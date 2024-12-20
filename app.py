@@ -20,32 +20,99 @@ from forms import (
     CoursRelieForm,
     CoursPrealableForm,
     DuplicatePlanCadreForm,
-    ImportPlanCadreForm
+    ImportPlanCadreForm,
+    PlanCadreCompetenceCertifieeForm,
+    PlanCadreCoursCorequisForm,
+    GenerateContentForm,
+    GlobalGenerationSettingsForm, 
+    GenerationSettingForm
 )
 from flask_ckeditor import CKEditor
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import sqlite3
 import json
+import logging
+from openai import OpenAI
+from openai import OpenAIError
+from dotenv import load_dotenv
+from bs4 import BeautifulSoup
 import os
 import markdown
+from jinja2 import Template
 import bleach
 from docxtpl import DocxTemplate
 from io import BytesIO 
 from werkzeug.security import generate_password_hash, check_password_hash
+from constants import SECTIONS  # Importer la liste des sections
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'votre_cle_secrete'
+app.config['WTF_CSRF_ENABLED'] = True  # Active la validation CSRF
 app.config['CKEDITOR_PKG_TYPE'] = 'standard'  # ou 'basic', 'full'
+
+
 
 ckeditor = CKEditor(app)
 
+# Configuration du logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+client = OpenAI()
+
 DATABASE = 'programme.db'
+
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
+if not OPENAI_API_KEY:
+    raise ValueError("La clé API OpenAI n'est pas définie dans les variables d'environnement.")
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row  # Permet de récupérer les résultats sous forme de dictionnaire
     return conn
 
+def parse_html_to_list(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    return [li.get_text(strip=True) for li in soup.find_all('li')]
+
+def parse_html_to_nested_list(html_content):
+    """
+    Parses HTML content with nested <ul> and <ol> elements and returns a
+    nested list structure with sub-items included recursively.
+    """
+    soup = BeautifulSoup(html_content, 'html.parser')
+
+    def process_list(items):
+        result = []
+        for li in items:
+            # Main text for the <li>
+            item_text = li.contents[0].strip() if li.contents else ""
+            sub_items = []
+
+            # Look for nested <ul> or <ol> within the current <li>
+            nested_list = li.find('ul') or li.find('ol')
+            if nested_list:
+                sub_items = process_list(nested_list.find_all('li', recursive=False))
+
+            # Append main item and its sub-items
+            if sub_items:
+                result.append({
+                    'text': item_text,
+                    'sub_items': sub_items
+                })
+            else:
+                result.append({
+                    'text': item_text
+                })
+        return result
+
+    # Start processing from the top-level <ul> or <ol>
+    top_list = soup.find('ul') or soup.find('ol')
+    if top_list:
+        return process_list(top_list.find_all('li', recursive=False))
+    else:
+        return []  # Return an empty list if no <ul> or <ol> is found
 
 # Configurer Flask-Login
 login_manager = LoginManager()
@@ -60,6 +127,618 @@ class User(UserMixin):
         self.username = username
         self.password = password
         self.role = role
+
+def get_plan_cadre_data(cours_id, db_path='programme.db'):
+    """
+    Récupère et retourne les informations d'un plan cadre pour un cours donné sous format JSON.
+    
+    :param cours_id: ID du cours dans la table Cours.
+    :param db_path: Chemin vers la base de données SQLite.
+    :return: Données structurées sous forme de dictionnaire
+    """
+    plan_cadre = {}
+
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        # 1. Nom du cours, Code du cours et session
+        cursor.execute(""" 
+            SELECT nom, code, fil_conducteur_id, session, programme_id, heures_theorie, heures_laboratoire, heures_travail_maison
+            FROM Cours
+            WHERE id = ?
+        """, (cours_id,))
+        cours = cursor.fetchone()
+        if not cours:
+            print(f"Aucun cours trouvé avec l'ID {cours_id}.")
+            return None
+        nom_cours, code_cours, fil_conducteur_id, session, programme_id, heures_theorie, heures_laboratoire, heures_travail_maison = cours
+        plan_cadre['cours'] = {
+            'nom': nom_cours,
+            'code': code_cours,
+            'session': session,
+            'heures_theorie': heures_theorie,
+            'heures_laboratoire': heures_laboratoire,
+            'heures_maison': heures_travail_maison
+        }
+
+        # 2. Nom du programme
+        if programme_id:
+            cursor.execute("""
+                SELECT nom
+                FROM Programme
+                WHERE id = ?
+            """, (programme_id,))
+            programme = cursor.fetchone()
+            programme_nom = programme[0] if programme else "Non défini"
+        else:
+            programme_nom = "Non défini"
+        plan_cadre['programme'] = programme_nom
+
+        # 2. Fil conducteur
+        if fil_conducteur_id:
+            cursor.execute("""
+                SELECT description
+                FROM FilConducteur
+                WHERE id = ?
+            """, (fil_conducteur_id,))
+            fil_conducteur = cursor.fetchone()
+            fil_conducteur_desc = fil_conducteur[0] if fil_conducteur else "Non défini"
+        else:
+            fil_conducteur_desc = "Non défini"
+        plan_cadre['fil_conducteur'] = fil_conducteur_desc
+
+        # 3. Éléments de compétence développée ou atteinte
+        cursor.execute("""
+            SELECT 
+                EC.id AS element_competence_id,
+                EC.nom AS element_nom,
+                ECCP.status AS status,
+                EC.competence_id AS competence_id,
+                ECC.criteria AS critere_performance
+            FROM 
+                ElementCompetence AS EC
+            JOIN 
+                ElementCompetenceParCours AS ECCP ON EC.id = ECCP.element_competence_id
+            LEFT JOIN 
+                ElementCompetenceCriteria AS ECC ON EC.id = ECC.element_competence_id
+            WHERE 
+                ECCP.cours_id = ?
+        """, (cours_id,))
+        element_competences_developpees = cursor.fetchall()
+        plan_cadre['elements_competences_developpees'] = []
+        for element_competence_id, element_nom, status, competence_id, critere_performance in element_competences_developpees:
+            plan_cadre['elements_competences_developpees'].append({
+                'element_nom': element_nom,
+                'element_competence_id': element_competence_id,
+                'status': status,
+                'competence_id': competence_id,
+                'critere_performance': critere_performance
+            })
+
+        # 4. Compétences développées
+        cursor.execute("""
+            SELECT DISTINCT 
+                EC.competence_id,
+                C.nom AS competence_nom,
+                C.criteria_de_performance AS critere_performance,
+                C.contexte_de_realisation AS contexte_realisation
+            FROM 
+                ElementCompetence AS EC
+            JOIN 
+                ElementCompetenceParCours AS ECCP ON EC.id = ECCP.element_competence_id
+            JOIN 
+                Competence AS C ON EC.competence_id = C.id
+            WHERE 
+                ECCP.cours_id = ? AND ECCP.status = 'Développé significativement'
+        """, (cours_id,))
+        competences_developpees = cursor.fetchall()
+        plan_cadre['competences_developpees'] = []
+        for competence_id, competence_nom, critere_performance, contexte_realisation in competences_developpees:
+            plan_cadre['competences_developpees'].append({
+                'competence_nom': competence_nom,
+                'competence_id': competence_id,
+                'critere_performance': critere_performance,
+                'contexte_realisation': contexte_realisation
+            })
+
+        # 5. Compétences atteintes
+        cursor.execute("""
+            SELECT DISTINCT 
+                EC.competence_id,
+                C.nom AS competence_nom,
+                C.criteria_de_performance AS critere_performance,
+                C.contexte_de_realisation AS contexte_realisation
+            FROM 
+                ElementCompetence AS EC
+            JOIN 
+                ElementCompetenceParCours AS ECCP ON EC.id = ECCP.element_competence_id
+            JOIN 
+                Competence AS C ON EC.competence_id = C.id
+            WHERE 
+                ECCP.cours_id = ? AND ECCP.status = 'Atteint'
+        """, (cours_id,))
+        competences_atteintes = cursor.fetchall()
+        plan_cadre['competences_atteintes'] = []
+        for competence_id, competence_nom, critere_performance, contexte_realisation in competences_atteintes:
+            plan_cadre['competences_atteintes'].append({
+                'competence_nom': competence_nom,
+                'competence_id': competence_id,
+                'critere_performance': critere_performance,
+                'contexte_realisation': contexte_realisation
+            })
+
+        # 6. Cours préalables
+        cursor.execute("""
+            SELECT 
+                CP.cours_prealable_id,
+                CP2.nom AS cours_prealable_nom,
+                CP2.code AS cours_prealable_code
+            FROM 
+                Cours AS C
+            JOIN 
+                CoursPrealable AS CP ON C.id = CP.cours_id
+            JOIN 
+                Cours AS CP2 ON CP.cours_prealable_id = CP2.id
+            WHERE 
+                C.id = ?
+        """, (cours_id,))
+        prealables = cursor.fetchall()
+        plan_cadre['cours_prealables'] = []
+        for preal_id, preal_nom, preal_code in prealables:
+            plan_cadre['cours_prealables'].append({
+                'cours_prealable_code': preal_code,
+                'cours_prealable_nom': preal_nom,
+                'cours_prealable_id': preal_id
+            })
+
+        # 7. Préalable à quel(s) cours
+        cursor.execute("""
+            SELECT 
+                CP.cours_id AS cours_prealable_a_id,
+                CP2.nom AS cours_prealable_a_nom,
+                CP2.code AS cours_prealable_a_code
+            FROM 
+                Cours AS C
+            JOIN 
+                CoursPrealable AS CP ON C.id = CP.cours_prealable_id
+            JOIN 
+                Cours AS CP2 ON CP.cours_id = CP2.id
+            WHERE 
+                C.id = ?
+        """, (cours_id,))
+        prealables_of = cursor.fetchall()
+        plan_cadre['prealables_of'] = []
+        for cours_id_rel, cours_nom_rel, cours_code_rel in prealables_of:
+            plan_cadre['prealables_of'].append({
+                'cours_prealable_a_code': cours_code_rel,
+                'cours_prealable_a_nom': cours_nom_rel,
+                'cours_prealable_a_id': cours_id_rel
+            })
+
+        # 8. Cours corequis
+        cursor.execute("""
+            SELECT CoursCorequis.cours_corequis_id, Cours.nom
+            FROM CoursCorequis
+            JOIN Cours ON CoursCorequis.cours_corequis_id = Cours.id
+            WHERE CoursCorequis.cours_id = ?
+        """, (cours_id,))
+        corequis = cursor.fetchall()
+        plan_cadre['cours_corequis'] = []
+        for coreq_id, coreq_nom in corequis:
+            plan_cadre['cours_corequis'].append({
+                'cours_corequis_id': coreq_id,
+                'cours_corequis_nom': coreq_nom
+            })
+
+        # 9. Cours développant une même compétence avant, pendant et après
+        cursor.execute("""
+            SELECT 
+                C.id AS cours_id,
+                C.nom AS cours_nom,
+                C.code AS code,
+                C.session AS session,
+                GROUP_CONCAT(DISTINCT EC.competence_id) AS competence_ids
+            FROM
+                Cours AS C
+            JOIN
+                ElementCompetenceParCours AS ECCP ON C.id = ECCP.cours_id
+            JOIN
+                ElementCompetence AS EC ON ECCP.element_competence_id = EC.id
+            WHERE
+                EC.id IN (
+                    SELECT element_competence_id
+                    FROM ElementCompetenceParCours
+                    WHERE cours_id = ?
+                )
+                AND C.id != ?
+            GROUP BY
+                C.id, C.nom, C.code, C.session;
+        """, (cours_id, cours_id))
+        corequis = cursor.fetchall()
+        plan_cadre['cours_developpant_une_meme_competence'] = []
+        for cours_id, cours_nom, code, session, competence_ids in corequis:
+            plan_cadre['cours_developpant_une_meme_competence'].append({
+                'cours_nom': cours_nom,
+                'cours_id': cours_id,
+                'code': code,
+                'session': session,
+                'competence_ids': competence_ids
+            })
+
+    except sqlite3.Error as e:
+        print(f"Erreur SQLite: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+    return plan_cadre
+
+@app.route('/settings/generation', methods=['GET', 'POST'])
+@login_required
+def edit_global_generation_settings():
+    form = GlobalGenerationSettingsForm()
+    conn = get_db_connection()
+
+    if request.method == 'GET':
+        # Récupérer les paramètres actuels
+        settings = conn.execute('SELECT * FROM GlobalGenerationSettings').fetchall()
+
+        # Assurez-vous que form.sections a exactement len(SECTIONS) entrées
+        current_entries = len(form.sections)
+        required_entries = len(SECTIONS)
+        print(f"Sections actuelles dans le formulaire: {current_entries}")
+        print(f"Sections requises: {required_entries}")
+
+        if current_entries < required_entries:
+            for _ in range(required_entries - current_entries):
+                form.sections.append_entry()
+            print(f"Ajouté {required_entries - current_entries} entrées supplémentaires au formulaire.")
+        elif current_entries > required_entries:
+            for _ in range(current_entries - required_entries):
+                form.sections.pop_entry()
+            print(f"Supprimé {current_entries - required_entries} entrées en trop du formulaire.")
+
+        # Remplir le formulaire avec les paramètres existants
+        for i, section in enumerate(SECTIONS):
+            setting = next((s for s in settings if s['section'] == section), None)
+            if setting:
+                form.sections[i].use_ai.data = bool(setting['use_ai'])
+                form.sections[i].text_content.data = setting['text_content']
+                print(f"Section '{section}' - use_ai: {setting['use_ai']}, text_content: {setting['text_content']}")
+            else:
+                # Si la section n'existe pas dans la base de données, définir des valeurs par défaut
+                form.sections[i].use_ai.data = False
+                form.sections[i].text_content.data = ''
+                print(f"Section '{section}' non trouvée dans la BD. Utilisation des valeurs par défaut.")
+
+
+
+    if form.validate_on_submit():
+        print("Formulaire validé avec succès.")
+        try:
+            for i, section in enumerate(SECTIONS):
+                use_ai = form.sections[i].use_ai.data
+                text_content = form.sections[i].text_content.data.strip()
+                print(f"Traitement de la section '{section}': use_ai={use_ai}, text_content='{text_content}'")
+
+                # Mettre à jour ou insérer les paramètres
+                existing = conn.execute('''
+                    SELECT id FROM GlobalGenerationSettings 
+                    WHERE section = ?
+                ''', (section,)).fetchone()
+                if existing:
+                    conn.execute('''
+                        UPDATE GlobalGenerationSettings
+                        SET use_ai = ?, text_content = ?
+                        WHERE id = ?
+                    ''', (use_ai, text_content, existing['id']))
+                    print(f"Mise à jour de la section '{section}' avec ID {existing['id']}.")
+                else:
+                    conn.execute('''
+                        INSERT INTO GlobalGenerationSettings (section, use_ai, text_content)
+                        VALUES (?, ?, ?)
+                    ''', (section, use_ai, text_content))
+                    print(f"Insertion de la nouvelle section '{section}'.")
+            conn.commit()
+            flash('Paramètres globaux de génération mis à jour avec succès!', 'success')
+            return redirect(url_for('edit_global_generation_settings'))
+        except sqlite3.Error as e:
+            conn.rollback()
+            print(f"Erreur lors de la mise à jour des paramètres: {e}")
+            flash(f'Erreur lors de la mise à jour des paramètres : {e}', 'danger')
+    else:
+        if request.method == 'POST':
+            print("Validation du formulaire échouée.")
+            # Déboguer les erreurs spécifiques des champs
+            for field_name, field in form._fields.items():
+                if field.errors:
+                    print(f"Erreurs dans le champ '{field_name}': {field.errors}")
+            flash('Validation du formulaire échouée. Veuillez vérifier vos entrées.', 'danger')
+
+    # Préparer la liste des sections avec leurs formulaires
+    sections_with_forms = list(zip(form.sections, SECTIONS))
+
+    conn.close()
+    return render_template('edit_global_generation_settings.html', form=form, sections_with_forms=sections_with_forms)
+
+from jinja2 import Template
+
+def replace_tags_jinja2(text, plan_cadre, extra_context=None):
+    """
+    Utilise Jinja2 pour remplacer les tags dans le texte avec les données de plan_cadre et un contexte supplémentaire.
+    
+    :param text: Le texte contenant des tags Jinja2.
+    :param plan_cadre: Le dictionnaire contenant les données du plan cadre.
+    :param extra_context: Un dictionnaire supplémentaire pour remplacer ou ajouter des variables.
+    :return: Le texte avec les tags remplacés.
+    """
+    try:
+        template = Template(text)
+        
+        # Préparer le contexte de remplacement
+        context = {
+            'code_cours': plan_cadre['cours']['code'],
+            'nom_cours': plan_cadre['cours']['nom'],
+            'fil_conducteur': plan_cadre['fil_conducteur'],
+            'programme': plan_cadre['programme'],
+            'session': plan_cadre['cours'].get('session', 'Non défini'),
+            'competences_developpees': plan_cadre.get('competences_developpees', []),
+            'competences_atteintes': plan_cadre.get('competences_atteintes', []),
+            'cours_prealables': plan_cadre.get('cours_prealables', []),
+            'cours_corequis': plan_cadre.get('cours_corequis', []),
+            'cours_developpant_une_meme_competence': plan_cadre.get('cours_developpant_une_meme_competence', []),
+            'heures_theorie': plan_cadre['cours']['heures_theorie'],
+            'heures_lab': plan_cadre['cours']['heures_laboratoire'],
+            'heures_maison': plan_cadre['cours']['heures_maison']
+        }
+        
+        # Ajouter le contexte supplémentaire si fourni
+        if extra_context:
+            context.update(extra_context)
+
+        #print(context['competence_nom'])
+        
+        # Rendre le template avec le contexte
+        replaced_text = template.render(**context)
+        return replaced_text
+    except KeyError as e:
+        logger.error(f"Clé manquante dans le contexte lors du rendu du template : {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Erreur lors du rendu du template Jinja2 : {e}")
+        raise
+
+def process_ai_prompt(prompt, role):
+    """
+    Sends the prompt to the AI service and returns the generated content.
+    """
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": role},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=500
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        # Log the exception
+        logger.error(f"Error generating AI content: {e}")
+        return None
+
+@app.route('/plan_cadre/<int:plan_id>/generate_content', methods=['POST'])
+@login_required
+def generate_plan_cadre_content(plan_id):
+    form = GenerateContentForm()
+    if form.validate_on_submit():
+        try:
+            # Connexion à la base de données
+            conn = get_db_connection()
+            plan = conn.execute('SELECT * FROM PlanCadre WHERE id = ?', (plan_id,)).fetchone()
+            
+            if not plan:
+                flash('Plan Cadre non trouvé.', 'danger')
+                conn.close()
+                return redirect(url_for('view_plan_cadre', cours_id=plan['cours_id'], plan_id=plan_id))
+            
+            # Récupérer le nom du cours pour les prompts
+            cours = conn.execute('SELECT nom FROM Cours WHERE id = ?', (plan['cours_id'],)).fetchone()
+            cours_nom = cours['nom'] if cours else "Non défini"
+
+            parametres_generation = conn.execute('SELECT section, use_ai, text_content FROM GlobalGenerationSettings').fetchall()
+
+            # Transformer la liste de tuples en dictionnaire
+            parametres_dict = {section: {'use_ai': use_ai, 'text_content': text_content}
+                               for section, use_ai, text_content in parametres_generation}
+
+            plan_cadre_data = get_plan_cadre_data(plan['cours_id'])
+
+            fields = [
+                'Intro et place du cours',
+                'Objectif terminal',
+                'Introduction Structure du Cours',
+                'Activités Théoriques',
+                'Activités Pratiques',
+                'Activités Prévues',
+                'Évaluation Sommative des Apprentissages',
+                'Nature des Évaluations Sommatives',
+                'Évaluation de la Langue',
+                'Évaluation formative des apprentissages',
+            ]
+
+            # (Optional) Define a mapping from field keys to database column names
+            # If the keys match the column names, you can skip this mapping
+            field_to_column = {
+                'Intro et place du cours': 'place_intro',
+                'Objectif terminal': 'objectif_terminal',
+                'Introduction Structure du Cours': 'structure_intro',
+                'Activités Théoriques': 'structure_activites_theoriques',
+                'Activités Pratiques': 'structure_activites_pratiques',
+                'Activités Prévues': 'structure_activites_prevues',
+                'Évaluation Sommative des Apprentissages': 'eval_evaluation_sommative',
+                'Nature des Évaluations Sommatives': 'eval_nature_evaluations_sommatives',
+                'Évaluation de la Langue': 'eval_evaluation_de_la_langue',
+                'Évaluation formative des apprentissages': 'eval_evaluation_sommatives_apprentissages',
+            }
+
+            # Initialize a dictionary to collect prompts where use_ai is enabled
+            prompts = {}
+
+            # Iterate over each field and apply the replacement and update logic
+            for field in fields:
+                # Retrieve the text content for the current field
+                text_with_tags = parametres_dict[field]['text_content']
+                
+                # Replace Jinja2 tags with actual data
+                replaced_text = replace_tags_jinja2(text_with_tags, plan_cadre_data)
+                
+                # Check if AI is not used for this field
+                if parametres_dict[field]['use_ai'] == 0:
+                    # Get the corresponding column name from the mapping
+                    column_name = field_to_column.get(field)
+                    
+                    if column_name:
+                        # Update the specific column in the PlanCadre table
+                        conn.execute(f'''
+                            UPDATE PlanCadre
+                            SET {column_name} = ?
+                            WHERE id = ?
+                        ''', (replaced_text, plan_id))
+                    else:
+                        # Handle cases where the field is not mapped to any column
+                        raise ValueError(f"No column mapping found for field: {field}")
+                else:
+                    # Collect the prompt for fields where AI is used
+                    prompts[field] = replaced_text
+
+            cursor = conn.cursor()
+
+            if parametres_dict['Description des compétences développées']['use_ai'] == 1:
+                cursor.execute("""
+                    SELECT DISTINCT 
+                        EC.competence_id,
+                        C.nom AS competence_nom,
+                        C.criteria_de_performance AS critere_performance,
+                        C.contexte_de_realisation AS contexte_realisation
+                    FROM 
+                        ElementCompetence AS EC
+                    JOIN 
+                        ElementCompetenceParCours AS ECCP ON EC.id = ECCP.element_competence_id
+                    JOIN 
+                        Competence AS C ON EC.competence_id = C.id
+                    WHERE 
+                        ECCP.cours_id = ? AND ECCP.status = 'Développé significativement'
+                """, (plan['cours_id'],))
+                competences_developpees = cursor.fetchall()
+
+                description_list = []
+                description_prompts = {}
+
+                role = f"Tu es un rédacteur de contenu pour un plan-cadre pour le cours '{plan_cadre_data['cours']['nom']}' situé en session {plan_cadre_data['cours'].get('session', 'Non défini')} sur 6 du programme {plan_cadre_data['programme']}"
+
+                for competence in competences_developpees:
+                    competence_id = competence['competence_id']
+                    competence_nom = competence['competence_nom']
+                    critere_performance = competence['critere_performance']
+                    contexte_realisation = competence['contexte_realisation']
+
+                    # Récupérer le texte avec les tags depuis les paramètres de génération
+                    text_with_tags = parametres_dict['Description des compétences développées']['text_content']
+                    
+                    # Créer un dictionnaire de contexte pour remplacer les tags spécifiques à la compétence
+                    extra_context = {
+                        'competence_nom': competence_nom,
+                        'critere_performance': critere_performance,
+                        'contexte_realisation': contexte_realisation
+                    }
+                    
+                    # Remplacer les tags dans le texte en utilisant le contexte combiné
+                    replaced_text = replace_tags_jinja2(text_with_tags, plan_cadre_data, extra_context)
+
+                    ai_description = process_ai_prompt(replaced_text, role)
+
+                    # Insérer la description dans la table dédiée
+                    cursor.execute("""
+                        INSERT OR REPLACE INTO PlanCadreCompetencesDeveloppees (plan_cadre_id, texte, description)
+                        VALUES (?, ?, ?);
+                    """, (plan_id, competence_nom, ai_description))
+
+
+
+                #for competence_id, competence_nom, critere_performance, contexte_realisation in competences_developpees:
+                #    text_with_tags = parametres_dict['Description des compétences développées']['text_content']
+                #    replaced_text = replace_tags_jinja2(text_with_tags, competences_developpees)
+                #    prompts['Description des compétences développées'] = 
+
+
+
+                    #cursor.execute("""
+                    #    INSERT INTO PlanCadreCompetencesDeveloppees (plan_cadre_id, texte, description)
+                    #    VALUES (?, ?, ?);
+                    #""", (plan_id, competence_nom, 'Description of the new competence'))
+
+
+
+            if prompts:
+                logger.info("Envoi des prompts pour le traitement AI.")
+                role = f"Tu es un rédacteur de contenu pour un plan-cadre pour le cours '{plan_cadre_data['cours']['nom']}' situé en session {plan_cadre_data['cours'].get('session', 'Non défini')} sur 6 du programme {plan_cadre_data['programme']}"
+
+                updates = {}
+                for field, prompt in prompts.items():
+                    try:
+                        response = client.chat.completions.create(
+                            model="gpt-4o-mini",
+                            messages=[
+                                {"role": "system", "content": role},
+                                {"role": "user", "content": prompt}
+                            ],
+                            temperature=0.7,
+                            max_tokens=500
+                        )
+                        # Récupérer le contenu généré
+                        generated_text = response.choices[0].message.content.strip()
+                        updates[field] = generated_text
+                        logger.info(f"Texte généré pour le champ '{field}'.")
+                    except Exception as e:
+                        logger.error(f"Erreur lors de l'appel à l'API OpenAI pour le champ '{field}': {e}")
+
+                cursor = conn.cursor()
+                def clean_generated_text(text):
+                    return text.strip().strip('"').strip("'")
+
+                # Mettre à jour la base de données avec les textes générés
+                for field, generated_text in updates.items():
+                    cleaned_text = clean_generated_text(generated_text)  # Supprime les guillemets
+                    column_name = field_to_column.get(field)
+                    if column_name:
+                        logger.info(f"Mise à jour de la colonne '{column_name}' avec le texte généré pour le champ '{field}'.")
+                        cursor.execute(f'''
+                            UPDATE PlanCadre
+                            SET {column_name} = ?
+                            WHERE id = ?
+                        ''', (cleaned_text, plan_id))
+                    else:
+                        logger.warning(f"Aucune correspondance de colonne pour le champ '{field}' lors de la mise à jour.")
+
+            conn.commit()
+            conn.close()
+
+            flash('Contenu généré automatiquement avec succès!', 'success')
+            return redirect(url_for('view_plan_cadre', cours_id=plan['cours_id'], plan_id=plan_id))
+        
+        except Exception as e:
+            flash(f'Erreur lors de la génération du contenu: {e}', 'danger')
+            return redirect(url_for('view_plan_cadre', cours_id=plan['cours_id'], plan_id=plan_id))
+    else:
+        flash('Erreur de validation du formulaire.', 'danger')
+        return redirect(url_for('view_plan_cadre', plan_id=plan_id))
+
+
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -178,16 +857,111 @@ def generate_docx_with_template(plan_id):
     
     competence_ids_uniques = list(competence_ids)
 
-    competence_info_developes = []
+    competence_info_developes = {}
 
-    # Loop over each unique element competence ID
     for elemcompid in competence_ids_uniques:
+        # Create a cursor object
+        cursor = conn.cursor()
+
         # Execute the query and fetch the results for the given element competence ID
-        competence_cours = conn.execute('SELECT code, nom FROM Competence WHERE id = ?', (elemcompid,)).fetchall()
-        
-        # Append the results (list of tuples) to the competence_info list
+        competence_cours = cursor.execute(
+            'SELECT id, code, nom, criteria_de_performance, contexte_de_realisation FROM Competence WHERE id = ?',
+            (elemcompid,)
+        ).fetchall()
+
+        # Convert the results (list of tuples) to a dictionary using column names
+        columns = [column[0] for column in cursor.description]  # Get column names from cursor description
         for row in competence_cours:
-            competence_info_developes.append(row)
+            # Create a dictionary from the tuple by pairing column names with values
+            row_dict = dict(zip(columns, row))  # Create the dictionary
+
+            # Parse the HTML fields (assuming you have the functions for this)
+            contexte_html = row_dict['contexte_de_realisation']
+            row_dict['contexte_de_realisation'] = parse_html_to_nested_list(contexte_html)
+
+            criteria_html = row_dict['criteria_de_performance']
+            row_dict['criteria_de_performance'] = parse_html_to_list(criteria_html)
+
+            # Initialize the competence in the dictionary if it doesn't already exist
+            if row_dict['id'] not in competence_info_developes:
+                competence_info_developes[row_dict['id']] = {
+                    "id": row_dict['id'],
+                    "code": row_dict['code'],
+                    "nom": row_dict['nom'],
+                    "criteria_de_performance": row_dict['criteria_de_performance'],
+                    "contexte_de_realisation": row_dict['contexte_de_realisation'],
+                    "elements": []  # Initialize elements list
+                }
+
+            # Now fetch related elements for this competence
+            element_competence_data = cursor.execute("""
+                SELECT 
+                    ec.id AS element_competence_id, 
+                    ec.nom, 
+                    ec.competence_id,
+                    GROUP_CONCAT(ecc.criteria, ', ') AS all_criteria
+                FROM 
+                    ElementCompetence AS ec
+                JOIN 
+                    ElementCompetenceCriteria AS ecc ON ec.id = ecc.element_competence_id
+                WHERE 
+                    ec.competence_id = ?
+                GROUP BY 
+                    ec.id, ec.nom, ec.competence_id;
+            """, (row_dict['id'],)).fetchall()
+
+            # Loop through the results and add the element competence info to the corresponding competence
+            for row in element_competence_data:
+                element_competence = {
+                    "element_competence_id": row[0],
+                    "nom": row[1],
+                    "criteria": row[3],  # Concatenated criteria
+                    "competence_id": row[2]
+                }
+
+                # Add the element_competence to the elements list of the corresponding competence
+                competence_info_developes[row_dict['id']]["elements"].append(element_competence)
+
+    # Ajouter les informations sur les cours associés
+    for competence in competence_info_developes.values():
+        for element in competence["elements"]:
+            element_competence_id = element["element_competence_id"]
+
+            if "cours_associes" not in element:
+                element["cours_associes"] = []
+            # Requête pour récupérer les cours associés
+            cursor.execute("""
+                SELECT 
+                    c.id AS cours_id,
+                    c.code AS cours_code,
+                    c.nom AS cours_nom,
+                    c.session AS cours_session,
+                    ecpc.status AS element_competence_status
+                FROM 
+                    Cours AS c
+                JOIN 
+                    ElementCompetenceParCours AS ecpc ON c.id = ecpc.cours_id
+                WHERE 
+                    ecpc.element_competence_id = ?
+                ORDER BY 
+                    c.session;  -- Trie les résultats par la colonne 'session'
+
+            """, (element_competence_id,))
+
+            # Ajouter les cours associés à l'élément
+            element["cours_associes"].extend([
+                {
+                    "cours_id": row[0],
+                    "cours_code": row[1],
+                    "cours_nom": row[2],
+                    "cours_session": row[3],
+                    "status": row[4]
+                }
+                for row in cursor.fetchall()
+            ])
+
+
+
 
     # Récupérer les compétences développées avec leur texte et description
     competences_developpees = conn.execute('''
@@ -226,14 +1000,20 @@ def generate_docx_with_template(plan_id):
 
     competence_info_atteint = []
 
+
     # Loop over each unique element competence ID
     for elemcompid in competence_ids_uniques:
         # Execute the query and fetch the results for the given element competence ID
-        competence_cours = conn.execute('SELECT code, nom FROM Competence WHERE id = ?', (elemcompid,)).fetchall()
+        competence_cours = conn.execute('SELECT id, code, nom, criteria_de_performance, contexte_de_realisation FROM Competence WHERE id = ?', (elemcompid,)).fetchall()
         
         # Append the results (list of tuples) to the competence_info list
         for row in competence_cours:
-            competence_info_atteint.append(row)
+            row_dict = dict(row)  # Convert sqlite3.Row to dictionary
+            contexte_html = row_dict['contexte_de_realisation']
+            row_dict['contexte_de_realisation'] = parse_html_to_nested_list(contexte_html)
+            contexte_html = row_dict['criteria_de_performance']
+            row_dict['criteria_de_performance'] = parse_html_to_list(contexte_html)
+            competence_info_atteint.append(row_dict)
 
     # Récupérer les objets cibles
     objets_cibles = conn.execute('SELECT texte, description FROM PlanCadreObjetsCibles WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
@@ -268,6 +1048,45 @@ def generate_docx_with_template(plan_id):
 
     # Récupérer le savoir-être
     savoir_etre = conn.execute('SELECT texte FROM PlanCadreSavoirEtre WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
+
+    # Récupérer les cours corequis
+    cours_corequis = conn.execute('''
+        SELECT texte, description
+        FROM PlanCadreCoursCorequis
+        WHERE plan_cadre_id = ?
+    ''', (plan_id,)).fetchall() 
+
+    # Récupérer les compétences certifiées et leur description
+    competences_certifiees = conn.execute('''
+        SELECT texte, description
+        FROM PlanCadreCompetencesCertifiees
+        WHERE plan_cadre_id = ?
+    ''', (plan_id,)).fetchall() 
+
+
+    # 9. Cours développant une même compétence avant, pendant et après
+    cours_meme_competence = conn.execute("""
+        SELECT 
+            C.id AS cours_id,
+            C.nom AS cours_nom,
+            C.code AS code,
+            C.session AS session,
+            GROUP_CONCAT(DISTINCT EC.competence_id) AS competence_ids
+        FROM
+            Cours AS C
+        JOIN
+            ElementCompetenceParCours AS ECCP ON C.id = ECCP.cours_id
+        JOIN
+            ElementCompetence AS EC ON ECCP.element_competence_id = EC.id
+        WHERE
+            EC.id IN (
+                SELECT element_competence_id
+                FROM ElementCompetenceParCours
+                WHERE cours_id = ?
+            )
+        GROUP BY
+            C.id, C.nom, C.code, C.session;
+    """, (plan['cours_id'],)).fetchall() 
 
     # Fermer la connexion
     conn.close()
@@ -306,8 +1125,11 @@ def generate_docx_with_template(plan_id):
         'cours_relies': [dict(cr) for cr in cours_relies],
         'capacites': capacites_detail,
         'savoir_etre': [dict(se) for se in savoir_etre],
-        'competences_info_developes': [dict(cid) for cid in competence_info_developes],
-        'competences_info_atteint': [dict(cid) for cid in competence_info_atteint]
+        'competences_info_developes': [competence for competence in competence_info_developes.values()],
+        'competences_info_atteint': [dict(cid) for cid in competence_info_atteint],
+        'cours_corequis': [dict(cro) for cro in cours_corequis],
+        'competences_certifiees': [dict(cc) for cc in competences_certifiees],
+        'cours_developpant_une_meme_competence': [dict(cdmc) for cdmc in cours_meme_competence]
     }
 
     # Charger le modèle DOCX
@@ -749,40 +1571,58 @@ def edit_plan_cadre(plan_id):
         cours_prealables = conn.execute('SELECT texte, description FROM PlanCadreCoursPrealables WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
         savoir_etre = conn.execute('SELECT texte FROM PlanCadreSavoirEtre WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
         
+        # Nouveaux champs récupérés
+        competences_certifiees = conn.execute('SELECT texte, description FROM PlanCadreCompetencesCertifiees WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
+        cours_corequis = conn.execute('SELECT texte, description FROM PlanCadreCoursCorequis WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
+        
         # Remplir les FieldList avec les données existantes
+        # Compétences Développées
         form.competences_developpees.entries = []
         for c in competences_developpees:
             subform = form.competences_developpees.append_entry()
             subform.texte.data = c['texte']
             subform.texte_description.data = c['description']
-    
-        # Répétez pour Objets Cibles, Cours Reliés, Cours Préalables
-        # Exemple pour Objets Cibles
+        
+        # Objets Cibles
         form.objets_cibles.entries = []
         for o in objets_cibles:
             subform = form.objets_cibles.append_entry()
             subform.texte.data = o['texte']
             subform.texte_description.data = o['description']
-    
-        # Exemple pour Cours Reliés
+        
+        # Cours Reliés
         form.cours_relies.entries = []
         for cr in cours_relies:
             subform = form.cours_relies.append_entry()
             subform.texte.data = cr['texte']
             subform.texte_description.data = cr['description']
-    
-        # Exemple pour Cours Préalables
+        
+        # Cours Préalables
         form.cours_prealables.entries = []
         for cp in cours_prealables:
             subform = form.cours_prealables.append_entry()
             subform.texte.data = cp['texte']
             subform.texte_description.data = cp['description']
-    
-        # Remplir Savoir-être
+        
+        # Savoir-être
         form.savoir_etre.entries = []
         for se in savoir_etre:
             subform = form.savoir_etre.append_entry()
             subform.texte.data = se['texte']
+        
+        # Remplir Compétences Certifiées
+        form.competences_certifiees.entries = []
+        for cc in competences_certifiees:
+            subform = form.competences_certifiees.append_entry()
+            subform.texte.data = cc['texte']
+            subform.texte_description.data = cc['description']
+        
+        # Remplir Cours Corequis
+        form.cours_corequis.entries = []
+        for cc in cours_corequis:
+            subform = form.cours_corequis.append_entry()
+            subform.texte.data = cc['texte']
+            subform.texte_description.data = cc['description']
     
     if form.validate_on_submit():
         # Récupérer les nouvelles données du formulaire
@@ -797,19 +1637,17 @@ def edit_plan_cadre(plan_id):
         eval_evaluation_de_la_langue = form.eval_evaluation_de_la_langue.data
         eval_evaluation_sommatives_apprentissages = form.eval_evaluation_sommatives_apprentissages.data
         
-        # Récupérer les données des FieldList directement depuis le formulaire
+        # Récupérer les données des FieldList
         competences_developpees_data = form.competences_developpees.data
         objets_cibles_data = form.objets_cibles.data
         cours_relies_data = form.cours_relies.data
         cours_prealables_data = form.cours_prealables.data
         savoir_etre_data = form.savoir_etre.data
+        competences_certifiees_data = form.competences_certifiees.data
+        cours_corequis_data = form.cours_corequis.data
         
-        # Ajouter des messages de débogage
-        print("Données Compétences Développées:", competences_developpees_data)
-        print("Données Objets Cibles:", objets_cibles_data)
-        print("Données Cours Reliés:", cours_relies_data)
-        print("Données Cours Préalables:", cours_prealables_data)
-        print("Données Savoir-être:", savoir_etre_data)
+        # Obtenir le cours_id associé au plan_cadre
+        cours_id = plan['cours_id']
         
         try:
             # Mettre à jour le Plan Cadre
@@ -828,7 +1666,7 @@ def edit_plan_cadre(plan_id):
                 eval_evaluation_sommatives_apprentissages, plan_id
             ))
             
-            # Sauvegarder les données des compétences développées
+            # Mettre à jour les compétences développées
             conn.execute('DELETE FROM PlanCadreCompetencesDeveloppees WHERE plan_cadre_id = ?', (plan_id,))
             for competence in competences_developpees_data:
                 conn.execute('''
@@ -836,7 +1674,7 @@ def edit_plan_cadre(plan_id):
                     VALUES (?, ?, ?)
                 ''', (plan_id, competence['texte'], competence['texte_description']))
     
-            # Sauvegarder les objets cibles
+            # Mettre à jour les objets cibles
             conn.execute('DELETE FROM PlanCadreObjetsCibles WHERE plan_cadre_id = ?', (plan_id,))
             for objet in objets_cibles_data:
                 conn.execute('''
@@ -844,7 +1682,7 @@ def edit_plan_cadre(plan_id):
                     VALUES (?, ?, ?)
                 ''', (plan_id, objet['texte'], objet['texte_description']))
     
-            # Sauvegarder les cours reliés
+            # Mettre à jour les cours reliés
             conn.execute('DELETE FROM PlanCadreCoursRelies WHERE plan_cadre_id = ?', (plan_id,))
             for cr in cours_relies_data:
                 conn.execute('''
@@ -852,7 +1690,7 @@ def edit_plan_cadre(plan_id):
                     VALUES (?, ?, ?)
                 ''', (plan_id, cr['texte'], cr['texte_description']))
     
-            # Sauvegarder les cours préalables
+            # Mettre à jour les cours préalables
             conn.execute('DELETE FROM PlanCadreCoursPrealables WHERE plan_cadre_id = ?', (plan_id,))
             for cp in cours_prealables_data:
                 conn.execute('''
@@ -860,7 +1698,7 @@ def edit_plan_cadre(plan_id):
                     VALUES (?, ?, ?)
                 ''', (plan_id, cp['texte'], cp['texte_description']))
     
-            # Sauvegarder les savoir-être
+            # Mettre à jour le savoir-être
             conn.execute('DELETE FROM PlanCadreSavoirEtre WHERE plan_cadre_id = ?', (plan_id,))
             for se in savoir_etre_data:
                 texte = se.get('texte')
@@ -870,9 +1708,25 @@ def edit_plan_cadre(plan_id):
                         VALUES (?, ?)
                     ''', (plan_id, texte.strip()))
     
+            # Mettre à jour les compétences certifiées
+            conn.execute('DELETE FROM PlanCadreCompetencesCertifiees WHERE plan_cadre_id = ?', (plan_id,))
+            for cc in competences_certifiees_data:
+                conn.execute('''
+                    INSERT INTO PlanCadreCompetencesCertifiees (plan_cadre_id, texte, description)
+                    VALUES (?, ?, ?)
+                ''', (plan_id, cc['texte'], cc['texte_description']))
+    
+            # Mettre à jour les cours corequis
+            conn.execute('DELETE FROM PlanCadreCoursCorequis WHERE plan_cadre_id = ?', (plan_id,))
+            for cc in cours_corequis_data:
+                conn.execute('''
+                    INSERT INTO PlanCadreCoursCorequis (plan_cadre_id, texte, description)
+                    VALUES (?, ?, ?)
+                ''', (plan_id, cc['texte'], cc['texte_description']))
+    
             conn.commit()
             flash('Plan Cadre mis à jour avec succès!', 'success')
-            return redirect(url_for('view_plan_cadre', cours_id=plan['cours_id'], plan_id=plan_id))
+            return redirect(url_for('view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
         except sqlite3.Error as e:
             flash(f'Erreur lors de la mise à jour du Plan Cadre : {e}', 'danger')
         finally:
@@ -880,6 +1734,7 @@ def edit_plan_cadre(plan_id):
     
     conn.close()
     return render_template('edit_plan_cadre.html', form=form, plan_id=plan_id, plan=plan)
+
 
 
 
@@ -1061,7 +1916,9 @@ def view_plan_cadre(cours_id, plan_id):
     objets_cibles = conn.execute('SELECT * FROM PlanCadreObjetsCibles WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
     cours_relies = conn.execute('SELECT * FROM PlanCadreCoursRelies WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
     cours_prealables = conn.execute('SELECT * FROM PlanCadreCoursPrealables WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-    
+    competences_certifiees = conn.execute('SELECT texte, description FROM PlanCadreCompetencesCertifiees WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
+    cours_corequis = conn.execute('SELECT texte, description FROM PlanCadreCoursCorequis WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
+
     # Récupérer les capacités
     capacites = conn.execute('SELECT * FROM PlanCadreCapacites WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
     capacites_detail = []
@@ -1096,6 +1953,8 @@ def view_plan_cadre(cours_id, plan_id):
         plan=plan,
         cours=cours,
         competences_developpees=competences_developpees,
+        competences_certifiees=competences_certifiees,
+        cours_corequis=cours_corequis,
         objets_cibles=objets_cibles,
         cours_relies=cours_relies,
         cours_prealables=cours_prealables,
