@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Ajouter un Fil Conducteur</h2>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      {{ form.programme.label(class="form-label") }}
+      {{ form.programme(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.description.label(class="form-label") }}
+      {{ form.description(class="form-control", rows="3") }}
+    </div>
+    <div class="form-group">
+      {{ form.couleur.label(class="form-label") }}
+      {{ form.couleur(class="form-control") }}  <!-- Sélecteur de couleur -->
+    </div>
+    <button type="submit" class="btn btn-success">Ajouter</button>
+  </form>
+{% endblock %}

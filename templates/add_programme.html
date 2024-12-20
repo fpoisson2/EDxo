@@ -1,0 +1,14 @@
+<!-- templates/add_programme.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Ajouter un Programme</h2>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      {{ form.nom.label(class="form-label") }}
+      {{ form.nom(class="form-control") }}
+    </div>
+    <button type="submit" class="btn btn-success">Ajouter</button>
+  </form>
+{% endblock %}

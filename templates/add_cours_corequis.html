@@ -1,0 +1,18 @@
+<!-- templates/add_cours_corequis.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Ajouter un Cours Corequis</h2>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      {{ form.cours.label(class="form-label") }}
+      {{ form.cours(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.cours_corequis.label(class="form-label") }}
+      {{ form.cours_corequis(class="form-control") }}
+    </div>
+    <button type="submit" class="btn btn-success">Ajouter</button>
+  </form>
+{% endblock %}

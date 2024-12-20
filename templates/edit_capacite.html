@@ -1,0 +1,152 @@
+<!-- templates/edit_capacite.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Éditer la Capacité</h2>
+<form method="POST">
+    {{ form.hidden_tag() }}
+
+    <div class="form-group">
+        {{ form.capacite.label }}
+        {{ form.capacite(class="form-control") }}
+    </div>
+
+    <div class="form-group">
+        {{ form.description_capacite.label }}
+        {{ form.description_capacite(class="form-control") }}
+    </div>
+
+    <div class="form-group">
+        {{ form.ponderation_min.label }}
+        {{ form.ponderation_min(class="form-control") }}
+    </div>
+
+    <div class="form-group">
+        {{ form.ponderation_max.label }}
+        {{ form.ponderation_max(class="form-control") }}
+    </div>
+
+    <h3>Savoirs Nécessaires</h3>
+    <div id="savoirs-necessaires-container">
+        {% for subform in form.savoirs_necessaires %}
+        <div class="savoir-necessaire-item">
+            <!-- Accès direct au champ StringField sans attribut 'texte' -->
+            {{ subform.label }}<br>
+            {{ subform(class="form-control") }}
+            <button type="button" class="btn btn-danger remove-savoir-necessaire">Supprimer</button>
+            <hr>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-info" id="add-savoir-necessaire">Ajouter un savoir nécessaire</button>
+
+    <h3>Savoirs Faire</h3>
+    <div id="savoirs-faire-container">
+        {% for subform in form.savoirs_faire %}
+        <div class="savoir-faire-item">
+            <label>{{ subform.texte.label }}</label>
+            {{ subform.texte(class="form-control") }}
+            <label>{{ subform.cible.label }}</label>
+            {{ subform.cible(class="form-control") }}
+            <label>{{ subform.seuil_reussite.label }}</label>
+            {{ subform.seuil_reussite(class="form-control") }}
+            <button type="button" class="btn btn-danger remove-savoir-faire">Supprimer</button>
+            <hr>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-info" id="add-savoir-faire">Ajouter un savoir faire</button>
+
+    <h3>Moyens d'Évaluation</h3>
+    <div id="moyens-evaluation-container">
+        {% for subform in form.moyens_evaluation %}
+        <div class="moyen-evaluation-item">
+            <label>{{ subform.texte.label }}</label>
+            {{ subform.texte(class="form-control") }}
+            <button type="button" class="btn btn-danger remove-moyen-evaluation">Supprimer</button>
+            <hr>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-info" id="add-moyen-evaluation">Ajouter un moyen d'évaluation</button>
+
+    <br><br>
+    <button type="submit" class="btn btn-primary">Enregistrer</button>
+</form>
+
+<!-- Scripts JavaScript pour ajouter/supprimer dynamiquement les sous-formulaires -->
+<script>
+    // Fonction pour ajouter un savoir nécessaire
+    document.getElementById('add-savoir-necessaire').addEventListener('click', function() {
+        var container = document.getElementById('savoirs-necessaires-container');
+        var index = container.children.length;
+        var newItem = `
+            <div class="savoir-necessaire-item">
+                <label for="savoirs_necessaires-${index}">Texte</label>
+                <input class="form-control" id="savoirs_necessaires-${index}" name="savoirs_necessaires-${index}" type="text">
+                <button type="button" class="btn btn-danger remove-savoir-necessaire">Supprimer</button>
+                <hr>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', newItem);
+    });
+
+    // Fonction pour supprimer un savoir nécessaire
+    document.getElementById('savoirs-necessaires-container').addEventListener('click', function(e) {
+        if (e.target && e.target.matches('button.remove-savoir-necessaire')) {
+            e.target.parentElement.remove();
+        }
+    });
+
+    // Fonction pour ajouter un savoir faire
+    document.getElementById('add-savoir-faire').addEventListener('click', function() {
+        var container = document.getElementById('savoirs-faire-container');
+        var index = container.children.length;
+        var newItem = `
+            <div class="savoir-faire-item">
+                <label for="savoirs_faire-${index}-texte">Texte</label>
+                <input class="form-control" id="savoirs_faire-${index}-texte" name="savoirs_faire-${index}-texte" type="text">
+                
+                <label for="savoirs_faire-${index}-cible">Cible</label>
+                <input class="form-control" id="savoirs_faire-${index}-cible" name="savoirs_faire-${index}-cible" type="text">
+                
+                <label for="savoirs_faire-${index}-seuil_reussite">Seuil de Réussite</label>
+                <input class="form-control" id="savoirs_faire-${index}-seuil_reussite" name="savoirs_faire-${index}-seuil_reussite" type="text">
+                
+                <button type="button" class="btn btn-danger remove-savoir-faire">Supprimer</button>
+                <hr>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', newItem);
+    });
+
+    // Fonction pour supprimer un savoir faire
+    document.getElementById('savoirs-faire-container').addEventListener('click', function(e) {
+        if (e.target && e.target.matches('button.remove-savoir-faire')) {
+            e.target.parentElement.remove();
+        }
+    });
+
+    // Fonction pour ajouter un moyen d'évaluation
+    document.getElementById('add-moyen-evaluation').addEventListener('click', function() {
+        var container = document.getElementById('moyens-evaluation-container');
+        var index = container.children.length;
+        var newItem = `
+            <div class="moyen-evaluation-item">
+                <label for="moyens_evaluation-${index}-texte">Moyen d'évaluation</label>
+                <input class="form-control" id="moyens_evaluation-${index}-texte" name="moyens_evaluation-${index}-texte" type="text">
+                <button type="button" class="btn btn-danger remove-moyen-evaluation">Supprimer</button>
+                <hr>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', newItem);
+    });
+
+    // Fonction pour supprimer un moyen d'évaluation
+    document.getElementById('moyens-evaluation-container').addEventListener('click', function(e) {
+        if (e.target && e.target.matches('button.remove-moyen-evaluation')) {
+            e.target.parentElement.remove();
+        }
+    });
+</script>
+{% endblock %}

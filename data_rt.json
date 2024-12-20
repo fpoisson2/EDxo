@@ -1,0 +1,1272 @@
+{
+    "programme": "Technologie du génie électrique : Réseaux et télécommunications (243.F0)",
+    "competences": [
+        {
+            "code": "02GN",
+            "nom": "Explorer la profession.",
+            "criteria_de_performance": [
+                "Pertinence de l’information recueillie.",
+                "Détermination adéquate de l’information.",
+                "Utilisation responsable de l’environnement numérique."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                "Dans une optique d’orientation et de formation tout au long de la carrière, dans les domaines de la réseautique et des télécommunications.",
+                "Individuellement ou en collaboration avec des technologues et des ingénieurs.",
+                {
+                    "text": "À l’aide :",
+                    "children": [
+                        "de plateformes de publication (médias).",
+                        "de la documentation sur le développement durable.",
+                        "des technologies de l’information et de la communication (TIC)."
+                    ]
+                },
+                {
+                    "text": "À partir :",
+                    "children": [
+                        "de la réglementation encadrant la profession.",
+                        "d’informations sur le milieu du travail."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Différencier les milieux de travail.",
+                    "criteria": [
+                        "Distinction juste des grands secteurs d’activité technologique.",
+                        "Identification appropriée de types d’entreprises."
+                    ]
+                },
+                {
+                    "nom": "Caractériser la profession et ses perspectives.",
+                    "criteria": [
+                        "Interprétation correcte des lois et règlements en vigueur.",
+                        "Examen adéquat des perspectives d’emploi.",
+                        "Reconnaissance des principales tendances du domaine.",
+                        "Définition juste de la place du développement durable dans la profession.",
+                        "Identification juste des responsabilités au regard de la profession."
+                    ]
+                },
+                {
+                    "nom": "Examiner les tâches et les opérations de la profession.",
+                    "criteria": [
+                        "Prise en compte de l’importance de la gestion du temps et du stress.",
+                        "Identification juste de ses caractéristiques personnelles qui représentent des atouts dans le domaine."
+                    ]
+                },
+                {
+                    "nom": "Examiner les habiletés et les comportements attendus dans la profession.",
+                    "criteria": [
+                        "Reconnaissance des aspects relatifs à la recherche de consensus concernant les décisions de l’équipe.",
+                        "Identification juste des attitudes et des comportements facilitant le travail d’équipe.",
+                        "Examen attentif des moyens assurant le développement de ses propres compétences, tout au long de sa carrière.",
+                        "Confirmation de son choix de formation."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02GP",
+            "nom": "Prévenir les atteintes à la santé, à la sécurité et à l’environnement.",
+            "criteria_de_performance": [
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                "Individuellement ou en équipe.",
+                {
+                    "text": "À l’aide :",
+                    "children": [
+                        "d’équipements de protection individuelle et collective.",
+                        "du SIMDUT.",
+                        "d’affiches informatives.",
+                        "de mesures de mitigation."
+                    ]
+                },
+                {
+                    "text": "À partir :",
+                    "children": [
+                        "des lignes directrices sur l’exposition aux radiofréquences.",
+                        "de la réglementation sur la protection de l’environnement."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Repérer les risques.",
+                    "criteria": [
+                        "Identification juste des risques présents."
+                    ]
+                },
+                {
+                    "nom": "Examiner l’information relative à la santé et sécurité du travail.",
+                    "criteria": [
+                        "Interprétation juste des lois et recommandations en vigueur.",
+                        "Interprétation juste des recommandations en matière de santé et de sécurité du travail.",
+                        "Interprétation juste des règles internes de l’entreprise ou de la clientèle."
+                    ]
+                },
+                {
+                    "nom": "Adopter des mesures de précaution.",
+                    "criteria": [
+                        "Vérification systématique des équipements de protection individuelle.",
+                        "Utilisation conforme de l’équipement de protection individuelle.",
+                        "Adoption de postures de travail ergonomiques.",
+                        "Signalement systématique de situations potentiellement dangereuses pour la personne ou pour l’environnement."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02GQ",
+            "nom": "Résoudre des problèmes en électronique.",
+            "criteria_de_performance": [
+                "Rigueur de la démarche.",
+                "Respect des unités du Système International."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                {
+                    "text": "À l’aide :",
+                    "children": [
+                        "de formules liées à l’électronique, à des circuits, etc.",
+                        "de concepts scientifiques.",
+                        "d’instruments de mesure.",
+                        "d’ondes électromagnétiques.",
+                        "de documentations techniques."
+                    ]
+                },
+                {
+                    "text": "À partir :",
+                    "children": [
+                        "de problèmes simples.",
+                        "de logiciels spécialisés.",
+                        "de circuits électriques.",
+                        "de supports de transmission électriques.",
+                        "de supports de transmission optiques."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Caractériser les concepts scientifiques mis en jeu dans la résolution d’un problème.",
+                    "criteria": [
+                        "Nomination juste du concept.",
+                        "Reconnaissance juste des contextes liés au problème.",
+                        "Description adéquate du concept."
+                    ]
+                },
+                {
+                    "nom": "Appliquer les lois et les équations à la résolution d’un problème.",
+                    "criteria": [
+                        "Identification juste des paramètres applicables en lien avec le problème.",
+                        "Formulation cohérente des équations relatives au problème.",
+                        "Mise en pratique appropriée des équations dans le cadre du problème."
+                    ]
+                },
+                {
+                    "nom": "Produire les résultats qualitatifs et/ou quantitatifs.",
+                    "criteria": [
+                        "Résolution adéquate des équations.",
+                        "Expression numérique précise des résultats en lien avec le problème.",
+                        "Représentation claire des résultats (graphiquement ou numériquement)."
+                    ]
+                },
+                {
+                    "nom": "Interpréter les résultats.",
+                    "criteria": [
+                        "Qualification et/ou quantification juste des résultats.",
+                        "Explication claire des résultats en lien avec le problème."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02GR",
+            "nom": "Interagir en contexte professionnel.",
+            "criteria_de_performance": [
+                "Respect de l’interlocuteur.",
+                "Respect des règles de politesse.",
+                "Respect de la culture d’entreprise."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "En participant à des rencontres.",
+                "En présence ou à distance.",
+                "À l’aide des technologies utilisées dans les milieux de travail.",
+                "À partir d’outils de communication (écrite, audio ou vidéo)."
+            ],
+            "elements": [
+                {
+                    "nom": "Communiquer avec des personnes.",
+                    "criteria": [
+                        "Interprétation juste des messages reçus.",
+                        "Formulation claire d’un message.",
+                        "Vérification appropriée de la compréhension de ses interlocuteurs."
+                    ]
+                },
+                {
+                    "nom": "Évaluer la qualité des interactions.",
+                    "criteria": [
+                        "Appréciation réaliste de la qualité de ses interactions.",
+                        "Mise en place de moyens d’amélioration."
+                    ]
+                },
+                {
+                    "nom": "Travailler au sein d’une équipe multidisciplinaire.",
+                    "criteria": [
+                        "Manifestation adéquate de : marques de respect; d’ouverture d’esprit; de collaboration.",
+                        "Respect des règles de fonctionnement en équipe.",
+                        "Respect du rôle, des responsabilités et de l’expertise de chacun.",
+                        "Collaboration efficace pour la résolution de problèmes."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02GS",
+            "nom": "Analyser des circuits.",
+            "criteria_de_performance": [],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                "Individuellement ou en équipe.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "documentation technique.",
+                        "logiciels (modélisation, simulation, calculs).",
+                        "références."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "diagrammes schématiques.",
+                        "diagrammes de montage.",
+                        "résultats de calculs."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Identifier les pièces constitutives du circuit et leur fonction.",
+                    "criteria": []
+                },
+                {
+                    "nom": "Décomposer le circuit.",
+                    "criteria": [
+                        "Identification exhaustive des pièces constitutives du circuit.",
+                        "Consultation suffisante de la documentation technique ou des références relatives à chaque pièce.",
+                        "Détermination précise de la fonction de chaque pièce considérant sa position dans le circuit.",
+                        "Délimitation claire de chaque partie du circuit considérant leur fonction propre.",
+                        "Identification exhaustive de chaque entrée-sortie pour chaque partie du circuit.",
+                        "Désignation précise de la fonction de chaque partie du circuit."
+                    ]
+                },
+                {
+                    "nom": "Déduire l’état de fonctionnement du circuit.",
+                    "criteria": [
+                        "Énonciation juste d’hypothèses de fonctionnement.",
+                        "Mise à l’épreuve appropriée de l’hypothèse.",
+                        "Vérification adéquate du résultat.",
+                        "Expression pertinente de l’état de fonctionnement."
+                    ]
+                },
+                {
+                    "nom": "Documenter l’analyse.",
+                    "criteria": [
+                        "Communication concise de l’avancement de l’analyse.",
+                        "Documentation pertinente des résultats de l’analyse."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02GT",
+            "nom": "Analyser des informations techniques.",
+            "criteria_de_performance": [],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                "Individuellement ou en équipe.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "documents techniques : fiches techniques, plans de réseaux, etc.",
+                        "programmes.",
+                        "organigrammes.",
+                        "forums d’experts."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "normes nationales et internationales et de standards.",
+                        "gabarits de document et autres.",
+                        "documents techniques."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Rassembler de l’information technique.",
+                    "criteria": [
+                        "Identification adéquate du besoin.",
+                        "Utilisation efficace de stratégies de recherche.",
+                        "Validation juste des sources.",
+                        "Sélection appropriée des informations."
+                    ]
+                },
+                {
+                    "nom": "Interpréter de l’information technique.",
+                    "criteria": [
+                        "Synthèse appropriée de l’information.",
+                        "Vérification complète des résultats de recherche."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02GU",
+            "nom": "Réaliser des travaux d’atelier.",
+            "criteria_de_performance": [
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail.",
+                "Respect des principes relatifs au développement durable."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                "Individuellement ou en équipe.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "outils : de brasure, de sertissage, manuels et électriques, optiques grossissants, etc.",
+                        "équipements de protection individuelle.",
+                        "instructions techniques.",
+                        "instructions d’assemblage ou de désassemblage."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "un système.",
+                        "un appareil.",
+                        "connecteurs, câbles, cabinets de branchement, de boîtier, d’une tour d’antenne, etc."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Préparer le travail.",
+                    "criteria": [
+                        "Sélection appropriée des outils.",
+                        "Préparation appropriée de l’espace de travail.",
+                        "Vérification rigoureuse de l’équipement de protection individuelle."
+                    ]
+                },
+                {
+                    "nom": "Exécuter un travail d’atelier.",
+                    "criteria": [
+                        "Réalisation méthodique des travaux.",
+                        "Manipulation minutieuse des pièces coûteuses.",
+                        "Remplacement soigné de composants électroniques.",
+                        "Maintien fonctionnel de l’espace de travail.",
+                        "Maintien d’une protection électrostatique adéquate."
+                    ]
+                },
+                {
+                    "nom": "Vérifier le travail.",
+                    "criteria": [
+                        "Vérification de la conformité du travail.",
+                        "Remise en ordre systématique des lieux."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02GV",
+            "nom": "Réaliser des prises de mesures.",
+            "criteria_de_performance": [
+                "Respect des normes de qualité en vigueur.",
+                "Respect des normes d’interférence électromagnétique.",
+                "Respect des normes de protection contre les phénomènes électrostatiques.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                "Individuellement ou en équipe.",
+                "À l’aide de instruments de mesure.",
+                "À l’aide d’outils spécialisés.",
+                "À l’aide de documentation technique.",
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "équipements, de systèmes ou de sous-systèmes.",
+                        "d’une procédure."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Prendre connaissance de la situation.",
+                    "criteria": [
+                        "Clarté du portrait global.",
+                        "Identification précise du système.",
+                        "Identification juste des risques liés à la mesure.",
+                        "Prise en compte effective de l’impact de la mesure."
+                    ]
+                },
+                {
+                    "nom": "Préparer la prise de mesures.",
+                    "criteria": [
+                        "Choix approprié de l’instrument de mesure.",
+                        "Vérification complète de l’état de l’instrument.",
+                        "Configuration adéquate de l’instrument.",
+                        "Préparation méthodique de la prise de mesures."
+                    ]
+                },
+                {
+                    "nom": "Procéder à la prise de mesures.",
+                    "criteria": [
+                        "Réalisation sécuritaire du branchement.",
+                        "Validation de la procédure.",
+                        "Exactitude de la mesure.",
+                        "Précision du relevé de la mesure."
+                    ]
+                },
+                {
+                    "nom": "Relever la mesure.",
+                    "criteria": [
+                        "Réalisation systématique du relevé.",
+                        "Absence d’ambiguïté du relevé."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02GW",
+            "nom": "Produire de la documentation technique.",
+            "criteria_de_performance": [
+                "Respect des règlements relatifs aux droits d’auteur."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Individuellement ou en équipe.",
+                "À l’aide de logiciels spécialisés.",
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "fiches techniques;",
+                        "plans du fabricant;",
+                        "normes nationales et internationales et de standards;",
+                        "gabarits de document et autres;",
+                        "informations archivées;",
+                        "versions précédentes."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Planifier la production du document.",
+                    "criteria": [
+                        "Choix approprié des éléments à documenter.",
+                        "Choix pertinent du format de document."
+                    ]
+                },
+                {
+                    "nom": "Élaborer le document.",
+                    "criteria": [
+                        "Respect des normes et standards propres au domaine.",
+                        "Exploitation efficace de l’outil de production.",
+                        "Vérification complète de la conformité.",
+                        "Rédaction soignée du document."
+                    ]
+                },
+                {
+                    "nom": "Diffuser le document.",
+                    "criteria": [
+                        "Choix approprié du mode de diffusion.",
+                        "Archivage complet.",
+                        "Gestion efficace des versions."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02GX",
+            "nom": "Réaliser des tests.",
+            "criteria_de_performance": [
+                "Respect des normes de qualité en vigueur.",
+                "Respect des normes d’interférence électromagnétique.",
+                "Respect des normes de protection contre les phénomènes électrostatiques.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail.",
+                "Respect de l’intégrité de l’équipement ou du système."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "fiches techniques,",
+                        "plans du fabricant,",
+                        "logiciels spécialisés,",
+                        "instruments de mesure spécialisés,",
+                        "outils,",
+                        "sources d’information spécialisées,",
+                        "un banc de test."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "normes nationales et internationales et de standards,",
+                        "gabarits et/ou d’une unité de référence,",
+                        "prises de mesures,",
+                        "équipements, de systèmes ou de sous-systèmes."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Prendre connaissance de la situation.",
+                    "criteria": [
+                        "Clarté du portrait global.",
+                        "Identification précise du système.",
+                        "Identification juste des risques liés aux tests.",
+                        "Prise en compte effective de l’impact du test."
+                    ]
+                },
+                {
+                    "nom": "Planifier le test.",
+                    "criteria": [
+                        "Mise en place de l’équipement ou du système.",
+                        "Vérification complète de l’état du banc de test.",
+                        "Préparation méthodique de la séquence de test.",
+                        "Détermination appropriée des conditions environnementales pour la réalisation du test."
+                    ]
+                },
+                {
+                    "nom": "Exécuter le test.",
+                    "criteria": [
+                        "Exécution méthodique de la séquence de test.",
+                        "Vérification de la cohérence de la séquence du test.",
+                        "Validation juste des résultats du test.",
+                        "Exactitude des résultats du test."
+                    ]
+                },
+                {
+                    "nom": "Documenter le test.",
+                    "criteria": [
+                        "Réalisation systématique de la saisie.",
+                        "Documentation pertinente des résultats du test."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02GY",
+            "nom": "Programmer un équipement ou un système connecté.",
+            "criteria_de_performance": [
+                "Respect des normes de programmation.",
+                "Application rigoureuse des conventions d’écriture de programme.",
+                "Manipulation consciencieuse de l’équipement ou du système connecté."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements physiques ou virtuels.",
+                "Individuellement ou en équipe.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "environnements de développement intégrés,",
+                        "sources d’information spécialisées,",
+                        "documentation technique,",
+                        "librairies,",
+                        "systèmes d’exploitation."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "objets connectés,",
+                        "plateformes,",
+                        "langages de programmation de base,",
+                        "logiciels de programmation,",
+                        "scripts."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Examiner le programme.",
+                    "criteria": [
+                        "Reconnaissance juste du langage.",
+                        "Identification juste des structures usuelles.",
+                        "Examen minutieux des algorithmes usuels.",
+                        "Reconnaissance des types de variables."
+                    ]
+                },
+                {
+                    "nom": "Modifier le programme.",
+                    "criteria": [
+                        "Sauvegarde systématique du programme d’origine.",
+                        "Pertinence des modifications."
+                    ]
+                },
+                {
+                    "nom": "Exécuter le programme.",
+                    "criteria": [
+                        "Ajustements adéquats de paramètres avant l’exécution.",
+                        "Implantation efficace du programme.",
+                        "Vérification juste des résultats d’exécution.",
+                        "Pertinence des itérations."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02GZ",
+            "nom": "Exploiter des systèmes d’exploitation.",
+            "criteria_de_performance": [
+                "Respect des règles de compatibilité matériel/logiciel.",
+                "Manipulation consciencieuse de l’équipement ou du système connecté."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                "Sur des équipements physiques ou virtuels.",
+                "Individuellement ou en équipe.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "plans du fabricant,",
+                        "logiciels de programmation, de mises à jour,",
+                        "forums d’experts,",
+                        "documentation technique."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "objets connectés,",
+                        "plateformes,",
+                        "systèmes d’exploitation,",
+                        "scripts."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Installer un système d’exploitation.",
+                    "criteria": [
+                        "Choix judicieux.",
+                        "Paramétrage approprié lors de l’installation.",
+                        "Déploiement méthodique.",
+                        "Vérification systématique des fonctionnalités.",
+                        "Pertinence de la virtualisation."
+                    ]
+                },
+                {
+                    "nom": "Configurer un système d’exploitation.",
+                    "criteria": [
+                        "Pertinence de la mise hors service de l’équipement.",
+                        "Choix adapté du mode de contrôle.",
+                        "Utilisation adaptée du mode de contrôle.",
+                        "Fonctionnement adéquat de la communication avec les périphériques.",
+                        "Vérification complète du fonctionnement."
+                    ]
+                },
+                {
+                    "nom": "Assurer la mise à jour d’un système d’exploitation.",
+                    "criteria": [
+                        "Mise à jour pertinente.",
+                        "Déploiement correct.",
+                        "Détection efficace de problèmes.",
+                        "Vérification complète du fonctionnement et/ou de la communication avec le matériel.",
+                        "Planification adéquate de la prochaine mise à jour."
+                    ]
+                },
+                {
+                    "nom": "Assurer l’archivage d’un système d’exploitation.",
+                    "criteria": [
+                        "Modification de la documentation.",
+                        "Mise en œuvre méthodique de l’archivage."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02H0",
+            "nom": "Configurer des réseaux de données.",
+            "criteria_de_performance": [
+                "Préoccupation constante de la cybersécurité.",
+                "Prévision appropriée de l’évolution du réseau.",
+                "Respect des bonnes pratiques."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                "Sur des équipements physiques ou virtuels.",
+                "Individuellement ou en équipe.",
+                "En accord avec le centre de surveillance.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "commutateurs,",
+                        "routeurs,",
+                        "points d’accès,",
+                        "branchements,",
+                        "documentation technique,",
+                        "instruments,",
+                        "fichiers de configuration."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "logiciels de simulation,",
+                        "plans de réseau,",
+                        "plans d’adressage,",
+                        "dispositifs terminaux."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Planifier la configuration du réseau de données.",
+                    "criteria": [
+                        "Identification exhaustive des caractéristiques du réseau de données.",
+                        "Organisation judicieuse des stratégies de sécurité.",
+                        "Conformité exhaustive du plan.",
+                        "Choix raisonné des équipements."
+                    ]
+                },
+                {
+                    "nom": "Configurer les équipements.",
+                    "criteria": [
+                        "Vérification préalable de la configuration.",
+                        "Configuration correcte des équipements.",
+                        "Sauvegarde systématique des configurations."
+                    ]
+                },
+                {
+                    "nom": "Déployer le réseau.",
+                    "criteria": [
+                        "Branchements structurés de l’infrastructure.",
+                        "Validation appropriée du câblage.",
+                        "Mise en œuvre rigoureuse de la planification."
+                    ]
+                },
+                {
+                    "nom": "Vérifier le fonctionnement du réseau.",
+                    "criteria": [
+                        "Validation exhaustive des fonctionnalités du réseau.",
+                        "Respect des règles de limitations du réseau.",
+                        "Utilisation juste des équipements de tests.",
+                        "Consignation systématique des résultats et des modifications."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02H1",
+            "nom": "Contribuer au changement technologique.",
+            "criteria_de_performance": [],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Individuellement ou en équipe.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "médias spécialisés et généralistes,",
+                        "réseaux sociaux professionnels,",
+                        "encyclopédies en ligne,",
+                        "blogues d’experts,",
+                        "communautés de praticiens,",
+                        "sites Web d’entreprises,",
+                        "documentation technique,",
+                        "formations."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "stratégies de changement en entreprise,",
+                        "logiciels spécialisés,",
+                        "stratégies d’autoformation."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Réaliser une veille technologique dans le domaine.",
+                    "criteria": [
+                        "Choix approprié des sources d’information.",
+                        "Distinction appropriée des technologies.",
+                        "Compréhension suffisante de la technologie."
+                    ]
+                },
+                {
+                    "nom": "Participer à l’implantation d’une technologie.",
+                    "criteria": [
+                        "Examen critique des sources d’information.",
+                        "Reconnaissance appropriée du besoin.",
+                        "Participation active à l’implantation."
+                    ]
+                },
+                {
+                    "nom": "Documenter l’implantation d’une technologie.",
+                    "criteria": [
+                        "Documentation complète."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02H2",
+            "nom": "Effectuer un diagnostic sur des équipements ou des systèmes.",
+            "criteria_de_performance": [
+                "Respect des normes de qualité en vigueur.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail.",
+                "Respect de l’intégrité de l’équipement ou du système."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                "Individuellement ou en équipe.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "fiches techniques,",
+                        "plans du fabricant,",
+                        "logiciels de programmation, de mises à jour,",
+                        "instruments de mesure,",
+                        "outils,",
+                        "archives issues de communautés de praticiens."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "normes nationales, internationales et aux standards,",
+                        "gabarits et/ou d’une unité de référence,",
+                        "prises de mesures."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Prendre connaissance du problème.",
+                    "criteria": [
+                        "Reconnaissance juste de la complexité du problème.",
+                        "Consultation appropriée des ressources."
+                    ]
+                },
+                {
+                    "nom": "Examiner les éléments.",
+                    "criteria": [
+                        "Inspection quatre sens exhaustive de l’équipement ou du système.",
+                        "Examen approprié de la documentation technique.",
+                        "Planification claire des tests à effectuer."
+                    ]
+                },
+                {
+                    "nom": "Procéder à une boucle de débogage.",
+                    "criteria": [
+                        "Isolation appropriée des éléments à diagnostiquer.",
+                        "Vérification méthodique des constituants de l’équipement ou du système : branchements; alimentation; compatibilité des versions; etc.",
+                        "Interprétation juste des résultats des prises de mesures.",
+                        "Identification appropriée de la source du problème."
+                    ]
+                },
+                {
+                    "nom": "Communiquer les résultats du diagnostic.",
+                    "criteria": [
+                        "Communication concise de l’avancement du diagnostic.",
+                        "Présentation claire des conclusions.",
+                        "Archivage approprié des résultats."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02H3",
+            "nom": "Effectuer l’installation et la mise en service d’équipements ou de systèmes de réseaux de télécommunications.",
+            "criteria_de_performance": [
+                "Respect des normes de qualité en vigueur.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail.",
+                "Vérification systématique des performances.",
+                "Respect des normes environnementales en vigueur."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                "En collaboration avec les autres membres de l’équipe.",
+                "En accord avec le centre de surveillance.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "plans du fabricant,",
+                        "logiciels spécialisés,",
+                        "instruments de mesure spécialisés,",
+                        "outils,",
+                        "pièces de remplacement,",
+                        "appareils ou d’équipements de remplacement."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "normes nationales et internationales et de standards,",
+                        "règlements en matière de développement durable,",
+                        "rapports de diagnostic,",
+                        "gabarits et/ou d’une unité de référence."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Planifier l’installation et la mise en service.",
+                    "criteria": [
+                        "Examen exhaustif des documents afférents à l’installation et à la mise en service.",
+                        "Vérification appropriée de l’emplacement de l’équipement ou du système.",
+                        "Estimation réaliste des ressources matérielles et humaines."
+                    ]
+                },
+                {
+                    "nom": "Procéder à l’installation.",
+                    "criteria": [
+                        "Mise en place appropriée.",
+                        "Branchements minutieux des connexions et interconnexions.",
+                        "Mise sous tension sécuritaire.",
+                        "Vérification appropriée."
+                    ]
+                },
+                {
+                    "nom": "Procéder à la mise en service.",
+                    "criteria": [
+                        "Mise en service complète.",
+                        "Vérification systématique du fonctionnement.",
+                        "Ajustement précis des paramètres."
+                    ]
+                },
+                {
+                    "nom": "Documenter l’installation et/ou la mise en service.",
+                    "criteria": [
+                        "Documentation complète."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02H4",
+            "nom": "Contrôler la qualité d’équipements et/ou de systèmes de réseaux de télécommunications.",
+            "criteria_de_performance": [
+                "Respect des normes de qualité en vigueur.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                "En collaboration avec des concepteurs, opérateurs, clients, réparateurs, etc.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "plans du fabricant,",
+                        "statistiques de tests,",
+                        "logiciels spécialisés,",
+                        "instruments de mesure spécialisés,",
+                        "outils,",
+                        "bancs de tests automatisés,",
+                        "procédures d’étalonnage."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "normes nationales et internationales et de standards,",
+                        "gabarits et/ou d’une unité de référence,",
+                        "spécifications et d’exigences techniques,",
+                        "résultats d’audits,",
+                        "émetteurs-récepteurs de radio fréquence (RF)."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Examiner l’équipement et/ou le système de réseau.",
+                    "criteria": []
+                },
+                {
+                    "nom": "Élaborer une stratégie de contrôle de qualité.",
+                    "criteria": [
+                        "Consultation pertinente des documents (spécifications, normes, etc.).",
+                        "Interprétation juste des objectifs du contrôle.",
+                        "Consultation appropriée des collaboratrices et collaborateurs.",
+                        "Sélection pertinente des critères d’acceptabilité de la qualité.",
+                        "Détermination appropriée des conditions environnementales pour la réalisation du test de contrôle de qualité.",
+                        "Choix approprié des instruments de mesure.",
+                        "Élaboration méthodique de procédures de tests.",
+                        "Élaboration méthodique de tests automatisés.",
+                        "Amélioration continue des procédures de contrôle de qualité."
+                    ]
+                },
+                {
+                    "nom": "Procéder au contrôle de qualité de l’équipement ou du système.",
+                    "criteria": []
+                },
+                {
+                    "nom": "Documenter le contrôle de qualité.",
+                    "criteria": [
+                        "Validation minutieuse de la qualité selon les critères établis.",
+                        "Réglage précis de l’équipement, du réseau ou des conditions de test.",
+                        "Vérification régulière de l’exécution des tests (tests automatisés ou exécutés par un tiers).",
+                        "Pertinence de la rétroaction aux collaboratrices et collaborateurs.",
+                        "Rédaction conforme d’un rapport (rapport de tests, rapport d’étalonnage, etc.).",
+                        "Validation du rapport par les intervenants.",
+                        "Archivage conforme des documents."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02H5",
+            "nom": "Effectuer la maintenance d’équipements ou de systèmes de réseaux de télécommunications.",
+            "criteria_de_performance": [
+                "Respect des normes de qualité en vigueur.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail.",
+                "Vérification systématique des performances."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                "En collaboration avec les autres membres de l’équipe.",
+                "En accord avec le centre de surveillance.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "plans du fabricant.",
+                        "logiciels spécialisés,",
+                        "instruments de mesure spécialisés,",
+                        "outils,",
+                        "pièces de remplacement."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "normes nationales et internationales et de standards,",
+                        "rapports de diagnostic,",
+                        "gabarits et/ou d’une unité de référence."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Identifier les besoins de maintenance pour l’équipement ou le système.",
+                    "criteria": [
+                        "Consultation exhaustive des documents.",
+                        "Interprétation juste des critères d’acceptabilité.",
+                        "Sélection pertinente des critères d’acceptabilité."
+                    ]
+                },
+                {
+                    "nom": "Inspecter l’équipement ou le système.",
+                    "criteria": [
+                        "Inspection 4 sens préliminaire complète de l’équipement ou du système en service.",
+                        "Validation minutieuse des critères d’acceptabilité.",
+                        "Inspection sécuritaire de l’équipement ou du système en service.",
+                        "Choix approprié de la solution.",
+                        "Pertinence du remplacement de l’équipement ou du système.",
+                        "Pertinence du remplacement des composants."
+                    ]
+                },
+                {
+                    "nom": "Procéder à la maintenance de l’équipement ou du système.",
+                    "criteria": [
+                        "Pertinence de la mise hors service.",
+                        "Choix approprié de la séquence d’opérations.",
+                        "Vérification systématique de l’étalonnage des instruments.",
+                        "Mise à jour pertinente du logiciel."
+                    ]
+                },
+                {
+                    "nom": "Procéder à la remise en service de l’équipement ou du système.",
+                    "criteria": [
+                        "Remise en service complète.",
+                        "Vérification systématique du fonctionnement."
+                    ]
+                },
+                {
+                    "nom": "Documenter la maintenance de l’équipement ou du système.",
+                    "criteria": [
+                        "Documentation complète.",
+                        "Archivage systématique des documents."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02H6",
+            "nom": "Effectuer le dépannage d’équipements ou de systèmes de réseaux de télécommunications.",
+            "criteria_de_performance": [
+                "Respect des normes de qualité en vigueur.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail.",
+                "Vérification appropriée des performances."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                "En collaboration avec les autres membres de l’équipe.",
+                "En accord avec le centre de surveillance.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "plans du fabricant,",
+                        "logiciels spécialisés,",
+                        "instruments de mesure spécialisés,",
+                        "outils,",
+                        "pièces de remplacement,",
+                        "appareils ou d’équipements de remplacement."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "normes nationales et internationales et de standards,",
+                        "rapports de diagnostic,",
+                        "gabarits et/ou d’une unité de référence,",
+                        "règlements en matière de développement durable."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Planifier le dépannage.",
+                    "criteria": [
+                        "Examen exhaustif du problème.",
+                        "Appropriation adéquate du rapport de diagnostic.",
+                        "Estimation réaliste de l’impact du dépannage.",
+                        "Estimation réaliste des ressources matérielles et humaines."
+                    ]
+                },
+                {
+                    "nom": "Procéder au dépannage.",
+                    "criteria": [
+                        "Pertinence de la mise hors service.",
+                        "Sélection pertinente de l’élément défectueux.",
+                        "Remplacement minutieux de l’élément.",
+                        "Traitement consciencieux des éléments à recycler.",
+                        "Vérification complète de l’installation."
+                    ]
+                },
+                {
+                    "nom": "Procéder à la remise en service de l’équipement ou du système.",
+                    "criteria": [
+                        "Remise en service complète.",
+                        "Vérification systématique du fonctionnement."
+                    ]
+                },
+                {
+                    "nom": "Documenter le dépannage de l’équipement ou du système.",
+                    "criteria": [
+                        "Documentation complète.",
+                        "Archivage systématique des documents."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02H7",
+            "nom": "Assurer du soutien technique dans le domaine des réseaux de télécommunications.",
+            "criteria_de_performance": [
+                "Respect des règles de courtoisie.",
+                "Assurance continue de la satisfaction."
+            ],
+            "contexte_de_realisation": [
+                "En industrie, au laboratoire ou dans un bureau.",
+                "Chez la clientèle, en présence ou à distance.",
+                "En collaboration avec les autres membres de l’équipe.",
+                "En accord avec le centre de surveillance.",
+                {
+                    "text": "À l’aide de :",
+                    "children": [
+                        "documents techniques,",
+                        "du matériel requis,",
+                        "de supports de communication,",
+                        "de données de requêtes,",
+                        "de tickets d’assistance technique,",
+                        "des technologies de l’information et de la communication (TIC)."
+                    ]
+                },
+                {
+                    "text": "À partir de :",
+                    "children": [
+                        "l’historique de traitements des requêtes,",
+                        "données de discussion avec des clients,",
+                        "normes nationales, internationales et de standards,",
+                        "rapports de diagnostic."
+                    ]
+                }
+            ],
+            "elements": [
+                {
+                    "nom": "Recueillir les attentes et les besoins.",
+                    "criteria": [
+                        "Consultation appropriée de l’historique.",
+                        "Consultation appropriée des personnes concernées.",
+                        "Identification juste des actions déjà entreprises.",
+                        "Examen de l’information nécessaire au soutien."
+                    ]
+                },
+                {
+                    "nom": "Analyser les attentes et les besoins.",
+                    "criteria": [
+                        "Interprétation juste du contexte.",
+                        "Estimation appropriée du niveau de priorité de la requête.",
+                        "Ébauche réaliste de pistes de solution ou de résolution de problème."
+                    ]
+                },
+                {
+                    "nom": "Procéder au soutien technique.",
+                    "criteria": []
+                },
+                {
+                    "nom": "Veiller au suivi de la requête.",
+                    "criteria": [
+                        "Pertinence du transfert de la requête vers la personne ou le service concerné.",
+                        "Application juste des solutions.",
+                        "Suivi rigoureux de l’avancement de la requête.",
+                        "Transmission claire des instructions.",
+                        "Vulgarisation appropriée des informations.",
+                        "Vérification appropriée du résultat.",
+                        "Documentation complète du traitement de la requête."
+                    ]
+                }
+            ]
+        }
+    ]
+}

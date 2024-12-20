@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Éditer le Plan Cadre</h2>
+<form method="POST">
+    {{ form.hidden_tag() }}
+
+    <div class="form-group">
+        {{ form.place_intro.label }}
+        {{ form.place_intro(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.objectif_terminal.label }}
+        {{ form.objectif_terminal(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.structure_intro.label }}
+        {{ form.structure_intro(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.structure_activites_theoriques.label }}
+        {{ form.structure_activites_theoriques(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.structure_activites_pratiques.label }}
+        {{ form.structure_activites_pratiques(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.structure_activites_prevues.label }}
+        {{ form.structure_activites_prevues(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.eval_evaluation_sommative.label }}
+        {{ form.eval_evaluation_sommative(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.eval_nature_evaluations_sommatives.label }}
+        {{ form.eval_nature_evaluations_sommatives(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.eval_evaluation_de_la_langue.label }}
+        {{ form.eval_evaluation_de_la_langue(class="form-control") }}
+    </div>
+    <div class="form-group">
+        Évaluation formative des apprentissages
+        {{ form.eval_evaluation_sommatives_apprentissages(class="form-control") }}
+    </div>
+
+    <h3>Compétences développées</h3>
+    <div id="competences-developpees-container">
+        {% for subform in form.competences_developpees %}
+        <div class="competences_developpees-item">
+            <label>Texte</label><br>
+            {{ subform.texte(class="form-control") }}
+            <label>Description</label><br>
+            {{ subform.texte_description(class="form-control") }}
+            <button type="button" class="btn btn-danger remove-competences-developpees">Supprimer</button>
+            <hr>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-info" id="add-competence-developpee">Ajouter une compétence développée</button>
+    
+    <h3>Objets cibles</h3>
+    <div id="objets-cibles-container">
+        {% for subform in form.objets_cibles %}
+        <div class="objets_cibles-item">
+            <label>Texte</label><br>
+            {{ subform.texte(class="form-control") }}
+            <label>Description</label><br>
+            {{ subform.texte_description(class="form-control") }}
+            <button type="button" class="btn btn-danger remove-objets-cibles">Supprimer</button>
+            <hr>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-info" id="add-objet-cible">Ajouter un objet cible</button>
+
+    <h3>Cours Reliés</h3>
+    <div id="cours-relies-container">
+        {% for subform in form.cours_relies %}
+        <div class="cours_relies-item">
+            <label>Texte</label><br>
+            {{ subform.texte(class="form-control") }}
+            <label>Description</label><br>
+            {{ subform.texte_description(class="form-control") }}
+            <button type="button" class="btn btn-danger remove-cours-relies">Supprimer</button>
+            <hr>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-info" id="add-cours-relie">Ajouter un cours relié</button>
+
+    <h3>Cours Préalables</h3>
+    <div id="cours-prealables-container">
+        {% for subform in form.cours_prealables %}
+        <div class="cours_prealables-item">
+            <label>Texte</label><br>
+            {{ subform.texte(class="form-control") }}
+            <label>Description</label><br>
+            {{ subform.texte_description(class="form-control") }}
+            <button type="button" class="btn btn-danger remove-cours-prealables">Supprimer</button>
+            <hr>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-info" id="add-cours-prealable">Ajouter un cours préalable</button>
+
+    <h3>Savoir-être</h3>
+    <div id="savoir-etre-fields">
+        {% for subform in form.savoir_etre %}
+            <div class="form-group">
+                {{ subform.texte.label }} {{ subform.texte(class="form-control") }}
+            </div>
+        {% endfor %}
+    </div>
+    <button type="button" id="add-savoir-etre" class="btn btn-secondary">Ajouter un Savoir-être</button>
+    
+
+    <br><br>
+    <button type="submit" class="btn btn-primary">Éditer</button>
+</form>
+
+<script>
+// Fonction pour ajouter un champ dans un FieldList avec texte + description
+function addItemWithDescription(containerId, fieldPrefix) {
+    var container = document.getElementById(containerId);
+    var index = container.querySelectorAll('.' + fieldPrefix + '-item').length;  // L'indice sera basé sur les éléments existants
+
+    // Remplacer les underscores par des tirets pour la classe du bouton de suppression
+    var removeClass = 'remove-' + fieldPrefix.replace(/_/g, '-');
+
+    // Créer le HTML pour un nouvel élément avec des noms d'ID et de champ dynamiques
+    var html = `
+    <div class="${fieldPrefix}-item">
+        <label>Texte</label><br>
+        <input id="${fieldPrefix}-${index}-texte" name="${fieldPrefix}-${index}-texte" class="form-control" type="text" value="">
+        <label>Description</label><br>
+        <textarea id="${fieldPrefix}-${index}-description" name="${fieldPrefix}-${index}-description" class="form-control"></textarea>
+        <button type="button" class="btn btn-danger ${removeClass}">Supprimer</button>
+        <hr>
+    </div>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
+}
+
+// Fonction pour ajouter un champ texte seul (pour savoir_etre)
+function addItemTexteOnly(containerId, fieldPrefix) {
+    var container = document.getElementById(containerId);
+    var index = container.querySelectorAll('.' + fieldPrefix + '-item').length;
+    var html = `
+    <div class="${fieldPrefix}-item">
+        <label>Texte</label><br>
+        <input id="${fieldPrefix}-${index}-texte" name="${fieldPrefix}-${index}-texte" class="form-control" type="text" value="">
+        <button type="button" class="btn btn-danger remove-${fieldPrefix}">Supprimer</button>
+        <hr>
+    </div>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
+}
+
+// Ajouter les handlers
+document.getElementById('add-competence-developpee').addEventListener('click', function(){
+    addItemWithDescription('competences-developpees-container', 'competences_developpees');
+});
+
+document.getElementById('add-objet-cible').addEventListener('click', function(){
+    addItemWithDescription('objets-cibles-container', 'objets_cibles');
+});
+
+document.getElementById('add-cours-relie').addEventListener('click', function(){
+    addItemWithDescription('cours-relies-container', 'cours_relies');
+});
+
+document.getElementById('add-cours-prealable').addEventListener('click', function(){
+    addItemWithDescription('cours-prealables-container', 'cours_prealables');
+});
+
+// JavaScript pour ajouter dynamiquement des champs de savoir-être
+document.getElementById('add-savoir-etre').addEventListener('click', function() {
+    var index = document.querySelectorAll('#savoir-etre-fields .form-group').length;
+    var newField = `
+        <div class="form-group">
+            <label for="savoir_etre-${index}-texte">Texte</label>
+            <input class="form-control" id="savoir_etre-${index}-texte" name="savoir_etre-${index}-texte" type="text">
+        </div>
+    `;
+    document.getElementById('savoir-etre-fields').insertAdjacentHTML('beforeend', newField);
+});
+
+// Gestion des suppressions déléguées
+document.addEventListener('click', function(e){
+    if(e.target && e.target.classList.contains('remove-competences-developpees')){
+        e.target.closest('.competences_developpees-item').remove();
+    } else if (e.target && e.target.classList.contains('remove-objets-cibles')){
+        e.target.closest('.objets_cibles-item').remove();
+    } else if (e.target && e.target.classList.contains('remove-cours-relies')){
+        e.target.closest('.cours_relies-item').remove();
+    } else if (e.target && e.target.classList.contains('remove-cours-prealables')){
+        e.target.closest('.cours_prealables-item').remove();
+    } else if (e.target && e.target.classList.contains('remove-savoir-etre')){
+        e.target.closest('.savoir-etre-item').remove();
+    }
+});
+</script>
+
+{% endblock %}
