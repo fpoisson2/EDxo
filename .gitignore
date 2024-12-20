@@ -1,6 +1,2 @@
-
-*.db
-*.pyc
-*.docx
 *.pyc
 add_user.py
