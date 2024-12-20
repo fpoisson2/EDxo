@@ -10,13 +10,22 @@ from wtforms import (
     IntegerField,
     TextAreaField,
     FieldList,
-    Form
+    Form,
+    BooleanField
 )
 from wtforms import ColorField, SubmitField
 from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional
 from wtforms.widgets import ListWidget, CheckboxInput
 from flask_ckeditor import CKEditorField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
+
+class PlanCadreCompetenceCertifieeForm(Form):
+    texte = StringField("Texte", validators=[DataRequired()])
+    texte_description = TextAreaField("Description", validators=[Optional()])
+
+class PlanCadreCoursCorequisForm(Form):
+    texte = StringField("Texte", validators=[DataRequired()])
+    texte_description = TextAreaField("Description", validators=[Optional()])
 
 class ImportPlanCadreForm(FlaskForm):
     json_file = FileField('Importer un fichier JSON', validators=[
@@ -139,6 +148,20 @@ class MoyenEvaluationFieldForm(Form):
         csrf = False
     texte = StringField("Moyen d'évaluation", validators=[Optional()])
 
+class GenerateContentForm(FlaskForm):
+    submit = SubmitField('Générer le Contenu')
+
+class GenerationSettingForm(FlaskForm):
+    use_ai = BooleanField('Utiliser l\'IA')
+    text_content = TextAreaField('Texte / Prompt', validators=[Optional()])
+
+    class Meta:
+        csrf = False  # Assurez-vous que le CSRF est activé
+
+class GlobalGenerationSettingsForm(FlaskForm):
+    sections = FieldList(FormField(GenerationSettingForm), min_entries=21, max_entries=21)
+    submit = SubmitField('Enregistrer les Paramètres')
+
 class CapaciteForm(FlaskForm):
     capacite = StringField("Capacité", validators=[DataRequired()])
     description_capacite = TextAreaField("Description")
@@ -178,6 +201,8 @@ class PlanCadreForm(FlaskForm):
     cours_relies = FieldList(FormField(PlanCadreItemWithDescriptionForm), min_entries=0, max_entries=50)
     cours_prealables = FieldList(FormField(PlanCadreItemWithDescriptionForm), min_entries=0, max_entries=50)
     savoir_etre = FieldList(FormField(PlanCadreTexteFieldForm), min_entries=0, max_entries=50)
+    competences_certifiees = FieldList(FormField(PlanCadreCompetenceCertifieeForm), min_entries=0, max_entries=50)
+    cours_corequis = FieldList(FormField(PlanCadreCoursCorequisForm), min_entries=0, max_entries=50)
 
     submit = SubmitField('Ajouter/Mettre à Jour Plan Cadre')
 
