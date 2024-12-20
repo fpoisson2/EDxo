@@ -1,0 +1,108 @@
+<!-- templates/view_cours.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container mt-5">
+    <!-- Titre du Cours et Actions Principales -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1>{{ cours.code }} - {{ cours.nom }}</h1>
+      <div>
+        <a href="{{ url_for('edit_cours', cours_id=cours.id) }}" class="btn btn-primary me-2">Éditer le cours</a>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Retour à la liste des cours</a>
+      </div>
+    </div>
+
+    <!-- Informations Générales du Cours -->
+    <div class="mb-4">
+      <p><strong>Programme :</strong> {{ cours.programme_nom }}</p>
+      <p><strong>Code :</strong> {{ cours.code }}</p>
+      <p><strong>Nombre d'unités :</strong> {{ cours.nombre_unites }}</p>
+      <p><strong>Session :</strong> {{ cours.session }}</p>
+      <p><strong>Heures de théorie :</strong> {{ cours.heures_theorie }}</p>
+      <p><strong>Heures de laboratoire :</strong> {{ cours.heures_laboratoire }}</p>
+      <p><strong>Heures de travail à la maison :</strong> {{ cours.heures_travail_maison }}</p>
+    </div>
+    
+    <!-- Éléments de Compétence -->
+    <h2>Éléments de compétence développés ou atteint</h2>
+    <div class="mb-4">
+      {% if elements_competence_par_cours %}
+        <ul class="list-group">
+          {% for competence_id, competence_data in elements_competence_par_cours.items() %}
+            <li class="list-group-item">
+              <strong>
+                <a href="{{ url_for('view_competence', competence_id=competence_id) }}" class="text-decoration-none">
+                  {{ competence_data.nom }} ({{ competence_data.code }})
+                </a>
+              </strong>
+              <ul class="mt-2">
+                {% for ec in competence_data.elements %}
+                  <li>{{ ec.element_competence_nom }} <span class="badge bg-secondary">Statut : {{ ec.status }}</span></li>
+                {% endfor %}
+              </ul>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>Aucun élément de compétence.</p>
+      {% endif %}
+    </div>
+    
+    <!-- Cours Préalables -->
+    <h2>Cours préalables</h2>
+    <div class="mb-4">
+      {% if prealables_details %}
+        <ul class="list-group">
+          {% for pre in prealables_details %}
+            <li class="list-group-item">
+              <a href="{{ url_for('view_cours', cours_id=pre.id) }}" class="text-decoration-none">{{ pre.nom }}</a> (Code: {{ pre.code }})
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>Aucun cours préalable.</p>
+      {% endif %}
+    </div>
+    
+    <!-- Cours Corequis -->
+    <h2>Cours corequis</h2>
+    <div class="mb-4">
+      {% if corequisites_details %}
+        <ul class="list-group">
+          {% for core in corequisites_details %}
+            <li class="list-group-item">
+              <a href="{{ url_for('view_cours', cours_id=core.id) }}" class="text-decoration-none">{{ core.nom }}</a> (Code: {{ core.code }})
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>Aucun cours corequis.</p>
+      {% endif %}
+    </div>
+
+    <div>
+      {% if plans_cadres %}
+        <!-- Si au moins un plan-cadre existe, afficher le titre comme lien vers le premier plan-cadre -->
+        <h3>
+          {% if plans_cadres[0] %}
+            <a href="{{ url_for('view_plan_cadre', cours_id=cours.id, plan_id=plans_cadres[0].id) }}" class="text-decoration-none">
+              Plan-cadre
+            </a>
+          {% else %}
+            Plan Cadre
+          {% endif %}
+        </h3>
+      {% endif %}
+      <!-- Bouton pour Ajouter un Plan Cadre -->
+      {% if not plans_cadres %}
+        <a href="{{ url_for('add_plan_cadre', cours_id=cours.id) }}" class="btn btn-success">Ajouter un Plan Cadre</a>
+      {% endif %}
+    </div>
+    
+    <!-- Boutons d'Actions Supplémentaires -->
+    <div class="mt-4">
+      <a href="{{ url_for('edit_cours', cours_id=cours.id) }}" class="btn btn-primary me-2">Éditer le Cours</a>
+      <a href="{{ url_for('index') }}" class="btn btn-secondary">Retour à la Liste des Cours</a>
+    </div>
+  </div>
+{% endblock %}

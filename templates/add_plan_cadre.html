@@ -1,0 +1,64 @@
+<!-- templates/add_plan_cadre.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h2>Ajouter un Plan Cadre</h2>
+    <form method="POST">
+      {{ form.hidden_tag() }}
+      
+      <div class="form-group">
+        {{ form.place_intro.label(class="form-label") }}
+        {{ form.place_intro(class="form-control", rows=3) }}
+      </div>
+      
+      <div class="form-group">
+        {{ form.objectif_terminal.label(class="form-label") }}
+        {{ form.objectif_terminal(class="form-control", rows=3) }}
+      </div>
+      
+      <div class="form-group">
+        {{ form.structure_intro.label(class="form-label") }}
+        {{ form.structure_intro(class="form-control", rows=3) }}
+      </div>
+      
+      <div class="form-group">
+        {{ form.structure_activites_theoriques.label(class="form-label") }}
+        {{ form.structure_activites_theoriques(class="form-control", rows=3) }}
+      </div>
+      
+      <div class="form-group">
+        {{ form.structure_activites_pratiques.label(class="form-label") }}
+        {{ form.structure_activites_pratiques(class="form-control", rows=3) }}
+      </div>
+      
+      <div class="form-group">
+        {{ form.structure_activites_prevues.label(class="form-label") }}
+        {{ form.structure_activites_prevues(class="form-control") }}
+      </div>
+      
+      <div class="form-group">
+        {{ form.eval_evaluation_sommative.label(class="form-label") }}
+        {{ form.eval_evaluation_sommative(class="form-control", rows=3) }}
+      </div>
+      
+      <div class="form-group">
+        {{ form.eval_nature_evaluations_sommatives.label(class="form-label") }}
+        {{ form.eval_nature_evaluations_sommatives(class="form-control", rows=3) }}
+      </div>
+      
+      <div class="form-group">
+        {{ form.eval_evaluation_de_la_langue.label(class="form-label") }}
+        {{ form.eval_evaluation_de_la_langue(class="form-control", rows=3) }}
+      </div>
+      
+      <div class="form-group">
+        {{ form.eval_evaluation_sommatives_apprentissages.label(class="form-label") }}
+        {{ form.eval_evaluation_sommatives_apprentissages(class="form-control") }}
+      </div>
+      
+      <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+      <a href="{{ url_for('view_cours', cours_id=cours_id) }}" class="btn btn-secondary">Annuler</a>
+    </form>
+  </div>
+{% endblock %}

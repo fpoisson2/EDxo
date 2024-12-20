@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h2>Ajouter un Élément de Compétence</h2>
+    <form method="POST">
+      {{ form.hidden_tag() }}
+      
+      <!-- Champ Compétence -->
+      <div class="form-group">
+        {{ form.competence.label(class="form-label") }}
+        {{ form.competence(class="form-control") }}
+        {% for error in form.competence.errors %}
+            <span class="text-danger">[{{ error }}]</span>
+        {% endfor %}
+      </div>
+      
+      <!-- Champ Nom -->
+      <div class="form-group">
+        {{ form.nom.label(class="form-label") }}
+        {{ form.nom(class="form-control") }}
+        {% for error in form.nom.errors %}
+            <span class="text-danger">[{{ error }}]</span>
+        {% endfor %}
+      </div>
+      
+      <!-- Section Critères de Performance -->
+      <div class="form-group">
+        <h3>Critères de Performance</h3>
+        {% for crit in form.criteres_de_performance %}
+          <div class="criteria mb-3">
+            {{ crit.label }}
+            {{ crit(class="form-control", rows="3") }}
+            {% for error in crit.errors %}
+                <span class="text-danger">[{{ error }}]</span>
+            {% endfor %}
+          </div>
+        {% endfor %}
+        <!-- Bouton pour ajouter un critère supplémentaire (optionnel) -->
+        <!-- Vous pouvez implémenter l'ajout dynamique avec JavaScript si nécessaire -->
+      </div>
+      
+      <!-- Bouton de Soumission -->
+      <button type="submit" class="btn btn-success">Ajouter</button>
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h2>Modifier le Cours</h2>
+    <form method="POST">
+      {{ form.hidden_tag() }}
+      
+      <!-- Champs du Cours -->
+      <div class="form-group">
+        <label for="{{ form.programme.id }}">{{ form.programme.label }}</label>
+        {{ form.programme(class="form-control") }}
+        {% for error in form.programme.errors %}
+          <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+      </div>
+      
+      <div class="form-group">
+        <label for="{{ form.code.id }}">{{ form.code.label }}</label>
+        {{ form.code(class="form-control") }}
+        {% for error in form.code.errors %}
+          <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+      </div>
+      
+      <div class="form-group">
+        <label for="{{ form.nom.id }}">{{ form.nom.label }}</label>
+        {{ form.nom(class="form-control") }}
+        {% for error in form.nom.errors %}
+          <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+      </div>
+      
+      
+      <div class="form-group">
+        <label for="{{ form.session.id }}">{{ form.session.label }}</label>
+        {{ form.session(class="form-control") }}
+        {% for error in form.session.errors %}
+          <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+      </div>
+      
+      <div class="form-group">
+        <label for="{{ form.heures_theorie.id }}">{{ form.heures_theorie.label }}</label>
+        {{ form.heures_theorie(class="form-control") }}
+        {% for error in form.heures_theorie.errors %}
+          <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+      </div>
+      
+      <div class="form-group">
+        <label for="{{ form.heures_laboratoire.id }}">{{ form.heures_laboratoire.label }}</label>
+        {{ form.heures_laboratoire(class="form-control") }}
+        {% for error in form.heures_laboratoire.errors %}
+          <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+      </div>
+      
+      <div class="form-group">
+        <label for="{{ form.heures_travail_maison.id }}">{{ form.heures_travail_maison.label }}</label>
+        {{ form.heures_travail_maison(class="form-control") }}
+        {% for error in form.heures_travail_maison.errors %}
+          <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+      </div>
+      
+      <!-- Section Éléments de Compétence -->
+      <div class="form-group">
+        <h3>Éléments de Compétence</h3>
+        
+        <div id="elements_competence">
+          {% for subform in form.elements_competence %}
+            <div class="element-competence mb-3 border p-3">
+              <div class="form-row">
+                <div class="col-md-6">
+                  <label for="{{ subform.element_competence.id }}">{{ subform.element_competence.label }}</label>
+                  {{ subform.element_competence(class="form-control") }}
+                  {% for error in subform.element_competence.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                  {% endfor %}
+                </div>
+                <div class="col-md-6">
+                  <label for="{{ subform.status.id }}">{{ subform.status.label }}</label>
+                  {{ subform.status(class="form-control") }}
+                  {% for error in subform.status.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        
+        <!-- Bouton pour ajouter un élément de compétence supplémentaire -->
+        <button type="button" class="btn btn-secondary" id="add-element-competence">Ajouter un Élément de Compétence</button>
+      </div>
+
+      <!-- Section Cours Préalables -->
+      <h3>Cours Préalables</h3>
+      <div id="prealables_container">
+        {% for p_subform in form.prealables %}
+          {% set p_index = loop.index0 %}
+          <div class="form-row mb-2 prealable-row">
+            <div class="col-md-5">
+              <label for="{{ p_subform.cours_prealable_id.id }}">{{ p_subform.cours_prealable_id.label }}</label>
+              {{ p_subform.cours_prealable_id(class="form-control") }}
+              {% for error in p_subform.cours_prealable_id.errors %}
+                <span class="text-danger">{{ error }}</span>
+              {% endfor %}
+            </div>
+            <div class="col-md-5">
+              <label for="{{ p_subform.note_necessaire.id }}">{{ p_subform.note_necessaire.label }}</label>
+              {{ p_subform.note_necessaire(class="form-control") }}
+              {% for error in p_subform.note_necessaire.errors %}
+                <span class="text-danger">{{ error }}</span>
+              {% endfor %}
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button type="button" class="btn btn-danger remove-prealable">Retirer</button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <button type="button" class="btn btn-secondary" id="add-prealable">Ajouter un Préalable</button>
+
+      <div class="form-group mt-3">
+        <label for="{{ form.corequis.id }}">{{ form.corequis.label }}</label>
+        {{ form.corequis(class="form-control", multiple=True) }}
+        {% for error in form.corequis.errors %}
+          <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        <label for="{{ form.fil_conducteur.id }}">{{ form.fil_conducteur.label }}</label>
+        {{ form.fil_conducteur(class="form-control") }}
+        {% for error in form.fil_conducteur.errors %}
+          <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+      </div>
+      
+      <!-- Bouton de Soumission -->
+      <button type="submit" class="btn btn-primary">Mettre à Jour</button>
+    </form>
+  </div>
+  
+  <!-- JavaScript pour ajouter dynamiquement des éléments de compétence -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var addButton = document.getElementById('add-element-competence');
+      var container = document.getElementById('elements_competence');
+      var index = {{ form.elements_competence|length }};
+      
+      var elements_competence = {{ elements_competence | tojson }};
+      
+      var statuts = [
+        'Non traité',
+        'Traité superficiellement',
+        'Développé significativement',
+        'Atteint',
+        'Réinvesti'
+      ];
+      
+      addButton.addEventListener('click', function() {
+        if (index >= 20) {
+          alert('Vous avez atteint le nombre maximal d\'éléments de compétence.');
+          return;
+        }
+
+        var newElement = document.createElement('div');
+        newElement.classList.add('element-competence', 'mb-3', 'border', 'p-3');
+        
+        var options = elements_competence.map(function(ec) {
+          return `<option value="${ec.id}">${ec.nom}</option>`;
+        }).join('');
+        
+        var statutOptions = statuts.map(function(status) {
+          return `<option value="${status}">${status}</option>`;
+        }).join('');
+        
+        newElement.innerHTML = `
+          <div class="form-row">
+            <div class="col-md-6">
+              <label for="elements_competence-${index}-element_competence">Élément de Compétence</label>
+              <select class="form-control" id="elements_competence-${index}-element_competence" name="elements_competence-${index}-element_competence">
+                <option value="">Sélectionnez un élément de compétence</option>
+                ${options}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="elements_competence-${index}-status">Statut</label>
+              <select class="form-control" id="elements_competence-${index}-status" name="elements_competence-${index}-status">
+                <option value="">Sélectionnez un statut</option>
+                ${statutOptions}
+              </select>
+            </div>
+          </div>
+        `;
+        
+        container.appendChild(newElement);
+        index++;
+      });
+    });
+  </script>
+
+  <!-- JavaScript pour ajouter et retirer dynamiquement des préalables -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var addPrealableButton = document.getElementById('add-prealable');
+      var prealablesContainer = document.getElementById('prealables_container');
+      var p_index = {{ form.prealables|length }};
+      var coursChoices = {{ cours_choices|tojson }};
+
+      function reindexPrealables() {
+        var rows = prealablesContainer.querySelectorAll('.prealable-row');
+        rows.forEach(function(row, i) {
+          var coursField = row.querySelector('[name^="prealables-"][name$="-cours_prealable_id"]');
+          var noteField = row.querySelector('[name^="prealables-"][name$="-note_necessaire"]');
+          
+          coursField.name = `prealables-${i}-cours_prealable_id`;
+          coursField.id = `prealables-${i}-cours_prealable_id`;
+          noteField.name = `prealables-${i}-note_necessaire`;
+          noteField.id = `prealables-${i}-note_necessaire`;
+        });
+        p_index = rows.length;
+      }
+
+      addPrealableButton.addEventListener('click', function() {
+        if (p_index >= 20) {
+          alert('Nombre maximal de préalables atteint.');
+          return;
+        }
+
+        var options = coursChoices.map(function(c) {
+          return '<option value="' + c[0] + '">' + c[1] + '</option>';
+        }).join('');
+
+        var newRow = document.createElement('div');
+        newRow.classList.add('form-row', 'mb-2', 'prealable-row');
+        newRow.innerHTML = `
+          <div class="col-md-5">
+            <label for="prealables-${p_index}-cours_prealable_id">Cours Préalable</label>
+            <select class="form-control" id="prealables-${p_index}-cours_prealable_id" name="prealables-${p_index}-cours_prealable_id">
+              <option value="">Sélectionnez un cours</option>
+              ${options}
+            </select>
+          </div>
+          <div class="col-md-5">
+            <label for="prealables-${p_index}-note_necessaire">Note Nécessaire</label>
+            <input class="form-control" id="prealables-${p_index}-note_necessaire" name="prealables-${p_index}-note_necessaire" type="number" min="0" max="100" step="0.1"/>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="button" class="btn btn-danger remove-prealable">Retirer</button>
+          </div>
+        `;
+
+        prealablesContainer.appendChild(newRow);
+        p_index++;
+      });
+
+      prealablesContainer.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('remove-prealable')) {
+          var row = e.target.closest('.prealable-row');
+          if (row) {
+            row.remove();
+            reindexPrealables();
+          }
+        }
+      });
+    });
+  </script>
+  
+{% endblock %}

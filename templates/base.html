@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>EDxo - Gestion pédagogique</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    {% block head %}
+      {{ ckeditor.load() }}
+    {% endblock %}
+  </head>
+  <body>
+    <div class="container mt-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <a href="{{ url_for('index') }}">
+            <img src="{{ url_for('static', filename='/assets/EDxologo.png') }}" alt="EDxo Logo" style="max-width: 200px; height: auto;">
+          </a>
+        </div>
+        <div>
+          {% if current_user.is_authenticated %}
+            <span>Connecté en tant que {{ current_user.id }}</span>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm ml-2">Se déconnecter</a>
+          {% else %}
+            <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-sm">Se connecter</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    
+    <div class="container">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="alert alert-info">
+            {% for message in messages %}
+              <p>{{ message }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      
+      {% block content %}{% endblock %}
+    </div>
+  </body>
+</html>

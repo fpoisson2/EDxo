@@ -1,0 +1,22 @@
+<!-- templates/add_competence_par_cours.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Ajouter une Compétence par Cours</h2>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      {{ form.cours.label(class="form-label") }}
+      {{ form.cours(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.competence_developpee.label(class="form-label") }}
+      {{ form.competence_developpee(class="form-control") }}
+    </div>
+    <div class="form-group">
+      {{ form.competence_atteinte.label(class="form-label") }}
+      {{ form.competence_atteinte(class="form-control") }}
+    </div>
+    <button type="submit" class="btn btn-success">Ajouter</button>
+  </form>
+{% endblock %}
