@@ -15,262 +15,352 @@
         <a href="{{ url_for('view_cours', cours_id=plan.cours_id) }}" class="btn btn-secondary">Retour au cours</a>
     </div>
 
-    <!-- Introduction -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h3>Introduction et place et rôle du cours</h3>
-        </div>
-        <div class="card-body">
-            <p>{{ plan.place_intro or "Non renseigné." }}</p>
-        </div>
-    </div>
+    <form action="{{ url_for('generate_plan_cadre_content', plan_id=plan.id) }}" method="post">
+        {{ import_form.hidden_tag() }}  <!-- CSRF token -->
+        <button type="submit" class="btn btn-primary">Générer du Contenu Automatiquement</button>
+    </form>
+    <a href="{{ url_for('edit_global_generation_settings') }}" class="btn btn-secondary">
+        Éditer les Paramètres de Génération Automatique (Globaux)
+    </a>
 
-    <!-- Objectif Terminal -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h3>Objectif terminal</h3>
-        </div>
-        <div class="card-body">
-            <p>{{ plan.objectif_terminal or "Non renseigné." }}</p>
-        </div>
-    </div>
-
-    <!-- Structure du Cours -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h3>Structure du cours</h3>
-        </div>
-        <div class="card-body">
-            <p><strong>Introduction:</strong> {{ plan.structure_intro or "Non renseigné." }}</p>
-            <p><strong>Activités Théoriques:</strong> {{ plan.structure_activites_theoriques or "Non renseigné." }}</p>
-            <p><strong>Activités Pratiques:</strong> {{ plan.structure_activites_pratiques or "Non renseigné." }}</p>
-            <div><strong>Activités Prévues:</strong> {{ plan.structure_activites_prevues | markdown | safe or "Non renseigné." }}</div>
-        </div>
-    </div>
-    <!-- Évaluation des Apprentissages -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h3>Évaluation des apprentissages</h3>
-        </div>
-        <div class="card-body">
-            <p><strong>Évaluation sommative:</strong> {{ plan.eval_evaluation_sommative or "Non renseigné." }}</p>
-            <p><strong>Nature des évaluations sommatives:</strong> {{ plan.eval_nature_evaluations_sommatives or "Non renseigné." }}</p>
-            <p><strong>Évaluation de la langue:</strong> {{ plan.eval_evaluation_de_la_langue or "Non renseigné." }}</p>
-            <p><strong>Évaluation formative des apprentissages:</strong> {{ plan.eval_evaluation_sommatives_apprentissages | markdown | safe or "Non renseigné." }}</p>
-        </div>
-    </div>
-
-    <!-- Compétences Développées -->
-    <div class="card mb-4">
-        <div class="card-header bg-secondary text-white">
-            <h3>Compétences développées</h3>
-        </div>
-        <div class="card-body">
-            {% if competences_developpees %}
-                <ul class="list-group list-group-flush">
-                    {% for comp in competences_developpees %}
-                        <li class="list-group-item">
-                            <strong>{{ comp.texte }}</strong>: {{ comp.description or "Pas de description." }}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Aucune compétence développée.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Objets Cibles -->
-    <div class="card mb-4">
-        <div class="card-header bg-secondary text-white">
-            <h3>Objets cibles</h3>
-        </div>
-        <div class="card-body">
-            {% if objets_cibles %}
-                <ul class="list-group list-group-flush">
-                    {% for obj in objets_cibles %}
-                        <li class="list-group-item">
-                            <strong>{{ obj.texte }}</strong>: {{ obj.description or "Pas de description." }}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Aucun objet cible.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Cours Reliés -->
-    <div class="card mb-4">
-        <div class="card-header bg-secondary text-white">
-            <h3>Cours reliés</h3>
-        </div>
-        <div class="card-body">
-            {% if cours_relies %}
-                <ul class="list-group list-group-flush">
-                    {% for cr in cours_relies %}
-                        <li class="list-group-item">
-                            <strong>{{ cr.texte }}</strong>: {{ cr.description or "Pas de description." }}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Aucun cours relié.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Cours Préalables -->
-    <div class="card mb-4">
-        <div class="card-header bg-secondary text-white">
-            <h3>Cours Préalables</h3>
-        </div>
-        <div class="card-body">
-            {% if cours_prealables %}
-                <ul class="list-group list-group-flush">
-                    {% for cp in cours_prealables %}
-                        <li class="list-group-item">
-                            <strong>{{ cp.texte }}</strong>: Note nécessaire: {{ cp.description or "Non spécifiée." }}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Aucun cours préalable.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Capacités -->
-    <div class="card mb-4">
-        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-            <h3>Capacités</h3>
-            <a href="{{ url_for('add_capacite', plan_id=plan.id) }}" class="btn btn-light btn-sm">Ajouter une Capacité</a>
-        </div>
-        <div class="card-body">
-            {% if capacites %}
-                {% for cap in capacites %}
-                    <div class="mb-3">
-                        <div class="card">
-                            <div class="card-header">
-                                <strong>{{ cap['capacite']['capacite'] }}</strong> 
-                                (Pondération: {{ cap['capacite']['ponderation_min'] }}% - {{ cap['capacite']['ponderation_max'] }}%)
-                            </div>
-                            <div class="card-body">
-                                <p>{{ cap['capacite']['description_capacite'] or "Pas de description." }}</p>
-                                
-                                <!-- Savoirs Nécessaires -->
-                                <div class="mb-3">
-                                    <h5>Savoirs Nécessaires</h5>
-                                    {% if cap['savoirs_necessaires'] %}
-                                        <ul class="list-group list-group-flush">
-                                            {% for sav in cap['savoirs_necessaires'] %}
-                                                <li class="list-group-item">{{ sav.texte }}</li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% else %}
-                                        <p>Aucun savoir nécessaire.</p>
-                                    {% endif %}
-                                </div>
-                                
-                                <!-- Savoirs Faire -->
-                                <div class="mb-3">
-                                    <h5>Savoirs Faire</h5>
-                                    {% if cap['savoirs_faire'] %}
-                                        <ul class="list-group list-group-flush">
-                                            {% for sf in cap['savoirs_faire'] %}
-                                                <li class="list-group-item">
-                                                    {{ sf.texte }} 
-                                                    <span class="badge bg-success">Cible: {{ sf.cible }}</span> 
-                                                    <span class="badge bg-warning text-dark">Seuil: {{ sf.seuil_reussite }}</span>
-                                                </li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% else %}
-                                        <p>Aucun savoir faire.</p>
-                                    {% endif %}
-                                </div>
-                                
-                                <!-- Moyens d'Évaluation -->
-                                <div class="mb-3">
-                                    <h5>Moyens d'Évaluation</h5>
-                                    {% if cap['moyens_evaluation'] %}
-                                        <ul class="list-group list-group-flush">
-                                            {% for me in cap['moyens_evaluation'] %}
-                                                <li class="list-group-item">{{ me.texte }}</li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% else %}
-                                        <p>Aucun moyen d'évaluation.</p>
-                                    {% endif %}
-                                </div>
-                                
-                                <!-- Boutons d'Action -->
-                                <div>
-                                    <a href="{{ url_for('edit_capacite', cours_id=plan.cours_id, plan_id=plan.id, capacite_id=cap['capacite']['id']) }}" class="btn btn-primary btn-sm">Éditer</a>
-                                    <form method="POST" action="{{ url_for('delete_capacite', plan_id=plan.id, capacite_id=cap['capacite']['id']) }}" style="display:inline;">
-                                        {{ delete_forms_capacites[cap['capacite']['id']].hidden_tag() }}
-                                        <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p>Aucune capacité ajoutée.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Savoir-être -->
-    <div class="card mb-4">
-        <div class="card-header bg-dark text-white">
-            <h3>Savoir-être</h3>
-        </div>
-        <div class="card-body">
-            {% if savoir_etre %}
-                <ul class="list-group list-group-flush">
-                    {% for se in savoir_etre %}
-                        <li class="list-group-item">{{ se.texte }}</li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Aucun savoir-être.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Boutons d'Exportation et d'Importation -->
-    <div class="card mb-4">
-        <div class="card-header bg-secondary text-white">
-            <h3>Gestion des Fichiers</h3>
-        </div>
-        <div class="card-body">
-            <div class="d-flex flex-wrap gap-2">
-                <a href="{{ url_for('export_plan_cadre', plan_id=plan_id) }}" class="btn btn-primary">Exporter en DOCX</a>
-                <a href="{{ url_for('export_plan_cadre_json', cours_id=cours_id, plan_id=plan_id) }}" class="btn btn-secondary">Exporter en JSON</a>
+    <!-- Accordion Principal sans Restriction d'Ouverture -->
+    <div class="accordion" id="planCadreAccordion">
+        <!-- Introduction -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingIntroduction">
+                <button class="accordion-button bg-primary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIntroduction" aria-expanded="true" aria-controls="collapseIntroduction">
+                    Introduction et place et rôle du cours
+                </button>
+            </h2>
+            <div id="collapseIntroduction" class="accordion-collapse collapse show" aria-labelledby="headingIntroduction">
+                <div class="accordion-body">
+                    <p>{{ plan.place_intro or "Non renseigné." }}</p>
+                </div>
             </div>
-            <hr>
-            <form method="POST" enctype="multipart/form-data" action="{{ url_for('import_plan_cadre_json', cours_id=cours_id, plan_id=plan_id) }}">
-                {{ import_form.hidden_tag() }}
-                <div class="mb-3">
-                    {{ import_form.json_file.label(class="form-label") }}
-                    {{ import_form.json_file(class="form-control-file") }}
-                    {% for error in import_form.json_file.errors %}
-                        <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
+        </div>
+
+        <!-- Objectif Terminal -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingObjectif">
+                <button class="accordion-button bg-success text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseObjectif" aria-expanded="true" aria-controls="collapseObjectif">
+                    Objectif terminal
+                </button>
+            </h2>
+            <div id="collapseObjectif" class="accordion-collapse collapse show" aria-labelledby="headingObjectif">
+                <div class="accordion-body">
+                    <p>{{ plan.objectif_terminal or "Non renseigné." }}</p>
                 </div>
-                <div>
-                    {{ import_form.submit(class="btn btn-success") }}
+            </div>
+        </div>
+
+        <!-- Structure du Cours -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingStructure">
+                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStructure" aria-expanded="true" aria-controls="collapseStructure">
+                    Structure du cours
+                </button>
+            </h2>
+            <div id="collapseStructure" class="accordion-collapse collapse show" aria-labelledby="headingStructure">
+                <div class="accordion-body">
+                    <p><strong>Introduction:</strong> {{ plan.structure_intro or "Non renseigné." }}</p>
+                    <p><strong>Activités Théoriques:</strong> {{ plan.structure_activites_theoriques or "Non renseigné." }}</p>
+                    <p><strong>Activités Pratiques:</strong> {{ plan.structure_activites_pratiques or "Non renseigné." }}</p>
+                    <div><strong>Activités Prévues:</strong> {{ plan.structure_activites_prevues | markdown | safe or "Non renseigné." }}</div>
                 </div>
-            </form>
+            </div>
+        </div>
+        
+        <!-- Évaluation des Apprentissages -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingEvaluation">
+                <button class="accordion-button bg-warning text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEvaluation" aria-expanded="true" aria-controls="collapseEvaluation">
+                    Évaluation des apprentissages
+                </button>
+            </h2>
+            <div id="collapseEvaluation" class="accordion-collapse collapse show" aria-labelledby="headingEvaluation">
+                <div class="accordion-body">
+                    <p><strong>Évaluation sommative:</strong> {{ plan.eval_evaluation_sommative or "Non renseigné." }}</p>
+                    <p><strong>Nature des évaluations sommatives:</strong> {{ plan.eval_nature_evaluations_sommatives or "Non renseigné." }}</p>
+                    <p><strong>Évaluation de la langue:</strong> {{ plan.eval_evaluation_de_la_langue or "Non renseigné." }}</p>
+                    <p><strong>Évaluation formative des apprentissages:</strong> {{ plan.eval_evaluation_sommatives_apprentissages | markdown | safe or "Non renseigné." }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compétences Développées -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingCompetencesDeveloppees">
+                <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCompetencesDeveloppees" aria-expanded="true" aria-controls="collapseCompetencesDeveloppees">
+                    Compétences développées
+                </button>
+            </h2>
+            <div id="collapseCompetencesDeveloppees" class="accordion-collapse collapse show" aria-labelledby="headingCompetencesDeveloppees">
+                <div class="accordion-body">
+                    {% if competences_developpees %}
+                        <ul class="list-group list-group-flush">
+                            {% for comp in competences_developpees %}
+                                <li class="list-group-item">
+                                    <strong>{{ comp.texte }}</strong>: {{ comp.description or "Pas de description." }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Aucune compétence développée.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Compétences Certifiées -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingCompetencesCertifiees">
+                <button class="accordion-button bg-danger text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCompetencesCertifiees" aria-expanded="true" aria-controls="collapseCompetencesCertifiees">
+                    Compétences certifiées
+                </button>
+            </h2>
+            <div id="collapseCompetencesCertifiees" class="accordion-collapse collapse show" aria-labelledby="headingCompetencesCertifiees">
+                <div class="accordion-body">
+                    {% if competences_certifiees %}
+                        <ul class="list-group list-group-flush">
+                            {% for cc in competences_certifiees %}
+                                <li class="list-group-item">
+                                    <strong>{{ cc.texte }}</strong>: {{ cc.description or "Pas de description." }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Aucune compétence certifiée.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Cours Corequis -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingCoursCorequis">
+                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCoursCorequis" aria-expanded="true" aria-controls="collapseCoursCorequis">
+                    Cours corequis
+                </button>
+            </h2>
+            <div id="collapseCoursCorequis" class="accordion-collapse collapse show" aria-labelledby="headingCoursCorequis">
+                <div class="accordion-body">
+                    {% if cours_corequis %}
+                        <ul class="list-group list-group-flush">
+                            {% for cc in cours_corequis %}
+                                <li class="list-group-item">
+                                    <strong>{{ cc.texte }}</strong>: {{ cc.description or "Pas de description." }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Aucun cours corequis.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Cours Préalables -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingCoursPrealables">
+                <button class="accordion-button bg-warning text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCoursPrealables" aria-expanded="true" aria-controls="collapseCoursPrealables">
+                    Cours Préalables
+                </button>
+            </h2>
+            <div id="collapseCoursPrealables" class="accordion-collapse collapse show" aria-labelledby="headingCoursPrealables">
+                <div class="accordion-body">
+                    {% if cours_prealables %}
+                        <ul class="list-group list-group-flush">
+                            {% for cp in cours_prealables %}
+                                <li class="list-group-item">
+                                    <strong>{{ cp.texte }}</strong>: Note nécessaire: {{ cp.description or "Non spécifiée." }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Aucun cours préalable.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Capacités avec Accordéon Intérieur -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingCapacites">
+                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCapacites" aria-expanded="true" aria-controls="collapseCapacites">
+                    Capacités
+                </button>
+            </h2>
+            <div id="collapseCapacites" class="accordion-collapse collapse show" aria-labelledby="headingCapacites">
+                <div class="accordion-body">
+                    {% if capacites %}
+                        <!-- Accordion Intérieur pour Capacités -->
+                        <div class="accordion" id="capacitesAccordion">
+                            {% for cap in capacites %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingCapacite{{ cap['capacite']['id'] }}">
+                                        <button class="accordion-button bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCapacite{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseCapacite{{ cap['capacite']['id'] }}">
+                                            {{ cap['capacite']['capacite'] }} (Pondération: {{ cap['capacite']['ponderation_min'] }}% - {{ cap['capacite']['ponderation_max'] }}%)
+                                        </button>
+                                    </h2>
+                                    <div id="collapseCapacite{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingCapacite{{ cap['capacite']['id'] }}">
+                                        <div class="accordion-body">
+                                            <p>{{ cap['capacite']['description_capacite'] or "Pas de description." }}</p>
+                                            
+                                            <!-- Sous-Accordion pour Savoirs Nécessaires -->
+                                            <div class="accordion mb-3" id="savoirsNecessairesAccordion{{ cap['capacite']['id'] }}">
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header" id="headingSavoirsNecessaires{{ cap['capacite']['id'] }}">
+                                                        <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavoirsNecessaires{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseSavoirsNecessaires{{ cap['capacite']['id'] }}">
+                                                            Savoirs Nécessaires
+                                                        </button>
+                                                    </h2>
+                                                    <div id="collapseSavoirsNecessaires{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingSavoirsNecessaires{{ cap['capacite']['id'] }}">
+                                                        <div class="accordion-body">
+                                                            {% if cap['savoirs_necessaires'] %}
+                                                                <ul class="list-group list-group-flush">
+                                                                    {% for sav in cap['savoirs_necessaires'] %}
+                                                                        <li class="list-group-item">{{ sav.texte }}</li>
+                                                                    {% endfor %}
+                                                                </ul>
+                                                            {% else %}
+                                                                <p>Aucun savoir nécessaire.</p>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Sous-Accordion pour Savoirs Faire -->
+                                            <div class="accordion mb-3" id="savoirsFaireAccordion{{ cap['capacite']['id'] }}">
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header" id="headingSavoirsFaire{{ cap['capacite']['id'] }}">
+                                                        <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavoirsFaire{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseSavoirsFaire{{ cap['capacite']['id'] }}">
+                                                            Savoirs Faire
+                                                        </button>
+                                                    </h2>
+                                                    <div id="collapseSavoirsFaire{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingSavoirsFaire{{ cap['capacite']['id'] }}">
+                                                        <div class="accordion-body">
+                                                            {% if cap['savoirs_faire'] %}
+                                                                <ul class="list-group list-group-flush">
+                                                                    {% for sf in cap['savoirs_faire'] %}
+                                                                        <li class="list-group-item">
+                                                                            {{ sf.texte }} 
+                                                                            <span class="badge bg-success">Cible: {{ sf.cible }}</span> 
+                                                                            <span class="badge bg-warning text-dark">Seuil: {{ sf.seuil_reussite }}</span>
+                                                                        </li>
+                                                                    {% endfor %}
+                                                                </ul>
+                                                            {% else %}
+                                                                <p>Aucun savoir faire.</p>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Sous-Accordion pour Moyens d'Évaluation -->
+                                            <div class="accordion mb-3" id="moyensEvaluationAccordion{{ cap['capacite']['id'] }}">
+                                                <div class="accordion-item">
+                                                    <h2 class="accordion-header" id="headingMoyensEvaluation{{ cap['capacite']['id'] }}">
+                                                        <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMoyensEvaluation{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseMoyensEvaluation{{ cap['capacite']['id'] }}">
+                                                            Moyens d'Évaluation
+                                                        </button>
+                                                    </h2>
+                                                    <div id="collapseMoyensEvaluation{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingMoyensEvaluation{{ cap['capacite']['id'] }}">
+                                                        <div class="accordion-body">
+                                                            {% if cap['moyens_evaluation'] %}
+                                                                <ul class="list-group list-group-flush">
+                                                                    {% for me in cap['moyens_evaluation'] %}
+                                                                        <li class="list-group-item">{{ me.texte }}</li>
+                                                                    {% endfor %}
+                                                                </ul>
+                                                            {% else %}
+                                                                <p>Aucun moyen d'évaluation.</p>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Boutons d'Action -->
+                                            <div>
+                                                <a href="{{ url_for('edit_capacite', cours_id=plan.cours_id, plan_id=plan.id, capacite_id=cap['capacite']['id']) }}" class="btn btn-primary btn-sm">Éditer</a>
+                                                <form method="POST" action="{{ url_for('delete_capacite', plan_id=plan.id, capacite_id=cap['capacite']['id']) }}" style="display:inline;">
+                                                    {{ delete_forms_capacites[cap['capacite']['id']].hidden_tag() }}
+                                                    <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p>Aucune capacité ajoutée.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Savoir-être -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingSavoirEtre">
+                <button class="accordion-button bg-success text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavoirEtre" aria-expanded="true" aria-controls="collapseSavoirEtre">
+                    Savoir-être
+                </button>
+            </h2>
+            <div id="collapseSavoirEtre" class="accordion-collapse collapse show" aria-labelledby="headingSavoirEtre">
+                <div class="accordion-body">
+                    {% if savoir_etre %}
+                        <ul class="list-group list-group-flush">
+                            {% for se in savoir_etre %}
+                                <li class="list-group-item">{{ se.texte }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Aucun savoir-être.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestion des Fichiers -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingGestionFichiers">
+                <button class="accordion-button bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGestionFichiers" aria-expanded="true" aria-controls="collapseGestionFichiers">
+                    Gestion des Fichiers
+                </button>
+            </h2>
+            <div id="collapseGestionFichiers" class="accordion-collapse collapse show" aria-labelledby="headingGestionFichiers">
+                <div class="accordion-body">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <a href="{{ url_for('export_plan_cadre', plan_id=plan_id) }}" class="btn btn-primary">Exporter en DOCX</a>
+                        <a href="{{ url_for('export_plan_cadre_json', cours_id=cours_id, plan_id=plan_id) }}" class="btn btn-secondary">Exporter en JSON</a>
+                    </div>
+                    <hr>
+                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('import_plan_cadre_json', cours_id=cours_id, plan_id=plan_id) }}">
+                        {{ import_form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ import_form.json_file.label(class="form-label") }}
+                            {{ import_form.json_file(class="form-control") }}
+                            {% for error in import_form.json_file.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div>
+                            {{ import_form.submit(class="btn btn-success") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Boutons d'Action Supplémentaires -->
-    <div class="d-flex gap-2 mb-5">
+    <!-- Boutons d'Action Supplémentaires (répétition si nécessaire) -->
+    <div class="d-flex gap-2 mt-5">
         <a href="{{ url_for('edit_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary">Éditer le plan-cadre</a>
         <a href="{{ url_for('view_cours', cours_id=plan.cours_id) }}" class="btn btn-secondary">Retour au cours</a>
     </div>
 </div>
+
 {% endblock %}
