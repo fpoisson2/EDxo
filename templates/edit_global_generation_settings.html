@@ -1,0 +1,65 @@
+<!-- templates/edit_global_generation_settings.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Paramètres Globaux de Génération Automatique</h2>
+
+Tags principaux
+Les tags principaux que vous avez déjà identifiés dans les sections sont :
+
+{code_cours}
+{nom_cours}
+{fil_conducteur}
+{programme} (à définir selon vos besoins)
+{session}
+Sous-tags disponibles dans les compétences
+En analysant les compétences, voici des sous-tags supplémentaires que vous pouvez utiliser :
+
+{element_nom} : Le nom de l'élément de compétence.
+{element_competence_id} : L'ID de l'élément de compétence.
+{status} : Le statut de l'élément de compétence (par exemple, "Développé significativement").
+{competence_id} : L'ID de la compétence associée à l'élément de compétence.
+{critere_performance} : Le critère de performance associé à l'élément de compétence.
+{competence_nom} : Le nom de la compétence associée.
+{contexte_realisation} : Le contexte de réalisation de la compétence.
+Sous-tags pour les préalables et cours liés
+Voici d'autres sous-tags qui peuvent être utilisés dans des sections comme "Cours préalables" ou "Cours liés" :
+
+{cours_prealable_code} : Le code du cours préalable.
+{cours_prealable_nom} : Le nom du cours préalable.
+{cours_prealable_id} : L'ID du cours préalable.
+{cours_corequis_id} : L'ID du cours corequis.
+{cours_corequis_nom} : Le nom du cours corequis.
+Sous-tags pour les compétences de développement
+Dans la section des compétences, vous avez des sous-tags comme :
+
+{competence_nom} : Le nom de la compétence (ex : "Configurer des réseaux de données").
+{competence_id} : L'ID de la compétence associée.
+{critere_performance} : Les critères de performance de la compétence.
+{contexte_realisation} : Le contexte de réalisation de la compétence.
+<form method="POST">
+    {{ form.hidden_tag() }} <!-- Inclut le token CSRF -->
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Section</th>
+                    <th>Utiliser l'IA</th>
+                    <th>Texte / Prompt</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for section_form, section_name in sections_with_forms %}
+                    <tr>
+                        <td>{{ section_name }}</td>
+                        <td>{{ section_form.use_ai(class="form-check-input") }}</td>
+                        <td>{{ section_form.text_content(class="form-control", rows=3, cols=60) }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {{ form.submit(class="btn btn-success") }}
+</form>
+{% endblock %}

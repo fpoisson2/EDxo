@@ -5,6 +5,7 @@
 <form method="POST">
     {{ form.hidden_tag() }}
 
+    <!-- Champs Principaux -->
     <div class="form-group">
         {{ form.place_intro.label }}
         {{ form.place_intro(class="form-control") }}
@@ -42,33 +43,83 @@
         {{ form.eval_evaluation_de_la_langue(class="form-control") }}
     </div>
     <div class="form-group">
-        Évaluation formative des apprentissages
+        <label>Évaluation formative des apprentissages</label>
         {{ form.eval_evaluation_sommatives_apprentissages(class="form-control") }}
     </div>
 
+    <!-- Compétences Développées -->
     <h3>Compétences développées</h3>
     <div id="competences-developpees-container">
         {% for subform in form.competences_developpees %}
         <div class="competences_developpees-item">
-            <label>Texte</label><br>
-            {{ subform.texte(class="form-control") }}
-            <label>Description</label><br>
-            {{ subform.texte_description(class="form-control") }}
+            <div class="form-group">
+                {{ subform.texte.label }}
+                {{ subform.texte(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ subform.texte_description.label }}
+                {{ subform.texte_description(class="form-control") }}
+            </div>
             <button type="button" class="btn btn-danger remove-competences-developpees">Supprimer</button>
             <hr>
         </div>
         {% endfor %}
     </div>
     <button type="button" class="btn btn-info" id="add-competence-developpee">Ajouter une compétence développée</button>
-    
+
+    <!-- Compétences Certifiées -->
+    <h3>Compétences certifiées</h3>
+    <div id="competences-certifiees-container">
+        {% for subform in form.competences_certifiees %}
+        <div class="competences_certifiees-item">
+            <div class="form-group">
+                {{ subform.texte.label }}
+                {{ subform.texte(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ subform.texte_description.label }}
+                {{ subform.texte_description(class="form-control") }}
+            </div>
+            <button type="button" class="btn btn-danger remove-competences-certifiees">Supprimer</button>
+            <hr>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-info" id="add-competence-certifiee">Ajouter une compétence certifiée</button>
+
+    <!-- Cours Corequis -->
+    <h3>Cours corequis</h3>
+    <div id="cours-corequis-container">
+        {% for subform in form.cours_corequis %}
+        <div class="cours_corequis-item">
+            <div class="form-group">
+                {{ subform.texte.label }}
+                {{ subform.texte(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ subform.texte_description.label }}
+                {{ subform.texte_description(class="form-control") }}
+            </div>
+            <button type="button" class="btn btn-danger remove-cours-corequis">Supprimer</button>
+            <hr>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" class="btn btn-info" id="add-cours-corequis">Ajouter un cours corequis</button>
+
+    <!-- Objets Cibles -->
     <h3>Objets cibles</h3>
     <div id="objets-cibles-container">
         {% for subform in form.objets_cibles %}
         <div class="objets_cibles-item">
-            <label>Texte</label><br>
-            {{ subform.texte(class="form-control") }}
-            <label>Description</label><br>
-            {{ subform.texte_description(class="form-control") }}
+            <div class="form-group">
+                {{ subform.texte.label }}
+                {{ subform.texte(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ subform.texte_description.label }}
+                {{ subform.texte_description(class="form-control") }}
+            </div>
             <button type="button" class="btn btn-danger remove-objets-cibles">Supprimer</button>
             <hr>
         </div>
@@ -76,14 +127,19 @@
     </div>
     <button type="button" class="btn btn-info" id="add-objet-cible">Ajouter un objet cible</button>
 
+    <!-- Cours Reliés -->
     <h3>Cours Reliés</h3>
     <div id="cours-relies-container">
         {% for subform in form.cours_relies %}
         <div class="cours_relies-item">
-            <label>Texte</label><br>
-            {{ subform.texte(class="form-control") }}
-            <label>Description</label><br>
-            {{ subform.texte_description(class="form-control") }}
+            <div class="form-group">
+                {{ subform.texte.label }}
+                {{ subform.texte(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ subform.texte_description.label }}
+                {{ subform.texte_description(class="form-control") }}
+            </div>
             <button type="button" class="btn btn-danger remove-cours-relies">Supprimer</button>
             <hr>
         </div>
@@ -91,14 +147,19 @@
     </div>
     <button type="button" class="btn btn-info" id="add-cours-relie">Ajouter un cours relié</button>
 
+    <!-- Cours Préalables -->
     <h3>Cours Préalables</h3>
     <div id="cours-prealables-container">
         {% for subform in form.cours_prealables %}
         <div class="cours_prealables-item">
-            <label>Texte</label><br>
-            {{ subform.texte(class="form-control") }}
-            <label>Description</label><br>
-            {{ subform.texte_description(class="form-control") }}
+            <div class="form-group">
+                {{ subform.texte.label }}
+                {{ subform.texte(class="form-control") }}
+            </div>
+            <div class="form-group">
+                {{ subform.texte_description.label }}
+                {{ subform.texte_description(class="form-control") }}
+            </div>
             <button type="button" class="btn btn-danger remove-cours-prealables">Supprimer</button>
             <hr>
         </div>
@@ -106,37 +167,41 @@
     </div>
     <button type="button" class="btn btn-info" id="add-cours-prealable">Ajouter un cours préalable</button>
 
+    <!-- Savoir-être -->
     <h3>Savoir-être</h3>
     <div id="savoir-etre-fields">
         {% for subform in form.savoir_etre %}
-            <div class="form-group">
-                {{ subform.texte.label }} {{ subform.texte(class="form-control") }}
+            <div class="form-group savoir-etre-item">
+                {{ subform.texte.label }}
+                {{ subform.texte(class="form-control") }}
+                <button type="button" class="btn btn-danger remove-savoir-etre">Supprimer</button>
+                <hr>
             </div>
         {% endfor %}
     </div>
     <button type="button" id="add-savoir-etre" class="btn btn-secondary">Ajouter un Savoir-être</button>
-    
 
     <br><br>
     <button type="submit" class="btn btn-primary">Éditer</button>
 </form>
 
+<!-- JavaScript pour gérer l'ajout et la suppression dynamique des champs -->
 <script>
-// Fonction pour ajouter un champ dans un FieldList avec texte + description
-function addItemWithDescription(containerId, fieldPrefix) {
+// Fonction pour ajouter un champ avec texte + description
+function addItemWithDescription(containerId, fieldPrefix, removeClass) {
     var container = document.getElementById(containerId);
-    var index = container.querySelectorAll('.' + fieldPrefix + '-item').length;  // L'indice sera basé sur les éléments existants
+    var index = container.querySelectorAll('.' + fieldPrefix + '-item').length;
 
-    // Remplacer les underscores par des tirets pour la classe du bouton de suppression
-    var removeClass = 'remove-' + fieldPrefix.replace(/_/g, '-');
-
-    // Créer le HTML pour un nouvel élément avec des noms d'ID et de champ dynamiques
     var html = `
     <div class="${fieldPrefix}-item">
-        <label>Texte</label><br>
-        <input id="${fieldPrefix}-${index}-texte" name="${fieldPrefix}-${index}-texte" class="form-control" type="text" value="">
-        <label>Description</label><br>
-        <textarea id="${fieldPrefix}-${index}-description" name="${fieldPrefix}-${index}-description" class="form-control"></textarea>
+        <div class="form-group">
+            <label for="${fieldPrefix}-${index}-texte">Texte</label>
+            <input id="${fieldPrefix}-${index}-texte" name="${fieldPrefix}-${index}-texte" class="form-control" type="text" value="">
+        </div>
+        <div class="form-group">
+            <label for="${fieldPrefix}-${index}-texte_description">Description</label>
+            <textarea id="${fieldPrefix}-${index}-texte_description" name="${fieldPrefix}-${index}-texte_description" class="form-control"></textarea>
+        </div>
         <button type="button" class="btn btn-danger ${removeClass}">Supprimer</button>
         <hr>
     </div>
@@ -144,61 +209,75 @@ function addItemWithDescription(containerId, fieldPrefix) {
     container.insertAdjacentHTML('beforeend', html);
 }
 
-// Fonction pour ajouter un champ texte seul (pour savoir_etre)
-function addItemTexteOnly(containerId, fieldPrefix) {
+// Fonction pour ajouter un champ texte seul (utilisé uniquement pour Savoir-être)
+function addItemTexteOnly(containerId, fieldPrefix, removeClass) {
     var container = document.getElementById(containerId);
     var index = container.querySelectorAll('.' + fieldPrefix + '-item').length;
+
     var html = `
     <div class="${fieldPrefix}-item">
-        <label>Texte</label><br>
-        <input id="${fieldPrefix}-${index}-texte" name="${fieldPrefix}-${index}-texte" class="form-control" type="text" value="">
-        <button type="button" class="btn btn-danger remove-${fieldPrefix}">Supprimer</button>
+        <div class="form-group">
+            <label for="${fieldPrefix}-${index}-texte">Texte</label>
+            <input id="${fieldPrefix}-${index}-texte" name="${fieldPrefix}-${index}-texte" class="form-control" type="text" value="">
+        </div>
+        <button type="button" class="btn btn-danger ${removeClass}">Supprimer</button>
         <hr>
     </div>
     `;
     container.insertAdjacentHTML('beforeend', html);
 }
 
-// Ajouter les handlers
+// Handlers pour les boutons d'ajout
 document.getElementById('add-competence-developpee').addEventListener('click', function(){
-    addItemWithDescription('competences-developpees-container', 'competences_developpees');
+    addItemWithDescription('competences-developpees-container', 'competences_developpees', 'remove-competences-developpees');
 });
 
-document.getElementById('add-objet-cible').addEventListener('click', function(){
-    addItemWithDescription('objets-cibles-container', 'objets_cibles');
+document.getElementById('add-competence-certifiee').addEventListener('click', function(){
+    addItemWithDescription('competences-certifiees-container', 'competences_certifiees', 'remove-competences-certifiees');
 });
 
-document.getElementById('add-cours-relie').addEventListener('click', function(){
-    addItemWithDescription('cours-relies-container', 'cours_relies');
+document.getElementById('add-cours-corequis').addEventListener('click', function(){
+    addItemWithDescription('cours-corequis-container', 'cours_corequis', 'remove-cours-corequis');
 });
 
 document.getElementById('add-cours-prealable').addEventListener('click', function(){
-    addItemWithDescription('cours-prealables-container', 'cours_prealables');
+    addItemWithDescription('cours-prealables-container', 'cours_prealables', 'remove-cours-prealables');
 });
 
-// JavaScript pour ajouter dynamiquement des champs de savoir-être
+document.getElementById('add-cours-relie').addEventListener('click', function(){
+    addItemWithDescription('cours-relies-container', 'cours_relies', 'remove-cours-relies');
+});
+
+document.getElementById('add-objet-cible').addEventListener('click', function(){
+    addItemWithDescription('objets-cibles-container', 'objets_cibles', 'remove-objets-cibles');
+});
+
+// Handler spécifique pour Savoir-être
 document.getElementById('add-savoir-etre').addEventListener('click', function() {
-    var index = document.querySelectorAll('#savoir-etre-fields .form-group').length;
-    var newField = `
-        <div class="form-group">
-            <label for="savoir_etre-${index}-texte">Texte</label>
-            <input class="form-control" id="savoir_etre-${index}-texte" name="savoir_etre-${index}-texte" type="text">
-        </div>
-    `;
-    document.getElementById('savoir-etre-fields').insertAdjacentHTML('beforeend', newField);
+    addItemTexteOnly('savoir-etre-fields', 'savoir_etre', 'remove-savoir-etre');
 });
 
 // Gestion des suppressions déléguées
 document.addEventListener('click', function(e){
     if(e.target && e.target.classList.contains('remove-competences-developpees')){
         e.target.closest('.competences_developpees-item').remove();
-    } else if (e.target && e.target.classList.contains('remove-objets-cibles')){
-        e.target.closest('.objets_cibles-item').remove();
-    } else if (e.target && e.target.classList.contains('remove-cours-relies')){
-        e.target.closest('.cours_relies-item').remove();
-    } else if (e.target && e.target.classList.contains('remove-cours-prealables')){
+    }
+    else if(e.target && e.target.classList.contains('remove-competences-certifiees')){
+        e.target.closest('.competences_certifiees-item').remove();
+    }
+    else if(e.target && e.target.classList.contains('remove-cours-corequis')){
+        e.target.closest('.cours_corequis-item').remove();
+    }
+    else if(e.target && e.target.classList.contains('remove-cours-prealables')){
         e.target.closest('.cours_prealables-item').remove();
-    } else if (e.target && e.target.classList.contains('remove-savoir-etre')){
+    }
+    else if(e.target && e.target.classList.contains('remove-cours-relies')){
+        e.target.closest('.cours_relies-item').remove();
+    }
+    else if(e.target && e.target.classList.contains('remove-objets-cibles')){
+        e.target.closest('.objets_cibles-item').remove();
+    }
+    else if(e.target && e.target.classList.contains('remove-savoir-etre')){
         e.target.closest('.savoir-etre-item').remove();
     }
 });
