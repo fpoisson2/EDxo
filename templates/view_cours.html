@@ -8,7 +8,7 @@
       <h1>{{ cours.code }} - {{ cours.nom }}</h1>
       <div>
         <a href="{{ url_for('edit_cours', cours_id=cours.id) }}" class="btn btn-primary me-2">Éditer le cours</a>
-        <a href="{{ url_for('index') }}" class="btn btn-secondary">Retour à la liste des cours</a>
+        <a href="{{ url_for('view_programme', programme_id=cours.programme_id) }}" class="btn btn-secondary">Retour au programme</a>
       </div>
     </div>
 
@@ -102,7 +102,7 @@
     <!-- Boutons d'Actions Supplémentaires -->
     <div class="mt-4">
       <a href="{{ url_for('edit_cours', cours_id=cours.id) }}" class="btn btn-primary me-2">Éditer le Cours</a>
-      <a href="{{ url_for('index') }}" class="btn btn-secondary">Retour à la Liste des Cours</a>
+      <a href="{{ url_for('view_programme', programme_id=cours.programme_id) }}" class="btn btn-secondary">Retour au programme</a>
     </div>
   </div>
 {% endblock %}

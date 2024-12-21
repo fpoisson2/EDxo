@@ -1500,43 +1500,32 @@ def index():
 @app.route('/cours/<int:cours_id>/plan_cadre/add', methods=['GET', 'POST'])
 @login_required
 def add_plan_cadre(cours_id):
-    form = PlanCadreForm()
-    if form.validate_on_submit():
-        place_intro = form.place_intro.data
-        objectif_terminal = form.objectif_terminal.data
-        structure_intro = form.structure_intro.data
-        structure_activites_theoriques = form.structure_activites_theoriques.data
-        structure_activites_pratiques = form.structure_activites_pratiques.data
-        structure_activites_prevues = form.structure_activites_prevues.data
-        eval_evaluation_sommative = form.eval_evaluation_sommative.data
-        eval_nature_evaluations_sommatives = form.eval_nature_evaluations_sommatives.data
-        eval_evaluation_de_la_langue = form.eval_evaluation_de_la_langue.data
-        eval_evaluation_sommatives_apprentissages = form.eval_evaluation_sommatives_apprentissages.data
+    conn = get_db_connection()
+    try:
+        # Créer un plan-cadre avec des valeurs par défaut
+        cursor = conn.execute("""
+            INSERT INTO PlanCadre 
+            (cours_id, place_intro, objectif_terminal, structure_intro, structure_activites_theoriques, 
+            structure_activites_pratiques, structure_activites_prevues, eval_evaluation_sommative, 
+            eval_nature_evaluations_sommatives, eval_evaluation_de_la_langue, eval_evaluation_sommatives_apprentissages)
+            VALUES (?, '', '', '', '', '', '', '', '', '', '')
+        """, (cours_id,))
+        conn.commit()
         
-        conn = get_db_connection()
-        try:
-            conn.execute("""
-                INSERT INTO PlanCadre 
-                (cours_id, place_intro, objectif_terminal, structure_intro, structure_activites_theoriques, 
-                structure_activites_pratiques, structure_activites_prevues, eval_evaluation_sommative, 
-                eval_nature_evaluations_sommatives, eval_evaluation_de_la_langue, eval_evaluation_sommatives_apprentissages)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                cours_id, place_intro, objectif_terminal, structure_intro, structure_activites_theoriques, 
-                structure_activites_pratiques, structure_activites_prevues, eval_evaluation_sommative, 
-                eval_nature_evaluations_sommatives, eval_evaluation_de_la_langue, eval_evaluation_sommatives_apprentissages
-            ))
-            conn.commit()
-            flash('Plan Cadre ajouté avec succès!', 'success')
-            return redirect(url_for('view_cours', cours_id=cours_id))
-        except sqlite3.IntegrityError:
-            flash('Un Plan Cadre existe déjà pour ce cours.', 'danger')
-        except sqlite3.Error as e:
-            flash(f'Erreur lors de l\'ajout du Plan Cadre : {e}', 'danger')
-        finally:
-            conn.close()
-    
-    return render_template('add_plan_cadre.html', form=form, cours_id=cours_id)
+        # Récupérer l'ID du plan-cadre nouvellement créé
+        plan_cadre_id = cursor.lastrowid
+        
+        flash('Plan Cadre créé avec succès!', 'success')
+        # Rediriger vers la page view_plan_cadre
+        return redirect(url_for('view_plan_cadre', cours_id=cours_id, plan_id=plan_cadre_id))
+    except sqlite3.IntegrityError:
+        flash('Un Plan Cadre existe déjà pour ce cours.', 'danger')
+        return redirect(url_for('view_cours', cours_id=cours_id))
+    except sqlite3.Error as e:
+        flash(f'Erreur lors de l\'ajout du Plan Cadre : {e}', 'danger')
+    finally:
+        conn.close()
+
 
 @app.route('/plan_cadre/<int:plan_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -2028,6 +2017,37 @@ def add_programme():
         return redirect(url_for('index'))
     return render_template('add_programme.html', form=form)
 
+@app.route('/cours/<int:cours_id>/plan_cadre', methods=['GET'])
+@login_required
+def view_or_add_plan_cadre(cours_id):
+    conn = get_db_connection()
+    try:
+        # Vérifier si un plan-cadre existe
+        plan_cadre = conn.execute("SELECT id FROM PlanCadre WHERE cours_id = ?", (cours_id,)).fetchone()
+        if plan_cadre:
+            # Rediriger vers la page du plan-cadre existant
+            return redirect(url_for('view_plan_cadre', cours_id=cours_id, plan_id=plan_cadre['id']))
+        else:
+            # Créer un plan-cadre vide
+            cursor = conn.execute("""
+                INSERT INTO PlanCadre 
+                (cours_id, place_intro, objectif_terminal, structure_intro, structure_activites_theoriques, 
+                structure_activites_pratiques, structure_activites_prevues, eval_evaluation_sommative, 
+                eval_nature_evaluations_sommatives, eval_evaluation_de_la_langue, eval_evaluation_sommatives_apprentissages)
+                VALUES (?, '', '', '', '', '', '', '', '', '', '')
+            """, (cours_id,))
+            conn.commit()
+            new_plan_cadre_id = cursor.lastrowid
+            flash('Plan-Cadre créé avec succès.', 'success')
+            # Rediriger vers le nouveau plan-cadre
+            return redirect(url_for('view_plan_cadre', cours_id=cours_id, plan_id=new_plan_cadre_id))
+    except sqlite3.Error as e:
+        flash(f'Erreur : {e}', 'danger')
+        return redirect(url_for('view_cours', cours_id=cours_id))
+    finally:
+        conn.close()
+
+
 @app.route('/programme/<int:programme_id>')
 @login_required
 def view_programme(programme_id):
@@ -2068,12 +2088,15 @@ def view_programme(programme_id):
     for c in cours:
         # Récupérer les cours préalables avec leurs codes
         prereqs = conn.execute(''' 
-            SELECT c_p.nom, c_p.code 
+            SELECT c_p.nom, c_p.code, cp.note_necessaire 
             FROM CoursPrealable cp
             JOIN Cours c_p ON cp.cours_prealable_id = c_p.id
             WHERE cp.cours_id = ?
         ''', (c['id'],)).fetchall()
-        prerequisites[c['id']] = [f"{p['code']} - {p['nom']}" for p in prereqs]
+
+        # Inclure la note dans les prérequis
+        prerequisites[c['id']] = [(f"{p['code']} - {p['nom']}", p['note_necessaire']) for p in prereqs]
+
         
         # Récupérer les cours corequis avec leurs codes
         coreqs = conn.execute(''' 
@@ -3059,7 +3082,20 @@ def delete_cours(cours_id):
         flash('Erreur lors de la soumission du formulaire de suppression.')
         return redirect(url_for('index'))
 
-# app.py (extrait pertinent)
+@app.route('/competence/code/<string:competence_code>')
+@login_required
+def view_competence_by_code(competence_code):
+    conn = get_db_connection()
+    competence = conn.execute('SELECT id FROM Competence WHERE code = ?', (competence_code,)).fetchone()
+    conn.close()
+
+    if not competence:
+        flash('Compétence non trouvée.', 'danger')
+        return redirect(url_for('index'))
+
+    # Rediriger vers la route existante avec competence_id
+    return redirect(url_for('view_competence', competence_id=competence['id']))
+
 
 @app.route('/competence/<int:competence_id>')
 @login_required
