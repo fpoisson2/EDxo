@@ -32,6 +32,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 import sqlite3
 import json
 import logging
+from collections import defaultdict
 from openai import OpenAI
 from openai import OpenAIError
 from dotenv import load_dotenv
@@ -2031,6 +2032,8 @@ def add_programme():
 @login_required
 def view_programme(programme_id):
     conn = get_db_connection()
+    
+    # Récupérer le programme
     programme = conn.execute('SELECT * FROM Programme WHERE id = ?', (programme_id,)).fetchone()
     
     if not programme:
@@ -2050,101 +2053,77 @@ def view_programme(programme_id):
         FROM Cours c
         LEFT JOIN FilConducteur fc ON c.fil_conducteur_id = fc.id
         WHERE c.programme_id = ?
+        ORDER BY c.session ASC
     ''', (programme_id,)).fetchall()
     
-    # Récupérer les prérequis et co-requis
+    # Regrouper les cours par session
+    cours_par_session = defaultdict(list)
+    for c in cours:
+        session = c['session']
+        cours_par_session[session].append(c)
+    
+    # Récupérer les prérequis et co-requis avec les codes des cours
     prerequisites = {}
     corequisites = {}
     for c in cours:
-        # Récupérer les cours préalables avec les notes nécessaires
+        # Récupérer les cours préalables avec leurs codes
         prereqs = conn.execute(''' 
-            SELECT cours_prealable_id, note_necessaire 
-            FROM CoursPrealable 
-            WHERE cours_id = ?
+            SELECT c_p.nom, c_p.code 
+            FROM CoursPrealable cp
+            JOIN Cours c_p ON cp.cours_prealable_id = c_p.id
+            WHERE cp.cours_id = ?
         ''', (c['id'],)).fetchall()
-        prerequisites[c['id']] = []
-        for p in prereqs:
-            # Récupérer les détails du cours préalable
-            prereq_course = conn.execute('SELECT nom FROM Cours WHERE id = ?', (p['cours_prealable_id'],)).fetchone()
-            if prereq_course:
-                prerequisites[c['id']].append((prereq_course['nom'], p['note_necessaire']))
+        prerequisites[c['id']] = [f"{p['code']} - {p['nom']}" for p in prereqs]
         
-        # Récupérer les cours corequis
+        # Récupérer les cours corequis avec leurs codes
         coreqs = conn.execute(''' 
-            SELECT cours_corequis_id 
-            FROM CoursCorequis 
-            WHERE cours_id = ?
+            SELECT c_c.nom, c_c.code 
+            FROM CoursCorequis cc
+            JOIN Cours c_c ON cc.cours_corequis_id = c_c.id
+            WHERE cc.cours_id = ?
         ''', (c['id'],)).fetchall()
-        corequisites[c['id']] = []
-        for c_core in coreqs:
-            coreq_course = conn.execute('SELECT nom FROM Cours WHERE id = ?', (c_core['cours_corequis_id'],)).fetchone()
-            if coreq_course:
-                corequisites[c['id']].append(coreq_course['nom'])
+        corequisites[c['id']] = [f"{c_core['code']} - {c_core['nom']}" for c_core in coreqs]
     
-    # Récupérer les compétences par cours
-    competencies = {}
+    # Récupérer les codes des compétences par cours
+    competencies_codes = {}
     for c in cours:
         comps = conn.execute(''' 
-            SELECT Competence.nom 
-            FROM CompetenceParCours 
-            JOIN Competence ON CompetenceParCours.competence_developpee_id = Competence.id 
-            WHERE CompetenceParCours.cours_id = ?
-        ''', (c['id'],)).fetchall()
-        competencies[c['id']] = [comp['nom'] for comp in comps]
-    
-    # Récupérer les éléments de compétence et leurs statuts avec code et nom de la compétence
-    elements_competence = {}
-    if cours:
-        cours_ids = [c['id'] for c in cours]
-        placeholders = ','.join(['?'] * len(cours_ids))
-        elements_competence_par_cours = conn.execute(f'''
-            SELECT 
-                ecp.cours_id, 
-                ec.nom AS element_competence_nom, 
-                c.code AS competence_code,
-                c.nom AS competence_nom,
-                ecp.status
+            SELECT DISTINCT c.code AS competence_code
             FROM ElementCompetenceParCours ecp
             JOIN ElementCompetence ec ON ecp.element_competence_id = ec.id
             JOIN Competence c ON ec.competence_id = c.id
-            WHERE ecp.cours_id IN ({placeholders})
-        ''', cours_ids).fetchall()
-        
-        # Structurer les éléments par compétence
-        for ecp in elements_competence_par_cours:
-            competence_key = f"{ecp['competence_code']} - {ecp['competence_nom']}"
-            elements_competence.setdefault(competence_key, []).append({
-                'element_competence': ecp['element_competence_nom'],
-                'status': ecp['status']
-            })
-
+            WHERE ecp.cours_id = ?
+        ''', (c['id'],)).fetchall()
+        competencies_codes[c['id']] = [comp['competence_code'] for comp in comps]
+    
+    # Calcul des totaux
     total_heures_theorie = sum(c['heures_theorie'] for c in cours)
     total_heures_laboratoire = sum(c['heures_laboratoire'] for c in cours)
     total_heures_travail_maison = sum(c['heures_travail_maison'] for c in cours)
     total_unites = sum(c['nombre_unites'] for c in cours)
-
-    conn.close()
     
     # Créer des dictionnaires de formulaires de suppression pour les compétences et les cours
     delete_forms_competences = {competence['id']: DeleteForm(prefix=f"competence-{competence['id']}") for competence in competences}
     delete_forms_cours = {c['id']: DeleteForm(prefix=f"cours-{c['id']}") for c in cours}
     
+    conn.close()
+    
     return render_template('view_programme.html', 
                            programme=programme, 
                            competences=competences, 
                            fil_conducteurs=fil_conducteurs, 
-                           cours=cours, 
+                           cours_par_session=cours_par_session,  # Groupement par session
                            delete_forms_competences=delete_forms_competences,
                            delete_forms_cours=delete_forms_cours,
                            prerequisites=prerequisites,
                            corequisites=corequisites,
-                           competencies=competencies,
-                           elements_competence=elements_competence,
+                           competencies_codes=competencies_codes,  # Codes des compétences
                            total_heures_theorie=total_heures_theorie,
                            total_heures_laboratoire=total_heures_laboratoire,
                            total_heures_travail_maison=total_heures_travail_maison,
                            total_unites=total_unites
                            )
+
 
 
 # --------------------- Competence Routes ---------------------
