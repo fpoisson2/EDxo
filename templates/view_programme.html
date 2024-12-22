@@ -50,7 +50,7 @@
                 <div class="col mb-3">
                   <div class="card h-100 d-flex flex-column">
                     <!-- En-tête cliquable uniformisée et responsive -->
-                    <a href="{{ url_for('main.view_cours', cours_id=c.id) }}" class="text-decoration-none d-flex align-items-center justify-content-center card-header" style="background-color: {{ c.fil_couleur if c.fil_conducteur_id else '#f2f2f2' }}; color: {{ 'white' if c.fil_conducteur_id else 'black' }}; min-height: 3rem; text-align: center; word-wrap: break-word; white-space: break-spaces; overflow: hidden;">
+                    <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}" class="text-decoration-none d-flex align-items-center justify-content-center card-header" style="background-color: {{ c.fil_couleur if c.fil_conducteur_id else '#f2f2f2' }}; color: {{ 'white' if c.fil_conducteur_id else 'black' }}; min-height: 3rem; text-align: center; word-wrap: break-word; white-space: break-spaces; overflow: hidden;">
                       <span><strong>{{ c.code }}</strong> - {{ c.nom }}</span>
                     </a>
                     <div class="card-body p-2 flex-grow-1">
@@ -58,7 +58,7 @@
                       <p><strong>Compétences :</strong>
                         {% if competencies_codes[c.id] %}
                           {% for code in competencies_codes[c.id] %}
-                            <a href="{{ url_for('main.view_competence_by_code', competence_code=code) }}" class="badge bg-primary text-white">{{ code }}</a>
+                            <a href="{{ url_for('programme.view_competence_by_code', competence_code=code) }}" class="badge bg-primary text-white">{{ code }}</a>
                           {% endfor %}
                         {% else %}
                           <em>Aucune</em>
@@ -83,7 +83,7 @@
                     </div>
                     <!-- Bouton Plan-Cadre -->
                     <div class="card-footer mt-auto text-center">
-                      <a href="{{ url_for('main.view_or_add_plan_cadre', cours_id=c.id) }}" class="btn btn-sm btn-info">
+                      <a href="{{ url_for('cours.view_or_add_plan_cadre', cours_id=c.id) }}" class="btn btn-sm btn-info">
                         Plan-Cadre
                       </a>
                     </div>

@@ -11,14 +11,20 @@ from wtforms import (
     TextAreaField,
     FieldList,
     Form,
-    BooleanField
+    BooleanField,
+    PasswordField
 )
 from wtforms import ColorField, SubmitField
-from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional
+from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional, Length, EqualTo
 from wtforms.widgets import ListWidget, CheckboxInput
 from flask_ckeditor import CKEditorField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
+class LoginForm(FlaskForm):
+    username = StringField('Nom d\'utilisateur', validators=[DataRequired(), Length(min=3, max=25)])
+    password = PasswordField('Mot de passe', validators=[DataRequired(), Length(min=8)])
+    submit = SubmitField('Se connecter')
+    
 class PlanCadreCompetenceCertifieeForm(Form):
     texte = StringField("Texte", validators=[DataRequired()])
     texte_description = TextAreaField("Description", validators=[Optional()])
@@ -55,7 +61,6 @@ class CompetenceForm(FlaskForm):
     criteria_de_performance = CKEditorField('Critères de Performance', validators=[DataRequired()])
     contexte_de_realisation = CKEditorField('Contexte de Réalisation', validators=[DataRequired()])
     submit = SubmitField('Ajouter/Mettre à Jour Compétence')
-
 class ElementCompetenceForm(FlaskForm):
     competence = SelectField('Compétence', coerce=int, validators=[DataRequired()])
     nom = StringField('Nom', validators=[DataRequired()])
@@ -158,8 +163,21 @@ class GenerationSettingForm(FlaskForm):
     class Meta:
         csrf = False  # Assurez-vous que le CSRF est activé
 
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Mot de passe actuel', validators=[DataRequired()])
+    new_password = PasswordField('Nouveau mot de passe', validators=[
+        DataRequired(),
+        Length(min=8, message='Le mot de passe doit contenir au moins 8 caractères.')
+    ])
+    confirm_password = PasswordField('Confirmer le nouveau mot de passe', validators=[
+        DataRequired(),
+        EqualTo('new_password', message='Les mots de passe doivent correspondre.')
+    ])
+    submit = SubmitField('Changer de mot de passe')
+
 class GlobalGenerationSettingsForm(FlaskForm):
     sections = FieldList(FormField(GenerationSettingForm), min_entries=21, max_entries=21)
+    openai_key = StringField('Clé OpenAI', validators=[Optional()])
     submit = SubmitField('Enregistrer les Paramètres')
 
 class CapaciteForm(FlaskForm):

@@ -10,18 +10,21 @@
     </div>
 
     <!-- Boutons d'Action Supplémentaires -->
-    <div class="d-flex gap-2 mb-5">
-        <a href="{{ url_for('plan_cadre.edit_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary">Éditer le plan-cadre</a>
-        <a href="{{ url_for('main.view_cours', cours_id=plan.cours_id) }}" class="btn btn-secondary">Retour au cours</a>
-    </div>
-
-    <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post">
-        {{ import_form.hidden_tag() }}  <!-- CSRF token -->
-        <button type="submit" class="btn btn-primary">Générer du Contenu Automatiquement</button>
-    </form>
-    <a href="{{ url_for('settings.edit_global_generation_settings') }}" class="btn btn-secondary">
-        Éditer les Paramètres de Génération Automatique (Globaux)
+<div class="d-flex gap-3 mb-5 align-items-center">
+    <a href="{{ url_for('plan_cadre.edit_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary d-flex align-items-center">
+        <i class="bi bi-pencil-square me-2"></i> Éditer le plan-cadre
     </a>
+    <a href="{{ url_for('cours.view_cours', cours_id=plan.cours_id) }}" class="btn btn-secondary d-flex align-items-center">
+        <i class="bi bi-arrow-left-circle me-2"></i> Retour au cours
+    </a>
+    <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post" class="d-flex align-items-center">
+        {{ import_form.hidden_tag() }}  <!-- CSRF token -->
+        <button type="submit" class="btn btn-success d-flex align-items-center">
+            <i class="bi bi-box-arrow-up-right me-2"></i> Générer du Contenu Automatiquement
+        </button>
+    </form>
+</div>
+
 
     <!-- Accordion Principal sans Restriction d'Ouverture -->
     <div class="accordion" id="planCadreAccordion">
@@ -284,7 +287,7 @@
 
                                             <!-- Boutons d'Action -->
                                             <div>
-                                                <a href="{{ url_for('main.edit_capacite', cours_id=plan.cours_id, plan_id=plan.id, capacite_id=cap['capacite']['id']) }}" class="btn btn-primary btn-sm">Éditer</a>
+                                                <a href="{{ url_for('cours.edit_capacite', cours_id=plan.cours_id, plan_id=plan.id, capacite_id=cap['capacite']['id']) }}" class="btn btn-primary btn-sm">Éditer</a>
                                                 <form method="POST" action="{{ url_for('plan_cadre.delete_capacite', plan_id=plan.id, capacite_id=cap['capacite']['id']) }}" style="display:inline;">
                                                     {{ delete_forms_capacites[cap['capacite']['id']].hidden_tag() }}
                                                     <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
@@ -335,10 +338,10 @@
                 <div class="accordion-body">
                     <div class="d-flex flex-wrap gap-2 mb-3">
                         <a href="{{ url_for('plan_cadre.export_plan_cadre', plan_id=plan_id) }}" class="btn btn-primary">Exporter en DOCX</a>
-                        <a href="{{ url_for('main.export_plan_cadre_json', cours_id=cours_id, plan_id=plan_id) }}" class="btn btn-secondary">Exporter en JSON</a>
+                        <a href="{{ url_for('cours.export_plan_cadre_json', cours_id=cours_id, plan_id=plan_id) }}" class="btn btn-secondary">Exporter en JSON</a>
                     </div>
                     <hr>
-                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('main.import_plan_cadre_json', cours_id=cours_id, plan_id=plan_id) }}">
+                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('cours.import_plan_cadre_json', cours_id=cours_id, plan_id=plan_id) }}">
                         {{ import_form.hidden_tag() }}
                         <div class="mb-3">
                             {{ import_form.json_file.label(class="form-label") }}
@@ -359,7 +362,7 @@
     <!-- Boutons d'Action Supplémentaires (répétition si nécessaire) -->
     <div class="d-flex gap-2 mt-5">
         <a href="{{ url_for('plan_cadre.edit_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary">Éditer le plan-cadre</a>
-        <a href="{{ url_for('main.view_cours', cours_id=plan.cours_id) }}" class="btn btn-secondary">Retour au cours</a>
+        <a href="{{ url_for('cours.view_cours', cours_id=plan.cours_id) }}" class="btn btn-secondary">Retour au cours</a>
     </div>
 </div>
 

@@ -4,12 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>EDxo - Gestion pédagogique</title>
-    <!-- Mise à jour vers Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    {% block head %}
-      {{ ckeditor.load() }}
-      {{ ckeditor.config(name='ckeditor') }}
-    {% endblock %}
+    {% block head %}{% endblock %}
   </head>
   <body>
     <div class="container mt-4">
@@ -21,15 +17,16 @@
         </div>
         <div>
           {% if current_user.is_authenticated %}
-            <span>Connecté en tant que {{ current_user.id }}</span>
+            <span>Connecté en tant que {{ current_user.username }}</span>
             <a href="{{ url_for('main.logout') }}" class="btn btn-outline-danger btn-sm ms-2">Se déconnecter</a>
+            <a href="{{ url_for('settings.parametres') }}" class="btn btn-outline-secondary btn-sm ms-2">Paramètres</a>
           {% else %}
             <a href="{{ url_for('main.login') }}" class="btn btn-outline-primary btn-sm">Se connecter</a>
           {% endif %}
         </div>
       </div>
     </div>
-    
+
     <div class="container">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -45,10 +42,7 @@
       {% block content %}{% endblock %}
     </div>
 
-    <!-- Inclusion de Bootstrap 5 JS Bundle avec Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    {% block scripts %}
-      {{ ckeditor.config(name='ckeditor') }}
-    {% endblock %}
+    {% block scripts %}{% endblock %}
   </body>
 </html>

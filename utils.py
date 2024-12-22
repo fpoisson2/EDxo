@@ -4,7 +4,8 @@ from jinja2 import Template
 from bs4 import BeautifulSoup
 from docxtpl import DocxTemplate
 from io import BytesIO
-
+import os
+from dotenv import load_dotenv
 
 DATABASE = 'programme.db'
 
@@ -341,10 +342,10 @@ def replace_tags_jinja2(text, plan_cadre, extra_context=None):
         replaced_text = template.render(**context)
         return replaced_text
     except KeyError as e:
-        logger.error(f"Clé manquante dans le contexte lors du rendu du template : {e}")
+        print("Clé manquante dans le contexte lors du rendu du template")
         raise
     except Exception as e:
-        logger.error(f"Erreur lors du rendu du template Jinja2 : {e}")
+        print("Erreur lors du rendu du template Jinja2")
         raise
 
 def process_ai_prompt(prompt, role):
@@ -364,7 +365,7 @@ def process_ai_prompt(prompt, role):
         return response.choices[0].message.content.strip()
     except Exception as e:
         # Log the exception
-        logger.error(f"Error generating AI content: {e}")
+        print("Error generating AI content")
         return None
 
 import os
