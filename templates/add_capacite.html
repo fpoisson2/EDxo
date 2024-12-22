@@ -41,7 +41,7 @@
       
       <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
       <!-- Utiliser 'cours_id' et 'plan_id' pour construire l'URL correctement -->
-      <a href="{{ url_for('view_plan_cadre', cours_id=cours_id, plan_id=plan_id) }}" class="btn btn-secondary">Annuler</a>
+      <a href="{{ url_for('main.view_plan_cadre', cours_id=cours_id, plan_id=plan_id) }}" class="btn btn-secondary">Annuler</a>
     </form>
   </div>
 {% endblock %}

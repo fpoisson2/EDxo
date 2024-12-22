@@ -5,13 +5,13 @@
   <ul class="list-group">
     {% for programme in programmes %}
       <li class="list-group-item d-flex justify-content-between align-items-center">
-        <a href="{{ url_for('view_programme', programme_id=programme.id) }}">{{ programme.nom }}</a>
+        <a href="{{ url_for('main.view_programme', programme_id=programme.id) }}">{{ programme.nom }}</a>
       </li>
     {% else %}
       <li class="list-group-item">Aucun programme trouvé.</li>
     {% endfor %}
   </ul>
   <nav class="mb-4">
-    <a href="{{ url_for('add_programme') }}" class="btn btn-success">Ajouter Programme</a>
+    <a href="{{ url_for('main.add_programme') }}" class="btn btn-success">Ajouter Programme</a>
   </nav>
 {% endblock %}

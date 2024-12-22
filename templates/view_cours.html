@@ -7,8 +7,8 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1>{{ cours.code }} - {{ cours.nom }}</h1>
       <div>
-        <a href="{{ url_for('edit_cours', cours_id=cours.id) }}" class="btn btn-primary me-2">Éditer le cours</a>
-        <a href="{{ url_for('view_programme', programme_id=cours.programme_id) }}" class="btn btn-secondary">Retour au programme</a>
+        <a href="{{ url_for('main.edit_cours', cours_id=cours.id) }}" class="btn btn-primary me-2">Éditer le cours</a>
+        <a href="{{ url_for('main.view_programme', programme_id=cours.programme_id) }}" class="btn btn-secondary">Retour au programme</a>
       </div>
     </div>
 
@@ -31,7 +31,7 @@
           {% for competence_id, competence_data in elements_competence_par_cours.items() %}
             <li class="list-group-item">
               <strong>
-                <a href="{{ url_for('view_competence', competence_id=competence_id) }}" class="text-decoration-none">
+                <a href="{{ url_for('main.view_competence', competence_id=competence_id) }}" class="text-decoration-none">
                   {{ competence_data.nom }} ({{ competence_data.code }})
                 </a>
               </strong>
@@ -55,7 +55,7 @@
         <ul class="list-group">
           {% for pre in prealables_details %}
             <li class="list-group-item">
-              <a href="{{ url_for('view_cours', cours_id=pre.id) }}" class="text-decoration-none">{{ pre.nom }}</a> (Code: {{ pre.code }})
+              <a href="{{ url_for('main.view_cours', cours_id=pre.id) }}" class="text-decoration-none">{{ pre.nom }}</a> (Code: {{ pre.code }})
             </li>
           {% endfor %}
         </ul>
@@ -71,7 +71,7 @@
         <ul class="list-group">
           {% for core in corequisites_details %}
             <li class="list-group-item">
-              <a href="{{ url_for('view_cours', cours_id=core.id) }}" class="text-decoration-none">{{ core.nom }}</a> (Code: {{ core.code }})
+              <a href="{{ url_for('main.view_cours', cours_id=core.id) }}" class="text-decoration-none">{{ core.nom }}</a> (Code: {{ core.code }})
             </li>
           {% endfor %}
         </ul>
@@ -85,7 +85,7 @@
         <!-- Si au moins un plan-cadre existe, afficher le titre comme lien vers le premier plan-cadre -->
         <h3>
           {% if plans_cadres[0] %}
-            <a href="{{ url_for('view_plan_cadre', cours_id=cours.id, plan_id=plans_cadres[0].id) }}" class="text-decoration-none">
+            <a href="{{ url_for('main.view_plan_cadre', cours_id=cours.id, plan_id=plans_cadres[0].id) }}" class="text-decoration-none">
               Plan-cadre
             </a>
           {% else %}
@@ -95,14 +95,14 @@
       {% endif %}
       <!-- Bouton pour Ajouter un Plan Cadre -->
       {% if not plans_cadres %}
-        <a href="{{ url_for('add_plan_cadre', cours_id=cours.id) }}" class="btn btn-success">Ajouter un Plan Cadre</a>
+        <a href="{{ url_for('main.add_plan_cadre', cours_id=cours.id) }}" class="btn btn-success">Ajouter un Plan Cadre</a>
       {% endif %}
     </div>
     
     <!-- Boutons d'Actions Supplémentaires -->
     <div class="mt-4">
-      <a href="{{ url_for('edit_cours', cours_id=cours.id) }}" class="btn btn-primary me-2">Éditer le Cours</a>
-      <a href="{{ url_for('view_programme', programme_id=cours.programme_id) }}" class="btn btn-secondary">Retour au programme</a>
+      <a href="{{ url_for('main.edit_cours', cours_id=cours.id) }}" class="btn btn-primary me-2">Éditer le Cours</a>
+      <a href="{{ url_for('main.view_programme', programme_id=cours.programme_id) }}" class="btn btn-secondary">Retour au programme</a>
     </div>
   </div>
 {% endblock %}

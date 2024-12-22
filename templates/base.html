@@ -15,16 +15,16 @@
     <div class="container mt-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <a href="{{ url_for('index') }}">
+          <a href="{{ url_for('main.index') }}">
             <img src="{{ url_for('static', filename='assets/EDxologo.png') }}" alt="EDxo Logo" style="max-width: 200px; height: auto;">
           </a>
         </div>
         <div>
           {% if current_user.is_authenticated %}
             <span>Connecté en tant que {{ current_user.id }}</span>
-            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm ms-2">Se déconnecter</a>
+            <a href="{{ url_for('main.logout') }}" class="btn btn-outline-danger btn-sm ms-2">Se déconnecter</a>
           {% else %}
-            <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-sm">Se connecter</a>
+            <a href="{{ url_for('main.login') }}" class="btn btn-outline-primary btn-sm">Se connecter</a>
           {% endif %}
         </div>
       </div>
