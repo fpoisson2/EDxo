@@ -42,7 +42,7 @@
             {% endif %}
             
             <!-- Lien pour éditer l'élément de compétence -->
-            <a href="{{ url_for('edit_element_competence', element_id=element_id) }}" class="btn btn-sm btn-warning">Modifier Élément</a>
+            <a href="{{ url_for('main.edit_element_competence', element_id=element_id) }}" class="btn btn-sm btn-warning">Modifier Élément</a>
             
           </li>
         {% endfor %}
@@ -54,15 +54,15 @@
     <hr>
     
     <!-- Boutons d'Action -->
-    <a href="{{ url_for('edit_competence', competence_id=competence.id) }}" class="btn btn-sm btn-warning">Modifier la Compétence</a>
+    <a href="{{ url_for('main.edit_competence', competence_id=competence.id) }}" class="btn btn-sm btn-warning">Modifier la Compétence</a>
     
     <!-- Formulaire de Suppression de la Compétence -->
-    <form action="{{ url_for('delete_competence', competence_id=competence.id) }}" method="POST" style="display: inline;">
+    <form action="{{ url_for('main.delete_competence', competence_id=competence.id) }}" method="POST" style="display: inline;">
       {{ delete_form.hidden_tag() }}
       <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette compétence?');">Supprimer la Compétence</button>
     </form>
     
     <!-- Bouton pour Ajouter un Élément de Compétence -->
-    <a href="{{ url_for('add_element_competence') }}" class="btn btn-sm btn-primary">Ajouter Élément de Compétence</a>
+    <a href="{{ url_for('main.add_element_competence') }}" class="btn btn-sm btn-primary">Ajouter Élément de Compétence</a>
   </div>
 {% endblock %}
