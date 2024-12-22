@@ -6,6 +6,7 @@ from utils import get_db_connection
 from auth import login_manager
 from routes import routes
 from routes.settings import settings_bp
+from routes.plan_cadre import plan_cadre_bp
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -27,6 +28,7 @@ if not OPENAI_API_KEY:
 # Import and register routes
 app.register_blueprint(routes.main)
 app.register_blueprint(settings_bp)
+app.register_blueprint(plan_cadre_bp)
 
 # Run the application
 if __name__ == '__main__':
