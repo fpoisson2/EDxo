@@ -54,10 +54,10 @@
     <hr>
     
     <!-- Boutons d'Action -->
-    <a href="{{ url_for('main.edit_competence', competence_id=competence.id) }}" class="btn btn-sm btn-warning">Modifier la Compétence</a>
+    <a href="{{ url_for('programme.edit_competence', competence_id=competence.id) }}" class="btn btn-sm btn-warning">Modifier la Compétence</a>
     
     <!-- Formulaire de Suppression de la Compétence -->
-    <form action="{{ url_for('main.delete_competence', competence_id=competence.id) }}" method="POST" style="display: inline;">
+    <form action="{{ url_for('programme.delete_competence', competence_id=competence.id) }}" method="POST" style="display: inline;">
       {{ delete_form.hidden_tag() }}
       <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette compétence?');">Supprimer la Compétence</button>
     </form>
