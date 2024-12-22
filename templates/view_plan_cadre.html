@@ -19,7 +19,7 @@
         {{ import_form.hidden_tag() }}  <!-- CSRF token -->
         <button type="submit" class="btn btn-primary">Générer du Contenu Automatiquement</button>
     </form>
-    <a href="{{ url_for('main.edit_global_generation_settings') }}" class="btn btn-secondary">
+    <a href="{{ url_for('settings.edit_global_generation_settings') }}" class="btn btn-secondary">
         Éditer les Paramètres de Génération Automatique (Globaux)
     </a>
 

@@ -44,105 +44,19 @@ import bleach
 from docxtpl import DocxTemplate
 from io import BytesIO 
 from werkzeug.security import generate_password_hash, check_password_hash
-from constants import SECTIONS  # Importer la liste des sections
 from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_list, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template
 from models import User
+
 
 main = Blueprint('main', __name__)
 
 logger = logging.getLogger(__name__)
 
-@main.route('/test')
-def test_route():
-    return "Test route is working!"
+# Define the markdown filter
+@main.app_template_filter('markdown')
+def markdown_filter(text):
+    return markdown.markdown(text)
 
-@main.route('/settings/generation', methods=['GET', 'POST'])
-@login_required
-def edit_global_generation_settings():
-    form = GlobalGenerationSettingsForm()
-    conn = get_db_connection()
-
-    if request.method == 'GET':
-        # Récupérer les paramètres actuels
-        settings = conn.execute('SELECT * FROM GlobalGenerationSettings').fetchall()
-
-        # Assurez-vous que form.sections a exactement len(SECTIONS) entrées
-        current_entries = len(form.sections)
-        required_entries = len(SECTIONS)
-        print(f"Sections actuelles dans le formulaire: {current_entries}")
-        print(f"Sections requises: {required_entries}")
-
-        if current_entries < required_entries:
-            for _ in range(required_entries - current_entries):
-                form.sections.append_entry()
-            print(f"Ajouté {required_entries - current_entries} entrées supplémentaires au formulaire.")
-        elif current_entries > required_entries:
-            for _ in range(current_entries - required_entries):
-                form.sections.pop_entry()
-            print(f"Supprimé {current_entries - required_entries} entrées en trop du formulaire.")
-
-        # Remplir le formulaire avec les paramètres existants
-        for i, section in enumerate(SECTIONS):
-            setting = next((s for s in settings if s['section'] == section), None)
-            if setting:
-                form.sections[i].use_ai.data = bool(setting['use_ai'])
-                form.sections[i].text_content.data = setting['text_content']
-                print(f"Section '{section}' - use_ai: {setting['use_ai']}, text_content: {setting['text_content']}")
-            else:
-                # Si la section n'existe pas dans la base de données, définir des valeurs par défaut
-                form.sections[i].use_ai.data = False
-                form.sections[i].text_content.data = ''
-                print(f"Section '{section}' non trouvée dans la BD. Utilisation des valeurs par défaut.")
-
-
-
-    if form.validate_on_submit():
-        print("Formulaire validé avec succès.")
-        try:
-            for i, section in enumerate(SECTIONS):
-                use_ai = form.sections[i].use_ai.data
-                text_content = form.sections[i].text_content.data.strip()
-                print(f"Traitement de la section '{section}': use_ai={use_ai}, text_content='{text_content}'")
-
-                # Mettre à jour ou insérer les paramètres
-                existing = conn.execute('''
-                    SELECT id FROM GlobalGenerationSettings 
-                    WHERE section = ?
-                ''', (section,)).fetchone()
-                if existing:
-                    conn.execute('''
-                        UPDATE GlobalGenerationSettings
-                        SET use_ai = ?, text_content = ?
-                        WHERE id = ?
-                    ''', (use_ai, text_content, existing['id']))
-                    print(f"Mise à jour de la section '{section}' avec ID {existing['id']}.")
-                else:
-                    conn.execute('''
-                        INSERT INTO GlobalGenerationSettings (section, use_ai, text_content)
-                        VALUES (?, ?, ?)
-                    ''', (section, use_ai, text_content))
-                    print(f"Insertion de la nouvelle section '{section}'.")
-            conn.commit()
-            flash('Paramètres globaux de génération mis à jour avec succès!', 'success')
-            return redirect(url_for('main.edit_global_generation_settings'))
-        except sqlite3.Error as e:
-            conn.rollback()
-            print(f"Erreur lors de la mise à jour des paramètres: {e}")
-            flash(f'Erreur lors de la mise à jour des paramètres : {e}', 'danger')
-    else:
-        if request.method == 'POST':
-            print("Validation du formulaire échouée.")
-            # Déboguer les erreurs spécifiques des champs
-            for field_name, field in form._fields.items():
-                if field.errors:
-                    print(f"Erreurs dans le champ '{field_name}': {field.errors}")
-            flash('Validation du formulaire échouée. Veuillez vérifier vos entrées.', 'danger')
-
-    # Préparer la liste des sections avec leurs formulaires
-    sections_with_forms = list(zip(form.sections, SECTIONS))
-
-    conn.close()
-    return render_template('edit_global_generation_settings.html', form=form, sections_with_forms=sections_with_forms)
 
 @main.route('/plan_cadre/<int:plan_id>/generate_content', methods=['POST'])
 @login_required
