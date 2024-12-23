@@ -131,11 +131,14 @@ def view_programme(programme_id):
     # Créer des dictionnaires de formulaires de suppression pour les compétences et les cours
     delete_forms_competences = {competence['id']: DeleteForm(prefix=f"competence-{competence['id']}") for competence in competences}
     delete_forms_cours = {c['id']: DeleteForm(prefix=f"cours-{c['id']}") for c in cours}
-    
+
+    programmes = conn.execute('SELECT * FROM Programme').fetchall()
+
     conn.close()
     
     return render_template('view_programme.html', 
                            programme=programme, 
+                           programmes=programmes,
                            competences=competences, 
                            fil_conducteurs=fil_conducteurs, 
                            cours_par_session=cours_par_session,  # Groupement par session
