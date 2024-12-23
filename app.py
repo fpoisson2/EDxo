@@ -20,7 +20,7 @@ app = Flask(__name__)
 
 login_manager.init_app(app)
 
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')  # Fallback for development
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['WTF_CSRF_ENABLED'] = True
 app.config['CKEDITOR_PKG_TYPE'] = 'standard'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  
