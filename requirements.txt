@@ -1,2 +1,11 @@
 flask
 flask-wtf
+flask-ckeditor
+python-dotenv
+beautifulsoup4
+docxtpl
+flask-login
+flask-wtf
+openai
+markdown
+bleach
