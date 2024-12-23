@@ -35,6 +35,7 @@ import logging
 from collections import defaultdict
 from openai import OpenAI
 from openai import OpenAIError
+from decorator import role_required, roles_required
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import os
@@ -150,7 +151,7 @@ def view_programme(programme_id):
                            )
 
 @programme_bp.route('/competence/<int:competence_id>/edit', methods=['GET', 'POST'])
-@login_required
+@role_required('admin')
 def edit_competence(competence_id):
     form = CompetenceForm()
     conn = get_db_connection()
@@ -196,7 +197,7 @@ def edit_competence(competence_id):
     return render_template('edit_competence.html', form=form, competence=competence)
 
 @programme_bp.route('/competence/<int:competence_id>/delete', methods=['POST'])
-@login_required
+@role_required('admin')
 def delete_competence(competence_id):
     # Instancier le formulaire avec le préfixe correspondant
     delete_form = DeleteForm(prefix=f"competence-{competence_id}")
@@ -236,7 +237,7 @@ def delete_competence(competence_id):
 
 
 @programme_bp.route('/competence/code/<string:competence_code>')
-@login_required
+@role_required('admin')
 def view_competence_by_code(competence_code):
     conn = get_db_connection()
     competence = conn.execute('SELECT id FROM Competence WHERE code = ?', (competence_code,)).fetchone()

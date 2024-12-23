@@ -34,6 +34,7 @@ from flask_ckeditor import CKEditor
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import sqlite3
 import json
+from decorator import role_required, roles_required
 import logging
 from collections import defaultdict
 from openai import OpenAI
@@ -94,7 +95,7 @@ def logout():
     return redirect(url_for('main.login'))
 
 @main.route('/manage_users', methods=['GET', 'POST'])
-@login_required
+@role_required('admin')
 def manage_users():
     if current_user.role != 'admin':  # Vérifiez que seul l'admin a accès
         flash('Accès interdit.', 'danger')
@@ -196,7 +197,7 @@ def index():
     return render_template('index.html', programmes=programmes)
 
 @main.route('/add_programme', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_programme():
     form = ProgrammeForm()
     if form.validate_on_submit():
@@ -211,7 +212,7 @@ def add_programme():
 
 # --------------------- Competence Routes ---------------------
 @main.route('/add_competence', methods=['GET', 'POST'])
-@login_required
+@role_required('admin')
 def add_competence():
     form = CompetenceForm()
     conn = get_db_connection()
@@ -267,7 +268,7 @@ def add_competence():
 # --------------------- ElementCompetence Routes ---------------------
 
 @main.route('/add_element_competence', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_element_competence():
     form = ElementCompetenceForm()
     conn = get_db_connection()
@@ -303,7 +304,7 @@ def add_element_competence():
 
 
 @main.route('/add_fil_conducteur', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_fil_conducteur():
     form = FilConducteurForm()
     conn = get_db_connection()
@@ -328,7 +329,7 @@ def add_fil_conducteur():
 
 
 @main.route('/add_cours', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_cours():
     form = CoursForm()
     conn = get_db_connection()
@@ -406,7 +407,7 @@ def add_cours():
 # --------------------- CoursPrealable Routes ---------------------
 
 @main.route('/add_cours_prealable', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_cours_prealable():
     form = CoursPrealableForm()
     conn = get_db_connection()
@@ -433,7 +434,7 @@ def add_cours_prealable():
 # --------------------- CoursCorequis Routes ---------------------
 
 @main.route('/add_cours_corequis', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_cours_corequis():
     form = CoursCorequisForm()
     conn = get_db_connection()
@@ -459,7 +460,7 @@ def add_cours_corequis():
 # --------------------- CompetenceParCours Routes ---------------------
 
 @main.route('/add_competence_par_cours', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_competence_par_cours():
     form = CompetenceParCoursForm()
     conn = get_db_connection()
@@ -488,7 +489,7 @@ def add_competence_par_cours():
 # --------------------- ElementCompetenceParCours Routes ---------------------
 
 @main.route('/add_element_competence_par_cours', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_element_competence_par_cours():
     form = ElementCompetenceParCoursForm()
     conn = get_db_connection()
@@ -519,7 +520,7 @@ def add_element_competence_par_cours():
 
 
 @main.route('/element_competence/<int:element_id>/edit', methods=['GET', 'POST'])
-@login_required
+@role_required('admin')
 def edit_element_competence(element_id):
     conn = get_db_connection()
     element = conn.execute('SELECT * FROM ElementCompetence WHERE id = ?', (element_id,)).fetchone()
@@ -576,7 +577,7 @@ def edit_element_competence(element_id):
     return render_template('edit_element_competence.html', form=form)
 
 @main.route('/edit_cours/<int:cours_id>', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def edit_cours(cours_id):
     conn = get_db_connection()
     cours = conn.execute('SELECT * FROM Cours WHERE id = ?', (cours_id,)).fetchone()

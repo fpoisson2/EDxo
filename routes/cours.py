@@ -36,6 +36,7 @@ from collections import defaultdict
 from openai import OpenAI
 from openai import OpenAIError
 from dotenv import load_dotenv
+from decorator import role_required, roles_required
 from bs4 import BeautifulSoup
 import os
 import markdown
@@ -52,7 +53,7 @@ cours_bp = Blueprint('cours', __name__, url_prefix='/cours')
 
 
 @cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>/import_json', methods=['POST'])
-@login_required
+@role_required('admin')
 def import_plan_cadre_json(cours_id, plan_id):
     form = ImportPlanCadreForm()
     if form.validate_on_submit():
@@ -609,7 +610,7 @@ def view_cours(cours_id):
 
 
 @cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>/capacite/<int:capacite_id>/edit', methods=['GET', 'POST'])
-@login_required
+@role_required('admin')
 def edit_capacite(cours_id, plan_id, capacite_id):
     form = CapaciteForm()
     conn = get_db_connection()
@@ -736,7 +737,7 @@ def edit_capacite(cours_id, plan_id, capacite_id):
 
 # Nouvelle Route pour Supprimer un Cours
 @cours_bp.route('/<int:cours_id>/delete', methods=['POST'])
-@login_required
+@role_required('admin')
 def delete_cours(cours_id):
     form = DeleteForm(prefix=f"cours-{cours_id}")
     
