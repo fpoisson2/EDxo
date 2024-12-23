@@ -1423,3 +1423,42 @@
 2024-12-22 22:52:00,601 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:00] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
 2024-12-22 22:52:00,612 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
 2024-12-22 22:52:03,631 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:03] "GET /plan_cadre/1/export HTTP/1.1" 200 -
+2024-12-22 22:52:27,608 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:27] "[32mGET /logout HTTP/1.1[0m" 302 -
+2024-12-22 22:52:27,618 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:27] "GET /login HTTP/1.1" 200 -
+2024-12-22 22:52:27,629 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:52:34,833 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:34] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-12-22 22:52:34,836 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:34] "GET / HTTP/1.1" 200 -
+2024-12-22 22:52:34,845 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:34] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:52:36,220 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:36] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 22:52:36,231 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:36] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:52:39,535 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:39] "GET /cours/4 HTTP/1.1" 200 -
+2024-12-22 22:52:39,547 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:39] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:52:42,185 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:42] "GET /edit_cours/4 HTTP/1.1" 200 -
+2024-12-22 22:52:42,193 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:42] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:52:45,512 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:45] "GET /cours/4/plan_cadre/8 HTTP/1.1" 200 -
+2024-12-22 22:52:45,520 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:45] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:52:51,282 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:51] "GET /settings/parametres HTTP/1.1" 200 -
+2024-12-22 22:52:51,296 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:52:52,379 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:52] "GET /settings/generation HTTP/1.1" 200 -
+2024-12-22 22:52:52,387 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:52] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:53:18,584 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/settings.py', reloading
+2024-12-22 22:53:18,701 - INFO -  * Restarting with stat
+2024-12-22 22:53:19,312 - WARNING -  * Debugger is active!
+2024-12-22 22:53:19,314 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 22:53:21,419 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:21] "GET /settings/generation HTTP/1.1" 200 -
+2024-12-22 22:53:21,429 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:21] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:53:23,078 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:23] "[32mGET /logout HTTP/1.1[0m" 302 -
+2024-12-22 22:53:23,090 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:23] "GET /login HTTP/1.1" 200 -
+2024-12-22 22:53:23,103 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:23] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:53:26,850 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:26] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-12-22 22:53:26,856 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:26] "GET / HTTP/1.1" 200 -
+2024-12-22 22:53:26,867 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:53:28,080 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:28] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 22:53:28,090 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:53:30,084 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:30] "GET /settings/parametres HTTP/1.1" 200 -
+2024-12-22 22:53:30,097 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:30] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:53:30,984 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:30] "[32mGET /settings/generation HTTP/1.1[0m" 302 -
+2024-12-22 22:53:30,989 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:30] "GET /settings/parametres HTTP/1.1" 200 -
+2024-12-22 22:53:31,001 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:53:32,100 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:32] "GET /change_password HTTP/1.1" 200 -
+2024-12-22 22:53:32,110 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
