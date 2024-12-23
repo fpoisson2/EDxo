@@ -272,8 +272,6 @@ def add_competence():
 
     return render_template('add_competence.html', form=form)
 
-
-
 # --------------------- ElementCompetence Routes ---------------------
 
 @main.route('/add_element_competence', methods=('GET', 'POST'))
