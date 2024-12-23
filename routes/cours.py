@@ -47,6 +47,7 @@ from io import BytesIO
 from werkzeug.security import generate_password_hash, check_password_hash
 from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_list, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template
 from models import User
+from flask_wtf.csrf import validate_csrf, CSRFError
 
 
 cours_bp = Blueprint('cours', __name__, url_prefix='/cours')
@@ -408,7 +409,96 @@ def view_plan_cadre(cours_id, plan_id):
     # On récupère d'abord le Plan Cadre en s'assurant qu'il correspond au cours_id
     plan = conn.execute('SELECT * FROM PlanCadre WHERE id = ? AND cours_id = ?', (plan_id, cours_id)).fetchone()
     cours = conn.execute('SELECT * FROM Cours WHERE id = ?', (cours_id,)).fetchone()
+    plans_cadres = conn.execute('SELECT * FROM PlanCadre WHERE cours_id = ?', (cours_id,)).fetchall()
+    delete_forms_plans = {plan['id']: DeleteForm(prefix=f"plan_cadre-{plan['id']}") for plan in plans_cadres}
     
+    # Instancier le formulaire de suppression pour ce cours
+    delete_form = DeleteForm(prefix=f"cours-{cours['id']}")
+
+   # Récupérer les détails du cours avec le nom du programme
+    cours = conn.execute('''
+        SELECT Cours.*, Programme.nom as programme_nom 
+        FROM Cours 
+        JOIN Programme ON Cours.programme_id = Programme.id 
+        WHERE Cours.id = ?
+    ''', (cours_id,)).fetchone()
+    
+    if not cours:
+        flash('Cours non trouvé.', 'danger')
+        conn.close()
+        return redirect(url_for('main.index'))
+    
+    # Récupérer les compétences développées
+    competences_developpees_from_cours = conn.execute('''
+        SELECT Competence.nom 
+        FROM CompetenceParCours
+        JOIN Competence ON CompetenceParCours.competence_developpee_id = Competence.id
+        WHERE CompetenceParCours.cours_id = ? AND CompetenceParCours.competence_developpee_id IS NOT NULL
+    ''', (cours_id,)).fetchall()
+    
+    # Récupérer les compétences atteintes
+    competences_atteintes = conn.execute('''
+        SELECT Competence.nom 
+        FROM CompetenceParCours
+        JOIN Competence ON CompetenceParCours.competence_atteinte_id = Competence.id
+        WHERE CompetenceParCours.cours_id = ? AND CompetenceParCours.competence_atteinte_id IS NOT NULL
+    ''', (cours_id,)).fetchall()
+    
+    elements_competence_par_cours = conn.execute('''
+        SELECT 
+            c.id AS competence_id,
+            ec.nom AS element_competence_nom, 
+            c.code AS competence_code,
+            c.nom AS competence_nom,
+            ecp.status
+        FROM ElementCompetenceParCours ecp
+        JOIN ElementCompetence ec ON ecp.element_competence_id = ec.id
+        JOIN Competence c ON ec.competence_id = c.id
+        WHERE ecp.cours_id = ?
+    ''', (cours_id,)).fetchall()
+
+    elements_competence_grouped = {}
+    for ec in elements_competence_par_cours:
+        competence_id = ec['competence_id']
+        competence_nom = ec['competence_nom']
+        if competence_id not in elements_competence_grouped:
+            elements_competence_grouped[competence_id] = {
+                'nom': competence_nom,
+                'code': ec['competence_code'],
+                'elements': []
+            }
+        elements_competence_grouped[competence_id]['elements'].append({
+            'element_competence_nom': ec['element_competence_nom'],
+            'status': ec['status']
+        })
+
+    # Récupérer les cours préalables
+    prealables = conn.execute('SELECT cours_prealable_id FROM CoursPrealable WHERE cours_id = ?', (cours_id,)).fetchall()
+    prealables_ids = [p['cours_prealable_id'] for p in prealables]
+    
+    prealables_details = []
+    if prealables_ids:
+        placeholders = ','.join(['?'] * len(prealables_ids))
+        prealables_details = conn.execute(f'''
+            SELECT id, nom, code 
+            FROM Cours 
+            WHERE id IN ({placeholders})
+        ''', prealables_ids).fetchall()
+    
+    # Récupérer les cours corequis
+    corequisites = conn.execute('SELECT cours_corequis_id FROM CoursCorequis WHERE cours_id = ?', (cours_id,)).fetchall()
+    corequisites_ids = [c['cours_corequis_id'] for c in corequisites]
+    
+    corequisites_details = []
+    if corequisites_ids:
+        placeholders = ','.join(['?'] * len(corequisites_ids))
+        corequisites_details = conn.execute(f'''
+            SELECT id, nom, code 
+            FROM Cours 
+            WHERE id IN ({placeholders})
+        ''', corequisites_ids).fetchall()
+
+
     if not plan:
         flash('Plan Cadre non trouvé pour ce cours.', 'danger')
         conn.close()
@@ -466,8 +556,43 @@ def view_plan_cadre(cours_id, plan_id):
         delete_forms_capacites=delete_forms_capacites,
         cours_id=cours_id,
         plan_id=plan_id,
-        import_form=import_form  # Passer le formulaire au template
+        import_form=import_form,
+                           plans_cadres=plans_cadres,
+                           competences_developpees_from_cours=competences_developpees_from_cours, 
+                           competences_atteintes=competences_atteintes,
+                           elements_competence_par_cours=elements_competence_grouped,
+                           prealables_details=prealables_details,
+                           corequisites_details=corequisites_details,
+                           delete_form=delete_form,
+                           delete_forms_plans=delete_forms_plans  # Passer le formulaire au template
     )
+
+@cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>/update_intro', methods=['POST'])
+@login_required
+def update_intro(cours_id, plan_id):
+    try:
+        # Validate CSRF token
+        csrf_token = request.headers.get('X-CSRFToken')
+        validate_csrf(csrf_token)
+
+        data = request.get_json()
+        new_intro = data.get('place_intro', '').strip()
+
+        if not new_intro:
+            return jsonify({'success': False, 'message': 'Le texte de l\'introduction ne peut pas être vide.'}), 400
+
+        conn = get_db_connection()
+        # Update the place_intro field
+        conn.execute('UPDATE PlanCadre SET place_intro = ? WHERE id = ? AND cours_id = ?', (new_intro, plan_id, cours_id))
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True}), 200
+    except CSRFError:
+        return jsonify({'success': False, 'message': 'CSRF token invalide.'}), 400
+    except Exception as e:
+        # Log the error as needed
+        return jsonify({'success': False, 'message': 'Une erreur est survenue.'}), 500
 
 @cours_bp.route('/<int:cours_id>/plan_cadre', methods=['GET'])
 @login_required
