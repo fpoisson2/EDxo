@@ -11,6 +11,7 @@ from routes.settings import settings_bp
 from routes.plan_cadre import plan_cadre_bp
 from flask_wtf import CSRFProtect
 
+
 # Initialize Flask application
 app = Flask(__name__)
 

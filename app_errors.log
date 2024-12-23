@@ -1237,3 +1237,189 @@
 2024-12-22 22:21:23,079 - INFO - 127.0.0.1 - - [22/Dec/2024 22:21:23] "[32mPOST /plan_cadre/8/generate_content HTTP/1.1[0m" 302 -
 2024-12-22 22:21:23,089 - INFO - 127.0.0.1 - - [22/Dec/2024 22:21:23] "GET /cours/4/plan_cadre/8 HTTP/1.1" 200 -
 2024-12-22 22:21:23,102 - INFO - 127.0.0.1 - - [22/Dec/2024 22:21:23] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:28:21,834 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/settings.py', reloading
+2024-12-22 22:28:21,925 - INFO -  * Restarting with stat
+2024-12-22 22:28:22,551 - WARNING -  * Debugger is active!
+2024-12-22 22:28:22,553 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 22:28:35,505 - INFO - 127.0.0.1 - - [22/Dec/2024 22:28:35] "[32mGET /login HTTP/1.1[0m" 302 -
+2024-12-22 22:28:35,517 - INFO - 127.0.0.1 - - [22/Dec/2024 22:28:35] "GET / HTTP/1.1" 200 -
+2024-12-22 22:28:35,533 - INFO - 127.0.0.1 - - [22/Dec/2024 22:28:35] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:28:36,565 - INFO - 127.0.0.1 - - [22/Dec/2024 22:28:36] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 22:28:36,575 - INFO - 127.0.0.1 - - [22/Dec/2024 22:28:36] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:28:37,878 - INFO - 127.0.0.1 - - [22/Dec/2024 22:28:37] "GET /cours/4 HTTP/1.1" 200 -
+2024-12-22 22:28:37,885 - INFO - 127.0.0.1 - - [22/Dec/2024 22:28:37] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:28:39,878 - INFO - 127.0.0.1 - - [22/Dec/2024 22:28:39] "GET /cours/4/plan_cadre/8 HTTP/1.1" 200 -
+2024-12-22 22:28:39,887 - INFO - 127.0.0.1 - - [22/Dec/2024 22:28:39] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:28:54,240 - INFO - 127.0.0.1 - - [22/Dec/2024 22:28:54] "[32mPOST /plan_cadre/8/generate_content HTTP/1.1[0m" 302 -
+2024-12-22 22:28:54,252 - INFO - 127.0.0.1 - - [22/Dec/2024 22:28:54] "GET /cours/4/plan_cadre/8 HTTP/1.1" 200 -
+2024-12-22 22:28:54,268 - INFO - 127.0.0.1 - - [22/Dec/2024 22:28:54] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:29:14,577 - INFO - 127.0.0.1 - - [22/Dec/2024 22:29:14] "GET / HTTP/1.1" 200 -
+2024-12-22 22:29:14,587 - INFO - 127.0.0.1 - - [22/Dec/2024 22:29:14] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:30:59,293 - INFO - 127.0.0.1 - - [22/Dec/2024 22:30:59] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 22:30:59,301 - INFO - 127.0.0.1 - - [22/Dec/2024 22:30:59] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:36:09,862 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/decorator.py', reloading
+2024-12-22 22:36:09,940 - INFO -  * Restarting with stat
+2024-12-22 22:36:10,549 - WARNING -  * Debugger is active!
+2024-12-22 22:36:10,551 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 22:36:35,806 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/decorator.py', reloading
+2024-12-22 22:36:35,892 - INFO -  * Restarting with stat
+2024-12-22 22:36:36,503 - WARNING -  * Debugger is active!
+2024-12-22 22:36:36,505 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 22:37:01,787 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 22:37:01,878 - INFO -  * Restarting with stat
+2024-12-22 22:42:16,258 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2024-12-22 22:42:16,259 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-22 22:42:16,259 - INFO -  * Restarting with stat
+2024-12-22 22:42:16,863 - WARNING -  * Debugger is active!
+2024-12-22 22:42:16,864 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 22:42:23,682 - INFO - 127.0.0.1 - - [22/Dec/2024 22:42:23] "[32mGET /login HTTP/1.1[0m" 302 -
+2024-12-22 22:42:23,693 - INFO - 127.0.0.1 - - [22/Dec/2024 22:42:23] "GET / HTTP/1.1" 200 -
+2024-12-22 22:42:23,704 - INFO - 127.0.0.1 - - [22/Dec/2024 22:42:23] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:42:47,160 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/settings.py', reloading
+2024-12-22 22:42:47,247 - INFO -  * Restarting with stat
+2024-12-22 22:43:25,590 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2024-12-22 22:43:25,591 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-22 22:43:25,591 - INFO -  * Restarting with stat
+2024-12-22 22:43:26,194 - WARNING -  * Debugger is active!
+2024-12-22 22:43:26,196 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 22:43:28,207 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:28] "[32mGET /logout HTTP/1.1[0m" 302 -
+2024-12-22 22:43:28,215 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:28] "GET /login HTTP/1.1" 200 -
+2024-12-22 22:43:28,234 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:43:33,061 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:33] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-12-22 22:43:33,065 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:33] "GET / HTTP/1.1" 200 -
+2024-12-22 22:43:33,075 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:33] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:43:35,513 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:35] "[32mGET /settings/parametres HTTP/1.1[0m" 302 -
+2024-12-22 22:43:35,517 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:35] "GET / HTTP/1.1" 200 -
+2024-12-22 22:43:35,533 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:35] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:43:36,756 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:36] "[32mGET /settings/parametres HTTP/1.1[0m" 302 -
+2024-12-22 22:43:36,759 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:36] "GET / HTTP/1.1" 200 -
+2024-12-22 22:43:36,769 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:36] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:43:37,543 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:37] "[32mGET /settings/parametres HTTP/1.1[0m" 302 -
+2024-12-22 22:43:37,547 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:37] "GET / HTTP/1.1" 200 -
+2024-12-22 22:43:37,557 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:37] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:43:38,892 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:38] "[32mGET /settings/parametres HTTP/1.1[0m" 302 -
+2024-12-22 22:43:38,895 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:38] "GET / HTTP/1.1" 200 -
+2024-12-22 22:43:38,908 - INFO - 127.0.0.1 - - [22/Dec/2024 22:43:38] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:43:48,426 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/settings.py', reloading
+2024-12-22 22:43:48,512 - INFO -  * Restarting with stat
+2024-12-22 22:43:49,118 - WARNING -  * Debugger is active!
+2024-12-22 22:43:49,120 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 22:43:52,159 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/settings.py', reloading
+2024-12-22 22:43:52,244 - INFO -  * Restarting with stat
+2024-12-22 22:43:52,862 - WARNING -  * Debugger is active!
+2024-12-22 22:43:52,864 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 22:44:21,140 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-22 22:44:21,226 - INFO -  * Restarting with stat
+2024-12-22 22:49:23,278 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2024-12-22 22:49:23,278 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-22 22:49:23,278 - INFO -  * Restarting with stat
+2024-12-22 22:49:23,879 - WARNING -  * Debugger is active!
+2024-12-22 22:49:23,881 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 22:49:24,588 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:24] "GET / HTTP/1.1" 200 -
+2024-12-22 22:49:24,600 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:24] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:49:26,266 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:26] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 22:49:26,274 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:49:28,193 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:28] "[32mGET /add_fil_conducteur HTTP/1.1[0m" 302 -
+2024-12-22 22:49:28,202 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:28] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 22:49:28,212 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:49:32,005 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:32] "[32mGET /cours/4/plan_cadre HTTP/1.1[0m" 302 -
+2024-12-22 22:49:32,029 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:32] "GET /cours/4/plan_cadre/8 HTTP/1.1" 200 -
+2024-12-22 22:49:32,039 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:49:33,905 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:33] "[32mGET /plan_cadre/8/edit HTTP/1.1[0m" 302 -
+2024-12-22 22:49:33,915 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:33] "GET /cours/4/plan_cadre/8 HTTP/1.1" 200 -
+2024-12-22 22:49:33,926 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:33] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:49:35,371 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:35] "[32mPOST /plan_cadre/8/generate_content HTTP/1.1[0m" 302 -
+2024-12-22 22:49:35,375 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:35] "GET /cours/4/plan_cadre/8 HTTP/1.1" 200 -
+2024-12-22 22:49:35,385 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:35] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:49:38,619 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:38] "[32mPOST /plan_cadre/8/generate_content HTTP/1.1[0m" 302 -
+2024-12-22 22:49:38,624 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:38] "GET /cours/4/plan_cadre/8 HTTP/1.1" 200 -
+2024-12-22 22:49:38,633 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:38] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:49:55,173 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:55] "[32mGET /plan_cadre/8/edit HTTP/1.1[0m" 302 -
+2024-12-22 22:49:55,184 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:55] "GET /cours/4/plan_cadre/8 HTTP/1.1" 200 -
+2024-12-22 22:49:55,199 - INFO - 127.0.0.1 - - [22/Dec/2024 22:49:55] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:07,695 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:07] "[32mPOST /cours/4/plan_cadre/8/import_json HTTP/1.1[0m" 302 -
+2024-12-22 22:50:07,702 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:07] "GET /cours/4/plan_cadre/8 HTTP/1.1" 200 -
+2024-12-22 22:50:07,710 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:07] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:14,111 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:14] "GET /cours/4 HTTP/1.1" 200 -
+2024-12-22 22:50:14,118 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:14] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:16,095 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:16] "GET /programme/competence/13 HTTP/1.1" 200 -
+2024-12-22 22:50:16,103 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:16] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:17,921 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:17] "[32mGET /element_competence/42/edit HTTP/1.1[0m" 302 -
+2024-12-22 22:50:17,931 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:17] "GET /programme/competence/13 HTTP/1.1" 200 -
+2024-12-22 22:50:17,942 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:17] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:20,522 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:20] "[32mGET /programme/competence/13/edit HTTP/1.1[0m" 302 -
+2024-12-22 22:50:20,531 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:20] "GET /programme/competence/13 HTTP/1.1" 200 -
+2024-12-22 22:50:20,540 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:20] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:24,682 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:24] "[32mGET /add_element_competence HTTP/1.1[0m" 302 -
+2024-12-22 22:50:24,691 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:24] "GET /programme/competence/13 HTTP/1.1" 200 -
+2024-12-22 22:50:24,702 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:24] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:29,013 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:29] "[32mPOST /programme/competence/13/delete HTTP/1.1[0m" 302 -
+2024-12-22 22:50:29,019 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:29] "GET /programme/competence/13 HTTP/1.1" 200 -
+2024-12-22 22:50:29,026 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:31,607 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:31] "GET /settings/parametres HTTP/1.1" 200 -
+2024-12-22 22:50:31,621 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:32,585 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:32] "GET /change_password HTTP/1.1" 200 -
+2024-12-22 22:50:32,595 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:33,384 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:33] "GET /settings/generation HTTP/1.1" 200 -
+2024-12-22 22:50:33,393 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:33] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:34,208 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:34] "[32mGET /manage_users HTTP/1.1[0m" 302 -
+2024-12-22 22:50:34,218 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:34] "GET /settings/generation HTTP/1.1" 200 -
+2024-12-22 22:50:34,230 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:34] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:37,935 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:37] "GET / HTTP/1.1" 200 -
+2024-12-22 22:50:37,947 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:37] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:39,112 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:39] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 22:50:39,121 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:39] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:42,575 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:42] "GET /cours/25 HTTP/1.1" 200 -
+2024-12-22 22:50:42,587 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:42] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:50:44,948 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:44] "[32mGET /cours/25/plan_cadre/add HTTP/1.1[0m" 302 -
+2024-12-22 22:50:44,954 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:44] "GET /cours/25 HTTP/1.1" 200 -
+2024-12-22 22:50:44,967 - INFO - 127.0.0.1 - - [22/Dec/2024 22:50:44] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:51:02,847 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/cours.py', reloading
+2024-12-22 22:51:02,935 - INFO -  * Restarting with stat
+2024-12-22 22:51:03,564 - WARNING -  * Debugger is active!
+2024-12-22 22:51:03,566 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 22:51:22,749 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/cours.py', reloading
+2024-12-22 22:51:22,834 - INFO -  * Restarting with stat
+2024-12-22 22:51:23,467 - WARNING -  * Debugger is active!
+2024-12-22 22:51:23,469 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 22:51:24,549 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:24] "GET /cours/25 HTTP/1.1" 200 -
+2024-12-22 22:51:24,562 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:24] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:51:26,650 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:26] "[32mGET /cours/25/plan_cadre/add HTTP/1.1[0m" 302 -
+2024-12-22 22:51:26,673 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:26] "GET /cours/25/plan_cadre/20 HTTP/1.1" 200 -
+2024-12-22 22:51:26,684 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:51:29,263 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:29] "[32mGET /plan_cadre/20/edit HTTP/1.1[0m" 302 -
+2024-12-22 22:51:29,270 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:29] "GET /cours/25/plan_cadre/20 HTTP/1.1" 200 -
+2024-12-22 22:51:29,280 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:51:31,171 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:31] "[32mPOST /plan_cadre/20/generate_content HTTP/1.1[0m" 302 -
+2024-12-22 22:51:31,178 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:31] "GET /cours/25/plan_cadre/20 HTTP/1.1" 200 -
+2024-12-22 22:51:31,188 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:51:32,097 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:32] "GET / HTTP/1.1" 200 -
+2024-12-22 22:51:32,111 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:51:34,317 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:34] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 22:51:34,324 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:34] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:51:38,266 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:38] "GET /cours/5 HTTP/1.1" 200 -
+2024-12-22 22:51:38,279 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:38] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:51:40,776 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:40] "GET /programme/competence/12 HTTP/1.1" 200 -
+2024-12-22 22:51:40,785 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:51:47,471 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:47] "GET / HTTP/1.1" 200 -
+2024-12-22 22:51:47,484 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:51:48,941 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:48] "[32mGET /add_programme HTTP/1.1[0m" 302 -
+2024-12-22 22:51:48,947 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:48] "GET / HTTP/1.1" 200 -
+2024-12-22 22:51:48,957 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:48] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:51:50,460 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:50] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 22:51:50,468 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:50] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:51:51,966 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:51] "GET /cours/1 HTTP/1.1" 200 -
+2024-12-22 22:51:51,979 - INFO - 127.0.0.1 - - [22/Dec/2024 22:51:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:52:00,590 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:00] "[32mGET /cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2024-12-22 22:52:00,601 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:00] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2024-12-22 22:52:00,612 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 22:52:03,631 - INFO - 127.0.0.1 - - [22/Dec/2024 22:52:03] "GET /plan_cadre/1/export HTTP/1.1" 200 -

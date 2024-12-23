@@ -2,6 +2,7 @@ from flask import Blueprint, request, render_template, flash, redirect, url_for
 from flask_login import login_required, current_user
 from constants import SECTIONS  # Importer la liste des sections
 import sqlite3
+from decorator import role_required, roles_required
 from forms import (
     GlobalGenerationSettingsForm
 )

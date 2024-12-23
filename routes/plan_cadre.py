@@ -40,6 +40,7 @@ from bs4 import BeautifulSoup
 import os
 import markdown
 from jinja2 import Template
+from decorator import role_required, roles_required
 import bleach
 from docxtpl import DocxTemplate
 from io import BytesIO 
@@ -55,7 +56,7 @@ logging.basicConfig(level=logging.ERROR, filename='app_errors.log', filemode='a'
 plan_cadre_bp = Blueprint('plan_cadre', __name__, url_prefix='/plan_cadre')
 
 @plan_cadre_bp.route('/<int:plan_id>/generate_content', methods=['POST'])
-@login_required
+@role_required('admin')
 def generate_plan_cadre_content(plan_id):
     conn = get_db_connection()
     plan = conn.execute('SELECT * FROM PlanCadre WHERE id = ?', (plan_id,)).fetchone()
@@ -303,7 +304,7 @@ def export_plan_cadre(plan_id):
     return send_file(docx_file, as_attachment=True, download_name=filename, mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 
 @plan_cadre_bp.route('/<int:plan_id>/edit', methods=['GET', 'POST'])
-@login_required
+@role_required('admin')
 def edit_plan_cadre(plan_id):
     form = PlanCadreForm()
     conn = get_db_connection()
@@ -502,7 +503,7 @@ def edit_plan_cadre(plan_id):
 
 # Route pour supprimer un Plan Cadre
 @plan_cadre_bp.route('/<int:plan_id>/delete', methods=['POST'])
-@login_required
+@role_required('admin')
 def delete_plan_cadre(plan_id):
     form = DeleteForm()
     if form.validate_on_submit():
@@ -528,139 +529,9 @@ def delete_plan_cadre(plan_id):
         flash('Erreur lors de la soumission du formulaire de suppression.', 'danger')
         return redirect(url_for('main.index'))
 
-# Route pour dupliquer un Plan Cadre
-@plan_cadre_bp.route('/<int:plan_id>/duplicate', methods=['GET', 'POST'])
-@login_required
-def duplicate_plan_cadre(plan_id):
-    form = DuplicatePlanCadreForm()
-    conn = get_db_connection()
-    
-    # Récupérer le plan à dupliquer
-    plan = conn.execute('SELECT * FROM PlanCadre WHERE id = ?', (plan_id,)).fetchone()
-    if not plan:
-        flash('Plan Cadre non trouvé.', 'danger')
-        conn.close()
-        return redirect(url_for('main.index'))
-    
-    # Récupérer les cours pour le choix de duplication (exclure le cours actuel)
-    cours_options = conn.execute('SELECT id, nom FROM Cours WHERE id != ?', (plan['cours_id'],)).fetchall()
-    form.new_cours_id.choices = [(c['id'], c['nom']) for c in cours_options]
-    
-    if form.validate_on_submit():
-        new_cours_id = form.new_cours_id.data
-        
-        # Vérifier qu'un Plan Cadre n'existe pas déjà pour le nouveau cours
-        existing_plan = conn.execute('SELECT * FROM PlanCadre WHERE cours_id = ?', (new_cours_id,)).fetchone()
-        if existing_plan:
-            flash('Un Plan Cadre existe déjà pour le cours sélectionné.', 'danger')
-            conn.close()
-            return redirect(url_for('main.duplicate_plan_cadre', plan_id=plan_id))
-        
-        try:
-            # Copier les données principales
-            conn.execute("""
-                INSERT INTO PlanCadre 
-                (cours_id, place_intro, objectif_terminal, structure_intro, structure_activites_theoriques, 
-                structure_activites_pratiques, structure_activites_prevues, eval_evaluation_sommative, 
-                eval_nature_evaluations_sommatives, eval_evaluation_de_la_langue, eval_evaluation_sommatives_apprentissages)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                new_cours_id, plan['place_intro'], plan['objectif_terminal'], plan['structure_intro'], 
-                plan['structure_activites_theoriques'], plan['structure_activites_pratiques'], 
-                plan['structure_activites_prevues'], plan['eval_evaluation_sommative'], 
-                plan['eval_nature_evaluations_sommatives'], plan['eval_evaluation_de_la_langue'], 
-                plan['eval_evaluation_sommatives_apprentissages']
-            ))
-            new_plan_id = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
-            
-            # Copier les compétences développées
-            competences = conn.execute('SELECT * FROM PlanCadreCompetencesDeveloppees WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-            for comp in competences:
-                conn.execute("""
-                    INSERT INTO PlanCadreCompetencesDeveloppees 
-                    (plan_cadre_id, texte) VALUES (?, ?)
-                """, (new_plan_id, comp['texte']))
-            
-            # Copier les objets cibles
-            objets = conn.execute('SELECT * FROM PlanCadreObjetsCibles WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-            for obj in objets:
-                conn.execute("""
-                    INSERT INTO PlanCadreObjetsCibles 
-                    (plan_cadre_id, texte) VALUES (?, ?)
-                """, (new_plan_id, obj['texte']))
-            
-            # Copier les cours reliés
-            cours_relies = conn.execute('SELECT * FROM PlanCadreCoursRelies WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-            for cr in cours_relies:
-                conn.execute("""
-                    INSERT INTO PlanCadreCoursRelies 
-                    (plan_cadre_id, texte) VALUES (?, ?)
-                """, (new_plan_id, cr['texte']))
-            
-            # Copier les cours préalables
-            cours_prealables = conn.execute('SELECT * FROM PlanCadreCoursPrealables WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-            for cp in cours_prealables:
-                conn.execute("""
-                    INSERT INTO PlanCadreCoursPrealables 
-                    (plan_cadre_id, texte) VALUES (?, ?)
-                """, (new_plan_id, cp['texte']))
-            
-            # Copier les capacités
-            capacites = conn.execute('SELECT * FROM PlanCadreCapacites WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-            for cap in capacites:
-                conn.execute("""
-                    INSERT INTO PlanCadreCapacites 
-                    (plan_cadre_id, capacite, description_capacite, ponderation_min, ponderation_max)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (new_plan_id, cap['capacite'], cap['description_capacite'], cap['ponderation_min'], cap['ponderation_max']))
-                new_cap_id = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
-                
-                # Copier les savoirs nécessaires
-                sav_necessaires = conn.execute('SELECT * FROM PlanCadreCapaciteSavoirsNecessaires WHERE capacite_id = ?', (cap['id'],)).fetchall()
-                for sav in sav_necessaires:
-                    conn.execute("""
-                        INSERT INTO PlanCadreCapaciteSavoirsNecessaires 
-                        (capacite_id, texte, cible, seuil_reussite) 
-                        VALUES (?, ?, ?, ?)
-                    """, (new_cap_id, sav['texte'], sav['cible'], sav['seuil_reussite']))
-                
-                # Copier les savoirs faire
-                sav_faire = conn.execute('SELECT * FROM PlanCadreCapaciteSavoirsFaire WHERE capacite_id = ?', (cap['id'],)).fetchall()
-                for sf in sav_faire:
-                    conn.execute("""
-                        INSERT INTO PlanCadreCapaciteSavoirsFaire 
-                        (capacite_id, texte, cible, seuil_reussite) 
-                        VALUES (?, ?, ?, ?)
-                    """, (new_cap_id, sf['texte'], sf['cible'], sf['seuil_reussite']))
-                
-                # Copier les moyens d'évaluation
-                moyens_eval = conn.execute('SELECT * FROM PlanCadreCapaciteMoyensEvaluation WHERE capacite_id = ?', (cap['id'],)).fetchall()
-                for me in moyens_eval:
-                    conn.execute("""
-                        INSERT INTO PlanCadreCapaciteMoyensEvaluation 
-                        (capacite_id, texte) VALUES (?, ?)
-                    """, (new_cap_id, me['texte']))
-            
-            # Copier le savoir-être
-            savoir_etre = conn.execute('SELECT * FROM PlanCadreSavoirEtre WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-            for se in savoir_etre:
-                conn.execute("""
-                    INSERT INTO PlanCadreSavoirEtre 
-                    (plan_cadre_id, texte) VALUES (?, ?)
-                """, (new_plan_id, se['texte']))
-            
-            conn.commit()
-            flash('Plan Cadre dupliqué avec succès!', 'success')
-            return redirect(url_for('cours_bp.view_cours', cours_id=new_cours_id))
-        except sqlite3.Error as e:
-            conn.rollback()
-            flash(f'Erreur lors de la duplication du Plan Cadre : {e}', 'danger')
-        finally:
-            conn.close()
-
 # Route pour ajouter une capacité au Plan Cadre
 @plan_cadre_bp.route('/<int:plan_id>/add_capacite', methods=['GET', 'POST'])
-@login_required
+@role_required('admin')
 def add_capacite(plan_id):
     form = CapaciteForm()
     conn = get_db_connection()
@@ -712,7 +583,7 @@ def add_capacite(plan_id):
 
 
 @plan_cadre_bp.route('/<int:plan_id>/capacite/<int:capacite_id>/delete', methods=['POST'])
-@login_required
+@role_required('admin')
 def delete_capacite(plan_id, capacite_id):
     # Utiliser le même préfixe que lors de la création du formulaire
     form = DeleteForm(prefix=f"capacite-{capacite_id}")
@@ -748,11 +619,3 @@ def delete_capacite(plan_id, capacite_id):
             return redirect(url_for('cours.view_plan_cadre', cours_id=plan['cours_id'], plan_id=plan_id))
         else:
             return redirect(url_for('main.index'))
-
-
-# Route pour dupliquer une capacité (optionnel)
-@plan_cadre_bp.route('/<int:plan_id>/capacite/<int:capacite_id>/duplicate', methods=['GET', 'POST'])
-@login_required
-def duplicate_capacite(plan_id, capacite_id):
-    # Implémenter la duplication de la capacité si nécessaire
-    pass
