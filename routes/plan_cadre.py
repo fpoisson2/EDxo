@@ -61,12 +61,11 @@ def generate_plan_cadre_content(plan_id):
     plan = conn.execute('SELECT * FROM PlanCadre WHERE id = ?', (plan_id,)).fetchone()
     
     # Retrieve the OpenAI API key from the database
-    openai_key_setting = conn.execute(
-        'SELECT openai_key FROM GlobalGenerationSettings LIMIT 1'
-    ).fetchone()
-    openai_key = openai_key_setting['openai_key']
+    user_id = current_user.id
+    user = conn.execute('SELECT openai_key FROM User WHERE id = ?', (user_id,)).fetchone()
+    openai_key = user['openai_key']
 
-    if openai_key_setting is None or not openai_key_setting['openai_key']:
+    if user is None or not user['openai_key']:
         flash(' Aucune clé OpenAI configurée.', 'danger')
         conn.close()
         return redirect(url_for('cours.view_plan_cadre', cours_id=plan['cours_id'], plan_id=plan_id))
