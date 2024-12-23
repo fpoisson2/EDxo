@@ -195,7 +195,15 @@ def index():
     conn = get_db_connection()
     programmes = conn.execute('SELECT * FROM Programme').fetchall()
     conn.close()
-    return render_template('index.html', programmes=programmes)
+    
+    if programmes:
+        # Sélectionner le premier programme comme défaut
+        default_programme_id = programmes[0]['id']  # Assurez-vous que 'id' est la clé correcte
+        return redirect(url_for('programme.view_programme', programme_id=default_programme_id))
+    else:
+        # Si aucun programme n'existe, rediriger vers la page d'ajout
+        flash('Aucun programme trouvé. Veuillez en ajouter un.', 'warning')
+        return redirect(url_for('main.add_programme'))
 
 @main.route('/add_programme', methods=('GET', 'POST'))
 @role_required('admin')
