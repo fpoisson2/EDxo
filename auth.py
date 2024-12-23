@@ -5,7 +5,7 @@ from models import User
 # Configure Flask-Login
 login_manager = LoginManager()
 login_manager.login_message = "Veuillez vous connecter pour accéder à cette page."
-login_manager.login_view = 'login'
+login_manager.login_view = 'main.login'
 
 @login_manager.user_loader
 def load_user(user_id):
