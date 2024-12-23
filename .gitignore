@@ -1,2 +1,3 @@
 *.pyc
 add_user.py
+app_errors.log
