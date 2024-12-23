@@ -9,3 +9,4 @@ flask-wtf
 openai
 markdown
 bleach
+gunicorn
