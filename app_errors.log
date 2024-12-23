@@ -1133,3 +1133,11 @@
 2024-12-22 21:46:40,408 - INFO - 127.0.0.1 - - [22/Dec/2024 21:46:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
 2024-12-22 21:46:49,087 - INFO - 127.0.0.1 - - [22/Dec/2024 21:46:49] "GET / HTTP/1.1" 200 -
 2024-12-22 21:46:49,098 - INFO - 127.0.0.1 - - [22/Dec/2024 21:46:49] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 21:59:08,749 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2024-12-22 21:59:08,749 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-22 21:59:08,749 - INFO -  * Restarting with stat
+2024-12-22 21:59:09,349 - WARNING -  * Debugger is active!
+2024-12-22 21:59:09,351 - INFO -  * Debugger PIN: 144-363-085
