@@ -17,7 +17,7 @@ def parametres():
     return render_template('parametres.html')
 
 @settings_bp.route('/generation', methods=['GET', 'POST'])
-@login_required
+@role_required('admin')
 def edit_global_generation_settings():
     form = GlobalGenerationSettingsForm()
     conn = get_db_connection()
