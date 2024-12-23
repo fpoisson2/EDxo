@@ -1468,3 +1468,229 @@
 2024-12-22 22:53:57,002 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:57] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
 2024-12-22 22:53:58,222 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:58] "GET / HTTP/1.1" 200 -
 2024-12-22 22:53:58,240 - INFO - 127.0.0.1 - - [22/Dec/2024 22:53:58] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:11,662 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:11] "[32mGET /login HTTP/1.1[0m" 302 -
+2024-12-22 23:11:11,665 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:11] "GET / HTTP/1.1" 200 -
+2024-12-22 23:11:11,673 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:11] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:13,769 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:13] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 23:11:13,776 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:13] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:15,940 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:15] "GET /cours/1 HTTP/1.1" 200 -
+2024-12-22 23:11:15,949 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:15] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:17,948 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:17] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2024-12-22 23:11:17,957 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:17] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:22,258 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:22] "[32mPOST /plan_cadre/1/generate_content HTTP/1.1[0m" 302 -
+2024-12-22 23:11:22,273 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:22] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2024-12-22 23:11:22,284 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:22] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:24,291 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:24] "[32mGET /logout HTTP/1.1[0m" 302 -
+2024-12-22 23:11:24,294 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:24] "GET /login HTTP/1.1" 200 -
+2024-12-22 23:11:24,302 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:24] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:32,535 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:32] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-12-22 23:11:32,538 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:32] "GET / HTTP/1.1" 200 -
+2024-12-22 23:11:32,549 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:34,034 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:34] "GET /settings/parametres HTTP/1.1" 200 -
+2024-12-22 23:11:34,044 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:34] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:35,228 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:35] "GET /change_password HTTP/1.1" 200 -
+2024-12-22 23:11:35,240 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:35] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:36,102 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:36] "GET /settings/generation HTTP/1.1" 200 -
+2024-12-22 23:11:36,113 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:36] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:38,587 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:38] "GET /manage_users HTTP/1.1" 200 -
+2024-12-22 23:11:38,597 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:38] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:42,637 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:42] "[32mGET /logout HTTP/1.1[0m" 302 -
+2024-12-22 23:11:42,641 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:42] "GET /login HTTP/1.1" 200 -
+2024-12-22 23:11:42,656 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:42] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:47,180 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:47] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-12-22 23:11:47,183 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:47] "GET / HTTP/1.1" 200 -
+2024-12-22 23:11:47,194 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:48,473 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:48] "GET /settings/parametres HTTP/1.1" 200 -
+2024-12-22 23:11:48,483 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:48] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:49,497 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:49] "[32mGET /settings/generation HTTP/1.1[0m" 302 -
+2024-12-22 23:11:49,500 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:49] "GET /settings/parametres HTTP/1.1" 200 -
+2024-12-22 23:11:49,508 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:49] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:56,428 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:56] "GET / HTTP/1.1" 200 -
+2024-12-22 23:11:56,437 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:56] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:11:57,674 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:57] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 23:11:57,681 - INFO - 127.0.0.1 - - [22/Dec/2024 23:11:57] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:12:00,749 - INFO - 127.0.0.1 - - [22/Dec/2024 23:12:00] "GET /cours/3 HTTP/1.1" 200 -
+2024-12-22 23:12:00,757 - INFO - 127.0.0.1 - - [22/Dec/2024 23:12:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:12:43,413 - INFO - 127.0.0.1 - - [22/Dec/2024 23:12:43] "[32mGET /cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2024-12-22 23:12:43,422 - INFO - 127.0.0.1 - - [22/Dec/2024 23:12:43] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2024-12-22 23:12:43,435 - INFO - 127.0.0.1 - - [22/Dec/2024 23:12:43] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:12:48,152 - INFO - 127.0.0.1 - - [22/Dec/2024 23:12:48] "GET /plan_cadre/1/export HTTP/1.1" 200 -
+2024-12-22 23:14:07,285 - INFO - 127.0.0.1 - - [22/Dec/2024 23:14:07] "[32mGET /cours/2/plan_cadre HTTP/1.1[0m" 302 -
+2024-12-22 23:14:07,290 - INFO - 127.0.0.1 - - [22/Dec/2024 23:14:07] "GET /cours/2/plan_cadre/2 HTTP/1.1" 200 -
+2024-12-22 23:14:07,301 - INFO - 127.0.0.1 - - [22/Dec/2024 23:14:07] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:18:58,498 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:18:58,598 - INFO -  * Restarting with stat
+2024-12-22 23:18:59,227 - WARNING -  * Debugger is active!
+2024-12-22 23:18:59,229 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:19:13,375 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:19:13,461 - INFO -  * Restarting with stat
+2024-12-22 23:19:14,084 - WARNING -  * Debugger is active!
+2024-12-22 23:19:14,086 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:20:14,882 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2024-12-22 23:20:14,882 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-22 23:20:14,882 - INFO -  * Restarting with stat
+2024-12-22 23:20:15,486 - WARNING -  * Debugger is active!
+2024-12-22 23:20:15,488 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:20:28,621 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:20:28,711 - INFO -  * Restarting with stat
+2024-12-22 23:20:29,323 - WARNING -  * Debugger is active!
+2024-12-22 23:20:29,325 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:20:34,608 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2024-12-22 23:20:34,608 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-22 23:20:34,608 - INFO -  * Restarting with stat
+2024-12-22 23:20:35,214 - WARNING -  * Debugger is active!
+2024-12-22 23:20:35,215 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:20:40,273 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:20:40,359 - INFO -  * Restarting with stat
+2024-12-22 23:20:40,964 - WARNING -  * Debugger is active!
+2024-12-22 23:20:40,966 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:20:56,143 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:20:56,248 - INFO -  * Restarting with stat
+2024-12-22 23:20:56,860 - WARNING -  * Debugger is active!
+2024-12-22 23:20:56,862 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:21:01,213 - INFO - 127.0.0.1 - - [22/Dec/2024 23:21:01] "[32mGET /programme/1 HTTP/1.1[0m" 302 -
+2024-12-22 23:21:01,231 - INFO - 127.0.0.1 - - [22/Dec/2024 23:21:01] "GET /login?next=/programme/1 HTTP/1.1" 200 -
+2024-12-22 23:21:01,241 - INFO - 127.0.0.1 - - [22/Dec/2024 23:21:01] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:21:09,178 - INFO - 127.0.0.1 - - [22/Dec/2024 23:21:09] "[32mPOST /login?next=/programme/1 HTTP/1.1[0m" 302 -
+2024-12-22 23:21:09,196 - INFO - 127.0.0.1 - - [22/Dec/2024 23:21:09] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 23:21:09,208 - INFO - 127.0.0.1 - - [22/Dec/2024 23:21:09] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-22 23:22:06,493 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:22:06,583 - INFO -  * Restarting with stat
+2024-12-22 23:22:17,429 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2024-12-22 23:22:17,429 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-22 23:22:17,430 - INFO -  * Restarting with stat
+2024-12-22 23:22:18,040 - WARNING -  * Debugger is active!
+2024-12-22 23:22:18,042 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:23:17,638 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:23:17,723 - INFO -  * Restarting with stat
+2024-12-22 23:23:18,356 - WARNING -  * Debugger is active!
+2024-12-22 23:23:18,358 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:23:38,572 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:23:38,658 - INFO -  * Restarting with stat
+2024-12-22 23:23:39,275 - WARNING -  * Debugger is active!
+2024-12-22 23:23:39,277 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:23:54,435 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:23:54,524 - INFO -  * Restarting with stat
+2024-12-22 23:23:55,136 - WARNING -  * Debugger is active!
+2024-12-22 23:23:55,138 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:24:23,757 - INFO - 127.0.0.1 - - [22/Dec/2024 23:24:23] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2024-12-22 23:24:23,770 - INFO - 127.0.0.1 - - [22/Dec/2024 23:24:23] "GET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2024-12-22 23:24:23,770 - INFO - 127.0.0.1 - - [22/Dec/2024 23:24:23] "GET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2024-12-22 23:24:23,778 - INFO - 127.0.0.1 - - [22/Dec/2024 23:24:23] "GET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=iZiYyRRXbqFi8zjZfOKN HTTP/1.1" 200 -
+2024-12-22 23:24:23,785 - INFO - 127.0.0.1 - - [22/Dec/2024 23:24:23] "GET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2024-12-22 23:24:52,818 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:24:52,906 - INFO -  * Restarting with stat
+2024-12-22 23:24:53,517 - WARNING -  * Debugger is active!
+2024-12-22 23:24:53,518 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:24:56,985 - INFO - 127.0.0.1 - - [22/Dec/2024 23:24:56] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2024-12-22 23:24:56,998 - INFO - 127.0.0.1 - - [22/Dec/2024 23:24:56] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2024-12-22 23:24:56,998 - INFO - 127.0.0.1 - - [22/Dec/2024 23:24:56] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2024-12-22 23:24:57,006 - INFO - 127.0.0.1 - - [22/Dec/2024 23:24:57] "GET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=J22JRvkXtvwdLdSdtc7B HTTP/1.1" 200 -
+2024-12-22 23:24:57,011 - INFO - 127.0.0.1 - - [22/Dec/2024 23:24:57] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2024-12-22 23:25:07,664 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:25:07,759 - INFO -  * Restarting with stat
+2024-12-22 23:25:08,375 - WARNING -  * Debugger is active!
+2024-12-22 23:25:08,377 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:25:10,143 - INFO - 127.0.0.1 - - [22/Dec/2024 23:25:10] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2024-12-22 23:25:10,153 - INFO - 127.0.0.1 - - [22/Dec/2024 23:25:10] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2024-12-22 23:25:10,156 - INFO - 127.0.0.1 - - [22/Dec/2024 23:25:10] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2024-12-22 23:25:10,163 - INFO - 127.0.0.1 - - [22/Dec/2024 23:25:10] "GET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=mWKEs1jghkEWXrjBSk5p HTTP/1.1" 200 -
+2024-12-22 23:25:10,167 - INFO - 127.0.0.1 - - [22/Dec/2024 23:25:10] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2024-12-22 23:25:28,582 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:25:28,669 - INFO -  * Restarting with stat
+2024-12-22 23:25:29,284 - WARNING -  * Debugger is active!
+2024-12-22 23:25:29,286 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:25:32,144 - INFO - 127.0.0.1 - - [22/Dec/2024 23:25:32] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2024-12-22 23:25:32,157 - INFO - 127.0.0.1 - - [22/Dec/2024 23:25:32] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2024-12-22 23:25:32,157 - INFO - 127.0.0.1 - - [22/Dec/2024 23:25:32] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2024-12-22 23:25:32,163 - INFO - 127.0.0.1 - - [22/Dec/2024 23:25:32] "GET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=wrlcHluQ7Xnk1gf0ZpGr HTTP/1.1" 200 -
+2024-12-22 23:25:32,166 - INFO - 127.0.0.1 - - [22/Dec/2024 23:25:32] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2024-12-22 23:26:02,602 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/routes.py', reloading
+2024-12-22 23:26:02,689 - INFO -  * Restarting with stat
+2024-12-22 23:26:03,302 - WARNING -  * Debugger is active!
+2024-12-22 23:26:03,304 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:26:22,503 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/routes.py', reloading
+2024-12-22 23:26:22,593 - INFO -  * Restarting with stat
+2024-12-22 23:26:23,212 - WARNING -  * Debugger is active!
+2024-12-22 23:26:23,213 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:26:25,245 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:26:25,330 - INFO -  * Restarting with stat
+2024-12-22 23:26:36,548 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2024-12-22 23:26:36,548 - INFO - [33mPress CTRL+C to quit[0m
+2024-12-22 23:26:36,548 - INFO -  * Restarting with stat
+2024-12-22 23:26:37,157 - WARNING -  * Debugger is active!
+2024-12-22 23:26:37,158 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:26:38,709 - INFO - 127.0.0.1 - - [22/Dec/2024 23:26:38] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2024-12-22 23:26:38,720 - INFO - 127.0.0.1 - - [22/Dec/2024 23:26:38] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2024-12-22 23:26:38,720 - INFO - 127.0.0.1 - - [22/Dec/2024 23:26:38] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2024-12-22 23:26:38,735 - INFO - 127.0.0.1 - - [22/Dec/2024 23:26:38] "GET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=CjmuSXS5SXmozyETLLlU HTTP/1.1" 200 -
+2024-12-22 23:26:38,745 - INFO - 127.0.0.1 - - [22/Dec/2024 23:26:38] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2024-12-22 23:27:05,410 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:27:05,497 - INFO -  * Restarting with stat
+2024-12-22 23:27:06,112 - WARNING -  * Debugger is active!
+2024-12-22 23:27:06,114 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:27:08,193 - INFO - 127.0.0.1 - - [22/Dec/2024 23:27:08] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 23:27:08,203 - INFO - 127.0.0.1 - - [22/Dec/2024 23:27:08] "[35m[1mGET /static/assets/EDxologo.png HTTP/1.1[0m" 500 -
+2024-12-22 23:27:13,884 - INFO - 127.0.0.1 - - [22/Dec/2024 23:27:13] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2024-12-22 23:27:13,896 - INFO - 127.0.0.1 - - [22/Dec/2024 23:27:13] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2024-12-22 23:27:13,896 - INFO - 127.0.0.1 - - [22/Dec/2024 23:27:13] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2024-12-22 23:27:13,901 - INFO - 127.0.0.1 - - [22/Dec/2024 23:27:13] "GET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=6C9LtYv13YDAFChw6562 HTTP/1.1" 200 -
+2024-12-22 23:27:13,905 - INFO - 127.0.0.1 - - [22/Dec/2024 23:27:13] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2024-12-22 23:28:09,676 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:28:09,795 - INFO -  * Restarting with stat
+2024-12-22 23:28:10,414 - WARNING -  * Debugger is active!
+2024-12-22 23:28:10,416 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:28:44,757 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:28:44,856 - INFO -  * Restarting with stat
+2024-12-22 23:28:45,465 - WARNING -  * Debugger is active!
+2024-12-22 23:28:45,467 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:28:47,745 - INFO - 127.0.0.1 - - [22/Dec/2024 23:28:47] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2024-12-22 23:28:47,758 - INFO - 127.0.0.1 - - [22/Dec/2024 23:28:47] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2024-12-22 23:28:47,759 - INFO - 127.0.0.1 - - [22/Dec/2024 23:28:47] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2024-12-22 23:28:47,770 - INFO - 127.0.0.1 - - [22/Dec/2024 23:28:47] "GET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=WbRaAt4cdrJv6jQfPQy0 HTTP/1.1" 200 -
+2024-12-22 23:28:47,773 - INFO - 127.0.0.1 - - [22/Dec/2024 23:28:47] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2024-12-22 23:28:48,586 - INFO - 127.0.0.1 - - [22/Dec/2024 23:28:48] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2024-12-22 23:28:48,595 - INFO - 127.0.0.1 - - [22/Dec/2024 23:28:48] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2024-12-22 23:28:48,596 - INFO - 127.0.0.1 - - [22/Dec/2024 23:28:48] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2024-12-22 23:28:48,603 - INFO - 127.0.0.1 - - [22/Dec/2024 23:28:48] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=WbRaAt4cdrJv6jQfPQy0 HTTP/1.1[0m" 304 -
+2024-12-22 23:28:48,607 - INFO - 127.0.0.1 - - [22/Dec/2024 23:28:48] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2024-12-22 23:29:44,877 - INFO - 127.0.0.1 - - [22/Dec/2024 23:29:44] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2024-12-22 23:29:44,892 - INFO - 127.0.0.1 - - [22/Dec/2024 23:29:44] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2024-12-22 23:29:44,895 - INFO - 127.0.0.1 - - [22/Dec/2024 23:29:44] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2024-12-22 23:29:44,908 - INFO - 127.0.0.1 - - [22/Dec/2024 23:29:44] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=WbRaAt4cdrJv6jQfPQy0 HTTP/1.1[0m" 304 -
+2024-12-22 23:29:58,109 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:29:58,198 - INFO -  * Restarting with stat
+2024-12-22 23:29:58,812 - WARNING -  * Debugger is active!
+2024-12-22 23:29:58,814 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:30:01,120 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:01] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2024-12-22 23:30:01,133 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:01] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2024-12-22 23:30:01,136 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:01] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2024-12-22 23:30:01,140 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:01] "GET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=2L6okBsWWF3g9Zkp3cVu HTTP/1.1" 200 -
+2024-12-22 23:30:01,144 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:01] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2024-12-22 23:30:23,060 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/app.py', reloading
+2024-12-22 23:30:23,147 - INFO -  * Restarting with stat
+2024-12-22 23:30:23,756 - WARNING -  * Debugger is active!
+2024-12-22 23:30:23,759 - INFO -  * Debugger PIN: 144-363-085
+2024-12-22 23:30:25,038 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:25] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2024-12-22 23:30:25,048 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:25] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2024-12-22 23:30:25,049 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:25] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2024-12-22 23:30:25,052 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:25] "GET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=wV8zRO6hYFoanRzxKaN6 HTTP/1.1" 200 -
+2024-12-22 23:30:25,055 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:25] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2024-12-22 23:30:37,249 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:37] "[32mGET /programme/1 HTTP/1.1[0m" 302 -
+2024-12-22 23:30:37,265 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:37] "GET /login?next=/programme/1 HTTP/1.1" 200 -
+2024-12-22 23:30:37,272 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:37] "GET /static/assets/EDxologo.png HTTP/1.1" 200 -
+2024-12-22 23:30:52,549 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:52] "[32mPOST /login?next=/programme/1 HTTP/1.1[0m" 302 -
+2024-12-22 23:30:52,560 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:52] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-22 23:30:52,570 - INFO - 127.0.0.1 - - [22/Dec/2024 23:30:52] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -

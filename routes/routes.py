@@ -52,6 +52,7 @@ from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_li
 from models import User
 
 
+
 main = Blueprint('main', __name__)
 
 # Define the markdown filter
