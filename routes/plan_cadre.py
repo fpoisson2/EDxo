@@ -36,6 +36,8 @@ from collections import defaultdict
 from openai import OpenAI
 from openai import OpenAIError
 from dotenv import load_dotenv
+from pydantic import BaseModel
+from typing import List, Optional
 from bs4 import BeautifulSoup
 import os
 import markdown
@@ -48,6 +50,43 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_list, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template
 from models import User
 
+class AIField(BaseModel):
+    """Represents older PlanCadre fields (e.g. place_intro, objectif_terminal)."""
+    field_name: Optional[str] = None
+    content: Optional[str] = None
+
+class AISavoirFaire(BaseModel):
+    texte: Optional[str] = None
+    cible: Optional[str] = None
+    seuil_reussite: Optional[str] = None
+
+class AICapacite(BaseModel):
+    """
+    A single 'capacité' with optional sub-lists for:
+      - savoirs_necessaires
+      - savoirs_faire
+      - moyens_evaluation
+    """
+    capacite: Optional[str] = None
+    description_capacite: Optional[str] = None
+    ponderation_min: Optional[int] = None
+    ponderation_max: Optional[int] = None
+
+    savoirs_necessaires: Optional[List[str]] = None
+    savoirs_faire: Optional[List[AISavoirFaire]] = None
+    moyens_evaluation: Optional[List[str]] = None
+
+class PlanCadreAIResponse(BaseModel):
+    """
+    The GPT response:
+      - fields: (list of AIField)
+      - savoir_etre: (list of strings)
+      - capacites: (list of AICapacite)
+    """
+    fields: Optional[List[AIField]] = None
+    savoir_etre: Optional[List[str]] = None
+    capacites: Optional[List[AICapacite]] = None
+
 
 # Configure logging
 logging.basicConfig(level=logging.ERROR, filename='app_errors.log', filemode='a', 
@@ -55,235 +94,337 @@ logging.basicConfig(level=logging.ERROR, filename='app_errors.log', filemode='a'
 
 plan_cadre_bp = Blueprint('plan_cadre', __name__, url_prefix='/plan_cadre')
 
+
+
 @plan_cadre_bp.route('/<int:plan_id>/generate_content', methods=['POST'])
 @role_required('admin')
 def generate_plan_cadre_content(plan_id):
+    """
+    Gère la génération du contenu d’un plan-cadre via GPT.
+    Récupère toutes les sections (IDs 43 à 63), applique ou non l’IA
+    selon 'use_ai', et insère dans les tables adéquates.
+    """
     conn = get_db_connection()
     plan = conn.execute('SELECT * FROM PlanCadre WHERE id = ?', (plan_id,)).fetchone()
-    
-    # Retrieve the OpenAI API key from the database
-    user_id = current_user.id
-    user = conn.execute('SELECT openai_key FROM User WHERE id = ?', (user_id,)).fetchone()
-    openai_key = user['openai_key']
 
-    if user is None or not user['openai_key']:
-        flash(' Aucune clé OpenAI configurée.', 'danger')
+    if not plan:
         conn.close()
+        flash('Plan Cadre non trouvé.', 'danger')
+        return redirect(url_for('cours.view_plan_cadre', cours_id=0, plan_id=plan_id))
+
+    user_id = current_user.id  # ou current_user.id si vous utilisez flask_login
+    user = conn.execute('SELECT openai_key FROM User WHERE id = ?', (user_id,)).fetchone()
+    openai_key = user['openai_key'] if user else None
+
+    if not openai_key:
+        conn.close()
+        flash('Aucune clé OpenAI configurée.', 'danger')
         return redirect(url_for('cours.view_plan_cadre', cours_id=plan['cours_id'], plan_id=plan_id))
-    else:
-        
-        client = OpenAI(api_key=openai_key)
-        form = GenerateContentForm()
-        if form.validate_on_submit():
-            try:
-                # Connexion à la base de données
-                
-                if not plan:
-                    flash('Plan Cadre non trouvé.', 'danger')
-                    conn.close()
-                    return redirect(url_for('cours.view_plan_cadre', cours_id=plan['cours_id'], plan_id=plan_id))
-                
-                # Récupérer le nom du cours pour les prompts
-                cours = conn.execute('SELECT nom FROM Cours WHERE id = ?', (plan['cours_id'],)).fetchone()
-                cours_nom = cours['nom'] if cours else "Non défini"
 
-                parametres_generation = conn.execute('SELECT section, use_ai, text_content FROM GlobalGenerationSettings').fetchall()
+    form = GenerateContentForm()
+    if not form.validate_on_submit():
+        conn.close()
+        flash('Erreur de validation du formulaire.', 'danger')
+        return redirect(url_for('cours.view_plan_cadre', plan_id=plan_id))
 
-                # Transformer la liste de tuples en dictionnaire
-                parametres_dict = {section: {'use_ai': use_ai, 'text_content': text_content}
-                                   for section, use_ai, text_content in parametres_generation}
+    try:
+        # ----------------------------------------------------------
+        # 1) Préparation des data & des settings
+        # ----------------------------------------------------------
+        cours = conn.execute('SELECT nom, session FROM Cours WHERE id = ?', (plan['cours_id'],)).fetchone()
+        cours_nom = cours['nom'] if cours else "Non défini"
+        cours_session = cours['session'] if (cours and cours['session']) else "Non défini"
 
-                plan_cadre_data = get_plan_cadre_data(plan['cours_id'])
+        # Récupérer tous les settings 43 → 63
+        parametres_generation = conn.execute(
+            "SELECT section, use_ai, text_content FROM GlobalGenerationSettings"
+        ).fetchall()
 
-                fields = [
-                    'Intro et place du cours',
-                    'Objectif terminal',
-                    'Introduction Structure du Cours',
-                    'Activités Théoriques',
-                    'Activités Pratiques',
-                    'Activités Prévues',
-                    'Évaluation Sommative des Apprentissages',
-                    'Nature des Évaluations Sommatives',
-                    'Évaluation de la Langue',
-                    'Évaluation formative des apprentissages',
-                ]
+        # Transformer en dict { "Intro et place du cours": {"use_ai":..., "text_content":...}, ... }
+        parametres_dict = {
+            row['section']: {
+                'use_ai': row['use_ai'],
+                'text_content': row['text_content']
+            }
+            for row in parametres_generation
+        }
 
-                # (Optional) Define a mapping from field keys to database column names
-                # If the keys match the column names, you can skip this mapping
-                field_to_column = {
-                    'Intro et place du cours': 'place_intro',
-                    'Objectif terminal': 'objectif_terminal',
-                    'Introduction Structure du Cours': 'structure_intro',
-                    'Activités Théoriques': 'structure_activites_theoriques',
-                    'Activités Pratiques': 'structure_activites_pratiques',
-                    'Activités Prévues': 'structure_activites_prevues',
-                    'Évaluation Sommative des Apprentissages': 'eval_evaluation_sommative',
-                    'Nature des Évaluations Sommatives': 'eval_nature_evaluations_sommatives',
-                    'Évaluation de la Langue': 'eval_evaluation_de_la_langue',
-                    'Évaluation formative des apprentissages': 'eval_evaluation_sommatives_apprentissages',
-                }
+        plan_cadre_data = get_plan_cadre_data(plan['cours_id'])
 
-                # Initialize a dictionary to collect prompts where use_ai is enabled
-                prompts = {}
+        # ----------------------------------------------------------
+        # 1A) Mapping : quel champ va où ?
+        # ----------------------------------------------------------
+        # 1. Champs stockés directement dans la table PlanCadre :
+        field_to_plan_cadre_column = {
+            'Intro et place du cours': 'place_intro',
+            'Objectif terminal': 'objectif_terminal',
+            'Introduction Structure du Cours': 'structure_intro',
+            'Activités Théoriques': 'structure_activites_theoriques',
+            'Activités Pratiques': 'structure_activites_pratiques',
+            'Activités Prévues': 'structure_activites_prevues',
+            'Évaluation Sommative des Apprentissages': 'eval_evaluation_sommative',
+            'Nature des Évaluations Sommatives': 'eval_nature_evaluations_sommatives',
+            'Évaluation de la Langue': 'eval_evaluation_de_la_langue',
+            'Évaluation formative des apprentissages': 'eval_evaluation_sommatives_apprentissages',
+        }
 
-                # Iterate over each field and apply the replacement and update logic
-                for field in fields:
-                    # Retrieve the text content for the current field
-                    text_with_tags = parametres_dict[field]['text_content']
-                    
-                    # Replace Jinja2 tags with actual data
-                    replaced_text = replace_tags_jinja2(text_with_tags, plan_cadre_data)
-                    
-                    # Check if AI is not used for this field
-                    if parametres_dict[field]['use_ai'] == 0:
-                        # Get the corresponding column name from the mapping
-                        column_name = field_to_column.get(field)
-                        
-                        if column_name:
-                            # Update the specific column in the PlanCadre table
-                            conn.execute(f'''
-                                UPDATE PlanCadre
-                                SET {column_name} = ?
-                                WHERE id = ?
-                            ''', (replaced_text, plan_id))
-                        else:
-                            # Handle cases where the field is not mapped to any column
-                            raise ValueError(f"No column mapping found for field: {field}")
+        # 2. Champs stockés dans d’autres tables (1-ligne):
+        field_to_table_insert = {
+            'Description des compétences développées': 'PlanCadreCompetencesDeveloppees',
+            'Description des Compétences certifiées': 'PlanCadreCompetencesCertifiees',
+            'Description des cours corequis': 'PlanCadreCoursCorequis',
+            'Objets cibles': 'PlanCadreObjetsCibles',
+            'Description des cours reliés': 'PlanCadreCoursRelies',
+            'Description des cours préalables': 'PlanCadreCoursPrealables',
+        }
+
+        # On prévoira un traitement spécial pour : "Savoir-être", "Capacité et pondération",
+        # et potentiellement "Savoirs nécessaires d'une capacité", "Savoirs faire d'une capacité", etc.
+        # Selon votre logique, vous pouvez tout regrouper dans "Capacité et pondération".
+
+        # ----------------------------------------------------------
+        # 1B) Parcours des sections pour déterminer "AI vs direct"
+        # ----------------------------------------------------------
+        ai_fields = []
+        non_ai_updates_plan_cadre = []    # Liste de tuples (col_name, replaced_text)
+        non_ai_inserts_other_table = []   # Liste de tuples (table_name, replaced_text)
+        ai_savoir_etre = None
+        ai_capacites_prompt = None
+
+        def replace_jinja(text_):
+            return replace_tags_jinja2(text_, plan_cadre_data)
+
+        for section_name, conf_data in parametres_dict.items():
+            raw_text = conf_data.get('text_content', "")
+            replaced_text = replace_jinja(raw_text)
+            is_ai = (conf_data.get('use_ai', 0) == 1)
+
+            # 1) Champs PlanCadre ?
+            if section_name in field_to_plan_cadre_column:
+                col_name = field_to_plan_cadre_column[section_name]
+                if is_ai:
+                    ai_fields.append({"field_name": section_name, "prompt": replaced_text})
+                else:
+                    non_ai_updates_plan_cadre.append((col_name, replaced_text))
+
+            # 2) Champs à insérer dans une autre table ?
+            elif section_name in field_to_table_insert:
+                table_name = field_to_table_insert[section_name]
+                if is_ai:
+                    ai_fields.append({"field_name": section_name, "prompt": replaced_text})
+                else:
+                    # On stocke pour insertion directe
+                    non_ai_inserts_other_table.append((table_name, replaced_text))
+
+            # 3) Champs spéciaux
+            else:
+                # Savoir-être
+                if section_name == 'Savoir-être':
+                    if is_ai:
+                        ai_savoir_etre = replaced_text
                     else:
-                        # Collect the prompt for fields where AI is used
-                        prompts[field] = replaced_text
-
-                cursor = conn.cursor()
-
-                if parametres_dict['Description des compétences développées']['use_ai'] == 1:
-                    cursor.execute("""
-                        SELECT DISTINCT 
-                            EC.competence_id,
-                            C.nom AS competence_nom,
-                            C.criteria_de_performance AS critere_performance,
-                            C.contexte_de_realisation AS contexte_realisation
-                        FROM 
-                            ElementCompetence AS EC
-                        JOIN 
-                            ElementCompetenceParCours AS ECCP ON EC.id = ECCP.element_competence_id
-                        JOIN 
-                            Competence AS C ON EC.competence_id = C.id
-                        WHERE 
-                            ECCP.cours_id = ? AND ECCP.status = 'Développé significativement'
-                    """, (plan['cours_id'],))
-                    competences_developpees = cursor.fetchall()
-
-                    description_list = []
-                    description_prompts = {}
-
-                    role = f"Tu es un rédacteur de contenu pour un plan-cadre pour le cours '{plan_cadre_data['cours']['nom']}' situé en session {plan_cadre_data['cours'].get('session', 'Non défini')} sur 6 du programme {plan_cadre_data['programme']}"
-
-                    for competence in competences_developpees:
-                        competence_id = competence['competence_id']
-                        competence_nom = competence['competence_nom']
-                        critere_performance = competence['critere_performance']
-                        contexte_realisation = competence['contexte_realisation']
-
-                        # Récupérer le texte avec les tags depuis les paramètres de génération
-                        text_with_tags = parametres_dict['Description des compétences développées']['text_content']
-                        
-                        # Créer un dictionnaire de contexte pour remplacer les tags spécifiques à la compétence
-                        extra_context = {
-                            'competence_nom': competence_nom,
-                            'critere_performance': critere_performance,
-                            'contexte_realisation': contexte_realisation
-                        }
-                        
-                        # Remplacer les tags dans le texte en utilisant le contexte combiné
-                        replaced_text = replace_tags_jinja2(text_with_tags, plan_cadre_data, extra_context)
-
-                        ai_description = process_ai_prompt(replaced_text, role)
-
-                        # Insérer la description dans la table dédiée
-                        cursor.execute("""
-                            INSERT OR REPLACE INTO PlanCadreCompetencesDeveloppees (plan_cadre_id, texte, description)
-                            VALUES (?, ?, ?);
-                        """, (plan_id, competence_nom, ai_description))
-
-
-
-                    #for competence_id, competence_nom, critere_performance, contexte_realisation in competences_developpees:
-                    #    text_with_tags = parametres_dict['Description des compétences développées']['text_content']
-                    #    replaced_text = replace_tags_jinja2(text_with_tags, competences_developpees)
-                    #    prompts['Description des compétences développées'] = 
-                    #    cursor.execute("""
-                    #        INSERT INTO PlanCadreCompetencesDeveloppees (plan_cadre_id, texte, description)
-                    #        VALUES (?, ?, ?);
-                    #    """, (plan_id, competence_nom, 'Description of the new competence'))
-
-                if prompts:
-                    role = f"Tu es un rédacteur de contenu pour un plan-cadre pour le cours '{plan_cadre_data['cours']['nom']}' situé en session {plan_cadre_data['cours'].get('session', 'Non défini')} sur 6 du programme {plan_cadre_data['programme']}"
-
-                    updates = {}
-                    for field, prompt in prompts.items():
-                        try:
-                            response = client.chat.completions.create(
-                                model="gpt-4o",
-                                messages=[
-                                    {"role": "system", "content": role},
-                                    {"role": "user", "content": prompt}
-                                ],
-                                temperature=0.7,
-                                max_tokens=500
+                        # Insertion directe en base (plusieurs lignes ?)
+                        # À vous de décider si text_content est déjà en CSV, etc.
+                        # Exemple minimal : on suppose splitted par "\n"
+                        lines = [l.strip() for l in replaced_text.split("\n") if l.strip()]
+                        for line in lines:
+                            conn.execute(
+                                "INSERT INTO PlanCadreSavoirEtre (plan_cadre_id, texte) VALUES (?, ?)",
+                                (plan_id, line)
                             )
-                            # Récupérer le contenu généré
-                            generated_text = response.choices[0].message.content.strip()
-                            updates[field] = generated_text
-                        except openai.error.RateLimitError as e:
-                            logging.error(f"Rate limit error: {e}. Prompt: {prompt}")
-                            flash("L'API OpenAI a atteint sa limite de requêtes. Veuillez réessayer plus tard.", "danger")
-                        except openai.error.AuthenticationError as e:
-                            logging.error(f"Authentication error: {e}")
-                            flash("Problème d'authentification avec l'API OpenAI. Contactez l'administrateur.", "danger")
-                        except openai.error.APIConnectionError as e:
-                            logging.error(f"Connection error: {e}")
-                            flash("Impossible de se connecter à l'API OpenAI. Vérifiez votre connexion internet.", "danger")
-                        except openai.error.InvalidRequestError as e:
-                            logging.error(f"Invalid request: {e}. Prompt: {prompt}")
-                            flash("La requête à l'API OpenAI est invalide. Contactez l'administrateur.", "danger")
-                        except openai.error.OpenAIError as e:
-                            logging.error(f"General OpenAI error: {e}")
-                            flash("Une erreur s'est produite avec l'API OpenAI. Veuillez réessayer plus tard.", "danger")
-                        except Exception as e:
-                            logging.error(f"Unexpected error: {e}")
-                            flash("Une erreur inattendue s'est produite. Contactez l'administrateur.", "danger")
 
-                    cursor = conn.cursor()
-                    def clean_generated_text(text):
-                        return text.strip().strip('"').strip("'")
+                # Capacité et pondération
+                elif section_name == 'Capacité et pondération':
+                    if is_ai:
+                        ai_capacites_prompt = replaced_text
+                    else:
+                        # Pas d'IA => insertion directe ? (À vous de voir)
+                        pass
 
-                    # Mettre à jour la base de données avec les textes générés
-                    for field, generated_text in updates.items():
-                        cleaned_text = clean_generated_text(generated_text)  # Supprime les guillemets
-                        column_name = field_to_column.get(field)
-                        if column_name:
-                            cursor.execute(f'''
-                                UPDATE PlanCadre
-                                SET {column_name} = ?
-                                WHERE id = ?
-                            ''', (cleaned_text, plan_id))
-                        else:
-                            print("Aucune correspondance de colonne lors de la mise à jour.")
+                # Si vous gérez séparément "Savoirs nécessaires d'une capacité", "Savoirs faire", etc. 
+                # vous pouvez rajouter d'autres elif.
 
-                conn.commit()
-                conn.close()
+                else:
+                    # Section inconnue : on l’ignore ou on gère autrement
+                    pass
 
-                flash('Contenu généré automatiquement avec succès!', 'success')
-                return redirect(url_for('cours.view_plan_cadre', cours_id=plan['cours_id'], plan_id=plan_id))
-            
-            except Exception as e:
-                conn.close()
-                flash(f'Erreur lors de la génération du contenu: {e}', 'danger')
-                return redirect(url_for('cours.view_plan_cadre', cours_id=plan['cours_id'], plan_id=plan_id))
-        else:
+        # ----------------------------------------------------------
+        # 1C) Exécuter les updates/inserts "non-AI" (direct)
+        # ----------------------------------------------------------
+        # - PlanCadre
+        for col_name, val in non_ai_updates_plan_cadre:
+            conn.execute(f"UPDATE PlanCadre SET {col_name} = ? WHERE id = ?", (val, plan_id))
+
+        # - Autres tables
+        for table_name, val in non_ai_inserts_other_table:
+            # Exemple d’insertion (assurez-vous que la table a les colonnes voulues)
+            conn.execute(
+                f"INSERT INTO {table_name} (plan_cadre_id, texte) VALUES (?, ?)",
+                (plan_id, val)
+            )
+
+        # On commit les non-AI
+        conn.commit()
+
+        # ----------------------------------------------------------
+        # 1D) Vérifier si on doit vraiment appeler GPT
+        # ----------------------------------------------------------
+        # => Si *aucun* champ n’est géré par l’IA, on sort
+        if not ai_fields and not ai_savoir_etre and not ai_capacites_prompt:
             conn.close()
-            flash('Erreur de validation du formulaire.', 'danger')
+            flash('Aucune génération IA requise (tous champs non-AI).', 'success')
             return redirect(url_for('cours.view_plan_cadre', plan_id=plan_id))
+
+        # ----------------------------------------------------------
+        # 2) Appel GPT (un seul)
+        # ----------------------------------------------------------
+        role_message = (
+            f"Tu es un rédacteur de contenu pour un plan-cadre de cours '{cours_nom}', "
+            f"session {cours_session}. Retourne un JSON valide correspondant à PlanCadreAIResponse."
+        )
+
+        # On structure la requête pour GPT
+        structured_request = {
+            "instruction": (
+                "Voici différents prompts. Retourne un JSON STRICTEMENT conforme à PlanCadreAIResponse:\n"
+                "- fields: liste de {field_name, content}\n"
+                "- savoir_etre: array de strings\n"
+                "- capacites: array de {capacite, description_capacite, ponderation_min, ponderation_max, "
+                "  savoirs_necessaires[], savoirs_faire[], moyens_evaluation[]}\n"
+                "Pour chaque capacité retournée, tu dois fournir au moins 10 éléments dans les listes de savoirs_faire et savoir-nécessaire.\n"
+                "Ne retourne rien d'autre que du JSON. Pour chaque savoir-faire, assure-toi de renvoyer:\n"
+                "  {\n"
+                "    \"texte\": \"...\",\n"
+                "    \"cible\": \"...\",\n"
+                "    \"seuil_reussite\": \"...\"\n"
+                "  }.\n"
+                "Un savoir-faire devrait commencer par un verbe à l'infinitif. Pour chaque savoir-faire, trouve un niveau cible (équivaut au 100%) et un niveau seuil qui correspond à du 60% qui commence par un verbe à l'infinitif, toujours avec des adjetcifs ."
+            ),
+            "fields": ai_fields,             # old plan-cadre fields
+            "savoir_etre": ai_savoir_etre or "",
+            "capacites": ai_capacites_prompt or "",
+        }
+
+        # On suppose que vous avez la fonction openai qui gère l’API
+        from openai import OpenAI
+        client = OpenAI(api_key=openai_key)
+
+        try:
+            completion = client.beta.chat.completions.parse(
+                model="gpt-4o",  # ou "gpt-3.5-turbo"
+                messages=[
+                    {"role": "system", "content": role_message},
+                    {"role": "user", "content": json.dumps(structured_request)}
+                ],
+                temperature=0.2,
+                max_tokens=4000,
+                response_format=PlanCadreAIResponse, 
+            )
+        except Exception as e:
+            conn.close()
+            logging.error(f"OpenAI error: {e}")
+            flash(f"Erreur API OpenAI: {str(e)}", 'danger')
+            return redirect(url_for('cours.view_plan_cadre', plan_id=plan_id))
+
+        # ----------------------------------------------------------
+        # 3) Parse & insertion en base du retour GPT
+        # ----------------------------------------------------------
+        parsed_data: PlanCadreAIResponse = completion.choices[0].message.parsed
+
+        def clean_text(val):
+            return val.strip().strip('"').strip("'") if val else ""
+
+        # 3A) fields -> (PlanCadre ou autres tables)
+        for fobj in (parsed_data.fields or []):
+            fname = fobj.field_name
+            fcontent = clean_text(fobj.content)
+
+            # Si c’est un champ de PlanCadre
+            if fname in field_to_plan_cadre_column:
+                col = field_to_plan_cadre_column[fname]
+                conn.execute(
+                    f"UPDATE PlanCadre SET {col} = ? WHERE id = ?", 
+                    (fcontent, plan_id)
+                )
+
+            # Sinon, si c’est un champ d’une autre table
+            elif fname in field_to_table_insert:
+                table_name = field_to_table_insert[fname]
+                conn.execute(
+                    f"INSERT INTO {table_name} (plan_cadre_id, texte) VALUES (?, ?)",
+                    (plan_id, fcontent)
+                )
+
+            else:
+                # Pas mappé => on ignore ou on gère autrement
+                pass
+
+        # 3B) savoir_etre -> PlanCadreSavoirEtre
+        if parsed_data.savoir_etre:
+            for se_item in parsed_data.savoir_etre:
+                conn.execute(
+                    "INSERT INTO PlanCadreSavoirEtre (plan_cadre_id, texte) VALUES (?, ?)",
+                    (plan_id, clean_text(se_item))
+                )
+
+        # 3C) capacites -> PlanCadreCapacites + sous-tables
+        if parsed_data.capacites:
+            cursor = conn.cursor()
+            for cap in parsed_data.capacites:
+                # Insert la capacité
+                cursor.execute("""
+                    INSERT INTO PlanCadreCapacites 
+                        (plan_cadre_id, capacite, description_capacite, ponderation_min, ponderation_max)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (
+                    plan_id,
+                    clean_text(cap.capacite),
+                    clean_text(cap.description_capacite),
+                    cap.ponderation_min if cap.ponderation_min else 0,
+                    cap.ponderation_max if cap.ponderation_max else 0
+                ))
+                new_cap_id = cursor.lastrowid
+
+                # Savoirs nécessaires
+                if cap.savoirs_necessaires:
+                    for sn in cap.savoirs_necessaires:
+                        cursor.execute("""
+                            INSERT INTO PlanCadreCapaciteSavoirsNecessaires (capacite_id, texte)
+                            VALUES (?, ?)
+                        """, (new_cap_id, clean_text(sn)))
+
+                # Savoirs-faire (texte, cible, seuil_reussite)
+                if cap.savoirs_faire:
+                    for sf in cap.savoirs_faire:
+                        cursor.execute("""
+                            INSERT INTO PlanCadreCapaciteSavoirsFaire (capacite_id, texte, cible, seuil_reussite)
+                            VALUES (?, ?, ?, ?)
+                        """, (
+                            new_cap_id,
+                            clean_text(sf.texte),
+                            clean_text(sf.cible),
+                            clean_text(sf.seuil_reussite)
+                        ))
+
+                # Moyens d'évaluation
+                if cap.moyens_evaluation:
+                    for me in cap.moyens_evaluation:
+                        cursor.execute("""
+                            INSERT INTO PlanCadreCapaciteMoyensEvaluation (capacite_id, texte)
+                            VALUES (?, ?)
+                        """, (new_cap_id, clean_text(me)))
+
+        conn.commit()
+        conn.close()
+
+        flash('Contenu généré automatiquement avec succès!', 'success')
+        return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
+
+    except Exception as e:
+        conn.close()
+        logging.error(f"Unexpected error: {e}")
+        flash(f'Erreur lors de la génération du contenu: {e}', 'danger')
+        return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
 
 
 
