@@ -210,11 +210,64 @@ def generate_plan_cadre_content(plan_id):
             # 2) Champs à insérer dans une autre table ?
             elif section_name in field_to_table_insert:
                 table_name = field_to_table_insert[section_name]
-                if is_ai:
+
+                # --- Si c'est "Description des compétences développées" et qu'on veut ajouter 
+                #     des infos provenant d'une autre table pour GPT, on fait le traitement ici:
+                if section_name == "Description des compétences développées" and is_ai:
+                    # Récupérer les compétences pour le cours
+                    # (Adaptez la requête à votre structure de DB)
+                    competences = conn.execute("""
+                        SELECT DISTINCT ec.competence_id, c.nom, c.code
+                        FROM ElementCompetence ec
+                        JOIN ElementCompetenceParCours ecp ON ec.id = ecp.element_competence_id
+                        JOIN Competence c ON ec.competence_id = c.id
+                        WHERE ecp.cours_id = ?
+                        AND ecp.status = 'Développé significativement';  -- Par exemple, ou un autre statut pertinent
+
+                    """, (plan['cours_id'],)).fetchall()
+
+                    # On construit un petit texte qui liste les compétences
+                    competences_text = ""
+                    if competences:
+                        competences_text = "\nListe des compétences développées pour ce cours:\n"
+                        for comp in competences:
+                            competences_text += f"- {comp['code']}: {comp['nom']}\n"
+                    else:
+                        competences_text = "\n(Aucune compétence de type 'developpee' trouvée pour ce cours)\n"
+
+                    # On concatène ce texte à replaced_text pour le prompt
+                    replaced_text += f"\n\n{competences_text}"
+
+                    # On ajoute ensuite ce champ à la liste des champs IA
                     ai_fields.append({"field_name": section_name, "prompt": replaced_text})
-                else:
-                    # On stocke pour insertion directe
-                    non_ai_inserts_other_table.append((table_name, replaced_text))
+
+                if section_name == "Description des Compétences certifiées" and is_ai:
+                    # Récupérer les compétences pour le cours
+                    # (Adaptez la requête à votre structure de DB)
+                    competences = conn.execute("""
+                        SELECT DISTINCT ec.competence_id, c.nom, c.code
+                        FROM ElementCompetence ec
+                        JOIN ElementCompetenceParCours ecp ON ec.id = ecp.element_competence_id
+                        JOIN Competence c ON ec.competence_id = c.id
+                        WHERE ecp.cours_id = ?
+                        AND ecp.status = 'Atteint';  -- Par exemple, ou un autre statut pertinent
+
+                    """, (plan['cours_id'],)).fetchall()
+
+                    # On construit un petit texte qui liste les compétences
+                    competences_text = ""
+                    if competences:
+                        competences_text = "\nListe des compétences certifiées pour ce cours:\n"
+                        for comp in competences:
+                            competences_text += f"- {comp['code']}: {comp['nom']}\n"
+                    else:
+                        competences_text = "\n(Aucune compétence de type 'developpee' trouvée pour ce cours)\n"
+
+                    # On concatène ce texte à replaced_text pour le prompt
+                    replaced_text += f"\n\n{competences_text}"
+
+                    # On ajoute ensuite ce champ à la liste des champs IA
+                    ai_fields.append({"field_name": section_name, "prompt": replaced_text})
 
             # 3) Champs spéciaux
             else:
@@ -286,24 +339,46 @@ def generate_plan_cadre_content(plan_id):
         # On structure la requête pour GPT
         structured_request = {
             "instruction": (
-                "Voici différents prompts. Retourne un JSON STRICTEMENT conforme à PlanCadreAIResponse:\n"
+                "Voici différents prompts. Retourne un JSON STRICTEMENT conforme à PlanCadreAIResponse.\n\n"
+
                 "- fields: liste de {field_name, content}\n"
                 "- savoir_etre: array de strings\n"
                 "- capacites: array de {capacite, description_capacite, ponderation_min, ponderation_max, "
-                "  savoirs_necessaires[], savoirs_faire[], moyens_evaluation[]}\n"
-                "Pour chaque capacité retournée, tu dois fournir au moins 10 éléments dans les listes de savoirs_faire et savoir-nécessaire.\n"
-                "Ne retourne rien d'autre que du JSON. Pour chaque savoir-faire, assure-toi de renvoyer:\n"
+                "  savoirs_necessaires[], savoirs_faire[], moyens_evaluation[]}\n\n"
+
+                "IMPORTANT: pour les field_name = \"Description des compétences développées\" et \"Description des compétences certifiées\" tu dois renvoyer :\n"
+                "  \"content\" : [\n"
+                "    {\"texte\": \"Code de la compétence - Titre de la compétence 1\", \"description\": \"Description détaillée...\"},\n"
+                "    {\"texte\": \"Code de la compétence - Titre de la compétence 2\", \"description\": \"Description détaillée...\"},\n"
+                "    ...\n"
+                "  ]\n\n"
+
+                "IMPORTANT: pour le field_name = \"Description des cours corequis\" et \"Description des cours préalables\" tu dois renvoyer :\n"
+                "  \"content\" : [\n"
+                "    {\"texte\": \"Code du cours- Titre du cours\", \"description\": \"Description détaillée...\"},\n"
+                "    {\"texte\": \"Code du cours- Titre du cours\", \"description\": \"Description détaillée...\"},\n"
+                "    ...\n"
+                "  ]\n\n"
+
+                "Pour chaque capacité retournée (dans la liste capacites), fournis au moins 10 éléments dans les "
+                "listes savoirs_faire et savoirs_necessaires. Ne retourne rien d'autre que du JSON.\n\n"
+
+                "Pour chaque savoir-faire, renvoie:\n"
                 "  {\n"
-                "    \"texte\": \"...\",\n"
+                "    \"texte\": \"verbe à l'infinitif...\",\n"
                 "    \"cible\": \"...\",\n"
                 "    \"seuil_reussite\": \"...\"\n"
                 "  }.\n"
-                "Un savoir-faire devrait commencer par un verbe à l'infinitif. Pour chaque savoir-faire, trouve un niveau cible (équivaut au 100%) et un niveau seuil qui correspond à du 60% qui commence par un verbe à l'infinitif, toujours avec des adjetcifs ."
+                "Un savoir-faire devrait commencer par un verbe à l'infinitif. Pour chaque savoir-faire, trouve un niveau cible et un niveau seuil qui commence par un verbe à l'infinitif, toujours avec des adjectifs, Au moins 10 mots.."
+                "Assure-toi que toutes les sorties sont un JSON strictement conforme au schéma PlanCadreAIResponse."
             ),
-            "fields": ai_fields,             # old plan-cadre fields
+            "fields": ai_fields,       # old plan-cadre fields
             "savoir_etre": ai_savoir_etre or "",
             "capacites": ai_capacites_prompt or "",
         }
+
+        print(structured_request)
+        print(PlanCadreAIResponse)
 
         # On suppose que vous avez la fonction openai qui gère l’API
         from openai import OpenAI
@@ -316,8 +391,8 @@ def generate_plan_cadre_content(plan_id):
                     {"role": "system", "content": role_message},
                     {"role": "user", "content": json.dumps(structured_request)}
                 ],
-                temperature=0.2,
-                max_tokens=4000,
+                temperature=0.7,
+                max_tokens=5000,
                 response_format=PlanCadreAIResponse, 
             )
         except Exception as e:
@@ -331,6 +406,8 @@ def generate_plan_cadre_content(plan_id):
         # ----------------------------------------------------------
         parsed_data: PlanCadreAIResponse = completion.choices[0].message.parsed
 
+
+
         def clean_text(val):
             return val.strip().strip('"').strip("'") if val else ""
 
@@ -338,6 +415,7 @@ def generate_plan_cadre_content(plan_id):
         for fobj in (parsed_data.fields or []):
             fname = fobj.field_name
             fcontent = clean_text(fobj.content)
+            raw_content = fobj.content  
 
             # Si c’est un champ de PlanCadre
             if fname in field_to_plan_cadre_column:
@@ -350,10 +428,57 @@ def generate_plan_cadre_content(plan_id):
             # Sinon, si c’est un champ d’une autre table
             elif fname in field_to_table_insert:
                 table_name = field_to_table_insert[fname]
-                conn.execute(
-                    f"INSERT INTO {table_name} (plan_cadre_id, texte) VALUES (?, ?)",
-                    (plan_id, fcontent)
-                )
+
+                # ----- CAS PARTICULIER : "Description des compétences développées" -----
+                if fname == "Description des compétences développées":
+                    table_name = "PlanCadreCompetencesDeveloppees"  # ou votre table correspondante
+
+                    try:
+                        competences = json.loads(raw_content)
+                    except Exception:
+                        # Si GPT a renvoyé du texte non-JSON => fallback
+                        competences = [
+                            {
+                                "texte": raw_content,
+                                "description": ""
+                            }
+                        ]
+
+                    for comp in competences:
+                        texte = comp.get('texte', '')
+                        desc  = comp.get('description', '')
+
+                        # Insertion en base, 1 ligne par compétence
+                        conn.execute(
+                            f"""INSERT OR REPLACE INTO PlanCadreCompetencesDeveloppees (plan_cadre_id, texte, description)
+VALUES (?, ?, ?)""",
+                            (plan_id, texte, desc)
+                        )
+
+                if fname == "Description des compétences cerifiées":
+                    table_name = "PlanCadreCompetencesCertifiees"  # ou votre table correspondante
+
+                    try:
+                        competences = json.loads(raw_content)
+                    except Exception:
+                        # Si GPT a renvoyé du texte non-JSON => fallback
+                        competences = [
+                            {
+                                "texte": raw_content,
+                                "description": ""
+                            }
+                        ]
+
+                    for comp in competences:
+                        texte = comp.get('texte', '')
+                        desc  = comp.get('description', '')
+
+                        # Insertion en base, 1 ligne par compétence
+                        conn.execute(
+                            f"""INSERT OR REPLACE INTO PlanCadreCompetencesCertifiees (plan_cadre_id, texte, description)
+VALUES (?, ?, ?)""",
+                            (plan_id, texte, desc)
+                        )
 
             else:
                 # Pas mappé => on ignore ou on gère autrement
@@ -418,13 +543,13 @@ def generate_plan_cadre_content(plan_id):
         conn.close()
 
         flash('Contenu généré automatiquement avec succès!', 'success')
-        return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
+        return redirect(url_for('cours.view_plan_cadre', cours_id=plan['cours_id'], plan_id=plan_id))
 
     except Exception as e:
         conn.close()
         logging.error(f"Unexpected error: {e}")
         flash(f'Erreur lors de la génération du contenu: {e}', 'danger')
-        return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
+        return redirect(url_for('cours.view_plan_cadre', cours_id=plan['cours_id'], plan_id=plan_id))
 
 
 
