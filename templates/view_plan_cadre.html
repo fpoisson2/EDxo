@@ -18,10 +18,14 @@
         <a href="{{ url_for('plan_cadre.edit_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary d-flex align-items-center">
             <i class="bi bi-pencil-square me-2"></i> Éditer le plan-cadre
         </a>
-        <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post" class="d-flex align-items-center">
-            {{ import_form.hidden_tag() }}  <!-- CSRF token -->
-            <button type="submit" class="btn btn-success d-flex align-items-center">
-                <i class="bi bi-box-arrow-up-right me-2"></i> Générer du Contenu Automatiquement
+        <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post" id="generateForm">
+            {{ import_form.hidden_tag() }}
+            <button type="submit" class="btn btn-success d-flex align-items-center" id="generateBtn">
+                <i class="bi bi-box-arrow-up-right me-2"></i>
+                <span class="btn-text">Générer le plan-cadre</span>
+                <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="loadingSpinner">
+                    <span class="visually-hidden">Chargement...</span>
+                </span>
             </button>
         </form>
     </div>
@@ -31,7 +35,7 @@
         <div class="accordion-item">
             <h2 class="accordion-header" id="headingGeneralInfo">
                 <button class="accordion-button bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGeneralInfo" aria-expanded="true" aria-controls="collapseGeneralInfo">
-                    Informations Générales du Cours
+                    Informations générales du cours
                 </button>
             </h2>
             <div id="collapseGeneralInfo" class="accordion-collapse collapse show" aria-labelledby="headingGeneralInfo" data-bs-parent="#generalInfoAccordion">
@@ -43,23 +47,7 @@
                     <p><strong>Heures de théorie :</strong> {{ cours.heures_theorie }}</p>
                     <p><strong>Heures de laboratoire :</strong> {{ cours.heures_laboratoire }}</p>
                     <p><strong>Heures de travail à la maison :</strong> {{ cours.heures_travail_maison }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cours Préalables et Corequis dans un Accordéon -->
-    <div class="accordion mb-4" id="prerequisitesAccordion">
-        <!-- Cours Préalables -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingPrealables">
-                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePrealables" aria-expanded="true" aria-controls="collapsePrealables">
-                    Cours Préalables
-                </button>
-            </h2>
-            <div id="collapsePrealables" class="accordion-collapse collapse show" aria-labelledby="headingPrealables" data-bs-parent="#prerequisitesAccordion">
-                <div class="accordion-body">
-                    {% if prealables_details %}
+                    <p><strong>Cours préalables :</strong>                   {% if prealables_details %}
                         <ul class="list-group">
                             {% for pre in prealables_details %}
                                 <li class="list-group-item">
@@ -69,21 +57,8 @@
                         </ul>
                     {% else %}
                         <p>Aucun cours préalable.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Cours Corequis -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingCorequis">
-                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCorequis" aria-expanded="true" aria-controls="collapseCorequis">
-                    Cours Corequis
-                </button>
-            </h2>
-            <div id="collapseCorequis" class="accordion-collapse collapse show" aria-labelledby="headingCorequis" data-bs-parent="#prerequisitesAccordion">
-                <div class="accordion-body">
-                    {% if corequisites_details %}
+                    {% endif %}</p>
+                    <p><strong>Cours corequis :</strong>                    {% if corequisites_details %}
                         <ul class="list-group">
                             {% for core in corequisites_details %}
                                 <li class="list-group-item">
@@ -93,7 +68,7 @@
                         </ul>
                     {% else %}
                         <p>Aucun cours corequis.</p>
-                    {% endif %}
+                    {% endif %}</p>
                 </div>
             </div>
         </div>
@@ -119,54 +94,6 @@
         </div>
     </div>
 </div>
-
-        <!-- Objectif Terminal -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingObjectif">
-                <button class="accordion-button bg-success text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseObjectif" aria-expanded="true" aria-controls="collapseObjectif">
-                    Objectif terminal
-                </button>
-            </h2>
-            <div id="collapseObjectif" class="accordion-collapse collapse show" aria-labelledby="headingObjectif" data-bs-parent="#planCadreAccordion">
-                <div class="accordion-body">
-                    <p>{{ plan.objectif_terminal or "Non renseigné." }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Structure du Cours -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingStructure">
-                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStructure" aria-expanded="true" aria-controls="collapseStructure">
-                    Structure du cours
-                </button>
-            </h2>
-            <div id="collapseStructure" class="accordion-collapse collapse show" aria-labelledby="headingStructure" data-bs-parent="#planCadreAccordion">
-                <div class="accordion-body">
-                    <p><strong>Introduction:</strong> {{ plan.structure_intro or "Non renseigné." }}</p>
-                    <p><strong>Activités Théoriques:</strong> {{ plan.structure_activites_theoriques or "Non renseigné." }}</p>
-                    <p><strong>Activités Pratiques:</strong> {{ plan.structure_activites_pratiques or "Non renseigné." }}</p>
-                    <div><strong>Activités Prévues:</strong> {{ plan.structure_activites_prevues | markdown | safe or "Non renseigné." }}</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Évaluation des Apprentissages -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingEvaluation">
-                <button class="accordion-button bg-warning text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEvaluation" aria-expanded="true" aria-controls="collapseEvaluation">
-                    Évaluation des apprentissages
-                </button>
-            </h2>
-            <div id="collapseEvaluation" class="accordion-collapse collapse show" aria-labelledby="headingEvaluation" data-bs-parent="#planCadreAccordion">
-                <div class="accordion-body">
-                    <p><strong>Évaluation sommative:</strong> {{ plan.eval_evaluation_sommative or "Non renseigné." }}</p>
-                    <p><strong>Nature des évaluations sommatives:</strong> {{ plan.eval_nature_evaluations_sommatives or "Non renseigné." }}</p>
-                    <p><strong>Évaluation de la langue:</strong> {{ plan.eval_evaluation_de_la_langue or "Non renseigné." }}</p>
-                    <p><strong>Évaluation formative des apprentissages:</strong> {{ plan.eval_evaluation_sommatives_apprentissages | markdown | safe or "Non renseigné." }}</p>
-                </div>
-            </div>
-        </div>
 
         <!-- Compétences Développées -->
         <div class="accordion-item">
@@ -260,6 +187,54 @@
                     {% else %}
                         <p>Aucun cours préalable.</p>
                     {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Objectif Terminal -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingObjectif">
+                <button class="accordion-button bg-success text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseObjectif" aria-expanded="true" aria-controls="collapseObjectif">
+                    Objectif terminal
+                </button>
+            </h2>
+            <div id="collapseObjectif" class="accordion-collapse collapse show" aria-labelledby="headingObjectif" data-bs-parent="#planCadreAccordion">
+                <div class="accordion-body">
+                    <p>{{ plan.objectif_terminal or "Non renseigné." }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Structure du Cours -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingStructure">
+                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStructure" aria-expanded="true" aria-controls="collapseStructure">
+                    Structure du cours
+                </button>
+            </h2>
+            <div id="collapseStructure" class="accordion-collapse collapse show" aria-labelledby="headingStructure" data-bs-parent="#planCadreAccordion">
+                <div class="accordion-body">
+                    <p><strong>Introduction:</strong> {{ plan.structure_intro or "Non renseigné." }}</p>
+                    <p><strong>Activités Théoriques:</strong> {{ plan.structure_activites_theoriques or "Non renseigné." }}</p>
+                    <p><strong>Activités Pratiques:</strong> {{ plan.structure_activites_pratiques or "Non renseigné." }}</p>
+                    <div><strong>Activités Prévues:</strong> {{ plan.structure_activites_prevues | markdown | safe or "Non renseigné." }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Évaluation des Apprentissages -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingEvaluation">
+                <button class="accordion-button bg-warning text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEvaluation" aria-expanded="true" aria-controls="collapseEvaluation">
+                    Évaluation des apprentissages
+                </button>
+            </h2>
+            <div id="collapseEvaluation" class="accordion-collapse collapse show" aria-labelledby="headingEvaluation" data-bs-parent="#planCadreAccordion">
+                <div class="accordion-body">
+                    <p><strong>Évaluation sommative:</strong> {{ plan.eval_evaluation_sommative or "Non renseigné." }}</p>
+                    <p><strong>Nature des évaluations sommatives:</strong> {{ plan.eval_nature_evaluations_sommatives or "Non renseigné." }}</p>
+                    <p><strong>Évaluation de la langue:</strong> {{ plan.eval_evaluation_de_la_langue or "Non renseigné." }}</p>
+                    <p><strong>Évaluation formative des apprentissages:</strong> {{ plan.eval_evaluation_sommatives_apprentissages | markdown | safe or "Non renseigné." }}</p>
                 </div>
             </div>
         </div>
@@ -488,6 +463,25 @@
         background-color: #f8f9fa;
     }
 </style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('generateForm');
+    const button = document.getElementById('generateBtn');
+    const spinner = document.getElementById('loadingSpinner');
+    const btnText = button.querySelector('.btn-text');
+
+    form.addEventListener('submit', function(e) {
+        // Désactiver le bouton
+        button.disabled = true;
+        
+        // Afficher le spinner
+        spinner.classList.remove('d-none');
+        
+        // Changer le texte
+        btnText.textContent = 'Génération en cours...';
+    });
+});
+</script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const introText = document.getElementById('intro-text');
