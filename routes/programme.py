@@ -115,10 +115,11 @@ def view_programme(programme_id):
     for c in cours:
         comps = conn.execute(''' 
             SELECT DISTINCT c.code AS competence_code
-            FROM ElementCompetenceParCours ecp
-            JOIN ElementCompetence ec ON ecp.element_competence_id = ec.id
-            JOIN Competence c ON ec.competence_id = c.id
-            WHERE ecp.cours_id = ?
+FROM ElementCompetenceParCours ecp
+JOIN ElementCompetence ec ON ecp.element_competence_id = ec.id
+JOIN Competence c ON ec.competence_id = c.id
+WHERE ecp.cours_id = ?
+  AND ecp.status IN ('Développé significativement', 'Atteint');
         ''', (c['id'],)).fetchall()
         competencies_codes[c['id']] = [comp['competence_code'] for comp in comps]
     
