@@ -55,6 +55,14 @@ class AIField(BaseModel):
     field_name: Optional[str] = None
     content: Optional[str] = None
 
+class AIContentDetail(BaseModel):
+    texte: Optional[str] = None
+    description: Optional[str] = None
+
+class AIFieldWithDescription(BaseModel):
+    field_name: Optional[str] = None
+    content: Optional[List[AIContentDetail]] = None  # Permet une liste d'objets structurés pour certains champs
+
 class AISavoirFaire(BaseModel):
     texte: Optional[str] = None
     cible: Optional[str] = None
@@ -84,6 +92,7 @@ class PlanCadreAIResponse(BaseModel):
       - capacites: (list of AICapacite)
     """
     fields: Optional[List[AIField]] = None
+    fields_with_description: Optional[List[AIFieldWithDescription]] = None
     savoir_etre: Optional[List[str]] = None
     capacites: Optional[List[AICapacite]] = None
 
@@ -186,6 +195,7 @@ def generate_plan_cadre_content(plan_id):
         # 1B) Parcours des sections pour déterminer "AI vs direct"
         # ----------------------------------------------------------
         ai_fields = []
+        ai_fields_with_description = []
         non_ai_updates_plan_cadre = []    # Liste de tuples (col_name, replaced_text)
         non_ai_inserts_other_table = []   # Liste de tuples (table_name, replaced_text)
         ai_savoir_etre = None
@@ -239,7 +249,7 @@ def generate_plan_cadre_content(plan_id):
                     replaced_text += f"\n\n{competences_text}"
 
                     # On ajoute ensuite ce champ à la liste des champs IA
-                    ai_fields.append({"field_name": section_name, "prompt": replaced_text})
+                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
 
                 if section_name == "Description des Compétences certifiées" and is_ai:
                     # Récupérer les compétences pour le cours
@@ -261,13 +271,63 @@ def generate_plan_cadre_content(plan_id):
                         for comp in competences:
                             competences_text += f"- {comp['code']}: {comp['nom']}\n"
                     else:
-                        competences_text = "\n(Aucune compétence de type 'developpee' trouvée pour ce cours)\n"
+                        competences_text = "\n(Aucune compétence de type 'certifiées' trouvée pour ce cours)\n"
 
                     # On concatène ce texte à replaced_text pour le prompt
                     replaced_text += f"\n\n{competences_text}"
 
                     # On ajoute ensuite ce champ à la liste des champs IA
-                    ai_fields.append({"field_name": section_name, "prompt": replaced_text})
+                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
+
+                if section_name == "Description des cours corequis" and is_ai:
+                    # Récupérer les compétences pour le cours
+                    # (Adaptez la requête à votre structure de DB)
+                    cours = conn.execute("""
+                        SELECT CoursCorequis.id, Cours.code, Cours.nom
+                        FROM CoursCorequis
+                        JOIN Cours ON CoursCorequis.cours_corequis_id = Cours.id
+                        WHERE CoursCorequis.cours_id = ?
+                    """, (plan['cours_id'],)).fetchall()
+
+                    # On construit un petit texte qui liste les compétences
+                    cours_text = ""
+                    if cours:
+                        cours_text = "\nListe des cours corequis pour ce cours:\n"
+                        for c in cours:
+                            cours_text += f"- {c['code']}: {c['nom']}\n"
+                    else:
+                        cours_text = "\n(Aucun cours corequis à ce cours)\n"
+
+                    # On concatène ce texte à replaced_text pour le prompt
+                    replaced_text += f"\n\n{cours_text}"
+
+                    # On ajoute ensuite ce champ à la liste des champs IA
+                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
+
+                if section_name == "Description des cours préalables" and is_ai:
+                    # Récupérer les compétences pour le cours
+                    # (Adaptez la requête à votre structure de DB)
+                    cours = conn.execute("""
+                        SELECT CoursPrealable.id, Cours.code, Cours.nom
+                        FROM CoursPrealable
+                        JOIN Cours ON CoursPrealable.cours_prealable_id = Cours.id
+                        WHERE CoursPrealable.cours_id = ?
+                    """, (plan['cours_id'],)).fetchall()
+
+                    # On construit un petit texte qui liste les compétences
+                    cours_text = ""
+                    if cours:
+                        cours_text = "\nListe des cours préalables pour ce cours:\n"
+                        for c in cours:
+                            cours_text += f"- {c['code']}: {c['nom']}\n"
+                    else:
+                        cours_text = "\n(Aucun cours préalables à ce cours)\n"
+
+                    # On concatène ce texte à replaced_text pour le prompt
+                    replaced_text += f"\n\n{cours_text}"
+
+                    # On ajoute ensuite ce champ à la liste des champs IA
+                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
 
             # 3) Champs spéciaux
             else:
@@ -342,23 +402,26 @@ def generate_plan_cadre_content(plan_id):
                 "Voici différents prompts. Retourne un JSON STRICTEMENT conforme à PlanCadreAIResponse.\n\n"
 
                 "- fields: liste de {field_name, content}\n"
+                "- fields_with_description: liste de {field_name, texte, description}\n"
                 "- savoir_etre: array de strings\n"
                 "- capacites: array de {capacite, description_capacite, ponderation_min, ponderation_max, "
                 "  savoirs_necessaires[], savoirs_faire[], moyens_evaluation[]}\n\n"
 
-                "IMPORTANT: pour les field_name = \"Description des compétences développées\" et \"Description des compétences certifiées\" tu dois renvoyer :\n"
-                "  \"content\" : [\n"
+                "IMPORTANT: pour le field_name = \"Description des compétences développées\", s'il y en a, tu dois renvoyer :\n"
                 "    {\"texte\": \"Code de la compétence - Titre de la compétence 1\", \"description\": \"Description détaillée...\"},\n"
-                "    {\"texte\": \"Code de la compétence - Titre de la compétence 2\", \"description\": \"Description détaillée...\"},\n"
-                "    ...\n"
-                "  ]\n\n"
+                "N'oublie pas d'inclure toutes les compétences développées"
 
-                "IMPORTANT: pour le field_name = \"Description des cours corequis\" et \"Description des cours préalables\" tu dois renvoyer :\n"
-                "  \"content\" : [\n"
+                "IMPORTANT: pour le field_name = \"Description des Compétences certifiées\", s'il y en a, tu dois renvoyer :\n"
+                "    {\"texte\": \"Code de la compétence - Titre de la compétence 1\", \"description\": \"Description détaillée...\"},\n"
+                "N'oublie pas d'inclure toutes les compétences certifiées"
+
+                "IMPORTANT: pour le field_name = \"Description des cours corequis\", s'il y en a, tu dois renvoyer :\n"
                 "    {\"texte\": \"Code du cours- Titre du cours\", \"description\": \"Description détaillée...\"},\n"
+                "N'oublie pas d'inclure tous les cours corequis"
+
+                "IMPORTANT: pour le field_name \"Description des cours préalables\", s'il y en a, tu dois renvoyer :\n"
                 "    {\"texte\": \"Code du cours- Titre du cours\", \"description\": \"Description détaillée...\"},\n"
-                "    ...\n"
-                "  ]\n\n"
+                "N'oublie pas d'inclure tous les cours préalables"
 
                 "Pour chaque capacité retournée (dans la liste capacites), fournis au moins 10 éléments dans les "
                 "listes savoirs_faire et savoirs_necessaires. Ne retourne rien d'autre que du JSON.\n\n"
@@ -373,12 +436,12 @@ def generate_plan_cadre_content(plan_id):
                 "Assure-toi que toutes les sorties sont un JSON strictement conforme au schéma PlanCadreAIResponse."
             ),
             "fields": ai_fields,       # old plan-cadre fields
+            "fields_with_description": ai_fields_with_description,
             "savoir_etre": ai_savoir_etre or "",
             "capacites": ai_capacites_prompt or "",
         }
 
         print(structured_request)
-        print(PlanCadreAIResponse)
 
         # On suppose que vous avez la fonction openai qui gère l’API
         from openai import OpenAI
@@ -406,7 +469,7 @@ def generate_plan_cadre_content(plan_id):
         # ----------------------------------------------------------
         parsed_data: PlanCadreAIResponse = completion.choices[0].message.parsed
 
-
+        print(parsed_data)
 
         def clean_text(val):
             return val.strip().strip('"').strip("'") if val else ""
@@ -425,63 +488,68 @@ def generate_plan_cadre_content(plan_id):
                     (fcontent, plan_id)
                 )
 
-            # Sinon, si c’est un champ d’une autre table
-            elif fname in field_to_table_insert:
-                table_name = field_to_table_insert[fname]
 
-                # ----- CAS PARTICULIER : "Description des compétences développées" -----
-                if fname == "Description des compétences développées":
-                    table_name = "PlanCadreCompetencesDeveloppees"  # ou votre table correspondante
 
-                    try:
-                        competences = json.loads(raw_content)
-                    except Exception:
-                        # Si GPT a renvoyé du texte non-JSON => fallback
-                        competences = [
-                            {
-                                "texte": raw_content,
-                                "description": ""
-                            }
-                        ]
 
-                    for comp in competences:
-                        texte = comp.get('texte', '')
-                        desc  = comp.get('description', '')
+        table_mapping = {
+            "Description des compétences développées": "PlanCadreCompetencesDeveloppees",
+            "Description des Compétences certifiées": "PlanCadreCompetencesCertifiees",
+            "Description des cours corequis": "PlanCadreCoursCorequis",
+            "Description des cours préalables": "PlanCadreCoursPrealables"
+        }
 
-                        # Insertion en base, 1 ligne par compétence
-                        conn.execute(
-                            f"""INSERT OR REPLACE INTO PlanCadreCompetencesDeveloppees (plan_cadre_id, texte, description)
-VALUES (?, ?, ?)""",
-                            (plan_id, texte, desc)
-                        )
+        for fobj in parsed_data.fields_with_description:
+            fname = fobj.field_name  # Définir fname ici
 
-                if fname == "Description des compétences cerifiées":
-                    table_name = "PlanCadreCompetencesCertifiees"  # ou votre table correspondante
+            # Initialiser une liste vide pour les éléments à insérer
+            elements = []
 
-                    try:
-                        competences = json.loads(raw_content)
-                    except Exception:
-                        # Si GPT a renvoyé du texte non-JSON => fallback
-                        competences = [
-                            {
-                                "texte": raw_content,
-                                "description": ""
-                            }
-                        ]
+            # Vérifier si le contenu est présent
+            if fobj.content:
+                if isinstance(fobj.content, list):
+                    # Si le contenu est une liste, itérer sur chaque élément
+                    for item in fobj.content:
+                        texte_comp = item.texte.strip() if item.texte else ""
+                        desc_comp = item.description.strip() if item.description else ""
+                        if texte_comp or desc_comp:
+                            elements.append({"texte": texte_comp, "description": desc_comp})
+                elif isinstance(fobj.content, str):
+                    # Si le contenu est une chaîne de caractères, l'ajouter directement
+                    elements.append({"texte": fobj.content.strip(), "description": ""})
+            # Si le contenu est None ou vide, `elements` restera une liste vide
 
-                    for comp in competences:
-                        texte = comp.get('texte', '')
-                        desc  = comp.get('description', '')
+            # Vérifier si le champ doit être inséré dans une table spécifique
+            if fname in field_to_table_insert:
+                # Obtenir le nom de la table correspondante
+                table_name = table_mapping.get(fname)
+                if not table_name:
+                    # Si le nom du champ n'est pas reconnu, passer au suivant
+                    continue
 
-                        # Insertion en base, 1 ligne par compétence
-                        conn.execute(
-                            f"""INSERT OR REPLACE INTO PlanCadreCompetencesCertifiees (plan_cadre_id, texte, description)
-VALUES (?, ?, ?)""",
-                            (plan_id, texte, desc)
-                        )
+                # Itérer sur chaque élément à insérer
+                for elem in elements:
+                    texte_comp = elem["texte"]
+                    desc_comp = elem["description"]
 
+                    # Vérifier si *les deux* champs sont vides
+                    if not texte_comp and not desc_comp:
+                        # Les deux sont vides => sauter cette insertion
+                        continue
+
+                    # Préparer la requête SQL en fonction de la table
+                    insert_query = f"""
+                        INSERT OR REPLACE INTO {table_name} (plan_cadre_id, texte, description)
+                        VALUES (?, ?, ?)
+                    """
+
+                    # Exécuter l'insertion en base de données
+                    conn.execute(
+                        insert_query,
+                        (plan_id, texte_comp, desc_comp)
+                    )
             else:
-                # Pas mappé => on ignore ou on gère autrement
+                # Gérer les champs qui ne nécessitent pas d'insertion dans une table spécifique
+                # Par exemple, les insérer dans une table générique ou les ignorer
                 pass
 
         # 3B) savoir_etre -> PlanCadreSavoirEtre
