@@ -20,6 +20,21 @@ from wtforms.widgets import ListWidget, CheckboxInput
 from flask_ckeditor import CKEditorField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
+class GenerateContentForm(FlaskForm):
+    additional_info = TextAreaField('Informations complémentaires', validators=[DataRequired()])
+    ai_model = SelectField(
+        'Modèle d\'IA',
+        choices=[
+            ('gpt-4o', 'gpt-4o (défaut)'),
+            ('gpt-4o-mini', 'gpt-4o-mini'),
+            ('o1-preview', 'o1-preview'),
+            ('o1-mini', 'o1-mini')
+        ],
+        default='gpt-4o',
+        validators=[DataRequired()]
+    )
+    submit = SubmitField('Générer le plan-cadre')
+
 class LoginForm(FlaskForm):
     username = StringField('Nom d\'utilisateur', validators=[DataRequired(), Length(min=3, max=25)])
     password = PasswordField('Mot de passe', validators=[DataRequired(), Length(min=8)])
@@ -153,8 +168,8 @@ class MoyenEvaluationFieldForm(Form):
         csrf = False
     texte = StringField("Moyen d'évaluation", validators=[Optional()])
 
-class GenerateContentForm(FlaskForm):
-    submit = SubmitField('Générer le Contenu')
+#class GenerateContentForm(FlaskForm):
+#    submit = SubmitField('Générer le Contenu')
 
 class GenerationSettingForm(FlaskForm):
     use_ai = BooleanField('Utiliser l\'IA')

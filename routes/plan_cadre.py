@@ -137,6 +137,14 @@ def generate_plan_cadre_content(plan_id):
         return redirect(url_for('cours.view_plan_cadre', plan_id=plan_id))
 
     try:
+        additional_info = form.additional_info.data
+        ai_model = form.ai_model.data  # "gpt-4o", "gpt-4o-mini", etc.
+
+        # Sauvegarder les données supplémentaires dans la base de données
+        conn.execute(
+            "UPDATE PlanCadre SET additional_info = ?, ai_model = ? WHERE id = ?",
+            (additional_info, ai_model, plan_id)
+        )
         # ----------------------------------------------------------
         # 1) Préparation des data & des settings
         # ----------------------------------------------------------
@@ -403,6 +411,7 @@ def generate_plan_cadre_content(plan_id):
             "instruction": (
                 f"Tu es un rédacteur de contenu pour un plan-cadre de cours '{cours_nom}', "
                 f"session {cours_session}. Retourne un JSON valide correspondant à PlanCadreAIResponse."
+                f"Informations supplémentaires: {additional_info}\n\n"
                 "Voici le schéma JSON auquel ta réponse doit strictement adhérer :\n\n"
                 f"{schema_json}\n\n"
 
@@ -455,7 +464,7 @@ def generate_plan_cadre_content(plan_id):
 
         try:
             o1_response = client.beta.chat.completions.parse(
-                model="gpt-4o",  # ou "gpt-3.5-turbo"
+                model=ai_model,  # ou "gpt-3.5-turbo"
                 messages=[
                     {"role": "user", "content": json.dumps(structured_request)}
                 ]

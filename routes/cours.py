@@ -406,6 +406,9 @@ def add_plan_cadre(cours_id):
 def view_plan_cadre(cours_id, plan_id):
 
     conn = get_db_connection()
+
+    generate_form = GenerateContentForm()
+
     # On récupère d'abord le Plan Cadre en s'assurant qu'il correspond au cours_id
     plan = conn.execute('SELECT * FROM PlanCadre WHERE id = ? AND cours_id = ?', (plan_id, cours_id)).fetchone()
     cours = conn.execute('SELECT * FROM Cours WHERE id = ?', (cours_id,)).fetchone()
@@ -414,6 +417,12 @@ def view_plan_cadre(cours_id, plan_id):
     
     # Instancier le formulaire de suppression pour ce cours
     delete_form = DeleteForm(prefix=f"cours-{cours['id']}")
+
+    generate_form = GenerateContentForm(
+        additional_info=plan['additional_info'],
+        ai_model=plan['ai_model']
+    )
+    import_form = ImportPlanCadreForm()
 
    # Récupérer les détails du cours avec le nom du programme
     cours = conn.execute('''
@@ -557,6 +566,7 @@ def view_plan_cadre(cours_id, plan_id):
         cours_id=cours_id,
         plan_id=plan_id,
         import_form=import_form,
+        generate_form=generate_form,
                            plans_cadres=plans_cadres,
                            competences_developpees_from_cours=competences_developpees_from_cours, 
                            competences_atteintes=competences_atteintes,
