@@ -4572,3 +4572,102 @@ fields.3.content
 2024-12-29 00:28:40,233 - INFO - 127.0.0.1 - - [29/Dec/2024 00:28:40] "[32mPOST /plan_cadre/24/generate_content HTTP/1.1[0m" 302 -
 2024-12-29 00:28:40,281 - INFO - 127.0.0.1 - - [29/Dec/2024 00:28:40] "GET /cours/31/plan_cadre/24 HTTP/1.1" 200 -
 2024-12-29 00:28:40,291 - INFO - 127.0.0.1 - - [29/Dec/2024 00:28:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-29 00:29:49,660 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 00:29:49,776 - INFO -  * Restarting with stat
+2024-12-29 00:29:50,394 - WARNING -  * Debugger is active!
+2024-12-29 00:29:50,396 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:20:05,188 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:20:05,245 - INFO -  * Restarting with stat
+2024-12-29 21:20:05,875 - WARNING -  * Debugger is active!
+2024-12-29 21:20:05,877 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:23:57,754 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:23:57,867 - INFO -  * Restarting with stat
+2024-12-29 21:23:58,375 - WARNING -  * Debugger is active!
+2024-12-29 21:23:58,376 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:24:37,706 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:24:37,815 - INFO -  * Restarting with stat
+2024-12-29 21:24:38,439 - WARNING -  * Debugger is active!
+2024-12-29 21:24:38,441 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:26:08,282 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:26:08,372 - INFO -  * Restarting with stat
+2024-12-29 21:26:08,989 - WARNING -  * Debugger is active!
+2024-12-29 21:26:08,990 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:26:23,130 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:26:23,226 - INFO -  * Restarting with stat
+2024-12-29 21:26:23,844 - WARNING -  * Debugger is active!
+2024-12-29 21:26:23,846 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:28:19,915 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:28:20,000 - INFO -  * Restarting with stat
+2024-12-29 21:28:20,614 - WARNING -  * Debugger is active!
+2024-12-29 21:28:20,616 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:28:29,735 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:28:29,829 - INFO -  * Restarting with stat
+2024-12-29 21:28:30,447 - WARNING -  * Debugger is active!
+2024-12-29 21:28:30,448 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:28:42,576 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:28:42,665 - INFO -  * Restarting with stat
+2024-12-29 21:28:43,282 - WARNING -  * Debugger is active!
+2024-12-29 21:28:43,284 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:30:40,379 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:30:40,465 - INFO -  * Restarting with stat
+2024-12-29 21:30:41,080 - WARNING -  * Debugger is active!
+2024-12-29 21:30:41,082 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:31:21,450 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:31:21,537 - INFO -  * Restarting with stat
+2024-12-29 21:31:22,157 - WARNING -  * Debugger is active!
+2024-12-29 21:31:22,159 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:31:30,246 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:31:30,332 - INFO -  * Restarting with stat
+2024-12-29 21:31:30,966 - WARNING -  * Debugger is active!
+2024-12-29 21:31:30,968 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:31:39,052 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:31:39,139 - INFO -  * Restarting with stat
+2024-12-29 21:31:39,758 - WARNING -  * Debugger is active!
+2024-12-29 21:31:39,760 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:32:05,003 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:32:05,089 - INFO -  * Restarting with stat
+2024-12-29 21:32:05,679 - WARNING -  * Debugger is active!
+2024-12-29 21:32:05,681 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:32:18,810 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:32:18,902 - INFO -  * Restarting with stat
+2024-12-29 21:32:19,518 - WARNING -  * Debugger is active!
+2024-12-29 21:32:19,520 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:32:25,738 - INFO - 127.0.0.1 - - [29/Dec/2024 21:32:25] "[32mGET /cours/31/plan_cadre/24 HTTP/1.1[0m" 302 -
+2024-12-29 21:32:25,755 - INFO - 127.0.0.1 - - [29/Dec/2024 21:32:25] "GET /login?next=/cours/31/plan_cadre/24 HTTP/1.1" 200 -
+2024-12-29 21:32:33,824 - INFO - 127.0.0.1 - - [29/Dec/2024 21:32:33] "[32mPOST /login?next=/cours/31/plan_cadre/24 HTTP/1.1[0m" 302 -
+2024-12-29 21:32:33,864 - INFO - 127.0.0.1 - - [29/Dec/2024 21:32:33] "GET /cours/31/plan_cadre/24 HTTP/1.1" 200 -
+2024-12-29 21:32:33,876 - INFO - 127.0.0.1 - - [29/Dec/2024 21:32:33] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-29 21:32:36,138 - INFO - 127.0.0.1 - - [29/Dec/2024 21:32:36] "[32mGET / HTTP/1.1[0m" 302 -
+2024-12-29 21:32:36,163 - INFO - 127.0.0.1 - - [29/Dec/2024 21:32:36] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-29 21:32:36,175 - INFO - 127.0.0.1 - - [29/Dec/2024 21:32:36] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-29 21:32:40,877 - INFO - 127.0.0.1 - - [29/Dec/2024 21:32:40] "[32mGET /cours/24/plan_cadre HTTP/1.1[0m" 302 -
+2024-12-29 21:32:40,881 - INFO - 127.0.0.1 - - [29/Dec/2024 21:32:40] "GET /cours/24/plan_cadre/15 HTTP/1.1" 200 -
+2024-12-29 21:32:40,895 - INFO - 127.0.0.1 - - [29/Dec/2024 21:32:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-29 21:34:52,628 - INFO - 127.0.0.1 - - [29/Dec/2024 21:34:52] "[32mPOST /plan_cadre/15/generate_content HTTP/1.1[0m" 302 -
+2024-12-29 21:34:52,637 - INFO - 127.0.0.1 - - [29/Dec/2024 21:34:52] "GET /cours/24/plan_cadre/15 HTTP/1.1" 200 -
+2024-12-29 21:34:52,649 - INFO - 127.0.0.1 - - [29/Dec/2024 21:34:52] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-29 21:36:55,882 - INFO - 127.0.0.1 - - [29/Dec/2024 21:36:55] "GET /plan_cadre/15/export HTTP/1.1" 200 -
+2024-12-29 21:37:04,671 - INFO - 127.0.0.1 - - [29/Dec/2024 21:37:04] "[32mGET / HTTP/1.1[0m" 302 -
+2024-12-29 21:37:04,685 - INFO - 127.0.0.1 - - [29/Dec/2024 21:37:04] "GET /programme/1 HTTP/1.1" 200 -
+2024-12-29 21:37:04,696 - INFO - 127.0.0.1 - - [29/Dec/2024 21:37:04] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-29 21:37:51,972 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2024-12-29 21:37:52,045 - INFO -  * Restarting with stat
+2024-12-29 21:37:52,671 - WARNING -  * Debugger is active!
+2024-12-29 21:37:52,673 - INFO -  * Debugger PIN: 122-719-709
+2024-12-29 21:37:57,513 - INFO - 127.0.0.1 - - [29/Dec/2024 21:37:57] "[32mGET /cours/25/plan_cadre HTTP/1.1[0m" 302 -
+2024-12-29 21:37:57,540 - INFO - 127.0.0.1 - - [29/Dec/2024 21:37:57] "GET /cours/25/plan_cadre/20 HTTP/1.1" 200 -
+2024-12-29 21:37:57,554 - INFO - 127.0.0.1 - - [29/Dec/2024 21:37:57] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-29 21:38:01,430 - INFO - 127.0.0.1 - - [29/Dec/2024 21:38:01] "[32mPOST /plan_cadre/20/capacite/20/delete HTTP/1.1[0m" 302 -
+2024-12-29 21:38:01,446 - INFO - 127.0.0.1 - - [29/Dec/2024 21:38:01] "GET /cours/25/plan_cadre/20 HTTP/1.1" 200 -
+2024-12-29 21:38:01,458 - INFO - 127.0.0.1 - - [29/Dec/2024 21:38:01] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-29 21:38:04,522 - INFO - 127.0.0.1 - - [29/Dec/2024 21:38:04] "[32mPOST /plan_cadre/20/capacite/21/delete HTTP/1.1[0m" 302 -
+2024-12-29 21:38:04,534 - INFO - 127.0.0.1 - - [29/Dec/2024 21:38:04] "GET /cours/25/plan_cadre/20 HTTP/1.1" 200 -
+2024-12-29 21:38:04,543 - INFO - 127.0.0.1 - - [29/Dec/2024 21:38:04] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-29 21:38:08,854 - INFO - 127.0.0.1 - - [29/Dec/2024 21:38:08] "GET /plan_cadre/20/edit HTTP/1.1" 200 -
+2024-12-29 21:38:08,864 - INFO - 127.0.0.1 - - [29/Dec/2024 21:38:08] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-29 21:38:21,332 - INFO - 127.0.0.1 - - [29/Dec/2024 21:38:21] "[32mPOST /plan_cadre/20/edit HTTP/1.1[0m" 302 -
+2024-12-29 21:38:21,343 - INFO - 127.0.0.1 - - [29/Dec/2024 21:38:21] "GET /cours/25/plan_cadre/20 HTTP/1.1" 200 -
+2024-12-29 21:38:21,356 - INFO - 127.0.0.1 - - [29/Dec/2024 21:38:21] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-29 21:39:24,502 - INFO - 127.0.0.1 - - [29/Dec/2024 21:39:24] "[32mPOST /plan_cadre/20/generate_content HTTP/1.1[0m" 302 -
+2024-12-29 21:39:24,517 - INFO - 127.0.0.1 - - [29/Dec/2024 21:39:24] "GET /cours/25/plan_cadre/20 HTTP/1.1" 200 -
+2024-12-29 21:39:24,530 - INFO - 127.0.0.1 - - [29/Dec/2024 21:39:24] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -

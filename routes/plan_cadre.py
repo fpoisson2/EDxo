@@ -388,6 +388,8 @@ def generate_plan_cadre_content(plan_id):
             flash('Aucune génération IA requise (tous champs non-AI).', 'success')
             return redirect(url_for('cours.view_plan_cadre', plan_id=plan_id))
 
+        schema_json = json.dumps(PlanCadreAIResponse.schema(), indent=4, ensure_ascii=False)
+
         # ----------------------------------------------------------
         # 2) Appel GPT (un seul)
         # ----------------------------------------------------------
@@ -399,8 +401,12 @@ def generate_plan_cadre_content(plan_id):
         # On structure la requête pour GPT
         structured_request = {
             "instruction": (
-                "Voici différents prompts. Retourne un JSON STRICTEMENT conforme à PlanCadreAIResponse.\n\n"
+                f"Tu es un rédacteur de contenu pour un plan-cadre de cours '{cours_nom}', "
+                f"session {cours_session}. Retourne un JSON valide correspondant à PlanCadreAIResponse."
+                "Voici le schéma JSON auquel ta réponse doit strictement adhérer :\n\n"
+                f"{schema_json}\n\n"
 
+                "Voici différents prompts."
                 "- fields: liste de {field_name, content}\n"
                 "- fields_with_description: liste de {field_name, texte, description}\n"
                 "- savoir_etre: array de strings\n"
@@ -448,15 +454,32 @@ def generate_plan_cadre_content(plan_id):
         client = OpenAI(api_key=openai_key)
 
         try:
-            completion = client.beta.chat.completions.parse(
+            o1_response = client.beta.chat.completions.parse(
                 model="gpt-4o",  # ou "gpt-3.5-turbo"
                 messages=[
-                    {"role": "system", "content": role_message},
                     {"role": "user", "content": json.dumps(structured_request)}
+                ]
+            )
+        except Exception as e:
+            conn.close()
+            logging.error(f"OpenAI error: {e}")
+            flash(f"Erreur API OpenAI: {str(e)}", 'danger')
+            return redirect(url_for('cours.view_plan_cadre', plan_id=plan_id))
+
+        o1_response_content = o1_response.choices[0].message.content
+
+        try:
+            completion = client.beta.chat.completions.parse(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "user", 
+                        "content": f"""
+            Connaissant les données suivantes, formatte-les selon le response_format demandé: {o1_response_content}
+            """
+                    }
                 ],
-                temperature=0.7,
-                max_tokens=5000,
-                response_format=PlanCadreAIResponse, 
+                response_format=PlanCadreAIResponse,
             )
         except Exception as e:
             conn.close()
@@ -469,7 +492,7 @@ def generate_plan_cadre_content(plan_id):
         # ----------------------------------------------------------
         parsed_data: PlanCadreAIResponse = completion.choices[0].message.parsed
 
-        print(parsed_data)
+        #print(parsed_data)
 
         def clean_text(val):
             return val.strip().strip('"').strip("'") if val else ""
