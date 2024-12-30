@@ -18,17 +18,15 @@
         <a href="{{ url_for('plan_cadre.edit_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary d-flex align-items-center">
             <i class="bi bi-pencil-square me-2"></i> Éditer le plan-cadre
         </a>
-        <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post" id="generateForm">
-            {{ import_form.hidden_tag() }}
-            <button type="submit" class="btn btn-success d-flex align-items-center" id="generateBtn">
-                <i class="bi bi-box-arrow-up-right me-2"></i>
-                <span class="btn-text">Générer le plan-cadre</span>
-                <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="loadingSpinner">
-                    <span class="visually-hidden">Chargement...</span>
-                </span>
-            </button>
-        </form>
+        <button type="button" class="btn btn-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
+            <i class="bi bi-box-arrow-up-right me-2"></i>
+            <span class="btn-text">Générer le plan-cadre</span>
+            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="loadingSpinner">
+                <span class="visually-hidden">Chargement...</span>
+            </span>
+        </button>
     </div>
+
 
     <!-- Informations Générales du Cours dans un Accordéon -->
     <div class="accordion mb-4" id="generalInfoAccordion">
@@ -450,11 +448,146 @@
         <a href="{{ url_for('plan_cadre.edit_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary">Éditer le plan-cadre</a>
         <a href="{{ url_for('cours.view_cours', cours_id=plan.cours_id) }}" class="btn btn-secondary">Retour au cours</a>
     </div>
+        <div class="modal fade" id="generateModal" tabindex="-1" aria-labelledby="generateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post" id="generateContentForm">
+                    {{ generate_form.hidden_tag() }}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="generateModalLabel">Générer le plan-cadre</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            {{ generate_form.additional_info.label(class="form-label") }}
+                            {{ generate_form.additional_info(class="form-control", rows="3") }}
+                            {% for error in generate_form.additional_info.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="mb-3">
+                            {{ generate_form.ai_model.label(class="form-label") }}
+                            {{ generate_form.ai_model(class="form-select") }}
+                            {% for error in generate_form.ai_model.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary" id="confirmGenerateBtn">
+                            <span class="btn-text">Générer le plan-cadre</span>
+                            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="modalLoadingSpinner">
+                                <span class="visually-hidden">Chargement...</span>
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}
 
 {% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const generateContentForm = document.getElementById('generateContentForm');
+    const confirmGenerateBtn = document.getElementById('confirmGenerateBtn');
+    const modalLoadingSpinner = document.getElementById('modalLoadingSpinner');
+
+    generateContentForm.addEventListener('submit', function(e) {
+        // Désactiver le bouton pour éviter les soumissions multiples
+        confirmGenerateBtn.disabled = true;
+
+        // Afficher le spinner
+        modalLoadingSpinner.classList.remove('d-none');
+    });
+
+    // Gestion du formulaire d'édition de l'introduction (existant)
+    const introText = document.getElementById('intro-text');
+    const saveBtn = document.getElementById('save-intro-btn');
+    const cancelBtn = document.getElementById('cancel-intro-btn');
+    const flashMessage = document.getElementById('flash-message');
+    let originalText = introText.innerHTML;
+
+    // Fetch CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    // Fonction pour afficher le message flash
+    function showFlashMessage(message, type) {
+        flashMessage.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning', 'alert-info');
+        flashMessage.classList.add(`alert-${type}`);
+        flashMessage.textContent = message;
+
+        // Faire disparaître le message après 5 secondes
+        setTimeout(() => {
+            flashMessage.classList.add('d-none');
+        }, 5000);
+    }
+
+    // Handle click on the paragraph to enable editing
+    introText.addEventListener('click', function () {
+        introText.contentEditable = "true";
+        introText.focus();
+        // Change cursor to text
+        introText.style.cursor = 'text';
+        // Show Save and Cancel buttons
+        saveBtn.style.display = 'inline-block';
+        cancelBtn.style.display = 'inline-block';
+    });
+
+    // Handle the save button click
+    saveBtn.addEventListener('click', function () {
+        const updatedText = introText.innerHTML.trim();
+        // Send the updated text via AJAX
+        fetch('{{ url_for("cours.update_intro", cours_id=cours_id, plan_id=plan_id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken  // Include CSRF token in headers
+            },
+            body: JSON.stringify({ place_intro: updatedText })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                introText.contentEditable = "false";
+                // Revert cursor
+                introText.style.cursor = 'pointer';
+                saveBtn.style.display = 'none';
+                cancelBtn.style.display = 'none';
+                originalText = updatedText;  // Update original text
+
+                // Afficher un message de succès
+                showFlashMessage('Introduction mise à jour avec succès.', 'success');
+            } else {
+                // Afficher un message d'erreur
+                showFlashMessage(data.message || 'Erreur lors de la mise à jour de l\'introduction.', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Afficher un message d'erreur générique
+            showFlashMessage('Erreur lors de la mise à jour de l\'introduction.', 'danger');
+        });
+    });
+
+    // Handle the cancel button click
+    cancelBtn.addEventListener('click', function () {
+        introText.innerHTML = originalText;
+        introText.contentEditable = "false";
+        // Revert cursor
+        introText.style.cursor = 'pointer';
+        saveBtn.style.display = 'none';
+        cancelBtn.style.display = 'none';
+
+        // Afficher un message indiquant que l'édition a été annulée
+        showFlashMessage('Modification annulée.', 'warning');
+    });
+});
+</script>
 <style>
     /* Style pour le texte en mode édition */
     #intro-text[contenteditable="true"] {
