@@ -30,6 +30,7 @@ from forms import (
 from flask_ckeditor import CKEditor
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import sqlite3
+from pprint import pprint
 import json
 import logging
 from collections import defaultdict
@@ -207,7 +208,7 @@ def generate_plan_cadre_content(plan_id):
         non_ai_updates_plan_cadre = []    # Liste de tuples (col_name, replaced_text)
         non_ai_inserts_other_table = []   # Liste de tuples (table_name, replaced_text)
         ai_savoir_etre = None
-        ai_capacites_prompt = None
+        ai_capacites_prompt = []
 
         def replace_jinja(text_):
             return replace_tags_jinja2(text_, plan_cadre_data)
@@ -231,6 +232,10 @@ def generate_plan_cadre_content(plan_id):
 
                 # --- Si c'est "Description des compétences développées" et qu'on veut ajouter 
                 #     des infos provenant d'une autre table pour GPT, on fait le traitement ici:
+                if section_name == "Objets cibles" and is_ai:
+                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
+
+
                 if section_name == "Description des compétences développées" and is_ai:
                     # Récupérer les compétences pour le cours
                     # (Adaptez la requête à votre structure de DB)
@@ -339,6 +344,12 @@ def generate_plan_cadre_content(plan_id):
 
             # 3) Champs spéciaux
             else:
+                target_sections = [
+                    'Capacité et pondération',
+                    "Savoirs nécessaires d'une capacité",
+                    "Savoirs faire d'une capacité",
+                    "Moyen d'évaluation d'une capacité"
+                ]
                 # Savoir-être
                 if section_name == 'Savoir-être':
                     if is_ai:
@@ -353,17 +364,14 @@ def generate_plan_cadre_content(plan_id):
                                 "INSERT INTO PlanCadreSavoirEtre (plan_cadre_id, texte) VALUES (?, ?)",
                                 (plan_id, line)
                             )
-
                 # Capacité et pondération
-                elif section_name == 'Capacité et pondération':
+                elif section_name in target_sections:
                     if is_ai:
-                        ai_capacites_prompt = replaced_text
+                        section_formatted = f"### {section_name}\n{replaced_text}"
+                        ai_capacites_prompt.append(section_formatted)
                     else:
                         # Pas d'IA => insertion directe ? (À vous de voir)
                         pass
-
-                # Si vous gérez séparément "Savoirs nécessaires d'une capacité", "Savoirs faire", etc. 
-                # vous pouvez rajouter d'autres elif.
 
                 else:
                     # Section inconnue : on l’ignore ou on gère autrement
@@ -416,47 +424,14 @@ def generate_plan_cadre_content(plan_id):
                 f"{schema_json}\n\n"
 
                 "Voici différents prompts."
-                "- fields: liste de {field_name, content}\n"
-                "- fields_with_description: liste de {field_name, texte, description}\n"
-                "- savoir_etre: array de strings\n"
-                "- capacites: array de {capacite, description_capacite, ponderation_min, ponderation_max, "
-                "  savoirs_necessaires[], savoirs_faire[], moyens_evaluation[]}\n\n"
-
-                "IMPORTANT: pour le field_name = \"Description des compétences développées\", s'il y en a, tu dois renvoyer :\n"
-                "    {\"texte\": \"Code de la compétence - Titre de la compétence 1\", \"description\": \"Description détaillée...\"},\n"
-                "N'oublie pas d'inclure toutes les compétences développées"
-
-                "IMPORTANT: pour le field_name = \"Description des Compétences certifiées\", s'il y en a, tu dois renvoyer :\n"
-                "    {\"texte\": \"Code de la compétence - Titre de la compétence 1\", \"description\": \"Description détaillée...\"},\n"
-                "N'oublie pas d'inclure toutes les compétences certifiées"
-
-                "IMPORTANT: pour le field_name = \"Description des cours corequis\", s'il y en a, tu dois renvoyer :\n"
-                "    {\"texte\": \"Code du cours- Titre du cours\", \"description\": \"Description détaillée...\"},\n"
-                "N'oublie pas d'inclure tous les cours corequis"
-
-                "IMPORTANT: pour le field_name \"Description des cours préalables\", s'il y en a, tu dois renvoyer :\n"
-                "    {\"texte\": \"Code du cours- Titre du cours\", \"description\": \"Description détaillée...\"},\n"
-                "N'oublie pas d'inclure tous les cours préalables"
-
-                "Pour chaque capacité retournée (dans la liste capacites), fournis au moins 10 éléments dans les "
-                "listes savoirs_faire et savoirs_necessaires. Ne retourne rien d'autre que du JSON.\n\n"
-
-                "Pour chaque savoir-faire, renvoie:\n"
-                "  {\n"
-                "    \"texte\": \"verbe à l'infinitif...\",\n"
-                "    \"cible\": \"...\",\n"
-                "    \"seuil_reussite\": \"...\"\n"
-                "  }.\n"
-                "Un savoir-faire devrait commencer par un verbe à l'infinitif. Pour chaque savoir-faire, trouve un niveau cible et un niveau seuil qui commence par un verbe à l'infinitif, toujours avec des adjectifs, Au moins 10 mots.."
-                "Assure-toi que toutes les sorties sont un JSON strictement conforme au schéma PlanCadreAIResponse."
-            ),
-            "fields": ai_fields,       # old plan-cadre fields
-            "fields_with_description": ai_fields_with_description,
-            "savoir_etre": ai_savoir_etre or "",
-            "capacites": ai_capacites_prompt or "",
+                f"- fields:{ai_fields}\n\n"
+                f"- fields_with_description:{ai_fields_with_description}\n\n"
+                f"- savoir_etre:{ai_savoir_etre}\n\n"
+                f"- capacites:{ai_capacites_prompt}\n\n"
+            )
         }
 
-        print(structured_request)
+        print(json.dumps(structured_request, indent=4, ensure_ascii=False))
 
         # On suppose que vous avez la fonction openai qui gère l’API
         from openai import OpenAI
@@ -527,7 +502,8 @@ def generate_plan_cadre_content(plan_id):
             "Description des compétences développées": "PlanCadreCompetencesDeveloppees",
             "Description des Compétences certifiées": "PlanCadreCompetencesCertifiees",
             "Description des cours corequis": "PlanCadreCoursCorequis",
-            "Description des cours préalables": "PlanCadreCoursPrealables"
+            "Description des cours préalables": "PlanCadreCoursPrealables",
+            "Objets cibles": "PlanCadreObjetsCibles"
         }
 
         for fobj in parsed_data.fields_with_description:

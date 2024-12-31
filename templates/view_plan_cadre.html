@@ -27,13 +27,13 @@
         </button>
     </div>
 
-
+    <div class="accordion" id="planCadreAccordion">
     <!-- Informations Générales du Cours dans un Accordéon -->
     <div class="accordion mb-4" id="generalInfoAccordion">
         <div class="accordion-item">
             <h2 class="accordion-header" id="headingGeneralInfo">
                 <button class="accordion-button bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGeneralInfo" aria-expanded="true" aria-controls="collapseGeneralInfo">
-                    Informations générales du cours
+                    Partie 1: Identification du cours 
                 </button>
             </h2>
             <div id="collapseGeneralInfo" class="accordion-collapse collapse show" aria-labelledby="headingGeneralInfo" data-bs-parent="#generalInfoAccordion">
@@ -70,15 +70,11 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Accordéon Principal pour les Sections du Plan-cadre -->
-    <div class="accordion" id="planCadreAccordion">
 <!-- Introduction -->
 <div class="accordion-item">
     <h2 class="accordion-header" id="headingIntroduction">
         <button class="accordion-button bg-primary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIntroduction" aria-expanded="true" aria-controls="collapseIntroduction">
-            Introduction et place et rôle du cours
+            Partie 2 - Repères généraux au sujet du cours
         </button>
     </h2>
     <div id="collapseIntroduction" class="accordion-collapse collapse show" aria-labelledby="headingIntroduction" data-bs-parent="#planCadreAccordion">
@@ -178,7 +174,7 @@
                         <ul class="list-group list-group-flush">
                             {% for cp in cours_prealables %}
                                 <li class="list-group-item">
-                                    <strong>{{ cp.texte }}</strong>: Note nécessaire: {{ cp.description or "Non spécifiée." }}
+                                    <strong>{{ cp.texte }}</strong>: {{ cp.description or "Non spécifiée." }}
                                 </li>
                             {% endfor %}
                         </ul>
