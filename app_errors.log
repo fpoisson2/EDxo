@@ -5185,3 +5185,5 @@ fields.3.content
 2024-12-31 20:45:18,079 - INFO - 127.0.0.1 - - [31/Dec/2024 20:45:18] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
 2024-12-31 20:46:11,688 - INFO - 127.0.0.1 - - [31/Dec/2024 20:46:11] "GET /cours/17/plan_cadre/13 HTTP/1.1" 200 -
 2024-12-31 20:46:11,698 - INFO - 127.0.0.1 - - [31/Dec/2024 20:46:11] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2024-12-31 20:50:29,594 - INFO - 127.0.0.1 - - [31/Dec/2024 20:50:29] "GET /cours/17/plan_cadre/13 HTTP/1.1" 200 -
+2024-12-31 20:50:29,602 - INFO - 127.0.0.1 - - [31/Dec/2024 20:50:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -

@@ -110,6 +110,22 @@
                         {% endif %}
                     </div>
 
+                    <!-- Objets Cibles -->
+                    <div class="mt-4">
+                        <strong>Objets Cibles</strong>
+                        {% if objets_cibles %}
+                            <ul class="list-group list-group-flush">
+                                {% for objet in objets_cibles %}
+                                    <li class="list-group-item">
+                                        <strong>{{ objet.texte }}</strong>: {{ objet.description or "Pas de description." }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Aucun objet cible.</p>
+                        {% endif %}
+                    </div>
+
                     <!-- Compétences Certifiées -->
                     <div class="mt-4">
                         <strong>Compétences certifiées</strong>
