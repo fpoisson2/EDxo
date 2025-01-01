@@ -5189,3 +5189,17 @@ fields.3.content
 2024-12-31 20:50:29,602 - INFO - 127.0.0.1 - - [31/Dec/2024 20:50:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
 2024-12-31 20:52:09,034 - INFO - 127.0.0.1 - - [31/Dec/2024 20:52:09] "GET /cours/17/plan_cadre/13 HTTP/1.1" 200 -
 2024-12-31 20:52:09,043 - INFO - 127.0.0.1 - - [31/Dec/2024 20:52:09] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-01 14:42:12,099 - WARNING -  * Debugger is active!
+2025-01-01 14:42:12,101 - INFO -  * Debugger PIN: 122-719-709
+2025-01-01 14:42:14,776 - INFO - 127.0.0.1 - - [01/Jan/2025 14:42:14] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2025-01-01 14:42:14,789 - INFO - 127.0.0.1 - - [01/Jan/2025 14:42:14] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-01 14:43:55,242 - INFO - 127.0.0.1 - - [01/Jan/2025 14:43:55] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2025-01-01 14:43:55,251 - INFO - 127.0.0.1 - - [01/Jan/2025 14:43:55] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-01 14:45:07,999 - INFO - 127.0.0.1 - - [01/Jan/2025 14:45:07] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2025-01-01 14:45:08,007 - INFO - 127.0.0.1 - - [01/Jan/2025 14:45:08] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-01 14:45:17,689 - INFO - 127.0.0.1 - - [01/Jan/2025 14:45:17] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-01 14:45:17,703 - INFO - 127.0.0.1 - - [01/Jan/2025 14:45:17] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-01 14:45:17,714 - INFO - 127.0.0.1 - - [01/Jan/2025 14:45:17] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-01 14:45:21,796 - INFO - 127.0.0.1 - - [01/Jan/2025 14:45:21] "[32mGET /cours/17/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-01 14:45:21,807 - INFO - 127.0.0.1 - - [01/Jan/2025 14:45:21] "GET /cours/17/plan_cadre/13 HTTP/1.1" 200 -
+2025-01-01 14:45:21,817 - INFO - 127.0.0.1 - - [01/Jan/2025 14:45:21] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -

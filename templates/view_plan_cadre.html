@@ -88,10 +88,7 @@
                     <strong class="d-block mb-3">Place et rôle du cours dans le programme</strong>
                     
                     <div id="intro-container">
-                        <p id="intro-text" contenteditable="false" style="cursor: pointer;">{{ plan.place_intro or "Non renseigné." }}</p>
-                        <!-- Boutons Sauvegarder et Annuler, cachés par défaut -->
-                        <button id="save-intro-btn" class="btn btn-sm btn-success" style="display: none;">Sauvegarder</button>
-                        <button id="cancel-intro-btn" class="btn btn-sm btn-danger" style="display: none;">Annuler</button>
+                        <p id="intro-text">{{ plan.place_intro or "Non renseigné." }}</p>
                     </div>
                     
                     <!-- Compétences Développées -->
@@ -540,12 +537,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Gestion du formulaire d'édition de l'introduction
-    const introText = document.getElementById('intro-text');
-    const saveBtn = document.getElementById('save-intro-btn');
-    const cancelBtn = document.getElementById('cancel-intro-btn');
     const flashMessage = document.getElementById('flash-message');
-    let originalText = introText.innerHTML;
-
     // Fetch CSRF token from meta tag
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -560,74 +552,6 @@ document.addEventListener('DOMContentLoaded', function() {
             flashMessage.classList.add('d-none');
         }, 5000);
     }
-
-    // Handle click on the paragraph to enable editing
-    introText.addEventListener('click', function () {
-        introText.contentEditable = "true";
-        introText.focus();
-        // Change cursor to text
-        introText.style.cursor = 'text';
-        // Show Save and Cancel buttons
-        saveBtn.style.display = 'inline-block';
-        cancelBtn.style.display = 'inline-block';
-    });
-
-    // Handle the save button click
-    saveBtn.addEventListener('click', function () {
-        const updatedText = introText.innerHTML.trim();
-        // Send the updated text via AJAX
-        fetch('{{ url_for("cours.update_intro", cours_id=cours_id, plan_id=plan_id) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken  // Include CSRF token in headers
-            },
-            body: JSON.stringify({ place_intro: updatedText })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                introText.contentEditable = "false";
-                // Revert cursor
-                introText.style.cursor = 'pointer';
-                saveBtn.style.display = 'none';
-                cancelBtn.style.display = 'none';
-                originalText = updatedText;  // Update original text
-
-                // Afficher un message de succès
-                showFlashMessage('Introduction mise à jour avec succès.', 'success');
-            } else {
-                // Afficher un message d'erreur
-                showFlashMessage(data.message || 'Erreur lors de la mise à jour de l\'introduction.', 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            // Afficher un message d'erreur générique
-            showFlashMessage('Erreur lors de la mise à jour de l\'introduction.', 'danger');
-        });
-    });
-
-    // Handle the cancel button click
-    cancelBtn.addEventListener('click', function () {
-        introText.innerHTML = originalText;
-        introText.contentEditable = "false";
-        // Revert cursor
-        introText.style.cursor = 'pointer';
-        saveBtn.style.display = 'none';
-        cancelBtn.style.display = 'none';
-
-        // Afficher un message indiquant que l'édition a été annulée
-        showFlashMessage('Modification annulée.', 'warning');
-    });
 });
 </script>
-<style>
-    /* Style pour le texte en mode édition */
-    #intro-text[contenteditable="true"] {
-        border: 1px solid #ced4da;
-        padding: 5px;
-        background-color: #f8f9fa;
-    }
-</style>
 {% endblock %}
