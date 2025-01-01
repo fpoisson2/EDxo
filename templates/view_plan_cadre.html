@@ -40,7 +40,7 @@
                 <div class="accordion-body">
                     <p><strong>Programme :</strong> {{ cours.programme_nom }}</p>
                     <p><strong>Code :</strong> {{ cours.code }}</p>
-                    <p><strong>Nombre d'unités :</strong> {{ cours.nombre_unites }}</p>
+                    <p><strong>Nombre d'unités :</strong> {{ cours.nombre_unites | round(2) }}</p>
                     <p><strong>Session :</strong> {{ cours.session }}</p>
                     <p><strong>Heures de théorie :</strong> {{ cours.heures_theorie }}</p>
                     <p><strong>Heures de laboratoire :</strong> {{ cours.heures_laboratoire }}</p>
