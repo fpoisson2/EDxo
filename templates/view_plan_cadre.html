@@ -5,9 +5,10 @@
 
 <div class="container mt-5">
 
-        <div id="flash-message" class="alert d-none" role="alert">
+    <div id="flash-message" class="alert d-none" role="alert">
         <!-- Le contenu du message sera injecté par JavaScript -->
     </div>
+    
     <!-- Titre du Cours -->
     <div class="mb-4">
         <h1 class="text-center">Plan-cadre pour le cours: {{ cours.code }} - {{ cours.nom }}</h1>
@@ -28,15 +29,14 @@
     </div>
 
     <div class="accordion" id="planCadreAccordion">
-    <!-- Informations Générales du Cours dans un Accordéon -->
-    <div class="accordion mb-4" id="generalInfoAccordion">
+        <!-- Partie 1: Identification du cours -->
         <div class="accordion-item">
             <h2 class="accordion-header" id="headingGeneralInfo">
                 <button class="accordion-button bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGeneralInfo" aria-expanded="true" aria-controls="collapseGeneralInfo">
-                    Partie 1: Identification du cours 
+                    Partie 1 - Identification du cours
                 </button>
             </h2>
-            <div id="collapseGeneralInfo" class="accordion-collapse collapse show" aria-labelledby="headingGeneralInfo" data-bs-parent="#generalInfoAccordion">
+            <div id="collapseGeneralInfo" class="accordion-collapse collapse show" aria-labelledby="headingGeneralInfo" data-bs-parent="#planCadreAccordion">
                 <div class="accordion-body">
                     <p><strong>Programme :</strong> {{ cours.programme_nom }}</p>
                     <p><strong>Code :</strong> {{ cours.code }}</p>
@@ -45,340 +45,359 @@
                     <p><strong>Heures de théorie :</strong> {{ cours.heures_theorie }}</p>
                     <p><strong>Heures de laboratoire :</strong> {{ cours.heures_laboratoire }}</p>
                     <p><strong>Heures de travail à la maison :</strong> {{ cours.heures_travail_maison }}</p>
-                    <p><strong>Cours préalables :</strong>                   {% if prealables_details %}
-                        <ul class="list-group">
-                            {% for pre in prealables_details %}
-                                <li class="list-group-item">
-                                    <a href="{{ url_for('cours.view_cours', cours_id=pre.id) }}" class="text-decoration-none">{{ pre.nom }}</a> (Code: {{ pre.code }})
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Aucun cours préalable.</p>
-                    {% endif %}</p>
-                    <p><strong>Cours corequis :</strong>                    {% if corequisites_details %}
-                        <ul class="list-group">
-                            {% for core in corequisites_details %}
-                                <li class="list-group-item">
-                                    <a href="{{ url_for('cours.view_cours', cours_id=core.id) }}" class="text-decoration-none">{{ core.nom }}</a> (Code: {{ core.code }})
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Aucun cours corequis.</p>
-                    {% endif %}</p>
+                    <p><strong>Cours préalables :</strong>
+                        {% if prealables_details %}
+                            <ul class="list-group">
+                                {% for pre in prealables_details %}
+                                    <li class="list-group-item">
+                                        <a href="{{ url_for('cours.view_cours', cours_id=pre.id) }}" class="text-decoration-none">{{ pre.nom }}</a> (Code: {{ pre.code }})
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Aucun cours préalable.</p>
+                        {% endif %}
+                    </p>
+                    <p><strong>Cours corequis :</strong>
+                        {% if corequisites_details %}
+                            <ul class="list-group">
+                                {% for core in corequisites_details %}
+                                    <li class="list-group-item">
+                                        <a href="{{ url_for('cours.view_cours', cours_id=core.id) }}" class="text-decoration-none">{{ core.nom }}</a> (Code: {{ core.code }})
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Aucun cours corequis.</p>
+                        {% endif %}
+                    </p>
                 </div>
             </div>
         </div>
-<!-- Introduction -->
-<div class="accordion-item">
-    <h2 class="accordion-header" id="headingIntroduction">
-        <button class="accordion-button bg-primary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIntroduction" aria-expanded="true" aria-controls="collapseIntroduction">
-            Partie 2 - Repères généraux au sujet du cours
-        </button>
-    </h2>
-    <div id="collapseIntroduction" class="accordion-collapse collapse show" aria-labelledby="headingIntroduction" data-bs-parent="#planCadreAccordion">
-        <div class="accordion-body">
-            <div id="intro-container">
-                <p id="intro-text" contenteditable="false" style="cursor: pointer;">{{ plan.place_intro or "Non renseigné." }}</p>
-                <!-- Boutons Sauvegarder et Annuler, cachés par défaut -->
-                <button id="save-intro-btn" class="btn btn-sm btn-success" style="display: none;">Sauvegarder</button>
-                <button id="cancel-intro-btn" class="btn btn-sm btn-danger" style="display: none;">Annuler</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-        <!-- Compétences Développées -->
+        <!-- Partie 2 - Repères généraux au sujet du cours -->
         <div class="accordion-item">
-            <h2 class="accordion-header" id="headingCompetencesDeveloppees">
-                <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCompetencesDeveloppees" aria-expanded="true" aria-controls="collapseCompetencesDeveloppees">
-                    Compétences développées
+            <h2 class="accordion-header" id="headingIntroduction">
+                <button class="accordion-button bg-primary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIntroduction" aria-expanded="true" aria-controls="collapseIntroduction">
+                    Partie 2 - Repères généraux au sujet du cours
                 </button>
             </h2>
-            <div id="collapseCompetencesDeveloppees" class="accordion-collapse collapse show" aria-labelledby="headingCompetencesDeveloppees" data-bs-parent="#planCadreAccordion">
+            <div id="collapseIntroduction" class="accordion-collapse collapse show" aria-labelledby="headingIntroduction" data-bs-parent="#planCadreAccordion">
                 <div class="accordion-body">
-                    {% if competences_developpees %}
-                        <ul class="list-group list-group-flush">
-                            {% for comp in competences_developpees %}
-                                <li class="list-group-item">
-                                    <strong>{{ comp.texte }}</strong>: {{ comp.description or "Pas de description." }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Aucune compétence développée.</p>
-                    {% endif %}
+                    <!-- Ajout du Titre "Place et rôle du cours dans le programme" -->
+                    <strong class="d-block mb-3">Place et rôle du cours dans le programme</strong>
+                    
+                    <div id="intro-container">
+                        <p id="intro-text" contenteditable="false" style="cursor: pointer;">{{ plan.place_intro or "Non renseigné." }}</p>
+                        <!-- Boutons Sauvegarder et Annuler, cachés par défaut -->
+                        <button id="save-intro-btn" class="btn btn-sm btn-success" style="display: none;">Sauvegarder</button>
+                        <button id="cancel-intro-btn" class="btn btn-sm btn-danger" style="display: none;">Annuler</button>
+                    </div>
+                    
+                    <!-- Compétences Développées -->
+                    <div class="mt-4">
+                        <strong>Compétences développées</strong>
+                        {% if competences_developpees %}
+                            <ul class="list-group list-group-flush">
+                                {% for comp in competences_developpees %}
+                                    <li class="list-group-item">
+                                        <strong>{{ comp.texte }}</strong>: {{ comp.description or "Pas de description." }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Aucune compétence développée.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Compétences Certifiées -->
+                    <div class="mt-4">
+                        <strong>Compétences certifiées</strong>
+                        {% if competences_certifiees %}
+                            <ul class="list-group list-group-flush">
+                                {% for cc in competences_certifiees %}
+                                    <li class="list-group-item">
+                                        <strong>{{ cc.texte }}</strong>: {{ cc.description or "Pas de description." }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Aucune compétence certifiée.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Cours Corequis -->
+                    <div class="mt-4">
+                        <strong>Cours Corequis</strong>
+                        {% if cours_corequis %}
+                            <ul class="list-group list-group-flush">
+                                {% for cc in cours_corequis %}
+                                    <li class="list-group-item">
+                                        <strong>{{ cc.texte }}</strong>: {{ cc.description or "Pas de description." }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Aucun cours corequis.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Cours Préalables -->
+                    <div class="mt-4">
+                        <strong>Cours Préalables</strong>
+                        {% if cours_prealables %}
+                            <ul class="list-group list-group-flush">
+                                {% for cp in cours_prealables %}
+                                    <li class="list-group-item">
+                                        <strong>{{ cp.texte }}</strong>: {{ cp.description or "Non spécifiée." }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Aucun cours préalable.</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Compétences Certifiées -->
+        <!-- Partie 3 - Résultats visés -->
         <div class="accordion-item">
-            <h2 class="accordion-header" id="headingCompetencesCertifiees">
-                <button class="accordion-button bg-danger text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCompetencesCertifiees" aria-expanded="true" aria-controls="collapseCompetencesCertifiees">
-                    Compétences certifiées
+            <h2 class="accordion-header" id="headingResultatsVises">
+                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseResultatsVises" aria-expanded="true" aria-controls="collapseResultatsVises">
+                    Partie 3 - Résultats visés
                 </button>
             </h2>
-            <div id="collapseCompetencesCertifiees" class="accordion-collapse collapse show" aria-labelledby="headingCompetencesCertifiees" data-bs-parent="#planCadreAccordion">
+            <div id="collapseResultatsVises" class="accordion-collapse collapse show" aria-labelledby="headingResultatsVises" data-bs-parent="#planCadreAccordion">
                 <div class="accordion-body">
-                    {% if competences_certifiees %}
-                        <ul class="list-group list-group-flush">
-                            {% for cc in competences_certifiees %}
-                                <li class="list-group-item">
-                                    <strong>{{ cc.texte }}</strong>: {{ cc.description or "Pas de description." }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Aucune compétence certifiée.</p>
-                    {% endif %}
+                    <!-- Objectif Terminal -->
+                    <div class="mb-4">
+                        <strong>Objectif terminal</strong>
+                        <p>{{ plan.objectif_terminal or "Non renseigné." }}</p>
+                    </div>
+
+                    <!-- Liste des Capacités -->
+                    <div class="mb-4">
+                        <strong>Capacités</strong>
+                        {% if capacites %}
+                            <ul class="list-group list-group-flush">
+                                {% for cap in capacites %}
+                                    <li class="list-group-item">
+                                        <strong>{{ cap['capacite']['capacite'] }}</strong>
+                                        <p>{{ cap['capacite']['description_capacite'] or "Pas de description." }}</p>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Aucune capacité ajoutée.</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Cours Corequis -->
+        <!-- Partie 4 - Indications relatives à l’organisation de l’apprentissage et de l’enseignement -->
         <div class="accordion-item">
-            <h2 class="accordion-header" id="headingCoursCorequis">
-                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCoursCorequis" aria-expanded="true" aria-controls="collapseCoursCorequis">
-                    Cours Corequis
+            <h2 class="accordion-header" id="headingOrganisation">
+                <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOrganisation" aria-expanded="true" aria-controls="collapseOrganisation">
+                    Partie 4 - Indications relatives à l’organisation de l’apprentissage et de l’enseignement
                 </button>
             </h2>
-            <div id="collapseCoursCorequis" class="accordion-collapse collapse show" aria-labelledby="headingCoursCorequis" data-bs-parent="#planCadreAccordion">
+            <div id="collapseOrganisation" class="accordion-collapse collapse show" aria-labelledby="headingOrganisation" data-bs-parent="#planCadreAccordion">
                 <div class="accordion-body">
-                    {% if cours_corequis %}
-                        <ul class="list-group list-group-flush">
-                            {% for cc in cours_corequis %}
-                                <li class="list-group-item">
-                                    <strong>{{ cc.texte }}</strong>: {{ cc.description or "Pas de description." }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Aucun cours corequis.</p>
-                    {% endif %}
+                    <!-- Structure du Cours -->
+                    <div class="mb-4">
+                        <strong>Structure du cours</strong>
+                        <p>{{ plan.structure_intro or "Non renseignée." }}</p>
+                    </div>
+
+                    <!-- Activités Théoriques -->
+                    <div class="mb-4">
+                        <strong>Activités théoriques</strong>
+                        <p>{{ plan.structure_activites_theoriques or "Non renseignées." }}</p>
+                    </div>
+
+                    <!-- Activités Pratiques -->
+                    <div class="mb-4">
+                        <strong>Activités pratiques</strong>
+                        <p>{{ plan.structure_activites_pratiques or "Non renseignées." }}</p>
+                    </div>
+
+                    <!-- Organisation du Cours -->
+                    <div class="mb-4">
+                        <strong>Organisation du cours</strong>
+                        <p>{{ plan.structure_activites_prevues | markdown | safe or "Non renseignée." }}</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Cours Préalables -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingCoursPrealables">
-                <button class="accordion-button bg-warning text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCoursPrealables" aria-expanded="true" aria-controls="collapseCoursPrealables">
-                    Cours Préalables
-                </button>
-            </h2>
-            <div id="collapseCoursPrealables" class="accordion-collapse collapse show" aria-labelledby="headingCoursPrealables" data-bs-parent="#planCadreAccordion">
-                <div class="accordion-body">
-                    {% if cours_prealables %}
-                        <ul class="list-group list-group-flush">
-                            {% for cp in cours_prealables %}
-                                <li class="list-group-item">
-                                    <strong>{{ cp.texte }}</strong>: {{ cp.description or "Non spécifiée." }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Aucun cours préalable.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Objectif Terminal -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingObjectif">
-                <button class="accordion-button bg-success text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseObjectif" aria-expanded="true" aria-controls="collapseObjectif">
-                    Objectif terminal
-                </button>
-            </h2>
-            <div id="collapseObjectif" class="accordion-collapse collapse show" aria-labelledby="headingObjectif" data-bs-parent="#planCadreAccordion">
-                <div class="accordion-body">
-                    <p>{{ plan.objectif_terminal or "Non renseigné." }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Structure du Cours -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingStructure">
-                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStructure" aria-expanded="true" aria-controls="collapseStructure">
-                    Structure du cours
-                </button>
-            </h2>
-            <div id="collapseStructure" class="accordion-collapse collapse show" aria-labelledby="headingStructure" data-bs-parent="#planCadreAccordion">
-                <div class="accordion-body">
-                    <p><strong>Introduction:</strong> {{ plan.structure_intro or "Non renseigné." }}</p>
-                    <p><strong>Activités Théoriques:</strong> {{ plan.structure_activites_theoriques or "Non renseigné." }}</p>
-                    <p><strong>Activités Pratiques:</strong> {{ plan.structure_activites_pratiques or "Non renseigné." }}</p>
-                    <div><strong>Activités Prévues:</strong> {{ plan.structure_activites_prevues | markdown | safe or "Non renseigné." }}</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Évaluation des Apprentissages -->
+        <!-- Partie 5 - Indications relatives à l’évaluation des apprentissages -->
         <div class="accordion-item">
             <h2 class="accordion-header" id="headingEvaluation">
                 <button class="accordion-button bg-warning text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEvaluation" aria-expanded="true" aria-controls="collapseEvaluation">
-                    Évaluation des apprentissages
+                    Partie 5 - Indications relatives à l’évaluation des apprentissages
                 </button>
             </h2>
             <div id="collapseEvaluation" class="accordion-collapse collapse show" aria-labelledby="headingEvaluation" data-bs-parent="#planCadreAccordion">
                 <div class="accordion-body">
-                    <p><strong>Évaluation sommative:</strong> {{ plan.eval_evaluation_sommative or "Non renseigné." }}</p>
-                    <p><strong>Nature des évaluations sommatives:</strong> {{ plan.eval_nature_evaluations_sommatives or "Non renseigné." }}</p>
-                    <p><strong>Évaluation de la langue:</strong> {{ plan.eval_evaluation_de_la_langue or "Non renseigné." }}</p>
-                    <p><strong>Évaluation formative des apprentissages:</strong> {{ plan.eval_evaluation_sommatives_apprentissages | markdown | safe or "Non renseigné." }}</p>
-                </div>
-            </div>
-        </div>
+                    <!-- Évaluation sommative des apprentissages -->
+                    <div class="mb-4">
+                        <strong>Évaluation sommative des apprentissages</strong>
+                        <p>{{ plan.eval_evaluation_sommative or "Non renseignée." }}</p>
+                    </div>
 
-        <!-- Capacités avec Accordéon Intérieur -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingCapacites">
-                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCapacites" aria-expanded="true" aria-controls="collapseCapacites">
-                    Capacités
-                </button>
-            </h2>
-            <div id="collapseCapacites" class="accordion-collapse collapse show" aria-labelledby="headingCapacites" data-bs-parent="#planCadreAccordion">
-                <div class="accordion-body">
-                    {% if capacites %}
-                        <!-- Accordéon Intérieur pour Capacités -->
-                        <div class="accordion" id="capacitesAccordion">
-                            {% for cap in capacites %}
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" id="headingCapacite{{ cap['capacite']['id'] }}">
-                                        <button class="accordion-button bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCapacite{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseCapacite{{ cap['capacite']['id'] }}">
-                                            {{ cap['capacite']['capacite'] }} (Pondération: {{ cap['capacite']['ponderation_min'] }}% - {{ cap['capacite']['ponderation_max'] }}%)
-                                        </button>
-                                    </h2>
-                                    <div id="collapseCapacite{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingCapacite{{ cap['capacite']['id'] }}" data-bs-parent="#capacitesAccordion">
-                                        <div class="accordion-body">
-                                            <p>{{ cap['capacite']['description_capacite'] or "Pas de description." }}</p>
-                                            
-                                            <!-- Sous-Accordion pour Savoirs Nécessaires -->
-                                            <div class="accordion mb-3" id="savoirsNecessairesAccordion{{ cap['capacite']['id'] }}">
-                                                <div class="accordion-item">
-                                                    <h2 class="accordion-header" id="headingSavoirsNecessaires{{ cap['capacite']['id'] }}">
-                                                        <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavoirsNecessaires{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseSavoirsNecessaires{{ cap['capacite']['id'] }}">
-                                                            Savoirs Nécessaires
-                                                        </button>
-                                                    </h2>
-                                                    <div id="collapseSavoirsNecessaires{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingSavoirsNecessaires{{ cap['capacite']['id'] }}" data-bs-parent="#savoirsNecessairesAccordion{{ cap['capacite']['id'] }}">
-                                                        <div class="accordion-body">
-                                                            {% if cap['savoirs_necessaires'] %}
-                                                                <ul class="list-group list-group-flush">
-                                                                    {% for sav in cap['savoirs_necessaires'] %}
-                                                                        <li class="list-group-item">{{ sav.texte }}</li>
-                                                                    {% endfor %}
-                                                                </ul>
-                                                            {% else %}
-                                                                <p>Aucun savoir nécessaire.</p>
-                                                            {% endif %}
+                    <!-- Nature des évaluations sommatives -->
+                    <div class="mb-4">
+                        <strong>Nature des évaluations sommatives</strong>
+                        <p>{{ plan.eval_nature_evaluations_sommatives or "Non renseignée." }}</p>
+                    </div>
+
+                    <!-- Évaluation de la langue -->
+                    <div class="mb-4">
+                        <strong>Évaluation de la langue</strong>
+                        <p>{{ plan.eval_evaluation_de_la_langue or "Non renseignée." }}</p>
+                    </div>
+
+                    <!-- Évaluation formative des apprentissages -->
+                    <div class="mb-4">
+                        <strong>Évaluation formative des apprentissages</strong>
+                        <p>{{ plan.eval_evaluation_sommatives_apprentissages | markdown | safe or "Non renseignée." }}</p>
+                    </div>
+
+                    <!-- Informations détaillées sur les Capacités et Savoir-être -->
+                    <div class="mb-4">
+                        <strong>Capacités</strong>
+                        {% if capacites %}
+                            <!-- Accordéon Intérieur pour Capacités -->
+                            <div class="accordion mb-3" id="capacitesAccordionEvaluation">
+                                {% for cap in capacites %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingCapaciteEval{{ cap['capacite']['id'] }}">
+                                            <button class="accordion-button bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCapaciteEval{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseCapaciteEval{{ cap['capacite']['id'] }}">
+                                                {{ cap['capacite']['capacite'] }} (Pondération: {{ cap['capacite']['ponderation_min'] }}% - {{ cap['capacite']['ponderation_max'] }}%)
+                                            </button>
+                                        </h2>
+                                        <div id="collapseCapaciteEval{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingCapaciteEval{{ cap['capacite']['id'] }}" data-bs-parent="#capacitesAccordionEvaluation">
+                                            <div class="accordion-body">
+                                                <p>{{ cap['capacite']['description_capacite'] or "Pas de description." }}</p>
+                                                
+                                                <!-- Sous-Accordion pour Savoirs Nécessaires -->
+                                                <div class="accordion mb-3" id="savoirsNecessairesAccordionEval{{ cap['capacite']['id'] }}">
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="headingSavoirsNecessairesEval{{ cap['capacite']['id'] }}">
+                                                            <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavoirsNecessairesEval{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseSavoirsNecessairesEval{{ cap['capacite']['id'] }}">
+                                                                Savoirs Nécessaires
+                                                            </button>
+                                                        </h2>
+                                                        <div id="collapseSavoirsNecessairesEval{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingSavoirsNecessairesEval{{ cap['capacite']['id'] }}" data-bs-parent="#savoirsNecessairesAccordionEval{{ cap['capacite']['id'] }}">
+                                                            <div class="accordion-body">
+                                                                {% if cap['savoirs_necessaires'] %}
+                                                                    <ul class="list-group list-group-flush">
+                                                                        {% for sav in cap['savoirs_necessaires'] %}
+                                                                            <li class="list-group-item">{{ sav.texte }}</li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                {% else %}
+                                                                    <p>Aucun savoir nécessaire.</p>
+                                                                {% endif %}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <!-- Sous-Accordion pour Savoirs Faire -->
-                                            <div class="accordion mb-3" id="savoirsFaireAccordion{{ cap['capacite']['id'] }}">
-                                                <div class="accordion-item">
-                                                    <h2 class="accordion-header" id="headingSavoirsFaire{{ cap['capacite']['id'] }}">
-                                                        <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavoirsFaire{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseSavoirsFaire{{ cap['capacite']['id'] }}">
-                                                            Savoirs Faire
-                                                        </button>
-                                                    </h2>
-                                                    <div id="collapseSavoirsFaire{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingSavoirsFaire{{ cap['capacite']['id'] }}" data-bs-parent="#savoirsFaireAccordion{{ cap['capacite']['id'] }}">
-                                                        <div class="accordion-body">
-                                                            {% if cap['savoirs_faire'] %}
-                                                                <ul class="list-group list-group-flush">
-                                                                    {% for sf in cap['savoirs_faire'] %}
-                                                                        <li class="list-group-item">
-                                                                            {{ sf.texte }} 
-                                                                            <span class="badge bg-success">Cible: {{ sf.cible }}</span> 
-                                                                            <span class="badge bg-warning text-dark">Seuil: {{ sf.seuil_reussite }}</span>
-                                                                        </li>
-                                                                    {% endfor %}
-                                                                </ul>
-                                                            {% else %}
-                                                                <p>Aucun savoir faire.</p>
-                                                            {% endif %}
+                                                <!-- Sous-Accordion pour Savoirs Faire -->
+                                                <div class="accordion mb-3" id="savoirsFaireAccordionEval{{ cap['capacite']['id'] }}">
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="headingSavoirsFaireEval{{ cap['capacite']['id'] }}">
+                                                            <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavoirsFaireEval{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseSavoirsFaireEval{{ cap['capacite']['id'] }}">
+                                                                Savoirs Faire
+                                                            </button>
+                                                        </h2>
+                                                        <div id="collapseSavoirsFaireEval{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingSavoirsFaireEval{{ cap['capacite']['id'] }}" data-bs-parent="#savoirsFaireAccordionEval{{ cap['capacite']['id'] }}">
+                                                            <div class="accordion-body">
+                                                                {% if cap['savoirs_faire'] %}
+                                                                    <ul class="list-group list-group-flush">
+                                                                        {% for sf in cap['savoirs_faire'] %}
+                                                                            <li class="list-group-item">
+                                                                                {{ sf.texte }} 
+                                                                                <span class="badge bg-success">Cible: {{ sf.cible }}</span> 
+                                                                                <span class="badge bg-warning text-dark">Seuil: {{ sf.seuil_reussite }}</span>
+                                                                            </li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                {% else %}
+                                                                    <p>Aucun savoir faire.</p>
+                                                                {% endif %}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <!-- Sous-Accordion pour Moyens d'Évaluation -->
-                                            <div class="accordion mb-3" id="moyensEvaluationAccordion{{ cap['capacite']['id'] }}">
-                                                <div class="accordion-item">
-                                                    <h2 class="accordion-header" id="headingMoyensEvaluation{{ cap['capacite']['id'] }}">
-                                                        <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMoyensEvaluation{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseMoyensEvaluation{{ cap['capacite']['id'] }}">
-                                                            Moyens d'Évaluation
-                                                        </button>
-                                                    </h2>
-                                                    <div id="collapseMoyensEvaluation{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingMoyensEvaluation{{ cap['capacite']['id'] }}" data-bs-parent="#moyensEvaluationAccordion{{ cap['capacite']['id'] }}">
-                                                        <div class="accordion-body">
-                                                            {% if cap['moyens_evaluation'] %}
-                                                                <ul class="list-group list-group-flush">
-                                                                    {% for me in cap['moyens_evaluation'] %}
-                                                                        <li class="list-group-item">{{ me.texte }}</li>
-                                                                    {% endfor %}
-                                                                </ul>
-                                                            {% else %}
-                                                                <p>Aucun moyen d'évaluation.</p>
-                                                            {% endif %}
+                                                <!-- Sous-Accordion pour Moyens d'Évaluation -->
+                                                <div class="accordion mb-3" id="moyensEvaluationAccordionEval{{ cap['capacite']['id'] }}">
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="headingMoyensEvaluationEval{{ cap['capacite']['id'] }}">
+                                                            <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMoyensEvaluationEval{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseMoyensEvaluationEval{{ cap['capacite']['id'] }}">
+                                                                Moyens d'Évaluation
+                                                            </button>
+                                                        </h2>
+                                                        <div id="collapseMoyensEvaluationEval{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingMoyensEvaluationEval{{ cap['capacite']['id'] }}" data-bs-parent="#moyensEvaluationAccordionEval{{ cap['capacite']['id'] }}">
+                                                            <div class="accordion-body">
+                                                                {% if cap['moyens_evaluation'] %}
+                                                                    <ul class="list-group list-group-flush">
+                                                                        {% for me in cap['moyens_evaluation'] %}
+                                                                            <li class="list-group-item">{{ me.texte }}</li>
+                                                                        {% endfor %}
+                                                                    </ul>
+                                                                {% else %}
+                                                                    <p>Aucun moyen d'évaluation.</p>
+                                                                {% endif %}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <!-- Boutons d'Action -->
-                                            <div>
-                                                <a href="{{ url_for('cours.edit_capacite', cours_id=plan.cours_id, plan_id=plan.id, capacite_id=cap['capacite']['id']) }}" class="btn btn-primary btn-sm">Éditer</a>
-                                                <form method="POST" action="{{ url_for('plan_cadre.delete_capacite', plan_id=plan.id, capacite_id=cap['capacite']['id']) }}" style="display:inline;">
-                                                    {{ delete_forms_capacites[cap['capacite']['id']].hidden_tag() }}
-                                                    <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
-                                                </form>
+                                                <!-- Boutons d'Action -->
+                                                <div class="mt-2">
+                                                    <a href="{{ url_for('cours.edit_capacite', cours_id=plan.cours_id, plan_id=plan.id, capacite_id=cap['capacite']['id']) }}" class="btn btn-primary btn-sm">Éditer</a>
+                                                    <form method="POST" action="{{ url_for('plan_cadre.delete_capacite', plan_id=plan.id, capacite_id=cap['capacite']['id']) }}" style="display:inline;">
+                                                        {{ delete_forms_capacites[cap['capacite']['id']].hidden_tag() }}
+                                                        <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                                                    </form>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p>Aucune capacité ajoutée.</p>
-                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p>Aucune capacité ajoutée.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Savoir-être -->
+                    <div class="mb-4">
+                        <strong>Savoir-être</strong>
+                        {% if savoir_etre %}
+                            <ul class="list-group list-group-flush">
+                                {% for se in savoir_etre %}
+                                    <li class="list-group-item">{{ se.texte }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Aucun savoir-être.</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Savoir-être -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingSavoirEtre">
-                <button class="accordion-button bg-success text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavoirEtre" aria-expanded="true" aria-controls="collapseSavoirEtre">
-                    Savoir-être
-                </button>
-            </h2>
-            <div id="collapseSavoirEtre" class="accordion-collapse collapse show" aria-labelledby="headingSavoirEtre" data-bs-parent="#planCadreAccordion">
-                <div class="accordion-body">
-                    {% if savoir_etre %}
-                        <ul class="list-group list-group-flush">
-                            {% for se in savoir_etre %}
-                                <li class="list-group-item">{{ se.texte }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Aucun savoir-être.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Éléments de Compétence Développés ou Atteints -->
+        <!-- Partie 6: Capacités (Accordéon Détail) -->
         <div class="accordion-item">
             <h2 class="accordion-header" id="headingElementsCompetence">
                 <button class="accordion-button bg-primary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseElementsCompetence" aria-expanded="true" aria-controls="collapseElementsCompetence">
-                    Éléments de Compétence Développés ou Atteints
+                    Partie 6 - Précisions sur le développement de la ou des compétences associées au cours 
                 </button>
             </h2>
             <div id="collapseElementsCompetence" class="accordion-collapse collapse show" aria-labelledby="headingElementsCompetence" data-bs-parent="#planCadreAccordion">
@@ -444,7 +463,9 @@
         <a href="{{ url_for('plan_cadre.edit_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary">Éditer le plan-cadre</a>
         <a href="{{ url_for('cours.view_cours', cours_id=plan.cours_id) }}" class="btn btn-secondary">Retour au cours</a>
     </div>
-        <div class="modal fade" id="generateModal" tabindex="-1" aria-labelledby="generateModalLabel" aria-hidden="true">
+    
+    <!-- Modal Génération du Plan-cadre -->
+    <div class="modal fade" id="generateModal" tabindex="-1" aria-labelledby="generateModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post" id="generateContentForm">
@@ -489,6 +510,7 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Gestion de la génération du plan-cadre
     const generateContentForm = document.getElementById('generateContentForm');
     const confirmGenerateBtn = document.getElementById('confirmGenerateBtn');
     const modalLoadingSpinner = document.getElementById('modalLoadingSpinner');
@@ -501,7 +523,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modalLoadingSpinner.classList.remove('d-none');
     });
 
-    // Gestion du formulaire d'édition de l'introduction (existant)
+    // Gestion du formulaire d'édition de l'introduction
     const introText = document.getElementById('intro-text');
     const saveBtn = document.getElementById('save-intro-btn');
     const cancelBtn = document.getElementById('cancel-intro-btn');
@@ -592,107 +614,4 @@ document.addEventListener('DOMContentLoaded', function() {
         background-color: #f8f9fa;
     }
 </style>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('generateForm');
-    const button = document.getElementById('generateBtn');
-    const spinner = document.getElementById('loadingSpinner');
-    const btnText = button.querySelector('.btn-text');
-
-    form.addEventListener('submit', function(e) {
-        // Désactiver le bouton
-        button.disabled = true;
-        
-        // Afficher le spinner
-        spinner.classList.remove('d-none');
-        
-        // Changer le texte
-        btnText.textContent = 'Génération en cours...';
-    });
-});
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const introText = document.getElementById('intro-text');
-        const saveBtn = document.getElementById('save-intro-btn');
-        const cancelBtn = document.getElementById('cancel-intro-btn');
-        const flashMessage = document.getElementById('flash-message');
-        let originalText = introText.innerHTML;
-
-        // Fetch CSRF token from meta tag
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-        // Fonction pour afficher le message flash
-        function showFlashMessage(message, type) {
-            flashMessage.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning', 'alert-info');
-            flashMessage.classList.add(`alert-${type}`);
-            flashMessage.textContent = message;
-
-            // Optionnel : Faire disparaître le message après 5 secondes
-            setTimeout(() => {
-                flashMessage.classList.add('d-none');
-            }, 5000);
-        }
-
-        // Handle click on the paragraph to enable editing
-        introText.addEventListener('click', function () {
-            introText.contentEditable = "true";
-            introText.focus();
-            // Change cursor to text
-            introText.style.cursor = 'text';
-            // Show Save and Cancel buttons
-            saveBtn.style.display = 'inline-block';
-            cancelBtn.style.display = 'inline-block';
-        });
-
-        // Handle the save button click
-        saveBtn.addEventListener('click', function () {
-            const updatedText = introText.innerHTML.trim();
-            // Send the updated text via AJAX
-            fetch('{{ url_for("cours.update_intro", cours_id=cours_id, plan_id=plan_id) }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken  // Include CSRF token in headers
-                },
-                body: JSON.stringify({ place_intro: updatedText })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    introText.contentEditable = "false";
-                    // Revert cursor
-                    introText.style.cursor = 'pointer';
-                    saveBtn.style.display = 'none';
-                    cancelBtn.style.display = 'none';
-                    originalText = updatedText;  // Update original text
-
-                    // Afficher un message de succès
-                    showFlashMessage('Introduction mise à jour avec succès.', 'success');
-                } else {
-                    // Afficher un message d'erreur
-                    showFlashMessage(data.message || 'Erreur lors de la mise à jour de l\'introduction.', 'danger');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                // Afficher un message d'erreur générique
-                showFlashMessage('Erreur lors de la mise à jour de l\'introduction.', 'danger');
-            });
-        });
-
-        // Handle the cancel button click
-        cancelBtn.addEventListener('click', function () {
-            introText.innerHTML = originalText;
-            introText.contentEditable = "false";
-            // Revert cursor
-            introText.style.cursor = 'pointer';
-            saveBtn.style.display = 'none';
-            cancelBtn.style.display = 'none';
-
-            // Optionnel : Afficher un message indiquant que l'édition a été annulée
-            showFlashMessage('Modification annulée.', 'warning');
-        });
-    });
-</script>
 {% endblock %}
