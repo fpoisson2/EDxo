@@ -239,7 +239,7 @@
                         <!-- Cours corequis (texte libre) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Cours corequis (texte libre)</h6>
+                                <h6 class="fw-bold">Cours corequis</h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-cours-corequis" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -278,7 +278,7 @@
                         <!-- Cours préalables (texte libre) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Cours Préalables (texte libre)</h6>
+                                <h6 class="fw-bold">Cours préalables</h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-cours-prealable" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -472,7 +472,7 @@
                                                                     </div>
                                                                     <!-- Bouton "Supprimer" remplacé par icône -->
                                                                     <button type="button"
-                                                                            class="btn btn-danger btn-sm remove-moyen-evaluation ms-auto"
+                                                                            class="btn btn-danger btn-sm remove-moyen-evaluation ms-auto remove-moyen-evaluation"
                                                                             style="border: none;"
                                                                             title="Supprimer">
                                                                         <i class="bi bi-dash-circle"></i>
@@ -678,18 +678,40 @@
                 </div>
             </div>
         </div>
-
-        <!-- Boutons d'action globale (enregistrer) -->
-        <div class="mt-2 d-flex gap-2">
-            <button type="submit" 
-                    name="submit_plan" 
-                    value="submit_plan" 
-                    class="btn btn-primary btn-sm">
-                Enregistrer le Plan-cadre
-            </button>
-            <a href="{{ url_for('cours.view_cours', cours_id=plan.cours_id) }}" class="btn btn-secondary btn-sm">Retour</a>
-        </div>
     </form>
+
+    <!-- Gestion des Fichiers (formulaire séparé en dehors du formulaire principal) -->
+    <div class="accordion mt-4" id="gestionFichiersAccordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingGestionFichiers">
+                <button class="accordion-button bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGestionFichiers" aria-expanded="true" aria-controls="collapseGestionFichiers">
+                    Gestion des Fichiers
+                </button>
+            </h2>
+            <div id="collapseGestionFichiers" class="accordion-collapse collapse show" aria-labelledby="headingGestionFichiers" data-bs-parent="#gestionFichiersAccordion">
+                <div class="accordion-body">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <a href="{{ url_for('plan_cadre.export_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary">Exporter en DOCX</a>
+                        <a href="{{ url_for('cours.export_plan_cadre_json', cours_id=cours.id, plan_id=plan.id) }}" class="btn btn-secondary">Exporter en JSON</a>
+                    </div>
+                    <hr>
+                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('cours.import_plan_cadre_json', cours_id=cours.id, plan_id=plan.id) }}">
+                        {{ import_form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ import_form.json_file.label(class="form-label") }}
+                            {{ import_form.json_file(class="form-control") }}
+                            {% for error in import_form.json_file.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div>
+                            {{ import_form.submit(class="btn btn-success") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Bouton d'Enregistrement Flottant -->
     <button type="submit" 
@@ -918,7 +940,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                placeholder="Savoir nécessaire (en gras)">
                     </div>
                     <button type="button" 
-                            class="btn btn-danger btn-sm remove-item-btn ms-auto remove-savoir-necessaire"
+                            class="btn btn-danger btn-sm remove-savoir-necessaire ms-auto remove-savoir-necessaire"
                             style="border: none;" title="Supprimer">
                         <i class="bi bi-dash-circle"></i>
                     </button>
@@ -982,7 +1004,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <!-- Bouton "Supprimer" remplacé par icône -->
                     <button type="button"
                             class="btn btn-danger btn-sm remove-item-btn mt-1 remove-savoir-faire"
-                            style="border: none;" title="Supprimer">
+                            style="border: none;"
+                            title="Supprimer">
                         <i class="bi bi-dash-circle"></i>
                     </button>
                 </div>
