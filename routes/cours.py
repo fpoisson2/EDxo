@@ -405,6 +405,8 @@ def view_plan_cadre(cours_id, plan_id):
     print("DEBUG => request.form:", request.form.to_dict())
     
     conn = get_db_connection()
+
+    import_form = ImportPlanCadreForm()
     
     try:
         # -- 1) Vérifier l'existence du plan-cadre et du cours --
@@ -664,11 +666,23 @@ def view_plan_cadre(cours_id, plan_id):
                             plan_id,
                             cours_id
                         ))
-    
-                        # Mettre à jour les FieldLists
+                            # Fonction utilitaire pour filtrer les doublons
+                        def filter_unique_entries(entries, key=lambda x: x):
+                            seen = set()
+                            unique = []
+                            for entry in entries:
+                                identifier = key(entry)
+                                if identifier not in seen:
+                                    seen.add(identifier)
+                                    unique.append(entry)
+                            return unique
+
+                        # Mise à jour des FieldLists avec suppression des doublons
                         # Compétences développées
                         cursor.execute("DELETE FROM PlanCadreCompetencesDeveloppees WHERE plan_cadre_id = ?", (plan_id,))
-                        for subform in plan_form.competences_developpees.entries:
+                        unique_competences = filter_unique_entries(plan_form.competences_developpees.entries, 
+                                                                  key=lambda subform: (subform.texte.data.strip(), subform.texte_description.data.strip()))
+                        for subform in unique_competences:
                             txt = subform.texte.data.strip()
                             desc = subform.texte_description.data.strip()
                             if txt:
@@ -676,10 +690,12 @@ def view_plan_cadre(cours_id, plan_id):
                                     INSERT INTO PlanCadreCompetencesDeveloppees (plan_cadre_id, texte, description)
                                     VALUES (?, ?, ?)
                                 """, (plan_id, txt, desc))
-    
+
                         # Objets cibles
                         cursor.execute("DELETE FROM PlanCadreObjetsCibles WHERE plan_cadre_id = ?", (plan_id,))
-                        for subform in plan_form.objets_cibles.entries:
+                        unique_objets = filter_unique_entries(plan_form.objets_cibles.entries, 
+                                                             key=lambda subform: (subform.texte.data.strip(), subform.texte_description.data.strip()))
+                        for subform in unique_objets:
                             txt = subform.texte.data.strip()
                             desc = subform.texte_description.data.strip()
                             if txt:
@@ -687,10 +703,12 @@ def view_plan_cadre(cours_id, plan_id):
                                     INSERT INTO PlanCadreObjetsCibles (plan_cadre_id, texte, description)
                                     VALUES (?, ?, ?)
                                 """, (plan_id, txt, desc))
-    
+
                         # Compétences certifiées
                         cursor.execute("DELETE FROM PlanCadreCompetencesCertifiees WHERE plan_cadre_id = ?", (plan_id,))
-                        for subform in plan_form.competences_certifiees.entries:
+                        unique_certifiees = filter_unique_entries(plan_form.competences_certifiees.entries, 
+                                                                key=lambda subform: (subform.texte.data.strip(), subform.texte_description.data.strip()))
+                        for subform in unique_certifiees:
                             txt = subform.texte.data.strip()
                             desc = subform.texte_description.data.strip()
                             if txt:
@@ -698,10 +716,12 @@ def view_plan_cadre(cours_id, plan_id):
                                     INSERT INTO PlanCadreCompetencesCertifiees (plan_cadre_id, texte, description)
                                     VALUES (?, ?, ?)
                                 """, (plan_id, txt, desc))
-    
+
                         # Cours corequis
                         cursor.execute("DELETE FROM PlanCadreCoursCorequis WHERE plan_cadre_id = ?", (plan_id,))
-                        for subform in plan_form.cours_corequis.entries:
+                        unique_corequis = filter_unique_entries(plan_form.cours_corequis.entries, 
+                                                              key=lambda subform: (subform.texte.data.strip(), subform.texte_description.data.strip()))
+                        for subform in unique_corequis:
                             txt = subform.texte.data.strip()
                             desc = subform.texte_description.data.strip()
                             if txt:
@@ -709,10 +729,12 @@ def view_plan_cadre(cours_id, plan_id):
                                     INSERT INTO PlanCadreCoursCorequis (plan_cadre_id, texte, description)
                                     VALUES (?, ?, ?)
                                 """, (plan_id, txt, desc))
-    
+
                         # Cours préalables
                         cursor.execute("DELETE FROM PlanCadreCoursPrealables WHERE plan_cadre_id = ?", (plan_id,))
-                        for subform in plan_form.cours_prealables.entries:
+                        unique_prealables = filter_unique_entries(plan_form.cours_prealables.entries, 
+                                                                key=lambda subform: (subform.texte.data.strip(), subform.texte_description.data.strip()))
+                        for subform in unique_prealables:
                             txt = subform.texte.data.strip()
                             desc = subform.texte_description.data.strip()
                             if txt:
@@ -720,17 +742,19 @@ def view_plan_cadre(cours_id, plan_id):
                                     INSERT INTO PlanCadreCoursPrealables (plan_cadre_id, texte, description)
                                     VALUES (?, ?, ?)
                                 """, (plan_id, txt, desc))
-    
+
                         # Savoir-être
                         cursor.execute("DELETE FROM PlanCadreSavoirEtre WHERE plan_cadre_id = ?", (plan_id,))
-                        for se in plan_form.savoir_etre.entries:
+                        unique_savoir_etre = filter_unique_entries(plan_form.savoir_etre.entries, 
+                                                                 key=lambda se: se.texte.data.strip())
+                        for se in unique_savoir_etre:
                             stxt = se.texte.data.strip()
                             if stxt:
                                 cursor.execute("""
                                     INSERT INTO PlanCadreSavoirEtre (plan_cadre_id, texte)
                                     VALUES (?, ?)
                                 """, (plan_id, stxt))
-    
+
                         conn.commit()
                         flash("Plan-cadre mis à jour avec succès.", "success")
                     except Exception as e:
@@ -845,6 +869,7 @@ def view_plan_cadre(cours_id, plan_id):
         capacites_data=capacites_data,
         delete_forms_capacites=delete_forms_capacites,
         generate_form=GenerateContentForm(),
+        import_form=import_form,
         competences_developpees_from_cours=competences_developpees_from_cours, 
         competences_atteintes=competences_atteintes,
         elements_competence_par_cours=elements_competence_grouped,
