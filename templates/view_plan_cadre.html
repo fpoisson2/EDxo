@@ -119,44 +119,45 @@
                                                      style="overflow:hidden; resize:none;") }}
                         </div>
 
-                        <!-- Compétences développées -->
-                        <div class="mb-2">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Compétences développées</h6>
-                                <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-competence-developpee" title="Ajouter">
-                                    <i class="bi bi-plus-circle"></i>
-                                </button>
-                            </div>
-                            <div id="competences-developpees-container">
-                                {% for subform in plan_form.competences_developpees %}
-                                    <div class="competences_developpees-item mb-1">
-                                        <div class="d-flex align-items-start">
-                                            <div class="flex-fill me-2">
-                                                {{ subform.texte(
-                                                    class="form-control fw-bold mb-1 auto-resize border-0",
-                                                    oninput="autoResize(this)",
-                                                    style="overflow:hidden; resize:none;",
-                                                    placeholder="Champ principal (en gras)"
-                                                )}}
-                                                {{ subform.texte_description(
-                                                    class="form-control auto-resize border-0",
-                                                    oninput="autoResize(this)",
-                                                    style="overflow:hidden; resize:none;",
-                                                    placeholder="Description (texte normal)"
-                                                )}}
-                                            </div>
-                                            <!-- Bouton "Supprimer" remplacé par icône -->
-                                            <button type="button"
-                                                    class="btn btn-danger btn-sm remove-item-btn ms-auto"
-                                                    style="border: none;"
-                                                    title="Supprimer">
-                                                <i class="bi bi-dash-circle"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        </div>
+<!-- Compétences développées -->
+<div class="mb-2">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+        <h6 class="fw-bold">Compétences développées</h6>
+        <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-competence-developpee" title="Ajouter">
+            <i class="bi bi-plus-circle"></i>
+        </button>
+    </div>
+    <div id="competences-developpees-container">
+        {% for subform in plan_form.competences_developpees %}
+            <div class="competences_developpees-item mb-1">
+                <div class="d-flex align-items-start">
+                    <div class="flex-fill me-2">
+                        {{ subform.texte(
+                            class="form-control fw-bold mb-1 auto-resize border-0",
+                            oninput="autoResize(this)",
+                            style="overflow:hidden; resize:none;",
+                            placeholder="Champ principal (en gras)"
+                        ) }}
+                        {{ subform.texte_description(
+                            class="form-control auto-resize border-0",
+                            oninput="autoResize(this)",
+                            style="overflow:hidden; resize:none;",
+                            placeholder="Description (texte normal)"
+                        ) }}
+                    </div>
+                    <!-- Bouton "Supprimer" remplacé par icône -->
+                    <button type="button"
+                            class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                            style="border: none;"
+                            title="Supprimer">
+                        <i class="bi bi-dash-circle"></i>
+                    </button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
 
                         <!-- Objets cibles -->
                         <div class="mb-2">
