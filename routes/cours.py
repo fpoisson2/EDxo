@@ -631,14 +631,14 @@ def view_plan_cadre(cours_id, plan_id):
             for cap_row in capacites_rows
         }
     
-        # -- 6) GESTION DU POST --
+
         if request.method == 'POST':
-            # -- a) Enregistrer le Plan-cadre --
             if 'submit_plan' in request.form:
                 if plan_form.validate_on_submit():
                     try:
                         cursor = conn.cursor()
-                        # Mettre à jour le plan-cadre
+                        
+                        # Update main PlanCadre table
                         cursor.execute("""
                             UPDATE PlanCadre
                             SET place_intro = ?,
@@ -666,100 +666,78 @@ def view_plan_cadre(cours_id, plan_id):
                             plan_id,
                             cours_id
                         ))
-                            # Fonction utilitaire pour filtrer les doublons
-                        def filter_unique_entries(entries, key=lambda x: x):
-                            seen = set()
-                            unique = []
-                            for entry in entries:
-                                identifier = key(entry)
-                                if identifier not in seen:
-                                    seen.add(identifier)
-                                    unique.append(entry)
-                            return unique
 
-                        # Mise à jour des FieldLists avec suppression des doublons
-                        # Compétences développées
-                        cursor.execute("DELETE FROM PlanCadreCompetencesDeveloppees WHERE plan_cadre_id = ?", (plan_id,))
-                        unique_competences = filter_unique_entries(plan_form.competences_developpees.entries, 
-                                                                  key=lambda subform: (subform.texte.data.strip(), subform.texte_description.data.strip()))
-                        for subform in unique_competences:
-                            txt = subform.texte.data.strip()
-                            desc = subform.texte_description.data.strip()
-                            if txt:
-                                cursor.execute("""
-                                    INSERT INTO PlanCadreCompetencesDeveloppees (plan_cadre_id, texte, description)
-                                    VALUES (?, ?, ?)
-                                """, (plan_id, txt, desc))
+                        def update_list_items(table_name, form_data, fields):
+                            try:
+                                cursor = conn.cursor()
+                                
+                                # Get the existing entries for logging purposes
+                                current_entries = cursor.execute(
+                                    f"SELECT id, texte FROM {table_name} WHERE plan_cadre_id = ?", 
+                                    (plan_id,)
+                                ).fetchall()
+                                
+                                # Since we want to delete everything when no entries are present,
+                                # simply delete all entries for this plan_cadre_id
+                                cursor.execute(f"DELETE FROM {table_name} WHERE plan_cadre_id = ?", (plan_id,))
+                                print(f"Deleted all entries from {table_name} for plan_cadre_id {plan_id}")
+                                
+                                # Only insert new entries if they exist in the form data
+                                insert_count = 0
+                                seen_entries = set()
+                                
+                                for entry in form_data:
+                                    if hasattr(entry, 'texte'):
+                                        texte = entry.texte.data.strip()
+                                        if texte and texte not in seen_entries:
+                                            seen_entries.add(texte)
+                                            description = entry.texte_description.data.strip() if hasattr(entry, 'texte_description') else None
+                                            
+                                            cursor.execute(
+                                                f"INSERT INTO {table_name} (plan_cadre_id, texte, description) VALUES (?, ?, ?)",
+                                                (plan_id, texte, description)
+                                            )
+                                            insert_count += 1
+                                            print(f"Inserted new entry: {texte}")
+                                
+                                print(f"Total entries inserted: {insert_count}")
+                                return True
 
-                        # Objets cibles
-                        cursor.execute("DELETE FROM PlanCadreObjetsCibles WHERE plan_cadre_id = ?", (plan_id,))
-                        unique_objets = filter_unique_entries(plan_form.objets_cibles.entries, 
-                                                             key=lambda subform: (subform.texte.data.strip(), subform.texte_description.data.strip()))
-                        for subform in unique_objets:
-                            txt = subform.texte.data.strip()
-                            desc = subform.texte_description.data.strip()
-                            if txt:
-                                cursor.execute("""
-                                    INSERT INTO PlanCadreObjetsCibles (plan_cadre_id, texte, description)
-                                    VALUES (?, ?, ?)
-                                """, (plan_id, txt, desc))
+                            except Exception as e:
+                                print(f"Error in update_list_items for {table_name}: {str(e)}")
+                                raise
 
-                        # Compétences certifiées
-                        cursor.execute("DELETE FROM PlanCadreCompetencesCertifiees WHERE plan_cadre_id = ?", (plan_id,))
-                        unique_certifiees = filter_unique_entries(plan_form.competences_certifiees.entries, 
-                                                                key=lambda subform: (subform.texte.data.strip(), subform.texte_description.data.strip()))
-                        for subform in unique_certifiees:
-                            txt = subform.texte.data.strip()
-                            desc = subform.texte_description.data.strip()
-                            if txt:
-                                cursor.execute("""
-                                    INSERT INTO PlanCadreCompetencesCertifiees (plan_cadre_id, texte, description)
-                                    VALUES (?, ?, ?)
-                                """, (plan_id, txt, desc))
-
-                        # Cours corequis
-                        cursor.execute("DELETE FROM PlanCadreCoursCorequis WHERE plan_cadre_id = ?", (plan_id,))
-                        unique_corequis = filter_unique_entries(plan_form.cours_corequis.entries, 
-                                                              key=lambda subform: (subform.texte.data.strip(), subform.texte_description.data.strip()))
-                        for subform in unique_corequis:
-                            txt = subform.texte.data.strip()
-                            desc = subform.texte_description.data.strip()
-                            if txt:
-                                cursor.execute("""
-                                    INSERT INTO PlanCadreCoursCorequis (plan_cadre_id, texte, description)
-                                    VALUES (?, ?, ?)
-                                """, (plan_id, txt, desc))
-
-                        # Cours préalables
-                        cursor.execute("DELETE FROM PlanCadreCoursPrealables WHERE plan_cadre_id = ?", (plan_id,))
-                        unique_prealables = filter_unique_entries(plan_form.cours_prealables.entries, 
-                                                                key=lambda subform: (subform.texte.data.strip(), subform.texte_description.data.strip()))
-                        for subform in unique_prealables:
-                            txt = subform.texte.data.strip()
-                            desc = subform.texte_description.data.strip()
-                            if txt:
-                                cursor.execute("""
-                                    INSERT INTO PlanCadreCoursPrealables (plan_cadre_id, texte, description)
-                                    VALUES (?, ?, ?)
-                                """, (plan_id, txt, desc))
-
-                        # Savoir-être
-                        cursor.execute("DELETE FROM PlanCadreSavoirEtre WHERE plan_cadre_id = ?", (plan_id,))
-                        unique_savoir_etre = filter_unique_entries(plan_form.savoir_etre.entries, 
-                                                                 key=lambda se: se.texte.data.strip())
-                        for se in unique_savoir_etre:
-                            stxt = se.texte.data.strip()
-                            if stxt:
-                                cursor.execute("""
-                                    INSERT INTO PlanCadreSavoirEtre (plan_cadre_id, texte)
-                                    VALUES (?, ?)
-                                """, (plan_id, stxt))
+                        # Update each list section
+                        update_list_items('PlanCadreCompetencesDeveloppees', 
+                                        plan_form.competences_developpees,
+                                        ['texte', 'description'])
+                                        
+                        update_list_items('PlanCadreObjetsCibles',
+                                        plan_form.objets_cibles,
+                                        ['texte', 'description'])
+                                        
+                        update_list_items('PlanCadreCompetencesCertifiees',
+                                        plan_form.competences_certifiees,
+                                        ['texte', 'description'])
+                                        
+                        update_list_items('PlanCadreCoursCorequis',
+                                        plan_form.cours_corequis,
+                                        ['texte', 'description'])
+                                        
+                        update_list_items('PlanCadreCoursPrealables',
+                                        plan_form.cours_prealables,
+                                        ['texte', 'description'])
+                                        
+                        update_list_items('PlanCadreSavoirEtre',
+                                        plan_form.savoir_etre,
+                                        ['texte'])
 
                         conn.commit()
                         flash("Plan-cadre mis à jour avec succès.", "success")
                     except Exception as e:
                         conn.rollback()
                         flash(f"Erreur lors de la mise à jour du plan-cadre : {e}", "danger")
+                        print(f"Error updating plan-cadre: {e}")  # For debugging
                 else:
                     flash("Formulaire invalide. Veuillez vérifier vos entrées.", "danger")
     
