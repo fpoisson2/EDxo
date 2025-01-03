@@ -617,39 +617,77 @@ def update_main_plan_cadre(cursor, plan_form, plan_id, cours_id):
 
 def update_list_items(cursor, table_name, form_data, plan_id):
     try:
-        # Log current entries if needed
-        # current_entries = cursor.execute(
-        #     f"SELECT id, texte FROM {table_name} WHERE plan_cadre_id = ?", 
-        #     (plan_id,)
-        # ).fetchall()
+        print(f"\n=== Debug for {table_name} ===")
+        print(f"Form data type: {type(form_data)}")
+        print(f"Raw form_data: {form_data}")
+        print(f"Number of entries: {len(form_data) if form_data else 0}")
         
         # Delete existing entries
         cursor.execute(f"DELETE FROM {table_name} WHERE plan_cadre_id = ?", (plan_id,))
-        print(f"Deleted all entries from {table_name} for plan_cadre_id {plan_id}")
+        rows_deleted = cursor.rowcount
+        print(f"Deleted {rows_deleted} existing rows")
         
         # Insert new entries
         insert_count = 0
         seen_entries = set()
         
         for entry in form_data:
+            # Handle different form field types
             if hasattr(entry, 'texte'):
-                texte = entry.texte.data.strip()
+                # Direct field access
+                texte = entry.texte.data if entry.texte.data else None
+            elif hasattr(entry, 'form') and hasattr(entry.form, 'texte'):
+                # Nested form access
+                texte = entry.form.texte.data if entry.form.texte.data else None
+            elif hasattr(entry, 'data') and isinstance(entry.data, dict) and 'texte' in entry.data:
+                # Dictionary data access
+                texte = entry.data['texte']
+            else:
+                print(f"Skipping entry - unexpected structure: {entry}")
+                continue
+                
+            # Process valid text
+            if texte and isinstance(texte, str):
+                texte = texte.strip()
                 if texte and texte not in seen_entries:
                     seen_entries.add(texte)
-                    description = entry.texte_description.data.strip() if hasattr(entry, 'texte_description') else None
+                    print(f"Inserting entry: {texte}")
                     
-                    cursor.execute(
-                        f"INSERT INTO {table_name} (plan_cadre_id, texte, description) VALUES (?, ?, ?)",
-                        (plan_id, texte, description)
-                    )
+                    if 'description' in [row[1] for row in cursor.execute(f"PRAGMA table_info({table_name});").fetchall()]:
+                        # Handle tables with description field
+                        description = None
+                        if hasattr(entry, 'texte_description'):
+                            description = entry.texte_description.data
+                        elif hasattr(entry, 'form') and hasattr(entry.form, 'texte_description'):
+                            description = entry.form.texte_description.data
+                        elif hasattr(entry, 'data') and isinstance(entry.data, dict) and 'texte_description' in entry.data:
+                            description = entry.data['texte_description']
+                            
+                        cursor.execute(
+                            f"INSERT INTO {table_name} (plan_cadre_id, texte, description) VALUES (?, ?, ?)",
+                            (plan_id, texte, description)
+                        )
+                    else:
+                        # Handle tables without description field
+                        cursor.execute(
+                            f"INSERT INTO {table_name} (plan_cadre_id, texte) VALUES (?, ?)",
+                            (plan_id, texte)
+                        )
+                    
                     insert_count += 1
-                    print(f"Inserted new entry: {texte}")
+                else:
+                    print(f"Skipping entry - empty, None, or duplicate: {texte}")
+            else:
+                print(f"Skipping entry - invalid texte: {texte}")
         
-        print(f"Total entries inserted into {table_name}: {insert_count}")
+        print(f"Total entries inserted: {insert_count}")
         return True
-
+        
     except Exception as e:
         print(f"Error in update_list_items for {table_name}: {str(e)}")
+        print(f"Error type: {type(e)}")
+        import traceback
+        traceback.print_exc()
         raise
 
 # --- Capacity Management Helpers ---
@@ -736,78 +774,85 @@ def initialize_delete_forms(capacites_rows):
 def view_plan_cadre(cours_id, plan_id):
     print("DEBUG => request.method:", request.method)
     print("DEBUG => request.form:", request.form.to_dict())
-    
+
     conn = get_db_connection()
-    
+
+    # Initialisation des formulaires
     import_form = ImportPlanCadreForm()
-    
+
     try:
-        # --- 1. Verify existence of plan-cadre and course ---
-        plan_row = get_plan_cadre(conn, plan_id, cours_id)
-        if not plan_row:
-            flash('Plan Cadre non trouvé pour ce cours.', 'danger')
-            return redirect(url_for('cours_bp.view_cours', cours_id=cours_id))
-        
-        cours = get_cours_details(conn, cours_id)
-        if not cours:
-            flash('Cours non trouvé.', 'danger')
-            return redirect(url_for('main.index'))
-        
-        # --- 2. Retrieve prerequisites and corequisites ---
-        prealables_details = get_related_courses(conn, cours_id, 'CoursPrealable', 'cours_prealable_id')
-        corequisites_details = get_related_courses(conn, cours_id, 'CoursCorequis', 'cours_corequis_id')
-        
-        # --- 3. Retrieve competencies ---
-        competences_developpees_from_cours = get_competences(conn, cours_id, 'developpees')
-        competences_atteintes = get_competences(conn, cours_id, 'atteintes')
-        elements_competence_par_cours = get_elements_competence(conn, cours_id)
-        
-        # --- 4. Prepare PlanCadreForm ---
-        plan_form = prepare_plan_form(plan_row)
-        populate_field_lists(conn, plan_id, plan_form)
-        
-        # --- 5. Prepare Capacities ---
-        capacites_data = prepare_capacites(conn, plan_id)
-        delete_forms_capacites = prepare_delete_forms(conn.execute(
-            'SELECT * FROM PlanCadreCapacites WHERE plan_cadre_id = ?', 
-            (plan_id,)
-        ).fetchall())
-        
-        # --- 6. Handle POST Requests ---
-        if request.method == 'POST':
+        if request.method == 'GET':
+            # --- 1. Vérification de l'existence du plan-cadre et du cours ---
+            plan_row = get_plan_cadre(conn, plan_id, cours_id)
+            if not plan_row:
+                flash('Plan Cadre non trouvé pour ce cours.', 'danger')
+                return redirect(url_for('cours_bp.view_cours', cours_id=cours_id))
+
+            cours = get_cours_details(conn, cours_id)
+            if not cours:
+                flash('Cours non trouvé.', 'danger')
+                return redirect(url_for('main.index'))
+
+            # --- 2. Récupération des détails requis ---
+            prealables_details = get_related_courses(conn, cours_id, 'CoursPrealable', 'cours_prealable_id')
+            corequisites_details = get_related_courses(conn, cours_id, 'CoursCorequis', 'cours_corequis_id')
+            competences_developpees_from_cours = get_competences(conn, cours_id, 'developpees')
+            competences_atteintes = get_competences(conn, cours_id, 'atteintes')
+            elements_competence_par_cours = get_elements_competence(conn, cours_id)
+
+            # --- 3. Préparation du formulaire pour le plan-cadre ---
+            plan_form = prepare_plan_form(plan_row)
+            populate_field_lists(conn, plan_id, plan_form)
+
+            # --- 4. Préparation des capacités ---
+            capacites_data = prepare_capacites(conn, plan_id)
+            delete_forms_capacites = prepare_delete_forms(conn.execute(
+                'SELECT * FROM PlanCadreCapacites WHERE plan_cadre_id = ?', 
+                (plan_id,)
+            ).fetchall())
+
+            # --- 5. Rendu du template avec les données ---
+            return render_template(
+                'view_plan_cadre.html',
+                cours=cours,
+                plan=plan_row,
+                prealables_details=prealables_details,
+                corequisites_details=corequisites_details,
+                plan_form=plan_form,
+                capacites_data=capacites_data,
+                delete_forms_capacites=delete_forms_capacites,
+                generate_form=GenerateContentForm(),
+                import_form=import_form,
+                competences_developpees_from_cours=competences_developpees_from_cours,
+                competences_atteintes=competences_atteintes,
+                elements_competence_par_cours=elements_competence_par_cours
+            )
+
+        elif request.method == 'POST':
+            # --- 6. Gestion des soumissions de formulaire ---
             if 'submit_plan' in request.form:
+                plan_form = prepare_plan_form(request.form)
                 if plan_form.validate_on_submit():
                     try:
                         cursor = conn.cursor()
-                        
-                        # Update main PlanCadre table
+
+                        # Mise à jour du plan-cadre principal
                         update_main_plan_cadre(cursor, plan_form, plan_id, cours_id)
-                        
-                        # Update each list section
-                        update_list_items('PlanCadreCompetencesDeveloppees', 
-                                         plan_form.competences_developpees,
-                                         plan_id)
-                        
-                        update_list_items('PlanCadreObjetsCibles',
-                                         plan_form.objets_cibles,
-                                         plan_id)
-                        
-                        update_list_items('PlanCadreCompetencesCertifiees',
-                                         plan_form.competences_certifiees,
-                                         plan_id)
-                        
-                        update_list_items('PlanCadreCoursCorequis',
-                                         plan_form.cours_corequis,
-                                         plan_id)
-                        
-                        update_list_items('PlanCadreCoursPrealables',
-                                         plan_form.cours_prealables,
-                                         plan_id)
-                        
-                        update_list_items('PlanCadreSavoirEtre',
-                                         plan_form.savoir_etre,
-                                         plan_id)
-                        
+
+                        # Mise à jour des listes associées
+                        update_list_items(cursor, 'PlanCadreCompetencesDeveloppees', 
+                                          plan_form.competences_developpees, plan_id)
+                        update_list_items(cursor, 'PlanCadreObjetsCibles', 
+                                          plan_form.objets_cibles, plan_id)
+                        update_list_items(cursor, 'PlanCadreCompetencesCertifiees', 
+                                          plan_form.competences_certifiees, plan_id)
+                        update_list_items(cursor, 'PlanCadreCoursCorequis', 
+                                          plan_form.cours_corequis, plan_id)
+                        update_list_items(cursor, 'PlanCadreCoursPrealables', 
+                                          plan_form.cours_prealables, plan_id)
+                        update_list_items(cursor, 'PlanCadreSavoirEtre', 
+                                          plan_form.savoir_etre, plan_id)
+
                         conn.commit()
                         flash("Plan-cadre mis à jour avec succès.", "success")
                     except Exception as e:
@@ -816,61 +861,42 @@ def view_plan_cadre(cours_id, plan_id):
                         print(f"Error updating plan-cadre: {e}")
                 else:
                     flash("Formulaire invalide. Veuillez vérifier vos entrées.", "danger")
-            
-            else:
-                # Handle specific actions (save/delete capacities)
-                for key, value in request.form.items():
-                    if key.startswith('save_capacite_'):
-                        cap_id = key.split('_')[-1]
-                        cap_data = next((c for c in capacites_data if str(c['capacite_obj']['id']) == cap_id), None)
-                        if cap_data:
-                            cap_form = CapaciteForm(request.form, prefix=f'cap_{cap_id}')
-                            if cap_form.validate():
-                                try:
-                                    cursor = conn.cursor()
-                                    handle_update_capacity(conn, cursor, cap_form, cap_id, plan_id)
-                                    conn.commit()
-                                    flash(f"Capacité {cap_id} mise à jour avec succès.", "success")
-                                except Exception as e:
-                                    conn.rollback()
-                                    flash(f"Erreur lors de la mise à jour de la capacité {cap_id} : {e}", "danger")
-                            else:
-                                flash(f"Formulaire invalide pour la capacité {cap_id}.", "danger")
-                    
-                    elif key.startswith('delete_capacite_'):
-                        cap_id = key.split('_')[-1]
+
+            # Gestion des capacités
+            for key, value in request.form.items():
+                if key.startswith('save_capacite_'):
+                    cap_id = key.split('_')[-1]
+                    cap_form = CapaciteForm(request.form, prefix=f'cap_{cap_id}')
+                    if cap_form.validate():
                         try:
                             cursor = conn.cursor()
-                            handle_delete_capacity(cursor, cap_id, plan_id)
+                            handle_update_capacity(conn, cursor, cap_form, cap_id, plan_id)
                             conn.commit()
-                            flash(f"Capacité {cap_id} supprimée avec succès.", "success")
+                            flash(f"Capacité {cap_id} mise à jour avec succès.", "success")
                         except Exception as e:
                             conn.rollback()
-                            flash(f"Erreur lors de la suppression de la capacité {cap_id} : {e}", "danger")
-                
-            # After any POST action, redirect to prevent form resubmission
-            return redirect(url_for('cours_bp.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
-    
+                            flash(f"Erreur lors de la mise à jour de la capacité {cap_id} : {e}", "danger")
+                    else:
+                        flash(f"Formulaire invalide pour la capacité {cap_id}.", "danger")
+
+                elif key.startswith('delete_capacite_'):
+                    cap_id = key.split('_')[-1]
+                    try:
+                        cursor = conn.cursor()
+                        handle_delete_capacity(cursor, cap_id, plan_id)
+                        conn.commit()
+                        flash(f"Capacité {cap_id} supprimée avec succès.", "success")
+                    except Exception as e:
+                        conn.rollback()
+                        flash(f"Erreur lors de la suppression de la capacité {cap_id} : {e}", "danger")
+
+            # Redirection après POST pour éviter la resoumission multiple
+            return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
+
     finally:
         conn.close()
-    
-    # --- 7. Render Template with Retrieved Data ---
-    return render_template(
-        'view_plan_cadre.html',  # Replace with your actual template name
-        cours=cours,
-        plan=plan_row,
-        prealables_details=prealables_details,
-        corequisites_details=corequisites_details,
-        plan_form=plan_form,
-        capacites_data=capacites_data,
-        delete_forms_capacites=delete_forms_capacites,
-        generate_form=GenerateContentForm(),
-        import_form=import_form,
-        competences_developpees_from_cours=competences_developpees_from_cours, 
-        competences_atteintes=competences_atteintes,
-        elements_competence_par_cours=elements_competence_par_cours,
-        # Add other necessary variables here
-    )
+
+
 
 
 
