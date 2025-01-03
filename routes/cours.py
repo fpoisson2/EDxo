@@ -811,6 +811,11 @@ def view_plan_cadre(cours_id, plan_id):
                 (plan_id,)
             ).fetchall())
 
+            generate_form = GenerateContentForm(
+                additional_info=plan_row['additional_info'],
+                ai_model=plan_row['ai_model']
+            )
+
             # --- 5. Rendu du template avec les données ---
             return render_template(
                 'view_plan_cadre.html',
@@ -821,7 +826,7 @@ def view_plan_cadre(cours_id, plan_id):
                 plan_form=plan_form,
                 capacites_data=capacites_data,
                 delete_forms_capacites=delete_forms_capacites,
-                generate_form=GenerateContentForm(),
+                generate_form=generate_form,
                 import_form=import_form,
                 competences_developpees_from_cours=competences_developpees_from_cours,
                 competences_atteintes=competences_atteintes,
