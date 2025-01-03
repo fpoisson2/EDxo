@@ -6806,3 +6806,60 @@ fields.3.content
 2025-01-02 22:31:15,718 - INFO - 127.0.0.1 - - [02/Jan/2025 22:31:15] "[32mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 302 -
 2025-01-02 22:31:15,729 - INFO - 127.0.0.1 - - [02/Jan/2025 22:31:15] "GET /cours/7/plan_cadre/4 HTTP/1.1" 200 -
 2025-01-02 22:31:15,739 - INFO - 127.0.0.1 - - [02/Jan/2025 22:31:15] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-02 22:31:59,909 - INFO - 127.0.0.1 - - [02/Jan/2025 22:31:59] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-02 22:31:59,933 - INFO - 127.0.0.1 - - [02/Jan/2025 22:31:59] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-02 22:31:59,947 - INFO - 127.0.0.1 - - [02/Jan/2025 22:31:59] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-02 22:32:03,168 - INFO - 127.0.0.1 - - [02/Jan/2025 22:32:03] "[32mGET /cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-02 22:32:03,182 - INFO - 127.0.0.1 - - [02/Jan/2025 22:32:03] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2025-01-02 22:32:03,191 - INFO - 127.0.0.1 - - [02/Jan/2025 22:32:03] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-02 22:32:14,554 - INFO - 127.0.0.1 - - [02/Jan/2025 22:32:14] "[32mGET /cours/2/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-02 22:32:14,558 - INFO - 127.0.0.1 - - [02/Jan/2025 22:32:14] "GET /cours/2/plan_cadre/2 HTTP/1.1" 200 -
+2025-01-02 22:32:14,571 - INFO - 127.0.0.1 - - [02/Jan/2025 22:32:14] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-02 22:33:40,531 - INFO - 127.0.0.1 - - [02/Jan/2025 22:33:40] "[32mPOST /plan_cadre/2/generate_content HTTP/1.1[0m" 302 -
+2025-01-02 22:33:40,552 - INFO - 127.0.0.1 - - [02/Jan/2025 22:33:40] "GET /cours/2/plan_cadre/2 HTTP/1.1" 200 -
+2025-01-02 22:33:40,564 - INFO - 127.0.0.1 - - [02/Jan/2025 22:33:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-02 22:33:49,022 - INFO - 127.0.0.1 - - [02/Jan/2025 22:33:49] "[32mPOST /cours/2/plan_cadre/2 HTTP/1.1[0m" 302 -
+2025-01-02 22:33:49,051 - INFO - 127.0.0.1 - - [02/Jan/2025 22:33:49] "GET /cours/2/plan_cadre/2 HTTP/1.1" 200 -
+2025-01-02 22:33:49,064 - INFO - 127.0.0.1 - - [02/Jan/2025 22:33:49] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-02 22:34:25,030 - INFO - 127.0.0.1 - - [02/Jan/2025 22:34:25] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-02 22:34:25,037 - INFO - 127.0.0.1 - - [02/Jan/2025 22:34:25] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-02 22:34:25,055 - INFO - 127.0.0.1 - - [02/Jan/2025 22:34:25] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-02 22:34:27,465 - INFO - 127.0.0.1 - - [02/Jan/2025 22:34:27] "[32mGET /cours/8/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-02 22:34:27,472 - INFO - 127.0.0.1 - - [02/Jan/2025 22:34:27] "GET /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-02 22:34:27,482 - INFO - 127.0.0.1 - - [02/Jan/2025 22:34:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-02 22:34:34,373 - INFO - 127.0.0.1 - - [02/Jan/2025 22:34:34] "[32mGET /cours/10/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-02 22:34:34,383 - INFO - 127.0.0.1 - - [02/Jan/2025 22:34:34] "GET /cours/10/plan_cadre/6 HTTP/1.1" 200 -
+2025-01-02 22:34:34,396 - INFO - 127.0.0.1 - - [02/Jan/2025 22:34:34] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-03 09:32:54,299 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/cours.py', reloading
+2025-01-03 09:32:54,366 - INFO -  * Restarting with stat
+2025-01-03 09:32:55,021 - WARNING -  * Debugger is active!
+2025-01-03 09:32:55,023 - INFO -  * Debugger PIN: 144-023-035
+2025-01-03 09:33:01,099 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/cours.py', reloading
+2025-01-03 09:33:01,205 - INFO -  * Restarting with stat
+2025-01-03 09:33:01,833 - WARNING -  * Debugger is active!
+2025-01-03 09:33:01,836 - INFO -  * Debugger PIN: 144-023-035
+2025-01-03 09:33:06,523 - INFO - 127.0.0.1 - - [03/Jan/2025 09:33:06] "[32mGET /cours/17/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-03 09:33:06,534 - INFO - 127.0.0.1 - - [03/Jan/2025 09:33:06] "GET /login?next=/cours/17/plan_cadre HTTP/1.1" 200 -
+2025-01-03 09:33:06,547 - INFO - 127.0.0.1 - - [03/Jan/2025 09:33:06] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-03 09:33:13,334 - INFO - 127.0.0.1 - - [03/Jan/2025 09:33:13] "[32mPOST /login?next=/cours/17/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-03 09:33:13,336 - INFO - 127.0.0.1 - - [03/Jan/2025 09:33:13] "[32mGET /cours/17/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-03 09:33:13,344 - INFO - 127.0.0.1 - - [03/Jan/2025 09:33:13] "[35m[1mGET /cours/17/plan_cadre/13 HTTP/1.1[0m" 500 -
+2025-01-03 09:33:13,356 - INFO - 127.0.0.1 - - [03/Jan/2025 09:33:13] "[36mGET /cours/17/plan_cadre/13?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-03 09:33:13,358 - INFO - 127.0.0.1 - - [03/Jan/2025 09:33:13] "[36mGET /cours/17/plan_cadre/13?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-03 09:33:13,364 - INFO - 127.0.0.1 - - [03/Jan/2025 09:33:13] "GET /cours/17/plan_cadre/13?__debugger__=yes&cmd=resource&f=console.png&s=Ypdr7bj3Re07vE1LdNWn HTTP/1.1" 200 -
+2025-01-03 09:33:26,080 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/cours.py', reloading
+2025-01-03 09:33:26,169 - INFO -  * Restarting with stat
+2025-01-03 09:33:26,846 - WARNING -  * Debugger is active!
+2025-01-03 09:33:26,848 - INFO -  * Debugger PIN: 144-023-035
+2025-01-03 09:33:26,954 - INFO - 127.0.0.1 - - [03/Jan/2025 09:33:26] "GET /cours/17/plan_cadre/13 HTTP/1.1" 200 -
+2025-01-03 09:33:26,967 - INFO - 127.0.0.1 - - [03/Jan/2025 09:33:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-03 09:33:37,968 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/cours.py', reloading
+2025-01-03 09:33:38,056 - INFO -  * Restarting with stat
+2025-01-03 09:33:38,718 - WARNING -  * Debugger is active!
+2025-01-03 09:33:38,720 - INFO -  * Debugger PIN: 144-023-035
+2025-01-03 09:33:51,850 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/cours.py', reloading
+2025-01-03 09:33:51,946 - INFO -  * Restarting with stat
+2025-01-03 09:33:52,610 - WARNING -  * Debugger is active!
+2025-01-03 09:33:52,612 - INFO -  * Debugger PIN: 144-023-035
+2025-01-03 09:33:52,946 - INFO - 127.0.0.1 - - [03/Jan/2025 09:33:52] "GET /cours/17/plan_cadre/13 HTTP/1.1" 200 -
+2025-01-03 09:33:52,958 - INFO - 127.0.0.1 - - [03/Jan/2025 09:33:52] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
