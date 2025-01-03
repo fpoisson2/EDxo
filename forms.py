@@ -214,7 +214,8 @@ class PlanCadreItemWithDescriptionForm(Form):
 class PlanCadreTexteFieldForm(Form):
     class Meta:
         csrf = False
-    texte = StringField("Texte", validators=[DataRequired()])
+    texte = StringField("Texte", validators=[Optional()])  # Changed from DataRequired to Optional
+
 
 class PlanCadreForm(FlaskForm):
     place_intro = TextAreaField('Introduction Place et Rôle du Cours', validators=[Optional()])
@@ -233,7 +234,7 @@ class PlanCadreForm(FlaskForm):
     objets_cibles = FieldList(FormField(PlanCadreItemWithDescriptionForm), min_entries=0, max_entries=50)
     cours_relies = FieldList(FormField(PlanCadreItemWithDescriptionForm), min_entries=0, max_entries=50)
     cours_prealables = FieldList(FormField(PlanCadreItemWithDescriptionForm), min_entries=0, max_entries=50)
-    savoir_etre = FieldList(FormField(PlanCadreTexteFieldForm), min_entries=0, max_entries=50)
+    savoir_etre = FieldList(FormField(PlanCadreTexteFieldForm), min_entries=0)
     competences_certifiees = FieldList(FormField(PlanCadreCompetenceCertifieeForm), min_entries=0, max_entries=50)
     cours_corequis = FieldList(FormField(PlanCadreCoursCorequisForm), min_entries=0, max_entries=50)
 

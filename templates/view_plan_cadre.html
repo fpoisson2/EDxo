@@ -119,45 +119,44 @@
                                                      style="overflow:hidden; resize:none;") }}
                         </div>
 
-<!-- Compétences développées -->
-<div class="mb-2">
-    <div class="d-flex justify-content-between align-items-center mb-1">
-        <h6 class="fw-bold">Compétences développées</h6>
-        <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-competence-developpee" title="Ajouter">
-            <i class="bi bi-plus-circle"></i>
-        </button>
-    </div>
-    <div id="competences-developpees-container">
-        {% for subform in plan_form.competences_developpees %}
-            <div class="competences_developpees-item mb-1">
-                <div class="d-flex align-items-start">
-                    <div class="flex-fill me-2">
-                        {{ subform.texte(
-                            class="form-control fw-bold mb-1 auto-resize border-0",
-                            oninput="autoResize(this)",
-                            style="overflow:hidden; resize:none;",
-                            placeholder="Champ principal (en gras)"
-                        ) }}
-                        {{ subform.texte_description(
-                            class="form-control auto-resize border-0",
-                            oninput="autoResize(this)",
-                            style="overflow:hidden; resize:none;",
-                            placeholder="Description (texte normal)"
-                        ) }}
-                    </div>
-                    <!-- Bouton "Supprimer" remplacé par icône -->
-                    <button type="button"
-                            class="btn btn-danger btn-sm remove-item-btn ms-auto"
-                            style="border: none;"
-                            title="Supprimer">
-                        <i class="bi bi-dash-circle"></i>
-                    </button>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-</div>
-
+                        <!-- Compétences développées -->
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold">Compétences développées</h6>
+                                <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-competence-developpee" title="Ajouter">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
+                            <div id="competences-developpees-container">
+                                {% for subform in plan_form.competences_developpees %}
+                                    <div class="competences_developpees-item mb-1">
+                                        <div class="d-flex align-items-start">
+                                            <div class="flex-fill me-2">
+                                                {{ subform.texte(
+                                                    class="form-control fw-bold mb-1 auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Champ principal (en gras)"
+                                                )}}
+                                                {{ subform.texte_description(
+                                                    class="form-control auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Description (texte normal)"
+                                                )}}
+                                            </div>
+                                            <!-- Bouton "Supprimer" remplacé par icône -->
+                                            <button type="button"
+                                                    class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                                                    style="border: none;"
+                                                    title="Supprimer">
+                                                <i class="bi bi-dash-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
 
                         <!-- Objets cibles -->
                         <div class="mb-2">
@@ -602,37 +601,39 @@
                                                                                    style="overflow:hidden; resize:none;") }}
                         </div>
 
-                        <!-- Savoir-être -->
-                        <div class="mb-2">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="fw-bold">Savoir-être</label>
-                                <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-savoir-etre" title="Ajouter">
-                                    <i class="bi bi-plus-circle"></i>
-                                </button>
-                            </div>
-                            <div id="savoir-etre-fields">
-                                {% for subform in plan_form.savoir_etre %}
-                                    <div class="savoir-etre-item mb-1">
-                                        <div class="d-flex align-items-start">
-                                            <div class="flex-fill me-2">
-                                                {{ subform.texte(class="form-control fw-bold auto-resize border-0",
-                                                                 oninput="autoResize(this)",
-                                                                 style="overflow:hidden; resize:none;",
-                                                                 placeholder="Savoir-être (en gras)")}}
-                                            </div>
-                                            <!-- Bouton "Supprimer" remplacé par icône -->
-                                            <button type="button"
-                                                    class="btn btn-danger btn-sm remove-item-btn ms-auto mt-1"
-                                                    style="border: none;"
-                                                    title="Supprimer">
-                                                <i class="bi bi-dash-circle"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        </div>
+<!-- Savoir-être -->
+<div class="mb-2">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+        <label class="fw-bold">Savoir-être</label>
+        <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-savoir-etre" title="Ajouter">
+            <i class="bi bi-plus-circle"></i>
+        </button>
+    </div>
+    <div id="savoir-etre-container">
+        {% for subform in plan_form.savoir_etre %}
+            <div class="savoir-etre-item mb-1">
+                <div class="d-flex align-items-start">
+                    <div class="flex-fill me-2">
+                        {{ subform.texte(
+                            class="form-control fw-bold auto-resize border-0",
+                            oninput="autoResize(this)",
+                            style="overflow:hidden; resize:none;",
+                            placeholder="Savoir-être (en gras)"
+                        ) }}
                     </div>
+                    <button type="button"
+                            class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                            style="border: none;"
+                            title="Supprimer">
+                        <i class="bi bi-dash-circle"></i>
+                    </button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+
                 </div>
             </div>
 
@@ -837,37 +838,98 @@ function addItemWithDescription(containerId, fieldPrefix, removeClass) {
     showFloatingSaveBtn();
 }
 
-// ---------- Ajout/Suppression de champs "Texte only" (ex : Savoir-être) ----------
-function addItemTexteOnly(containerId, fieldPrefix, removeClass) {
-    let container = document.getElementById(containerId);
-    let index = container.querySelectorAll('.' + fieldPrefix + '-item').length;
+// static/js/plan_cadre.js
+
+function addSavoirEtre() {
+    let container = document.getElementById('savoir-etre-container');
+    let index = container.querySelectorAll('.savoir-etre-item').length;
+
     let html = `
-    <div class="${fieldPrefix}-item mb-1">
-        <div class="d-flex align-items-start">
-            <div class="flex-fill me-2">
-                <input id="${fieldPrefix}-${index}-texte" name="${fieldPrefix}-${index}-texte"
-                       class="form-control fw-bold mb-1 auto-resize border-0"
-                       oninput="autoResize(this)"
-                       style="overflow:hidden; resize:none;"
-                       placeholder="Savoir-être (en gras)" type="text">
+        <div class="savoir-etre-item mb-1">
+            <div class="d-flex align-items-start">
+                <div class="flex-fill me-2">
+                    <input type="text" 
+                           id="savoir_etre-${index}-texte" 
+                           name="savoir_etre-${index}-texte" 
+                           class="form-control fw-bold auto-resize border-0"
+                           oninput="autoResize(this)"
+                           style="overflow:hidden; resize:none;"
+                           placeholder="Savoir-être (en gras)"
+                           value="">
+                </div>
+                <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                        style="border: none;" title="Supprimer">
+                    <i class="bi bi-dash-circle"></i>
+                </button>
             </div>
-            <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-auto"
-                    style="border: none;" title="Supprimer">
-                <i class="bi bi-dash-circle"></i>
-            </button>
         </div>
-    </div>
     `;
+
     container.insertAdjacentHTML('beforeend', html);
 
-    let newElems = container.querySelectorAll('.auto-resize');
-    if(newElems.length > 0){
-        autoResize(newElems[newElems.length - 1]);
+    // Auto-resize the new input
+    let newInput = container.querySelector(`#savoir_etre-${index}-texte`);
+    if (newInput) {
+        autoResize(newInput);
+        // Add event listener to show the floating save button
+        newInput.addEventListener('input', showFloatingSaveBtn);
     }
 
-    // Afficher le bouton flottant
+    // Show the floating save button
     showFloatingSaveBtn();
 }
+
+document.getElementById('add-savoir-etre').addEventListener('click', addSavoirEtre);
+
+// static/js/plan_cadre.js
+
+function removeSavoirEtre(button) {
+    const item = button.closest('.savoir-etre-item');
+    if (item) {
+        item.remove();
+        reindexSavoirEtre();
+        showFloatingSaveBtn();
+    }
+}
+
+function reindexSavoirEtre() {
+    const container = document.getElementById('savoir-etre-container');
+    const items = container.querySelectorAll('.savoir-etre-item');
+    items.forEach((item, index) => {
+        const input = item.querySelector('input');
+        if (input) {
+            input.id = `savoir_etre-${index}-texte`;
+            input.name = `savoir_etre-${index}-texte`;
+        }
+    });
+}
+
+// Event delegation for remove buttons
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.remove-item-btn')) {
+        removeSavoirEtre(e.target.closest('.remove-item-btn'));
+    }
+});
+
+
+function deleteItem(button) {
+    const item = button.closest('.savoir-etre-item');
+    if (item) {
+        item.remove();
+        // Renumber remaining items
+        const container = document.getElementById('savoir-etre-container');
+        const items = container.querySelectorAll('.savoir-etre-item');
+        items.forEach((item, index) => {
+            const input = item.querySelector('input');
+            if (input) {
+                input.id = `savoir_etre-${index}-texte`;
+                input.name = `savoir_etre-${index}-texte`;
+            }
+        });
+        showFloatingSaveBtn();
+    }
+}
+
 
 // ---------- Fonction pour afficher le bouton flottant ----------
 function showFloatingSaveBtn() {
@@ -913,7 +975,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     addItemWithDescription('cours-prealables-container', 'cours_prealables', 'remove-item-btn');
                     break;
                 case 'add-savoir-etre':
-                    addItemTexteOnly('savoir-etre-fields', 'savoir_etre', 'remove-item-btn');
+                    addItemTexteOnly('savoir-etre-container', 'savoir_etre', 'remove-item-btn');
                     break;
                 // Ajoutez d'autres cas si nécessaire
             }
