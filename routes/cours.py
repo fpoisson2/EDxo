@@ -690,11 +690,17 @@ def update_list_items(cursor, table_name, form_data, plan_id):
         traceback.print_exc()
         raise
 
-# --- Capacity Management Helpers ---
-
 def handle_update_capacity(conn, cursor, cap_form, cap_id, plan_id):
     try:
-        # Update the main capacity fields
+        # Récupérer les valeurs de pondération depuis le formulaire
+        ponderation_min = cap_form.ponderation_min.data
+        ponderation_max = cap_form.ponderation_max.data
+
+        # Validation: la pondération minimale ne doit pas dépasser la pondération maximale
+        if ponderation_min > ponderation_max:
+            raise ValueError("La pondération minimale ne peut pas être supérieure à la pondération maximale.")
+        
+        # Mettre à jour les champs principaux de la capacité
         cursor.execute("""
             UPDATE PlanCadreCapacites
             SET capacite = ?,
@@ -705,13 +711,13 @@ def handle_update_capacity(conn, cursor, cap_form, cap_id, plan_id):
         """, (
             cap_form.capacite.data.strip(),
             cap_form.description_capacite.data.strip(),
-            cap_form.ponderation_min.data,
-            cap_form.ponderation_max.data,
+            ponderation_min,
+            ponderation_max,
             cap_id,
             plan_id
         ))
         
-        # Update Savoirs Nécessaires
+        # Mettre à jour les Savoirs Nécessaires
         cursor.execute("DELETE FROM PlanCadreCapaciteSavoirsNecessaires WHERE capacite_id = ?", (cap_id,))
         for sn in cap_form.savoirs_necessaires.entries:
             sn_txt = sn.data.strip()
@@ -721,10 +727,10 @@ def handle_update_capacity(conn, cursor, cap_form, cap_id, plan_id):
                     VALUES (?, ?)
                 """, (cap_id, sn_txt))
         
-        # Update Savoirs Faire
+        # Mettre à jour les Savoirs Faire
         cursor.execute("DELETE FROM PlanCadreCapaciteSavoirsFaire WHERE capacite_id = ?", (cap_id,))
         for sf in cap_form.savoirs_faire.entries:
-            sf_txt = sf.texte.data.strip()
+            sf_txt = sf.texte.data.strip() if sf.texte.data else None
             sf_cible = sf.cible.data.strip() if sf.cible.data else None
             sf_seuil = sf.seuil_reussite.data.strip() if sf.seuil_reussite.data else None
             if sf_txt:
@@ -733,22 +739,27 @@ def handle_update_capacity(conn, cursor, cap_form, cap_id, plan_id):
                     VALUES (?, ?, ?, ?)
                 """, (cap_id, sf_txt, sf_cible, sf_seuil))
         
-        # Update Moyens d'Evaluation
+        # Mettre à jour les Moyens d'Evaluation
         cursor.execute("DELETE FROM PlanCadreCapaciteMoyensEvaluation WHERE capacite_id = ?", (cap_id,))
         for me in cap_form.moyens_evaluation.entries:
-            me_txt = me.data.strip()
+            # Accéder directement au champ 'texte' de chaque entrée
+            me_txt = me.texte.data.strip() if me.texte.data else None
             if me_txt:
                 cursor.execute("""
                     INSERT INTO PlanCadreCapaciteMoyensEvaluation (capacite_id, texte)
                     VALUES (?, ?)
                 """, (cap_id, me_txt))
         
+        # Valider la transaction
+        conn.commit()
         return True
 
     except Exception as e:
-        print(f"Error updating capacity {cap_id}: {e}")
+        # Annuler la transaction en cas d'erreur
+        conn.rollback()
+        print(f"Erreur lors de la mise à jour de la capacité {cap_id}: {e}")
         raise
-
+        
 def handle_delete_capacity(cursor, cap_id, plan_id):
     try:
         # Delete capacity and related entries

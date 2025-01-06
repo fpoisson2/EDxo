@@ -237,6 +237,7 @@ class PlanCadreForm(FlaskForm):
     savoir_etre = FieldList(FormField(PlanCadreTexteFieldForm), min_entries=0)
     competences_certifiees = FieldList(FormField(PlanCadreCompetenceCertifieeForm), min_entries=0, max_entries=50)
     cours_corequis = FieldList(FormField(PlanCadreCoursCorequisForm), min_entries=0, max_entries=50)
+    
 
     submit = SubmitField('Ajouter/Mettre à Jour Plan Cadre')
 
