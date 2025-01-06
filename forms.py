@@ -156,10 +156,10 @@ class ElementCompetenceParCoursForm(FlaskForm):
 class DeleteForm(FlaskForm):
     submit = SubmitField('Supprimer')
 
-class SavoirFieldForm(Form):
+class CapaciteSavoirFaireForm(Form):
     class Meta:
         csrf = False
-    texte = StringField("Texte", validators=[DataRequired()])
+    texte = StringField("Texte", validators=[Optional()])
     cible = StringField("Cible", validators=[Optional()])
     seuil_reussite = StringField("Seuil de réussite", validators=[Optional()])
 
@@ -195,15 +195,16 @@ class GlobalGenerationSettingsForm(FlaskForm):
     openai_key = StringField('Clé OpenAI', validators=[Optional()])
     submit = SubmitField('Enregistrer les Paramètres')
 
-class CapaciteForm(FlaskForm):
-    capacite = StringField("Capacité", validators=[DataRequired()])
-    description_capacite = TextAreaField("Description")
-    ponderation_min = IntegerField("Pondération minimale", validators=[DataRequired()])
-    ponderation_max = IntegerField("Pondération maximale", validators=[DataRequired()])
-    savoirs_necessaires = FieldList(StringField("Texte"), min_entries=0, max_entries=50)
-    savoirs_faire = FieldList(FormField(SavoirFieldForm), min_entries=0, max_entries=50)
-    moyens_evaluation = FieldList(FormField(MoyenEvaluationFieldForm), min_entries=0, max_entries=50)
-    submit = SubmitField("Enregistrer")
+class CapaciteItemForm(Form):
+    class Meta:
+        csrf = False
+    capacite = StringField("Capacité", validators=[Optional()])
+    description_capacite = TextAreaField("Description", validators=[Optional()])
+    ponderation_min = IntegerField("Pondération minimale", validators=[Optional()])
+    ponderation_max = IntegerField("Pondération maximale", validators=[Optional()])
+    savoirs_necessaires = FieldList(StringField("Savoir nécessaire"), min_entries=0)
+    savoirs_faire = FieldList(FormField(CapaciteSavoirFaireForm), min_entries=0)
+    moyens_evaluation = FieldList(StringField("Moyen d'évaluation"), min_entries=0)
 
 # Nouveau sous-formulaire avec description
 class PlanCadreItemWithDescriptionForm(Form):
@@ -238,6 +239,7 @@ class PlanCadreForm(FlaskForm):
     competences_certifiees = FieldList(FormField(PlanCadreCompetenceCertifieeForm), min_entries=0, max_entries=50)
     cours_corequis = FieldList(FormField(PlanCadreCoursCorequisForm), min_entries=0, max_entries=50)
     
+    capacites = FieldList(FormField(CapaciteItemForm), min_entries=0)
 
     submit = SubmitField('Ajouter/Mettre à Jour Plan Cadre')
 
