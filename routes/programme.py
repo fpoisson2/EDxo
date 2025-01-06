@@ -13,7 +13,6 @@ from forms import (
     DeleteForm,
     MultiCheckboxField,
     PlanCadreForm,
-    CapaciteForm,
     SavoirEtreForm,
     CompetenceDeveloppeeForm,
     ObjetCibleForm,
