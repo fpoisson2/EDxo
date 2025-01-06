@@ -12,6 +12,7 @@ from routes.settings import settings_bp
 from routes.plan_cadre import plan_cadre_bp
 from flask_wtf import CSRFProtect
 from datetime import timedelta, datetime, timezone
+from flask_cors import CORS
 
 load_dotenv()
 
@@ -28,6 +29,7 @@ app.config['SESSION_COOKIE_SECURE'] = True  # Use HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Mitigate CSRF
 csrf = CSRFProtect(app)
+CORS(app, supports_credentials=True)
 
 ckeditor = CKEditor(app)
 

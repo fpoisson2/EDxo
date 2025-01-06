@@ -234,6 +234,7 @@ def generate_plan_cadre_content(plan_id):
                 #     des infos provenant d'une autre table pour GPT, on fait le traitement ici:
                 if section_name == "Objets cibles" and is_ai:
                     ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
+                    print(ai_fields_with_description)
 
 
                 if section_name == "Description des compétences développées" and is_ai:
