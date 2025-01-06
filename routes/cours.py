@@ -779,7 +779,6 @@ def initialize_delete_forms(capacites_rows):
         cap_row['id']: DeleteForm(prefix=f"capacite-{cap_row['id']}")
         for cap_row in capacites_rows
     }
-
 @cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>', methods=['GET', 'POST'])
 @login_required
 def view_plan_cadre(cours_id, plan_id):
@@ -793,24 +792,24 @@ def view_plan_cadre(cours_id, plan_id):
 
     try:
         if request.method == 'GET':
-            # Get plan_cadre and course details
+            # Récupération des détails du plan-cadre et du cours
             plan_row = get_plan_cadre(conn, plan_id, cours_id)
             cours = get_cours_details(conn, cours_id)
             
             if not plan_row or not cours:
                 flash('Plan Cadre ou Cours non trouvé.', 'danger')
-                return redirect(url_for('cours_bp.view_cours', cours_id=cours_id))
+                return redirect(url_for('cours.view_cours', cours_id=cours_id))
 
-            # Get related course details
+            # Récupération des détails des cours préalables et corequis
             prealables_details = get_related_courses(conn, cours_id, 'CoursPrealable', 'cours_prealable_id')
             corequisites_details = get_related_courses(conn, cours_id, 'CoursCorequis', 'cours_corequis_id')
             
-            # Get competences
+            # Récupération des compétences
             competences_developpees_from_cours = get_competences(conn, cours_id, 'developpees')
             competences_atteintes = get_competences(conn, cours_id, 'atteintes')
             elements_competence_par_cours = get_elements_competence(conn, cours_id)
 
-            # Prepare forms
+            # Préparation du formulaire principal
             plan_form = prepare_plan_form(plan_row)
             populate_field_lists(conn, plan_id, plan_form)
             generate_form = GenerateContentForm(
@@ -818,7 +817,7 @@ def view_plan_cadre(cours_id, plan_id):
                 ai_model=plan_row['ai_model']
             )
 
-            # Get capacities data - Key addition
+            # Récupération des données des capacités
             capacites_data = []
             capacites_rows = conn.execute(
                 'SELECT * FROM PlanCadreCapacites WHERE plan_cadre_id = ? ORDER BY id',
@@ -828,17 +827,19 @@ def view_plan_cadre(cours_id, plan_id):
             for cap_row in capacites_rows:
                 cap_id = cap_row['id']
                 
-                # Get related data for each capacity
+                # Récupération des savoirs nécessaires pour chaque capacité
                 savoirs_necessaires = conn.execute(
                     'SELECT texte FROM PlanCadreCapaciteSavoirsNecessaires WHERE capacite_id = ?',
                     (cap_id,)
                 ).fetchall()
                 
+                # Récupération des savoirs faire pour chaque capacité
                 savoirs_faire = conn.execute(
                     'SELECT texte, cible, seuil_reussite FROM PlanCadreCapaciteSavoirsFaire WHERE capacite_id = ?',
                     (cap_id,)
                 ).fetchall()
                 
+                # Récupération des moyens d'évaluation pour chaque capacité
                 moyens_evaluation = conn.execute(
                     'SELECT texte FROM PlanCadreCapaciteMoyensEvaluation WHERE capacite_id = ?',
                     (cap_id,)
@@ -861,7 +862,7 @@ def view_plan_cadre(cours_id, plan_id):
                     'moyens_evaluation': [{'texte': me['texte']} for me in moyens_evaluation]
                 })
 
-            # Update plan_form with capacities data
+            # Mise à jour du formulaire avec les données des capacités
             for cap_data in capacites_data:
                 form_cap = plan_form.capacites.append_entry()
                 form_cap.capacite.data = cap_data['capacite']['capacite']
@@ -869,18 +870,18 @@ def view_plan_cadre(cours_id, plan_id):
                 form_cap.ponderation_min.data = cap_data['capacite']['ponderation_min']
                 form_cap.ponderation_max.data = cap_data['capacite']['ponderation_max']
                 
-                # Add savoirs necessaires
+                # Ajout des savoirs nécessaires
                 for sn in cap_data['savoirs_necessaires']:
                     form_cap.savoirs_necessaires.append_entry(sn['texte'])
                 
-                # Add savoirs faire
+                # Ajout des savoirs faire
                 for sf in cap_data['savoirs_faire']:
                     sf_entry = form_cap.savoirs_faire.append_entry()
                     sf_entry.texte.data = sf['texte']
                     sf_entry.cible.data = sf['cible']
                     sf_entry.seuil_reussite.data = sf['seuil_reussite']
                 
-                # Add moyens evaluation
+                # Ajout des moyens d'évaluation
                 for me in cap_data['moyens_evaluation']:
                     form_cap.moyens_evaluation.append_entry(me['texte'])
 
@@ -996,17 +997,42 @@ def view_plan_cadre(cours_id, plan_id):
                                     """, (capacite_id, moyen))
 
                     conn.commit()
-                    flash("Plan-cadre et capacités mis à jour avec succès.", "success")
+                    success_message = "Plan-cadre et capacités mis à jour avec succès."
+
+                    # Détection de la nature de la requête
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        # Requête AJAX
+                        return jsonify({'success': True, 'message': success_message}), 200
+                    else:
+                        # Requête traditionnelle
+                        flash(success_message, "success")
 
                 except Exception as e:
                     conn.rollback()
-                    flash(f"Erreur lors de la mise à jour : {e}", "danger")
+                    error_message = f"Erreur lors de la mise à jour : {str(e)}"
                     print(f"Error updating plan-cadre: {e}")  # Debug
-            else:
-                flash("Formulaire invalide. Veuillez vérifier vos entrées.", "danger")
+                    traceback.print_exc()  # Pour avoir le traceback complet
 
-            # Redirection après POST pour éviter la resoumission multiple
-            return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        # Requête AJAX
+                        return jsonify({'success': False, 'message': error_message}), 500
+                    else:
+                        # Requête traditionnelle
+                        flash(error_message, "danger")
+            else:
+                error_message = "Formulaire invalide. Veuillez vérifier vos entrées."
+                print(f"DEBUG - Form validation failed: {plan_form.errors}")  # Debug
+
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    # Requête AJAX
+                    return jsonify({'success': False, 'message': error_message, 'errors': plan_form.errors}), 400
+                else:
+                    # Requête traditionnelle
+                    flash(error_message, "danger")
+
+            # Redirection après POST pour les requêtes traditionnelles
+            if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+                return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
 
     finally:
         conn.close()

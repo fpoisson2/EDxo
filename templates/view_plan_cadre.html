@@ -316,7 +316,6 @@
                     </div>
                 </div>
             </div>
-
 <!-- PARTIE 3: Résultats visés -->
 <div class="accordion-item">
     <h2 class="accordion-header" id="headingResultatsVises">
@@ -333,155 +332,178 @@
          data-bs-parent="#planCadreAccordion">
         <div class="accordion-body">
             <!-- Objectif Terminal -->
-            <div class="mb-2">
+            <div class="mb-3">
                 <label class="fw-bold">Objectif terminal</label>
                 {{ plan_form.objectif_terminal(class="form-control border-0 auto-resize",
                                              oninput="autoResize(this)",
                                              style="overflow:hidden; resize:none;") }}
             </div>
 
-            <!-- Capacités -->
-            <div class="mb-2">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <h6 class="fw-bold">Capacités</h6>
-                    <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-capacite" title="Ajouter">
-                        <i class="bi bi-plus-circle"></i>
-                    </button>
-                </div>
-                
-                <div id="capacites-container">
-                    {% for capacite in plan_form.capacites %}
-                        <div class="capacite-item mb-3">
-                            <div class="accordion" id="capaciteAccordion{{ loop.index }}">
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed" type="button"
-                                                data-bs-toggle="collapse"
-                                                data-bs-target="#collapseCapacite{{ loop.index }}"
-                                                aria-expanded="false">
-                                            {{ capacite.capacite.data or "Nouvelle capacité" }}
-                                        </button>
-                                    </h2>
-                                    <div id="collapseCapacite{{ loop.index }}" class="accordion-collapse collapse"
-                                         data-bs-parent="#capaciteAccordion{{ loop.index }}">
-                                        <div class="accordion-body">
-                                            <div class="mb-1">
-                                                <label class="fw-bold">Capacité</label>
-                                                {{ capacite.capacite(class="form-control fw-bold auto-resize border-0",
-                                                                   oninput="autoResize(this)",
-                                                                   style="overflow:hidden; resize:none;") }}
-                                            </div>
-                                            <div class="mb-1">
-                                                <label class="fw-bold">Description</label>
-                                                {{ capacite.description_capacite(class="form-control auto-resize border-0",
-                                                                              oninput="autoResize(this)",
-                                                                              style="overflow:hidden; resize:none;") }}
-                                            </div>
-                                            <div class="row mb-1">
-                                                <div class="col">
-                                                    <label class="fw-bold">Pondération minimale</label>
-                                                    {{ capacite.ponderation_min(class="form-control border-0") }}
-                                                </div>
-                                                <div class="col">
-                                                    <label class="fw-bold">Pondération maximale</label>
-                                                    {{ capacite.ponderation_max(class="form-control border-0") }}
-                                                </div>
-                                            </div>
-
-                                            <!-- Savoirs nécessaires -->
-                                            <div class="mb-2">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <label class="fw-bold">Savoirs nécessaires</label>
-                                                    <button type="button" class="btn btn-success btn-sm add-savoir"
-                                                            onclick="addSavoir({{ loop.index0 }}, 'necessaire')">
-                                                        <i class="bi bi-plus-circle"></i>
-                                                    </button>
-                                                </div>
-                                                <div id="savoirs-necessaires-{{ loop.index0 }}" class="savoirs-list">
-                                                    {% for savoir in capacite.savoirs_necessaires %}
-                                                        <div class="savoir-item d-flex align-items-center gap-2 mb-1">
-                                                            {{ savoir(class="form-control auto-resize border-0",
-                                                                    oninput="autoResize(this)") }}
-                                                            <button type="button" class="btn btn-danger btn-sm remove-item"
-                                                                    onclick="removeItem(this)">
-                                                                <i class="bi bi-dash-circle"></i>
-                                                            </button>
-                                                        </div>
-                                                    {% endfor %}
-                                                </div>
-                                            </div>
-
-                                            <!-- Savoirs faire -->
-                                            <div class="mb-2">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <label class="fw-bold">Savoirs faire</label>
-                                                    <button type="button" class="btn btn-success btn-sm add-savoir-faire"
-                                                            onclick="addSavoirFaire({{ loop.index0 }})">
-                                                        <i class="bi bi-plus-circle"></i>
-                                                    </button>
-                                                </div>
-                                                <div id="savoirs-faire-{{ loop.index0 }}" class="savoirs-faire-list">
-                                                    {% for savoir in capacite.savoirs_faire %}
-                                                        <div class="savoir-faire-item mb-2">
-                                                            {{ savoir.texte(class="form-control fw-bold mb-1 auto-resize border-0",
-                                                                          placeholder="Savoir faire") }}
-                                                            <div class="row">
-                                                                <div class="col">
-                                                                    {{ savoir.cible(class="form-control border-0",
-                                                                                   placeholder="Cible") }}
-                                                                </div>
-                                                                <div class="col">
-                                                                    {{ savoir.seuil_reussite(class="form-control border-0",
-                                                                                           placeholder="Seuil de réussite") }}
-                                                                </div>
-                                                            </div>
-                                                            <button type="button" class="btn btn-danger btn-sm remove-item mt-1"
-                                                                    onclick="removeItem(this)">
-                                                                <i class="bi bi-dash-circle"></i>
-                                                            </button>
-                                                        </div>
-                                                    {% endfor %}
-                                                </div>
-                                            </div>
-
-                                            <!-- Moyens d'évaluation -->
-                                            <div class="mb-2">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <label class="fw-bold">Moyens d'évaluation</label>
-                                                    <button type="button" class="btn btn-success btn-sm add-moyen"
-                                                            onclick="addMoyen({{ loop.index0 }})">
-                                                        <i class="bi bi-plus-circle"></i>
-                                                    </button>
-                                                </div>
-                                                <div id="moyens-evaluation-{{ loop.index0 }}" class="moyens-list">
-                                                    {% for moyen in capacite.moyens_evaluation %}
-                                                        <div class="moyen-item d-flex align-items-center gap-2 mb-1">
-                                                            {{ moyen(class="form-control auto-resize border-0",
-                                                                    oninput="autoResize(this)") }}
-                                                            <button type="button" class="btn btn-danger btn-sm remove-item"
-                                                                    onclick="removeItem(this)">
-                                                                <i class="bi bi-dash-circle"></i>
-                                                            </button>
-                                                        </div>
-                                                    {% endfor %}
-                                                </div>
-                                            </div>
-
-                                            <button type="button" class="btn btn-danger btn-sm remove-capacite"
-                                                    onclick="removeCapacite(this)">
-                                                <i class="bi bi-trash"></i> Supprimer cette capacité
-                                            </button>
-                                        </div>
+<!-- Capacités -->
+<div class="mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold">Capacités</h6>
+        <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-capacite" title="Ajouter">
+            <i class="bi bi-plus-circle"></i>
+        </button>
+    </div>
+    
+    <div id="capacites-container">
+        {% for capacite in plan_form.capacites %}
+            <div class="capacite-item mb-4">
+                <div class="accordion" id="capaciteAccordion{{ loop.index }}">
+                    <div class="accordion-item">
+                        <!-- En-tête de l'accordéon avec le bouton de suppression à droite -->
+                        <h2 class="accordion-header d-flex justify-content-between align-items-center">
+                            <button class="accordion-button collapsed flex-grow-1" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseCapacite{{ loop.index }}"
+                                    aria-expanded="false">
+                                {{ capacite.capacite.data or "Nouvelle capacité" }}
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm remove-capacite ms-2"
+                                    onclick="removeCapacite(this)" title="Supprimer cette capacité">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </h2>
+                        <div id="collapseCapacite{{ loop.index }}" class="accordion-collapse collapse"
+                             data-bs-parent="#capaciteAccordion{{ loop.index }}">
+                            <div class="accordion-body">
+                                <!-- Énoncé de la capacité -->
+                                <div class="mb-3">
+                                    <label class="fw-bold">Énoncé de la capacité</label>
+                                    {{ capacite.capacite(class="form-control fw-bold auto-resize border-0",
+                                                       oninput="autoResize(this)",
+                                                       style="overflow:hidden; resize:none;") }}
+                                </div>
+                                
+                                <!-- Description -->
+                                <div class="mb-3">
+                                    <label class="fw-bold">Description</label>
+                                    {{ capacite.description_capacite(class="form-control auto-resize border-0",
+                                                                  oninput="autoResize(this)",
+                                                                  style="overflow:hidden; resize:none;") }}
+                                </div>
+                                
+                                <!-- Pondération -->
+                                <div class="mb-3">
+                                    <label class="fw-bold">Pondération</label>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-1">(</span>
+                                        {{ capacite.ponderation_min(class="form-control border-0 me-2", style="width: 80px;") }}
+                                        <span class="me-2">-</span>
+                                        {{ capacite.ponderation_max(class="form-control border-0 me-2", style="width: 80px;") }}
+                                        <span>%)</span>
                                     </div>
                                 </div>
+
+                                <!-- Savoirs nécessaires -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="fw-bold">Savoirs nécessaires</label>
+                                        <button type="button" class="btn btn-success btn-sm add-savoir"
+                                                onclick="addSavoir({{ loop.index0 }}, 'necessaire')">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div id="savoirs-necessaires-{{ loop.index0 }}" class="savoirs-list">
+                                        {% for savoir in capacite.savoirs_necessaires %}
+                                            <div class="savoir-item d-flex align-items-center gap-2 mb-2">
+                                                {{ savoir(class="form-control auto-resize border-0",
+                                                        oninput="autoResize(this)") }}
+                                                <button type="button" class="btn btn-danger btn-sm remove-item"
+                                                        onclick="removeItem(this)">
+                                                    <i class="bi bi-dash-circle"></i>
+                                                </button>
+                                            </div>
+                                            <hr>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <!-- Savoirs faire -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="fw-bold">Savoirs faire</label>
+                                        <button type="button" class="btn btn-success btn-sm add-savoir-faire"
+                                                onclick="addSavoirFaire({{ loop.index0 }})">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div id="savoirs-faire-{{ loop.index0 }}" class="savoirs-faire-list">
+                                        {% for savoir in capacite.savoirs_faire %}
+                                            <div class="savoir-faire-item mb-4">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div class="flex-grow-1 me-2">
+                                                        {{ savoir.texte(class="form-control fw-bold mb-2 auto-resize border-0",
+                                                                      placeholder="Savoir faire") }}
+                                                        <div class="row mb-2">
+                                                            <div class="col-6 mb-2">
+                                                                <label class="fw-bold text-dark px-2 rounded" style="background-color: #28a745;">
+                                                                    Cible
+                                                                </label>
+                                                                {{ savoir.cible(class="form-control border-0 mt-1", placeholder="Cible") }}
+                                                            </div>
+                                                            <div class="col-6 mb-2">
+                                                                <label class="fw-bold text-dark px-2 rounded" style="background-color: #ffc107;">
+                                                                    Seuil de réussite
+                                                                </label>
+                                                                {{ savoir.seuil_reussite(class="form-control border-0 mt-1", placeholder="Seuil de réussite") }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" class="btn btn-danger btn-sm remove-item"
+                                                            onclick="removeItem(this)">
+                                                        <i class="bi bi-dash-circle"></i>
+                                                    </button>
+                                                </div>
+                                                <hr>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <!-- Moyens d'évaluation -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="fw-bold">Moyens d'évaluation</label>
+                                        <button type="button" class="btn btn-success btn-sm add-moyen"
+                                                onclick="addMoyen({{ loop.index0 }})">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div id="moyens-evaluation-{{ loop.index0 }}" class="moyens-list">
+                                        {% for moyen in capacite.moyens_evaluation %}
+                                            <div class="moyen-item d-flex align-items-center gap-2 mb-2">
+                                                {{ moyen(class="form-control auto-resize border-0",
+                                                        oninput="autoResize(this)") }}
+                                                <button type="button" class="btn btn-danger btn-sm remove-item"
+                                                        onclick="removeItem(this)">
+                                                    <i class="bi bi-dash-circle"></i>
+                                                </button>
+                                            </div>
+                                            <hr>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <!-- Bouton de suppression déplacé dans l'en-tête de l'accordéon -->
+                                <!--
+                                <button type="button" class="btn btn-danger btn-sm remove-capacite"
+                                        onclick="removeCapacite(this)">
+                                    <i class="bi bi-trash"></i> Supprimer cette capacité
+                                </button>
+                                -->
                             </div>
                         </div>
-                    {% endfor %}
+                    </div>
                 </div>
             </div>
-        </div>
+        {% endfor %}
     </div>
 </div>
+
+
             <!-- PARTIE 4: Organisation de l'apprentissage et de l'enseignement -->
             <div class="accordion-item">
                 <h2 class="accordion-header" id="headingOrganisation">
@@ -498,7 +520,7 @@
                      data-bs-parent="#planCadreAccordion">
                     <div class="accordion-body">
                         <div class="mb-2">
-                            <label class="fw-bold">Structure du cours</label>
+                            8<label class="fw-bold">Structure du cours</label>
                             {{ plan_form.structure_intro(class="form-control border-0 auto-resize",
                                                          oninput="autoResize(this)",
                                                          style="overflow:hidden; resize:none;") }}
@@ -579,7 +601,7 @@
                 <div class="d-flex align-items-start">
                     <div class="flex-fill me-2">
                         {{ subform.texte(
-                            class="form-control fw-bold auto-resize border-0",
+                            class="form-control auto-resize border-0",
                             oninput="autoResize(this)",
                             style="overflow:hidden; resize:none;",
                             placeholder="Savoir-être (en gras)"
@@ -690,6 +712,14 @@
         <i class="bi bi-save"></i>
     </button>
 
+<!-- Bouton Flottant "Annuler" -->
+<button type="button" 
+        id="floatingCancelBtn" 
+        class="btn btn-danger btn-lg rounded-circle shadow-lg d-none"
+        title="Annuler les modifications">
+    <i class="bi bi-x-circle"></i>
+</button>
+
     <!-- Modal Génération du Plan-cadre (Formulaire Séparé) -->
     <div class="modal fade" id="generateModal" tabindex="-1" aria-labelledby="generateModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -736,10 +766,20 @@
 
 {% block scripts %}
 <style>
-    #floatingSaveBtn {
+    /* Styles pour les boutons flottants */
+    label.fw-bold {
+        color: black; /* Couleur du texte */
+        padding: 0.2rem; /* Ajouter un peu d'espace autour du texte */
+        border-bottom: 1px solid black; /* Ligne en dessous du texte */
+    }
+    h6 {
+        color: black; /* Couleur du texte */
+        padding: 0.2rem; /* Ajouter un peu d'espace autour du texte */
+        border-bottom: 1px solid black; /* Ligne en dessous du texte */
+    }
+    #floatingSaveBtn, #floatingCancelBtn {
         position: fixed;
         bottom: 20px;
-        right: 20px;
         z-index: 1000;
         width: 60px;
         height: 60px;
@@ -747,67 +787,59 @@
         align-items: center;
         justify-content: center;
         border-radius: 50%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    #floatingSaveBtn .bi {
+    #floatingSaveBtn {
+        right: 20px;
+        background-color: #0d6efd; /* Couleur primaire de Bootstrap */
+        color: white;
+    }
+    #floatingCancelBtn {
+        right: 90px; /* Espacement entre les boutons */
+        background-color: #dc3545; /* Couleur danger de Bootstrap */
+        color: white;
+    }
+    #floatingSaveBtn .bi, #floatingCancelBtn .bi {
         font-size: 1.5rem;
+    }
+
+    /* Optionnel : Transition douce pour l'apparition des boutons */
+    #floatingSaveBtn, #floatingCancelBtn {
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    #floatingSaveBtn.d-none, #floatingCancelBtn.d-none {
+        opacity: 0;
+        visibility: hidden;
     }
 </style>
 <script>
-// Fonction autoResize
-function autoResize(element) {
-    if (element.tagName.toLowerCase() === 'textarea') {
-        element.style.height = 'auto';
-        element.style.height = element.scrollHeight + 'px';
+    // Fonction autoResize pour ajuster la hauteur des textarea
+    function autoResize(element) {
+        if (element.tagName.toLowerCase() === 'textarea') {
+            element.style.height = 'auto';
+            element.style.height = element.scrollHeight + 'px';
+        }
     }
-}
 
-// Fonction pour ajouter des items avec description
-function addItemWithDescription(containerId, fieldPrefix, removeClass) {
-    let container = document.getElementById(containerId);
-    let index = container.querySelectorAll('.' + fieldPrefix + '-item').length;
-    let html = `
-    <div class="${fieldPrefix}-item mb-1">
-        <div class="d-flex align-items-start">
-            <div class="flex-fill me-2">
-                <input id="${fieldPrefix}-${index}-texte" name="${fieldPrefix}-${index}-texte"
-                       class="form-control fw-bold mb-1 auto-resize border-0"
-                       oninput="autoResize(this)"
-                       style="overflow:hidden; resize:none;"
-                       placeholder="Champ principal (en gras)"
-                       type="text">
-                <textarea id="${fieldPrefix}-${index}-texte_description" name="${fieldPrefix}-${index}-texte_description"
-                          class="form-control auto-resize border-0"
-                          oninput="autoResize(this)"
-                          style="overflow:hidden; resize:none;"
-                          placeholder="Description (texte normal)"></textarea>
-            </div>
-            <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-auto"
-                    style="border: none;" title="Supprimer">
-                <i class="bi bi-dash-circle"></i>
-            </button>
-        </div>
-    </div>
-    `;
-    container.insertAdjacentHTML('beforeend', html);
-    showFloatingSaveBtn();
-}
-
-// Fonction pour ajouter un savoir-être
-function addSavoirEtre() {
-    let container = document.getElementById('savoir-etre-container');
-    let index = container.querySelectorAll('.savoir-etre-item').length;
-    let html = `
-        <div class="savoir-etre-item mb-1">
+    // Fonction pour ajouter des items avec description
+    function addItemWithDescription(containerId, fieldPrefix) {
+        let container = document.getElementById(containerId);
+        let index = container.querySelectorAll('.' + fieldPrefix + '-item').length;
+        let html = `
+        <div class="${fieldPrefix}-item mb-1">
             <div class="d-flex align-items-start">
                 <div class="flex-fill me-2">
-                    <input type="text" 
-                           id="savoir_etre-${index}-texte" 
-                           name="savoir_etre-${index}-texte" 
-                           class="form-control fw-bold auto-resize border-0"
+                    <input id="${fieldPrefix}-${index}-texte" name="${fieldPrefix}-${index}-texte"
+                           class="form-control fw-bold mb-1 auto-resize border-0"
                            oninput="autoResize(this)"
                            style="overflow:hidden; resize:none;"
-                           placeholder="Savoir-être (en gras)"
-                           value="">
+                           placeholder="Champ principal (en gras)"
+                           type="text">
+                    <textarea id="${fieldPrefix}-${index}-texte_description" name="${fieldPrefix}-${index}-texte_description"
+                              class="form-control auto-resize border-0"
+                              oninput="autoResize(this)"
+                              style="overflow:hidden; resize:none;"
+                              placeholder="Description (texte normal)"></textarea>
                 </div>
                 <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-auto"
                         style="border: none;" title="Supprimer">
@@ -815,288 +847,437 @@ function addSavoirEtre() {
                 </button>
             </div>
         </div>
-    `;
-    container.insertAdjacentHTML('beforeend', html);
-    showFloatingSaveBtn();
-}
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+        showFloatingButtons();
+    }
 
-function addCapacite() {
-    const container = document.getElementById('capacites-container');
-    const index = container.querySelectorAll('.capacite-item').length;
-    
-    const html = `
-        <div class="capacite-item mb-3">
-            <div class="accordion" id="capaciteAccordion${index}">
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#collapseCapacite${index}"
-                                aria-expanded="false">
-                            Nouvelle capacité
-                        </button>
-                    </h2>
-                    <div id="collapseCapacite${index}" class="accordion-collapse collapse"
-                         data-bs-parent="#capaciteAccordion${index}">
-                        <div class="accordion-body">
-                            <div class="mb-1">
-                                <label class="fw-bold">Capacité</label>
-                                <input type="text" name="capacites-${index}-capacite" 
-                                       class="form-control fw-bold auto-resize border-0"
-                                       oninput="autoResize(this)"
-                                       style="overflow:hidden; resize:none;"
-                                       placeholder="Capacité">
-                            </div>
-                            <div class="mb-1">
-                                <label class="fw-bold">Description</label>
-                                <textarea name="capacites-${index}-description_capacite" 
-                                         class="form-control auto-resize border-0"
-                                         oninput="autoResize(this)"
-                                         style="overflow:hidden; resize:none;"
-                                         placeholder="Description"></textarea>
-                            </div>
-                            <div class="row mb-1">
-                                <div class="col">
-                                    <label class="fw-bold">Pondération minimale</label>
-                                    <input type="number" name="capacites-${index}-ponderation_min"
-                                           class="form-control border-0" value="0">
-                                </div>
-                                <div class="col">
-                                    <label class="fw-bold">Pondération maximale</label>
-                                    <input type="number" name="capacites-${index}-ponderation_max"
-                                           class="form-control border-0" value="100">
-                                </div>
-                            </div>
-                            
-                            <!-- Savoirs nécessaires -->
-                            <div class="mb-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <label class="fw-bold">Savoirs nécessaires</label>
-                                    <button type="button" class="btn btn-success btn-sm add-savoir"
-                                            onclick="addSavoir(${index}, 'necessaire')">
-                                        <i class="bi bi-plus-circle"></i>
-                                    </button>
-                                </div>
-                                <div id="savoirs-necessaires-${index}" class="savoirs-list"></div>
-                            </div>
+    // Fonction pour ajouter un savoir-être
+    function addSavoirEtre() {
+        let container = document.getElementById('savoir-etre-container');
+        let index = container.querySelectorAll('.savoir-etre-item').length;
+        let html = `
+            <div class="savoir-etre-item mb-1">
+                <div class="d-flex align-items-start">
+                    <div class="flex-fill me-2">
+                        <input type="text" 
+                               id="savoir_etre-${index}-texte" 
+                               name="savoir_etre-${index}-texte" 
+                               class="form-control fw-bold auto-resize border-0"
+                               oninput="autoResize(this)"
+                               style="overflow:hidden; resize:none;"
+                               placeholder="Savoir-être (en gras)"
+                               value="">
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                            style="border: none;" title="Supprimer">
+                        <i class="bi bi-dash-circle"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+        showFloatingButtons();
+    }
 
-                            <!-- Savoirs faire -->
-                            <div class="mb-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <label class="fw-bold">Savoirs faire</label>
-                                    <button type="button" class="btn btn-success btn-sm add-savoir-faire"
-                                            onclick="addSavoirFaire(${index})">
-                                        <i class="bi bi-plus-circle"></i>
-                                    </button>
-                                </div>
-                                <div id="savoirs-faire-${index}" class="savoirs-faire-list"></div>
-                            </div>
-
-                            <!-- Moyens d'évaluation -->
-                            <div class="mb-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <label class="fw-bold">Moyens d'évaluation</label>
-                                    <button type="button" class="btn btn-success btn-sm add-moyen"
-                                            onclick="addMoyen(${index})">
-                                        <i class="bi bi-plus-circle"></i>
-                                    </button>
-                                </div>
-                                <div id="moyens-evaluation-${index}" class="moyens-list"></div>
-                            </div>
-
-                            <button type="button" class="btn btn-danger btn-sm remove-capacite"
-                                    onclick="removeCapacite(this)">
-                                <i class="bi bi-trash"></i> Supprimer cette capacité
+    // Fonction pour ajouter une capacité
+    function addCapacite() {
+        const container = document.getElementById('capacites-container');
+        const index = container.querySelectorAll('.capacite-item').length;
+        
+        const html = `
+            <div class="capacite-item mb-3">
+                <div class="accordion" id="capaciteAccordion${index}">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseCapacite${index}"
+                                    aria-expanded="false">
+                                Nouvelle capacité
                             </button>
+                        </h2>
+                        <div id="collapseCapacite${index}" class="accordion-collapse collapse"
+                             data-bs-parent="#capaciteAccordion${index}">
+                            <div class="accordion-body">
+                                <div class="mb-1">
+                                    <label class="fw-bold">Capacité</label>
+                                    <input type="text" name="capacites-${index}-capacite" 
+                                           class="form-control fw-bold auto-resize border-0"
+                                           oninput="autoResize(this)"
+                                           style="overflow:hidden; resize:none;"
+                                           placeholder="Capacité">
+                                </div>
+                                <div class="mb-1">
+                                    <label class="fw-bold">Description</label>
+                                    <textarea name="capacites-${index}-description_capacite" 
+                                             class="form-control auto-resize border-0"
+                                             oninput="autoResize(this)"
+                                             style="overflow:hidden; resize:none;"
+                                             placeholder="Description"></textarea>
+                                </div>
+                                <div class="row mb-1">
+                                    <div class="col">
+                                        <label class="fw-bold">Pondération minimale</label>
+                                        <input type="number" name="capacites-${index}-ponderation_min"
+                                               class="form-control border-0" value="0">
+                                    </div>
+                                    <div class="col">
+                                        <label class="fw-bold">Pondération maximale</label>
+                                        <input type="number" name="capacites-${index}-ponderation_max"
+                                               class="form-control border-0" value="100">
+                                    </div>
+                                </div>
+                                
+                                <!-- Savoirs nécessaires -->
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="fw-bold">Savoirs nécessaires</label>
+                                        <button type="button" class="btn btn-success btn-sm add-savoir"
+                                                onclick="addSavoir(${index}, 'necessaire')">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div id="savoirs-necessaires-${index}" class="savoirs-list"></div>
+                                </div>
+
+                                <!-- Savoirs faire -->
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="fw-bold">Savoirs faire</label>
+                                        <button type="button" class="btn btn-success btn-sm add-savoir-faire"
+                                                onclick="addSavoirFaire(${index})">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div id="savoirs-faire-${index}" class="savoirs-faire-list"></div>
+                                </div>
+
+                                <!-- Moyens d'évaluation -->
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="fw-bold">Moyens d'évaluation</label>
+                                        <button type="button" class="btn btn-success btn-sm add-moyen"
+                                                onclick="addMoyen(${index})">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div id="moyens-evaluation-${index}" class="moyens-list"></div>
+                                </div>
+
+                                <button type="button" class="btn btn-danger btn-sm remove-capacite"
+                                        onclick="removeCapacite(this)">
+                                    <i class="bi bi-trash"></i> Supprimer cette capacité
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', html);
-    showFloatingSaveBtn();
-}
+        `;
+        
+        container.insertAdjacentHTML('beforeend', html);
+        showFloatingButtons();
+    }
 
-// Fonctions pour les savoirs dans les capacités
-function addSavoir(capaciteIndex, type) {
-    const container = document.getElementById(`savoirs-${type}s-${capaciteIndex}`);
-    const index = container.querySelectorAll('.savoir-item').length;
-    
-    const html = `
-        <div class="savoir-item d-flex align-items-center gap-2 mb-1">
-            <input type="text" name="capacites-${capaciteIndex}-savoirs_${type}s-${index}"
-                   class="form-control auto-resize border-0"
-                   oninput="autoResize(this)">
-            <button type="button" class="btn btn-danger btn-sm remove-item"
-                    onclick="removeItem(this)">
-                <i class="bi bi-dash-circle"></i>
-            </button>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', html);
-    showFloatingSaveBtn();
-}
-
-// Fonction pour ajouter un savoir-faire
-function addSavoirFaire(capaciteIndex) {
-    const container = document.getElementById(`savoirs-faire-${capaciteIndex}`);
-    const index = container.querySelectorAll('.savoir-faire-item').length;
-    
-    const html = `
-        <div class="savoir-faire-item mb-2">
-            <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-texte"
-                   class="form-control fw-bold mb-1 auto-resize border-0"
-                   placeholder="Savoir faire">
-            <div class="row">
-                <div class="col">
-                    <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-cible"
-                           class="form-control border-0"
-                           placeholder="Cible">
-                </div>
-                <div class="col">
-                    <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-seuil_reussite"
-                           class="form-control border-0"
-                           placeholder="Seuil de réussite">
-                </div>
+    // Fonctions pour les savoirs dans les capacités
+    function addSavoir(capaciteIndex, type) {
+        const container = document.getElementById(`savoirs-${type}s-${capaciteIndex}`);
+        if (!container) return; // Vérifie que le conteneur existe
+        const index = container.querySelectorAll('.savoir-item').length;
+        
+        const html = `
+            <div class="savoir-item d-flex align-items-center gap-2 mb-1">
+                <input type="text" name="capacites-${capaciteIndex}-savoirs_${type}s-${index}"
+                       class="form-control auto-resize border-0"
+                       oninput="autoResize(this)">
+                <button type="button" class="btn btn-danger btn-sm remove-item"
+                        onclick="removeItem(this)">
+                    <i class="bi bi-dash-circle"></i>
+                </button>
             </div>
-            <button type="button" class="btn btn-danger btn-sm remove-item mt-1"
-                    onclick="removeItem(this)">
-                <i class="bi bi-dash-circle"></i>
-            </button>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', html);
-    showFloatingSaveBtn();
-}
-
-// Fonction pour ajouter un moyen d'évaluation
-function addMoyen(capaciteIndex) {
-    const container = document.getElementById(`moyens-evaluation-${capaciteIndex}`);
-    const index = container.querySelectorAll('.moyen-item').length;
-    
-    const html = `
-        <div class="moyen-item d-flex align-items-center gap-2 mb-1">
-            <input type="text" name="capacites-${capaciteIndex}-moyens_evaluation-${index}"
-                   class="form-control auto-resize border-0"
-                   oninput="autoResize(this)">
-            <button type="button" class="btn btn-danger btn-sm remove-item"
-                    onclick="removeItem(this)">
-                <i class="bi bi-dash-circle"></i>
-            </button>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', html);
-    showFloatingSaveBtn();
-}
-
-// Fonctions de suppression
-function removeItem(button) {
-    button.closest('.savoir-item, .savoir-faire-item, .moyen-item').remove();
-    showFloatingSaveBtn();
-}
-
-function removeCapacite(button) {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette capacité ?')) {
-        button.closest('.capacite-item').remove();
-        showFloatingSaveBtn();
+        `;
+        
+        container.insertAdjacentHTML('beforeend', html);
+        showFloatingButtons();
     }
-}
 
-function removeSavoirEtre(button) {
-    const item = button.closest('.savoir-etre-item');
-    if (item) {
-        item.remove();
-        reindexSavoirEtre();
-        showFloatingSaveBtn();
+    // Fonction pour ajouter un savoir-faire
+    function addSavoirFaire(capaciteIndex) {
+        const container = document.getElementById(`savoirs-faire-${capaciteIndex}`);
+        if (!container) return; // Vérifie que le conteneur existe
+        const index = container.querySelectorAll('.savoir-faire-item').length;
+        
+        const html = `
+            <div class="savoir-faire-item mb-2">
+                <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-texte"
+                       class="form-control fw-bold mb-1 auto-resize border-0"
+                       placeholder="Savoir faire">
+                <div class="row">
+                    <div class="col">
+                        <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-cible"
+                               class="form-control border-0"
+                               placeholder="Cible">
+                    </div>
+                    <div class="col">
+                        <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-seuil_reussite"
+                               class="form-control border-0"
+                               placeholder="Seuil de réussite">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm remove-item mt-1"
+                        onclick="removeItem(this)">
+                    <i class="bi bi-dash-circle"></i>
+                </button>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', html);
+        showFloatingButtons();
     }
-}
 
-function reindexSavoirEtre() {
-    const container = document.getElementById('savoir-etre-container');
-    const items = container.querySelectorAll('.savoir-etre-item');
-    items.forEach((item, index) => {
-        const input = item.querySelector('input');
-        if (input) {
-            input.id = `savoir_etre-${index}-texte`;
-            input.name = `savoir_etre-${index}-texte`;
+    // Fonction pour ajouter un moyen d'évaluation
+    function addMoyen(capaciteIndex) {
+        const container = document.getElementById(`moyens-evaluation-${capaciteIndex}`);
+        if (!container) return; // Vérifie que le conteneur existe
+        const index = container.querySelectorAll('.moyen-item').length;
+        
+        const html = `
+            <div class="moyen-item d-flex align-items-center gap-2 mb-1">
+                <input type="text" name="capacites-${capaciteIndex}-moyens_evaluation-${index}"
+                       class="form-control auto-resize border-0"
+                       oninput="autoResize(this)">
+                <button type="button" class="btn btn-danger btn-sm remove-item"
+                        onclick="removeItem(this)">
+                    <i class="bi bi-dash-circle"></i>
+                </button>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', html);
+        showFloatingButtons();
+    }
+
+    // Fonctions de suppression
+    function removeItem(button) {
+        const parentItem = button.closest('.savoir-item, .savoir-faire-item, .moyen-item, .competences_developpees-item, .objets_cibles-item, .competences_certifiees-item, .cours_corequis-item, .cours_prealables-item, .savoir-etre-item');
+        if (parentItem) {
+            parentItem.remove();
+            showFloatingButtons();
         }
-    });
-}
-
-// Fonction pour afficher le bouton flottant
-function showFloatingSaveBtn() {
-    const floatingSaveBtn = document.getElementById('floatingSaveBtn');
-    if (floatingSaveBtn.classList.contains('d-none')) {
-        floatingSaveBtn.classList.remove('d-none');
     }
-}
 
-// Initialisation au chargement de la page
-document.addEventListener('DOMContentLoaded', function() {
-    // Gestion du bouton d'ajout de capacité
-    document.getElementById('add-capacite').addEventListener('click', addCapacite);
-    
-    // Gestion des boutons d'ajout avec icônes
-    document.querySelectorAll('.add-item-btn').forEach(function(btn) {
-        btn.addEventListener('click', function(){
-            const id = btn.id;
-            switch(id) {
-                case 'add-competence-developpee':
-                    addItemWithDescription('competences-developpees-container', 'competences_developpees', 'remove-item-btn');
-                    break;
-                case 'add-objet-cible':
-                    addItemWithDescription('objets-cibles-container', 'objets_cibles', 'remove-item-btn');
-                    break;
-                case 'add-competence-certifiee':
-                    addItemWithDescription('competences-certifiees-container', 'competences_certifiees', 'remove-item-btn');
-                    break;
-                case 'add-cours-corequis':
-                    addItemWithDescription('cours-corequis-container', 'cours_corequis', 'remove-item-btn');
-                    break;
-                case 'add-cours-prealable':
-                    addItemWithDescription('cours-prealables-container', 'cours_prealables', 'remove-item-btn');
-                    break;
-                case 'add-savoir-etre':
-                    addSavoirEtre();
-                    break;
+    function removeCapacite(button) {
+        if (confirm('Êtes-vous sûr de vouloir supprimer cette capacité ?')) {
+            const capaciteItem = button.closest('.capacite-item');
+            if (capaciteItem) {
+                capaciteItem.remove();
+                showFloatingButtons();
+            }
+        }
+    }
+
+    // Fonction pour réindexer les savoir-être après suppression (si nécessaire)
+    function reindexSavoirEtre() {
+        const container = document.getElementById('savoir-etre-container');
+        const items = container.querySelectorAll('.savoir-etre-item');
+        items.forEach((item, index) => {
+            const input = item.querySelector('input');
+            if (input) {
+                input.id = `savoir_etre-${index}-texte`;
+                input.name = `savoir_etre-${index}-texte`;
             }
         });
-    });
+    }
 
-    // Gestion du formulaire principal
-    const planCadreForm = document.getElementById('planCadreForm');
-    const floatingSaveBtn = document.getElementById('floatingSaveBtn');
+    // Fonction pour afficher les boutons flottants
+    function showFloatingButtons() {
+        const floatingSaveBtn = document.getElementById('floatingSaveBtn');
+        const floatingCancelBtn = document.getElementById('floatingCancelBtn');
+        if (floatingSaveBtn && floatingCancelBtn) {
+            floatingSaveBtn.classList.remove('d-none');
+            floatingCancelBtn.classList.remove('d-none');
+        }
+    }
 
-    if (planCadreForm) {
-        planCadreForm.addEventListener('input', showFloatingSaveBtn);
-        planCadreForm.addEventListener('submit', function() {
+    // Fonction pour masquer les boutons flottants
+    function hideFloatingButtons() {
+        const floatingSaveBtn = document.getElementById('floatingSaveBtn');
+        const floatingCancelBtn = document.getElementById('floatingCancelBtn');
+        if (floatingSaveBtn && floatingCancelBtn) {
             floatingSaveBtn.classList.add('d-none');
-        });
+            floatingCancelBtn.classList.add('d-none');
+        }
     }
 
-    // Suppression déléguée
-    document.addEventListener('click', function(e){
-        if(e.target.closest('.remove-item-btn')){
-            const parentItem = e.target.closest('.competences_developpees-item') ||
-                             e.target.closest('.objets_cibles-item') ||
-                             e.target.closest('.competences_certifiees-item') ||
-                             e.target.closest('.cours_corequis-item') ||
-                             e.target.closest('.cours_prealables-item') ||
-                             e.target.closest('.savoir-etre-item');
-            if(parentItem){
-                parentItem.remove();
-                showFloatingSaveBtn();
+    // Fonction pour afficher des messages flash
+    function showFlashMessage(message, type) {
+        const flashMessage = document.getElementById('flash-message');
+        flashMessage.className = `alert alert-${type}`;
+        flashMessage.textContent = message;
+        flashMessage.classList.remove('d-none');
+
+        // Masquer le message après 5 secondes
+        setTimeout(() => {
+            flashMessage.classList.add('d-none');
+        }, 5000);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const planCadreForm = document.getElementById('planCadreForm');
+        const floatingSaveBtn = document.getElementById('floatingSaveBtn');
+        const floatingCancelBtn = document.getElementById('floatingCancelBtn');
+
+        // Gestion des boutons d'ajout avec icônes
+        document.querySelectorAll('.add-item-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(){
+                const id = btn.id;
+                switch(id) {
+                    case 'add-competence-developpee':
+                        addItemWithDescription('competences-developpees-container', 'competences_developpees');
+                        break;
+                    case 'add-objet-cible':
+                        addItemWithDescription('objets-cibles-container', 'objets_cibles');
+                        break;
+                    case 'add-competence-certifiee':
+                        addItemWithDescription('competences-certifiees-container', 'competences_certifiees');
+                        break;
+                    case 'add-cours-corequis':
+                        addItemWithDescription('cours-corequis-container', 'cours_corequis');
+                        break;
+                    case 'add-cours-prealable':
+                        addItemWithDescription('cours-prealables-container', 'cours_prealables');
+                        break;
+                    case 'add-savoir-etre':
+                        addSavoirEtre();
+                        break;
+                    case 'add-capacite': // Nouveau cas ajouté
+                        addCapacite();
+                        break;
+                }
+            });
+        });
+
+        // Gestion de la soumission du formulaire principal via AJAX
+        if (planCadreForm && floatingSaveBtn && floatingCancelBtn) {
+            // Afficher les boutons flottants lors des modifications du formulaire
+            planCadreForm.addEventListener('input', showFloatingButtons);
+            planCadreForm.addEventListener('change', showFloatingButtons);
+
+            // Gestion de la soumission du formulaire
+            planCadreForm.addEventListener('submit', function(event) {
+                event.preventDefault(); // Empêche la soumission traditionnelle
+
+                // Afficher un indicateur de chargement si nécessaire
+                const loadingSpinner = floatingSaveBtn.querySelector('#loadingSpinner');
+                const btnText = floatingSaveBtn.querySelector('.btn-text');
+                if (loadingSpinner && btnText) {
+                    loadingSpinner.classList.remove('d-none');
+                    btnText.classList.add('d-none');
+                }
+
+                // Collecter les données du formulaire
+                const formData = new FormData(planCadreForm);
+
+                // Envoyer les données via Fetch API
+                fetch(planCadreForm.action, {
+                    method: planCadreForm.method,
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest' // Pour identifier la requête AJAX côté serveur
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Masquer l'indicateur de chargement
+                    if (loadingSpinner && btnText) {
+                        loadingSpinner.classList.add('d-none');
+                        btnText.classList.remove('d-none');
+                    }
+
+                    if (data.success) {
+                        // Cacher les boutons flottants
+                        hideFloatingButtons();
+
+                        // Afficher un message de succès
+                        showFlashMessage('Plan-cadre sauvegardé avec succès.', 'success');
+                    } else {
+                        // Afficher les erreurs
+                        if (data.errors) {
+                            // Convertir les erreurs en une chaîne de caractères
+                            let errorMessages = '';
+                            for (const [field, errors] of Object.entries(data.errors)) {
+                                errorMessages += `${field}: ${errors.join(', ')}\n`;
+                            }
+                            showFlashMessage('Erreur lors de la sauvegarde :\n' + errorMessages, 'danger');
+                        } else {
+                            showFlashMessage('Erreur inconnue lors de la sauvegarde.', 'danger');
+                        }
+                    }
+                })
+                .catch((error) => {
+                    // Masquer l'indicateur de chargement
+                    if (loadingSpinner && btnText) {
+                        loadingSpinner.classList.add('d-none');
+                        btnText.classList.remove('d-none');
+                    }
+
+                    console.error('Erreur:', error);
+                    // Afficher un message d'erreur
+                    showFlashMessage('Erreur lors de la sauvegarde du plan-cadre.', 'danger');
+                });
+            });
+
+            // Gestion du clic sur le bouton flottant "Enregistrer"
+            floatingSaveBtn.addEventListener('click', function() {
+                planCadreForm.requestSubmit(); // Déclenche la soumission du formulaire
+            });
+
+            // Gestion du bouton flottant "Annuler"
+            floatingCancelBtn.addEventListener('click', function() {
+                if (confirm('Êtes-vous sûr de vouloir annuler les modifications ? Toutes les modifications non sauvegardées seront perdues.')) {
+                    // Option 1: Réinitialiser le formulaire
+                    planCadreForm.reset();
+
+                    // Option 2: Recharger la page pour restaurer les données initiales
+                    // location.reload();
+
+                    // Masquer les boutons flottants après l'annulation
+                    hideFloatingButtons();
+
+                    // Afficher un message flash
+                    showFlashMessage('Modifications annulées.', 'warning');
+                }
+            });
+        }
+
+        // Suppression déléguée pour les boutons "Supprimer"
+        document.addEventListener('click', function(e){
+            if(e.target.closest('.remove-item-btn')){
+                const parentItem = e.target.closest('.savoir-item, .savoir-faire-item, .moyen-item, .competences_developpees-item, .objets_cibles-item, .competences_certifiees-item, .cours_corequis-item, .cours_prealables-item, .savoir-etre-item');
+                if(parentItem){
+                    parentItem.remove();
+                    showFloatingButtons();
+                }
             }
+        });
+
+        // Auto-resize initial pour tous les champs
+        document.querySelectorAll('.auto-resize').forEach(autoResize);
+
+        // --- Ajout des modifications pour le bouton "Générer le plan-cadre" ---
+        const generateForm = document.getElementById('generateContentForm');
+        const confirmGenerateBtn = document.getElementById('confirmGenerateBtn');
+        const modalLoadingSpinner = document.getElementById('modalLoadingSpinner');
+
+        if (generateForm && confirmGenerateBtn && modalLoadingSpinner) {
+            generateForm.addEventListener('submit', function(event) {
+                // Désactiver le bouton et afficher le spinner
+                confirmGenerateBtn.disabled = true;
+                modalLoadingSpinner.classList.remove('d-none');
+                confirmGenerateBtn.querySelector('.btn-text').textContent = 'Génération en cours...';
+            });
         }
     });
-
-    // Auto-resize initial pour tous les champs
-    document.querySelectorAll('.auto-resize').forEach(autoResize);
-});
 </script>
 {% endblock %}

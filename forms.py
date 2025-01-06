@@ -159,9 +159,9 @@ class DeleteForm(FlaskForm):
 class CapaciteSavoirFaireForm(Form):
     class Meta:
         csrf = False
-    texte = StringField("Texte", validators=[Optional()])
-    cible = StringField("Cible", validators=[Optional()])
-    seuil_reussite = StringField("Seuil de réussite", validators=[Optional()])
+    texte =TextAreaField("Texte", validators=[Optional()])
+    cible = TextAreaField("Cible", validators=[Optional()])
+    seuil_reussite = TextAreaField("Seuil de réussite", validators=[Optional()])
 
 class MoyenEvaluationFieldForm(Form):
     class Meta:
