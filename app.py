@@ -28,7 +28,6 @@ app.config['SESSION_COOKIE_SECURE'] = True  # Use HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Mitigate CSRF
 csrf = CSRFProtect(app)
-CORS(app, supports_credentials=True)
 
 @app.before_request
 def before_request():
