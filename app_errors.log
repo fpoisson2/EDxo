@@ -7935,3 +7935,29 @@ fields.3.content
 2025-01-07 09:43:45,994 - INFO - 127.0.0.1 - - [07/Jan/2025 09:43:45] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
 2025-01-07 09:43:48,428 - INFO - 127.0.0.1 - - [07/Jan/2025 09:43:48] "GET /cours/31 HTTP/1.1" 200 -
 2025-01-07 09:43:48,461 - INFO - 127.0.0.1 - - [07/Jan/2025 09:43:48] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 09:45:15,775 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/forms.py', reloading
+2025-01-07 09:45:15,964 - INFO -  * Restarting with stat
+2025-01-07 09:45:17,077 - WARNING -  * Debugger is active!
+2025-01-07 09:45:17,080 - INFO -  * Debugger PIN: 144-023-035
+2025-01-07 09:46:33,183 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/routes/plan_cadre.py', reloading
+2025-01-07 09:46:33,359 - INFO -  * Restarting with stat
+2025-01-07 09:46:34,573 - WARNING -  * Debugger is active!
+2025-01-07 09:46:34,577 - INFO -  * Debugger PIN: 144-023-035
+2025-01-07 09:49:22,009 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/utils.py', reloading
+2025-01-07 09:49:22,205 - INFO -  * Restarting with stat
+2025-01-07 09:49:23,407 - WARNING -  * Debugger is active!
+2025-01-07 09:49:23,410 - INFO -  * Debugger PIN: 144-023-035
+2025-01-07 09:49:29,260 - INFO - 127.0.0.1 - - [07/Jan/2025 09:49:29] "GET /cours/31/plan_cadre/24 HTTP/1.1" 200 -
+2025-01-07 09:49:29,321 - INFO - 127.0.0.1 - - [07/Jan/2025 09:49:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 09:49:41,279 - INFO - 127.0.0.1 - - [07/Jan/2025 09:49:41] "POST /cours/31/plan_cadre/24 HTTP/1.1" 200 -
+2025-01-07 09:49:41,318 - INFO - 127.0.0.1 - - [07/Jan/2025 09:49:41] "POST /cours/31/plan_cadre/24 HTTP/1.1" 200 -
+2025-01-07 09:49:44,687 - INFO - 127.0.0.1 - - [07/Jan/2025 09:49:44] "GET /plan_cadre/24/export HTTP/1.1" 200 -
+2025-01-07 09:50:50,692 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/utils.py', reloading
+2025-01-07 09:50:50,900 - INFO -  * Restarting with stat
+2025-01-07 09:50:52,065 - WARNING -  * Debugger is active!
+2025-01-07 09:50:52,070 - INFO -  * Debugger PIN: 144-023-035
+2025-01-07 09:51:48,884 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo/utils.py', reloading
+2025-01-07 09:51:49,071 - INFO -  * Restarting with stat
+2025-01-07 09:51:50,159 - WARNING -  * Debugger is active!
+2025-01-07 09:51:50,162 - INFO -  * Debugger PIN: 144-023-035
+2025-01-07 09:52:15,447 - INFO - 127.0.0.1 - - [07/Jan/2025 09:52:15] "GET /plan_cadre/24/export HTTP/1.1" 200 -
