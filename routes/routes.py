@@ -586,7 +586,14 @@ def edit_element_competence(element_id):
 @role_required('admin')
 def edit_cours(cours_id):
     conn = get_db_connection()
-    cours = conn.execute('SELECT * FROM Cours WHERE id = ?', (cours_id,)).fetchone()
+    # Modifier la requête initiale pour inclure le fil_conducteur_id
+    cours = conn.execute('''
+        SELECT c.*, fc.id as fil_conducteur_id 
+        FROM Cours c 
+        LEFT JOIN FilConducteur fc ON c.fil_conducteur_id = fc.id 
+        WHERE c.id = ?
+    ''', (cours_id,)).fetchone()
+    
     if cours is None:
         conn.close()
         flash('Cours non trouvé.', 'danger')
@@ -605,7 +612,13 @@ def edit_cours(cours_id):
     corequis_existants = [c['cours_corequis_id'] for c in corequis_rows]
 
     # Récupérer les éléments de compétence
-    elements_competence_rows = conn.execute('SELECT id, nom FROM ElementCompetence').fetchall()
+    # Modifier la requête pour inclure le code de la compétence
+    elements_competence_rows = conn.execute('''
+        SELECT ec.id, c.code || ' - ' || ec.nom as nom 
+        FROM ElementCompetence ec
+        JOIN Competence c ON ec.competence_id = c.id
+        ORDER BY c.code, ec.nom
+    ''').fetchall()
     elements_competence = [dict(row) for row in elements_competence_rows]
 
     ec_assoc_rows = conn.execute('SELECT element_competence_id, status FROM ElementCompetenceParCours WHERE cours_id = ?', (cours_id,)).fetchall()
@@ -617,8 +630,6 @@ def edit_cours(cours_id):
     # Récupérer les fils conducteurs
     fils_conducteurs_rows = conn.execute('SELECT id, description FROM FilConducteur').fetchall()
     fils_conducteurs = [(fc['id'], fc['description']) for fc in fils_conducteurs_rows]
-
-    conn.close()
 
     form = CoursForm()
     form.programme.choices = [(p['id'], p['nom']) for p in programmes]
@@ -639,12 +650,15 @@ def edit_cours(cours_id):
         form.heures_travail_maison.data = cours['heures_travail_maison']
         form.corequis.data = corequis_existants
 
-        # Pré-remplir le fil conducteur (s'il est associé au cours)
-        if 'fil_conducteur_id' in cours:
-            form.fil_conducteur.data = cours['fil_conducteur_id']
-        else:
-            form.fil_conducteur.data = None  # Ou une autre valeur par défaut
-        # Vider les entrées existantes d'éléments de compétence
+        cours = conn.execute('''
+            SELECT c.*, fc.id as fil_conducteur_id 
+            FROM Cours c 
+            LEFT JOIN FilConducteur fc ON c.fil_conducteur_id = fc.id 
+            WHERE c.id = ?
+        ''', (cours_id,)).fetchone()
+
+        form.fil_conducteur.data = cours['fil_conducteur_id'] if cours['fil_conducteur_id'] else None
+
         form.elements_competence.entries = []
         for ec in ec_assoc:
             subform = form.elements_competence.append_entry()
@@ -674,6 +688,8 @@ def edit_cours(cours_id):
         for p_subform in form.prealables:
             p_subform.cours_prealable_id.choices = cours_choices
 
+    conn.close()
+    
     if form.validate_on_submit():
         # Récupérer les données
         programme_id = form.programme.data

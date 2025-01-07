@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="/home/fpoisson/Documents/GitHub/edxo/programme.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="1"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="3504"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,10:mainListeCegep"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="Competence" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="41"/><column index="2" value="99"/><column index="3" value="44"/><column index="4" value="300"/><column index="5" value="300"/><column index="6" value="300"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="ListeCegep" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="41"/><column index="2" value="102"/><column index="3" value="44"/><column index="4" value="120"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="User" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="41"/><column index="2" value="109"/><column index="3" value="300"/><column index="4" value="74"/><column index="5" value="300"/><column index="6" value="60"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1">-- Activer les clés étrangères
+PRAGMA foreign_keys = ON;
+
+-- 5. Insérer les cégeps par région et par type en utilisant INSERT OR IGNORE pour éviter les doublons
+
+-- Abitibi-Témiscamingue
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep de l’Abitibi-Témiscamingue', 'Abitibi-Témiscamingue', 'Public'),
+('Conservatoire de musique de Val-d’Or', 'Abitibi-Témiscamingue', 'Public');
+
+-- Bas-Saint-Laurent
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep de La Pocatière', 'Bas-Saint-Laurent', 'Public'),
+('Cégep de Matane', 'Bas-Saint-Laurent', 'Public'),
+('Cégep de Rimouski', 'Bas-Saint-Laurent', 'Public'),
+('Cégep de Rivière-du-Loup', 'Bas-Saint-Laurent', 'Public'),
+('Conservatoire de musique de Rimouski', 'Bas-Saint-Laurent', 'Public'),
+('Institut de technologie agroalimentaire du Québec, campus de La Pocatière', 'Bas-Saint-Laurent', 'Public');
+
+-- Capitale-Nationale
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep de Sainte-Foy', 'Capitale-Nationale', 'Public'),
+('Cégep Garneau', 'Capitale-Nationale', 'Public'),
+('Cégep Limoilou', 'Capitale-Nationale', 'Public'),
+('Cégep Champlain – Campus Saint-Lawrence', 'Capitale-Nationale', 'Public'),
+('Campus Notre-Dame-de-Foy', 'Capitale-Nationale', 'Public'),
+('Collège Bart (1975)', 'Capitale-Nationale', 'Public'),
+('Collège O’Sullivan de Québec inc.', 'Capitale-Nationale', 'Privé'),
+('Mérici Collégial Privé', 'Capitale-Nationale', 'Privé'),
+('Académie de Formation Équestre du Québec', 'Capitale-Nationale', 'Privé'),
+('Collège Avalon', 'Capitale-Nationale', 'Privé'),
+('Collège iFly inc.', 'Capitale-Nationale', 'Privé'),
+('L’École de danse de Québec', 'Capitale-Nationale', 'Privé'),
+('Conservatoire de musique de Québec', 'Capitale-Nationale', 'Public');
+
+-- Centre-du-Québec
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep de Drummondville', 'Centre-du-Québec', 'Public'),
+('Cégep de Victoriaville', 'Centre-du-Québec', 'Public'),
+('Collège Ellis', 'Centre-du-Québec', 'Privé');
+
+-- Chaudière-Appalaches
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep Beauce-Appalaches', 'Chaudière-Appalaches', 'Public'),
+('Cégep de Lévis', 'Chaudière-Appalaches', 'Public'),
+('Cégep de Thetford', 'Chaudière-Appalaches', 'Public');
+
+-- Côte-Nord
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep de Baie-Comeau', 'Côte-Nord', 'Public'),
+('Cégep de Sept-Îles', 'Côte-Nord', 'Public');
+
+-- Estrie
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep de Granby', 'Estrie', 'Public'),
+('Cégep de Sherbrooke', 'Estrie', 'Public'),
+('Cégep Champlain – Lennoxville', 'Estrie', 'Public'),
+('Séminaire de Sherbrooke', 'Estrie', 'Privé'),
+('Cestar Collège, Campus Sherbrooke', 'Estrie', 'Privé'),
+('Collège Canada inc.', 'Estrie', 'Privé'),
+('Collège Eid Air Aviation', 'Estrie', 'Privé');
+
+-- Gaspésie–Îles-de-la-Madeleine
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep de la Gaspésie et des Îles', 'Gaspésie–Îles-de-la-Madeleine', 'Public');
+
+-- Lanaudière
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep régional de Lanaudière à Joliette', 'Lanaudière', 'Public'),
+('Cégep régional de Lanaudière à L’Assomption', 'Lanaudière', 'Public'),
+('Cégep régional de Lanaudière à Terrebonne', 'Lanaudière', 'Public'),
+('Passport Hélico', 'Lanaudière', 'Privé');
+
+-- Laurentides
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep de Saint-Jérôme', 'Laurentides', 'Public'),
+('Cégep Lionel Groulx', 'Laurentides', 'Public'),
+('Lachute Aviation', 'Laurentides', 'Privé');
+
+-- Laval
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep Montmorency', 'Laval', 'Public'),
+('Collège LaSalle', 'Laval', 'Privé'),
+('Collège CDI Administration. Technologie. Santé', 'Laval', 'Privé'),
+('Collège de l’immobilier du Québec', 'Laval', 'Privé');
+
+-- Mauricie
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep de Trois-Rivières', 'Mauricie', 'Public'),
+('Cégep de Shawinigan', 'Mauricie', 'Public'),
+('Collège Laflèche', 'Mauricie', 'Privé'),
+('Collège Ellis', 'Mauricie', 'Privé'),
+('Conservatoire de musique de Trois-Rivières', 'Mauricie', 'Public');
+
+-- Montérégie
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep de Sorel-Tracy', 'Montérégie', 'Public'),
+('Cégep de St-Hyacinthe', 'Montérégie', 'Public'),
+('Cégep de Valleyfield', 'Montérégie', 'Public'),
+('Cégep Édouard Montpetit', 'Montérégie', 'Public'),
+('Cégep Saint-Jean-sur-Richelieu', 'Montérégie', 'Public'),
+('Cégep Champlain – Saint-Lambert', 'Montérégie', 'Public'),
+('Collège Ellis', 'Montérégie', 'Privé'),
+('Institut Teccart', 'Montérégie', 'Privé'),
+('Académie de l’Entrepreneurship', 'Montérégie', 'Privé'),
+('Collège Air Richelieu', 'Montérégie', 'Privé'),
+('Collège April-Fortier', 'Montérégie', 'Privé'),
+('Collège CDI Administration. Technologie. Santé', 'Montérégie', 'Privé'),
+('Collège de l’immobilier du Québec', 'Montérégie', 'Privé'),
+('Cargair Ltée', 'Montérégie', 'Privé'),
+('Collège de pilotage Saint-Hubert', 'Montérégie', 'Privé'),
+('Collège Milestone', 'Montérégie', 'Privé'),
+('Hélicraft', 'Montérégie', 'Privé'),
+('Institut Élite de Montréal', 'Montérégie', 'Privé'),
+('Institut de technologie agroalimentaire du Québec, campus de Saint-Hyacinthe', 'Montérégie', 'Public');
+
+-- Montréal
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep André-Laurendeau', 'Montréal', 'Public'),
+('Cégep d’Ahuntsic', 'Montréal', 'Public'),
+('Cégep de Bois-de-Boulogne', 'Montréal', 'Public'),
+('Cégep de Maisonneuve', 'Montréal', 'Public'),
+('Cégep de Rosemont', 'Montréal', 'Public'),
+('Cégep de Saint-Laurent', 'Montréal', 'Public'),
+('Cégep du Vieux Montréal', 'Montréal', 'Public'),
+('Cégep Gérald-Godin', 'Montréal', 'Public'),
+('Cégep John Abbott', 'Montréal', 'Public'),
+('Cégep Marie-Victorin', 'Montréal', 'Public'),
+('Collège Dawson', 'Montréal', 'Public'),
+('Cégep Vanier', 'Montréal', 'Public'),
+('Collège Notre-Dame-de-foy / Collège BCM', 'Montréal', 'Privé'),
+('Collège André-Grasset (1973) inc.', 'Montréal', 'Privé'),
+('Collège Décarie', 'Montréal', 'Privé'),
+('Collège Jean-de-Brébeuf', 'Montréal', 'Privé'),
+('Collège LaSalle', 'Montréal', 'Privé'),
+('Collège O’Sullivan de Montréal inc.', 'Montréal', 'Privé'),
+('Collège Universel', 'Montréal', 'Privé'),
+('Collégial international Sainte-Anne', 'Montréal', 'Privé'),
+('École de musique Vincent d’Indy', 'Montréal', 'Public'),
+('École nationale de cirque', 'Montréal', 'Public'),
+('Institut Teccart', 'Montréal', 'Privé'),
+('Collège Marianopolis', 'Montréal', 'Public'),
+('Collège TAV', 'Montréal', 'Public'),
+('Collège international Marie de France', 'Montréal', 'Privé'),
+('Collège Stanislas inc.', 'Montréal', 'Privé'),
+('Académie de lEntrepreneurship', 'Montréal', 'Privé'),
+('Campus d’effets visuels inc.', 'Montréal', 'Privé'),
+('Cestar College, Campus LaSalle', 'Montréal', 'Privé'),
+('Cestar College - Syn Studio', 'Montréal', 'Privé'),
+('Collège April-Fortier inc.', 'Montréal', 'Privé'),
+('Collège Avalon', 'Montréal', 'Privé'),
+('Collège Canada inc.', 'Montréal', 'Privé'),
+('Collège Select Aviation', 'Montréal', 'Privé'),
+('Conservatoire de musique de Montréal', 'Montréal', 'Public'),
+('Institut de tourisme et d’hôtellerie du Québec', 'Montréal', 'Public'),
+('Macdonald College – Université McGill', 'Montréal', 'Public');
+
+-- Outaouais
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep de l’Outaouais', 'Outaouais', 'Public'),
+('Collège Héritage', 'Outaouais', 'Privé'),
+('Collège Universel', 'Outaouais', 'Privé'),
+('Collège Canada inc.', 'Outaouais', 'Privé'),
+('Collège Select Aviation', 'Outaouais', 'Privé'),
+('Conservatoire de musique de Gatineau', 'Outaouais', 'Public');
+
+-- Saguenay–Lac-Saint-Jean
+INSERT OR IGNORE INTO ListeCegep (nom, region, type) VALUES
+('Cégep de Chicoutimi', 'Saguenay–Lac-Saint-Jean', 'Public'),
+('Cégep de Jonquière', 'Saguenay–Lac-Saint-Jean', 'Public'),
+('Cégep de St-Félicien', 'Saguenay–Lac-Saint-Jean', 'Public'),
+('Collège d’Alma', 'Saguenay–Lac-Saint-Jean', 'Public'),
+('MultiHexa', 'Saguenay–Lac-Saint-Jean', 'Privé'),
+('Conservatoire de musique de Saguenay', 'Saguenay–Lac-Saint-Jean', 'Public'),
+('Cégep à distance', 'À distance', 'À distance'); -- Catégorie distincte pour les cégeps à distance
+
+-- Nord-du-Québec
+-- Aucun établissement d’enseignement collégial n’est présent dans cette région.
+-- Aucun INSERT nécessaire.
+
+-- 6. Valider la transaction
+COMMIT;
+
+-- 7. Vérifier les insertions
+SELECT * FROM ListeCegep ORDER BY region, nom;
+</sql><current_tab id="0"/></tab_sql></sqlb_project>
