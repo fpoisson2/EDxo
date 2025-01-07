@@ -122,7 +122,7 @@ class CoursForm(FlaskForm):
     elements_competence = FieldList(
         FormField(ElementCompetenceStatusForm),
         min_entries=0,
-        max_entries=20
+        max_entries=50
     )
     prealables = FieldList(FormField(CoursPrealableEntryForm), min_entries=0)
     corequis = SelectMultipleField('Cours Corequis', coerce=int)
