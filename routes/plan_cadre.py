@@ -454,7 +454,7 @@ def generate_plan_cadre_content(plan_id):
 
         try:
             completion = client.beta.chat.completions.parse(
-                model="gpt-4o-mini",
+                model="gpt-4o",
                 messages=[
                     {
                         "role": "user", 

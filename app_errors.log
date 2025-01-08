@@ -7935,3 +7935,458 @@ fields.3.content
 2025-01-07 09:43:45,994 - INFO - 127.0.0.1 - - [07/Jan/2025 09:43:45] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
 2025-01-07 09:43:48,428 - INFO - 127.0.0.1 - - [07/Jan/2025 09:43:48] "GET /cours/31 HTTP/1.1" 200 -
 2025-01-07 09:43:48,461 - INFO - 127.0.0.1 - - [07/Jan/2025 09:43:48] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 10:06:03,615 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-07 10:06:03,615 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-07 10:06:03,625 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-07 10:06:04,395 - WARNING -  * Debugger is active!
+2025-01-07 10:06:04,395 - INFO -  * Debugger PIN: 342-468-122
+2025-01-07 10:06:10,217 - INFO - 127.0.0.1 - - [07/Jan/2025 10:06:10] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-01-07 10:06:18,248 - INFO - 127.0.0.1 - - [07/Jan/2025 10:06:18] "[32mGET /programme/1 HTTP/1.1[0m" 302 -
+2025-01-07 10:06:18,266 - INFO - 127.0.0.1 - - [07/Jan/2025 10:06:18] "GET /login?next=/programme/1 HTTP/1.1" 200 -
+2025-01-07 10:06:18,320 - INFO - 127.0.0.1 - - [07/Jan/2025 10:06:18] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 10:06:27,074 - INFO - 127.0.0.1 - - [07/Jan/2025 10:06:27] "[32mPOST /login?next=/programme/1 HTTP/1.1[0m" 302 -
+2025-01-07 10:06:27,107 - INFO - 127.0.0.1 - - [07/Jan/2025 10:06:27] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 10:06:27,127 - INFO - 127.0.0.1 - - [07/Jan/2025 10:06:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 10:15:39,125 - INFO - 127.0.0.1 - - [07/Jan/2025 10:15:39] "[32mGET /cours/31/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 10:15:39,212 - INFO - 127.0.0.1 - - [07/Jan/2025 10:15:39] "GET /cours/31/plan_cadre/24 HTTP/1.1" 200 -
+2025-01-07 10:15:39,229 - INFO - 127.0.0.1 - - [07/Jan/2025 10:15:39] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 10:15:43,099 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask\\app.py', reloading
+2025-01-07 10:15:43,110 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask_login\\utils.py', reloading
+2025-01-07 10:15:43,120 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\docxtpl\\template.py', reloading
+2025-01-07 10:15:43,129 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\jinja2\\environment.py', reloading
+2025-01-07 10:15:43,132 - INFO - 127.0.0.1 - - [07/Jan/2025 10:15:43] "[35m[1mGET /plan_cadre/24/export HTTP/1.1[0m" 500 -
+2025-01-07 10:15:43,281 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-07 10:15:44,160 - WARNING -  * Debugger is active!
+2025-01-07 10:15:44,161 - INFO -  * Debugger PIN: 342-468-122
+2025-01-07 10:15:44,226 - INFO - 127.0.0.1 - - [07/Jan/2025 10:15:44] "GET /plan_cadre/24/export?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-07 10:15:44,226 - INFO - 127.0.0.1 - - [07/Jan/2025 10:15:44] "GET /plan_cadre/24/export?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-07 10:15:44,252 - INFO - 127.0.0.1 - - [07/Jan/2025 10:15:44] "GET /plan_cadre/24/export?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-07 10:15:44,252 - INFO - 127.0.0.1 - - [07/Jan/2025 10:15:44] "[36mGET /plan_cadre/24/export?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-07 10:16:13,670 - INFO - 127.0.0.1 - - [07/Jan/2025 10:16:13] "GET /plan_cadre/24/export HTTP/1.1" 200 -
+2025-01-07 10:23:09,081 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\utils.py', reloading
+2025-01-07 10:23:09,081 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\utils.py', reloading
+2025-01-07 10:23:09,081 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\utils.py', reloading
+2025-01-07 10:23:09,081 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\utils.py', reloading
+2025-01-07 10:23:10,161 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-07 10:24:04,727 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-07 10:24:04,727 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-07 10:24:04,727 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-07 10:24:05,487 - WARNING -  * Debugger is active!
+2025-01-07 10:24:05,487 - INFO -  * Debugger PIN: 342-468-122
+2025-01-07 10:29:33,630 - INFO - 127.0.0.1 - - [07/Jan/2025 10:29:33] "GET /plan_cadre/24/export HTTP/1.1" 200 -
+2025-01-07 10:40:01,552 - INFO - 127.0.0.1 - - [07/Jan/2025 10:40:01] "GET /cours/31/plan_cadre/24 HTTP/1.1" 200 -
+2025-01-07 10:40:01,638 - INFO - 127.0.0.1 - - [07/Jan/2025 10:40:01] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 10:40:02,493 - INFO - 127.0.0.1 - - [07/Jan/2025 10:40:02] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 10:40:04,120 - INFO - 127.0.0.1 - - [07/Jan/2025 10:40:04] "[32mGET /cours/30/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 10:40:04,148 - INFO - 127.0.0.1 - - [07/Jan/2025 10:40:04] "GET /cours/30/plan_cadre/31 HTTP/1.1" 200 -
+2025-01-07 10:40:04,163 - INFO - 127.0.0.1 - - [07/Jan/2025 10:40:04] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 10:40:07,909 - INFO - 127.0.0.1 - - [07/Jan/2025 10:40:07] "GET /cours/30 HTTP/1.1" 200 -
+2025-01-07 10:40:07,925 - INFO - 127.0.0.1 - - [07/Jan/2025 10:40:07] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 10:40:10,033 - INFO - 127.0.0.1 - - [07/Jan/2025 10:40:10] "GET /edit_cours/30 HTTP/1.1" 200 -
+2025-01-07 10:40:10,052 - INFO - 127.0.0.1 - - [07/Jan/2025 10:40:10] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 10:41:27,836 - INFO - 127.0.0.1 - - [07/Jan/2025 10:41:27] "[32mPOST /edit_cours/30 HTTP/1.1[0m" 302 -
+2025-01-07 10:41:27,870 - INFO - 127.0.0.1 - - [07/Jan/2025 10:41:27] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 10:41:27,888 - INFO - 127.0.0.1 - - [07/Jan/2025 10:41:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 10:42:38,308 - INFO - 127.0.0.1 - - [07/Jan/2025 10:42:38] "[32mGET /cours/30/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 10:42:38,325 - INFO - 127.0.0.1 - - [07/Jan/2025 10:42:38] "GET /cours/30/plan_cadre/31 HTTP/1.1" 200 -
+2025-01-07 10:42:38,342 - INFO - 127.0.0.1 - - [07/Jan/2025 10:42:38] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 10:42:41,284 - INFO - 127.0.0.1 - - [07/Jan/2025 10:42:41] "GET /plan_cadre/31/export HTTP/1.1" 200 -
+2025-01-07 11:17:07,288 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\app.py', reloading
+2025-01-07 11:17:07,288 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\auth.py', reloading
+2025-01-07 11:17:07,288 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\decorator.py', reloading
+2025-01-07 11:17:07,288 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-07 11:17:07,288 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\get_db_info.py', reloading
+2025-01-07 11:17:07,298 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\cours.py', reloading
+2025-01-07 11:17:07,298 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_cadre.py', reloading
+2025-01-07 11:17:07,298 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\programme.py', reloading
+2025-01-07 11:17:07,298 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\routes.py', reloading
+2025-01-07 11:17:07,298 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\settings.py', reloading
+2025-01-07 11:17:07,978 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-07 11:17:08,892 - WARNING -  * Debugger is active!
+2025-01-07 11:17:08,892 - INFO -  * Debugger PIN: 342-468-122
+2025-01-07 11:17:15,165 - INFO - 127.0.0.1 - - [07/Jan/2025 11:17:15] "[32mGET /cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 11:17:15,197 - INFO - 127.0.0.1 - - [07/Jan/2025 11:17:15] "GET /login?next=/cours/1/plan_cadre HTTP/1.1" 200 -
+2025-01-07 11:17:15,229 - INFO - 127.0.0.1 - - [07/Jan/2025 11:17:15] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 11:17:22,703 - INFO - 127.0.0.1 - - [07/Jan/2025 11:17:22] "[32mPOST /login?next=/cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 11:17:22,707 - INFO - 127.0.0.1 - - [07/Jan/2025 11:17:22] "[32mGET /cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 11:17:22,769 - INFO - 127.0.0.1 - - [07/Jan/2025 11:17:22] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2025-01-07 11:17:22,787 - INFO - 127.0.0.1 - - [07/Jan/2025 11:17:22] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 11:17:27,708 - INFO - 127.0.0.1 - - [07/Jan/2025 11:17:27] "GET /plan_cadre/1/export HTTP/1.1" 200 -
+2025-01-07 11:19:05,268 - INFO - 127.0.0.1 - - [07/Jan/2025 11:19:05] "GET /plan_cadre/1/export HTTP/1.1" 200 -
+2025-01-07 11:19:27,779 - INFO - 127.0.0.1 - - [07/Jan/2025 11:19:27] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-07 11:19:27,828 - INFO - 127.0.0.1 - - [07/Jan/2025 11:19:27] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 11:19:27,855 - INFO - 127.0.0.1 - - [07/Jan/2025 11:19:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 11:24:09,034 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\cwp.py', reloading
+2025-01-07 11:24:09,785 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-07 11:24:10,655 - WARNING -  * Debugger is active!
+2025-01-07 11:24:10,655 - INFO -  * Debugger PIN: 342-468-122
+2025-01-07 15:55:24,345 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\app.py', reloading
+2025-01-07 15:55:24,346 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\auth.py', reloading
+2025-01-07 15:55:24,347 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\decorator.py', reloading
+2025-01-07 15:55:24,348 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-07 15:55:24,348 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\get_db_info.py', reloading
+2025-01-07 15:55:24,352 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\cours.py', reloading
+2025-01-07 15:55:24,353 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_cadre.py', reloading
+2025-01-07 15:55:24,353 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\programme.py', reloading
+2025-01-07 15:55:24,354 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\routes.py', reloading
+2025-01-07 15:55:24,355 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\settings.py', reloading
+2025-01-07 15:55:25,471 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-07 15:55:26,450 - WARNING -  * Debugger is active!
+2025-01-07 15:55:26,453 - INFO -  * Debugger PIN: 342-468-122
+2025-01-07 21:10:30,062 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\app.py', reloading
+2025-01-07 21:10:30,062 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\auth.py', reloading
+2025-01-07 21:10:30,062 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\decorator.py', reloading
+2025-01-07 21:10:30,062 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-07 21:10:30,062 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\get_db_info.py', reloading
+2025-01-07 21:10:30,066 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\cours.py', reloading
+2025-01-07 21:10:30,066 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_cadre.py', reloading
+2025-01-07 21:10:30,066 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\programme.py', reloading
+2025-01-07 21:10:30,072 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\routes.py', reloading
+2025-01-07 21:10:30,072 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\settings.py', reloading
+2025-01-07 21:10:30,842 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-07 21:10:31,844 - WARNING -  * Debugger is active!
+2025-01-07 21:10:31,844 - INFO -  * Debugger PIN: 342-468-122
+2025-01-07 21:11:55,540 - INFO - 127.0.0.1 - - [07/Jan/2025 21:11:55] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 21:11:55,576 - INFO - 127.0.0.1 - - [07/Jan/2025 21:11:55] "GET /login?next=/cours/9/plan_cadre HTTP/1.1" 200 -
+2025-01-07 21:11:55,672 - INFO - 127.0.0.1 - - [07/Jan/2025 21:11:55] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:12:04,639 - INFO - 127.0.0.1 - - [07/Jan/2025 21:12:04] "[32mPOST /login?next=/cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 21:12:04,648 - INFO - 127.0.0.1 - - [07/Jan/2025 21:12:04] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 21:12:04,772 - INFO - 127.0.0.1 - - [07/Jan/2025 21:12:04] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:12:04,802 - INFO - 127.0.0.1 - - [07/Jan/2025 21:12:04] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:12:10,599 - INFO - 127.0.0.1 - - [07/Jan/2025 21:12:10] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-07 21:13:40,191 - INFO - 127.0.0.1 - - [07/Jan/2025 21:13:40] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-07 21:13:40,212 - INFO - 127.0.0.1 - - [07/Jan/2025 21:13:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:13:41,451 - INFO - 127.0.0.1 - - [07/Jan/2025 21:13:41] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-07 21:13:41,527 - INFO - 127.0.0.1 - - [07/Jan/2025 21:13:41] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 21:13:41,554 - INFO - 127.0.0.1 - - [07/Jan/2025 21:13:41] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:13:43,177 - INFO - 127.0.0.1 - - [07/Jan/2025 21:13:43] "[32mGET /cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 21:13:43,211 - INFO - 127.0.0.1 - - [07/Jan/2025 21:13:43] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2025-01-07 21:13:43,228 - INFO - 127.0.0.1 - - [07/Jan/2025 21:13:43] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:14:13,377 - INFO - 127.0.0.1 - - [07/Jan/2025 21:14:13] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-07 21:14:13,392 - INFO - 127.0.0.1 - - [07/Jan/2025 21:14:13] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:14:14,751 - INFO - 127.0.0.1 - - [07/Jan/2025 21:14:14] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-07 21:14:14,770 - INFO - 127.0.0.1 - - [07/Jan/2025 21:14:14] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:15:30,465 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:30] "[32mPOST /settings/generation HTTP/1.1[0m" 302 -
+2025-01-07 21:15:30,479 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:30] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-07 21:15:30,497 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:30] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:15:31,824 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:31] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-07 21:15:31,858 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:31] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 21:15:31,877 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:15:35,181 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:35] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 21:15:35,216 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:35] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:15:35,244 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:35] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:15:55,293 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:55] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-07 21:15:55,312 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:55] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:15:56,710 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:56] "GET /manage_users HTTP/1.1" 200 -
+2025-01-07 21:15:56,725 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:56] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:15:57,668 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:57] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-07 21:15:57,685 - INFO - 127.0.0.1 - - [07/Jan/2025 21:15:57] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:16:39,993 - INFO - 127.0.0.1 - - [07/Jan/2025 21:16:39] "[32mPOST /settings/generation HTTP/1.1[0m" 302 -
+2025-01-07 21:16:40,008 - INFO - 127.0.0.1 - - [07/Jan/2025 21:16:40] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-07 21:16:40,023 - INFO - 127.0.0.1 - - [07/Jan/2025 21:16:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:16:41,462 - INFO - 127.0.0.1 - - [07/Jan/2025 21:16:41] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-07 21:16:41,495 - INFO - 127.0.0.1 - - [07/Jan/2025 21:16:41] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 21:16:41,514 - INFO - 127.0.0.1 - - [07/Jan/2025 21:16:41] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:16:43,990 - INFO - 127.0.0.1 - - [07/Jan/2025 21:16:43] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 21:16:44,028 - INFO - 127.0.0.1 - - [07/Jan/2025 21:16:44] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:16:44,046 - INFO - 127.0.0.1 - - [07/Jan/2025 21:16:44] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:16:56,223 - INFO - 127.0.0.1 - - [07/Jan/2025 21:16:56] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:16:56,235 - INFO - 127.0.0.1 - - [07/Jan/2025 21:16:56] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:17:33,294 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_cadre.py', reloading
+2025-01-07 21:17:33,294 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_cadre.py', reloading
+2025-01-07 21:17:33,294 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_cadre.py', reloading
+2025-01-07 21:17:33,864 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-07 21:17:36,983 - WARNING -  * Debugger is active!
+2025-01-07 21:17:36,983 - INFO -  * Debugger PIN: 342-468-122
+2025-01-07 21:24:15,909 - INFO - 127.0.0.1 - - [07/Jan/2025 21:24:15] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 21:24:16,019 - INFO - 127.0.0.1 - - [07/Jan/2025 21:24:16] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:24:16,099 - INFO - 127.0.0.1 - - [07/Jan/2025 21:24:16] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:26:52,887 - INFO - 127.0.0.1 - - [07/Jan/2025 21:26:52] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:26:52,945 - INFO - 127.0.0.1 - - [07/Jan/2025 21:26:52] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:27:59,138 - INFO - 127.0.0.1 - - [07/Jan/2025 21:27:59] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-07 21:29:10,679 - INFO - 127.0.0.1 - - [07/Jan/2025 21:29:10] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-07 21:30:16,027 - INFO - 127.0.0.1 - - [07/Jan/2025 21:30:16] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-07 21:38:29,925 - INFO - 127.0.0.1 - - [07/Jan/2025 21:38:29] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-07 21:39:19,553 - INFO - 127.0.0.1 - - [07/Jan/2025 21:39:19] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-07 21:40:36,164 - INFO - 127.0.0.1 - - [07/Jan/2025 21:40:36] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-07 21:41:53,783 - INFO - 127.0.0.1 - - [07/Jan/2025 21:41:53] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-07 21:43:18,716 - INFO - 127.0.0.1 - - [07/Jan/2025 21:43:18] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-07 21:44:03,872 - INFO - 127.0.0.1 - - [07/Jan/2025 21:44:03] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-07 21:46:00,502 - INFO - 127.0.0.1 - - [07/Jan/2025 21:46:00] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-07 21:46:52,511 - INFO - 127.0.0.1 - - [07/Jan/2025 21:46:52] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-07 21:50:24,330 - INFO - 127.0.0.1 - - [07/Jan/2025 21:50:24] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:50:24,339 - INFO - 127.0.0.1 - - [07/Jan/2025 21:50:24] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:50:28,116 - INFO - 127.0.0.1 - - [07/Jan/2025 21:50:28] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-07 21:50:28,136 - INFO - 127.0.0.1 - - [07/Jan/2025 21:50:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:50:29,300 - INFO - 127.0.0.1 - - [07/Jan/2025 21:50:29] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-07 21:50:29,319 - INFO - 127.0.0.1 - - [07/Jan/2025 21:50:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:51:27,422 - INFO - 127.0.0.1 - - [07/Jan/2025 21:51:27] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-07 21:51:27,438 - INFO - 127.0.0.1 - - [07/Jan/2025 21:51:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:51:28,405 - INFO - 127.0.0.1 - - [07/Jan/2025 21:51:28] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-07 21:51:28,460 - INFO - 127.0.0.1 - - [07/Jan/2025 21:51:28] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 21:51:28,480 - INFO - 127.0.0.1 - - [07/Jan/2025 21:51:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:51:29,561 - INFO - 127.0.0.1 - - [07/Jan/2025 21:51:29] "[32mGET /cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 21:51:29,597 - INFO - 127.0.0.1 - - [07/Jan/2025 21:51:29] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2025-01-07 21:51:29,619 - INFO - 127.0.0.1 - - [07/Jan/2025 21:51:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:51:50,730 - INFO - 127.0.0.1 - - [07/Jan/2025 21:51:50] "[32mPOST /settings/generation HTTP/1.1[0m" 302 -
+2025-01-07 21:51:50,740 - INFO - 127.0.0.1 - - [07/Jan/2025 21:51:50] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-07 21:51:50,761 - INFO - 127.0.0.1 - - [07/Jan/2025 21:51:50] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:52:37,948 - INFO - 127.0.0.1 - - [07/Jan/2025 21:52:37] "[32mPOST /settings/generation HTTP/1.1[0m" 302 -
+2025-01-07 21:52:37,958 - INFO - 127.0.0.1 - - [07/Jan/2025 21:52:37] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-07 21:52:37,980 - INFO - 127.0.0.1 - - [07/Jan/2025 21:52:37] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:52:39,504 - INFO - 127.0.0.1 - - [07/Jan/2025 21:52:39] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-07 21:52:39,537 - INFO - 127.0.0.1 - - [07/Jan/2025 21:52:39] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 21:52:39,556 - INFO - 127.0.0.1 - - [07/Jan/2025 21:52:39] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:52:41,570 - INFO - 127.0.0.1 - - [07/Jan/2025 21:52:41] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 21:52:41,585 - INFO - 127.0.0.1 - - [07/Jan/2025 21:52:41] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:52:41,603 - INFO - 127.0.0.1 - - [07/Jan/2025 21:52:41] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:55:31,872 - INFO - 127.0.0.1 - - [07/Jan/2025 21:55:31] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 21:55:31,909 - INFO - 127.0.0.1 - - [07/Jan/2025 21:55:31] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:55:31,932 - INFO - 127.0.0.1 - - [07/Jan/2025 21:55:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:59:05,475 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:05] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:59:05,522 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:05] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:59:26,258 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:26] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:59:26,274 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:26] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 21:59:32,119 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:32] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-07 21:59:32,151 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:32] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 21:59:32,171 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:59:33,963 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:33] "[32mGET /cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 21:59:33,979 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:33] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2025-01-07 21:59:33,996 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:33] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:59:46,523 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:46] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-07 21:59:46,539 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:46] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 21:59:48,186 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:48] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-07 21:59:48,205 - INFO - 127.0.0.1 - - [07/Jan/2025 21:59:48] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:00:56,510 - INFO - 127.0.0.1 - - [07/Jan/2025 22:00:56] "[32mPOST /settings/generation HTTP/1.1[0m" 302 -
+2025-01-07 22:00:56,530 - INFO - 127.0.0.1 - - [07/Jan/2025 22:00:56] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-07 22:00:56,543 - INFO - 127.0.0.1 - - [07/Jan/2025 22:00:56] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:00:57,709 - INFO - 127.0.0.1 - - [07/Jan/2025 22:00:57] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-07 22:00:57,728 - INFO - 127.0.0.1 - - [07/Jan/2025 22:00:57] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 22:00:57,745 - INFO - 127.0.0.1 - - [07/Jan/2025 22:00:57] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:01:01,551 - INFO - 127.0.0.1 - - [07/Jan/2025 22:01:01] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 22:01:01,567 - INFO - 127.0.0.1 - - [07/Jan/2025 22:01:01] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:01:01,587 - INFO - 127.0.0.1 - - [07/Jan/2025 22:01:01] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:04:52,592 - INFO - 127.0.0.1 - - [07/Jan/2025 22:04:52] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 22:04:52,634 - INFO - 127.0.0.1 - - [07/Jan/2025 22:04:52] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:04:52,650 - INFO - 127.0.0.1 - - [07/Jan/2025 22:04:52] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:06:52,823 - INFO - 127.0.0.1 - - [07/Jan/2025 22:06:52] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:06:52,840 - INFO - 127.0.0.1 - - [07/Jan/2025 22:06:52] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:07:03,425 - ERROR - OpenAI error: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}
+2025-01-07 22:07:03,425 - ERROR - Unexpected error: Could not build url for endpoint 'cours.view_plan_cadre' with values ['plan_id']. Did you forget to specify values ['cours_id']?
+2025-01-07 22:07:03,425 - INFO - 127.0.0.1 - - [07/Jan/2025 22:07:03] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 22:07:03,449 - INFO - 127.0.0.1 - - [07/Jan/2025 22:07:03] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:07:03,466 - INFO - 127.0.0.1 - - [07/Jan/2025 22:07:03] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:08:10,926 - INFO - 127.0.0.1 - - [07/Jan/2025 22:08:10] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:08:10,940 - INFO - 127.0.0.1 - - [07/Jan/2025 22:08:10] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:08:18,306 - ERROR - OpenAI error: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}
+2025-01-07 22:08:18,310 - ERROR - Unexpected error: Could not build url for endpoint 'cours.view_plan_cadre' with values ['plan_id']. Did you forget to specify values ['cours_id']?
+2025-01-07 22:08:18,310 - INFO - 127.0.0.1 - - [07/Jan/2025 22:08:18] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 22:08:18,334 - INFO - 127.0.0.1 - - [07/Jan/2025 22:08:18] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:08:18,354 - INFO - 127.0.0.1 - - [07/Jan/2025 22:08:18] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:08:25,704 - INFO - 127.0.0.1 - - [07/Jan/2025 22:08:25] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:08:25,719 - INFO - 127.0.0.1 - - [07/Jan/2025 22:08:25] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:08:37,972 - ERROR - OpenAI error: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}
+2025-01-07 22:08:37,977 - ERROR - Unexpected error: Could not build url for endpoint 'cours.view_plan_cadre' with values ['plan_id']. Did you forget to specify values ['cours_id']?
+2025-01-07 22:08:37,977 - INFO - 127.0.0.1 - - [07/Jan/2025 22:08:37] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 22:08:37,998 - INFO - 127.0.0.1 - - [07/Jan/2025 22:08:37] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:08:38,019 - INFO - 127.0.0.1 - - [07/Jan/2025 22:08:38] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:09:09,780 - ERROR - OpenAI error: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}
+2025-01-07 22:09:09,780 - ERROR - Unexpected error: Could not build url for endpoint 'cours.view_plan_cadre' with values ['plan_id']. Did you forget to specify values ['cours_id']?
+2025-01-07 22:09:09,780 - INFO - 127.0.0.1 - - [07/Jan/2025 22:09:09] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 22:09:09,806 - INFO - 127.0.0.1 - - [07/Jan/2025 22:09:09] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:09:09,827 - INFO - 127.0.0.1 - - [07/Jan/2025 22:09:09] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:10:31,591 - ERROR - OpenAI error: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}
+2025-01-07 22:10:31,598 - ERROR - Unexpected error: Could not build url for endpoint 'cours.view_plan_cadre' with values ['plan_id']. Did you forget to specify values ['cours_id']?
+2025-01-07 22:10:31,599 - INFO - 127.0.0.1 - - [07/Jan/2025 22:10:31] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 22:10:31,614 - INFO - 127.0.0.1 - - [07/Jan/2025 22:10:31] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:10:31,640 - INFO - 127.0.0.1 - - [07/Jan/2025 22:10:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:10:50,684 - ERROR - OpenAI error: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}
+2025-01-07 22:10:50,684 - ERROR - Unexpected error: Could not build url for endpoint 'cours.view_plan_cadre' with values ['plan_id']. Did you forget to specify values ['cours_id']?
+2025-01-07 22:10:50,684 - INFO - 127.0.0.1 - - [07/Jan/2025 22:10:50] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 22:10:50,709 - INFO - 127.0.0.1 - - [07/Jan/2025 22:10:50] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:10:50,728 - INFO - 127.0.0.1 - - [07/Jan/2025 22:10:50] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:13:07,705 - ERROR - OpenAI error: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}
+2025-01-07 22:13:07,710 - ERROR - Unexpected error: Could not build url for endpoint 'cours.view_plan_cadre' with values ['plan_id']. Did you forget to specify values ['cours_id']?
+2025-01-07 22:13:07,712 - INFO - 127.0.0.1 - - [07/Jan/2025 22:13:07] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 22:13:07,730 - INFO - 127.0.0.1 - - [07/Jan/2025 22:13:07] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:13:07,753 - INFO - 127.0.0.1 - - [07/Jan/2025 22:13:07] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:13:40,665 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-07 22:13:40,665 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-07 22:13:40,675 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-07 22:13:41,455 - WARNING -  * Debugger is active!
+2025-01-07 22:13:41,455 - INFO -  * Debugger PIN: 342-468-122
+2025-01-07 22:13:43,131 - INFO - 127.0.0.1 - - [07/Jan/2025 22:13:43] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:13:43,156 - INFO - 127.0.0.1 - - [07/Jan/2025 22:13:43] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:13:47,790 - ERROR - OpenAI error: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}
+2025-01-07 22:13:47,790 - ERROR - Unexpected error: Could not build url for endpoint 'cours.view_plan_cadre' with values ['plan_id']. Did you forget to specify values ['cours_id']?
+2025-01-07 22:13:47,790 - INFO - 127.0.0.1 - - [07/Jan/2025 22:13:47] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 22:13:47,805 - INFO - 127.0.0.1 - - [07/Jan/2025 22:13:47] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:13:47,815 - INFO - 127.0.0.1 - - [07/Jan/2025 22:13:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:14:07,193 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\auth.py', reloading
+2025-01-07 22:14:07,193 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\decorator.py', reloading
+2025-01-07 22:14:07,193 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-07 22:14:07,193 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\get_db_info.py', reloading
+2025-01-07 22:14:07,203 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\cours.py', reloading
+2025-01-07 22:14:07,203 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\programme.py', reloading
+2025-01-07 22:14:07,203 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\routes.py', reloading
+2025-01-07 22:14:07,203 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\settings.py', reloading
+2025-01-07 22:14:07,714 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-07 22:14:08,489 - WARNING -  * Debugger is active!
+2025-01-07 22:14:08,489 - INFO -  * Debugger PIN: 342-468-122
+2025-01-07 22:16:03,190 - INFO - 127.0.0.1 - - [07/Jan/2025 22:16:03] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:16:03,241 - INFO - 127.0.0.1 - - [07/Jan/2025 22:16:03] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:16:04,000 - INFO - 127.0.0.1 - - [07/Jan/2025 22:16:04] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-07 22:16:04,053 - INFO - 127.0.0.1 - - [07/Jan/2025 22:16:04] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 22:16:04,072 - INFO - 127.0.0.1 - - [07/Jan/2025 22:16:04] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:16:42,626 - INFO - 127.0.0.1 - - [07/Jan/2025 22:16:42] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 22:16:42,645 - INFO - 127.0.0.1 - - [07/Jan/2025 22:16:42] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:16:42,665 - INFO - 127.0.0.1 - - [07/Jan/2025 22:16:42] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:16:47,128 - ERROR - OpenAI error: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}
+2025-01-07 22:16:47,138 - ERROR - Unexpected error: Could not build url for endpoint 'cours.view_plan_cadre' with values ['plan_id']. Did you forget to specify values ['cours_id']?
+2025-01-07 22:16:47,138 - INFO - 127.0.0.1 - - [07/Jan/2025 22:16:47] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 22:16:47,161 - INFO - 127.0.0.1 - - [07/Jan/2025 22:16:47] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:16:47,178 - INFO - 127.0.0.1 - - [07/Jan/2025 22:16:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:17:09,447 - ERROR - OpenAI error: Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.', 'type': 'insufficient_quota', 'param': None, 'code': 'insufficient_quota'}}
+2025-01-07 22:17:09,456 - ERROR - Unexpected error: Could not build url for endpoint 'cours.view_plan_cadre' with values ['plan_id']. Did you forget to specify values ['cours_id']?
+2025-01-07 22:17:09,456 - INFO - 127.0.0.1 - - [07/Jan/2025 22:17:09] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 22:17:09,474 - INFO - 127.0.0.1 - - [07/Jan/2025 22:17:09] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:17:09,495 - INFO - 127.0.0.1 - - [07/Jan/2025 22:17:09] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:17:39,664 - INFO - 127.0.0.1 - - [07/Jan/2025 22:17:39] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-07 22:17:39,695 - INFO - 127.0.0.1 - - [07/Jan/2025 22:17:39] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 22:17:39,714 - INFO - 127.0.0.1 - - [07/Jan/2025 22:17:39] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:18:27,197 - INFO - 127.0.0.1 - - [07/Jan/2025 22:18:27] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 22:18:27,216 - INFO - 127.0.0.1 - - [07/Jan/2025 22:18:27] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:18:27,246 - INFO - 127.0.0.1 - - [07/Jan/2025 22:18:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:21:22,134 - INFO - 127.0.0.1 - - [07/Jan/2025 22:21:22] "[32mPOST /plan_cadre/9/generate_content HTTP/1.1[0m" 302 -
+2025-01-07 22:21:22,182 - INFO - 127.0.0.1 - - [07/Jan/2025 22:21:22] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:21:22,203 - INFO - 127.0.0.1 - - [07/Jan/2025 22:21:22] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:23:44,943 - INFO - 127.0.0.1 - - [07/Jan/2025 22:23:44] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:23:44,985 - INFO - 127.0.0.1 - - [07/Jan/2025 22:23:44] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:24:23,527 - INFO - 127.0.0.1 - - [07/Jan/2025 22:24:23] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-07 22:26:31,582 - INFO - 127.0.0.1 - - [07/Jan/2025 22:26:31] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-07 22:26:31,615 - INFO - 127.0.0.1 - - [07/Jan/2025 22:26:31] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-07 22:26:31,634 - INFO - 127.0.0.1 - - [07/Jan/2025 22:26:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-07 22:26:55,924 - INFO - 127.0.0.1 - - [07/Jan/2025 22:26:55] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-07 22:26:55,969 - INFO - 127.0.0.1 - - [07/Jan/2025 22:26:55] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-07 22:26:55,990 - INFO - 127.0.0.1 - - [07/Jan/2025 22:26:55] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:18:02,550 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\app.py', reloading
+2025-01-08 10:18:02,550 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\auth.py', reloading
+2025-01-08 10:18:02,560 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\decorator.py', reloading
+2025-01-08 10:18:02,560 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-08 10:18:02,570 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\get_db_info.py', reloading
+2025-01-08 10:18:02,590 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\cours.py', reloading
+2025-01-08 10:18:02,603 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\programme.py', reloading
+2025-01-08 10:18:02,610 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\routes.py', reloading
+2025-01-08 10:18:02,620 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\settings.py', reloading
+2025-01-08 10:18:03,833 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-08 10:18:08,877 - WARNING -  * Debugger is active!
+2025-01-08 10:18:08,877 - INFO -  * Debugger PIN: 342-468-122
+2025-01-08 10:25:30,040 - INFO - 127.0.0.1 - - [08/Jan/2025 10:25:30] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-08 10:25:30,101 - INFO - 127.0.0.1 - - [08/Jan/2025 10:25:30] "GET /login?next=/ HTTP/1.1" 200 -
+2025-01-08 10:25:30,216 - INFO - 127.0.0.1 - - [08/Jan/2025 10:25:30] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:36:48,168 - INFO - 127.0.0.1 - - [08/Jan/2025 10:36:48] "[32mGET /cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-08 10:36:48,182 - INFO - 127.0.0.1 - - [08/Jan/2025 10:36:48] "GET /login?next=/cours/1/plan_cadre HTTP/1.1" 200 -
+2025-01-08 10:36:48,223 - INFO - 127.0.0.1 - - [08/Jan/2025 10:36:48] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:36:58,208 - INFO - 127.0.0.1 - - [08/Jan/2025 10:36:58] "[32mPOST /login?next=/cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-08 10:36:58,216 - INFO - 127.0.0.1 - - [08/Jan/2025 10:36:58] "[32mGET /cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-08 10:36:58,342 - INFO - 127.0.0.1 - - [08/Jan/2025 10:36:58] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2025-01-08 10:36:58,382 - INFO - 127.0.0.1 - - [08/Jan/2025 10:36:58] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:37:44,978 - INFO - 127.0.0.1 - - [08/Jan/2025 10:37:44] "GET /cours/1 HTTP/1.1" 200 -
+2025-01-08 10:37:45,013 - INFO - 127.0.0.1 - - [08/Jan/2025 10:37:45] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:37:46,861 - INFO - 127.0.0.1 - - [08/Jan/2025 10:37:46] "GET /edit_cours/1 HTTP/1.1" 200 -
+2025-01-08 10:37:46,885 - INFO - 127.0.0.1 - - [08/Jan/2025 10:37:46] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:37:50,658 - INFO - 127.0.0.1 - - [08/Jan/2025 10:37:50] "[32mPOST /edit_cours/1 HTTP/1.1[0m" 302 -
+2025-01-08 10:37:50,720 - INFO - 127.0.0.1 - - [08/Jan/2025 10:37:50] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-08 10:37:50,743 - INFO - 127.0.0.1 - - [08/Jan/2025 10:37:50] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:38:28,375 - INFO - 127.0.0.1 - - [08/Jan/2025 10:38:28] "[32mGET /cours/7/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-08 10:38:28,401 - INFO - 127.0.0.1 - - [08/Jan/2025 10:38:28] "GET /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-08 10:38:28,437 - INFO - 127.0.0.1 - - [08/Jan/2025 10:38:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:38:30,915 - INFO - 127.0.0.1 - - [08/Jan/2025 10:38:30] "GET /cours/7 HTTP/1.1" 200 -
+2025-01-08 10:38:30,939 - INFO - 127.0.0.1 - - [08/Jan/2025 10:38:30] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:38:32,779 - INFO - 127.0.0.1 - - [08/Jan/2025 10:38:32] "GET /edit_cours/7 HTTP/1.1" 200 -
+2025-01-08 10:38:32,812 - INFO - 127.0.0.1 - - [08/Jan/2025 10:38:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:38:37,476 - INFO - 127.0.0.1 - - [08/Jan/2025 10:38:37] "[32mPOST /edit_cours/7 HTTP/1.1[0m" 302 -
+2025-01-08 10:38:37,509 - INFO - 127.0.0.1 - - [08/Jan/2025 10:38:37] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-08 10:38:37,528 - INFO - 127.0.0.1 - - [08/Jan/2025 10:38:37] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:39:09,365 - INFO - 127.0.0.1 - - [08/Jan/2025 10:39:09] "[32mGET /cours/12/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-08 10:39:09,389 - INFO - 127.0.0.1 - - [08/Jan/2025 10:39:09] "GET /cours/12/plan_cadre/10 HTTP/1.1" 200 -
+2025-01-08 10:39:09,424 - INFO - 127.0.0.1 - - [08/Jan/2025 10:39:09] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:39:12,129 - INFO - 127.0.0.1 - - [08/Jan/2025 10:39:12] "GET /cours/12 HTTP/1.1" 200 -
+2025-01-08 10:39:12,153 - INFO - 127.0.0.1 - - [08/Jan/2025 10:39:12] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:39:13,721 - INFO - 127.0.0.1 - - [08/Jan/2025 10:39:13] "GET /edit_cours/12 HTTP/1.1" 200 -
+2025-01-08 10:39:13,753 - INFO - 127.0.0.1 - - [08/Jan/2025 10:39:13] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:39:17,897 - INFO - 127.0.0.1 - - [08/Jan/2025 10:39:17] "[32mPOST /edit_cours/12 HTTP/1.1[0m" 302 -
+2025-01-08 10:39:17,931 - INFO - 127.0.0.1 - - [08/Jan/2025 10:39:17] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-08 10:39:17,953 - INFO - 127.0.0.1 - - [08/Jan/2025 10:39:17] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:39:59,198 - INFO - 127.0.0.1 - - [08/Jan/2025 10:39:59] "[32mGET /cours/17/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-08 10:39:59,217 - INFO - 127.0.0.1 - - [08/Jan/2025 10:39:59] "GET /cours/17/plan_cadre/13 HTTP/1.1" 200 -
+2025-01-08 10:39:59,259 - INFO - 127.0.0.1 - - [08/Jan/2025 10:39:59] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:40:02,000 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:02] "GET /cours/17 HTTP/1.1" 200 -
+2025-01-08 10:40:02,025 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:02] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:40:03,371 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:03] "GET /edit_cours/17 HTTP/1.1" 200 -
+2025-01-08 10:40:03,398 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:03] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:40:10,860 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:10] "[32mPOST /edit_cours/17 HTTP/1.1[0m" 302 -
+2025-01-08 10:40:10,898 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:10] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-08 10:40:10,920 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:10] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:40:28,427 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:28] "[32mGET /cours/23/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-08 10:40:28,451 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:28] "GET /cours/23/plan_cadre/17 HTTP/1.1" 200 -
+2025-01-08 10:40:28,484 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:40:31,600 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:31] "GET /cours/23 HTTP/1.1" 200 -
+2025-01-08 10:40:31,625 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:40:33,005 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:33] "GET /edit_cours/23 HTTP/1.1" 200 -
+2025-01-08 10:40:33,039 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:33] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:40:37,960 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:37] "[32mPOST /edit_cours/23 HTTP/1.1[0m" 302 -
+2025-01-08 10:40:37,999 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:37] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-08 10:40:38,016 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:38] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:40:49,167 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:49] "[32mGET /cours/29/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-08 10:40:49,181 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:49] "GET /cours/29/plan_cadre/30 HTTP/1.1" 200 -
+2025-01-08 10:40:49,223 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:49] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:40:51,388 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:51] "GET /plan_cadre/30/edit HTTP/1.1" 200 -
+2025-01-08 10:40:51,420 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:40:57,007 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:57] "GET /cours/29 HTTP/1.1" 200 -
+2025-01-08 10:40:57,033 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:57] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:40:58,855 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:58] "GET /edit_cours/29 HTTP/1.1" 200 -
+2025-01-08 10:40:58,889 - INFO - 127.0.0.1 - - [08/Jan/2025 10:40:58] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:41:04,639 - INFO - 127.0.0.1 - - [08/Jan/2025 10:41:04] "[32mPOST /edit_cours/29 HTTP/1.1[0m" 302 -
+2025-01-08 10:41:04,675 - INFO - 127.0.0.1 - - [08/Jan/2025 10:41:04] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-08 10:41:04,700 - INFO - 127.0.0.1 - - [08/Jan/2025 10:41:04] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:42:40,197 - INFO - 127.0.0.1 - - [08/Jan/2025 10:42:40] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-08 10:42:40,217 - INFO - 127.0.0.1 - - [08/Jan/2025 10:42:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:44:22,564 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\programme.py', reloading
+2025-01-08 10:44:22,564 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\programme.py', reloading
+2025-01-08 10:44:22,564 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\programme.py', reloading
+2025-01-08 10:44:22,946 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-08 10:44:23,938 - WARNING -  * Debugger is active!
+2025-01-08 10:44:23,938 - INFO -  * Debugger PIN: 342-468-122
+2025-01-08 10:44:25,537 - INFO - 127.0.0.1 - - [08/Jan/2025 10:44:25] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-08 10:44:25,575 - INFO - 127.0.0.1 - - [08/Jan/2025 10:44:25] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:45:19,770 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\programme.py', reloading
+2025-01-08 10:45:19,780 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\programme.py', reloading
+2025-01-08 10:45:19,780 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\programme.py', reloading
+2025-01-08 10:45:19,780 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\programme.py', reloading
+2025-01-08 10:45:20,432 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-08 10:45:21,462 - WARNING -  * Debugger is active!
+2025-01-08 10:45:21,462 - INFO -  * Debugger PIN: 342-468-122
+2025-01-08 10:47:15,057 - INFO - 127.0.0.1 - - [08/Jan/2025 10:47:15] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-08 10:47:15,174 - INFO - 127.0.0.1 - - [08/Jan/2025 10:47:15] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:47:23,092 - INFO - 127.0.0.1 - - [08/Jan/2025 10:47:23] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-08 10:47:23,119 - INFO - 127.0.0.1 - - [08/Jan/2025 10:47:23] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:47:39,308 - INFO - 127.0.0.1 - - [08/Jan/2025 10:47:39] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-08 10:47:39,337 - INFO - 127.0.0.1 - - [08/Jan/2025 10:47:39] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:48:05,382 - INFO - 127.0.0.1 - - [08/Jan/2025 10:48:05] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-08 10:48:05,523 - INFO - 127.0.0.1 - - [08/Jan/2025 10:48:05] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-08 10:48:05,554 - INFO - 127.0.0.1 - - [08/Jan/2025 10:48:05] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:50:36,864 - INFO - 127.0.0.1 - - [08/Jan/2025 10:50:36] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-08 10:50:36,924 - INFO - 127.0.0.1 - - [08/Jan/2025 10:50:36] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-08 10:50:36,974 - INFO - 127.0.0.1 - - [08/Jan/2025 10:50:36] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-08 10:50:41,073 - INFO - 127.0.0.1 - - [08/Jan/2025 10:50:41] "GET /plan_cadre/9/export HTTP/1.1" 200 -
+2025-01-08 10:51:47,698 - INFO - 127.0.0.1 - - [08/Jan/2025 10:51:47] "GET /plan_cadre/9/export HTTP/1.1" 200 -
