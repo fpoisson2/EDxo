@@ -15,9 +15,6 @@
 
     <!-- Boutons d'Action Supplémentaires -->
     <div class="d-flex gap-3 mb-5 align-items-center">
-        <a href="{{ url_for('plan_cadre.edit_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary d-flex align-items-center">
-            <i class="bi bi-pencil-square me-2"></i> Éditer le plan-cadre
-        </a>
         <button type="button" class="btn btn-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
             <i class="bi bi-box-arrow-up-right me-2"></i>
             <span class="btn-text">Générer le plan-cadre</span>
