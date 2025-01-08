@@ -422,6 +422,7 @@ def generate_plan_cadre_content(plan_id):
                 f"Informations supplémentaires: {additional_info}\n\n"
                 "Voici le schéma JSON auquel ta réponse doit strictement adhérer :\n\n"
                 f"{schema_json}\n\n"
+                "Utilise un langage neutre (Par exemple 'étudiant' devrait être 'personne étudiante'.\n\n"
 
                 "Voici différents prompts."
                 f"- fields:{ai_fields}\n\n"
