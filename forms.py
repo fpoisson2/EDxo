@@ -12,7 +12,8 @@ from wtforms import (
     FieldList,
     Form,
     BooleanField,
-    PasswordField
+    PasswordField,
+    HiddenField
 )
 from wtforms import ColorField, SubmitField
 from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional, Length, EqualTo
@@ -266,3 +267,20 @@ class PlanCadreCoursPrealableForm(FlaskForm):
 class DuplicatePlanCadreForm(FlaskForm):
     new_cours_id = SelectField('Dupliquer vers le Cours', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Dupliquer Plan Cadre')
+
+class CreateUserForm(FlaskForm):
+    username = StringField('Nom d\'utilisateur', validators=[DataRequired(), Length(min=3, max=25)])
+    password = PasswordField('Mot de passe', validators=[DataRequired(), Length(min=6)])
+    role = SelectField('Rôle', choices=[
+        ('admin', 'Admin'),
+        ('professeur', 'Professeur'),
+        ('coordo', 'Coordonnateur'),
+        ('cp', 'Conseiller pédagogique')
+    ], validators=[DataRequired()])
+    submit = SubmitField('Créer')
+
+# forms.py
+class DeleteUserForm(FlaskForm):
+    user_id = HiddenField(validators=[DataRequired()])
+    submit = SubmitField('Supprimer')
+
