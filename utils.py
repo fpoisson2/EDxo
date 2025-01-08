@@ -573,22 +573,107 @@ def generate_docx_with_template(plan_id):
     
     competence_ids_uniques = list(competence_ids)
 
-    competence_info_atteint = []
+    competence_info_atteint = {}
 
-
-    # Loop over each unique element competence ID
     for elemcompid in competence_ids_uniques:
+        # Create a cursor object
+        cursor = conn.cursor()
+
         # Execute the query and fetch the results for the given element competence ID
-        competence_cours = conn.execute('SELECT id, code, nom, criteria_de_performance, contexte_de_realisation FROM Competence WHERE id = ?', (elemcompid,)).fetchall()
-        
-        # Append the results (list of tuples) to the competence_info list
+        competence_cours = cursor.execute(
+            'SELECT id, code, nom, criteria_de_performance, contexte_de_realisation FROM Competence WHERE id = ?',
+            (elemcompid,)
+        ).fetchall()
+
+        # Convert the results (list of tuples) to a dictionary using column names
+        columns = [column[0] for column in cursor.description]  # Get column names from cursor description
         for row in competence_cours:
-            row_dict = dict(row)  # Convert sqlite3.Row to dictionary
+            # Create a dictionary from the tuple by pairing column names with values
+            row_dict = dict(zip(columns, row))  # Create the dictionary
+
+            # Parse the HTML fields
             contexte_html = row_dict['contexte_de_realisation']
             row_dict['contexte_de_realisation'] = parse_html_to_nested_list(contexte_html)
-            contexte_html = row_dict['criteria_de_performance']
-            row_dict['criteria_de_performance'] = parse_html_to_list(contexte_html)
-            competence_info_atteint.append(row_dict)
+
+            criteria_html = row_dict['criteria_de_performance']
+            row_dict['criteria_de_performance'] = parse_html_to_list(criteria_html)
+
+            # Initialize the competence in the dictionary if it doesn't already exist
+            if row_dict['id'] not in competence_info_atteint:
+                competence_info_atteint[row_dict['id']] = {
+                    "id": row_dict['id'],
+                    "code": row_dict['code'],
+                    "nom": row_dict['nom'],
+                    "criteria_de_performance": row_dict['criteria_de_performance'],
+                    "contexte_de_realisation": row_dict['contexte_de_realisation'],
+                    "elements": []  # Initialize elements list
+                }
+
+            # Now fetch related elements for this competence
+            element_competence_data = cursor.execute("""
+                SELECT 
+                    ec.id AS element_competence_id, 
+                    ec.nom, 
+                    ec.competence_id,
+                    GROUP_CONCAT(ecc.criteria, ', ') AS all_criteria
+                FROM 
+                    ElementCompetence AS ec
+                JOIN 
+                    ElementCompetenceCriteria AS ecc ON ec.id = ecc.element_competence_id
+                WHERE 
+                    ec.competence_id = ?
+                GROUP BY 
+                    ec.id, ec.nom, ec.competence_id;
+            """, (row_dict['id'],)).fetchall()
+
+            # Loop through the results and add the element competence info to the corresponding competence
+            for row in element_competence_data:
+                element_competence = {
+                    "element_competence_id": row[0],
+                    "nom": row[1],
+                    "criteria": row[3],  # Concatenated criteria
+                    "competence_id": row[2]
+                }
+
+                # Add the element_competence to the elements list of the corresponding competence
+                competence_info_atteint[row_dict['id']]["elements"].append(element_competence)
+
+    # Ajouter les informations sur les cours associés
+    for competence in competence_info_atteint.values():
+        for element in competence["elements"]:
+            element_competence_id = element["element_competence_id"]
+
+            if "cours_associes" not in element:
+                element["cours_associes"] = []
+            # Requête pour récupérer les cours associés
+            cursor.execute("""
+                SELECT 
+                    c.id AS cours_id,
+                    c.code AS cours_code,
+                    c.nom AS cours_nom,
+                    c.session AS cours_session,
+                    ecpc.status AS element_competence_status
+                FROM 
+                    Cours AS c
+                JOIN 
+                    ElementCompetenceParCours AS ecpc ON c.id = ecpc.cours_id
+                WHERE 
+                    ecpc.element_competence_id = ?
+                ORDER BY 
+                    c.session;  -- Trie les résultats par la colonne 'session'
+            """, (element_competence_id,))
+
+            # Ajouter les cours associés à l'élément
+            element["cours_associes"].extend([
+                {
+                    "cours_id": row[0],
+                    "cours_code": row[1],
+                    "cours_nom": row[2],
+                    "cours_session": row[3],
+                    "status": row[4]
+                }
+                for row in cursor.fetchall()
+            ])
 
     # Récupérer les objets cibles
     objets_cibles = conn.execute('SELECT texte, description FROM PlanCadreObjetsCibles WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
@@ -701,7 +786,7 @@ def generate_docx_with_template(plan_id):
         'capacites': capacites_detail,
         'savoir_etre': [dict(se) for se in savoir_etre],
         'competences_info_developes': [competence for competence in competence_info_developes.values()],
-        'competences_info_atteint': [dict(cid) for cid in competence_info_atteint],
+        'competences_info_atteint': [competence for competence in competence_info_atteint.values()],
         'cours_corequis': [dict(cro) for cro in cours_corequis],
         'competences_certifiees': [dict(cc) for cc in competences_certifiees],
         'cours_developpant_une_meme_competence': [dict(cdmc) for cdmc in cours_meme_competence]
