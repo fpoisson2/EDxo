@@ -42,8 +42,9 @@
                             </td>
                             <td>
                                 <form method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
-                                    <input type="hidden" name="user_id" value="{{ user['id'] }}">
-                                    <button type="submit" name="delete_user" class="btn btn-sm btn-outline-danger">
+                                    {{ delete_forms[user['id']].csrf_token }}
+                                    {{ delete_forms[user['id']].user_id(value=user['id']) }}
+                                    <button type="submit" name="delete-submit-{{ user['id'] }}" class="btn btn-sm btn-outline-danger">
                                         <i class="bi bi-trash"></i> Supprimer
                                     </button>
                                 </form>
@@ -63,28 +64,30 @@
         </div>
         <div class="card-body">
             <form method="POST" class="row g-3">
+                {{ create_form.hidden_tag() }} <!-- This includes the CSRF token -->
                 <div class="col-md-4">
-                    <label for="username" class="form-label">Nom d'utilisateur</label>
-                    <input type="text" class="form-control" id="username" name="username" placeholder="Ex: johndoe" required>
+                    {{ create_form.username.label(class="form-label") }}
+                    {{ create_form.username(class="form-control", placeholder="Ex: johndoe", required=True) }}
+                    {% for error in create_form.username.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
                 </div>
                 <div class="col-md-4">
-                    <label for="password" class="form-label">Mot de passe</label>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="********" required>
+                    {{ create_form.password.label(class="form-label") }}
+                    {{ create_form.password(class="form-control", placeholder="********", required=True) }}
+                    {% for error in create_form.password.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
                 </div>
                 <div class="col-md-4">
-                    <label for="role" class="form-label">Rôle</label>
-                    <select class="form-select" id="role" name="role" required>
-                        <option selected disabled>Choisir un rôle</option>
-                        <option value="admin">Admin</option>
-                        <option value="professeur">Professeur</option>
-                        <option value="coordo">Coordonnateur</option>
-                        <option value="cp">Conseiller pédagogique</option>
-                    </select>
+                    {{ create_form.role.label(class="form-label") }}
+                    {{ create_form.role(class="form-select", required=True) }}
+                    {% for error in create_form.role.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
                 </div>
                 <div class="col-12">
-                    <button type="submit" name="create_user" class="btn btn-primary">
-                        <i class="bi bi-plus-circle"></i> Créer
-                    </button>
+                    {{ create_form.submit(class="btn btn-primary") }}
                 </div>
             </form>
         </div>

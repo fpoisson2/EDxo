@@ -27,7 +27,9 @@ from forms import (
     GlobalGenerationSettingsForm, 
     GenerationSettingForm,
     ChangePasswordForm,
-    LoginForm
+    LoginForm,
+    CreateUserForm, 
+    DeleteUserForm
 )
 from flask_ckeditor import CKEditor
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -97,7 +99,7 @@ def logout():
 @main.route('/manage_users', methods=['GET', 'POST'])
 @role_required('admin')
 def manage_users():
-    if current_user.role != 'admin':  # Vérifiez que seul l'admin a accès
+    if current_user.role != 'admin':
         flash('Accès interdit.', 'danger')
         return redirect(url_for('settings.parametres'))
 
@@ -105,16 +107,14 @@ def manage_users():
     users = conn.execute('SELECT * FROM User').fetchall()
     conn.close()
 
-    if request.method == 'POST':
-        if 'create_user' in request.form:
-            username = request.form.get('username')
-            password = request.form.get('password')
-            role = request.form.get('role')
+    create_form = CreateUserForm(prefix='create')
+    delete_forms = {user['id']: DeleteUserForm(prefix=f'delete_{user["id"]}') for user in users}
 
-            # Vérification des champs
-            if not username or not password or not role:
-                flash('Tous les champs sont requis pour créer un utilisateur.', 'warning')
-                return redirect(url_for('main.manage_users'))
+    if request.method == 'POST':
+        if 'create-submit' in request.form and create_form.validate_on_submit():
+            username = create_form.username.data
+            password = create_form.password.data
+            role = create_form.role.data
 
             hashed_password = generate_password_hash(password, method='scrypt')
             try:
@@ -131,32 +131,30 @@ def manage_users():
                 conn.close()
             return redirect(url_for('main.manage_users'))
 
-        elif 'delete_user' in request.form:
-            user_id = request.form.get('user_id')
+        # Handle delete user forms
+        for user in users:
+            form = delete_forms[user['id']]
+            if f'delete-submit-{user["id"]}' in request.form and form.validate_on_submit():
+                user_id = form.user_id.data
 
-            # Empêcher la suppression de l'utilisateur actuel
-            if str(user_id) == str(current_user.id):
-                flash('Vous ne pouvez pas supprimer votre propre compte.', 'danger')
+                if str(user_id) == str(current_user.id):
+                    flash('Vous ne pouvez pas supprimer votre propre compte.', 'danger')
+                    return redirect(url_for('main.manage_users'))
+
+                try:
+                    conn = get_db_connection()
+                    conn.execute('DELETE FROM User WHERE id = ?', (user_id,))
+                    conn.commit()
+                    flash('Utilisateur supprimé avec succès.', 'success')
+                except Exception as e:
+                    flash(f'Erreur lors de la suppression : {e}', 'danger')
+                finally:
+                    conn.close()
                 return redirect(url_for('main.manage_users'))
 
-            # Optionnel : Empêcher la suppression des comptes administrateurs (sauf si vous le souhaitez)
-            # user_to_delete = conn.execute('SELECT * FROM User WHERE id = ?', (user_id,)).fetchone()
-            # if user_to_delete and user_to_delete['role'] == 'admin':
-            #     flash('Vous ne pouvez pas supprimer un compte administrateur.', 'danger')
-            #     return redirect(url_for('main.manage_users'))
+    return render_template('manage_users.html', users=users, create_form=create_form, delete_forms=delete_forms, current_user_id=current_user.id)
 
-            try:
-                conn = get_db_connection()
-                conn.execute('DELETE FROM User WHERE id = ?', (user_id,))
-                conn.commit()
-                flash('Utilisateur supprimé avec succès.', 'success')
-            except Exception as e:
-                flash(f'Erreur lors de la suppression : {e}', 'danger')
-            finally:
-                conn.close()
-            return redirect(url_for('main.manage_users'))
-
-    return render_template('manage_users.html', users=users, current_user_id=current_user.id)
+    
 @main.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
