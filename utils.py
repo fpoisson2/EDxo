@@ -748,6 +748,22 @@ def generate_docx_with_template(plan_id):
             C.id, C.nom, C.code, C.session;
     """, (plan['cours_id'],)).fetchall() 
 
+    # Récupérer les cours corequis avec leur nom et code
+    cc = conn.execute('''
+        SELECT DISTINCT C2.nom AS nom, C2.code AS code
+        FROM CoursCorequis CC
+        JOIN Cours C2 ON CC.cours_corequis_id = C2.id
+        WHERE CC.cours_id = ?
+    ''', (plan['cours_id'],)).fetchall()
+
+    # Récupérer les cours préalables avec leur nom, code et note nécessaire
+    cp = conn.execute('''
+        SELECT DISTINCT C2.nom AS nom, C2.code AS code, CP.note_necessaire
+        FROM CoursPrealable CP
+        JOIN Cours C2 ON CP.cours_prealable_id = C2.id
+        WHERE CP.cours_id = ?
+    ''', (plan['cours_id'],)).fetchall()
+
     # Fermer la connexion
     conn.close()
 
@@ -789,7 +805,19 @@ def generate_docx_with_template(plan_id):
         'competences_info_atteint': [competence for competence in competence_info_atteint.values()],
         'cours_corequis': [dict(cro) for cro in cours_corequis],
         'competences_certifiees': [dict(cc) for cc in competences_certifiees],
-        'cours_developpant_une_meme_competence': [dict(cdmc) for cdmc in cours_meme_competence]
+        'cours_developpant_une_meme_competence': [dict(cdmc) for cdmc in cours_meme_competence],
+        'cc': [
+            {'nom': cc['nom'], 'code': cc['code']} 
+            for cc in cc
+        ],
+        'cp': [
+            {
+                'nom': cp['nom'], 
+                'code': cp['code'],
+                'note_necessaire': cp['note_necessaire']
+            } 
+            for cp in cp
+        ]
     }
 
     # Charger le modèle DOCX
