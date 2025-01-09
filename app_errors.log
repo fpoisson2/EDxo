@@ -11068,3 +11068,106 @@ fields.3.content
 2025-01-09 15:25:31,795 - INFO -  * Restarting with watchdog (windowsapi)
 2025-01-09 15:25:32,788 - WARNING -  * Debugger is active!
 2025-01-09 15:25:32,790 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 15:25:49,952 - INFO - 127.0.0.1 - - [09/Jan/2025 15:25:49] "[32mGET /cours/8/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 15:25:50,079 - INFO - 127.0.0.1 - - [09/Jan/2025 15:25:50] "GET /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:25:50,175 - INFO - 127.0.0.1 - - [09/Jan/2025 15:25:50] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:26:35,399 - INFO - 127.0.0.1 - - [09/Jan/2025 15:26:35] "GET /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 15:26:35,434 - INFO - 127.0.0.1 - - [09/Jan/2025 15:26:35] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:26:51,712 - INFO - 127.0.0.1 - - [09/Jan/2025 15:26:51] "GET /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 15:26:51,738 - INFO - 127.0.0.1 - - [09/Jan/2025 15:26:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:28:19,721 - INFO - 127.0.0.1 - - [09/Jan/2025 15:28:19] "GET /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 15:28:19,747 - INFO - 127.0.0.1 - - [09/Jan/2025 15:28:19] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:28:56,069 - INFO - 127.0.0.1 - - [09/Jan/2025 15:28:56] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-09 15:28:56,122 - INFO - 127.0.0.1 - - [09/Jan/2025 15:28:56] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-09 15:28:56,149 - INFO - 127.0.0.1 - - [09/Jan/2025 15:28:56] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:29:12,941 - INFO - 127.0.0.1 - - [09/Jan/2025 15:29:12] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 15:29:12,984 - INFO - 127.0.0.1 - - [09/Jan/2025 15:29:12] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:29:13,011 - INFO - 127.0.0.1 - - [09/Jan/2025 15:29:13] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:29:22,925 - INFO - 127.0.0.1 - - [09/Jan/2025 15:29:22] "[32mGET /cours/10/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 15:29:22,965 - INFO - 127.0.0.1 - - [09/Jan/2025 15:29:22] "GET /cours/10/plan_cadre/6 HTTP/1.1" 200 -
+2025-01-09 15:29:22,989 - INFO - 127.0.0.1 - - [09/Jan/2025 15:29:22] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:29:41,101 - INFO - 127.0.0.1 - - [09/Jan/2025 15:29:41] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 15:29:41,130 - INFO - 127.0.0.1 - - [09/Jan/2025 15:29:41] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:29:41,170 - INFO - 127.0.0.1 - - [09/Jan/2025 15:29:41] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:30:13,752 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask\\app.py', reloading
+2025-01-09 15:30:13,752 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask_login\\utils.py', reloading
+2025-01-09 15:30:13,772 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:13] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:13,781 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:13] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:14,170 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 15:30:15,159 - WARNING -  * Debugger is active!
+2025-01-09 15:30:15,161 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 15:30:15,257 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:15] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:15,276 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:15] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:15,284 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:15] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:15,287 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:15] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:15,297 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:15] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:15,298 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:15] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:15,311 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:15] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:15,347 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:15] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:29,585 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:29] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:30:29,666 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:30:47,170 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:47] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:47,173 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:47] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:47,638 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:47] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:47,657 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:47] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:47,804 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:47] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:47,809 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:47] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:30:50,936 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:50] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:30:50,962 - INFO - 127.0.0.1 - - [09/Jan/2025 15:30:50] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:31:35,236 - INFO - 127.0.0.1 - - [09/Jan/2025 15:31:35] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:31:35,265 - INFO - 127.0.0.1 - - [09/Jan/2025 15:31:35] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:31:42,621 - INFO - 127.0.0.1 - - [09/Jan/2025 15:31:42] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:31:42,638 - INFO - 127.0.0.1 - - [09/Jan/2025 15:31:42] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:31:52,848 - INFO - 127.0.0.1 - - [09/Jan/2025 15:31:52] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:31:52,866 - INFO - 127.0.0.1 - - [09/Jan/2025 15:31:52] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:31:54,275 - INFO - 127.0.0.1 - - [09/Jan/2025 15:31:54] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:31:54,276 - INFO - 127.0.0.1 - - [09/Jan/2025 15:31:54] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:31:54,819 - INFO - 127.0.0.1 - - [09/Jan/2025 15:31:54] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:31:54,834 - INFO - 127.0.0.1 - - [09/Jan/2025 15:31:54] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:31:56,152 - INFO - 127.0.0.1 - - [09/Jan/2025 15:31:56] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:31:56,178 - INFO - 127.0.0.1 - - [09/Jan/2025 15:31:56] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:32:18,505 - INFO - 127.0.0.1 - - [09/Jan/2025 15:32:18] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:32:18,509 - INFO - 127.0.0.1 - - [09/Jan/2025 15:32:18] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:32:19,174 - INFO - 127.0.0.1 - - [09/Jan/2025 15:32:19] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:32:19,181 - INFO - 127.0.0.1 - - [09/Jan/2025 15:32:19] "[35m[1mPOST /cours/9/plan_cadre/9 HTTP/1.1[0m" 500 -
+2025-01-09 15:32:23,382 - INFO - 127.0.0.1 - - [09/Jan/2025 15:32:23] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:32:23,413 - INFO - 127.0.0.1 - - [09/Jan/2025 15:32:23] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:32:28,316 - INFO - 127.0.0.1 - - [09/Jan/2025 15:32:28] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:32:28,347 - INFO - 127.0.0.1 - - [09/Jan/2025 15:32:28] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:35:29,930 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.10:5000
+2025-01-09 15:35:29,930 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-09 15:35:29,930 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 15:35:30,890 - WARNING -  * Debugger is active!
+2025-01-09 15:35:30,890 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 15:35:33,621 - INFO - 127.0.0.1 - - [09/Jan/2025 15:35:33] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:35:33,630 - INFO - 127.0.0.1 - - [09/Jan/2025 15:35:33] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:36:05,216 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:05] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:36:05,246 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:05] "POST /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:36:09,829 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:09] "[32mGET /cours/8/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 15:36:09,938 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:09] "GET /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:36:10,029 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:10] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:36:16,126 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:16] "[32mGET /cours/7/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 15:36:16,167 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:16] "GET /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 15:36:16,195 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:16] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:36:19,660 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:19] "[32mGET /cours/10/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 15:36:19,699 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:19] "GET /cours/10/plan_cadre/6 HTTP/1.1" 200 -
+2025-01-09 15:36:19,724 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:19] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:36:41,477 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:41] "POST /cours/10/plan_cadre/6 HTTP/1.1" 200 -
+2025-01-09 15:36:41,508 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:41] "POST /cours/10/plan_cadre/6 HTTP/1.1" 200 -
+2025-01-09 15:36:44,043 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:44] "[32mGET /cours/11/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 15:36:44,080 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:44] "GET /cours/11/plan_cadre/7 HTTP/1.1" 200 -
+2025-01-09 15:36:44,108 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:44] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:36:55,204 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:55] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-09 15:36:55,259 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:55] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-09 15:36:55,279 - INFO - 127.0.0.1 - - [09/Jan/2025 15:36:55] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:37:16,250 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.10:5000
+2025-01-09 15:37:16,250 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-09 15:37:16,250 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 15:37:17,270 - WARNING -  * Debugger is active!
+2025-01-09 15:37:17,271 - INFO -  * Debugger PIN: 342-468-122
