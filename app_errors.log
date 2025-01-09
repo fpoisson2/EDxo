@@ -10995,3 +10995,76 @@ fields.3.content
 2025-01-09 15:05:17,573 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:17] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
 2025-01-09 15:05:21,064 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:21] "GET /cours/7/plan_de_cours/ HTTP/1.1" 200 -
 2025-01-09 15:05:21,086 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:21] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:06:03,310 - INFO - 127.0.0.1 - - [09/Jan/2025 15:06:03] "[32mGET /cours/8/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 15:06:03,330 - INFO - 127.0.0.1 - - [09/Jan/2025 15:06:03] "GET /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:06:03,352 - INFO - 127.0.0.1 - - [09/Jan/2025 15:06:03] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:06:10,699 - INFO - 127.0.0.1 - - [09/Jan/2025 15:06:10] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:06:10,707 - INFO - 127.0.0.1 - - [09/Jan/2025 15:06:10] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:06:42,146 - INFO - 127.0.0.1 - - [09/Jan/2025 15:06:42] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:06:42,164 - INFO - 127.0.0.1 - - [09/Jan/2025 15:06:42] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:06:43,908 - INFO - 127.0.0.1 - - [09/Jan/2025 15:06:43] "[31m[1mPOST /cours/8/plan_cadre/19 HTTP/1.1[0m" 400 -
+2025-01-09 15:06:43,910 - INFO - 127.0.0.1 - - [09/Jan/2025 15:06:43] "[31m[1mPOST /cours/8/plan_cadre/19 HTTP/1.1[0m" 400 -
+2025-01-09 15:06:53,901 - INFO - 127.0.0.1 - - [09/Jan/2025 15:06:53] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:06:53,914 - INFO - 127.0.0.1 - - [09/Jan/2025 15:06:53] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:08:00,864 - INFO - 127.0.0.1 - - [09/Jan/2025 15:08:00] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:08:00,888 - INFO - 127.0.0.1 - - [09/Jan/2025 15:08:00] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:08:19,600 - INFO - 127.0.0.1 - - [09/Jan/2025 15:08:19] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:08:19,619 - INFO - 127.0.0.1 - - [09/Jan/2025 15:08:19] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:08:47,087 - INFO - 127.0.0.1 - - [09/Jan/2025 15:08:47] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:08:47,117 - INFO - 127.0.0.1 - - [09/Jan/2025 15:08:47] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:09:10,914 - INFO - 127.0.0.1 - - [09/Jan/2025 15:09:10] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:09:10,936 - INFO - 127.0.0.1 - - [09/Jan/2025 15:09:10] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:09:56,469 - INFO - 127.0.0.1 - - [09/Jan/2025 15:09:56] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:09:56,490 - INFO - 127.0.0.1 - - [09/Jan/2025 15:09:56] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:10:22,062 - INFO - 127.0.0.1 - - [09/Jan/2025 15:10:22] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:10:22,086 - INFO - 127.0.0.1 - - [09/Jan/2025 15:10:22] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:10:57,343 - INFO - 127.0.0.1 - - [09/Jan/2025 15:10:57] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:10:57,365 - INFO - 127.0.0.1 - - [09/Jan/2025 15:10:57] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:11:34,771 - INFO - 127.0.0.1 - - [09/Jan/2025 15:11:34] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:11:34,789 - INFO - 127.0.0.1 - - [09/Jan/2025 15:11:34] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:13:11,031 - INFO - 127.0.0.1 - - [09/Jan/2025 15:13:11] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:13:11,056 - INFO - 127.0.0.1 - - [09/Jan/2025 15:13:11] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:13:54,209 - INFO - 127.0.0.1 - - [09/Jan/2025 15:13:54] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:13:54,229 - INFO - 127.0.0.1 - - [09/Jan/2025 15:13:54] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:14:12,291 - INFO - 127.0.0.1 - - [09/Jan/2025 15:14:12] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:14:12,316 - INFO - 127.0.0.1 - - [09/Jan/2025 15:14:12] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:15:45,918 - INFO - 127.0.0.1 - - [09/Jan/2025 15:15:45] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:15:45,951 - INFO - 127.0.0.1 - - [09/Jan/2025 15:15:45] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:16:18,359 - INFO - 127.0.0.1 - - [09/Jan/2025 15:16:18] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:16:18,388 - INFO - 127.0.0.1 - - [09/Jan/2025 15:16:18] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:18:56,637 - INFO - 127.0.0.1 - - [09/Jan/2025 15:18:56] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:18:56,661 - INFO - 127.0.0.1 - - [09/Jan/2025 15:18:56] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:19:17,864 - INFO - 127.0.0.1 - - [09/Jan/2025 15:19:17] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:19:17,898 - INFO - 127.0.0.1 - - [09/Jan/2025 15:19:17] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:19:25,654 - INFO - 127.0.0.1 - - [09/Jan/2025 15:19:25] "GET /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:19:25,702 - INFO - 127.0.0.1 - - [09/Jan/2025 15:19:25] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:20:32,499 - INFO - 127.0.0.1 - - [09/Jan/2025 15:20:32] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:20:32,522 - INFO - 127.0.0.1 - - [09/Jan/2025 15:20:32] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:21:00,833 - INFO - 127.0.0.1 - - [09/Jan/2025 15:21:00] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:21:00,871 - INFO - 127.0.0.1 - - [09/Jan/2025 15:21:00] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:22:26,875 - INFO - 127.0.0.1 - - [09/Jan/2025 15:22:26] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:22:26,903 - INFO - 127.0.0.1 - - [09/Jan/2025 15:22:26] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:23:10,984 - INFO - 127.0.0.1 - - [09/Jan/2025 15:23:10] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:23:11,010 - INFO - 127.0.0.1 - - [09/Jan/2025 15:23:11] "POST /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:23:13,349 - INFO - 127.0.0.1 - - [09/Jan/2025 15:23:13] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-09 15:23:13,378 - INFO - 127.0.0.1 - - [09/Jan/2025 15:23:13] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-09 15:23:13,399 - INFO - 127.0.0.1 - - [09/Jan/2025 15:23:13] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:23:19,936 - INFO - 127.0.0.1 - - [09/Jan/2025 15:23:19] "GET /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 15:23:19,957 - INFO - 127.0.0.1 - - [09/Jan/2025 15:23:19] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:23:52,110 - INFO - 127.0.0.1 - - [09/Jan/2025 15:23:52] "[32mPOST /cours/9/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-09 15:23:52,148 - INFO - 127.0.0.1 - - [09/Jan/2025 15:23:52] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-09 15:23:52,168 - INFO - 127.0.0.1 - - [09/Jan/2025 15:23:52] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:24:18,719 - INFO - 127.0.0.1 - - [09/Jan/2025 15:24:18] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-09 15:24:18,746 - INFO - 127.0.0.1 - - [09/Jan/2025 15:24:18] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-09 15:24:18,766 - INFO - 127.0.0.1 - - [09/Jan/2025 15:24:18] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:25:00,789 - INFO - 127.0.0.1 - - [09/Jan/2025 15:25:00] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 15:25:00,833 - INFO - 127.0.0.1 - - [09/Jan/2025 15:25:00] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-09 15:25:00,854 - INFO - 127.0.0.1 - - [09/Jan/2025 15:25:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:25:31,789 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.10:5000
+2025-01-09 15:25:31,789 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-09 15:25:31,795 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 15:25:32,788 - WARNING -  * Debugger is active!
+2025-01-09 15:25:32,790 - INFO -  * Debugger PIN: 342-468-122
