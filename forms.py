@@ -21,6 +21,54 @@ from wtforms.widgets import ListWidget, CheckboxInput
 from flask_ckeditor import CKEditorField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
+class CalendrierForm(FlaskForm):
+    semaine = IntegerField("Semaine", validators=[Optional()])
+    sujet = TextAreaField("Sujet", validators=[Optional()])
+    activites = TextAreaField("Activités", validators=[Optional()])
+    travaux_hors_classe = TextAreaField("Travaux hors-classe", validators=[Optional()])
+    evaluations = TextAreaField("Évaluations", validators=[Optional()])
+
+class MediagraphieForm(FlaskForm):
+    reference_bibliographique = TextAreaField("Référence", validators=[DataRequired()])
+
+class DisponibiliteForm(FlaskForm):
+    jour_semaine = StringField("Jour", validators=[Optional()])
+    plage_horaire = StringField("Plage horaire", validators=[Optional()])
+    lieu = StringField("Local/Bureau", validators=[Optional()])
+
+class EvaluationPlanCoursForm(FlaskForm):
+    titre_evaluation = StringField("Titre de l'évaluation", validators=[Optional()])
+    texte_description = TextAreaField("Description", validators=[Optional()])
+    semaine = IntegerField("Semaine", validators=[Optional()])
+    ponderation = StringField("Pondération (ex: 20%)", validators=[Optional()])
+
+class PlanDeCoursForm(FlaskForm):
+    # Champs principaux
+    campus = StringField("Campus", validators=[Optional()])
+    session = StringField("Session", validators=[Optional()])
+    presentation_du_cours = TextAreaField("Présentation du cours", validators=[Optional()])
+    objectif_terminal_du_cours = TextAreaField("Objectif terminal reformulé", validators=[Optional()])
+    organisation_et_methodes = TextAreaField("Organisation du cours et méthodes pédagogiques", validators=[Optional()])
+    accomodement = TextAreaField("Accommodement", validators=[Optional()])
+    evaluation_formative_apprentissages = TextAreaField("Évaluation formative des apprentissages", validators=[Optional()])
+    evaluation_expression_francais = TextAreaField("Évaluation de l’expression en français", validators=[Optional()])
+    seuil_reussite = TextAreaField("Seuil de réussite du cours", validators=[Optional()])
+
+    # Informations enseignant
+    nom_enseignant = StringField("Nom de l’enseignant", validators=[Optional()])
+    telephone_enseignant = StringField("Téléphone de l’enseignant", validators=[Optional()])
+    courriel_enseignant = StringField("Courriel de l’enseignant", validators=[Optional()])
+    bureau_enseignant = StringField("Bureau de l’enseignant", validators=[Optional()])
+
+    # Listes associées
+    calendriers = FieldList(FormField(CalendrierForm), min_entries=0)
+    mediagraphies = FieldList(FormField(MediagraphieForm), min_entries=0)
+    disponibilites = FieldList(FormField(DisponibiliteForm), min_entries=0)
+    evaluations = FieldList(FormField(EvaluationPlanCoursForm), min_entries=0)
+
+    # Bouton de soumission (si besoin)
+    submit = SubmitField("Enregistrer")
+
 class GenerateContentForm(FlaskForm):
     additional_info = TextAreaField('Informations complémentaires', validators=[DataRequired()])
     ai_model = SelectField(
