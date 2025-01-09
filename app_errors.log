@@ -10840,3 +10840,158 @@ fields.3.content
 2025-01-09 14:37:43,112 - INFO - 127.0.0.1 - - [09/Jan/2025 14:37:43] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
 2025-01-09 14:37:43,152 - INFO - 127.0.0.1 - - [09/Jan/2025 14:37:43] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
 2025-01-09 14:37:43,177 - INFO - 127.0.0.1 - - [09/Jan/2025 14:37:43] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 14:38:04,397 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-09 14:38:04,505 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_cadre.py', reloading
+2025-01-09 14:38:05,132 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 14:38:06,173 - WARNING -  * Debugger is active!
+2025-01-09 14:38:06,174 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 14:38:10,665 - INFO - 127.0.0.1 - - [09/Jan/2025 14:38:10] "GET /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 14:38:10,699 - INFO - 127.0.0.1 - - [09/Jan/2025 14:38:10] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 14:38:15,123 - INFO - 127.0.0.1 - - [09/Jan/2025 14:38:15] "[32mGET /cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 14:38:15,215 - INFO - 127.0.0.1 - - [09/Jan/2025 14:38:15] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2025-01-09 14:38:15,242 - INFO - 127.0.0.1 - - [09/Jan/2025 14:38:15] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 14:38:31,032 - INFO - 127.0.0.1 - - [09/Jan/2025 14:38:31] "[32mGET /cours/7/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 14:38:31,047 - INFO - 127.0.0.1 - - [09/Jan/2025 14:38:31] "GET /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:38:31,063 - INFO - 127.0.0.1 - - [09/Jan/2025 14:38:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 14:39:13,091 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\cours.py', reloading
+2025-01-09 14:39:13,113 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:13] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:13,121 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:13] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:13,628 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 14:39:14,626 - WARNING -  * Debugger is active!
+2025-01-09 14:39:14,627 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 14:39:14,691 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:14] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:14,692 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:14] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:14,696 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:14] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:14,710 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:14] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:14,852 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:14] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:14,867 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:14] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:15,029 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:15] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:15,033 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:15] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:16,380 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:16] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:16,388 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:16] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:16,549 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:16] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:16,560 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:16] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:16,734 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:16] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:16,738 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:16] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:16,872 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:16] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:16,889 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:16] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:17,040 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:17] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:17,055 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:17] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:28,199 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:28] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:28,217 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:28] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:28,405 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:28] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:28,410 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:28] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:28,545 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:28] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:28,546 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:28] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:39:41,203 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:41] "GET /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:39:41,277 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:41] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 14:39:50,429 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.10:5000
+2025-01-09 14:39:50,429 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-09 14:39:50,434 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 14:39:51,411 - WARNING -  * Debugger is active!
+2025-01-09 14:39:51,412 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 14:39:51,683 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:51] "GET /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:39:51,716 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 14:39:54,969 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:54] "[31m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 400 -
+2025-01-09 14:39:54,972 - INFO - 127.0.0.1 - - [09/Jan/2025 14:39:54] "[31m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 400 -
+2025-01-09 14:40:18,764 - INFO - 127.0.0.1 - - [09/Jan/2025 14:40:18] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:40:18,777 - INFO - 127.0.0.1 - - [09/Jan/2025 14:40:18] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:40:29,212 - INFO - 127.0.0.1 - - [09/Jan/2025 14:40:29] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:40:29,233 - INFO - 127.0.0.1 - - [09/Jan/2025 14:40:29] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:40:35,109 - INFO - 127.0.0.1 - - [09/Jan/2025 14:40:35] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:40:35,129 - INFO - 127.0.0.1 - - [09/Jan/2025 14:40:35] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:40:38,161 - INFO - 127.0.0.1 - - [09/Jan/2025 14:40:38] "[31m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 400 -
+2025-01-09 14:40:38,171 - INFO - 127.0.0.1 - - [09/Jan/2025 14:40:38] "[31m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 400 -
+2025-01-09 14:40:47,882 - INFO - 127.0.0.1 - - [09/Jan/2025 14:40:47] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:40:47,907 - INFO - 127.0.0.1 - - [09/Jan/2025 14:40:47] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:41:02,473 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:02] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:02,488 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:02] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:03,001 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:03] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:03,005 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:03] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:03,171 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:03] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:03,186 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:03] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:03,377 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:03] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:03,391 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:03] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:03,539 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:03] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:03,545 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:03] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:33,486 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:33] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:41:33,504 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:33] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:41:40,262 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:40] "[31m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 400 -
+2025-01-09 14:41:40,271 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:40] "[31m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 400 -
+2025-01-09 14:41:43,158 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:43] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:43,176 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:43] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:49,576 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:49] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:49,587 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:49] "[35m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 500 -
+2025-01-09 14:41:51,600 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:51] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:41:51,626 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:51] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:41:55,296 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:55] "GET /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:41:55,325 - INFO - 127.0.0.1 - - [09/Jan/2025 14:41:55] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 14:47:08,404 - INFO - 127.0.0.1 - - [09/Jan/2025 14:47:08] "[32mPOST /plan_cadre/4/generate_content HTTP/1.1[0m" 302 -
+2025-01-09 14:47:08,472 - INFO - 127.0.0.1 - - [09/Jan/2025 14:47:08] "GET /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:47:08,498 - INFO - 127.0.0.1 - - [09/Jan/2025 14:47:08] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 14:47:17,147 - INFO - 127.0.0.1 - - [09/Jan/2025 14:47:17] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:47:17,179 - INFO - 127.0.0.1 - - [09/Jan/2025 14:47:17] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:47:32,285 - INFO - 127.0.0.1 - - [09/Jan/2025 14:47:32] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:47:32,308 - INFO - 127.0.0.1 - - [09/Jan/2025 14:47:32] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:47:40,227 - INFO - 127.0.0.1 - - [09/Jan/2025 14:47:40] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:47:40,249 - INFO - 127.0.0.1 - - [09/Jan/2025 14:47:40] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:48:49,103 - INFO - 127.0.0.1 - - [09/Jan/2025 14:48:49] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:48:49,130 - INFO - 127.0.0.1 - - [09/Jan/2025 14:48:49] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:48:59,379 - INFO - 127.0.0.1 - - [09/Jan/2025 14:48:59] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:48:59,405 - INFO - 127.0.0.1 - - [09/Jan/2025 14:48:59] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:49:40,274 - INFO - 127.0.0.1 - - [09/Jan/2025 14:49:40] "[31m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 400 -
+2025-01-09 14:49:40,276 - INFO - 127.0.0.1 - - [09/Jan/2025 14:49:40] "[31m[1mPOST /cours/7/plan_cadre/4 HTTP/1.1[0m" 400 -
+2025-01-09 14:50:14,920 - INFO - 127.0.0.1 - - [09/Jan/2025 14:50:14] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:50:14,946 - INFO - 127.0.0.1 - - [09/Jan/2025 14:50:14] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:50:25,943 - INFO - 127.0.0.1 - - [09/Jan/2025 14:50:25] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:50:25,968 - INFO - 127.0.0.1 - - [09/Jan/2025 14:50:25] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:50:50,902 - INFO - 127.0.0.1 - - [09/Jan/2025 14:50:50] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:50:50,927 - INFO - 127.0.0.1 - - [09/Jan/2025 14:50:50] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:51:04,484 - INFO - 127.0.0.1 - - [09/Jan/2025 14:51:04] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:51:04,515 - INFO - 127.0.0.1 - - [09/Jan/2025 14:51:04] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:51:17,590 - INFO - 127.0.0.1 - - [09/Jan/2025 14:51:17] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:51:17,614 - INFO - 127.0.0.1 - - [09/Jan/2025 14:51:17] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:51:48,064 - INFO - 127.0.0.1 - - [09/Jan/2025 14:51:48] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:51:48,086 - INFO - 127.0.0.1 - - [09/Jan/2025 14:51:48] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:52:34,921 - INFO - 127.0.0.1 - - [09/Jan/2025 14:52:34] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:52:34,945 - INFO - 127.0.0.1 - - [09/Jan/2025 14:52:34] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:53:21,052 - INFO - 127.0.0.1 - - [09/Jan/2025 14:53:21] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:53:21,075 - INFO - 127.0.0.1 - - [09/Jan/2025 14:53:21] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:53:50,409 - INFO - 127.0.0.1 - - [09/Jan/2025 14:53:50] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:53:50,439 - INFO - 127.0.0.1 - - [09/Jan/2025 14:53:50] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:54:25,802 - INFO - 127.0.0.1 - - [09/Jan/2025 14:54:25] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:54:25,825 - INFO - 127.0.0.1 - - [09/Jan/2025 14:54:25] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:56:05,611 - INFO - 127.0.0.1 - - [09/Jan/2025 14:56:05] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:56:05,641 - INFO - 127.0.0.1 - - [09/Jan/2025 14:56:05] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:56:10,022 - INFO - 127.0.0.1 - - [09/Jan/2025 14:56:10] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:56:10,055 - INFO - 127.0.0.1 - - [09/Jan/2025 14:56:10] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:56:54,580 - INFO - 127.0.0.1 - - [09/Jan/2025 14:56:54] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:56:54,610 - INFO - 127.0.0.1 - - [09/Jan/2025 14:56:54] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:58:25,849 - INFO - 127.0.0.1 - - [09/Jan/2025 14:58:25] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:58:25,871 - INFO - 127.0.0.1 - - [09/Jan/2025 14:58:25] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:58:40,549 - INFO - 127.0.0.1 - - [09/Jan/2025 14:58:40] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:58:40,576 - INFO - 127.0.0.1 - - [09/Jan/2025 14:58:40] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:59:12,293 - INFO - 127.0.0.1 - - [09/Jan/2025 14:59:12] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:59:12,320 - INFO - 127.0.0.1 - - [09/Jan/2025 14:59:12] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:59:23,181 - INFO - 127.0.0.1 - - [09/Jan/2025 14:59:23] "GET /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 14:59:23,250 - INFO - 127.0.0.1 - - [09/Jan/2025 14:59:23] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:01:24,774 - INFO - 127.0.0.1 - - [09/Jan/2025 15:01:24] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 15:01:24,797 - INFO - 127.0.0.1 - - [09/Jan/2025 15:01:24] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 15:02:28,490 - INFO - 127.0.0.1 - - [09/Jan/2025 15:02:28] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 15:02:28,511 - INFO - 127.0.0.1 - - [09/Jan/2025 15:02:28] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 15:02:50,250 - INFO - 127.0.0.1 - - [09/Jan/2025 15:02:50] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 15:02:50,301 - INFO - 127.0.0.1 - - [09/Jan/2025 15:02:50] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 15:05:07,883 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:07] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 15:05:07,911 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:07] "POST /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 15:05:12,984 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:12] "GET /cours/7/plan_cadre/4 HTTP/1.1" 200 -
+2025-01-09 15:05:15,448 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:15] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-09 15:05:15,501 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:15] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-09 15:05:15,521 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:15] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:05:17,527 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:17] "[32mGET /cours/8/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 15:05:17,550 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:17] "GET /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-09 15:05:17,573 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:17] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:05:21,064 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:21] "GET /cours/7/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 15:05:21,086 - INFO - 127.0.0.1 - - [09/Jan/2025 15:05:21] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
