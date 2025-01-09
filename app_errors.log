@@ -11234,3 +11234,38 @@ fields.3.content
 2025-01-09 15:49:40,403 - INFO - 127.0.0.1 - - [09/Jan/2025 15:49:40] "[32mGET / HTTP/1.1[0m" 302 -
 2025-01-09 15:49:40,435 - INFO - 127.0.0.1 - - [09/Jan/2025 15:49:40] "GET /programme/1 HTTP/1.1" 200 -
 2025-01-09 15:49:40,459 - INFO - 127.0.0.1 - - [09/Jan/2025 15:49:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:50:34,639 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.10:5000
+2025-01-09 15:50:34,639 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-09 15:50:34,639 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 15:50:35,619 - WARNING -  * Debugger is active!
+2025-01-09 15:50:35,619 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 15:51:31,402 - INFO - 127.0.0.1 - - [09/Jan/2025 15:51:31] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-09 15:51:31,476 - INFO - 127.0.0.1 - - [09/Jan/2025 15:51:31] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-09 15:51:31,579 - INFO - 127.0.0.1 - - [09/Jan/2025 15:51:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:51:32,915 - INFO - 127.0.0.1 - - [09/Jan/2025 15:51:32] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-09 15:51:32,945 - INFO - 127.0.0.1 - - [09/Jan/2025 15:51:32] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-09 15:51:32,972 - INFO - 127.0.0.1 - - [09/Jan/2025 15:51:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 15:51:40,796 - INFO - 127.0.0.1 - - [09/Jan/2025 15:51:40] "[32mGET /cours/2/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-09 15:51:40,880 - INFO - 127.0.0.1 - - [09/Jan/2025 15:51:40] "GET /cours/2/plan_cadre/2 HTTP/1.1" 200 -
+2025-01-09 15:51:40,903 - INFO - 127.0.0.1 - - [09/Jan/2025 15:51:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 16:03:20,151 - INFO - 127.0.0.1 - - [09/Jan/2025 16:03:20] "GET /cours/2/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 16:03:20,172 - INFO - 127.0.0.1 - - [09/Jan/2025 16:03:20] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 16:03:29,538 - INFO - 127.0.0.1 - - [09/Jan/2025 16:03:29] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-09 16:03:29,565 - INFO - 127.0.0.1 - - [09/Jan/2025 16:03:29] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-09 16:03:29,589 - INFO - 127.0.0.1 - - [09/Jan/2025 16:03:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 16:08:39,064 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:39] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-09 16:08:39,095 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:39] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-09 16:08:39,113 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:39] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 16:08:40,614 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:40] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-09 16:08:40,631 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 16:08:42,248 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:42] "GET /manage_users HTTP/1.1" 200 -
+2025-01-09 16:08:42,263 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:42] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 16:08:44,851 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:44] "[32mPOST /manage_users HTTP/1.1[0m" 302 -
+2025-01-09 16:08:44,873 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:44] "GET /manage_users HTTP/1.1" 200 -
+2025-01-09 16:08:44,889 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:44] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 16:08:52,985 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:52] "[32mPOST /manage_users HTTP/1.1[0m" 302 -
+2025-01-09 16:08:53,002 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:53] "GET /manage_users HTTP/1.1" 200 -
+2025-01-09 16:08:53,018 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
