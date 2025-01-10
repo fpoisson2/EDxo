@@ -46,10 +46,11 @@ class Programme(db.Model):
     __tablename__ = "Programme"
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.Text, nullable=False)
-    discipline = db.Column(db.Text, nullable=True)  # Utilisé potentiellement pour le département plus tard
+    department_id = db.Column(db.Integer, db.ForeignKey("Department.id"), nullable=False)
 
     # Relations
     cours = db.relationship("Cours", back_populates="programme")
+    department = db.relationship("Department", back_populates="programmes")
 
     def __repr__(self):
         return f"<Programme {self.nom}>"
@@ -325,3 +326,41 @@ class PlanDeCoursEvaluationsCapacites(db.Model):
             f"capacite_id={self.capacite_id} "
             f"ponderation='{self.ponderation}'>"
         )
+
+class Department(db.Model):
+    __tablename__ = "Department"
+    id = db.Column(db.Integer, primary_key=True)
+    nom = db.Column(db.Text, nullable=False, unique=True)
+
+    # Relations
+    regles = db.relationship("DepartmentRegles", back_populates="department", cascade="all, delete-orphan")
+    piea = db.relationship("DepartmentPIEA", back_populates="department", cascade="all, delete-orphan")
+    programmes = db.relationship("Programme", back_populates="department")
+
+    def __repr__(self):
+        return f"<Department {self.nom}>"
+
+class DepartmentRegles(db.Model):
+    __tablename__ = "DepartmentRegles"
+    id = db.Column(db.Integer, primary_key=True)
+    department_id = db.Column(db.Integer, db.ForeignKey("Department.id", ondelete="CASCADE"), nullable=False, index=True)
+    regle = db.Column(db.Text, nullable=False)
+    contenu = db.Column(db.Text, nullable=False)
+    # Relation vers Department
+    department = db.relationship("Department", back_populates="regles")
+
+    def __repr__(self):
+        return f"<DepartmentRegles id={self.id} department_id={self.department_id}>"
+
+class DepartmentPIEA(db.Model):
+    __tablename__ = "DepartmentPIEA"
+    id = db.Column(db.Integer, primary_key=True)
+    department_id = db.Column(db.Integer, db.ForeignKey("Department.id"), nullable=False)
+    article = db.Column(db.Text, nullable=False)
+    contenu = db.Column(db.Text, nullable=False)
+
+    # Relation vers Department
+    department = db.relationship("Department", back_populates="piea")
+
+    def __repr__(self):
+        return f"<DepartmentPIEA id={self.id} department_id={self.department_id}>"

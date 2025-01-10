@@ -342,3 +342,18 @@ class DeleteUserForm(FlaskForm):
     user_id = HiddenField(validators=[DataRequired()])
     submit = SubmitField('Supprimer')
 
+class DepartmentForm(FlaskForm):
+    nom = StringField('Nom du Département', validators=[DataRequired(), Length(max=100)])
+    submit = SubmitField('Ajouter Département')
+
+class DepartmentRegleForm(FlaskForm):
+    regle = StringField('Règle', validators=[DataRequired(), Length(max=200)])
+    contenu = TextAreaField('Contenu', validators=[DataRequired()])
+
+class DepartmentPIEAForm(FlaskForm):
+    article = StringField('Article', validators=[DataRequired(), Length(max=200)])
+    contenu = TextAreaField('Contenu', validators=[DataRequired()])
+
+class DeleteForm(FlaskForm):
+    """Simple form for CSRF protection on delete operations"""
+    pass
