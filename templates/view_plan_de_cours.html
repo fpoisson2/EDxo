@@ -7,6 +7,32 @@
     <h1>Plan de cours</h1>
     <hr>
 
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h3 class="mb-0">Informations Générales sur le Cours</h3>
+        </div>
+        <div class="card-body">
+            <p><strong>Code du cours :</strong> {{ cours.code }}</p>
+            <p><strong>Nom du cours :</strong> {{ cours.nom }}</p>
+            <p><strong>Nombre d'unités :</strong> {{ cours.nombre_unites }}</p>
+            <!-- Champ "Session" retiré -->
+            <p><strong>Heures Théorie :</strong> {{ cours.heures_theorie }}</p>
+            <p><strong>Heures Laboratoire :</strong> {{ cours.heures_laboratoire }}</p>
+            <p><strong>Heures Travail Maison :</strong> {{ cours.heures_travail_maison }}</p>
+            <!-- Champ "Fil Conducteur" retiré -->
+
+            <!-- Ajout du Nom du Programme -->
+            <p><strong>Nom du programme :</strong> 
+                {% if cours.programme %}
+                    {{ cours.programme.nom }}
+                {% else %}
+                    Non défini
+                {% endif %}
+            </p>
+            <!-- Ajoutez d'autres champs si nécessaire -->
+        </div>
+    </div>
+
     <!-- 1) Section PlanCadre en lecture seule -->
     <div class="card mb-4">
         <div class="card-header bg-light">
@@ -256,33 +282,47 @@
             <button type="button" class="btn btn-secondary mb-3" id="add-disponibilite">Ajouter une disponibilité</button>
 
             <hr>
+
             <h4>Évaluations (PlanDeCours)</h4>
-            <div id="evaluations-container" class="mb-3" {% if not form.evaluations %}style="display: none;"{% endif %}>
-                {% for subform in form.evaluations %}
-                    <div class="evaluation-item border p-2 mb-2">
-                        <button type="button" class="btn btn-danger btn-sm float-end remove-evaluation">Supprimer</button>
+            <div id="evaluations-container">
+                {% for evaluation_subform in form.evaluations %}
+                    <div class="evaluation-item" data-eval-index="{{ loop.index0 }}">
+                        <!-- Champs de l'évaluation -->
                         <div class="row mb-2">
                             <div class="col">
-                                {{ subform.titre_evaluation.label(class="form-label") }}
-                                {{ subform.titre_evaluation(class="form-control") }}
+                                {{ evaluation_subform.titre_evaluation.label }}
+                                {{ evaluation_subform.titre_evaluation(class="form-control") }}
                             </div>
                             <div class="col">
-                                {{ subform.semaine.label(class="form-label") }}
-                                {{ subform.semaine(class="form-control") }}
-                            </div>
-                            <div class="col">
-                                {{ subform.ponderation.label(class="form-label") }}
-                                {{ subform.ponderation(class="form-control") }}
+                                {{ evaluation_subform.semaine.label }}
+                                {{ evaluation_subform.semaine(class="form-control") }}
                             </div>
                         </div>
                         <div class="mb-2">
-                            {{ subform.texte_description.label(class="form-label") }}
-                            {{ subform.texte_description(class="form-control") }}
+                            {{ evaluation_subform.texte_description.label }}
+                            {{ evaluation_subform.texte_description(class="form-control") }}
                         </div>
+
+                        <!-- Sous-formulaire : Capacités pour cette évaluation -->
+                        <h5>Capacités évaluées</h5>
+                        {% for cap_subform in evaluation_subform.capacites %}
+                            <div class="capacite-item mb-2 border p-2">
+                                {{ cap_subform.capacite_id.label }}
+                                {{ cap_subform.capacite_id(class="form-control") }}
+
+                                {{ cap_subform.ponderation.label }}
+                                {{ cap_subform.ponderation(class="form-control") }}
+                                <!-- Bouton pour supprimer la capacité si vous faites du JS dynamique -->
+                            </div>
+                        {% endfor %}
+                        <!-- ICI : Le bouton qu'il vous manque -->
+                        <button type="button" class="btn btn-secondary btn-sm add-capacite">
+                            Ajouter une capacité
+                        </button>
                     </div>
                 {% endfor %}
             </div>
-            <button type="button" class="btn btn-secondary mb-3" id="add-evaluation">Ajouter une évaluation</button>
+            <button type="button" id="add-evaluation" class="btn btn-secondary">Ajouter une évaluation</button>
 
             <button type="submit" class="btn btn-primary">
                 {{ form.submit.label }}
@@ -370,12 +410,6 @@
                        class="form-control" 
                        id="evaluations-__index__-semaine" />
             </div>
-            <div class="col">
-                <label class="form-label" for="evaluations-__index__-ponderation">Pondération</label>
-                <input type="number" name="evaluations-__index__-ponderation" 
-                       class="form-control" 
-                       id="evaluations-__index__-ponderation" />
-            </div>
         </div>
         <div class="mb-2">
             <label class="form-label" for="evaluations-__index__-texte_description">Description</label>
@@ -383,7 +417,39 @@
                       class="form-control" 
                       id="evaluations-__index__-texte_description"></textarea>
         </div>
+    <button type="button" class="btn btn-secondary btn-sm add-capacite">
+        Ajouter une capacité
+    </button>
     </div>
+
+    <div id="evaluation-capacite-template" class="capacite-item mb-2 border p-2">
+        <button type="button" class="btn btn-danger btn-sm float-end remove-capacite">Supprimer</button>
+
+        <label class="form-label" for="evaluations-__eval_index__-capacites-__cap_index__-capacite_id">
+            Capacité
+        </label>
+        <select class="form-control"
+                name="evaluations-__eval_index__-capacites-__cap_index__-capacite_id"
+                id="evaluations-__eval_index__-capacites-__cap_index__-capacite_id">
+        </select>
+
+        <label class="form-label" for="evaluations-__eval_index__-capacites-__cap_index__-ponderation">
+            Pondération
+        </label>
+        <input type="text"
+               class="form-control"
+               name="evaluations-__eval_index__-capacites-__cap_index__-ponderation"
+               id="evaluations-__eval_index__-capacites-__cap_index__-ponderation">
+    </div>
+
+<select id="capacites-hidden" style="display: none;">
+    {% for cap in plan_cadre.capacites %}
+        <option value="{{ cap.id }}">
+            {{ cap.capacite }}
+        </option>
+    {% endfor %}
+</select>
+
 </div>
 {% endblock %}
 
@@ -392,120 +458,128 @@
 <!-- JavaScript pour gérer l'ajout et la suppression -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Compteurs pour les indices
-    let calendrierIndex = {{ form.calendriers|length }};
-    let mediagraphieIndex = {{ form.mediagraphies|length }};
-    let disponibiliteIndex = {{ form.disponibilites|length }};
-    let evaluationIndex = {{ form.evaluations|length }};
+    let calendrierIndex = document.querySelectorAll('.calendar-item').length;
+    let mediagraphieIndex = document.querySelectorAll('.mediagraphie-item').length;
+    let disponibiliteIndex = document.querySelectorAll('.disponibilite-item').length;
+    let evaluationIndex = document.querySelectorAll('.evaluation-item').length;
 
-    // Fonction pour supprimer un élément
-    function removeItem(button) {
-        const item = button.closest('.calendar-item, .mediagraphie-item, .disponibilite-item, .evaluation-item');
-        if (item) {
-            const container = item.parentElement;
-            if (container) {
-                item.remove();
-                if (container.children.length === 0) {
-                    container.style.display = 'none';
+    // Gestion de la suppression
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-calendar') ||
+            e.target.classList.contains('remove-mediagraphie') ||
+            e.target.classList.contains('remove-disponibilite') ||
+            e.target.classList.contains('remove-evaluation')) {
+            
+            const parentDiv = e.target.parentElement;
+            if (parentDiv) {
+                const container = parentDiv.parentElement;
+                if (container) {
+                    parentDiv.remove();
+                    // Vérifier si le container est vide
+                    if (container.children.length === 0) {
+                        container.style.display = 'none';
+                    }
                 }
             }
         }
-    }
+    });
 
-    // Gestion des suppressions pour les éléments existants
-    document.querySelectorAll('.remove-calendar, .remove-mediagraphie, .remove-disponibilite, .remove-evaluation')
-        .forEach(button => {
-            button.addEventListener('click', function() {
-                removeItem(this);
-            });
-        });
-
-    // Ajout d'un calendrier
+    // Ajout de calendrier
     document.getElementById('add-calendrier').addEventListener('click', function() {
-        const template = document.getElementById('calendrier-template');
         const container = document.getElementById('calendrier-container');
-        let newHtml = template.innerHTML.replace(/__index__/g, calendrierIndex);
-
         container.style.display = 'block';
-        container.insertAdjacentHTML('beforeend', newHtml);
-
-        const newItem = container.lastElementChild;
-        const newButton = newItem.querySelector('.remove-calendar');
-        if (newButton) {
-            newButton.addEventListener('click', function() {
-                removeItem(this);
-            });
-        }
-
-        calendrierIndex++;
+        const newItem = document.createElement('div');
+        newItem.className = 'calendar-item border p-2 mb-2';
+        newItem.innerHTML = document.getElementById('calendrier-template')
+            .innerHTML.replace(/__index__/g, calendrierIndex++);
+        container.appendChild(newItem);
     });
 
-    // Ajout d'une médiagraphie
+    // Ajout de médiagraphie
     document.getElementById('add-mediagraphie').addEventListener('click', function() {
-        const template = document.getElementById('mediagraphie-template');
         const container = document.getElementById('mediagraphie-container');
-        let newHtml = template.innerHTML.replace(/__index__/g, mediagraphieIndex);
-
         container.style.display = 'block';
-        container.insertAdjacentHTML('beforeend', newHtml);
-
-        const newItem = container.lastElementChild;
-        const newButton = newItem.querySelector('.remove-mediagraphie');
-        if (newButton) {
-            newButton.addEventListener('click', function() {
-                removeItem(this);
-            });
-        }
-
-        mediagraphieIndex++;
+        const newItem = document.createElement('div');
+        newItem.className = 'mediagraphie-item mb-2';
+        newItem.innerHTML = document.getElementById('mediagraphie-template')
+            .innerHTML.replace(/__index__/g, mediagraphieIndex++);
+        container.appendChild(newItem);
     });
 
-    // Ajout d'une disponibilité
+    // Ajout de disponibilité
     document.getElementById('add-disponibilite').addEventListener('click', function() {
-        const template = document.getElementById('disponibilite-template');
         const container = document.getElementById('disponibilites-container');
-        let newHtml = template.innerHTML.replace(/__index__/g, disponibiliteIndex);
-
         container.style.display = 'block';
-        container.insertAdjacentHTML('beforeend', newHtml);
-
-        const newItem = container.lastElementChild;
-        const newButton = newItem.querySelector('.remove-disponibilite');
-        if (newButton) {
-            newButton.addEventListener('click', function() {
-                removeItem(this);
-            });
-        }
-
-        disponibiliteIndex++;
+        const newItem = document.createElement('div');
+        newItem.className = 'disponibilite-item row g-2 mb-2';
+        newItem.innerHTML = document.getElementById('disponibilite-template')
+            .innerHTML.replace(/__index__/g, disponibiliteIndex++);
+        container.appendChild(newItem);
     });
 
-    // Ajout d'une évaluation
+    // Ajout d'évaluation
     document.getElementById('add-evaluation').addEventListener('click', function() {
-        const template = document.getElementById('evaluation-template');
         const container = document.getElementById('evaluations-container');
-        let newHtml = template.innerHTML.replace(/__index__/g, evaluationIndex);
-
         container.style.display = 'block';
-        container.insertAdjacentHTML('beforeend', newHtml);
-
-        const newItem = container.lastElementChild;
-        const newButton = newItem.querySelector('.remove-evaluation');
-        if (newButton) {
-            newButton.addEventListener('click', function() {
-                removeItem(this);
-            });
-        }
-
-        evaluationIndex++;
+        const newItem = document.createElement('div');
+        newItem.className = 'evaluation-item border p-2 mb-2';
+        newItem.innerHTML = document.getElementById('evaluation-template')
+            .innerHTML.replace(/__index__/g, evaluationIndex++);
+        container.appendChild(newItem);
     });
 
     // Initialisation : cacher les conteneurs vides
-    ['calendrier', 'mediagraphie', 'disponibilites', 'evaluations'].forEach(type => {
-        const container = document.getElementById(type + '-container');
+    ['calendrier-container', 'mediagraphie-container', 'disponibilites-container', 'evaluations-container'].forEach(id => {
+        const container = document.getElementById(id);
         if (container && container.children.length === 0) {
             container.style.display = 'none';
         }
+    });
+
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('add-capacite')) {
+        const evaluationItem = e.target.closest('.evaluation-item');
+        if (!evaluationItem) return;
+
+        // 1) Récupérer l'index de l'évaluation
+        let evalIndex = evaluationItem.getAttribute('data-eval-index');
+        if (!evalIndex) {
+          evalIndex = 0;  // fallback
+        }
+
+        // 2) Compter combien de capacités sont déjà présentes dans cette évaluation
+        const capacitesContainer = evaluationItem.querySelectorAll('.capacite-item');
+        let capIndex = capacitesContainer.length;
+
+        // 3) Créer le nouveau bloc de capacité
+        const newCap = document.createElement('div');
+        newCap.className = 'capacite-item mb-2 border p-2';
+        newCap.innerHTML = document.getElementById('evaluation-capacite-template')
+          .innerHTML
+          .replace(/__eval_index__/g, evalIndex)
+          .replace(/__cap_index__/g, capIndex);
+
+        // 4) Ajouter ce bloc dans la div .evaluation-item
+        evaluationItem.appendChild(newCap);
+
+        // 5) Copier les <option> du <select> caché
+        const hiddenSelect = document.getElementById('capacites-hidden');
+        const newSelect = newCap.querySelector('select');
+        if (hiddenSelect && newSelect) {
+          newSelect.innerHTML = hiddenSelect.innerHTML;
+        }
+      }
+    });
+
+
+    // Pour la suppression d'une capacité
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('remove-capacite')) {
+        const capItem = e.target.closest('.capacite-item');
+        if (capItem) {
+          capItem.remove();
+        }
+      }
     });
 });
 </script>

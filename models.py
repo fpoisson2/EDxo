@@ -24,7 +24,7 @@ class Cours(db.Model):
     """
     __tablename__ = "Cours"
     id = db.Column(db.Integer, primary_key=True)
-    programme_id = db.Column(db.Integer, nullable=False)
+    programme_id = db.Column(db.Integer, db.ForeignKey("Programme.id"), nullable=False)
     code = db.Column(db.Text, nullable=False)
     nom = db.Column(db.Text, nullable=False)
     nombre_unites = db.Column(db.Float, nullable=False, default=1.0)
@@ -35,12 +35,24 @@ class Cours(db.Model):
     fil_conducteur_id = db.Column(db.Integer, nullable=True)  # Optionnel
 
     # Relations
+    programme = db.relationship("Programme", back_populates="cours")
     plan_cadre = db.relationship("PlanCadre", back_populates="cours", uselist=False)
     plans_de_cours = db.relationship("PlanDeCours", back_populates="cours")
 
     def __repr__(self):
         return f"<Cours {self.code} - {self.nom}>"
 
+class Programme(db.Model):
+    __tablename__ = "Programme"
+    id = db.Column(db.Integer, primary_key=True)
+    nom = db.Column(db.Text, nullable=False)
+    discipline = db.Column(db.Text, nullable=True)  # Utilisé potentiellement pour le département plus tard
+
+    # Relations
+    cours = db.relationship("Cours", back_populates="programme")
+
+    def __repr__(self):
+        return f"<Programme {self.nom}>"
 
 class PlanCadre(db.Model):
     """
@@ -245,7 +257,6 @@ class PlanDeCoursMediagraphie(db.Model):
     def __repr__(self):
         return f"<PlanDeCoursMediagraphie id={self.id} plan_de_cours_id={self.plan_de_cours_id}>"
 
-
 class PlanDeCoursDisponibiliteEnseignant(db.Model):
     """
     Disponibilités de l’enseignant (jour, plage horaire, local).
@@ -265,19 +276,52 @@ class PlanDeCoursDisponibiliteEnseignant(db.Model):
 
 
 class PlanDeCoursEvaluations(db.Model):
-    """
-    Évaluations propres au plan de cours.
-    """
     __tablename__ = "PlanDeCoursEvaluations"
     id = db.Column(db.Integer, primary_key=True)
     plan_de_cours_id = db.Column(db.Integer, db.ForeignKey("PlanDeCours.id"), nullable=False)
-
+    
     titre_evaluation = db.Column(db.Text, nullable=True)
     description = db.Column(db.Text, nullable=True)
     semaine = db.Column(db.Integer, nullable=True)
-    ponderation = db.Column(db.Text, nullable=True)  # Ex: "20%"
+
+    # S'il y avait un "ponderation" ici, on peut le retirer ou le laisser pour compatibilité
+    # ponderation = db.Column(db.String, nullable=True)
 
     plan_de_cours = db.relationship("PlanDeCours", back_populates="evaluations")
 
+    # Relation many-to-many simulée par la table d’association
+    capacites = db.relationship(
+        "PlanDeCoursEvaluationsCapacites",
+        back_populates="evaluation",
+        cascade="all, delete-orphan"
+    )
+
     def __repr__(self):
-        return f"<PlanDeCoursEvaluations id={self.id} plan_de_cours_id={self.plan_de_cours_id}>"
+        return (f"<PlanDeCoursEvaluations id={self.id} plan_de_cours_id={self.plan_de_cours_id}>")
+
+
+class PlanDeCoursEvaluationsCapacites(db.Model):
+    """
+    Table de liaison entre PlanDeCoursEvaluations et PlanCadreCapacites.
+    Permet de spécifier la (les) capacité(s) et la pondération associée.
+    """
+    __tablename__ = "PlanDeCoursEvaluationsCapacites"
+
+    id = db.Column(db.Integer, primary_key=True)
+    evaluation_id = db.Column(db.Integer, db.ForeignKey("PlanDeCoursEvaluations.id"), nullable=False)
+    capacite_id = db.Column(db.Integer, db.ForeignKey("PlanCadreCapacites.id"), nullable=False)
+    ponderation = db.Column(db.String, nullable=True)
+
+    evaluation = db.relationship("PlanDeCoursEvaluations", back_populates="capacites")
+    # Optionnel : une relation vers PlanCadreCapacites si vous voulez y accéder
+    # directement depuis cette table :
+    capacite = db.relationship("PlanCadreCapacites")  
+
+    def __repr__(self):
+        return (
+            f"<PlanDeCoursEvaluationsCapacites "
+            f"id={self.id} "
+            f"evaluation_id={self.evaluation_id} "
+            f"capacite_id={self.capacite_id} "
+            f"ponderation='{self.ponderation}'>"
+        )

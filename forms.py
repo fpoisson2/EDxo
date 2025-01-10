@@ -36,11 +36,21 @@ class DisponibiliteForm(FlaskForm):
     plage_horaire = StringField("Plage horaire", validators=[Optional()])
     lieu = StringField("Local/Bureau", validators=[Optional()])
 
+class CapaciteEvaluationForm(FlaskForm):
+    """
+    Sous-formulaire qui représente la liaison (capacite_id, ponderation)
+    pour une évaluation donnée.
+    """
+    capacite_id = SelectField("Capacité", coerce=int)
+    ponderation = StringField("Pondération (ex: 20%)", validators=[Optional()])
+
 class EvaluationPlanCoursForm(FlaskForm):
     titre_evaluation = StringField("Titre de l'évaluation", validators=[Optional()])
     texte_description = TextAreaField("Description", validators=[Optional()])
     semaine = IntegerField("Semaine", validators=[Optional()])
-    ponderation = StringField("Pondération (ex: 20%)", validators=[Optional()])
+
+    # Au lieu d'un unique champ "ponderation", on utilise un FieldList de "CapaciteEvaluationForm"
+    capacites = FieldList(FormField(CapaciteEvaluationForm), min_entries=0)
 
 class PlanDeCoursForm(FlaskForm):
     # Champs principaux

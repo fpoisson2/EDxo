@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
-from models import (db, Cours, PlanCadre, PlanCadreCapacites, PlanCadreSavoirEtre,
-                   PlanDeCours,
-                   PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
-                   PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations)
+from models import (
+    db, Cours, PlanCadre, PlanCadreCapacites, PlanCadreSavoirEtre,
+    PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
+    PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites
+)
 from forms import PlanDeCoursForm
 
 plan_de_cours_bp = Blueprint("plan_de_cours", __name__, template_folder="templates")
@@ -14,14 +15,6 @@ plan_de_cours_bp = Blueprint("plan_de_cours", __name__, template_folder="templat
     "/cours/<int:cours_id>/plan_de_cours/<string:session>/", methods=["GET", "POST"]
 )
 def view_plan_de_cours(cours_id, session=None):
-    """
-    Affiche :
-     - le PlanCadre en lecture seule (place_intro, capacités, savoir-être, moyens d'évaluation)
-     - le PlanDeCours en mode édition (campus, session, présentation, objectifs, organisation, etc.)
-     
-    Si `session` n'est pas spécifiée, affiche le PlanDeCours le plus récent.
-    Si aucun PlanDeCours n'existe pour une session donnée, crée-en un nouveau vide.
-    """
     # 1. Récupération du Cours
     cours = Cours.query.get(cours_id)
     if not cours:
@@ -38,20 +31,16 @@ def view_plan_de_cours(cours_id, session=None):
 
     # 3. Détermination du PlanDeCours à utiliser
     if session:
-        # Tenter de récupérer le PlanDeCours pour le cours et la session spécifiés
         plan_de_cours = PlanDeCours.query.filter_by(cours_id=cours.id, session=session).first()
         if not plan_de_cours:
-            # Créer un nouveau PlanDeCours pour la session spécifiée
             plan_de_cours = PlanDeCours(cours_id=cours.id, session=session)
             db.session.add(plan_de_cours)
             db.session.commit()
             flash(f"Plan de Cours pour la session {session} créé.", "success")
     else:
-        # Récupérer le PlanDeCours le plus récent
         plan_de_cours = PlanDeCours.query.filter_by(cours_id=cours.id).order_by(PlanDeCours.id.desc()).first()
         if not plan_de_cours:
             flash("Aucun Plan de Cours existant. Création d'un nouveau Plan de Cours.", "warning")
-            # Créer un nouveau PlanDeCours avec une session par défaut
             plan_de_cours = PlanDeCours(cours_id=cours.id, session="À définir")
             db.session.add(plan_de_cours)
             db.session.commit()
@@ -108,88 +97,115 @@ def view_plan_de_cours(cours_id, session=None):
         # Évaluations
         if plan_de_cours.evaluations:
             for ev in plan_de_cours.evaluations:
-                form.evaluations.append_entry({
+                eval_entry = {
                     "titre_evaluation": ev.titre_evaluation,
                     "texte_description": ev.description,
                     "semaine": ev.semaine,
-                    "ponderation": ev.ponderation
-                })
+                    "capacites": []
+                }
+                for cap_link in ev.capacites:
+                    eval_entry["capacites"].append({
+                        "capacite_id": cap_link.capacite_id,
+                        "ponderation": cap_link.ponderation
+                    })
+                form.evaluations.append_entry(eval_entry)
+
+        # 4.4. Assigner les choices pour chaque capacite_id dans le GET
+        choices_capacites = [(c.id, c.capacite) for c in plan_cadre.capacites]
+        for eval_f in form.evaluations:
+            for cap_f in eval_f.capacites:
+                cap_f.capacite_id.choices = choices_capacites
 
     # 5. Traitement du POST (sauvegarde)
-    if request.method == "POST" and form.validate_on_submit():
-        try:
-            with db.session.no_autoflush:
-                # 5.1. Mettre à jour les Champs Simples
-                plan_de_cours.campus = form.campus.data
-                plan_de_cours.session = form.session.data
-                plan_de_cours.presentation_du_cours = form.presentation_du_cours.data
-                plan_de_cours.objectif_terminal_du_cours = form.objectif_terminal_du_cours.data
-                plan_de_cours.organisation_et_methodes = form.organisation_et_methodes.data
-                plan_de_cours.accomodement = form.accomodement.data
-                plan_de_cours.evaluation_formative_apprentissages = form.evaluation_formative_apprentissages.data
-                plan_de_cours.evaluation_expression_francais = form.evaluation_expression_francais.data
-                plan_de_cours.seuil_reussite = form.seuil_reussite.data
+    if request.method == "POST":
+        # (1) Assigner les choices avant validation
+        choices_capacites = [(c.id, c.capacite) for c in plan_cadre.capacites]
+        for eval_f in form.evaluations:
+            for cap_f in eval_f.capacites:
+                cap_f.capacite_id.choices = choices_capacites
 
-                # 5.2. Mettre à jour les Informations de l’Enseignant
-                plan_de_cours.nom_enseignant = form.nom_enseignant.data
-                plan_de_cours.telephone_enseignant = form.telephone_enseignant.data
-                plan_de_cours.courriel_enseignant = form.courriel_enseignant.data
-                plan_de_cours.bureau_enseignant = form.bureau_enseignant.data
+        # (2) Maintenant on peut valider
+        if form.validate_on_submit():
+            try:
+                with db.session.no_autoflush:
+                    # 5.1. Mettre à jour les Champs Simples
+                    plan_de_cours.campus = form.campus.data
+                    plan_de_cours.session = form.session.data
+                    plan_de_cours.presentation_du_cours = form.presentation_du_cours.data
+                    plan_de_cours.objectif_terminal_du_cours = form.objectif_terminal_du_cours.data
+                    plan_de_cours.organisation_et_methodes = form.organisation_et_methodes.data
+                    plan_de_cours.accomodement = form.accomodement.data
+                    plan_de_cours.evaluation_formative_apprentissages = form.evaluation_formative_apprentissages.data
+                    plan_de_cours.evaluation_expression_francais = form.evaluation_expression_francais.data
+                    plan_de_cours.seuil_reussite = form.seuil_reussite.data
 
-                # 5.3. Gérer les FieldLists
+                    # 5.2. Mettre à jour les Informations de l’Enseignant
+                    plan_de_cours.nom_enseignant = form.nom_enseignant.data
+                    plan_de_cours.telephone_enseignant = form.telephone_enseignant.data
+                    plan_de_cours.courriel_enseignant = form.courriel_enseignant.data
+                    plan_de_cours.bureau_enseignant = form.bureau_enseignant.data
 
-                # Calendriers
-                plan_de_cours.calendriers.clear()
-                for cal_f in form.calendriers.entries:
-                    new_cal = PlanDeCoursCalendrier(
-                        semaine=cal_f.data.get("semaine"),
-                        sujet=cal_f.data.get("sujet"),
-                        activites=cal_f.data.get("activites"),
-                        travaux_hors_classe=cal_f.data.get("travaux_hors_classe"),
-                        evaluations=cal_f.data.get("evaluations")
-                    )
-                    plan_de_cours.calendriers.append(new_cal)
+                    # 5.3. Gérer les FieldLists
 
-                # Médiagraphies
-                plan_de_cours.mediagraphies.clear()
-                for med_f in form.mediagraphies.entries:
-                    new_med = PlanDeCoursMediagraphie(
-                        reference_bibliographique=med_f.data.get("reference_bibliographique")
-                    )
-                    plan_de_cours.mediagraphies.append(new_med)
+                    # Calendriers
+                    plan_de_cours.calendriers.clear()
+                    for cal_f in form.calendriers.entries:
+                        new_cal = PlanDeCoursCalendrier(
+                            semaine=cal_f.data.get("semaine"),
+                            sujet=cal_f.data.get("sujet"),
+                            activites=cal_f.data.get("activites"),
+                            travaux_hors_classe=cal_f.data.get("travaux_hors_classe"),
+                            evaluations=cal_f.data.get("evaluations")
+                        )
+                        plan_de_cours.calendriers.append(new_cal)
 
-                # Disponibilités
-                plan_de_cours.disponibilites.clear()
-                for disp_f in form.disponibilites.entries:
-                    new_disp = PlanDeCoursDisponibiliteEnseignant(
-                        jour_semaine=disp_f.data.get("jour_semaine"),
-                        plage_horaire=disp_f.data.get("plage_horaire"),
-                        lieu=disp_f.data.get("lieu")
-                    )
-                    plan_de_cours.disponibilites.append(new_disp)
+                    # Médiagraphies
+                    plan_de_cours.mediagraphies.clear()
+                    for med_f in form.mediagraphies.entries:
+                        new_med = PlanDeCoursMediagraphie(
+                            reference_bibliographique=med_f.data.get("reference_bibliographique")
+                        )
+                        plan_de_cours.mediagraphies.append(new_med)
 
-                # Évaluations
-                plan_de_cours.evaluations.clear()
-                for ev_f in form.evaluations.entries:
-                    new_ev = PlanDeCoursEvaluations(
-                        titre_evaluation=ev_f.data.get("titre_evaluation"),
-                        description=ev_f.data.get("texte_description"),
-                        semaine=ev_f.data.get("semaine"),
-                        ponderation=ev_f.data.get("ponderation")
-                    )
-                    plan_de_cours.evaluations.append(new_ev)
+                    # Disponibilités
+                    plan_de_cours.disponibilites.clear()
+                    for disp_f in form.disponibilites.entries:
+                        new_disp = PlanDeCoursDisponibiliteEnseignant(
+                            jour_semaine=disp_f.data.get("jour_semaine"),
+                            plage_horaire=disp_f.data.get("plage_horaire"),
+                            lieu=disp_f.data.get("lieu")
+                        )
+                        plan_de_cours.disponibilites.append(new_disp)
 
-            # 5.4. Commit des Changements
-            db.session.commit()
-            # db.session.close()  # <--- Remove this line
-            flash("Le PlanDeCours a été mis à jour avec succès!", "success")
-            return redirect(url_for("plan_de_cours.view_plan_de_cours",
-                                    cours_id=cours.id,
-                                    session=plan_de_cours.session))
-        except Exception as e:
-            db.session.rollback()
-            # db.session.close()  # <--- Remove this line
-            flash(f"Erreur lors de la mise à jour du PlanDeCours: {str(e)}", "danger")
+                    # Évaluations
+                    plan_de_cours.evaluations.clear()
+                    for ev_f in form.evaluations.entries:
+                        # 1) Créer l'évaluation
+                        new_ev = PlanDeCoursEvaluations(
+                            titre_evaluation=ev_f.data.get("titre_evaluation"),
+                            description=ev_f.data.get("texte_description"),
+                            semaine=ev_f.data.get("semaine")
+                        )
+                        plan_de_cours.evaluations.append(new_ev)
+                        
+                        # 2) Créer les liaisons (capacités + ponderation)
+                        for cap_f in ev_f.capacites.entries:
+                            cap_link = PlanDeCoursEvaluationsCapacites(
+                                evaluation=new_ev,
+                                capacite_id=cap_f.data.get("capacite_id"),
+                                ponderation=cap_f.data.get("ponderation")
+                            )
+                            new_ev.capacites.append(cap_link)  # Assure la liaison via back_populates
+
+                # 5.4. Commit des Changements
+                db.session.commit()
+                flash("Le PlanDeCours a été mis à jour avec succès!", "success")
+                return redirect(url_for("plan_de_cours.view_plan_de_cours",
+                                        cours_id=cours.id,
+                                        session=plan_de_cours.session))
+            except Exception as e:
+                db.session.rollback()
+                flash(f"Erreur lors de la mise à jour du PlanDeCours: {str(e)}", "danger")
 
     # 6. Rendre la page
     return render_template("view_plan_de_cours.html",
