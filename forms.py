@@ -70,6 +70,8 @@ class PlanDeCoursForm(FlaskForm):
     courriel_enseignant = StringField("Courriel de l’enseignant", validators=[Optional()])
     bureau_enseignant = StringField("Bureau de l’enseignant", validators=[Optional()])
 
+    materiel = TextAreaField('Matériel', validators=[Optional()])
+
     # Listes associées
     calendriers = FieldList(FormField(CalendrierForm), min_entries=0)
     mediagraphies = FieldList(FormField(MediagraphieForm), min_entries=0)
