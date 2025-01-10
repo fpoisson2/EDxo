@@ -263,6 +263,11 @@
                     {{ form.bureau_enseignant(class="form-control") }}
                 </div>
 
+                <div class="mb-3">
+                    {{ form.materiel.label(class="form-label fw-bold") }}
+                    {{ form.materiel(class="form-control") }}
+                </div>
+
                 <hr>
                 <h4>Calendrier des activités</h4>
                 <div id="calendrier-container" class="mb-3" {% if not form.calendriers %}style="display: none;"{% endif %}>

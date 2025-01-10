@@ -133,6 +133,8 @@ def view_plan_de_cours(cours_id, session=None):
         form.courriel_enseignant.data = plan_de_cours.courriel_enseignant
         form.bureau_enseignant.data = plan_de_cours.bureau_enseignant
 
+        form.materiel.data = plan_de_cours.materiel
+
         # 4.3. Initialiser les FieldLists
 
         # Calendriers
@@ -210,6 +212,8 @@ def view_plan_de_cours(cours_id, session=None):
                     plan_de_cours.telephone_enseignant = form.telephone_enseignant.data
                     plan_de_cours.courriel_enseignant = form.courriel_enseignant.data
                     plan_de_cours.bureau_enseignant = form.bureau_enseignant.data
+
+                    plan_de_cours.materiel = form.materiel.data
 
                     # 5.3. Gérer les FieldLists
 
@@ -379,6 +383,9 @@ def export_docx(cours_id, session):
         "telephone_enseignant": plan_de_cours.telephone_enseignant,
         "courriel_enseignant": plan_de_cours.courriel_enseignant,
         "bureau_enseignant": plan_de_cours.bureau_enseignant,
+
+    
+        "materiel": plan_de_cours.materiel,
 
         # -- Calendrier, Médiagraphies, Disponibilités, Évaluations
         "calendriers": plan_de_cours.calendriers,

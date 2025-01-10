@@ -13012,3 +13012,26 @@ fields.3.content
 2025-01-10 15:50:41,137 - INFO - 127.0.0.1 - - [10/Jan/2025 15:50:41] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
 2025-01-10 15:51:28,497 - INFO - 127.0.0.1 - - [10/Jan/2025 15:51:28] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
 2025-01-10 15:52:41,890 - INFO - 127.0.0.1 - - [10/Jan/2025 15:52:41] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-10 16:00:15,247 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.10:5000
+2025-01-10 16:00:15,247 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-10 16:00:15,257 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-10 16:00:16,207 - WARNING -  * Debugger is active!
+2025-01-10 16:00:16,207 - INFO -  * Debugger PIN: 342-468-122
+2025-01-10 16:00:23,027 - INFO - 127.0.0.1 - - [10/Jan/2025 16:00:23] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-10 16:00:23,067 - INFO - 127.0.0.1 - - [10/Jan/2025 16:00:23] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-10 16:01:07,047 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-10 16:01:07,047 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-10 16:01:07,047 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-10 16:01:07,652 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-10 16:01:08,627 - WARNING -  * Debugger is active!
+2025-01-10 16:01:08,627 - INFO -  * Debugger PIN: 342-468-122
+2025-01-10 16:01:10,001 - INFO - 127.0.0.1 - - [10/Jan/2025 16:01:10] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-10 16:01:10,040 - INFO - 127.0.0.1 - - [10/Jan/2025 16:01:10] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-10 16:02:06,356 - INFO - 127.0.0.1 - - [10/Jan/2025 16:02:06] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-10 16:02:07,574 - INFO - 127.0.0.1 - - [10/Jan/2025 16:02:07] "[32mPOST /cours/8/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-10 16:02:07,635 - INFO - 127.0.0.1 - - [10/Jan/2025 16:02:07] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-10 16:02:07,661 - INFO - 127.0.0.1 - - [10/Jan/2025 16:02:07] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-10 16:02:30,426 - INFO - 127.0.0.1 - - [10/Jan/2025 16:02:30] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
