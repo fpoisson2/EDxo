@@ -395,7 +395,13 @@ def generate_docx_with_template(plan_id):
         return None
 
     # Récupérer les informations du programme associé au cours
-    programme = conn.execute('SELECT nom, discipline FROM Programme WHERE id = ?', (cours['programme_id'],)).fetchone()
+    programme = conn.execute('''
+        SELECT Programme.nom AS programme_nom, Department.nom AS department_nom
+        FROM Programme
+        JOIN Department ON Programme.department_id = Department.id
+        WHERE Programme.id = ?
+    ''', (cours['programme_id'],)).fetchone()
+
 
     # Récupérer les compétences développées avec leur texte et description
     competences_developpees = conn.execute('''
@@ -770,8 +776,8 @@ def generate_docx_with_template(plan_id):
     # Structurer les données dans un dictionnaire de contexte
     context = {
         'programme': {
-            'nom': programme['nom'] if programme else 'Non défini',
-            'discipline': programme['discipline'] if programme else 'Non définie'
+            'nom': programme['programme_nom'] if programme else 'Non défini',
+            'departement': programme['department_nom'] if programme else 'Non défini'
         },
         'cours': {
             'code': cours['code'],

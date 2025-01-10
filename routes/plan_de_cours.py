@@ -5,6 +5,67 @@ from models import (
     PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites
 )
 from forms import PlanDeCoursForm
+import os
+from docxtpl import DocxTemplate
+import io
+from flask import send_file
+import markdown
+from bs4 import BeautifulSoup
+
+def parse_markdown_nested(md_text):
+    """
+    Converts Markdown text into a nested list of dictionaries where bullet points
+    are treated as children of their preceding paragraph.
+    Each dictionary has 'text' and 'children' keys.
+    
+    Example input:
+    This is a top level text
+    - First bullet (becomes child of above text)
+      - Nested bullet
+    Another top level text
+    - Second bullet (becomes child of second text)
+    
+    Returns a list of dictionaries representing the nested structure.
+    """
+    html = markdown.markdown(md_text)
+    soup = BeautifulSoup(html, 'html.parser')
+    
+    def parse_list(ul):
+        items = []
+        for li in ul.find_all('li', recursive=False):
+            item_text = ''
+            children = []
+            # Extract text and check for nested <ul>
+            for content in li.contents:
+                if isinstance(content, str):
+                    item_text += content.strip()
+                elif content.name == 'ul':
+                    children = parse_list(content)
+                elif content.name == 'p':
+                    item_text += content.get_text().strip()
+            items.append({'text': item_text, 'children': children})
+        return items
+
+    nested_structure = []
+    current_parent = None
+    
+    # Process all top-level elements
+    for element in soup.find_all(['p', 'ul'], recursive=False):
+        if element.name == 'p':
+            # Create new top-level item
+            text = element.get_text().strip()
+            if text:
+                current_parent = {'text': text, 'children': []}
+                nested_structure.append(current_parent)
+        elif element.name == 'ul' and current_parent is not None:
+            # Add bullet points as children of the current parent
+            current_parent['children'].extend(parse_list(element))
+        elif element.name == 'ul':
+            # Handle case where there's no preceding paragraph
+            nested_structure.extend(parse_list(element))
+    
+    return nested_structure
+
 
 plan_de_cours_bp = Blueprint("plan_de_cours", __name__, template_folder="templates")
 
@@ -45,6 +106,11 @@ def view_plan_de_cours(cours_id, session=None):
             db.session.add(plan_de_cours)
             db.session.commit()
             flash("Nouveau Plan de Cours créé. Veuillez le remplir.", "success")
+
+    programme = cours.programme
+    departement = programme.department
+    regles_departementales = departement.regles  # Règles départementales
+    regles_piea = departement.piea  # Règles de PIEA
 
     # 4. Préparer le formulaire
     form = PlanDeCoursForm()
@@ -209,7 +275,139 @@ def view_plan_de_cours(cours_id, session=None):
 
     # 6. Rendre la page
     return render_template("view_plan_de_cours.html",
-                           cours=cours, 
-                           plan_cadre=plan_cadre,
-                           plan_de_cours=plan_de_cours,
-                           form=form)
+                                        cours=cours, 
+                                        plan_cadre=plan_cadre,
+                                        plan_de_cours=plan_de_cours,
+                                        form=form,
+                                        departement=departement,
+                                        regles_departementales=regles_departementales,
+                                        regles_piea=regles_piea)
+
+@plan_de_cours_bp.route(
+    "/cours/<int:cours_id>/plan_de_cours/<string:session>/export_docx", 
+    methods=["GET"]
+)
+def export_docx(cours_id, session):
+    # 1. Récupérer le Cours
+    cours = Cours.query.get_or_404(cours_id)
+
+    # 2. Récupérer le PlanCadre + chargement des relations
+    plan_cadre = PlanCadre.query.options(
+        db.joinedload(PlanCadre.capacites),
+        db.joinedload(PlanCadre.savoirs_etre)
+    ).filter_by(cours_id=cours.id).first()
+
+    if not plan_cadre:
+        flash("Aucun PlanCadre associé à ce cours.", "warning")
+        return redirect(url_for('main.view_programme', programme_id=cours.programme_id))
+
+    # 3. Récupérer le PlanDeCours correspondant à la session demandée
+    plan_de_cours = PlanDeCours.query.filter_by(cours_id=cours.id, session=session).first()
+    if not plan_de_cours:
+        flash(f"Aucun PlanDeCours pour la session {session}.", "warning")
+        return redirect(url_for('plan_de_cours.view_plan_de_cours', cours_id=cours.id))
+
+    # 4. Récupérer d'autres informations (programme, département, règles, etc.)
+    programme = cours.programme
+    departement = programme.department if programme else None
+    regles_departementales = departement.regles if departement else []
+    regles_piea = departement.piea if departement else []
+
+    # 5. Charger le template Word
+    #    -> Assurez-vous que le fichier existe dans votre projet (p.ex. dossier templates_docx)
+    template_path = os.path.join('static', 'docs', 'plan_de_cours_template.docx')
+    doc = DocxTemplate(template_path)
+
+    # 6. Prepare Data for Pivot Table
+
+    # a. Gather all unique capacités across all evaluations
+    all_caps = set()
+    for ev in plan_de_cours.evaluations:
+        for cap_link in ev.capacites:
+            all_caps.add(cap_link.capacite.capacite)
+    all_caps = sorted(all_caps)  # Sort for consistent ordering
+
+    # b. Create a capacity to ponderation map for each evaluation
+    for ev in plan_de_cours.evaluations:
+        # Initialize all capacities with empty strings
+        cap_map = {cap: "" for cap in all_caps}
+        # Fill in the pondérations where applicable
+        for cap_link in ev.capacites:
+            cap_name = cap_link.capacite.capacite
+            cap_map[cap_name] = cap_link.ponderation
+        # Attach the map to the evaluation
+        ev.cap_map = cap_map
+
+    for piea in regles_piea:
+        # Access 'contenu' using dot notation
+        bullet_points = parse_markdown_nested(piea.contenu)
+        
+        # Assign 'bullet_points' as a new attribute
+        setattr(piea, 'bullet_points', bullet_points)
+
+    for regle in regles_departementales:
+        # Access 'contenu' using dot notation
+        bullet_points = parse_markdown_nested(regle.contenu)
+        
+        # Assign 'bullet_points' as a new attribute
+        setattr(regle, 'bullet_points', bullet_points)
+
+    # 6. Construire le contexte pour injection (tous les champs possibles)
+    context = {
+        # -- Informations sur le Cours & PlanCadre
+        "cours": cours,
+        "plan_cadre": plan_cadre,
+        "programme": programme,
+        "departement": departement,
+        "savoirs_etre": plan_cadre.savoirs_etre,
+        "capacites_plan_cadre": plan_cadre.capacites,
+
+        # -- Informations PlanDeCours
+        "plan_de_cours": plan_de_cours,
+        "campus": plan_de_cours.campus,
+        "session": plan_de_cours.session,
+        "presentation_du_cours": plan_de_cours.presentation_du_cours,
+        "objectif_terminal_du_cours": plan_de_cours.objectif_terminal_du_cours,
+        "organisation_et_methodes": plan_de_cours.organisation_et_methodes,
+        "accomodement": plan_de_cours.accomodement,
+        "evaluation_formative_apprentissages": plan_de_cours.evaluation_formative_apprentissages,
+        "evaluation_expression_francais": plan_de_cours.evaluation_expression_francais,
+        "seuil_reussite": plan_de_cours.seuil_reussite,
+        
+        # -- Informations Enseignant
+        "nom_enseignant": plan_de_cours.nom_enseignant,
+        "telephone_enseignant": plan_de_cours.telephone_enseignant,
+        "courriel_enseignant": plan_de_cours.courriel_enseignant,
+        "bureau_enseignant": plan_de_cours.bureau_enseignant,
+
+        # -- Calendrier, Médiagraphies, Disponibilités, Évaluations
+        "calendriers": plan_de_cours.calendriers,
+        "mediagraphies": plan_de_cours.mediagraphies,
+        "disponibilites": plan_de_cours.disponibilites,
+        "evaluations": plan_de_cours.evaluations,
+
+        # -- Evaluations Data for Pivot Table
+        "all_caps": all_caps,
+        "evaluations": plan_de_cours.evaluations,
+
+        # -- Règles
+        "regles_departementales": regles_departementales,
+        "regles_piea": regles_piea
+    }
+
+    # 7. Rendre le document avec le context
+    doc.render(context)
+
+    # 8. Retourner le document (pour téléchargement) via un flux en mémoire
+    byte_io = io.BytesIO()
+    doc.save(byte_io)
+    byte_io.seek(0)
+
+    # 9. Envoyer le fichier .docx
+    #    Selon votre version de Flask, 'attachment_filename' peut être remplacé par 'download_name'
+    filename = f"Plan_de_cours_{cours.code}_{session}.docx"
+    return send_file(
+        byte_io,
+        download_name=filename,
+        as_attachment=True
+    )

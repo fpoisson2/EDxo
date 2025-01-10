@@ -29,7 +29,15 @@
                     Non défini
                 {% endif %}
             </p>
-            <!-- Ajoutez d'autres champs si nécessaire -->
+
+            <!-- Nom du Département -->
+            <p><strong>Nom du département :</strong> 
+                {% if departement %}
+                    {{ departement.nom }}
+                {% else %}
+                    Non défini
+                {% endif %}
+            </p>
         </div>
     </div>
 
@@ -128,6 +136,52 @@
 
         </div>
     </div>
+
+<!-- Section Règles Départementales -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">Règles Départementales</h3>
+    </div>
+    <div class="card-body">
+        {% if regles_departementales %}
+            <ul class="list-group mb-3">
+                {% for regle in regles_departementales %}
+                    <li class="list-group-item">
+                        <div class="fw-bold mb-2">{{ regle.regle }}</div>
+                        <div>
+                            {{ regle.contenu|markdown|safe }}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Aucune règle départementale définie.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Section Règles de PIEA -->
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h3 class="mb-0">Règles de PIEA</h3>
+    </div>
+    <div class="card-body">
+        {% if regles_piea %}
+            <ul class="list-group mb-3">
+                {% for piea in regles_piea %}
+                    <li class="list-group-item">
+                        <div class="fw-bold mb-2">{{ piea.article }}</div>
+                        <div>
+                            {{ piea.contenu|markdown|safe }}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Aucune règle de PIEA définie.</p>
+        {% endif %}
+    </div>
+</div>
 
     <!-- Section PlanDeCours en mode édition -->
     <div class="card">
@@ -331,6 +385,13 @@
                 <button type="submit" class="btn btn-primary">
                     {{ form.submit.label }}
                 </button>
+<!-- Bouton d'exportation du plan de cours en .docx -->
+<div class="mt-4">
+    <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" 
+       class="btn btn-success" role="button">
+        Exporter le Plan de Cours en .docx
+    </a>
+</div>
             </form>
         </div>
     </div>
