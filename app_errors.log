@@ -11269,3 +11269,335 @@ fields.3.content
 2025-01-09 16:08:52,985 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:52] "[32mPOST /manage_users HTTP/1.1[0m" 302 -
 2025-01-09 16:08:53,002 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:53] "GET /manage_users HTTP/1.1" 200 -
 2025-01-09 16:08:53,018 - INFO - 127.0.0.1 - - [09/Jan/2025 16:08:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:09:35,156 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-09 21:09:35,163 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-09 21:09:35,196 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:09:36,921 - WARNING -  * Debugger is active!
+2025-01-09 21:09:36,926 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:09:43,578 - INFO - 127.0.0.1 - - [09/Jan/2025 21:09:43] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-09 21:09:43,646 - INFO - 127.0.0.1 - - [09/Jan/2025 21:09:43] "GET /login?next=/ HTTP/1.1" 200 -
+2025-01-09 21:09:43,723 - INFO - 127.0.0.1 - - [09/Jan/2025 21:09:43] "GET /static/assets/EDxologo.png HTTP/1.1" 200 -
+2025-01-09 21:09:44,100 - INFO - 127.0.0.1 - - [09/Jan/2025 21:09:44] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-01-09 21:09:51,489 - INFO - 127.0.0.1 - - [09/Jan/2025 21:09:51] "[32mPOST /login?next=/ HTTP/1.1[0m" 302 -
+2025-01-09 21:09:53,430 - INFO - 127.0.0.1 - - [09/Jan/2025 21:09:53] "[32mPOST /login?next=/ HTTP/1.1[0m" 302 -
+2025-01-09 21:09:53,439 - INFO - 127.0.0.1 - - [09/Jan/2025 21:09:53] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-09 21:09:53,510 - INFO - 127.0.0.1 - - [09/Jan/2025 21:09:53] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-09 21:09:53,535 - INFO - 127.0.0.1 - - [09/Jan/2025 21:09:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:09:56,355 - INFO - 127.0.0.1 - - [09/Jan/2025 21:09:56] "GET /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 21:09:56,380 - INFO - 127.0.0.1 - - [09/Jan/2025 21:09:56] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:13:10,564 - INFO - 127.0.0.1 - - [09/Jan/2025 21:13:10] "GET /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 21:13:10,589 - INFO - 127.0.0.1 - - [09/Jan/2025 21:13:10] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:13:49,153 - INFO - 127.0.0.1 - - [09/Jan/2025 21:13:49] "GET /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 21:13:49,172 - INFO - 127.0.0.1 - - [09/Jan/2025 21:13:49] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:14:28,732 - INFO - 127.0.0.1 - - [09/Jan/2025 21:14:28] "GET /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 21:14:28,756 - INFO - 127.0.0.1 - - [09/Jan/2025 21:14:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:16:21,740 - INFO - 127.0.0.1 - - [09/Jan/2025 21:16:21] "GET /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 21:16:21,759 - INFO - 127.0.0.1 - - [09/Jan/2025 21:16:21] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:16:38,794 - INFO - 127.0.0.1 - - [09/Jan/2025 21:16:38] "GET /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 21:16:38,820 - INFO - 127.0.0.1 - - [09/Jan/2025 21:16:38] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:16:46,937 - INFO - 127.0.0.1 - - [09/Jan/2025 21:16:46] "POST /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 21:16:46,971 - INFO - 127.0.0.1 - - [09/Jan/2025 21:16:46] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:21:17,095 - INFO - 127.0.0.1 - - [09/Jan/2025 21:21:17] "GET /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 21:22:31,355 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:22:31,355 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:22:32,351 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:22:40,117 - WARNING -  * Debugger is active!
+2025-01-09 21:22:40,117 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:22:49,062 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:22:49,489 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:22:50,989 - WARNING -  * Debugger is active!
+2025-01-09 21:22:50,989 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:23:00,297 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask\\app.py', reloading
+2025-01-09 21:23:00,303 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask_sqlalchemy\\model.py', reloading
+2025-01-09 21:23:00,319 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\orm\\query.py', reloading
+2025-01-09 21:23:00,335 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\sql\\coercions.py', reloading
+2025-01-09 21:23:00,348 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\util\\langhelpers.py', reloading
+2025-01-09 21:23:00,368 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\orm\\mapper.py', reloading
+2025-01-09 21:23:00,368 - INFO - 127.0.0.1 - - [09/Jan/2025 21:23:00] "[35m[1mGET /cours/1/plan_de_cours/ HTTP/1.1[0m" 500 -
+2025-01-09 21:23:00,472 - INFO - 127.0.0.1 - - [09/Jan/2025 21:23:00] "GET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-09 21:23:00,501 - INFO - 127.0.0.1 - - [09/Jan/2025 21:23:00] "GET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-09 21:23:00,541 - INFO - 127.0.0.1 - - [09/Jan/2025 21:23:00] "GET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-09 21:23:00,545 - INFO - 127.0.0.1 - - [09/Jan/2025 21:23:00] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-09 21:23:01,294 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:23:02,985 - WARNING -  * Debugger is active!
+2025-01-09 21:23:02,985 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:26:22,193 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-09 21:26:22,195 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-09 21:26:22,209 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:26:23,709 - WARNING -  * Debugger is active!
+2025-01-09 21:26:23,712 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:26:23,731 - INFO - 127.0.0.1 - - [09/Jan/2025 21:26:23] "[35m[1mGET /cours/1/plan_de_cours/ HTTP/1.1[0m" 500 -
+2025-01-09 21:26:24,293 - INFO - 127.0.0.1 - - [09/Jan/2025 21:26:24] "[35m[1mGET /cours/1/plan_de_cours/ HTTP/1.1[0m" 500 -
+2025-01-09 21:26:24,350 - INFO - 127.0.0.1 - - [09/Jan/2025 21:26:24] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-09 21:26:24,356 - INFO - 127.0.0.1 - - [09/Jan/2025 21:26:24] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-09 21:26:24,384 - INFO - 127.0.0.1 - - [09/Jan/2025 21:26:24] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-09 21:26:24,392 - INFO - 127.0.0.1 - - [09/Jan/2025 21:26:24] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-09 21:28:48,848 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:28:48,848 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:28:49,606 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:28:51,116 - WARNING -  * Debugger is active!
+2025-01-09 21:28:51,116 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:28:54,556 - INFO - 127.0.0.1 - - [09/Jan/2025 21:28:54] "GET /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 21:28:54,602 - INFO - 127.0.0.1 - - [09/Jan/2025 21:28:54] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:29:26,604 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:29:27,576 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:29:29,123 - WARNING -  * Debugger is active!
+2025-01-09 21:29:29,123 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:29:30,324 - INFO - 127.0.0.1 - - [09/Jan/2025 21:29:30] "[35m[1mGET /cours/1/plan_de_cours/ HTTP/1.1[0m" 500 -
+2025-01-09 21:29:30,380 - INFO - 127.0.0.1 - - [09/Jan/2025 21:29:30] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-09 21:29:30,380 - INFO - 127.0.0.1 - - [09/Jan/2025 21:29:30] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-09 21:29:30,399 - INFO - 127.0.0.1 - - [09/Jan/2025 21:29:30] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-09 21:29:30,409 - INFO - 127.0.0.1 - - [09/Jan/2025 21:29:30] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-09 21:29:47,566 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:29:48,507 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:29:50,237 - WARNING -  * Debugger is active!
+2025-01-09 21:29:50,248 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:31:58,610 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 21:31:58,610 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 21:31:59,130 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:32:00,621 - WARNING -  * Debugger is active!
+2025-01-09 21:32:00,621 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:32:01,388 - INFO - 127.0.0.1 - - [09/Jan/2025 21:32:01] "[35m[1mGET /cours/1/plan_de_cours/ HTTP/1.1[0m" 500 -
+2025-01-09 21:32:01,448 - INFO - 127.0.0.1 - - [09/Jan/2025 21:32:01] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-09 21:32:01,448 - INFO - 127.0.0.1 - - [09/Jan/2025 21:32:01] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-09 21:32:01,463 - INFO - 127.0.0.1 - - [09/Jan/2025 21:32:01] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-09 21:32:01,474 - INFO - 127.0.0.1 - - [09/Jan/2025 21:32:01] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-09 21:32:04,784 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 21:32:04,787 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 21:32:04,789 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 21:32:05,823 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:32:07,203 - WARNING -  * Debugger is active!
+2025-01-09 21:32:07,203 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:34:15,268 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-09 21:34:15,268 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-09 21:34:15,277 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:34:16,811 - WARNING -  * Debugger is active!
+2025-01-09 21:34:16,811 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:34:16,903 - INFO - 127.0.0.1 - - [09/Jan/2025 21:34:16] "GET /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 21:34:16,944 - INFO - 127.0.0.1 - - [09/Jan/2025 21:34:16] "GET /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 21:34:16,998 - INFO - 127.0.0.1 - - [09/Jan/2025 21:34:16] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:36:48,419 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-09 21:36:48,419 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-09 21:36:48,421 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:36:49,902 - WARNING -  * Debugger is active!
+2025-01-09 21:36:49,902 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:36:50,000 - INFO - 127.0.0.1 - - [09/Jan/2025 21:36:50] "[32mPOST /cours/1/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-09 21:36:50,066 - INFO - 127.0.0.1 - - [09/Jan/2025 21:36:50] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 21:36:50,117 - INFO - 127.0.0.1 - - [09/Jan/2025 21:36:50] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:38:05,373 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:38:06,504 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:38:08,045 - WARNING -  * Debugger is active!
+2025-01-09 21:38:08,049 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:38:13,827 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:38:13,827 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:38:13,827 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:38:14,248 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:50:38,049 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-09 21:50:38,049 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-09 21:50:38,058 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:50:39,649 - WARNING -  * Debugger is active!
+2025-01-09 21:50:39,649 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:50:41,106 - INFO - 127.0.0.1 - - [09/Jan/2025 21:50:41] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 21:50:41,153 - INFO - 127.0.0.1 - - [09/Jan/2025 21:50:41] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:50:50,251 - INFO - 127.0.0.1 - - [09/Jan/2025 21:50:50] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 21:50:50,292 - INFO - 127.0.0.1 - - [09/Jan/2025 21:50:50] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:54:03,593 - INFO - 127.0.0.1 - - [09/Jan/2025 21:54:03] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 21:54:03,613 - INFO - 127.0.0.1 - - [09/Jan/2025 21:54:03] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:54:42,483 - INFO - 127.0.0.1 - - [09/Jan/2025 21:54:42] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 21:54:42,508 - INFO - 127.0.0.1 - - [09/Jan/2025 21:54:42] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 21:56:16,248 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:56:16,248 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:56:16,248 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:56:16,248 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:56:17,340 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:56:19,236 - WARNING -  * Debugger is active!
+2025-01-09 21:56:19,236 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:56:33,773 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:56:33,773 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:56:33,773 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-09 21:56:34,726 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:56:36,516 - WARNING -  * Debugger is active!
+2025-01-09 21:56:36,526 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:56:38,533 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-09 21:56:38,533 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-09 21:56:38,736 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:56:40,170 - WARNING -  * Debugger is active!
+2025-01-09 21:56:40,170 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:56:48,931 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-09 21:56:49,508 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:56:51,103 - WARNING -  * Debugger is active!
+2025-01-09 21:56:51,103 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:57:22,795 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-09 21:57:22,795 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-09 21:57:23,550 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:57:25,128 - WARNING -  * Debugger is active!
+2025-01-09 21:57:25,128 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:57:53,566 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask\\templating.py', reloading
+2025-01-09 21:57:53,584 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\jinja2\\environment.py', reloading
+2025-01-09 21:57:53,594 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\jinja2\\loaders.py', reloading
+2025-01-09 21:57:53,605 - INFO - 127.0.0.1 - - [09/Jan/2025 21:57:53] "[35m[1mGET /cours/1/plan_de_cours/A25/ HTTP/1.1[0m" 500 -
+2025-01-09 21:57:53,716 - INFO - 127.0.0.1 - - [09/Jan/2025 21:57:53] "GET /cours/1/plan_de_cours/A25/?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-09 21:57:53,716 - INFO - 127.0.0.1 - - [09/Jan/2025 21:57:53] "GET /cours/1/plan_de_cours/A25/?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-09 21:57:53,733 - INFO - 127.0.0.1 - - [09/Jan/2025 21:57:53] "GET /cours/1/plan_de_cours/A25/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-09 21:57:53,762 - INFO - 127.0.0.1 - - [09/Jan/2025 21:57:53] "[36mGET /cours/1/plan_de_cours/A25/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-09 21:57:54,546 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 21:57:56,122 - WARNING -  * Debugger is active!
+2025-01-09 21:57:56,122 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 21:59:00,594 - INFO - 127.0.0.1 - - [09/Jan/2025 21:59:00] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 21:59:00,674 - INFO - 127.0.0.1 - - [09/Jan/2025 21:59:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:00:56,745 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-09 22:00:56,745 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-09 22:00:56,745 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 22:00:58,247 - WARNING -  * Debugger is active!
+2025-01-09 22:00:58,247 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 22:00:59,058 - INFO - 127.0.0.1 - - [09/Jan/2025 22:00:59] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:00:59,106 - INFO - 127.0.0.1 - - [09/Jan/2025 22:00:59] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:04:12,287 - INFO - 127.0.0.1 - - [09/Jan/2025 22:04:12] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:04:12,314 - INFO - 127.0.0.1 - - [09/Jan/2025 22:04:12] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:05:00,219 - INFO - 127.0.0.1 - - [09/Jan/2025 22:05:00] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:05:00,252 - INFO - 127.0.0.1 - - [09/Jan/2025 22:05:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:06:22,123 - INFO - 127.0.0.1 - - [09/Jan/2025 22:06:22] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:06:22,141 - INFO - 127.0.0.1 - - [09/Jan/2025 22:06:22] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:07:05,438 - INFO - 127.0.0.1 - - [09/Jan/2025 22:07:05] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:07:05,458 - INFO - 127.0.0.1 - - [09/Jan/2025 22:07:05] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:08:05,628 - INFO - 127.0.0.1 - - [09/Jan/2025 22:08:05] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:08:05,654 - INFO - 127.0.0.1 - - [09/Jan/2025 22:08:05] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:10:51,930 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:10:51,930 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:10:51,930 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:10:53,104 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 22:10:55,055 - WARNING -  * Debugger is active!
+2025-01-09 22:10:55,055 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 22:11:04,966 - INFO - 127.0.0.1 - - [09/Jan/2025 22:11:04] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:11:05,045 - INFO - 127.0.0.1 - - [09/Jan/2025 22:11:05] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:14:09,152 - INFO - 127.0.0.1 - - [09/Jan/2025 22:14:09] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:14:09,172 - INFO - 127.0.0.1 - - [09/Jan/2025 22:14:09] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:15:18,355 - INFO - 127.0.0.1 - - [09/Jan/2025 22:15:18] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:15:18,381 - INFO - 127.0.0.1 - - [09/Jan/2025 22:15:18] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:15:39,872 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask_wtf\\form.py', reloading
+2025-01-09 22:15:39,887 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\wtforms\\form.py', reloading
+2025-01-09 22:15:39,898 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\wtforms\\fields\\list.py', reloading
+2025-01-09 22:15:39,898 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\wtforms\\fields\\form.py', reloading
+2025-01-09 22:15:39,916 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\wtforms\\fields\\core.py', reloading
+2025-01-09 22:15:39,924 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\wtforms\\fields\\choices.py', reloading
+2025-01-09 22:15:39,932 - INFO - 127.0.0.1 - - [09/Jan/2025 22:15:39] "[35m[1mPOST /cours/1/plan_de_cours/ HTTP/1.1[0m" 500 -
+2025-01-09 22:15:39,958 - INFO - 127.0.0.1 - - [09/Jan/2025 22:15:39] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-09 22:15:39,960 - INFO - 127.0.0.1 - - [09/Jan/2025 22:15:39] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-09 22:15:39,973 - INFO - 127.0.0.1 - - [09/Jan/2025 22:15:39] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-09 22:15:40,016 - INFO - 127.0.0.1 - - [09/Jan/2025 22:15:40] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-09 22:15:40,542 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 22:15:42,112 - WARNING -  * Debugger is active!
+2025-01-09 22:15:42,112 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 22:16:20,484 - INFO - 127.0.0.1 - - [09/Jan/2025 22:16:20] "[35m[1mPOST /cours/1/plan_de_cours/ HTTP/1.1[0m" 500 -
+2025-01-09 22:16:20,587 - INFO - 127.0.0.1 - - [09/Jan/2025 22:16:20] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-09 22:16:20,597 - INFO - 127.0.0.1 - - [09/Jan/2025 22:16:20] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-09 22:16:20,616 - INFO - 127.0.0.1 - - [09/Jan/2025 22:16:20] "[36mGET /cours/1/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-09 22:17:28,978 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:17:28,978 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:17:29,868 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 22:17:31,458 - WARNING -  * Debugger is active!
+2025-01-09 22:17:31,458 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 22:17:45,562 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:17:45,562 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:17:45,562 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:17:46,845 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 22:19:30,507 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-09 22:19:30,507 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-09 22:19:30,514 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 22:19:31,983 - WARNING -  * Debugger is active!
+2025-01-09 22:19:31,983 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 22:19:33,907 - INFO - 127.0.0.1 - - [09/Jan/2025 22:19:33] "POST /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 22:19:33,955 - INFO - 127.0.0.1 - - [09/Jan/2025 22:19:33] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:20:07,892 - INFO - 127.0.0.1 - - [09/Jan/2025 22:20:07] "POST /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 22:20:07,917 - INFO - 127.0.0.1 - - [09/Jan/2025 22:20:07] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:21:59,553 - INFO - 127.0.0.1 - - [09/Jan/2025 22:21:59] "POST /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 22:21:59,571 - INFO - 127.0.0.1 - - [09/Jan/2025 22:21:59] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:23:06,764 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\cours.py', reloading
+2025-01-09 22:23:07,194 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 22:23:44,295 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-09 22:23:44,295 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-09 22:23:44,305 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 22:23:45,865 - WARNING -  * Debugger is active!
+2025-01-09 22:23:45,865 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 22:23:54,624 - INFO - 127.0.0.1 - - [09/Jan/2025 22:23:54] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:23:54,717 - INFO - 127.0.0.1 - - [09/Jan/2025 22:23:54] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:24:05,916 - INFO - 127.0.0.1 - - [09/Jan/2025 22:24:05] "[32mPOST /cours/1/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-09 22:24:05,965 - INFO - 127.0.0.1 - - [09/Jan/2025 22:24:05] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:24:06,004 - INFO - 127.0.0.1 - - [09/Jan/2025 22:24:06] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:24:15,471 - INFO - 127.0.0.1 - - [09/Jan/2025 22:24:15] "[32mPOST /cours/1/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-09 22:24:15,509 - INFO - 127.0.0.1 - - [09/Jan/2025 22:24:15] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:24:15,551 - INFO - 127.0.0.1 - - [09/Jan/2025 22:24:15] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:24:34,622 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:24:35,390 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 22:24:37,061 - WARNING -  * Debugger is active!
+2025-01-09 22:24:37,072 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 22:27:24,749 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:27:24,749 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:27:26,056 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 22:27:27,706 - WARNING -  * Debugger is active!
+2025-01-09 22:27:27,715 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 22:27:27,832 - INFO - 127.0.0.1 - - [09/Jan/2025 22:27:27] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:27:27,873 - INFO - 127.0.0.1 - - [09/Jan/2025 22:27:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:27:36,168 - INFO - 127.0.0.1 - - [09/Jan/2025 22:27:36] "[32mPOST /cours/1/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-09 22:27:36,218 - INFO - 127.0.0.1 - - [09/Jan/2025 22:27:36] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:27:36,259 - INFO - 127.0.0.1 - - [09/Jan/2025 22:27:36] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:29:56,539 - INFO - 127.0.0.1 - - [09/Jan/2025 22:29:56] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:29:56,562 - INFO - 127.0.0.1 - - [09/Jan/2025 22:29:56] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:30:02,620 - INFO - 127.0.0.1 - - [09/Jan/2025 22:30:02] "POST /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 22:30:02,651 - INFO - 127.0.0.1 - - [09/Jan/2025 22:30:02] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:33:11,121 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:33:11,471 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 22:33:13,112 - WARNING -  * Debugger is active!
+2025-01-09 22:33:13,112 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 22:33:16,913 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:33:17,354 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 22:33:18,856 - WARNING -  * Debugger is active!
+2025-01-09 22:33:18,856 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 22:33:22,318 - INFO - 127.0.0.1 - - [09/Jan/2025 22:33:22] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:33:22,363 - INFO - 127.0.0.1 - - [09/Jan/2025 22:33:22] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:33:26,563 - INFO - 127.0.0.1 - - [09/Jan/2025 22:33:26] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:33:26,586 - INFO - 127.0.0.1 - - [09/Jan/2025 22:33:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:33:36,319 - INFO - 127.0.0.1 - - [09/Jan/2025 22:33:36] "POST /cours/1/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-09 22:33:36,365 - INFO - 127.0.0.1 - - [09/Jan/2025 22:33:36] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:33:44,996 - INFO - 127.0.0.1 - - [09/Jan/2025 22:33:44] "[32mPOST /cours/1/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-09 22:33:45,038 - INFO - 127.0.0.1 - - [09/Jan/2025 22:33:45] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:33:45,056 - INFO - 127.0.0.1 - - [09/Jan/2025 22:33:45] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:33:53,383 - INFO - 127.0.0.1 - - [09/Jan/2025 22:33:53] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:33:53,418 - INFO - 127.0.0.1 - - [09/Jan/2025 22:33:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:33:54,726 - INFO - 127.0.0.1 - - [09/Jan/2025 22:33:54] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:33:54,761 - INFO - 127.0.0.1 - - [09/Jan/2025 22:33:54] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:34:00,669 - INFO - 127.0.0.1 - - [09/Jan/2025 22:34:00] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:34:00,710 - INFO - 127.0.0.1 - - [09/Jan/2025 22:34:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:35:29,343 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-09 22:35:29,714 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-09 22:35:31,231 - WARNING -  * Debugger is active!
+2025-01-09 22:35:31,231 - INFO -  * Debugger PIN: 342-468-122
+2025-01-09 22:35:32,482 - INFO - 127.0.0.1 - - [09/Jan/2025 22:35:32] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:35:32,519 - INFO - 127.0.0.1 - - [09/Jan/2025 22:35:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-09 22:35:41,018 - INFO - 127.0.0.1 - - [09/Jan/2025 22:35:41] "[32mPOST /cours/1/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-09 22:35:41,060 - INFO - 127.0.0.1 - - [09/Jan/2025 22:35:41] "GET /cours/1/plan_de_cours/A25/ HTTP/1.1" 200 -
+2025-01-09 22:35:41,078 - INFO - 127.0.0.1 - - [09/Jan/2025 22:35:41] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
