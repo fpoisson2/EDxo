@@ -210,7 +210,7 @@ class PlanDeCours(db.Model):
     courriel_enseignant = db.Column(db.Text, nullable=True)
     bureau_enseignant = db.Column(db.Text, nullable=True)
 
-    materiel = db.Column(db.Text, nullable=False)
+    materiel = db.Column(db.Text, nullable=True)
 
     # Relations vers les sous-éléments
     calendriers = db.relationship("PlanDeCoursCalendrier", back_populates="plan_de_cours", cascade="all, delete-orphan")
