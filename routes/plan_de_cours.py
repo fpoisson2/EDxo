@@ -27,6 +27,8 @@ def parse_markdown_nested(md_text):
     
     Returns a list of dictionaries representing the nested structure.
     """
+    # Ensure proper spacing for markdown list processing
+    md_text = md_text.replace('\n- ', '\n\n- ')  # Add extra newline before list items
     html = markdown.markdown(md_text)
     soup = BeautifulSoup(html, 'html.parser')
     
@@ -324,23 +326,58 @@ def export_docx(cours_id, session):
 
     # 6. Prepare Data for Pivot Table
 
-    # a. Gather all unique capacités across all evaluations
+    # a. Gather all unique capacités and calculate totals
     all_caps = set()
+    cap_total_map = {}  # Dictionary to store total ponderation for each capacity
+    cap_id_total_map = {}  # Dictionary to store total ponderation by capacity ID
+
     for ev in plan_de_cours.evaluations:
         for cap_link in ev.capacites:
-            all_caps.add(cap_link.capacite.capacite)
+            cap_name = cap_link.capacite.capacite
+            cap_id = cap_link.capacite_id
+            
+            # Add to name-based map
+            all_caps.add(cap_name)
+            if cap_name not in cap_total_map:
+                cap_total_map[cap_name] = 0.0
+                
+            # Add to ID-based map
+            if cap_id not in cap_id_total_map:
+                cap_id_total_map[cap_id] = 0.0
+            
+            # Convert string ponderation to float before adding
+            try:
+                ponderation_str = str(cap_link.ponderation).strip().replace('%', '')
+                ponderation_value = float(ponderation_str) if ponderation_str else 0.0
+                cap_total_map[cap_name] += ponderation_value
+                cap_id_total_map[cap_id] += ponderation_value
+            except (ValueError, TypeError) as e:
+                print(f"Warning: Invalid ponderation value for {cap_name}: {str(e)}")
+
     all_caps = sorted(all_caps)  # Sort for consistent ordering
+
+    # Clean up the total maps to ensure they're formatted properly for the template
+    cleaned_cap_total_map = {cap: f"{total:.1f}" for cap, total in cap_total_map.items()}
+    cleaned_cap_id_total_map = {cap_id: f"{total:.1f}" for cap_id, total in cap_id_total_map.items()}
+
+    # Attach total ponderation to each capacite in capacites_plan_cadre
+    for capacite in plan_cadre.capacites:
+        capacite.total_ponderation = cleaned_cap_id_total_map.get(capacite.id, "0.0")
 
     # b. Create a capacity to ponderation map for each evaluation
     for ev in plan_de_cours.evaluations:
-        # Initialize all capacities with empty strings
         cap_map = {cap: "" for cap in all_caps}
-        # Fill in the pondérations where applicable
         for cap_link in ev.capacites:
             cap_name = cap_link.capacite.capacite
-            cap_map[cap_name] = cap_link.ponderation
-        # Attach the map to the evaluation
+            # Strip the % if it exists and ensure it's properly formatted
+            ponderation_str = str(cap_link.ponderation).strip().replace('%', '')
+            try:
+                value = float(ponderation_str)
+                cap_map[cap_name] = f"{value:.1f}"
+            except (ValueError, TypeError):
+                cap_map[cap_name] = "0.0"
         ev.cap_map = cap_map
+
 
     for piea in regles_piea:
         # Access 'contenu' using dot notation
@@ -356,6 +393,20 @@ def export_docx(cours_id, session):
         # Assign 'bullet_points' as a new attribute
         setattr(regle, 'bullet_points', bullet_points)
 
+    if plan_de_cours.evaluation_formative_apprentissages:
+        bullet_points = parse_markdown_nested(plan_de_cours.evaluation_formative_apprentissages)
+        setattr(plan_de_cours, 'evaluation_formative_apprentissages_bullet_points', bullet_points)
+
+    # Parse bullet points for accomodement
+    if plan_de_cours.accomodement:
+        bullet_points = parse_markdown_nested(plan_de_cours.accomodement)
+        setattr(plan_de_cours, 'accomodement_bullet_points', bullet_points)
+
+    # Parse bullet points for objectif_terminal_du_cours
+    if plan_de_cours.objectif_terminal_du_cours:
+        bullet_points = parse_markdown_nested(plan_de_cours.objectif_terminal_du_cours)
+        setattr(plan_de_cours, 'objectif_terminal_bullet_points', bullet_points)
+
     # 6. Construire le contexte pour injection (tous les champs possibles)
     context = {
         # -- Informations sur le Cours & PlanCadre
@@ -365,6 +416,7 @@ def export_docx(cours_id, session):
         "departement": departement,
         "savoirs_etre": plan_cadre.savoirs_etre,
         "capacites_plan_cadre": plan_cadre.capacites,
+        "cap_id_total_map": cleaned_cap_id_total_map,
 
         # -- Informations PlanDeCours
         "plan_de_cours": plan_de_cours,
@@ -372,9 +424,12 @@ def export_docx(cours_id, session):
         "session": plan_de_cours.session,
         "presentation_du_cours": plan_de_cours.presentation_du_cours,
         "objectif_terminal_du_cours": plan_de_cours.objectif_terminal_du_cours,
+        "objectif_terminal_bullet_points": getattr(plan_de_cours, 'objectif_terminal_bullet_points', []),
         "organisation_et_methodes": plan_de_cours.organisation_et_methodes,
         "accomodement": plan_de_cours.accomodement,
+        "accomodement_bullet_points": getattr(plan_de_cours, 'accomodement_bullet_points', []),
         "evaluation_formative_apprentissages": plan_de_cours.evaluation_formative_apprentissages,
+        "evaluation_formative_apprentissages_bullet_points": getattr(plan_de_cours, 'evaluation_formative_apprentissages_bullet_points', []),
         "evaluation_expression_francais": plan_de_cours.evaluation_expression_francais,
         "seuil_reussite": plan_de_cours.seuil_reussite,
         
@@ -396,6 +451,7 @@ def export_docx(cours_id, session):
         # -- Evaluations Data for Pivot Table
         "all_caps": all_caps,
         "evaluations": plan_de_cours.evaluations,
+        "cap_total_map": cleaned_cap_total_map,
 
         # -- Règles
         "regles_departementales": regles_departementales,
