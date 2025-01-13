@@ -8170,3 +8170,31 @@ fields.3.content
 2025-01-13 16:11:13,846 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:13] "[32mGET / HTTP/1.1[0m" 302 -
 2025-01-13 16:11:13,867 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:13] "GET /programme/1 HTTP/1.1" 200 -
 2025-01-13 16:11:13,878 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:13] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:11:52,051 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-13 16:11:52,051 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-13 16:11:52,052 - INFO -  * Restarting with stat
+2025-01-13 16:11:52,882 - WARNING -  * Debugger is active!
+2025-01-13 16:11:52,884 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 16:11:53,452 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:53] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 16:11:53,466 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:11:59,820 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:59] "GET /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-13 16:11:59,831 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:59] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:12:23,529 - INFO - 127.0.0.1 - - [13/Jan/2025 16:12:23] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-13 16:12:23,542 - INFO - 127.0.0.1 - - [13/Jan/2025 16:12:23] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:12:24,641 - INFO - 127.0.0.1 - - [13/Jan/2025 16:12:24] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 16:12:24,656 - INFO - 127.0.0.1 - - [13/Jan/2025 16:12:24] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:12:25,327 - INFO - 127.0.0.1 - - [13/Jan/2025 16:12:25] "GET /parametres/gestion_departements HTTP/1.1" 200 -
+2025-01-13 16:12:25,337 - INFO - 127.0.0.1 - - [13/Jan/2025 16:12:25] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:12:26,118 - INFO - 127.0.0.1 - - [13/Jan/2025 16:12:26] "GET /change_password HTTP/1.1" 200 -
+2025-01-13 16:12:26,132 - INFO - 127.0.0.1 - - [13/Jan/2025 16:12:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:12:26,594 - INFO - 127.0.0.1 - - [13/Jan/2025 16:12:26] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-13 16:12:26,607 - INFO - 127.0.0.1 - - [13/Jan/2025 16:12:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:13:25,228 - INFO - 127.0.0.1 - - [13/Jan/2025 16:13:25] "[32mPOST /settings/generation HTTP/1.1[0m" 302 -
+2025-01-13 16:13:25,233 - INFO - 127.0.0.1 - - [13/Jan/2025 16:13:25] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-13 16:13:25,247 - INFO - 127.0.0.1 - - [13/Jan/2025 16:13:25] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:13:26,195 - INFO - 127.0.0.1 - - [13/Jan/2025 16:13:26] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 16:13:26,206 - INFO - 127.0.0.1 - - [13/Jan/2025 16:13:26] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 16:13:26,220 - INFO - 127.0.0.1 - - [13/Jan/2025 16:13:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
