@@ -8088,3 +8088,85 @@ fields.3.content
 2025-01-13 16:04:27,537 - INFO - 127.0.0.1 - - [13/Jan/2025 16:04:27] "[36mGET /cours/30/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
 2025-01-13 16:05:12,704 - INFO - 127.0.0.1 - - [13/Jan/2025 16:05:12] "GET /cours/30/plan_de_cours/ HTTP/1.1" 200 -
 2025-01-13 16:05:12,715 - INFO - 127.0.0.1 - - [13/Jan/2025 16:05:12] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:08:21,059 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-13 16:08:21,059 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-13 16:08:21,059 - INFO -  * Restarting with stat
+2025-01-13 16:08:21,905 - WARNING -  * Debugger is active!
+2025-01-13 16:08:21,906 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 16:08:21,948 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:21] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 16:08:21,968 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:21] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 16:08:21,981 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:21] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:08:22,319 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:22] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 16:08:22,332 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:22] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:08:23,999 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:23] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-13 16:08:24,017 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:24] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:08:25,134 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:25] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-13 16:08:25,143 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:25] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:08:25,808 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:25] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 16:08:25,820 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:25] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:08:26,322 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:26] "GET /parametres/gestion_departements HTTP/1.1" 200 -
+2025-01-13 16:08:26,331 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:08:26,883 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:26] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-13 16:08:26,894 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:08:27,475 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:27] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 16:08:27,486 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:08:27,960 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:27] "GET /parametres/gestion_departements HTTP/1.1" 200 -
+2025-01-13 16:08:27,972 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:08:28,776 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:28] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 16:08:28,791 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:28] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 16:08:28,801 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:08:32,972 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:32] "[32mGET /programme/competence/code/02GP HTTP/1.1[0m" 302 -
+2025-01-13 16:08:32,988 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:32] "GET /programme/competence/2 HTTP/1.1" 200 -
+2025-01-13 16:08:32,999 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:08:34,277 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:34] "[35m[1mGET /element_competence/7/edit HTTP/1.1[0m" 500 -
+2025-01-13 16:08:34,285 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:34] "GET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-13 16:08:34,287 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:34] "GET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-13 16:08:34,303 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:34] "GET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=console.png&s=1o0iu4iui0gTFUbGzSc3 HTTP/1.1" 200 -
+2025-01-13 16:08:34,309 - INFO - 127.0.0.1 - - [13/Jan/2025 16:08:34] "GET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-13 16:09:09,498 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/decorator.py', reloading
+2025-01-13 16:09:09,641 - INFO -  * Restarting with stat
+2025-01-13 16:09:10,474 - WARNING -  * Debugger is active!
+2025-01-13 16:09:10,475 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 16:09:20,593 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/decorator.py', reloading
+2025-01-13 16:09:20,728 - INFO -  * Restarting with stat
+2025-01-13 16:09:21,565 - WARNING -  * Debugger is active!
+2025-01-13 16:09:21,567 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 16:09:23,951 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:23] "[35m[1mGET /element_competence/7/edit HTTP/1.1[0m" 500 -
+2025-01-13 16:09:23,965 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:23] "[36mGET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 16:09:23,965 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:23] "[36mGET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 16:09:23,977 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:23] "GET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=console.png&s=fOvCXKVX94Y3KnfBWD7H HTTP/1.1" 200 -
+2025-01-13 16:09:23,982 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:23] "[36mGET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 16:09:45,841 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 16:09:45,990 - INFO -  * Restarting with stat
+2025-01-13 16:09:46,831 - WARNING -  * Debugger is active!
+2025-01-13 16:09:46,833 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 16:09:49,181 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:49] "[35m[1mGET /element_competence/7/edit HTTP/1.1[0m" 500 -
+2025-01-13 16:09:49,194 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:49] "[36mGET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 16:09:49,195 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:49] "[36mGET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 16:09:49,202 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:49] "GET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=console.png&s=xu04gu4iWifnEgr49Ud6 HTTP/1.1" 200 -
+2025-01-13 16:09:49,210 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:49] "[36mGET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 16:09:49,840 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:49] "[35m[1mGET /element_competence/7/edit HTTP/1.1[0m" 500 -
+2025-01-13 16:09:49,851 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:49] "[36mGET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 16:09:49,854 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:49] "[36mGET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 16:09:49,862 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:49] "[36mGET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=console.png&s=xu04gu4iWifnEgr49Ud6 HTTP/1.1[0m" 304 -
+2025-01-13 16:09:49,871 - INFO - 127.0.0.1 - - [13/Jan/2025 16:09:49] "[36mGET /element_competence/7/edit?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 16:10:15,141 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 16:10:15,282 - INFO -  * Restarting with stat
+2025-01-13 16:10:16,118 - WARNING -  * Debugger is active!
+2025-01-13 16:10:16,119 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 16:10:50,490 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/app.py', reloading
+2025-01-13 16:10:50,628 - INFO -  * Restarting with stat
+2025-01-13 16:10:51,424 - WARNING -  * Debugger is active!
+2025-01-13 16:10:51,426 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 16:10:52,892 - INFO - 127.0.0.1 - - [13/Jan/2025 16:10:52] "GET /element_competence/7/edit HTTP/1.1" 200 -
+2025-01-13 16:10:52,904 - INFO - 127.0.0.1 - - [13/Jan/2025 16:10:52] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:11:00,047 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:00] "GET /programme/competence/2/edit HTTP/1.1" 200 -
+2025-01-13 16:11:00,060 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:11:07,767 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:07] "GET /element_competence/7/edit HTTP/1.1" 200 -
+2025-01-13 16:11:07,779 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:07] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:11:13,846 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:13] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 16:11:13,867 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:13] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 16:11:13,878 - INFO - 127.0.0.1 - - [13/Jan/2025 16:11:13] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
