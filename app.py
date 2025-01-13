@@ -12,6 +12,10 @@ from routes.settings import settings_bp
 from routes.plan_cadre import plan_cadre_bp
 from flask_wtf import CSRFProtect
 from datetime import timedelta, datetime, timezone
+from routes.plan_de_cours import plan_de_cours_bp
+from models import db, Cours  # Import specific models
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text
 
 load_dotenv()
 
@@ -19,6 +23,8 @@ load_dotenv()
 app = Flask(__name__)
 
 login_manager.init_app(app)
+
+print(os.path.abspath('programme.db'))
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['WTF_CSRF_ENABLED'] = True
@@ -31,6 +37,28 @@ csrf = CSRFProtect(app)
 
 @app.before_request
 def before_request():
+    try:
+        # Test the database connection
+        db.session.execute(text("SELECT 1"))
+        db.session.commit()  # Commit to ensure the session is active
+        print("Database connection successful")
+        
+        # Test retrieving a Cours record (first one in the database)
+        cours = Cours.query.first()  # Or you can use .get() or other query methods
+        if cours:
+            print(f"Retrieved Cours: {cours.nom} (ID: {cours.id})")
+        else:
+            print("No Cours record found in the database.")
+        
+    except SQLAlchemyError as e:
+        # Catch database-related errors
+        print(f"Database connection failed: {e}")
+    except Exception as e:
+        # Catch any other unexpected errors
+        print(f"Unexpected error: {e}")
+
+
+
     session.permanent = True
     now = datetime.now(timezone.utc)  # Offset-aware UTC time
 
@@ -57,12 +85,24 @@ def after_request(response):
         session.modified = True  # Optionally regenerate session ID
     return response
 
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.abspath('programme.db?timeout=30')}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize db
+db.init_app(app)
+
+with app.app_context():
+    with db.engine.connect() as connection:
+        connection.execute(text('PRAGMA journal_mode=WAL;'))
+
+
 # Import and register routes
 app.register_blueprint(routes.main)
 app.register_blueprint(settings_bp)
 app.register_blueprint(cours_bp)
 app.register_blueprint(programme_bp)
 app.register_blueprint(plan_cadre_bp)
+app.register_blueprint(plan_de_cours_bp)
 
 # Run the application
 if __name__ == '__main__':

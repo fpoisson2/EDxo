@@ -1,3 +1,4 @@
+<!-- parametres.html -->
 {% extends "base.html" %}
 
 {% block content %}
@@ -15,10 +16,15 @@
             Génération de plan-cadre
             <i class="bi bi-gear"></i>
           </a>
-            <a href="{{ url_for('main.manage_users') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
-    Gestion des utilisateurs
-    <i class="bi bi-people"></i>
-  </a>
+          <a href="{{ url_for('main.manage_users') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
+            Gestion des utilisateurs
+            <i class="bi bi-people"></i>
+          </a>
+          <!-- Nouveau lien pour la gestion des départements -->
+          <a href="{{ url_for('main.gestion_departements') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
+            Gestion des départements
+            <i class="bi bi-building"></i>
+          </a>
         </div>
       </div>
 

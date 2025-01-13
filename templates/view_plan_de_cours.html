@@ -1,0 +1,723 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+
+    <h1>Plan de cours</h1>
+    <hr>
+
+    <!-- Informations Générales sur le Cours -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h3 class="mb-0">Informations Générales sur le Cours</h3>
+        </div>
+        <div class="card-body">
+            <p><strong>Code du cours :</strong> {{ cours.code }}</p>
+            <p><strong>Nom du cours :</strong> {{ cours.nom }}</p>
+            <p><strong>Nombre d'unités :</strong> {{ cours.nombre_unites }}</p>
+            <!-- Champ "Session" retiré -->
+            <p><strong>Heures Théorie :</strong> {{ cours.heures_theorie }}</p>
+            <p><strong>Heures Laboratoire :</strong> {{ cours.heures_laboratoire }}</p>
+            <p><strong>Heures Travail Maison :</strong> {{ cours.heures_travail_maison }}</p>
+            <!-- Champ "Fil Conducteur" retiré -->
+
+            <!-- Ajout du Nom du Programme -->
+            <p><strong>Nom du programme :</strong> 
+                {% if cours.programme %}
+                    {{ cours.programme.nom }}
+                {% else %}
+                    Non défini
+                {% endif %}
+            </p>
+
+            <!-- Nom du Département -->
+            <p><strong>Nom du département :</strong> 
+                {% if departement %}
+                    {{ departement.nom }}
+                {% else %}
+                    Non défini
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Section PlanCadre en lecture seule -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h3 class="mb-0">Informations PlanCadre</h3>
+        </div>
+        <div class="card-body">
+
+            <p><strong>Place et rôle du cours dans le programme :</strong></p>
+            <div class="bg-light p-2 mb-3">
+                {{ plan_cadre.place_intro | safe }}
+            </div>
+
+            <hr>
+
+            <h5>Capacités (incluant savoirs, savoir-faire)</h5>
+            {% if plan_cadre.capacites %}
+                <ul class="list-group mb-3">
+                    {% for cap in plan_cadre.capacites %}
+                        <li class="list-group-item">
+                            <h5 class="mb-1">Capacité : {{ cap.capacite }}</h5>
+                            {% if cap.description_capacite %}
+                                <p class="mb-1">{{ cap.description_capacite }}</p>
+                            {% endif %}
+
+                            <p class="mb-1">
+                                <strong>Pondération min/max :</strong> {{ cap.ponderation_min }} / {{ cap.ponderation_max }}
+                            </p>
+
+                            {# Liste des savoirs nécessaires #}
+                            {% if cap.savoirs_necessaires %}
+                                <p><strong>Savoirs nécessaires :</strong></p>
+                                <ul>
+                                    {% for sn in cap.savoirs_necessaires %}
+                                        <li>{{ sn.texte }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>Aucun savoir nécessaire défini.</p>
+                            {% endif %}
+
+                            {# Liste des savoirs-faire #}
+                            {% if cap.savoirs_faire %}
+                                <p><strong>Savoir-faire :</strong></p>
+                                <ul>
+                                    {% for sf in cap.savoirs_faire %}
+                                        <li>
+                                            {{ sf.texte }}
+                                            {% if sf.cible %}  
+                                              &nbsp; — *Cible:* {{ sf.cible }}
+                                            {% endif %}
+                                            {% if sf.seuil_reussite %}
+                                              &nbsp; — *Seuil de réussite:* {{ sf.seuil_reussite }}
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>Aucun savoir-faire défini.</p>
+                            {% endif %}
+
+                            {# Moyens d'évaluation #}
+                            {% if cap.moyens_evaluation %}
+                                <p><strong>Moyens d'évaluation :</strong></p>
+                                <ul>
+                                    {% for me in cap.moyens_evaluation %}
+                                        <li>{{ me.texte }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>Aucun moyen d'évaluation défini.</p>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Aucune capacité définie.</p>
+            {% endif %}
+
+            <hr>
+
+            <h5>Savoir-être</h5>
+            {% if plan_cadre.savoirs_etre %}
+                <ul class="list-group mb-3">
+                    {% for se in plan_cadre.savoirs_etre %}
+                        <li class="list-group-item">
+                            {{ se.texte }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Aucun savoir-être.</p>
+            {% endif %}
+
+        </div>
+    </div>
+
+<!-- Section Règles Départementales -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">Règles Départementales</h3>
+    </div>
+    <div class="card-body">
+        {% if regles_departementales %}
+            <ul class="list-group mb-3">
+                {% for regle in regles_departementales %}
+                    <li class="list-group-item">
+                        <div class="fw-bold mb-2">{{ regle.regle }}</div>
+                        <div>
+                            {{ regle.contenu|markdown|safe }}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Aucune règle départementale définie.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Section Règles de PIEA -->
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h3 class="mb-0">Règles de PIEA</h3>
+    </div>
+    <div class="card-body">
+        {% if regles_piea %}
+            <ul class="list-group mb-3">
+                {% for piea in regles_piea %}
+                    <li class="list-group-item">
+                        <div class="fw-bold mb-2">{{ piea.article }}</div>
+                        <div>
+                            {{ piea.contenu|markdown|safe }}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Aucune règle de PIEA définie.</p>
+        {% endif %}
+    </div>
+</div>
+
+    <!-- Section PlanDeCours en mode édition -->
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h3 class="mb-0">Édition du PlanDeCours</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" 
+                  action="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=cours.id) }}"
+                  id="planDeCoursForm">
+                {{ form.hidden_tag() }}
+
+                <!-- Champs Principaux -->
+                <h4>Informations Principales</h4>
+                <div class="mb-3">
+                    {{ form.campus.label(class="form-label fw-bold") }}
+                    {{ form.campus(class="form-control") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.session.label(class="form-label fw-bold") }}
+                    {{ form.session(class="form-control") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.presentation_du_cours.label(class="form-label fw-bold") }}
+                    {{ form.presentation_du_cours(class="form-control", rows="3") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.objectif_terminal_du_cours.label(class="form-label fw-bold") }}
+                    {{ form.objectif_terminal_du_cours(class="form-control", rows="3") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.organisation_et_methodes.label(class="form-label fw-bold") }}
+                    {{ form.organisation_et_methodes(class="form-control", rows="3") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.accomodement.label(class="form-label fw-bold") }}
+                    {{ form.accomodement(class="form-control", rows="3") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.evaluation_formative_apprentissages.label(class="form-label fw-bold") }}
+                    {{ form.evaluation_formative_apprentissages(class="form-control", rows="3") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.evaluation_expression_francais.label(class="form-label fw-bold") }}
+                    {{ form.evaluation_expression_francais(class="form-control", rows="3") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.seuil_reussite.label(class="form-label fw-bold") }}
+                    {{ form.seuil_reussite(class="form-control", rows="3") }}
+                </div>
+
+                <hr>
+                <h4>Informations de l’Enseignant</h4>
+                <div class="mb-3">
+                    {{ form.nom_enseignant.label(class="form-label fw-bold") }}
+                    {{ form.nom_enseignant(class="form-control") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.telephone_enseignant.label(class="form-label fw-bold") }}
+                    {{ form.telephone_enseignant(class="form-control") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.courriel_enseignant.label(class="form-label fw-bold") }}
+                    {{ form.courriel_enseignant(class="form-control") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.bureau_enseignant.label(class="form-label fw-bold") }}
+                    {{ form.bureau_enseignant(class="form-control") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.materiel.label(class="form-label fw-bold") }}
+                    {{ form.materiel(class="form-control") }}
+                </div>
+
+                <hr>
+                <h4>Calendrier des activités</h4>
+                <div id="calendrier-container" class="mb-3" {% if not form.calendriers %}style="display: none;"{% endif %}>
+                    {% for subform in form.calendriers %}
+                        <div class="calendar-item border p-2 mb-2">
+                            <button type="button" class="btn btn-danger btn-sm float-end remove-calendar">Supprimer</button>
+                            <div class="row mb-2">
+                                <div class="col-2">
+                                    {{ subform.semaine.label(class="form-label") }}
+                                    {{ subform.semaine(class="form-control") }}
+                                </div>
+                                <div class="col-4">
+                                    {{ subform.sujet.label(class="form-label") }}
+                                    {{ subform.sujet(class="form-control") }}
+                                </div>
+                                <div class="col-6">
+                                    {{ subform.activites.label(class="form-label") }}
+                                    {{ subform.activites(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-6">
+                                    {{ subform.travaux_hors_classe.label(class="form-label") }}
+                                    {{ subform.travaux_hors_classe(class="form-control") }}
+                                </div>
+                                <div class="col-6">
+                                    {{ subform.evaluations.label(class="form-label") }}
+                                    {{ subform.evaluations(class="form-control") }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn btn-secondary mb-3" id="add-calendrier">Ajouter un calendrier</button>
+
+                <hr>
+                <h4>Médiagraphie</h4>
+                <div id="mediagraphie-container" class="mb-3" {% if not form.mediagraphies %}style="display: none;"{% endif %}>
+                    {% for subform in form.mediagraphies %}
+                        <div class="mediagraphie-item mb-2">
+                            <button type="button" class="btn btn-danger btn-sm float-end remove-mediagraphie">Supprimer</button>
+                            {{ subform.reference_bibliographique.label(class="form-label") }}
+                            {{ subform.reference_bibliographique(class="form-control") }}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn btn-secondary mb-3" id="add-mediagraphie">Ajouter une référence</button>
+
+                <hr>
+                <h4>Disponibilités de l’enseignant</h4>
+                <div id="disponibilites-container" class="mb-3" {% if not form.disponibilites %}style="display: none;"{% endif %}>
+                    {% for subform in form.disponibilites %}
+                        <div class="disponibilite-item row g-2 mb-2">
+                            <button type="button" class="btn btn-danger btn-sm float-end remove-disponibilite">Supprimer</button>
+                            <div class="col">
+                                {{ subform.jour_semaine.label(class="form-label") }}
+                                {{ subform.jour_semaine(class="form-control") }}
+                            </div>
+                            <div class="col">
+                                {{ subform.plage_horaire.label(class="form-label") }}
+                                {{ subform.plage_horaire(class="form-control") }}
+                            </div>
+                            <div class="col">
+                                {{ subform.lieu.label(class="form-label") }}
+                                {{ subform.lieu(class="form-control") }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn btn-secondary mb-3" id="add-disponibilite">Ajouter une disponibilité</button>
+
+                <hr>
+                <h4>Évaluations (PlanDeCours)</h4>
+                <div id="evaluations-container">
+                    {% for evaluation_subform in form.evaluations %}
+                        <div class="evaluation-item border p-2 mb-2" data-eval-index="{{ loop.index0 }}">
+                            <!-- Bouton de suppression de l'évaluation -->
+                            <button type="button" class="btn btn-danger btn-sm float-end remove-evaluation">Supprimer l'évaluation</button>
+                            
+                            <!-- Champs de l'évaluation -->
+                            <div class="row mb-2">
+                                <div class="col">
+                                    {{ evaluation_subform.titre_evaluation.label(class="form-label") }}
+                                    {{ evaluation_subform.titre_evaluation(class="form-control") }}
+                                </div>
+                                <div class="col">
+                                    {{ evaluation_subform.semaine.label(class="form-label") }}
+                                    {{ evaluation_subform.semaine(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                {{ evaluation_subform.texte_description.label(class="form-label") }}
+                                {{ evaluation_subform.texte_description(class="form-control") }}
+                            </div>
+
+                            <h5>Capacités évaluées</h5>
+                            <div class="capacites-container">
+                                {% for cap_subform in evaluation_subform.capacites %}
+                                    <div class="capacite-item mb-2 border p-2">
+                                        <!-- Bouton de suppression de la capacité -->
+                                        <button type="button" class="btn btn-danger btn-sm float-end remove-capacite">Supprimer la capacité</button>
+                                        
+                                        {{ cap_subform.capacite_id.label(class="form-label") }}
+                                        {{ cap_subform.capacite_id(class="form-control") }}
+
+                                        {{ cap_subform.ponderation.label(class="form-label") }}
+                                        {{ cap_subform.ponderation(class="form-control") }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <!-- Bouton pour ajouter une capacité -->
+                            <button type="button" class="btn btn-secondary btn-sm add-capacite">
+                                Ajouter une capacité
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" id="add-evaluation" class="btn btn-secondary">Ajouter une évaluation</button>
+
+                <button type="submit" class="btn btn-primary">
+                    {{ form.submit.label }}
+                </button>
+<!-- Bouton d'exportation du plan de cours en .docx -->
+<div class="mt-4">
+    <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" 
+       class="btn btn-success" role="button">
+        Exporter le Plan de Cours en .docx
+    </a>
+</div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modèles cachés pour clonage -->
+    <div id="templates" style="display: none;">
+        <!-- Template Calendrier -->
+        <div id="calendrier-template" class="calendar-item border p-2 mb-2">
+            <button type="button" class="btn btn-danger btn-sm float-end remove-calendar">Supprimer</button>
+            <div class="row mb-2">
+                <div class="col-2">
+                    <label class="form-label" for="calendriers-__index__-semaine">Semaine</label>
+                    <input type="text" name="calendriers-__index__-semaine" class="form-control" id="calendriers-__index__-semaine" />
+                </div>
+                <div class="col-4">
+                    <label class="form-label" for="calendriers-__index__-sujet">Sujet</label>
+                    <input type="text" name="calendriers-__index__-sujet" class="form-control" id="calendriers-__index__-sujet" />
+                </div>
+                <div class="col-6">
+                    <label class="form-label" for="calendriers-__index__-activites">Activités</label>
+                    <textarea name="calendriers-__index__-activites" class="form-control" id="calendriers-__index__-activites"></textarea>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-6">
+                    <label class="form-label" for="calendriers-__index__-travaux_hors_classe">Travaux hors-classe</label>
+                    <textarea name="calendriers-__index__-travaux_hors_classe" class="form-control" id="calendriers-__index__-travaux_hors_classe"></textarea>
+                </div>
+                <div class="col-6">
+                    <label class="form-label" for="calendriers-__index__-evaluations">Évaluations</label>
+                    <textarea name="calendriers-__index__-evaluations" class="form-control" id="calendriers-__index__-evaluations"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Template Médiagraphie -->
+        <div id="mediagraphie-template" class="mediagraphie-item mb-2">
+            <button type="button" class="btn btn-danger btn-sm float-end remove-mediagraphie">Supprimer</button>
+            <label class="form-label" for="mediagraphies-__index__-reference_bibliographique">Référence bibliographique</label>
+            <input type="text" name="mediagraphies-__index__-reference_bibliographique" 
+                   class="form-control" 
+                   id="mediagraphies-__index__-reference_bibliographique" />
+        </div>
+
+        <!-- Template Disponibilité -->
+        <div id="disponibilite-template" class="disponibilite-item row g-2 mb-2">
+            <button type="button" class="btn btn-danger btn-sm float-end remove-disponibilite">Supprimer</button>
+            <div class="col">
+                <label class="form-label" for="disponibilites-__index__-jour_semaine">Jour</label>
+                <input type="text" name="disponibilites-__index__-jour_semaine" 
+                       class="form-control" 
+                       id="disponibilites-__index__-jour_semaine" />
+            </div>
+            <div class="col">
+                <label class="form-label" for="disponibilites-__index__-plage_horaire">Plage horaire</label>
+                <input type="text" name="disponibilites-__index__-plage_horaire" 
+                       class="form-control" 
+                       id="disponibilites-__index__-plage_horaire" />
+            </div>
+            <div class="col">
+                <label class="form-label" for="disponibilites-__index__-lieu">Lieu</label>
+                <input type="text" name="disponibilites-__index__-lieu" 
+                       class="form-control" 
+                       id="disponibilites-__index__-lieu" />
+            </div>
+        </div>
+
+        <!-- Template Évaluation -->
+        <div id="evaluation-template" class="evaluation-item border p-2 mb-2">
+            <button type="button" class="btn btn-danger btn-sm float-end remove-evaluation">Supprimer</button>
+            <div class="row mb-2">
+                <div class="col">
+                    <label class="form-label" for="evaluations-__index__-titre_evaluation">Titre</label>
+                    <input type="text" name="evaluations-__index__-titre_evaluation" 
+                           class="form-control" 
+                           id="evaluations-__index__-titre_evaluation" />
+                </div>
+                <div class="col">
+                    <label class="form-label" for="evaluations-__index__-semaine">Semaine</label>
+                    <input type="text" name="evaluations-__index__-semaine" 
+                           class="form-control" 
+                           id="evaluations-__index__-semaine" />
+                </div>
+            </div>
+            <div class="mb-2">
+                <label class="form-label" for="evaluations-__index__-texte_description">Description</label>
+                <textarea name="evaluations-__index__-texte_description" 
+                          class="form-control" 
+                          id="evaluations-__index__-texte_description"></textarea>
+            </div>
+            <h5>Capacités évaluées</h5>
+            <div class="capacites-container">
+                <!-- Capacités ajoutées dynamiquement ici -->
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm add-capacite">
+                Ajouter une capacité
+            </button>
+        </div>
+
+        <!-- Template Capacité Évaluée -->
+        <div id="evaluation-capacite-template" class="capacite-item mb-2 border p-2">
+            <button type="button" class="btn btn-danger btn-sm float-end remove-capacite">Supprimer</button>
+
+            <label class="form-label" for="evaluations-__eval_index__-capacites-__cap_index__-capacite_id">
+                Capacité
+            </label>
+            <select class="form-control"
+                    name="evaluations-__eval_index__-capacites-__cap_index__-capacite_id"
+                    id="evaluations-__eval_index__-capacites-__cap_index__-capacite_id">
+                <!-- Les options seront copiées depuis #capacites-hidden -->
+            </select>
+
+            <label class="form-label" for="evaluations-__eval_index__-capacites-__cap_index__-ponderation">
+                Pondération
+            </label>
+            <input type="text"
+                   class="form-control"
+                   name="evaluations-__eval_index__-capacites-__cap_index__-ponderation"
+                   id="evaluations-__eval_index__-capacites-__cap_index__-ponderation">
+        </div>
+    </div>
+
+    <!-- Liste des Capacités pour les sélecteurs -->
+    <select id="capacites-hidden" style="display: none;">
+        {% for cap in plan_cadre.capacites %}
+            <option value="{{ cap.id }}">
+                {{ cap.capacite }}
+            </option>
+        {% endfor %}
+    </select>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- JavaScript pour gérer l'ajout et la suppression -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let calendrierIndex = document.querySelectorAll('.calendar-item').length;
+    let mediagraphieIndex = document.querySelectorAll('.mediagraphie-item').length;
+    let disponibiliteIndex = document.querySelectorAll('.disponibilite-item').length;
+    let evaluationIndex = document.querySelectorAll('.evaluation-item').length;
+
+    // Fonction pour réindexer les évaluations et capacités
+    function reindexEvaluations() {
+        const evaluations = document.querySelectorAll('.evaluation-item');
+        evaluations.forEach((evaluation, evalIndex) => {
+            evaluation.setAttribute('data-eval-index', evalIndex);
+            
+            // Réindexer les champs de l'évaluation
+            evaluation.querySelectorAll('[name]').forEach(field => {
+                field.name = field.name.replace(/evaluations-\d+-/, `evaluations-${evalIndex}-`);
+                field.id = field.id.replace(/evaluations-\d+-/, `evaluations-${evalIndex}-`);
+            });
+            
+            // Réindexer les capacités de chaque évaluation
+            const capacites = evaluation.querySelectorAll('.capacite-item');
+            capacites.forEach((capacite, capIndex) => {
+                capacite.querySelectorAll('[name]').forEach(field => {
+                    field.name = field.name.replace(/evaluations-\d+-capacites-\d+-/, `evaluations-${evalIndex}-capacites-${capIndex}-`);
+                    field.id = field.id.replace(/evaluations-\d+-capacites-\d+-/, `evaluations-${evalIndex}-capacites-${capIndex}-`);
+                });
+            });
+        });
+    }
+
+    // Gestion de la suppression
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-calendar') ||
+            e.target.classList.contains('remove-mediagraphie') ||
+            e.target.classList.contains('remove-disponibilite') ||
+            e.target.classList.contains('remove-evaluation') ||
+            e.target.classList.contains('remove-capacite')) {
+            
+            const parentDiv = e.target.closest('.calendar-item, .mediagraphie-item, .disponibilite-item, .evaluation-item, .capacite-item');
+            if (parentDiv) {
+                parentDiv.remove();
+                // Si une évaluation est supprimée, réindexer les évaluations
+                if (parentDiv.classList.contains('evaluation-item')) {
+                    reindexEvaluations();
+                }
+                // Si une capacité est supprimée, réindexer les capacités de son évaluation parent
+                if (parentDiv.classList.contains('capacite-item')) {
+                    const evaluationItem = parentDiv.closest('.evaluation-item');
+                    if (evaluationItem) {
+                        const evalIndex = evaluationItem.getAttribute('data-eval-index');
+                        const capacites = evaluationItem.querySelectorAll('.capacite-item');
+                        capacites.forEach((capacite, capIndex) => {
+                            capacite.querySelectorAll('[name]').forEach(field => {
+                                field.name = field.name.replace(/evaluations-\d+-capacites-\d+-/, `evaluations-${evalIndex}-capacites-${capIndex}-`);
+                                field.id = field.id.replace(/evaluations-\d+-capacites-\d+-/, `evaluations-${evalIndex}-capacites-${capIndex}-`);
+                            });
+                        });
+                    }
+                }
+                
+                // Vérifier si le container est vide pour le cacher
+                const container = parentDiv.parentElement;
+                if (container && container.children.length === 0) {
+                    container.style.display = 'none';
+                }
+            }
+        }
+    });
+
+    // Ajout de calendrier
+    document.getElementById('add-calendrier').addEventListener('click', function() {
+        const container = document.getElementById('calendrier-container');
+        container.style.display = 'block';
+        const newItem = document.createElement('div');
+        newItem.className = 'calendar-item border p-2 mb-2';
+        newItem.innerHTML = document.getElementById('calendrier-template')
+            .innerHTML.replace(/__index__/g, calendrierIndex++);
+        container.appendChild(newItem);
+    });
+
+    // Ajout de médiagraphie
+    document.getElementById('add-mediagraphie').addEventListener('click', function() {
+        const container = document.getElementById('mediagraphie-container');
+        container.style.display = 'block';
+        const newItem = document.createElement('div');
+        newItem.className = 'mediagraphie-item mb-2';
+        newItem.innerHTML = document.getElementById('mediagraphie-template')
+            .innerHTML.replace(/__index__/g, mediagraphieIndex++);
+        container.appendChild(newItem);
+    });
+
+    // Ajout de disponibilité
+    document.getElementById('add-disponibilite').addEventListener('click', function() {
+        const container = document.getElementById('disponibilites-container');
+        container.style.display = 'block';
+        const newItem = document.createElement('div');
+        newItem.className = 'disponibilite-item row g-2 mb-2';
+        newItem.innerHTML = document.getElementById('disponibilite-template')
+            .innerHTML.replace(/__index__/g, disponibiliteIndex++);
+        container.appendChild(newItem);
+    });
+
+    // Ajout d'évaluation
+    document.getElementById('add-evaluation').addEventListener('click', function() {
+        const container = document.getElementById('evaluations-container');
+        container.style.display = 'block';
+        const newItem = document.createElement('div');
+        newItem.className = 'evaluation-item border p-2 mb-2';
+        newItem.innerHTML = document.getElementById('evaluation-template')
+            .innerHTML.replace(/__index__/g, evaluationIndex++);
+        container.appendChild(newItem);
+        reindexEvaluations();
+    });
+
+    // Ajout de capacité dans une évaluation
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-capacite')) {
+            const evaluationItem = e.target.closest('.evaluation-item');
+            if (!evaluationItem) return;
+
+            // Récupérer l'index de l'évaluation
+            let evalIndex = evaluationItem.getAttribute('data-eval-index');
+            if (evalIndex === null) {
+                // Si l'index n'est pas défini, assigner le prochain index
+                evalIndex = evaluationIndex++;
+                evaluationItem.setAttribute('data-eval-index', evalIndex);
+                reindexEvaluations();
+            }
+
+            // Compter combien de capacités sont déjà présentes dans cette évaluation
+            const capacitesContainer = evaluationItem.querySelector('.capacites-container');
+            if (!capacitesContainer) return;
+
+            let capIndex = capacitesContainer.querySelectorAll('.capacite-item').length;
+
+            // Créer le nouveau bloc de capacité
+            const newCap = document.createElement('div');
+            newCap.className = 'capacite-item mb-2 border p-2';
+            newCap.innerHTML = document.getElementById('evaluation-capacite-template')
+              .innerHTML
+              .replace(/__eval_index__/g, evalIndex)
+              .replace(/__cap_index__/g, capIndex);
+
+            // Copier les <option> du <select> caché
+            const hiddenSelect = document.getElementById('capacites-hidden');
+            const newSelect = newCap.querySelector('select');
+            if (hiddenSelect && newSelect) {
+              newSelect.innerHTML = hiddenSelect.innerHTML;
+            }
+
+            // Ajouter ce bloc dans la div .capacites-container
+            capacitesContainer.appendChild(newCap);
+        }
+    });
+
+    // Pour la suppression d'une capacité
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-capacite')) {
+            const capItem = e.target.closest('.capacite-item');
+            if (capItem) {
+                const capacitesContainer = capItem.parentElement;
+                capItem.remove();
+                // Réindexer les capacités restantes
+                const evaluationItem = capacitesContainer.closest('.evaluation-item');
+                if (evaluationItem) {
+                    const evalIndex = evaluationItem.getAttribute('data-eval-index');
+                    const capacites = capacitesContainer.querySelectorAll('.capacite-item');
+                    capacites.forEach((capacite, capIndex) => {
+                        capacite.querySelectorAll('[name]').forEach(field => {
+                            field.name = field.name.replace(/evaluations-\d+-capacites-\d+-/, `evaluations-${evalIndex}-capacites-${capIndex}-`);
+                            field.id = field.id.replace(/evaluations-\d+-capacites-\d+-/, `evaluations-${evalIndex}-capacites-${capIndex}-`);
+                        });
+                    });
+                }
+            }
+        }
+    });
+
+    // Initialisation : cacher les conteneurs vides
+    ['calendrier-container', 'mediagraphie-container', 'disponibilites-container', 'evaluations-container'].forEach(id => {
+        const container = document.getElementById(id);
+        if (container && container.children.length === 0) {
+            container.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

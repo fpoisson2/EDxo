@@ -504,6 +504,7 @@ def populate_field_lists(conn, plan_id, plan_form):
         'competences_certifiees': 'PlanCadreCompetencesCertifiees',
         'cours_corequis': 'PlanCadreCoursCorequis',
         'cours_prealables': 'PlanCadreCoursPrealables',
+        'cours_relies': 'PlanCadreCoursRelies',
         'savoir_etre': 'PlanCadreSavoirEtre'
     }
     
@@ -800,6 +801,13 @@ def view_plan_cadre(cours_id, plan_id):
                 flash('Plan Cadre ou Cours non trouvé.', 'danger')
                 return redirect(url_for('cours.view_cours', cours_id=cours_id))
 
+            # Ajout de la récupération des cours reliés
+            cours_relies = conn.execute('''
+                SELECT texte, description 
+                FROM PlanCadreCoursRelies 
+                WHERE plan_cadre_id = ?
+            ''', (plan_id,)).fetchall()
+
             # Récupération des détails des cours préalables et corequis
             prealables_details = get_related_courses(conn, cours_id, 'CoursPrealable', 'cours_prealable_id')
             corequisites_details = get_related_courses(conn, cours_id, 'CoursCorequis', 'cours_corequis_id')
@@ -891,6 +899,7 @@ def view_plan_cadre(cours_id, plan_id):
                 plan=plan_row,
                 prealables_details=prealables_details,
                 corequisites_details=corequisites_details,
+                cours_relies=cours_relies,
                 plan_form=plan_form,
                 capacites_data=capacites_data,  # Pass the capacities data to the template
                 generate_form=generate_form,
@@ -923,6 +932,8 @@ def view_plan_cadre(cours_id, plan_id):
                                     plan_form.cours_corequis, plan_id)
                     update_list_items(cursor, 'PlanCadreCoursPrealables', 
                                     plan_form.cours_prealables, plan_id)
+                    update_list_items(cursor, 'PlanCadreCoursRelies',   # Ajout de cette ligne
+                                    plan_form.cours_relies, plan_id)     # pour les cours reliés
                     update_list_items(cursor, 'PlanCadreSavoirEtre', 
                                     plan_form.savoir_etre, plan_id)
 

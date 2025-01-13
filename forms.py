@@ -12,13 +12,74 @@ from wtforms import (
     FieldList,
     Form,
     BooleanField,
-    PasswordField
+    PasswordField,
+    HiddenField
 )
 from wtforms import ColorField, SubmitField
 from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional, Length, EqualTo
 from wtforms.widgets import ListWidget, CheckboxInput
 from flask_ckeditor import CKEditorField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
+
+class CalendrierForm(FlaskForm):
+    semaine = IntegerField("Semaine", validators=[Optional()])
+    sujet = TextAreaField("Sujet", validators=[Optional()])
+    activites = TextAreaField("Activités", validators=[Optional()])
+    travaux_hors_classe = TextAreaField("Travaux hors-classe", validators=[Optional()])
+    evaluations = TextAreaField("Évaluations", validators=[Optional()])
+
+class MediagraphieForm(FlaskForm):
+    reference_bibliographique = TextAreaField("Référence", validators=[DataRequired()])
+
+class DisponibiliteForm(FlaskForm):
+    jour_semaine = StringField("Jour", validators=[Optional()])
+    plage_horaire = StringField("Plage horaire", validators=[Optional()])
+    lieu = StringField("Local/Bureau", validators=[Optional()])
+
+class CapaciteEvaluationForm(FlaskForm):
+    """
+    Sous-formulaire qui représente la liaison (capacite_id, ponderation)
+    pour une évaluation donnée.
+    """
+    capacite_id = SelectField("Capacité", coerce=int)
+    ponderation = StringField("Pondération (ex: 20%)", validators=[Optional()])
+
+class EvaluationPlanCoursForm(FlaskForm):
+    titre_evaluation = StringField("Titre de l'évaluation", validators=[Optional()])
+    texte_description = TextAreaField("Description", validators=[Optional()])
+    semaine = IntegerField("Semaine", validators=[Optional()])
+
+    # Au lieu d'un unique champ "ponderation", on utilise un FieldList de "CapaciteEvaluationForm"
+    capacites = FieldList(FormField(CapaciteEvaluationForm), min_entries=0)
+
+class PlanDeCoursForm(FlaskForm):
+    # Champs principaux
+    campus = StringField("Campus", validators=[Optional()])
+    session = StringField("Session", validators=[Optional()])
+    presentation_du_cours = TextAreaField("Présentation du cours", validators=[Optional()])
+    objectif_terminal_du_cours = TextAreaField("Objectif terminal reformulé", validators=[Optional()])
+    organisation_et_methodes = TextAreaField("Organisation du cours et méthodes pédagogiques", validators=[Optional()])
+    accomodement = TextAreaField("Accommodement", validators=[Optional()])
+    evaluation_formative_apprentissages = TextAreaField("Évaluation formative des apprentissages", validators=[Optional()])
+    evaluation_expression_francais = TextAreaField("Évaluation de l’expression en français", validators=[Optional()])
+    seuil_reussite = TextAreaField("Seuil de réussite du cours", validators=[Optional()])
+
+    # Informations enseignant
+    nom_enseignant = StringField("Nom de l’enseignant", validators=[Optional()])
+    telephone_enseignant = StringField("Téléphone de l’enseignant", validators=[Optional()])
+    courriel_enseignant = StringField("Courriel de l’enseignant", validators=[Optional()])
+    bureau_enseignant = StringField("Bureau de l’enseignant", validators=[Optional()])
+
+    materiel = TextAreaField('Matériel', validators=[Optional()])
+
+    # Listes associées
+    calendriers = FieldList(FormField(CalendrierForm), min_entries=0)
+    mediagraphies = FieldList(FormField(MediagraphieForm), min_entries=0)
+    disponibilites = FieldList(FormField(DisponibiliteForm), min_entries=0)
+    evaluations = FieldList(FormField(EvaluationPlanCoursForm), min_entries=0)
+
+    # Bouton de soumission (si besoin)
+    submit = SubmitField("Enregistrer")
 
 class GenerateContentForm(FlaskForm):
     additional_info = TextAreaField('Informations complémentaires', validators=[DataRequired()])
@@ -266,3 +327,35 @@ class PlanCadreCoursPrealableForm(FlaskForm):
 class DuplicatePlanCadreForm(FlaskForm):
     new_cours_id = SelectField('Dupliquer vers le Cours', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Dupliquer Plan Cadre')
+
+class CreateUserForm(FlaskForm):
+    username = StringField('Nom d\'utilisateur', validators=[DataRequired(), Length(min=3, max=25)])
+    password = PasswordField('Mot de passe', validators=[DataRequired(), Length(min=6)])
+    role = SelectField('Rôle', choices=[
+        ('admin', 'Admin'),
+        ('professeur', 'Professeur'),
+        ('coordo', 'Coordonnateur'),
+        ('cp', 'Conseiller pédagogique')
+    ], validators=[DataRequired()])
+    submit = SubmitField('Créer')
+
+# forms.py
+class DeleteUserForm(FlaskForm):
+    user_id = HiddenField(validators=[DataRequired()])
+    submit = SubmitField('Supprimer')
+
+class DepartmentForm(FlaskForm):
+    nom = StringField('Nom du Département', validators=[DataRequired(), Length(max=100)])
+    submit = SubmitField('Ajouter Département')
+
+class DepartmentRegleForm(FlaskForm):
+    regle = StringField('Règle', validators=[DataRequired(), Length(max=200)])
+    contenu = TextAreaField('Contenu', validators=[DataRequired()])
+
+class DepartmentPIEAForm(FlaskForm):
+    article = StringField('Article', validators=[DataRequired(), Length(max=200)])
+    contenu = TextAreaField('Contenu', validators=[DataRequired()])
+
+class DeleteForm(FlaskForm):
+    """Simple form for CSRF protection on delete operations"""
+    pass

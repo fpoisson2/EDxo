@@ -318,27 +318,28 @@ def generate_plan_cadre_content(plan_id):
                     ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
 
                 if section_name == "Description des cours préalables" and is_ai:
-                    # Récupérer les compétences pour le cours
-                    # (Adaptez la requête à votre structure de DB)
+                    # Récupérer les cours pour lesquels ce cours est un prérequis
+                    # (La requête est inversée par rapport à l'originale)
                     cours = conn.execute("""
-                        SELECT CoursPrealable.id, Cours.code, Cours.nom
+                        SELECT CoursPrealable.id, Cours.code, Cours.nom, CoursPrealable.note_necessaire
                         FROM CoursPrealable
-                        JOIN Cours ON CoursPrealable.cours_prealable_id = Cours.id
-                        WHERE CoursPrealable.cours_id = ?
+                        JOIN Cours ON CoursPrealable.cours_id = Cours.id  
+                        WHERE CoursPrealable.cours_prealable_id = ?
                     """, (plan['cours_id'],)).fetchall()
-
-                    # On construit un petit texte qui liste les compétences
+                    
+                    # On construit un petit texte qui liste les cours
                     cours_text = ""
                     if cours:
-                        cours_text = "\nListe des cours préalables pour ce cours:\n"
+                        cours_text = "\nCe cours est un prérequis pour les cours suivants:\n"
                         for c in cours:
-                            cours_text += f"- {c['code']}: {c['nom']}\n"
+                            # Ajout du pourcentage si disponible
+                            note = f" (note requise: {c['note_necessaire']}%)" if c['note_necessaire'] else ""
+                            cours_text += f"- {c['code']}: {c['nom']}{note}\n"
                     else:
-                        cours_text = "\n(Aucun cours préalables à ce cours)\n"
-
+                        cours_text = "\n(Ce cours n'est prérequis pour aucun autre cours)\n"
+                        
                     # On concatène ce texte à replaced_text pour le prompt
                     replaced_text += f"\n\n{cours_text}"
-
                     # On ajoute ensuite ce champ à la liste des champs IA
                     ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
 
@@ -422,6 +423,7 @@ def generate_plan_cadre_content(plan_id):
                 f"Informations supplémentaires: {additional_info}\n\n"
                 "Voici le schéma JSON auquel ta réponse doit strictement adhérer :\n\n"
                 f"{schema_json}\n\n"
+                "Utilise un langage neutre (Par exemple 'étudiant' devrait être 'personne étudiante'.\n\n"
 
                 "Voici différents prompts."
                 f"- fields:{ai_fields}\n\n"
@@ -454,7 +456,7 @@ def generate_plan_cadre_content(plan_id):
 
         try:
             completion = client.beta.chat.completions.parse(
-                model="gpt-4o-mini",
+                model="gpt-4o",
                 messages=[
                     {
                         "role": "user", 
