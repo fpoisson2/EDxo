@@ -103,6 +103,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize db
 db.init_app(app)
 
+ckeditor = CKEditor(app)
+
 with app.app_context():
     with db.engine.connect() as connection:
         connection.execute(text('PRAGMA journal_mode=WAL;'))

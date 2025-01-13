@@ -2,6 +2,7 @@
 from functools import wraps
 from flask import flash, redirect, request, url_for
 from flask_login import current_user, login_required
+from flask_ckeditor import CKEditor
 
 def role_required(required_role, default_redirect='main.index'):
     """
