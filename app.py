@@ -16,6 +16,8 @@ from routes.plan_de_cours import plan_de_cours_bp
 from models import db, Cours  # Import specific models
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
+import atexit
+
 
 load_dotenv()
 
@@ -34,6 +36,16 @@ app.config['SESSION_COOKIE_SECURE'] = True  # Use HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Mitigate CSRF
 csrf = CSRFProtect(app)
+
+def checkpoint_wal():
+    with app.app_context():
+        try:
+            db.session.execute(text("PRAGMA wal_checkpoint(TRUNCATE);"))
+            db.session.commit()
+            print("WAL checkpointed successfully.")
+        except SQLAlchemyError as e:
+            print(f"Error during WAL checkpoint: {e}")
+
 
 @app.before_request
 def before_request():
@@ -103,6 +115,9 @@ app.register_blueprint(cours_bp)
 app.register_blueprint(programme_bp)
 app.register_blueprint(plan_cadre_bp)
 app.register_blueprint(plan_de_cours_bp)
+
+# Register the checkpoint function to be called on exit
+atexit.register(checkpoint_wal)
 
 # Run the application
 if __name__ == '__main__':
