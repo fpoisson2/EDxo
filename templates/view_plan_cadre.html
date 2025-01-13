@@ -15,9 +15,6 @@
 
     <!-- Boutons d'Action Supplémentaires -->
     <div class="d-flex gap-3 mb-5 align-items-center">
-        <a href="{{ url_for('plan_cadre.edit_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary d-flex align-items-center">
-            <i class="bi bi-pencil-square me-2"></i> Éditer le plan-cadre
-        </a>
         <button type="button" class="btn btn-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
             <i class="bi bi-box-arrow-up-right me-2"></i>
             <span class="btn-text">Générer le plan-cadre</span>
@@ -136,13 +133,13 @@
                                                     class="form-control fw-bold mb-1 auto-resize border-0",
                                                     oninput="autoResize(this)",
                                                     style="overflow:hidden; resize:none;",
-                                                    placeholder="Champ principal (en gras)"
+                                                    placeholder="Titre"
                                                 )}}
                                                 {{ subform.texte_description(
                                                     class="form-control auto-resize border-0",
                                                     oninput="autoResize(this)",
                                                     style="overflow:hidden; resize:none;",
-                                                    placeholder="Description (texte normal)"
+                                                    placeholder="Description"
                                                 )}}
                                             </div>
                                             <!-- Bouton "Supprimer" remplacé par icône -->
@@ -175,13 +172,13 @@
                                                     class="form-control fw-bold mb-1 auto-resize border-0",
                                                     oninput="autoResize(this)",
                                                     style="overflow:hidden; resize:none;",
-                                                    placeholder="Champ principal (en gras)"
+                                                    placeholder="Titre"
                                                 )}}
                                                 {{ subform.texte_description(
                                                     class="form-control auto-resize border-0",
                                                     oninput="autoResize(this)",
                                                     style="overflow:hidden; resize:none;",
-                                                    placeholder="Description (texte normal)"
+                                                    placeholder="Description"
                                                 )}}
                                             </div>
                                             <!-- Bouton "Supprimer" remplacé par icône -->
@@ -214,13 +211,13 @@
                                                     class="form-control fw-bold mb-1 auto-resize border-0",
                                                     oninput="autoResize(this)",
                                                     style="overflow:hidden; resize:none;",
-                                                    placeholder="Champ principal (en gras)"
+                                                    placeholder="Titre"
                                                 )}}
                                                 {{ subform.texte_description(
                                                     class="form-control auto-resize border-0",
                                                     oninput="autoResize(this)",
                                                     style="overflow:hidden; resize:none;",
-                                                    placeholder="Description (texte normal)"
+                                                    placeholder="Description"
                                                 )}}
                                             </div>
                                             <!-- Bouton "Supprimer" remplacé par icône -->
@@ -253,13 +250,13 @@
                                                     class="form-control fw-bold mb-1 auto-resize border-0",
                                                     oninput="autoResize(this)",
                                                     style="overflow:hidden; resize:none;",
-                                                    placeholder="Champ principal (en gras)"
+                                                    placeholder="Titre"
                                                 )}}
                                                 {{ subform.texte_description(
                                                     class="form-control auto-resize border-0",
                                                     oninput="autoResize(this)",
                                                     style="overflow:hidden; resize:none;",
-                                                    placeholder="Description (texte normal)"
+                                                    placeholder="Description"
                                                 )}}
                                             </div>
                                             <!-- Bouton "Supprimer" remplacé par icône -->
@@ -292,13 +289,13 @@
                                                     class="form-control fw-bold mb-1 auto-resize border-0",
                                                     oninput="autoResize(this)",
                                                     style="overflow:hidden; resize:none;",
-                                                    placeholder="Champ principal (en gras)"
+                                                    placeholder="Titre"
                                                 )}}
                                                 {{ subform.texte_description(
                                                     class="form-control auto-resize border-0",
                                                     oninput="autoResize(this)",
                                                     style="overflow:hidden; resize:none;",
-                                                    placeholder="Description (texte normal)"
+                                                    placeholder="Description"
                                                 )}}
                                             </div>
                                             <!-- Bouton "Supprimer" remplacé par icône -->
@@ -313,6 +310,44 @@
                                 {% endfor %}
                             </div>
                         </div>
+                        <!-- Cours reliés -->
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold">Cours reliés</h6>
+                                <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-cours-relie" title="Ajouter">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
+                            <div id="cours-relies-container">
+                                {% for subform in plan_form.cours_relies %}
+                                    <div class="cours_relies-item mb-1">
+                                        <div class="d-flex align-items-start">
+                                            <div class="flex-fill me-2">
+                                                {{ subform.texte(
+                                                    class="form-control fw-bold mb-1 auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Titre"
+                                                )}}
+                                                {{ subform.texte_description(
+                                                    class="form-control auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Description"
+                                                )}}
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                                                    style="border: none;"
+                                                    title="Supprimer">
+                                                <i class="bi bi-dash-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -520,7 +555,7 @@
                      data-bs-parent="#planCadreAccordion">
                     <div class="accordion-body">
                         <div class="mb-2">
-                            8<label class="fw-bold">Structure du cours</label>
+                            <label class="fw-bold">Structure du cours</label>
                             {{ plan_form.structure_intro(class="form-control border-0 auto-resize",
                                                          oninput="autoResize(this)",
                                                          style="overflow:hidden; resize:none;") }}
@@ -833,13 +868,13 @@
                            class="form-control fw-bold mb-1 auto-resize border-0"
                            oninput="autoResize(this)"
                            style="overflow:hidden; resize:none;"
-                           placeholder="Champ principal (en gras)"
+                           placeholder="Titre"
                            type="text">
                     <textarea id="${fieldPrefix}-${index}-texte_description" name="${fieldPrefix}-${index}-texte_description"
                               class="form-control auto-resize border-0"
                               oninput="autoResize(this)"
                               style="overflow:hidden; resize:none;"
-                              placeholder="Description (texte normal)"></textarea>
+                              placeholder="Description"></textarea>
                 </div>
                 <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-auto"
                         style="border: none;" title="Supprimer">
@@ -1060,7 +1095,7 @@
 
     // Fonctions de suppression
     function removeItem(button) {
-        const parentItem = button.closest('.savoir-item, .savoir-faire-item, .moyen-item, .competences_developpees-item, .objets_cibles-item, .competences_certifiees-item, .cours_corequis-item, .cours_prealables-item, .savoir-etre-item');
+        const parentItem = button.closest('.savoir-item, .savoir-faire-item, .moyen-item, .competences_developpees-item, .objets_cibles-item, .competences_certifiees-item, .cours_corequis-item, .cours_prealables-item, .savoir-etre-item, .cours_relies-item');  // Ajout de .cours_relies-item
         if (parentItem) {
             parentItem.remove();
             showFloatingButtons();
@@ -1147,6 +1182,9 @@
                         break;
                     case 'add-cours-prealable':
                         addItemWithDescription('cours-prealables-container', 'cours_prealables');
+                        break;
+                    case 'add-cours-relie':
+                        addItemWithDescription('cours-relies-container', 'cours_relies');
                         break;
                     case 'add-savoir-etre':
                         addSavoirEtre();
@@ -1251,11 +1289,11 @@
             });
         }
 
-        // Suppression déléguée pour les boutons "Supprimer"
-        document.addEventListener('click', function(e){
-            if(e.target.closest('.remove-item-btn')){
-                const parentItem = e.target.closest('.savoir-item, .savoir-faire-item, .moyen-item, .competences_developpees-item, .objets_cibles-item, .competences_certifiees-item, .cours_corequis-item, .cours_prealables-item, .savoir-etre-item');
-                if(parentItem){
+        // Dans l'écouteur d'événements pour la suppression
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-item-btn')) {
+                const parentItem = e.target.closest('.savoir-item, .savoir-faire-item, .moyen-item, .competences_developpees-item, .objets_cibles-item, .competences_certifiees-item, .cours_corequis-item, .cours_prealables-item, .savoir-etre-item, .cours_relies-item');  // Ajout de .cours_relies-item
+                if (parentItem) {
                     parentItem.remove();
                     showFloatingButtons();
                 }

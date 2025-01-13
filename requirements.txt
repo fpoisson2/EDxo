@@ -10,3 +10,4 @@ openai
 markdown
 bleach
 gunicorn
+flask_sqlalchemy

@@ -27,7 +27,13 @@ from forms import (
     GlobalGenerationSettingsForm, 
     GenerationSettingForm,
     ChangePasswordForm,
-    LoginForm
+    LoginForm,
+    CreateUserForm, 
+    DeleteUserForm,
+    DepartmentForm, 
+    DepartmentRegleForm, 
+    DepartmentPIEAForm,
+    DeleteForm
 )
 from flask_ckeditor import CKEditor
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -48,7 +54,7 @@ from docxtpl import DocxTemplate
 from io import BytesIO 
 from werkzeug.security import generate_password_hash, check_password_hash
 from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_list, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template
-from models import User
+from models import User, db, Department, DepartmentRegles, DepartmentPIEA
 
 
 
@@ -97,7 +103,7 @@ def logout():
 @main.route('/manage_users', methods=['GET', 'POST'])
 @role_required('admin')
 def manage_users():
-    if current_user.role != 'admin':  # Vérifiez que seul l'admin a accès
+    if current_user.role != 'admin':
         flash('Accès interdit.', 'danger')
         return redirect(url_for('settings.parametres'))
 
@@ -105,16 +111,14 @@ def manage_users():
     users = conn.execute('SELECT * FROM User').fetchall()
     conn.close()
 
-    if request.method == 'POST':
-        if 'create_user' in request.form:
-            username = request.form.get('username')
-            password = request.form.get('password')
-            role = request.form.get('role')
+    create_form = CreateUserForm(prefix='create')
+    delete_forms = {user['id']: DeleteUserForm(prefix=f'delete_{user["id"]}') for user in users}
 
-            # Vérification des champs
-            if not username or not password or not role:
-                flash('Tous les champs sont requis pour créer un utilisateur.', 'warning')
-                return redirect(url_for('main.manage_users'))
+    if request.method == 'POST':
+        if 'create-submit' in request.form and create_form.validate_on_submit():
+            username = create_form.username.data
+            password = create_form.password.data
+            role = create_form.role.data
 
             hashed_password = generate_password_hash(password, method='scrypt')
             try:
@@ -131,32 +135,30 @@ def manage_users():
                 conn.close()
             return redirect(url_for('main.manage_users'))
 
-        elif 'delete_user' in request.form:
-            user_id = request.form.get('user_id')
+        # Handle delete user forms
+        for user in users:
+            form = delete_forms[user['id']]
+            if f'delete-submit-{user["id"]}' in request.form and form.validate_on_submit():
+                user_id = form.user_id.data
 
-            # Empêcher la suppression de l'utilisateur actuel
-            if str(user_id) == str(current_user.id):
-                flash('Vous ne pouvez pas supprimer votre propre compte.', 'danger')
+                if str(user_id) == str(current_user.id):
+                    flash('Vous ne pouvez pas supprimer votre propre compte.', 'danger')
+                    return redirect(url_for('main.manage_users'))
+
+                try:
+                    conn = get_db_connection()
+                    conn.execute('DELETE FROM User WHERE id = ?', (user_id,))
+                    conn.commit()
+                    flash('Utilisateur supprimé avec succès.', 'success')
+                except Exception as e:
+                    flash(f'Erreur lors de la suppression : {e}', 'danger')
+                finally:
+                    conn.close()
                 return redirect(url_for('main.manage_users'))
 
-            # Optionnel : Empêcher la suppression des comptes administrateurs (sauf si vous le souhaitez)
-            # user_to_delete = conn.execute('SELECT * FROM User WHERE id = ?', (user_id,)).fetchone()
-            # if user_to_delete and user_to_delete['role'] == 'admin':
-            #     flash('Vous ne pouvez pas supprimer un compte administrateur.', 'danger')
-            #     return redirect(url_for('main.manage_users'))
+    return render_template('manage_users.html', users=users, create_form=create_form, delete_forms=delete_forms, current_user_id=current_user.id)
 
-            try:
-                conn = get_db_connection()
-                conn.execute('DELETE FROM User WHERE id = ?', (user_id,))
-                conn.commit()
-                flash('Utilisateur supprimé avec succès.', 'success')
-            except Exception as e:
-                flash(f'Erreur lors de la suppression : {e}', 'danger')
-            finally:
-                conn.close()
-            return redirect(url_for('main.manage_users'))
-
-    return render_template('manage_users.html', users=users, current_user_id=current_user.id)
+    
 @main.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
@@ -758,3 +760,180 @@ def edit_cours(cours_id):
             return redirect(url_for('main.edit_cours', cours_id=cours_id))
 
     return render_template('edit_cours.html', form=form, elements_competence=elements_competence, cours_choices=cours_choices)
+
+@main.route('/parametres/gestion_departements', methods=['GET', 'POST'])
+@login_required
+def gestion_departements():
+    print("Request method:", request.method)
+    print("Form data:", request.form)
+
+    department_form = DepartmentForm()
+    delete_department_form = DeleteForm()
+    delete_rule_form = DeleteForm()
+    delete_piea_form = DeleteForm()
+
+    if request.method == 'POST':
+        if 'ajouter_regle' in request.form:
+            department_id = request.form.get('department_id')
+            print(f"Processing rule addition for department {department_id}")
+            
+            regle_form = DepartmentRegleForm()
+            if regle_form.regle.data and regle_form.contenu.data:
+                department = Department.query.get(department_id)
+                if department:
+                    nouvelle_regle = DepartmentRegles(
+                        regle=regle_form.regle.data,
+                        contenu=regle_form.contenu.data,
+                        department_id=department.id
+                    )
+                    db.session.add(nouvelle_regle)
+                    try:
+                        db.session.commit()
+                        flash("Règle ajoutée avec succès.", 'success')
+                        return redirect(url_for('main.gestion_departements'))
+                    except Exception as e:
+                        print(f"Error adding rule: {e}")
+                        db.session.rollback()
+                        flash(f"Erreur lors de l'ajout de la règle : {e}", 'danger')
+                else:
+                    flash("Département non trouvé.", 'danger')
+            else:
+                flash("Veuillez remplir tous les champs.", 'danger')
+
+        elif 'ajouter_piea' in request.form:
+            department_id = request.form.get('department_id')
+            print(f"Processing PIEA addition for department {department_id}")
+            
+            piea_form = DepartmentPIEAForm()
+            if piea_form.article.data and piea_form.contenu.data:
+                department = Department.query.get(department_id)
+                if department:
+                    nouvelle_piea = DepartmentPIEA(
+                        article=piea_form.article.data,
+                        contenu=piea_form.contenu.data,
+                        department_id=department.id
+                    )
+                    db.session.add(nouvelle_piea)
+                    try:
+                        db.session.commit()
+                        flash("Règle de PIEA ajoutée avec succès.", 'success')
+                        return redirect(url_for('main.gestion_departements'))
+                    except Exception as e:
+                        print(f"Error adding PIEA: {e}")
+                        db.session.rollback()
+                        flash(f"Erreur lors de l'ajout de la règle de PIEA : {e}", 'danger')
+                else:
+                    flash("Département non trouvé.", 'danger')
+            else:
+                flash("Veuillez remplir tous les champs.", 'danger')
+
+    # Pour le GET request ou si la validation échoue
+    regle_form = DepartmentRegleForm()
+    piea_form = DepartmentPIEAForm()
+    departments = Department.query.order_by(Department.nom).all()
+    
+    return render_template(
+        'gestion_departements.html',
+        department_form=department_form,
+        regle_form=regle_form,
+        piea_form=piea_form,
+        delete_department_form=delete_department_form,
+        delete_rule_form=delete_rule_form,
+        delete_piea_form=delete_piea_form,
+        departments=departments
+    )
+
+@main.route('/parametres/gestion_departements/supprimer/<int:departement_id>', methods=['POST'])
+@login_required
+def supprimer_departement(departement_id):
+    department = Department.query.get_or_404(departement_id)
+    try:
+        db.session.delete(department)
+        db.session.commit()
+        flash(f"Département '{department.nom}' supprimé avec succès.", 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erreur lors de la suppression du département : {e}", 'danger')
+    return redirect(url_for('main.gestion_departements'))
+
+@main.route('/parametres/gestion_departements/supprimer_regle/<int:regle_id>', methods=['POST'])
+@login_required
+def supprimer_regle(regle_id):
+    regle = DepartmentRegles.query.get_or_404(regle_id)
+    try:
+        db.session.delete(regle)
+        db.session.commit()
+        flash("Règle supprimée avec succès.", 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erreur lors de la suppression de la règle : {e}", 'danger')
+    return redirect(url_for('main.gestion_departements'))
+
+@main.route('/parametres/gestion_departements/supprimer_piea/<int:piea_id>', methods=['POST'])
+@login_required
+def supprimer_piea(piea_id):
+    piea = DepartmentPIEA.query.get_or_404(piea_id)
+    try:
+        db.session.delete(piea)
+        db.session.commit()
+        flash("Règle de PIEA supprimée avec succès.", 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erreur lors de la suppression de la règle de PIEA : {e}", 'danger')
+    return redirect(url_for('main.gestion_departements'))
+
+@main.route('/parametres/gestion_departements/edit_regle/<int:regle_id>', methods=['GET', 'POST'])
+@login_required
+def edit_regle(regle_id):
+    regle = DepartmentRegles.query.get_or_404(regle_id)
+    form = DepartmentRegleForm()
+
+    if form.validate_on_submit():
+        regle.regle = form.regle.data
+        regle.contenu = form.contenu.data
+        try:
+            db.session.commit()
+            flash('Règle mise à jour avec succès.', 'success')
+            return redirect(url_for('main.gestion_departements'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur lors de la mise à jour de la règle : {e}', 'danger')
+            return redirect(url_for('main.gestion_departements'))
+
+    # Pré-remplir le formulaire avec les données existantes
+    if request.method == 'GET':
+        form.regle.data = regle.regle
+        form.contenu.data = regle.contenu
+
+    return render_template('edit_regle.html', 
+                         form=form, 
+                         regle=regle,
+                         title='Modifier la Règle')
+
+@main.route('/parametres/gestion_departements/edit_piea/<int:piea_id>', methods=['GET', 'POST'])
+@login_required
+def edit_piea(piea_id):
+    piea = DepartmentPIEA.query.get_or_404(piea_id)
+    form = DepartmentPIEAForm()
+
+    if form.validate_on_submit():
+        piea.article = form.article.data
+        piea.contenu = form.contenu.data
+        try:
+            db.session.commit()
+            flash('Règle PIEA mise à jour avec succès.', 'success')
+            return redirect(url_for('main.gestion_departements'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur lors de la mise à jour de la règle PIEA : {e}', 'danger')
+            return redirect(url_for('main.gestion_departements'))
+
+    # Pré-remplir le formulaire avec les données existantes
+    if request.method == 'GET':
+        form.article.data = piea.article
+        form.contenu.data = piea.contenu
+
+    return render_template('edit_piea.html', 
+                         form=form, 
+                         piea=piea,
+                         title='Modifier la Règle PIEA')
