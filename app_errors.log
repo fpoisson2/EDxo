@@ -13035,3 +13035,632 @@ fields.3.content
 2025-01-10 16:02:07,635 - INFO - 127.0.0.1 - - [10/Jan/2025 16:02:07] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
 2025-01-10 16:02:07,661 - INFO - 127.0.0.1 - - [10/Jan/2025 16:02:07] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
 2025-01-10 16:02:30,426 - INFO - 127.0.0.1 - - [10/Jan/2025 16:02:30] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-10 16:19:22,394 - INFO - 127.0.0.1 - - [10/Jan/2025 16:19:22] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-11 21:36:45,509 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.194:5000
+2025-01-11 21:36:45,509 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-11 21:36:45,539 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-11 21:36:47,474 - WARNING -  * Debugger is active!
+2025-01-11 21:36:47,483 - INFO -  * Debugger PIN: 342-468-122
+2025-01-11 21:41:04,652 - INFO - 127.0.0.1 - - [11/Jan/2025 21:41:04] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-11 21:41:04,717 - INFO - 127.0.0.1 - - [11/Jan/2025 21:41:04] "GET /login?next=/ HTTP/1.1" 200 -
+2025-01-11 21:41:04,791 - INFO - 127.0.0.1 - - [11/Jan/2025 21:41:04] "GET /static/assets/EDxologo.png HTTP/1.1" 200 -
+2025-01-11 21:41:13,473 - INFO - 127.0.0.1 - - [11/Jan/2025 21:41:13] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-01-11 21:41:22,183 - INFO - 127.0.0.1 - - [11/Jan/2025 21:41:22] "[32mPOST /login?next=/ HTTP/1.1[0m" 302 -
+2025-01-11 21:41:22,199 - INFO - 127.0.0.1 - - [11/Jan/2025 21:41:22] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-11 21:41:22,313 - INFO - 127.0.0.1 - - [11/Jan/2025 21:41:22] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-11 21:41:22,371 - INFO - 127.0.0.1 - - [11/Jan/2025 21:41:22] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:42:06,288 - INFO - 127.0.0.1 - - [11/Jan/2025 21:42:06] "[32mGET /cours/8/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-11 21:42:06,486 - INFO - 127.0.0.1 - - [11/Jan/2025 21:42:06] "GET /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-11 21:42:06,518 - INFO - 127.0.0.1 - - [11/Jan/2025 21:42:06] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:42:12,231 - INFO - 127.0.0.1 - - [11/Jan/2025 21:42:12] "GET /programme/competence/5 HTTP/1.1" 200 -
+2025-01-11 21:42:12,263 - INFO - 127.0.0.1 - - [11/Jan/2025 21:42:12] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:42:26,179 - INFO - 127.0.0.1 - - [11/Jan/2025 21:42:26] "GET /plan_cadre/19/export HTTP/1.1" 200 -
+2025-01-11 21:43:13,018 - INFO - 127.0.0.1 - - [11/Jan/2025 21:43:13] "GET /cours/8/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-11 21:43:13,048 - INFO - 127.0.0.1 - - [11/Jan/2025 21:43:13] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:44:36,018 - INFO - 127.0.0.1 - - [11/Jan/2025 21:44:36] "[32mGET /cours/28/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-11 21:44:36,035 - INFO - 127.0.0.1 - - [11/Jan/2025 21:44:36] "GET /cours/28/plan_cadre/29 HTTP/1.1" 200 -
+2025-01-11 21:44:36,058 - INFO - 127.0.0.1 - - [11/Jan/2025 21:44:36] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:44:56,672 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask\\app.py', reloading
+2025-01-11 21:44:56,696 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-11 21:44:57,112 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-11 21:44:59,301 - WARNING -  * Debugger is active!
+2025-01-11 21:44:59,309 - INFO -  * Debugger PIN: 342-468-122
+2025-01-11 21:44:59,452 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\orm\\session.py', reloading
+2025-01-11 21:44:59,464 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\orm\\state_changes.py', reloading
+2025-01-11 21:44:59,488 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\util\\langhelpers.py', reloading
+2025-01-11 21:44:59,511 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\orm\\unitofwork.py', reloading
+2025-01-11 21:44:59,527 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\orm\\persistence.py', reloading
+2025-01-11 21:44:59,552 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\engine\\base.py', reloading
+2025-01-11 21:44:59,570 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\sql\\elements.py', reloading
+2025-01-11 21:44:59,602 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\engine\\default.py', reloading
+2025-01-11 21:44:59,610 - INFO - 127.0.0.1 - - [11/Jan/2025 21:44:59] "[35m[1mGET /cours/24/plan_de_cours/ HTTP/1.1[0m" 500 -
+2025-01-11 21:45:00,269 - INFO - 127.0.0.1 - - [11/Jan/2025 21:45:00] "[32mGET /cours/24/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-11 21:45:00,365 - INFO - 127.0.0.1 - - [11/Jan/2025 21:45:00] "GET /cours/24/plan_cadre/15 HTTP/1.1" 200 -
+2025-01-11 21:45:00,616 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-11 21:45:03,013 - WARNING -  * Debugger is active!
+2025-01-11 21:45:03,013 - INFO -  * Debugger PIN: 342-468-122
+2025-01-11 21:45:09,831 - INFO - 127.0.0.1 - - [11/Jan/2025 21:45:09] "[32mGET /cours/28/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-11 21:45:10,002 - INFO - 127.0.0.1 - - [11/Jan/2025 21:45:10] "GET /cours/28/plan_cadre/29 HTTP/1.1" 200 -
+2025-01-11 21:45:10,116 - INFO - 127.0.0.1 - - [11/Jan/2025 21:45:10] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:46:08,735 - INFO - 127.0.0.1 - - [11/Jan/2025 21:46:08] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-11 21:46:08,829 - INFO - 127.0.0.1 - - [11/Jan/2025 21:46:08] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-11 21:46:08,869 - INFO - 127.0.0.1 - - [11/Jan/2025 21:46:08] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:46:12,131 - INFO - 127.0.0.1 - - [11/Jan/2025 21:46:12] "GET /cours/8/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-11 21:46:12,163 - INFO - 127.0.0.1 - - [11/Jan/2025 21:46:12] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:46:41,613 - INFO - 127.0.0.1 - - [11/Jan/2025 21:46:41] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-11 21:48:35,649 - INFO - 127.0.0.1 - - [11/Jan/2025 21:48:35] "[32mGET /cours/8/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-11 21:48:35,680 - INFO - 127.0.0.1 - - [11/Jan/2025 21:48:35] "GET /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-11 21:48:35,714 - INFO - 127.0.0.1 - - [11/Jan/2025 21:48:35] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:48:54,648 - INFO - 127.0.0.1 - - [11/Jan/2025 21:48:54] "[32mGET /cours/8/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-11 21:48:54,696 - INFO - 127.0.0.1 - - [11/Jan/2025 21:48:54] "GET /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-11 21:48:54,736 - INFO - 127.0.0.1 - - [11/Jan/2025 21:48:54] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:49:01,228 - INFO - 127.0.0.1 - - [11/Jan/2025 21:49:01] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-11 21:49:01,268 - INFO - 127.0.0.1 - - [11/Jan/2025 21:49:01] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-11 21:49:01,309 - INFO - 127.0.0.1 - - [11/Jan/2025 21:49:01] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:49:24,313 - INFO - 127.0.0.1 - - [11/Jan/2025 21:49:24] "[32mGET /cours/28/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-11 21:49:24,329 - INFO - 127.0.0.1 - - [11/Jan/2025 21:49:24] "GET /cours/28/plan_cadre/29 HTTP/1.1" 200 -
+2025-01-11 21:49:24,352 - INFO - 127.0.0.1 - - [11/Jan/2025 21:49:24] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:52:49,290 - INFO - 127.0.0.1 - - [11/Jan/2025 21:52:49] "[32mPOST /plan_cadre/29/generate_content HTTP/1.1[0m" 302 -
+2025-01-11 21:52:49,356 - INFO - 127.0.0.1 - - [11/Jan/2025 21:52:49] "GET /cours/28/plan_cadre/29 HTTP/1.1" 200 -
+2025-01-11 21:52:49,389 - INFO - 127.0.0.1 - - [11/Jan/2025 21:52:49] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:53:02,988 - INFO - 127.0.0.1 - - [11/Jan/2025 21:53:02] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-11 21:53:03,020 - INFO - 127.0.0.1 - - [11/Jan/2025 21:53:03] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:53:05,045 - INFO - 127.0.0.1 - - [11/Jan/2025 21:53:05] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-11 21:53:05,086 - INFO - 127.0.0.1 - - [11/Jan/2025 21:53:05] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:53:48,077 - INFO - 127.0.0.1 - - [11/Jan/2025 21:53:48] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-11 21:53:48,109 - INFO - 127.0.0.1 - - [11/Jan/2025 21:53:48] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-11 21:53:48,158 - INFO - 127.0.0.1 - - [11/Jan/2025 21:53:48] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:53:59,502 - INFO - 127.0.0.1 - - [11/Jan/2025 21:53:59] "[32mGET /cours/28/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-11 21:53:59,558 - INFO - 127.0.0.1 - - [11/Jan/2025 21:53:59] "GET /cours/28/plan_cadre/29 HTTP/1.1" 200 -
+2025-01-11 21:53:59,607 - INFO - 127.0.0.1 - - [11/Jan/2025 21:53:59] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 21:54:39,661 - INFO - 127.0.0.1 - - [11/Jan/2025 21:54:39] "GET /plan_cadre/29/export HTTP/1.1" 200 -
+2025-01-11 21:55:29,233 - INFO - 127.0.0.1 - - [11/Jan/2025 21:55:29] "[35m[1mGET /cours/28/plan_de_cours/ HTTP/1.1[0m" 500 -
+2025-01-11 21:55:29,290 - INFO - 127.0.0.1 - - [11/Jan/2025 21:55:29] "GET /cours/28/plan_de_cours/?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-11 21:55:29,315 - INFO - 127.0.0.1 - - [11/Jan/2025 21:55:29] "GET /cours/28/plan_de_cours/?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-11 21:55:29,408 - INFO - 127.0.0.1 - - [11/Jan/2025 21:55:29] "GET /cours/28/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-11 21:55:29,436 - INFO - 127.0.0.1 - - [11/Jan/2025 21:55:29] "[36mGET /cours/28/plan_de_cours/?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-11 21:56:50,323 - INFO - 127.0.0.1 - - [11/Jan/2025 21:56:50] "[32mGET /cours/28/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-11 21:56:50,372 - INFO - 127.0.0.1 - - [11/Jan/2025 21:56:50] "GET /cours/28/plan_cadre/29 HTTP/1.1" 200 -
+2025-01-11 21:56:50,397 - INFO - 127.0.0.1 - - [11/Jan/2025 21:56:50] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 22:01:02,590 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\forms.py', reloading
+2025-01-11 22:01:02,601 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\models.py', reloading
+2025-01-11 22:01:03,531 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-11 22:01:10,773 - WARNING -  * Debugger is active!
+2025-01-11 22:01:10,773 - INFO -  * Debugger PIN: 342-468-122
+2025-01-11 22:01:23,412 - INFO - 127.0.0.1 - - [11/Jan/2025 22:01:23] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-11 22:01:23,515 - INFO - 127.0.0.1 - - [11/Jan/2025 22:01:23] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-11 22:01:23,622 - INFO - 127.0.0.1 - - [11/Jan/2025 22:01:23] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 22:01:26,473 - INFO - 127.0.0.1 - - [11/Jan/2025 22:01:26] "[32mGET /cours/1/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-11 22:01:26,594 - INFO - 127.0.0.1 - - [11/Jan/2025 22:01:26] "GET /cours/1/plan_cadre/1 HTTP/1.1" 200 -
+2025-01-11 22:01:26,612 - INFO - 127.0.0.1 - - [11/Jan/2025 22:01:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 22:02:11,305 - INFO - 127.0.0.1 - - [11/Jan/2025 22:02:11] "[32mGET /programme/competence/code/02GQ HTTP/1.1[0m" 302 -
+2025-01-11 22:02:11,403 - INFO - 127.0.0.1 - - [11/Jan/2025 22:02:11] "GET /programme/competence/3 HTTP/1.1" 200 -
+2025-01-11 22:02:11,459 - INFO - 127.0.0.1 - - [11/Jan/2025 22:02:11] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 22:02:51,668 - INFO - 127.0.0.1 - - [11/Jan/2025 22:02:51] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-11 22:02:51,708 - INFO - 127.0.0.1 - - [11/Jan/2025 22:02:51] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-11 22:02:51,765 - INFO - 127.0.0.1 - - [11/Jan/2025 22:02:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 22:03:40,173 - INFO - 127.0.0.1 - - [11/Jan/2025 22:03:40] "GET /cours/8/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-11 22:03:40,206 - INFO - 127.0.0.1 - - [11/Jan/2025 22:03:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 22:05:12,174 - INFO - 127.0.0.1 - - [11/Jan/2025 22:05:12] "[32mPOST /cours/8/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-11 22:05:12,240 - INFO - 127.0.0.1 - - [11/Jan/2025 22:05:12] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-11 22:05:12,264 - INFO - 127.0.0.1 - - [11/Jan/2025 22:05:12] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 22:07:29,494 - INFO - 127.0.0.1 - - [11/Jan/2025 22:07:29] "[32mGET /cours/2/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-11 22:07:29,529 - INFO - 127.0.0.1 - - [11/Jan/2025 22:07:29] "GET /cours/2/plan_cadre/2 HTTP/1.1" 200 -
+2025-01-11 22:07:29,555 - INFO - 127.0.0.1 - - [11/Jan/2025 22:07:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 22:12:08,299 - INFO - 127.0.0.1 - - [11/Jan/2025 22:12:08] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-11 22:12:08,340 - INFO - 127.0.0.1 - - [11/Jan/2025 22:12:08] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-11 22:12:08,397 - INFO - 127.0.0.1 - - [11/Jan/2025 22:12:08] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 22:12:10,109 - INFO - 127.0.0.1 - - [11/Jan/2025 22:12:10] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-11 22:12:10,168 - INFO - 127.0.0.1 - - [11/Jan/2025 22:12:10] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-11 22:12:13,609 - INFO - 127.0.0.1 - - [11/Jan/2025 22:12:13] "GET /settings/generation HTTP/1.1" 200 -
+2025-01-11 22:12:13,636 - INFO - 127.0.0.1 - - [11/Jan/2025 22:12:13] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 09:55:35,285 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-13 09:55:35,285 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-13 09:55:35,301 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 09:55:36,291 - WARNING -  * Debugger is active!
+2025-01-13 09:55:36,291 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 09:55:44,363 - INFO - 127.0.0.1 - - [13/Jan/2025 09:55:44] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 09:55:44,414 - INFO - 127.0.0.1 - - [13/Jan/2025 09:55:44] "GET /login?next=/ HTTP/1.1" 200 -
+2025-01-13 09:55:44,473 - INFO - 127.0.0.1 - - [13/Jan/2025 09:55:44] "GET /static/assets/EDxologo.png HTTP/1.1" 200 -
+2025-01-13 09:55:45,197 - INFO - 127.0.0.1 - - [13/Jan/2025 09:55:45] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-01-13 09:55:51,581 - INFO - 127.0.0.1 - - [13/Jan/2025 09:55:51] "[32mPOST /login?next=/ HTTP/1.1[0m" 302 -
+2025-01-13 09:55:51,590 - INFO - 127.0.0.1 - - [13/Jan/2025 09:55:51] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 09:55:51,639 - INFO - 127.0.0.1 - - [13/Jan/2025 09:55:51] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 09:55:51,657 - INFO - 127.0.0.1 - - [13/Jan/2025 09:55:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 09:55:57,180 - INFO - 127.0.0.1 - - [13/Jan/2025 09:55:57] "GET /cours/8/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-13 09:55:57,203 - INFO - 127.0.0.1 - - [13/Jan/2025 09:55:57] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 09:56:03,286 - INFO - 127.0.0.1 - - [13/Jan/2025 09:56:03] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 09:58:13,279 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 09:58:13,279 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 09:58:13,279 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 09:58:13,279 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 09:58:14,101 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 09:58:15,100 - WARNING -  * Debugger is active!
+2025-01-13 09:58:15,102 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 09:58:17,486 - INFO - 127.0.0.1 - - [13/Jan/2025 09:58:17] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 09:59:02,800 - INFO - 127.0.0.1 - - [13/Jan/2025 09:59:02] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-13 09:59:02,812 - INFO - 127.0.0.1 - - [13/Jan/2025 09:59:02] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 09:59:04,451 - INFO - 127.0.0.1 - - [13/Jan/2025 09:59:04] "GET /parametres/gestion_departements HTTP/1.1" 200 -
+2025-01-13 09:59:04,468 - INFO - 127.0.0.1 - - [13/Jan/2025 09:59:04] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 09:59:08,614 - INFO - 127.0.0.1 - - [13/Jan/2025 09:59:08] "GET /parametres/gestion_departements/edit_regle/3 HTTP/1.1" 200 -
+2025-01-13 09:59:08,631 - INFO - 127.0.0.1 - - [13/Jan/2025 09:59:08] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 09:59:46,787 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 09:59:46,787 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 09:59:46,787 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 09:59:46,787 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 09:59:47,654 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 09:59:48,680 - WARNING -  * Debugger is active!
+2025-01-13 09:59:48,680 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 09:59:51,572 - INFO - 127.0.0.1 - - [13/Jan/2025 09:59:51] "GET /cours/8/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-13 09:59:51,608 - INFO - 127.0.0.1 - - [13/Jan/2025 09:59:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 09:59:54,853 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask\\app.py', reloading
+2025-01-13 09:59:54,867 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\orm\\attributes.py', reloading
+2025-01-13 09:59:54,879 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\orm\\strategies.py', reloading
+2025-01-13 09:59:54,894 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\orm\\session.py', reloading
+2025-01-13 09:59:54,904 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\orm\\context.py', reloading
+2025-01-13 09:59:54,913 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\util\\langhelpers.py', reloading
+2025-01-13 09:59:54,921 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\orm\\unitofwork.py', reloading
+2025-01-13 09:59:54,935 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\orm\\persistence.py', reloading
+2025-01-13 09:59:54,948 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\engine\\base.py', reloading
+2025-01-13 09:59:54,960 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\sql\\elements.py', reloading
+2025-01-13 09:59:54,971 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\sqlalchemy\\engine\\default.py', reloading
+2025-01-13 09:59:54,975 - INFO - 127.0.0.1 - - [13/Jan/2025 09:59:54] "[35m[1mGET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1[0m" 500 -
+2025-01-13 09:59:55,002 - INFO - 127.0.0.1 - - [13/Jan/2025 09:59:55] "GET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-13 09:59:55,010 - INFO - 127.0.0.1 - - [13/Jan/2025 09:59:55] "GET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-13 09:59:55,049 - INFO - 127.0.0.1 - - [13/Jan/2025 09:59:55] "GET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-13 09:59:55,054 - INFO - 127.0.0.1 - - [13/Jan/2025 09:59:55] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 09:59:55,913 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 09:59:57,004 - WARNING -  * Debugger is active!
+2025-01-13 09:59:57,006 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:00:32,386 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:00:32,386 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:00:32,386 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:00:33,281 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:00:34,309 - WARNING -  * Debugger is active!
+2025-01-13 10:00:34,309 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:00:39,550 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:00:39,550 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:00:39,550 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:00:40,465 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:00:41,460 - WARNING -  * Debugger is active!
+2025-01-13 10:00:41,460 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:00:47,401 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:00:47,401 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:00:47,401 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:00:47,632 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:00:48,665 - WARNING -  * Debugger is active!
+2025-01-13 10:00:48,666 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:00:58,413 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:00:58,423 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:00:58,423 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:00:58,423 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:00:58,854 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:00:59,969 - WARNING -  * Debugger is active!
+2025-01-13 10:00:59,970 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:01:01,998 - INFO - 127.0.0.1 - - [13/Jan/2025 10:01:01] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:02:06,765 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:02:06,765 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:02:07,447 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:02:08,612 - WARNING -  * Debugger is active!
+2025-01-13 10:02:08,613 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:02:10,058 - INFO - 127.0.0.1 - - [13/Jan/2025 10:02:10] "GET /cours/8/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-13 10:02:10,090 - INFO - 127.0.0.1 - - [13/Jan/2025 10:02:10] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 10:02:11,343 - INFO - 127.0.0.1 - - [13/Jan/2025 10:02:11] "[35m[1mGET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1[0m" 500 -
+2025-01-13 10:02:11,358 - INFO - 127.0.0.1 - - [13/Jan/2025 10:02:11] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 10:02:11,360 - INFO - 127.0.0.1 - - [13/Jan/2025 10:02:11] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 10:02:11,364 - INFO - 127.0.0.1 - - [13/Jan/2025 10:02:11] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:02:34,455 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:02:34,455 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:02:34,455 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:02:34,865 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:02:35,913 - WARNING -  * Debugger is active!
+2025-01-13 10:02:35,913 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:02:40,590 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:02:40,590 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:02:41,071 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:02:42,107 - WARNING -  * Debugger is active!
+2025-01-13 10:02:42,107 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:02:45,900 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:02:45,900 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:02:45,900 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:02:46,248 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:02:47,309 - WARNING -  * Debugger is active!
+2025-01-13 10:02:47,309 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:02:47,822 - INFO - 127.0.0.1 - - [13/Jan/2025 10:02:47] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:03:56,561 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:03:56,561 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:03:56,561 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:03:56,561 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:03:56,801 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:03:57,792 - WARNING -  * Debugger is active!
+2025-01-13 10:03:57,792 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:04:05,746 - INFO - 127.0.0.1 - - [13/Jan/2025 10:04:05] "[35m[1mGET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1[0m" 500 -
+2025-01-13 10:04:05,866 - INFO - 127.0.0.1 - - [13/Jan/2025 10:04:05] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 10:04:05,866 - INFO - 127.0.0.1 - - [13/Jan/2025 10:04:05] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 10:04:05,885 - INFO - 127.0.0.1 - - [13/Jan/2025 10:04:05] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:04:05,887 - INFO - 127.0.0.1 - - [13/Jan/2025 10:04:05] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:04:53,270 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:04:53,270 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:04:53,270 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:04:54,201 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:04:55,313 - WARNING -  * Debugger is active!
+2025-01-13 10:04:55,313 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:05:05,328 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:05:05,328 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:05:05,328 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:05:05,517 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:05:09,697 - WARNING -  * Debugger is active!
+2025-01-13 10:05:09,698 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:05:16,174 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:05:16,174 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:05:16,174 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:05:16,174 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:05:16,954 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:05:17,937 - WARNING -  * Debugger is active!
+2025-01-13 10:05:17,947 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:05:26,421 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:05:26,421 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:05:26,421 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:05:26,431 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:05:27,122 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:05:28,156 - WARNING -  * Debugger is active!
+2025-01-13 10:05:28,156 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:05:28,474 - INFO - 127.0.0.1 - - [13/Jan/2025 10:05:28] "[35m[1mGET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1[0m" 500 -
+2025-01-13 10:05:28,519 - INFO - 127.0.0.1 - - [13/Jan/2025 10:05:28] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 10:05:28,524 - INFO - 127.0.0.1 - - [13/Jan/2025 10:05:28] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 10:05:28,528 - INFO - 127.0.0.1 - - [13/Jan/2025 10:05:28] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:05:28,536 - INFO - 127.0.0.1 - - [13/Jan/2025 10:05:28] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:11:44,662 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:11:44,662 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:11:44,662 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:11:44,662 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:11:44,993 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:11:46,006 - WARNING -  * Debugger is active!
+2025-01-13 10:11:46,006 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:15:12,388 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:15:12,398 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:15:12,398 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:15:12,398 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:15:13,021 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:15:14,010 - WARNING -  * Debugger is active!
+2025-01-13 10:15:14,010 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:15:17,463 - INFO - 127.0.0.1 - - [13/Jan/2025 10:15:17] "[35m[1mGET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1[0m" 500 -
+2025-01-13 10:15:17,503 - INFO - 127.0.0.1 - - [13/Jan/2025 10:15:17] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 10:15:17,503 - INFO - 127.0.0.1 - - [13/Jan/2025 10:15:17] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 10:15:17,514 - INFO - 127.0.0.1 - - [13/Jan/2025 10:15:17] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:15:17,516 - INFO - 127.0.0.1 - - [13/Jan/2025 10:15:17] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:15:23,654 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:15:23,654 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:15:23,654 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:15:23,654 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:15:24,241 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:15:25,233 - WARNING -  * Debugger is active!
+2025-01-13 10:15:25,233 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:15:25,874 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\json\\__init__.py', reloading
+2025-01-13 10:15:25,902 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\json\\decoder.py', reloading
+2025-01-13 10:15:25,905 - INFO - 127.0.0.1 - - [13/Jan/2025 10:15:25] "[35m[1mGET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1[0m" 500 -
+2025-01-13 10:15:25,944 - INFO - 127.0.0.1 - - [13/Jan/2025 10:15:25] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 10:15:25,945 - INFO - 127.0.0.1 - - [13/Jan/2025 10:15:25] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 10:15:25,951 - INFO - 127.0.0.1 - - [13/Jan/2025 10:15:25] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:15:25,956 - INFO - 127.0.0.1 - - [13/Jan/2025 10:15:25] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:15:26,409 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:15:27,373 - WARNING -  * Debugger is active!
+2025-01-13 10:15:27,373 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:16:02,669 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:16:02,679 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:16:02,679 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:16:02,679 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:16:03,664 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:16:04,667 - WARNING -  * Debugger is active!
+2025-01-13 10:16:04,667 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:16:09,449 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:16:09,449 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:16:09,449 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:16:09,449 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:16:09,830 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:16:10,843 - WARNING -  * Debugger is active!
+2025-01-13 10:16:10,843 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:16:12,208 - INFO - 127.0.0.1 - - [13/Jan/2025 10:16:12] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:17:13,057 - INFO - 127.0.0.1 - - [13/Jan/2025 10:17:13] "GET /cours/8/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-13 10:17:13,080 - INFO - 127.0.0.1 - - [13/Jan/2025 10:17:13] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 10:17:55,797 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:17:55,797 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:17:55,807 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:17:56,490 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:17:57,483 - WARNING -  * Debugger is active!
+2025-01-13 10:17:57,483 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:21:00,346 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:21:00,346 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:21:00,346 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:21:01,460 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:21:02,416 - WARNING -  * Debugger is active!
+2025-01-13 10:21:02,416 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:21:10,006 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:21:10,006 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:21:10,006 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:21:10,006 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:21:10,638 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:21:11,626 - WARNING -  * Debugger is active!
+2025-01-13 10:21:11,626 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:21:59,403 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:21:59,403 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:21:59,403 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:22:00,022 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:22:01,010 - WARNING -  * Debugger is active!
+2025-01-13 10:22:01,010 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:22:42,624 - INFO - 127.0.0.1 - - [13/Jan/2025 10:22:42] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:24:37,177 - INFO - 127.0.0.1 - - [13/Jan/2025 10:24:37] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:25:13,683 - INFO - 127.0.0.1 - - [13/Jan/2025 10:25:13] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:26:08,601 - INFO - 127.0.0.1 - - [13/Jan/2025 10:26:08] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:26:43,666 - INFO - 127.0.0.1 - - [13/Jan/2025 10:26:43] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:27:15,575 - INFO - 127.0.0.1 - - [13/Jan/2025 10:27:15] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:29:05,706 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:29:05,706 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:29:05,706 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:29:05,997 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:29:07,012 - WARNING -  * Debugger is active!
+2025-01-13 10:29:07,012 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:29:15,101 - INFO - 127.0.0.1 - - [13/Jan/2025 10:29:15] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:29:58,321 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:29:58,321 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:29:58,321 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:29:59,464 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:30:00,468 - WARNING -  * Debugger is active!
+2025-01-13 10:30:00,468 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:30:01,231 - INFO - 127.0.0.1 - - [13/Jan/2025 10:30:01] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:30:38,061 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:30:38,071 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:30:38,071 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:30:38,812 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:30:39,815 - WARNING -  * Debugger is active!
+2025-01-13 10:30:39,815 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:30:44,073 - INFO - 127.0.0.1 - - [13/Jan/2025 10:30:44] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:31:18,655 - INFO - 127.0.0.1 - - [13/Jan/2025 10:31:18] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:32:41,465 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:32:41,465 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:32:41,465 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:32:42,515 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:32:43,545 - WARNING -  * Debugger is active!
+2025-01-13 10:32:43,545 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:33:07,314 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:33:07,314 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:33:07,315 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:33:07,814 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:33:08,851 - WARNING -  * Debugger is active!
+2025-01-13 10:33:08,852 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:33:16,288 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:33:16,289 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:33:16,290 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:33:17,065 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:33:18,043 - WARNING -  * Debugger is active!
+2025-01-13 10:33:18,045 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:34:22,813 - INFO - 127.0.0.1 - - [13/Jan/2025 10:34:22] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:35:34,219 - INFO - 127.0.0.1 - - [13/Jan/2025 10:35:34] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:37:46,911 - INFO - 127.0.0.1 - - [13/Jan/2025 10:37:46] "[32mPOST /cours/8/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-13 10:37:47,013 - INFO - 127.0.0.1 - - [13/Jan/2025 10:37:47] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-13 10:37:47,028 - INFO - 127.0.0.1 - - [13/Jan/2025 10:37:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 10:37:49,705 - INFO - 127.0.0.1 - - [13/Jan/2025 10:37:49] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:38:19,087 - INFO - 127.0.0.1 - - [13/Jan/2025 10:38:19] "[32mPOST /cours/8/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-13 10:38:19,135 - INFO - 127.0.0.1 - - [13/Jan/2025 10:38:19] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-13 10:38:19,154 - INFO - 127.0.0.1 - - [13/Jan/2025 10:38:19] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 10:38:21,857 - INFO - 127.0.0.1 - - [13/Jan/2025 10:38:21] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:38:58,276 - INFO - 127.0.0.1 - - [13/Jan/2025 10:38:58] "[32mPOST /cours/8/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-13 10:38:58,312 - INFO - 127.0.0.1 - - [13/Jan/2025 10:38:58] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-13 10:38:58,333 - INFO - 127.0.0.1 - - [13/Jan/2025 10:38:58] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 10:39:25,726 - INFO - 127.0.0.1 - - [13/Jan/2025 10:39:25] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:39:54,025 - INFO - 127.0.0.1 - - [13/Jan/2025 10:39:54] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:40:23,915 - INFO - 127.0.0.1 - - [13/Jan/2025 10:40:23] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:40:47,348 - INFO - 127.0.0.1 - - [13/Jan/2025 10:40:47] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:41:04,506 - INFO - 127.0.0.1 - - [13/Jan/2025 10:41:04] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:41:30,924 - INFO - 127.0.0.1 - - [13/Jan/2025 10:41:30] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:42:12,952 - INFO - 127.0.0.1 - - [13/Jan/2025 10:42:12] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:43:21,535 - INFO - 127.0.0.1 - - [13/Jan/2025 10:43:21] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:44:04,244 - INFO - 127.0.0.1 - - [13/Jan/2025 10:44:04] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:44:50,520 - INFO - 127.0.0.1 - - [13/Jan/2025 10:44:50] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:45:08,837 - INFO - 127.0.0.1 - - [13/Jan/2025 10:45:08] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:46:30,946 - INFO - 127.0.0.1 - - [13/Jan/2025 10:46:30] "[32mPOST /cours/8/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-13 10:46:31,004 - INFO - 127.0.0.1 - - [13/Jan/2025 10:46:31] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-13 10:46:31,030 - INFO - 127.0.0.1 - - [13/Jan/2025 10:46:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 10:46:34,421 - INFO - 127.0.0.1 - - [13/Jan/2025 10:46:34] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:47:20,684 - INFO - 127.0.0.1 - - [13/Jan/2025 10:47:20] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:51:32,265 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:51:32,265 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:51:32,265 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:51:32,925 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:51:33,915 - WARNING -  * Debugger is active!
+2025-01-13 10:51:33,915 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:51:51,466 - INFO - 127.0.0.1 - - [13/Jan/2025 10:51:51] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-13 10:51:51,539 - INFO - 127.0.0.1 - - [13/Jan/2025 10:51:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 10:51:53,219 - INFO - 127.0.0.1 - - [13/Jan/2025 10:51:53] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:51:57,406 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:51:57,407 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:51:57,409 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:51:57,410 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:51:58,287 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:51:59,292 - WARNING -  * Debugger is active!
+2025-01-13 10:51:59,294 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:52:53,747 - INFO - 127.0.0.1 - - [13/Jan/2025 10:52:53] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:54:03,585 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:54:03,585 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:54:03,585 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:54:03,585 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:54:04,086 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:54:05,095 - WARNING -  * Debugger is active!
+2025-01-13 10:54:05,095 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:54:30,415 - INFO - 127.0.0.1 - - [13/Jan/2025 10:54:30] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 10:56:02,421 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:56:02,422 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:56:02,423 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:56:02,761 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:56:03,783 - WARNING -  * Debugger is active!
+2025-01-13 10:56:03,784 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:56:15,545 - INFO - 127.0.0.1 - - [13/Jan/2025 10:56:15] "[35m[1mGET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1[0m" 500 -
+2025-01-13 10:56:15,666 - INFO - 127.0.0.1 - - [13/Jan/2025 10:56:15] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 10:56:15,666 - INFO - 127.0.0.1 - - [13/Jan/2025 10:56:15] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 10:56:15,684 - INFO - 127.0.0.1 - - [13/Jan/2025 10:56:15] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:56:15,686 - INFO - 127.0.0.1 - - [13/Jan/2025 10:56:15] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:56:54,789 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:56:54,789 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:56:54,789 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:56:54,789 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:56:55,218 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:56:56,252 - WARNING -  * Debugger is active!
+2025-01-13 10:56:56,253 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:56:59,156 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:56:59,156 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:56:59,157 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:56:59,423 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:57:00,444 - WARNING -  * Debugger is active!
+2025-01-13 10:57:00,445 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:57:01,706 - INFO - 127.0.0.1 - - [13/Jan/2025 10:57:01] "[35m[1mGET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1[0m" 500 -
+2025-01-13 10:57:01,745 - INFO - 127.0.0.1 - - [13/Jan/2025 10:57:01] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 10:57:01,746 - INFO - 127.0.0.1 - - [13/Jan/2025 10:57:01] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 10:57:01,750 - INFO - 127.0.0.1 - - [13/Jan/2025 10:57:01] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:57:01,757 - INFO - 127.0.0.1 - - [13/Jan/2025 10:57:01] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:57:25,586 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:57:25,586 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:57:25,586 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:57:26,755 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:57:27,746 - WARNING -  * Debugger is active!
+2025-01-13 10:57:27,747 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:57:46,867 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:57:46,868 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:57:46,868 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:57:46,869 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:57:48,006 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:57:49,033 - WARNING -  * Debugger is active!
+2025-01-13 10:57:49,034 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:57:49,921 - INFO - 127.0.0.1 - - [13/Jan/2025 10:57:49] "[35m[1mGET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1[0m" 500 -
+2025-01-13 10:57:49,963 - INFO - 127.0.0.1 - - [13/Jan/2025 10:57:49] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 10:57:49,964 - INFO - 127.0.0.1 - - [13/Jan/2025 10:57:49] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 10:57:49,967 - INFO - 127.0.0.1 - - [13/Jan/2025 10:57:49] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:57:49,975 - INFO - 127.0.0.1 - - [13/Jan/2025 10:57:49] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:58:03,996 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:58:03,997 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:58:03,998 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:58:03,998 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:58:04,286 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:58:05,300 - WARNING -  * Debugger is active!
+2025-01-13 10:58:05,302 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:58:05,642 - INFO - 127.0.0.1 - - [13/Jan/2025 10:58:05] "[35m[1mGET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1[0m" 500 -
+2025-01-13 10:58:05,680 - INFO - 127.0.0.1 - - [13/Jan/2025 10:58:05] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 10:58:05,680 - INFO - 127.0.0.1 - - [13/Jan/2025 10:58:05] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 10:58:05,684 - INFO - 127.0.0.1 - - [13/Jan/2025 10:58:05] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:58:05,692 - INFO - 127.0.0.1 - - [13/Jan/2025 10:58:05] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 10:58:27,666 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:58:27,666 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:58:27,666 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 10:58:28,596 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 10:58:29,609 - WARNING -  * Debugger is active!
+2025-01-13 10:58:29,613 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 10:58:29,842 - INFO - 127.0.0.1 - - [13/Jan/2025 10:58:29] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 11:00:09,966 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:00:09,966 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:00:09,966 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:00:09,966 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:00:10,271 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 11:00:11,237 - WARNING -  * Debugger is active!
+2025-01-13 11:00:11,237 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 11:01:39,196 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:01:39,196 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:01:39,196 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:01:39,196 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:01:39,765 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 11:01:40,865 - WARNING -  * Debugger is active!
+2025-01-13 11:01:40,865 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 11:02:41,706 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask\\app.py', reloading
+2025-01-13 11:02:41,713 - INFO - 127.0.0.1 - - [13/Jan/2025 11:02:41] "[35m[1mGET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1[0m" 500 -
+2025-01-13 11:02:41,814 - INFO - 127.0.0.1 - - [13/Jan/2025 11:02:41] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 11:02:41,815 - INFO - 127.0.0.1 - - [13/Jan/2025 11:02:41] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 11:02:41,829 - INFO - 127.0.0.1 - - [13/Jan/2025 11:02:41] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 11:02:41,834 - INFO - 127.0.0.1 - - [13/Jan/2025 11:02:41] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 11:02:42,316 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 11:02:43,319 - WARNING -  * Debugger is active!
+2025-01-13 11:02:43,320 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 11:03:14,219 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:03:14,219 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:03:14,219 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:03:14,219 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:03:14,621 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 11:03:15,700 - WARNING -  * Debugger is active!
+2025-01-13 11:03:15,700 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 11:03:16,005 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\docxtpl\\template.py', reloading
+2025-01-13 11:03:16,015 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\jinja2\\environment.py', reloading
+2025-01-13 11:03:16,015 - INFO - 127.0.0.1 - - [13/Jan/2025 11:03:16] "[35m[1mGET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1[0m" 500 -
+2025-01-13 11:03:16,060 - INFO - 127.0.0.1 - - [13/Jan/2025 11:03:16] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 11:03:16,060 - INFO - 127.0.0.1 - - [13/Jan/2025 11:03:16] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 11:03:16,067 - INFO - 127.0.0.1 - - [13/Jan/2025 11:03:16] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 11:03:16,069 - INFO - 127.0.0.1 - - [13/Jan/2025 11:03:16] "[36mGET /cours/8/plan_de_cours/H25/export_docx?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 11:03:16,875 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 11:03:17,860 - WARNING -  * Debugger is active!
+2025-01-13 11:03:17,861 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 11:04:14,435 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:04:14,446 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:04:14,446 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:04:14,446 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:04:15,288 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 11:04:16,336 - WARNING -  * Debugger is active!
+2025-01-13 11:04:16,336 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 11:04:16,920 - INFO - 127.0.0.1 - - [13/Jan/2025 11:04:16] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 11:05:04,846 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:05:04,851 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:05:04,851 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:05:04,851 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:05:05,732 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 11:05:06,748 - WARNING -  * Debugger is active!
+2025-01-13 11:05:06,749 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 11:05:07,946 - INFO - 127.0.0.1 - - [13/Jan/2025 11:05:07] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 11:06:03,888 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:06:03,888 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:06:03,889 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:06:03,890 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:06:04,198 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 11:06:05,309 - WARNING -  * Debugger is active!
+2025-01-13 11:06:05,311 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 11:06:12,318 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:06:12,319 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:06:12,320 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:06:12,321 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:06:12,518 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 11:06:13,585 - WARNING -  * Debugger is active!
+2025-01-13 11:06:13,590 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 11:06:26,644 - INFO - 127.0.0.1 - - [13/Jan/2025 11:06:26] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 11:07:46,636 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:07:46,636 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:07:46,637 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:07:46,637 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:07:47,162 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 11:07:48,269 - WARNING -  * Debugger is active!
+2025-01-13 11:07:48,271 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 11:08:09,926 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:08:09,926 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:08:09,926 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:08:09,926 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo\\routes\\plan_de_cours.py', reloading
+2025-01-13 11:08:10,576 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-13 11:08:11,641 - WARNING -  * Debugger is active!
+2025-01-13 11:08:11,641 - INFO -  * Debugger PIN: 342-468-122
+2025-01-13 11:08:12,241 - INFO - 127.0.0.1 - - [13/Jan/2025 11:08:12] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 11:09:03,336 - INFO - 127.0.0.1 - - [13/Jan/2025 11:09:03] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 11:09:19,891 - INFO - 127.0.0.1 - - [13/Jan/2025 11:09:19] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-13 11:09:19,913 - INFO - 127.0.0.1 - - [13/Jan/2025 11:09:19] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 11:10:03,919 - INFO - 127.0.0.1 - - [13/Jan/2025 11:10:03] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 11:10:48,369 - INFO - 127.0.0.1 - - [13/Jan/2025 11:10:48] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
+2025-01-13 11:15:41,655 - INFO - 127.0.0.1 - - [13/Jan/2025 11:15:41] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-13 11:15:43,706 - INFO - 127.0.0.1 - - [13/Jan/2025 11:15:43] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-13 11:15:44,495 - INFO - 127.0.0.1 - - [13/Jan/2025 11:15:44] "GET /cours/8/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-13 11:15:44,529 - INFO - 127.0.0.1 - - [13/Jan/2025 11:15:44] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 11:15:48,264 - INFO - 127.0.0.1 - - [13/Jan/2025 11:15:48] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 11:15:48,333 - INFO - 127.0.0.1 - - [13/Jan/2025 11:15:48] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 11:15:48,363 - INFO - 127.0.0.1 - - [13/Jan/2025 11:15:48] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 11:15:53,937 - INFO - 127.0.0.1 - - [13/Jan/2025 11:15:53] "[32mGET /cours/8/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-13 11:15:54,063 - INFO - 127.0.0.1 - - [13/Jan/2025 11:15:54] "GET /cours/8/plan_cadre/19 HTTP/1.1" 200 -
+2025-01-13 11:15:54,094 - INFO - 127.0.0.1 - - [13/Jan/2025 11:15:54] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 11:16:29,038 - INFO - 127.0.0.1 - - [13/Jan/2025 11:16:29] "GET /cours/8/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-13 11:16:29,060 - INFO - 127.0.0.1 - - [13/Jan/2025 11:16:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 11:16:55,189 - INFO - 127.0.0.1 - - [13/Jan/2025 11:16:55] "GET /cours/8/plan_de_cours/H25/export_docx HTTP/1.1" 200 -
