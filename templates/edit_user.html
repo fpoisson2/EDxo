@@ -1,0 +1,131 @@
+{% extends "parametres.html" %}
+
+{% block parametres_content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Modifier l'utilisateur : {{ user['username'] }}</h1>
+    <form method="POST" id="editUserForm">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            {{ form.username.label(class="form-label") }}
+            {{ form.username(class="form-control") }}
+            {% for error in form.username.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="mb-3">
+            {{ form.password.label(class="form-label") }}
+            {{ form.password(class="form-control", placeholder="Laissez vide pour ne pas modifier") }}
+            {% for error in form.password.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.role.label(class="form-label") }}
+            {{ form.role(class="form-select") }}
+            {% for error in form.role.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.cegep_id.label(class="form-label") }}
+            {{ form.cegep_id(class="form-select") }}
+            {% for error in form.cegep_id.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form.department_id.label(class="form-label") }}
+            {{ form.department_id(class="form-select") }}
+            {% for error in form.department_id.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+<div class="mb-3">
+    {{ form.programmes.label(class="form-label") }}
+    <div id="programmes-checkboxes">
+        {% for value, label in form.programmes.choices %}
+        <div class="form-check">
+            <input class="form-check-input" 
+                   type="checkbox"
+                   name="programmes"
+                   id="prog_{{ value }}"
+                   value="{{ value }}"
+                   {% if form.programmes.data and value in form.programmes.data %}checked{% endif %}>
+            <label class="form-check-label" for="prog_{{ value }}">
+                {{ label }}
+            </label>
+        </div>
+        {% endfor %}
+    </div>
+    {% for error in form.programmes.errors %}
+        <div class="text-danger">{{ error }}</div>
+    {% endfor %}
+</div>
+        
+        <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+        <a href="{{ url_for('main.manage_users') }}" class="btn btn-secondary">Annuler</a>
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+    const cegepSelect = document.getElementById("cegep_id");
+    const departmentSelect = document.getElementById("department_id");
+    const programmesContainer = document.getElementById("programmes-checkboxes");
+
+    // Store the current programme selections before updating
+    function getCurrentProgrammeSelections() {
+        const selections = [];
+        document.querySelectorAll('input[name="programmes"]:checked').forEach(checkbox => {
+            selections.push(parseInt(checkbox.value));
+        });
+        return selections;
+    }
+
+    cegepSelect.addEventListener("change", async function() {
+        const cegepId = this.value;
+        const currentSelections = getCurrentProgrammeSelections();
+        
+        try {
+            const response = await fetch(`/get_departments_and_programmes/${cegepId}`);
+            const data = await response.json();
+            
+            // Update departments dropdown
+            departmentSelect.innerHTML = '';
+            data.departments.forEach(function(dept) {
+                const option = new Option(dept.nom, dept.id);
+                departmentSelect.add(option);
+            });
+            departmentSelect.value = "0";  // Reset to "Aucun"
+
+            // Update programmes checkboxes
+            programmesContainer.innerHTML = '';
+            data.programmes.forEach(function(prog) {
+                const div = document.createElement('div');
+                div.className = 'form-check';
+                const isChecked = currentSelections.includes(prog.id);
+                div.innerHTML = `
+                    <input class="form-check-input" type="checkbox" 
+                           name="programmes" 
+                           id="prog_${prog.id}" 
+                           value="${prog.id}"
+                           ${isChecked ? 'checked' : ''}>
+                    <label class="form-check-label" for="prog_${prog.id}">
+                        ${prog.nom}
+                    </label>`;
+                programmesContainer.appendChild(div);
+            });
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+});
+</script>
+
+
+{% endblock %}

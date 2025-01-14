@@ -15,12 +15,38 @@ from wtforms import (
     PasswordField,
     HiddenField
 )
-from wtforms import ColorField, SubmitField
+from wtforms import ValidationError, ColorField, SubmitField
 from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional, Length, EqualTo
 from wtforms.widgets import ListWidget, CheckboxInput
 from flask_ckeditor import CKEditorField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
+# Exemple de widget pour le champ multi-select sous forme de cases à cocher
+class MultiCheckboxField(SelectMultipleField):
+    widget = ListWidget(prefix_label=False)
+    option_widget = CheckboxInput()
+
+class EditUserForm(FlaskForm):
+    user_id = HiddenField('ID')
+    username = StringField("Nom d'utilisateur", validators=[DataRequired()])
+    password = PasswordField("Nouveau mot de passe", validators=[Optional()])
+    role = SelectField("Rôle", choices=[('admin', 'Admin'), ('professeur', 'Professeur'), ('coordo', 'Coordo'), ('invite', 'Invite')], validators=[DataRequired()])
+    cegep_id = SelectField("Cégep", coerce=int, validators=[Optional()])
+    department_id = SelectField("Département", coerce=int, validators=[Optional()])
+    programmes = MultiCheckboxField("Programmes", coerce=int, default=[])
+    submit = SubmitField("Enregistrer les modifications")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.programmes.data is None:
+            self.programmes.data = []
+
+    def validate_department_id(self, field):
+        if field.data != 0 and self.cegep_id.data == 0:
+            raise ValidationError("Vous devez d'abord sélectionner un cégep.")
+        if field.data != 0 and field.data not in [c[0] for c in field.choices]:
+            field.data = 0  # Reset to "Aucun" if invalid
+            
 class CalendrierForm(FlaskForm):
     semaine = IntegerField("Semaine", validators=[Optional()])
     sujet = TextAreaField("Sujet", validators=[Optional()])

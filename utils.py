@@ -9,6 +9,44 @@ from dotenv import load_dotenv
 
 DATABASE = 'programme.db'
 
+def get_all_cegeps():
+    conn = get_db_connection()
+    cegeps = conn.execute('SELECT id, nom FROM ListeCegep').fetchall()
+    conn.close()
+    return cegeps
+
+def get_cegep_details_data(cegep_id):
+    conn = get_db_connection()
+    departments = conn.execute('SELECT id, nom FROM Department WHERE cegep_id = ?', (cegep_id,)).fetchall()
+    programmes = conn.execute('SELECT id, nom FROM Programme WHERE cegep_id = ?', (cegep_id,)).fetchall()
+    conn.close()
+
+    return {
+        'departments': [{'id': d['id'], 'nom': d['nom']} for d in departments],
+        'programmes': [{'id': p['id'], 'nom': p['nom']} for p in programmes]
+    }
+
+
+
+def get_all_departments():
+    conn = get_db_connection()
+    departments = conn.execute('SELECT id, nom FROM Department').fetchall()
+    conn.close()
+    return departments
+
+def get_all_programmes():
+    conn = get_db_connection()
+    programmes = conn.execute('SELECT id, nom FROM Programme').fetchall()
+    conn.close()
+    return programmes
+
+def get_programmes_by_user(user_id):
+    conn = get_db_connection()
+    programmes = conn.execute('SELECT programme_id FROM User_Programme WHERE user_id = ?', (user_id,)).fetchall()
+    conn.close()
+    return programmes
+
+
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row  # Permet de récupérer les résultats sous forme de dictionnaire

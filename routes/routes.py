@@ -33,7 +33,8 @@ from forms import (
     DepartmentForm, 
     DepartmentRegleForm, 
     DepartmentPIEAForm,
-    DeleteForm
+    DeleteForm,
+    EditUserForm
 )
 from flask_ckeditor import CKEditor
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -53,7 +54,7 @@ import bleach
 from docxtpl import DocxTemplate
 from io import BytesIO 
 from werkzeug.security import generate_password_hash, check_password_hash
-from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_list, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template
+from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_list, get_cegep_details_data, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template, get_all_cegeps, get_all_departments, get_all_programmes, get_programmes_by_user
 from models import User, db, Department, DepartmentRegles, DepartmentPIEA
 
 
@@ -64,6 +65,24 @@ main = Blueprint('main', __name__)
 @main.app_template_filter('markdown')
 def markdown_filter(text):
     return markdown.markdown(text)
+
+@main.route('/get_cegep_details')
+@role_required('admin')
+def get_cegep_details():
+    cegep_id = request.args.get('cegep_id', type=int)
+    if not cegep_id:
+        return jsonify({'departments': [], 'programmes': []})
+
+    conn = get_db_connection()
+    departments = conn.execute('SELECT id, nom FROM Department WHERE cegep_id = ?', (cegep_id,)).fetchall()
+    programmes = conn.execute('SELECT id, nom FROM Programme WHERE cegep_id = ?', (cegep_id,)).fetchall()
+    conn.close()
+
+    return jsonify({
+        'departments': [{'id': d['id'], 'nom': d['nom']} for d in departments],
+        'programmes': [{'id': p['id'], 'nom': p['nom']} for p in programmes]
+    })
+
 
 
 @main.route('/login', methods=['GET', 'POST'])
@@ -158,7 +177,138 @@ def manage_users():
 
     return render_template('manage_users.html', users=users, create_form=create_form, delete_forms=delete_forms, current_user_id=current_user.id)
 
+@main.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
+@role_required('admin')
+def edit_user(user_id):
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM User WHERE id = ?', (user_id,)).fetchone()
+    if user:
+        user = dict(user)
+        # Get user's programmes immediately
+        user_programmes = conn.execute('''
+            SELECT programme_id 
+            FROM User_Programme 
+            WHERE user_id = ?
+        ''', (user_id,)).fetchall()
+        user['programmes'] = [p['programme_id'] for p in user_programmes]
+        print("User programmes loaded:", user['programmes'])  # Debug print
+    conn.close()
+
+    if not user:
+        flash("Utilisateur non trouvé.", "danger")
+        return redirect(url_for('main.manage_users'))
     
+    form = EditUserForm()
+
+    # Set initial choices for all dropdowns
+    cegeps = get_all_cegeps()
+    form.cegep_id.choices = [(0, 'Aucun')] + [(c['id'], c['nom']) for c in cegeps]
+
+    # Handle GET request first (for initial load)
+    if request.method == 'GET':
+        if user['cegep_id']:
+            details = get_cegep_details_data(user['cegep_id'])
+            form.department_id.choices = [(0, 'Aucun')] + [(d['id'], d['nom']) for d in details['departments']]
+            form.programmes.choices = [(p['id'], p['nom']) for p in details['programmes']]
+        else:
+            form.department_id.choices = [(0, 'Aucun')]
+            form.programmes.choices = []
+
+        # Pre-fill form data
+        form.user_id.data = user['id']
+        form.username.data = user['username']
+        form.role.data = user['role']
+        form.cegep_id.data = user['cegep_id'] if user['cegep_id'] else 0
+        form.department_id.data = user['department_id'] if user['department_id'] else 0
+        form.programmes.data = user['programmes']  # Set the programmes data here
+        
+        print("GET request - form.programmes.data:", form.programmes.data)
+        print("GET request - form.programmes.choices:", form.programmes.choices)
+
+    # Handle POST request
+    else:
+        submitted_cegep_id = request.form.get('cegep_id', type=int)
+        if submitted_cegep_id and submitted_cegep_id != 0:
+            details = get_cegep_details_data(submitted_cegep_id)
+            form.department_id.choices = [(0, 'Aucun')] + [(d['id'], d['nom']) for d in details['departments']]
+            form.programmes.choices = [(p['id'], p['nom']) for p in details['programmes']]
+        else:
+            form.department_id.choices = [(0, 'Aucun')]
+            form.programmes.choices = []
+        
+        print("POST request - submitted data:", request.form.getlist('programmes'))
+
+    if form.validate_on_submit():
+        try:
+            conn = get_db_connection()
+            
+            # Update user info
+            conn.execute(
+                '''UPDATE User SET 
+                    username = ?, 
+                    password = ?, 
+                    role = ?, 
+                    cegep_id = ?, 
+                    department_id = ? 
+                WHERE id = ?''',
+                (
+                    form.username.data,
+                    generate_password_hash(form.password.data, method='scrypt') if form.password.data else user['password'],
+                    form.role.data,
+                    form.cegep_id.data if form.cegep_id.data != 0 else None,
+                    form.department_id.data if form.department_id.data != 0 else None,
+                    user_id
+                )
+            )
+            
+            # Update programmes - get directly from form submission
+            submitted_programmes = request.form.getlist('programmes')
+            print("Submitted programmes:", submitted_programmes)  # Debug print
+            
+            conn.execute('DELETE FROM User_Programme WHERE user_id = ?', (user_id,))
+            
+            if submitted_programmes:
+                for prog_id in submitted_programmes:
+                    prog_id = int(prog_id)  # Convert to integer
+                    print(f"Inserting programme {prog_id} for user {user_id}")  # Debug print
+                    conn.execute(
+                        'INSERT INTO User_Programme (user_id, programme_id) VALUES (?, ?)', 
+                        (user_id, prog_id)
+                    )
+            
+            conn.commit()
+            flash('Utilisateur mis à jour avec succès.', 'success')
+            return redirect(url_for('main.manage_users'))
+            
+        except Exception as e:
+            conn.rollback()
+            flash(f'Erreur lors de la mise à jour : {e}', 'danger')
+        finally:
+            conn.close()
+
+    print("Final form.programmes.data:", form.programmes.data)
+    print("Final form.programmes.choices:", form.programmes.choices)
+
+    return render_template('edit_user.html', form=form, user=user)
+
+@main.route('/get_departments_and_programmes/<int:cegep_id>')
+@login_required
+def get_departments_and_programmes(cegep_id):
+    if cegep_id == 0:
+        return jsonify({
+            'departments': [{'id': 0, 'nom': 'Aucun'}],
+            'programmes': []
+        })
+    
+    details = get_cegep_details_data(cegep_id)
+    return jsonify({
+        'departments': [{'id': 0, 'nom': 'Aucun'}] + details['departments'],
+        'programmes': details['programmes']
+    })
+
+
+
+
 @main.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
