@@ -46,7 +46,7 @@ class EditUserForm(FlaskForm):
             raise ValidationError("Vous devez d'abord sélectionner un cégep.")
         if field.data != 0 and field.data not in [c[0] for c in field.choices]:
             field.data = 0  # Reset to "Aucun" if invalid
-            
+
 class CalendrierForm(FlaskForm):
     semaine = IntegerField("Semaine", validators=[Optional()])
     sujet = TextAreaField("Sujet", validators=[Optional()])
@@ -152,9 +152,18 @@ class CoursPrealableEntryForm(Form):
     cours_prealable_id = SelectField('Cours Préalable', coerce=int, validators=[DataRequired()])
     note_necessaire = FloatField('Note Nécessaire', validators=[InputRequired(), NumberRange(min=0, max=100)])
 
+class ProgrammeMinisterielForm(FlaskForm):
+    nom = StringField("Nom du programme ministériel", validators=[DataRequired()])
+    code = StringField("Code du programme ministériel", validators=[DataRequired()])
+    submit = SubmitField("Ajouter")
+
 class ProgrammeForm(FlaskForm):
-    nom = StringField('Nom', validators=[DataRequired()])
-    submit = SubmitField('Ajouter Programme')
+    nom = StringField("Nom du programme", validators=[DataRequired()])
+    department_id = IntegerField("ID du département", validators=[DataRequired()])
+    liste_programme_ministeriel_id = IntegerField("ID de programme ministériel", validators=[Optional()])
+    cegep_id = IntegerField("ID du Cégep", validators=[Optional()])
+    variante = StringField("Variante", validators=[Optional()])
+    submit = SubmitField("Ajouter le programme")
 
 class CompetenceForm(FlaskForm):
     programme = SelectField('Programme', coerce=int, validators=[DataRequired()])

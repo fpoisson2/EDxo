@@ -1,4 +1,3 @@
-<!-- parametres.html -->
 {% extends "base.html" %}
 
 {% block content %}
@@ -20,10 +19,15 @@
             Gestion des utilisateurs
             <i class="bi bi-people"></i>
           </a>
-          <!-- Nouveau lien pour la gestion des départements -->
+          <!-- Lien existant pour la gestion des départements -->
           <a href="{{ url_for('main.gestion_departements') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
             Gestion des départements
             <i class="bi bi-building"></i>
+          </a>
+          <!-- Nouveau lien pour la gestion des programmes ministériels -->
+          <a href="{{ url_for('main.gestion_programmes_ministeriels') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
+            Gestion des programmes ministériels
+            <i class="bi bi-journal-text"></i>
           </a>
         </div>
       </div>
