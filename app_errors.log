@@ -8198,3 +8198,30 @@ fields.3.content
 2025-01-13 16:13:26,195 - INFO - 127.0.0.1 - - [13/Jan/2025 16:13:26] "[32mGET / HTTP/1.1[0m" 302 -
 2025-01-13 16:13:26,206 - INFO - 127.0.0.1 - - [13/Jan/2025 16:13:26] "GET /programme/1 HTTP/1.1" 200 -
 2025-01-13 16:13:26,220 - INFO - 127.0.0.1 - - [13/Jan/2025 16:13:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:13:52,565 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-13 16:13:52,565 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-13 16:13:52,565 - INFO -  * Restarting with stat
+2025-01-13 16:13:53,398 - WARNING -  * Debugger is active!
+2025-01-13 16:13:53,400 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 16:13:53,475 - INFO - 127.0.0.1 - - [13/Jan/2025 16:13:53] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 16:13:53,491 - INFO - 127.0.0.1 - - [13/Jan/2025 16:13:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:15:21,298 - INFO - 127.0.0.1 - - [13/Jan/2025 16:15:21] "GET /cours/8/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-13 16:15:21,311 - INFO - 127.0.0.1 - - [13/Jan/2025 16:15:21] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:15:27,630 - INFO - 127.0.0.1 - - [13/Jan/2025 16:15:27] "GET /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-13 16:15:27,647 - INFO - 127.0.0.1 - - [13/Jan/2025 16:15:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:15:35,106 - INFO - 127.0.0.1 - - [13/Jan/2025 16:15:35] "GET /cours/10/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-13 16:15:35,119 - INFO - 127.0.0.1 - - [13/Jan/2025 16:15:35] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 16:15:47,389 - INFO - 127.0.0.1 - - [13/Jan/2025 16:15:47] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 16:15:47,405 - INFO - 127.0.0.1 - - [13/Jan/2025 16:15:47] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 16:15:47,418 - INFO - 127.0.0.1 - - [13/Jan/2025 16:15:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 20:28:29,682 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-13 20:28:29,682 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-13 20:28:29,683 - INFO -  * Restarting with stat
+2025-01-13 20:28:30,506 - WARNING -  * Debugger is active!
+2025-01-13 20:28:30,508 - INFO -  * Debugger PIN: 134-907-754
