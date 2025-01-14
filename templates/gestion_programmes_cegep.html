@@ -1,0 +1,63 @@
+{% extends "parametres.html" %}
+
+{% block parametres_content %}
+<div class="container my-5">
+    <h1 class="mb-4">Gestion des Programmes par Cégep</h1>
+    
+    <!-- Sélecteur de cégep pour filtrer -->
+    <form method="GET" class="mb-4">
+        <div class="mb-3">
+            <label for="cegep_id" class="form-label">Sélectionnez un cégep :</label>
+            <select name="cegep_id" id="cegep_id" class="form-select" onchange="this.form.submit()">
+                {% for id, nom in form.cegep_id.choices %}
+                    <option value="{{ id }}" {% if id == selected_cegep %}selected{% endif %}>{{ nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    <!-- Formulaire d'ajout d'un nouveau programme pour le cégep sélectionné -->
+    <div class="card mb-5">
+        <div class="card-body">
+            <h2 class="h4 mb-3">Ajouter un nouveau programme pour le cégep</h2>
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.nom.label(class="form-label") }}
+                    {{ form.nom(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.department_id.label(class="form-label") }}
+                    {{ form.department_id(class="form-select") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.liste_programme_ministeriel_id.label(class="form-label") }}
+                    {{ form.liste_programme_ministeriel_id(class="form-select") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.variante.label(class="form-label") }}
+                    {{ form.variante(class="form-control") }}
+                </div>
+                {# Le champ cegep_id est déjà sélectionné via le sélecteur ci-dessus #}
+                <button type="submit" class="btn btn-primary">Ajouter le programme</button>
+                <a href="{{ url_for('main.gestion_programmes_cegep', cegep_id=selected_cegep) }}" class="btn btn-secondary">Annuler</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Liste des programmes pour le cégep sélectionné -->
+    <h2 class="mb-3">Liste des Programmes pour le Cégep sélectionné</h2>
+    {% if programmes %}
+    <ul class="list-group">
+        {% for programme in programmes %}
+            <li class="list-group-item">
+                <strong>{{ programme.nom }}</strong> — Département : {{ programme.department_id }}
+                {% if programme.variante %} (Variante : {{ programme.variante }}){% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+        <div class="alert alert-info">Aucun programme n'a encore été ajouté pour ce cégep.</div>
+    {% endif %}
+</div>
+{% endblock %}

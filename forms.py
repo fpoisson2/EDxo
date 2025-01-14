@@ -159,9 +159,12 @@ class ProgrammeMinisterielForm(FlaskForm):
 
 class ProgrammeForm(FlaskForm):
     nom = StringField("Nom du programme", validators=[DataRequired()])
-    department_id = IntegerField("ID du département", validators=[DataRequired()])
-    liste_programme_ministeriel_id = IntegerField("ID de programme ministériel", validators=[Optional()])
-    cegep_id = IntegerField("ID du Cégep", validators=[Optional()])
+    # On remplace l'IntegerField par un SelectField pour choisir le département
+    department_id = SelectField("Département", coerce=int, validators=[DataRequired()])
+    # Pour le programme ministériel, si c'est optionnel, on pourra utiliser Optional()
+    liste_programme_ministeriel_id = SelectField("Programme ministériel", coerce=int, validators=[Optional()])
+    # Le cégep est également un menu déroulant
+    cegep_id = SelectField("Cégep", coerce=int, validators=[DataRequired()])
     variante = StringField("Variante", validators=[Optional()])
     submit = SubmitField("Ajouter le programme")
 
@@ -169,9 +172,10 @@ class CompetenceForm(FlaskForm):
     programme = SelectField('Programme', coerce=int, validators=[DataRequired()])
     code = StringField('Code', validators=[DataRequired()])
     nom = StringField('Nom', validators=[DataRequired()])
-    criteria_de_performance = CKEditorField('Critères de Performance', validators=[DataRequired()])
-    contexte_de_realisation = CKEditorField('Contexte de Réalisation', validators=[DataRequired()])
+    criteria_de_performance = CKEditorField('Critères de Performance', validators=[Optional()])
+    contexte_de_realisation = CKEditorField('Contexte de Réalisation', validators=[Optional()])
     submit = SubmitField('Ajouter/Mettre à Jour Compétence')
+
 class ElementCompetenceForm(FlaskForm):
     competence = SelectField('Compétence', coerce=int, validators=[DataRequired()])
     nom = StringField('Nom', validators=[DataRequired()])
