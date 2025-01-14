@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
 from models import (
     db, Cours, PlanCadre, PlanCadreCapacites, PlanCadreSavoirEtre,
     PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
@@ -188,6 +188,9 @@ def view_plan_de_cours(cours_id, session=None):
 
     # 5. Traitement du POST (sauvegarde)
     if request.method == "POST":
+        # Vérifier si c'est une requête AJAX
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
         # (1) Assigner les choices avant validation
         choices_capacites = [(c.id, c.capacite) for c in plan_cadre.capacites]
         for eval_f in form.evaluations:
@@ -271,13 +274,35 @@ def view_plan_de_cours(cours_id, session=None):
 
                 # 5.4. Commit des Changements
                 db.session.commit()
-                flash("Le PlanDeCours a été mis à jour avec succès!", "success")
-                return redirect(url_for("plan_de_cours.view_plan_de_cours",
+                
+                if is_ajax:
+                    return jsonify({
+                        'success': True,
+                        'message': 'Le plan de cours a été mis à jour avec succès!'
+                    })
+                else:
+                    flash("Le plan de cours a été mis à jour avec succès!", "success")
+                    return redirect(url_for("plan_de_cours.view_plan_de_cours",
                                         cours_id=cours.id,
                                         session=plan_de_cours.session))
+                                        
             except Exception as e:
                 db.session.rollback()
-                flash(f"Erreur lors de la mise à jour du PlanDeCours: {str(e)}", "danger")
+                error_message = str(e)
+                if is_ajax:
+                    return jsonify({
+                        'success': False,
+                        'message': f"Erreur lors de la mise à jour du plan de cours: {error_message}"
+                    }), 400
+                else:
+                    flash(f"Erreur lors de la mise à jour du plan de cours: {error_message}", "danger")
+        else:
+            if is_ajax:
+                return jsonify({
+                    'success': False,
+                    'message': "Erreur de validation du formulaire",
+                    'errors': form.errors
+                }), 400
 
     # 6. Rendre la page
     return render_template("view_plan_de_cours.html",

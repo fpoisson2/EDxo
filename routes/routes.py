@@ -34,7 +34,8 @@ from forms import (
     DepartmentRegleForm, 
     DepartmentPIEAForm,
     DeleteForm,
-    EditUserForm
+    EditUserForm,
+    ProgrammeMinisterielForm
 )
 from flask_ckeditor import CKEditor
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -55,7 +56,7 @@ from docxtpl import DocxTemplate
 from io import BytesIO 
 from werkzeug.security import generate_password_hash, check_password_hash
 from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_list, get_cegep_details_data, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template, get_all_cegeps, get_all_departments, get_all_programmes, get_programmes_by_user
-from models import User, db, Department, DepartmentRegles, DepartmentPIEA
+from models import User, db, Department, DepartmentRegles, DepartmentPIEA, ListeProgrammeMinisteriel
 
 
 
@@ -65,6 +66,54 @@ main = Blueprint('main', __name__)
 @main.app_template_filter('markdown')
 def markdown_filter(text):
     return markdown.markdown(text)
+
+@main.route('/gestion_programmes_ministeriels', methods=['GET', 'POST'])
+def gestion_programmes_ministeriels():
+    form = ProgrammeMinisterielForm()  # Crée le formulaire
+    if form.validate_on_submit():
+        nouveau_programme_min = ListeProgrammeMinisteriel(
+            nom=form.nom.data,
+            code=form.code.data
+        )
+        try:
+            db.session.add(nouveau_programme_min)
+            db.session.commit()
+            flash("Programme ministériel ajouté avec succès.", "success")
+            return redirect(url_for('main.gestion_programmes_ministeriels'))
+        except Exception as e:
+            db.session.rollback()
+            flash("Erreur lors de l'ajout du programme ministériel : " + str(e), "danger")
+    programmes = ListeProgrammeMinisteriel.query.all()
+    return render_template('gestion_programmes_ministeriels.html', programmes=programmes, form=form)
+
+
+@main.route('/ajouter_programme_ministeriel', methods=['GET', 'POST'])
+def ajouter_programme_ministeriel():
+    form = ProgrammeMinisterielForm()
+    if form.validate_on_submit():
+        # Création de l'objet ListeProgrammeMinisteriel
+        nouveau_programme_min = ListeProgrammeMinisteriel(
+            nom=form.nom.data,
+            code=form.code.data
+        )
+        try:
+            db.session.add(nouveau_programme_min)
+            db.session.commit()
+            flash("Programme ministériel ajouté avec succès.", "success")
+            # Redirigez vers une page de liste ou l'accueil, par exemple.
+            return redirect(url_for('liste_programmes_ministeriels'))
+        except Exception as e:
+            db.session.rollback()
+            flash("Erreur lors de l'ajout du programme ministériel : " + str(e), "danger")
+    
+    return render_template('ajouter_programme_ministeriel.html', form=form)
+
+# Exemple d'une route de listing
+@main.route('/liste_programmes_ministeriels')
+def liste_programmes_ministeriels():
+    programmes = ListeProgrammeMinisteriel.query.all()
+    return render_template('liste_programmes_ministeriels.html', programmes=programmes)
+
 
 @main.route('/get_cegep_details')
 @role_required('admin')

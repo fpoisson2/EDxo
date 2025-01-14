@@ -10,8 +10,9 @@ login_manager.login_view = 'main.login'
 @login_manager.user_loader
 def load_user(user_id):
     conn = get_db_connection()
-    user = conn.execute('SELECT * FROM User WHERE id = ?', (user_id,)).fetchone()
+    user_row = conn.execute('SELECT * FROM User WHERE id = ?', (user_id,)).fetchone()
     conn.close()
-    if user:
-        return User(user['id'], user['username'], user['password'], user['role'])
+    if user_row:
+        # Ici on récupère l'objet via SQLAlchemy, ou on pourrait utiliser: User.query.get(user_id)
+        return User.query.get(user_id)
     return None

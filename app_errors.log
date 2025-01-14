@@ -8657,3 +8657,475 @@ fields.3.content
 2025-01-13 22:17:47,178 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:47] "[32mGET / HTTP/1.1[0m" 302 -
 2025-01-13 22:17:47,195 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:47] "GET /programme/1 HTTP/1.1" 200 -
 2025-01-13 22:17:47,206 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:44:17,659 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-14 12:44:17,659 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-14 12:44:17,660 - INFO -  * Restarting with stat
+2025-01-14 12:44:18,481 - WARNING -  * Debugger is active!
+2025-01-14 12:44:18,483 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 12:44:26,589 - INFO - 127.0.0.1 - - [14/Jan/2025 12:44:26] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:44:26,607 - INFO - 127.0.0.1 - - [14/Jan/2025 12:44:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:44:26,642 - INFO - 127.0.0.1 - - [14/Jan/2025 12:44:26] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 12:44:26,643 - INFO - 127.0.0.1 - - [14/Jan/2025 12:44:26] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:46:11,742 - INFO - 127.0.0.1 - - [14/Jan/2025 12:46:11] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:46:11,752 - INFO - 127.0.0.1 - - [14/Jan/2025 12:46:11] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:46:11,777 - INFO - 127.0.0.1 - - [14/Jan/2025 12:46:11] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:46:11,778 - INFO - 127.0.0.1 - - [14/Jan/2025 12:46:11] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 12:46:40,768 - INFO - 127.0.0.1 - - [14/Jan/2025 12:46:40] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:46:40,783 - INFO - 127.0.0.1 - - [14/Jan/2025 12:46:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:46:40,803 - INFO - 127.0.0.1 - - [14/Jan/2025 12:46:40] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:46:40,804 - INFO - 127.0.0.1 - - [14/Jan/2025 12:46:40] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 12:46:43,187 - INFO - 127.0.0.1 - - [14/Jan/2025 12:46:43] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:47:16,355 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:16] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:47:16,370 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:16] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:47:16,442 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:16] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:47:16,442 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:16] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 12:47:23,310 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:23] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:47:23,329 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:23] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:47:23,372 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:23] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:47:23,372 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:23] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 12:47:26,999 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:26] "[32mPOST /cours/9/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-14 12:47:27,028 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:27] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:47:27,047 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:47:27,085 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:27] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:47:32,307 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:32] "[32mPOST /cours/9/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-14 12:47:32,327 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:32] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:47:32,342 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:47:32,382 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:32] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:47:44,182 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:44] "[32mPOST /cours/9/plan_de_cours/ HTTP/1.1[0m" 302 -
+2025-01-14 12:47:44,210 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:44] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:47:44,220 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:44] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:47:44,247 - INFO - 127.0.0.1 - - [14/Jan/2025 12:47:44] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:50:57,227 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/plan_de_cours.py', reloading
+2025-01-14 12:50:57,403 - INFO -  * Restarting with stat
+2025-01-14 12:50:58,290 - WARNING -  * Debugger is active!
+2025-01-14 12:50:58,291 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 12:51:07,370 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/plan_de_cours.py', reloading
+2025-01-14 12:51:07,525 - INFO -  * Restarting with stat
+2025-01-14 12:51:08,398 - WARNING -  * Debugger is active!
+2025-01-14 12:51:08,399 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 12:51:34,675 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/plan_de_cours.py', reloading
+2025-01-14 12:51:34,876 - INFO -  * Restarting with stat
+2025-01-14 12:52:25,527 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-14 12:52:25,527 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-14 12:52:25,527 - INFO -  * Restarting with stat
+2025-01-14 12:52:26,352 - WARNING -  * Debugger is active!
+2025-01-14 12:52:26,354 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 12:52:27,392 - INFO - 127.0.0.1 - - [14/Jan/2025 12:52:27] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:52:27,404 - INFO - 127.0.0.1 - - [14/Jan/2025 12:52:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:52:27,466 - INFO - 127.0.0.1 - - [14/Jan/2025 12:52:27] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:52:27,468 - INFO - 127.0.0.1 - - [14/Jan/2025 12:52:27] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 12:52:37,113 - INFO - 127.0.0.1 - - [14/Jan/2025 12:52:37] "[35m[1mPOST /cours/9/plan_de_cours/ HTTP/1.1[0m" 500 -
+2025-01-14 12:52:42,982 - INFO - 127.0.0.1 - - [14/Jan/2025 12:52:42] "[35m[1mPOST /cours/9/plan_de_cours/ HTTP/1.1[0m" 500 -
+2025-01-14 12:53:12,844 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/plan_de_cours.py', reloading
+2025-01-14 12:53:13,037 - INFO -  * Restarting with stat
+2025-01-14 12:53:13,898 - WARNING -  * Debugger is active!
+2025-01-14 12:53:13,900 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 12:53:15,114 - INFO - 127.0.0.1 - - [14/Jan/2025 12:53:15] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:53:15,129 - INFO - 127.0.0.1 - - [14/Jan/2025 12:53:15] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:53:15,147 - INFO - 127.0.0.1 - - [14/Jan/2025 12:53:15] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:53:15,148 - INFO - 127.0.0.1 - - [14/Jan/2025 12:53:15] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 12:53:18,854 - INFO - 127.0.0.1 - - [14/Jan/2025 12:53:18] "POST /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-14 12:53:23,590 - INFO - 127.0.0.1 - - [14/Jan/2025 12:53:23] "POST /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-14 12:54:04,694 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-14 12:54:04,694 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-14 12:54:04,694 - INFO -  * Restarting with stat
+2025-01-14 12:54:05,515 - WARNING -  * Debugger is active!
+2025-01-14 12:54:05,517 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 12:54:07,017 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:07] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:54:07,031 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:07] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:54:07,051 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:07] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:54:07,053 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:07] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 12:54:09,626 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:09] "POST /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-14 12:54:11,149 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:11] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:54:11,160 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:11] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:54:11,202 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:11] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 12:54:11,203 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:11] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:54:12,472 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:12] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:54:12,483 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:12] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:54:12,525 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:12] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:54:12,526 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:12] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 12:54:13,483 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:13] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:54:13,492 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:13] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:54:13,517 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:13] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:54:13,518 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:13] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 12:54:17,506 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:17] "POST /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-14 12:54:20,943 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:20] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:54:20,955 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:20] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:54:20,998 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:20] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:54:20,999 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:20] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 12:54:21,574 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:21] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 12:54:21,585 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:21] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 12:54:21,627 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:21] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 12:54:21,627 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:21] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 12:54:24,778 - INFO - 127.0.0.1 - - [14/Jan/2025 12:54:24] "POST /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-14 13:03:45,608 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-14 13:03:45,609 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-14 13:03:45,609 - INFO -  * Restarting with stat
+2025-01-14 13:03:46,331 - WARNING -  * Debugger is active!
+2025-01-14 13:03:46,333 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 13:03:47,610 - INFO - 127.0.0.1 - - [14/Jan/2025 13:03:47] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:03:47,625 - INFO - 127.0.0.1 - - [14/Jan/2025 13:03:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:03:47,661 - INFO - 127.0.0.1 - - [14/Jan/2025 13:03:47] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:03:47,664 - INFO - 127.0.0.1 - - [14/Jan/2025 13:03:47] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:04:02,391 - INFO - 127.0.0.1 - - [14/Jan/2025 13:04:02] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:04:02,402 - INFO - 127.0.0.1 - - [14/Jan/2025 13:04:02] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:04:02,446 - INFO - 127.0.0.1 - - [14/Jan/2025 13:04:02] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:04:02,447 - INFO - 127.0.0.1 - - [14/Jan/2025 13:04:02] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:05:18,064 - INFO - 127.0.0.1 - - [14/Jan/2025 13:05:18] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:05:18,075 - INFO - 127.0.0.1 - - [14/Jan/2025 13:05:18] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:05:18,118 - INFO - 127.0.0.1 - - [14/Jan/2025 13:05:18] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:05:18,118 - INFO - 127.0.0.1 - - [14/Jan/2025 13:05:18] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:05:21,905 - INFO - 127.0.0.1 - - [14/Jan/2025 13:05:21] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:05:27,703 - INFO - 127.0.0.1 - - [14/Jan/2025 13:05:27] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:08:20,154 - INFO - 127.0.0.1 - - [14/Jan/2025 13:08:20] "POST /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-14 13:08:21,818 - INFO - 127.0.0.1 - - [14/Jan/2025 13:08:21] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:08:21,829 - INFO - 127.0.0.1 - - [14/Jan/2025 13:08:21] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:08:21,854 - INFO - 127.0.0.1 - - [14/Jan/2025 13:08:21] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:08:21,854 - INFO - 127.0.0.1 - - [14/Jan/2025 13:08:21] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:08:25,195 - INFO - 127.0.0.1 - - [14/Jan/2025 13:08:25] "POST /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-14 13:09:54,186 - INFO - 127.0.0.1 - - [14/Jan/2025 13:09:54] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:09:54,200 - INFO - 127.0.0.1 - - [14/Jan/2025 13:09:54] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:09:54,240 - INFO - 127.0.0.1 - - [14/Jan/2025 13:09:54] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:09:54,241 - INFO - 127.0.0.1 - - [14/Jan/2025 13:09:54] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:10:15,226 - INFO - 127.0.0.1 - - [14/Jan/2025 13:10:15] "POST /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-14 13:10:28,786 - INFO - 127.0.0.1 - - [14/Jan/2025 13:10:28] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:10:28,799 - INFO - 127.0.0.1 - - [14/Jan/2025 13:10:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:10:28,847 - INFO - 127.0.0.1 - - [14/Jan/2025 13:10:28] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:10:28,848 - INFO - 127.0.0.1 - - [14/Jan/2025 13:10:28] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:11:11,230 - INFO - 127.0.0.1 - - [14/Jan/2025 13:11:11] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:11:11,242 - INFO - 127.0.0.1 - - [14/Jan/2025 13:11:11] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:11:11,267 - INFO - 127.0.0.1 - - [14/Jan/2025 13:11:11] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:11:11,267 - INFO - 127.0.0.1 - - [14/Jan/2025 13:11:11] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:11:55,688 - INFO - 127.0.0.1 - - [14/Jan/2025 13:11:55] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:11:55,700 - INFO - 127.0.0.1 - - [14/Jan/2025 13:11:55] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:11:55,741 - INFO - 127.0.0.1 - - [14/Jan/2025 13:11:55] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:11:55,742 - INFO - 127.0.0.1 - - [14/Jan/2025 13:11:55] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:16:51,515 - INFO - 127.0.0.1 - - [14/Jan/2025 13:16:51] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:16:51,527 - INFO - 127.0.0.1 - - [14/Jan/2025 13:16:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:16:51,573 - INFO - 127.0.0.1 - - [14/Jan/2025 13:16:51] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:16:51,573 - INFO - 127.0.0.1 - - [14/Jan/2025 13:16:51] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:18:34,320 - INFO - 127.0.0.1 - - [14/Jan/2025 13:18:34] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:18:34,330 - INFO - 127.0.0.1 - - [14/Jan/2025 13:18:34] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:18:34,354 - INFO - 127.0.0.1 - - [14/Jan/2025 13:18:34] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:18:34,356 - INFO - 127.0.0.1 - - [14/Jan/2025 13:18:34] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:19:38,925 - INFO - 127.0.0.1 - - [14/Jan/2025 13:19:38] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:19:38,937 - INFO - 127.0.0.1 - - [14/Jan/2025 13:19:38] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:19:38,982 - INFO - 127.0.0.1 - - [14/Jan/2025 13:19:38] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:19:38,983 - INFO - 127.0.0.1 - - [14/Jan/2025 13:19:38] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:21:08,685 - INFO - 127.0.0.1 - - [14/Jan/2025 13:21:08] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:21:08,696 - INFO - 127.0.0.1 - - [14/Jan/2025 13:21:08] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:21:08,724 - INFO - 127.0.0.1 - - [14/Jan/2025 13:21:08] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:21:08,725 - INFO - 127.0.0.1 - - [14/Jan/2025 13:21:08] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:21:53,261 - INFO - 127.0.0.1 - - [14/Jan/2025 13:21:53] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:21:53,271 - INFO - 127.0.0.1 - - [14/Jan/2025 13:21:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:21:53,296 - INFO - 127.0.0.1 - - [14/Jan/2025 13:21:53] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:21:53,296 - INFO - 127.0.0.1 - - [14/Jan/2025 13:21:53] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:22:06,254 - INFO - 127.0.0.1 - - [14/Jan/2025 13:22:06] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:22:35,498 - INFO - 127.0.0.1 - - [14/Jan/2025 13:22:35] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:22:35,508 - INFO - 127.0.0.1 - - [14/Jan/2025 13:22:35] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:22:35,534 - INFO - 127.0.0.1 - - [14/Jan/2025 13:22:35] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:22:35,535 - INFO - 127.0.0.1 - - [14/Jan/2025 13:22:35] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:23:24,055 - INFO - 127.0.0.1 - - [14/Jan/2025 13:23:24] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:23:24,070 - INFO - 127.0.0.1 - - [14/Jan/2025 13:23:24] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:23:24,113 - INFO - 127.0.0.1 - - [14/Jan/2025 13:23:24] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:23:24,114 - INFO - 127.0.0.1 - - [14/Jan/2025 13:23:24] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:24:32,832 - INFO - 127.0.0.1 - - [14/Jan/2025 13:24:32] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:24:32,847 - INFO - 127.0.0.1 - - [14/Jan/2025 13:24:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:24:32,897 - INFO - 127.0.0.1 - - [14/Jan/2025 13:24:32] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:24:32,898 - INFO - 127.0.0.1 - - [14/Jan/2025 13:24:32] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:25:10,175 - INFO - 127.0.0.1 - - [14/Jan/2025 13:25:10] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:25:10,186 - INFO - 127.0.0.1 - - [14/Jan/2025 13:25:10] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:25:10,216 - INFO - 127.0.0.1 - - [14/Jan/2025 13:25:10] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:25:10,217 - INFO - 127.0.0.1 - - [14/Jan/2025 13:25:10] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:25:41,157 - INFO - 127.0.0.1 - - [14/Jan/2025 13:25:41] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:25:46,712 - INFO - 127.0.0.1 - - [14/Jan/2025 13:25:46] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:25:59,827 - INFO - 127.0.0.1 - - [14/Jan/2025 13:25:59] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:25:59,842 - INFO - 127.0.0.1 - - [14/Jan/2025 13:25:59] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:25:59,889 - INFO - 127.0.0.1 - - [14/Jan/2025 13:25:59] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:25:59,889 - INFO - 127.0.0.1 - - [14/Jan/2025 13:25:59] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:27:47,234 - INFO - 127.0.0.1 - - [14/Jan/2025 13:27:47] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:27:47,248 - INFO - 127.0.0.1 - - [14/Jan/2025 13:27:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:27:47,293 - INFO - 127.0.0.1 - - [14/Jan/2025 13:27:47] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:27:47,294 - INFO - 127.0.0.1 - - [14/Jan/2025 13:27:47] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:28:14,026 - INFO - 127.0.0.1 - - [14/Jan/2025 13:28:14] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:29:58,710 - INFO - 127.0.0.1 - - [14/Jan/2025 13:29:58] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:29:58,724 - INFO - 127.0.0.1 - - [14/Jan/2025 13:29:58] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:29:58,768 - INFO - 127.0.0.1 - - [14/Jan/2025 13:29:58] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:29:58,768 - INFO - 127.0.0.1 - - [14/Jan/2025 13:29:58] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:33:41,762 - INFO - 127.0.0.1 - - [14/Jan/2025 13:33:41] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:33:41,773 - INFO - 127.0.0.1 - - [14/Jan/2025 13:33:41] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:33:41,798 - INFO - 127.0.0.1 - - [14/Jan/2025 13:33:41] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:33:41,799 - INFO - 127.0.0.1 - - [14/Jan/2025 13:33:41] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:33:56,835 - INFO - 127.0.0.1 - - [14/Jan/2025 13:33:56] "POST /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-14 13:34:04,595 - INFO - 127.0.0.1 - - [14/Jan/2025 13:34:04] "[31m[1mPOST /cours/9/plan_de_cours/ HTTP/1.1[0m" 400 -
+2025-01-14 13:34:14,029 - INFO - 127.0.0.1 - - [14/Jan/2025 13:34:14] "POST /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-14 13:34:17,508 - INFO - 127.0.0.1 - - [14/Jan/2025 13:34:17] "POST /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-14 13:40:28,184 - INFO - 127.0.0.1 - - [14/Jan/2025 13:40:28] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:40:28,198 - INFO - 127.0.0.1 - - [14/Jan/2025 13:40:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:40:28,220 - INFO - 127.0.0.1 - - [14/Jan/2025 13:40:28] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:40:28,221 - INFO - 127.0.0.1 - - [14/Jan/2025 13:40:28] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 13:40:44,671 - INFO - 127.0.0.1 - - [14/Jan/2025 13:40:44] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:41:00,192 - INFO - 127.0.0.1 - - [14/Jan/2025 13:41:00] "POST /cours/9/plan_de_cours/ HTTP/1.1" 200 -
+2025-01-14 13:59:53,272 - INFO - 127.0.0.1 - - [14/Jan/2025 13:59:53] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 13:59:53,284 - INFO - 127.0.0.1 - - [14/Jan/2025 13:59:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 13:59:53,327 - INFO - 127.0.0.1 - - [14/Jan/2025 13:59:53] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 13:59:53,328 - INFO - 127.0.0.1 - - [14/Jan/2025 13:59:53] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 14:00:32,791 - INFO - 127.0.0.1 - - [14/Jan/2025 14:00:32] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 14:00:32,801 - INFO - 127.0.0.1 - - [14/Jan/2025 14:00:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:00:32,827 - INFO - 127.0.0.1 - - [14/Jan/2025 14:00:32] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:00:32,828 - INFO - 127.0.0.1 - - [14/Jan/2025 14:00:32] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 14:01:01,559 - INFO - 127.0.0.1 - - [14/Jan/2025 14:01:01] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 14:03:08,388 - INFO - 127.0.0.1 - - [14/Jan/2025 14:03:08] "GET /cours/9/plan_de_cours/H25/ HTTP/1.1" 200 -
+2025-01-14 14:03:11,915 - INFO - 127.0.0.1 - - [14/Jan/2025 14:03:11] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 14:03:11,942 - INFO - 127.0.0.1 - - [14/Jan/2025 14:03:11] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:03:11,955 - INFO - 127.0.0.1 - - [14/Jan/2025 14:03:11] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:03:11,982 - INFO - 127.0.0.1 - - [14/Jan/2025 14:03:11] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:04:14,744 - INFO - 127.0.0.1 - - [14/Jan/2025 14:04:14] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 14:04:14,754 - INFO - 127.0.0.1 - - [14/Jan/2025 14:04:14] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:04:14,771 - INFO - 127.0.0.1 - - [14/Jan/2025 14:04:14] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:04:14,794 - INFO - 127.0.0.1 - - [14/Jan/2025 14:04:14] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:04:19,440 - INFO - 127.0.0.1 - - [14/Jan/2025 14:04:19] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 14:04:19,451 - INFO - 127.0.0.1 - - [14/Jan/2025 14:04:19] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:04:19,464 - INFO - 127.0.0.1 - - [14/Jan/2025 14:04:19] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:04:19,488 - INFO - 127.0.0.1 - - [14/Jan/2025 14:04:19] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:04:52,882 - INFO - 127.0.0.1 - - [14/Jan/2025 14:04:52] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-14 14:04:52,899 - INFO - 127.0.0.1 - - [14/Jan/2025 14:04:52] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:04:52,905 - INFO - 127.0.0.1 - - [14/Jan/2025 14:04:52] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:06:53,136 - INFO - 127.0.0.1 - - [14/Jan/2025 14:06:53] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-14 14:06:53,148 - INFO - 127.0.0.1 - - [14/Jan/2025 14:06:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:06:53,156 - INFO - 127.0.0.1 - - [14/Jan/2025 14:06:53] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:06:53,158 - INFO - 127.0.0.1 - - [14/Jan/2025 14:06:53] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 14:06:53,604 - INFO - 127.0.0.1 - - [14/Jan/2025 14:06:53] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 14:06:53,634 - INFO - 127.0.0.1 - - [14/Jan/2025 14:06:53] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2025-01-14 14:06:53,642 - INFO - 127.0.0.1 - - [14/Jan/2025 14:06:53] "GET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-14 14:06:53,643 - INFO - 127.0.0.1 - - [14/Jan/2025 14:06:53] "GET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-14 14:06:53,656 - INFO - 127.0.0.1 - - [14/Jan/2025 14:06:53] "GET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=so0vRBPYMlLDRzKNzXbK HTTP/1.1" 200 -
+2025-01-14 14:06:53,660 - INFO - 127.0.0.1 - - [14/Jan/2025 14:06:53] "GET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-14 14:07:52,195 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:52] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2025-01-14 14:07:52,203 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:52] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-14 14:07:52,204 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:52] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-14 14:07:52,208 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:52] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=so0vRBPYMlLDRzKNzXbK HTTP/1.1[0m" 304 -
+2025-01-14 14:07:52,212 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:52] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-14 14:07:52,850 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:52] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2025-01-14 14:07:52,857 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:52] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-14 14:07:52,858 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:52] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-14 14:07:52,862 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:52] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=so0vRBPYMlLDRzKNzXbK HTTP/1.1[0m" 304 -
+2025-01-14 14:07:52,869 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:52] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-14 14:07:58,265 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:58] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:07:58,275 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:58] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:07:58,290 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:58] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:07:58,291 - INFO - 127.0.0.1 - - [14/Jan/2025 14:07:58] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 14:08:00,033 - INFO - 127.0.0.1 - - [14/Jan/2025 14:08:00] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 14:08:00,045 - INFO - 127.0.0.1 - - [14/Jan/2025 14:08:00] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:08:00,060 - INFO - 127.0.0.1 - - [14/Jan/2025 14:08:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:08:00,072 - INFO - 127.0.0.1 - - [14/Jan/2025 14:08:00] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:09:00,822 - INFO - 127.0.0.1 - - [14/Jan/2025 14:09:00] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:09:00,831 - INFO - 127.0.0.1 - - [14/Jan/2025 14:09:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:09:00,859 - INFO - 127.0.0.1 - - [14/Jan/2025 14:09:00] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:09:00,859 - INFO - 127.0.0.1 - - [14/Jan/2025 14:09:00] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 14:09:08,968 - INFO - 127.0.0.1 - - [14/Jan/2025 14:09:08] "GET /add_programme HTTP/1.1" 200 -
+2025-01-14 14:09:08,983 - INFO - 127.0.0.1 - - [14/Jan/2025 14:09:08] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:09:08,988 - INFO - 127.0.0.1 - - [14/Jan/2025 14:09:08] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:10:07,895 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:07] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 14:10:07,909 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:07] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:10:07,921 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:07] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:10:07,935 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:07] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:10:08,973 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:08] "GET /add_programme HTTP/1.1" 200 -
+2025-01-14 14:10:08,988 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:08] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:10:08,993 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:08] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:10:17,982 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:17] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 14:10:17,990 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:17] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:10:18,005 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:18] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:10:18,039 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:18] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:10:25,419 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:25] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-14 14:10:25,432 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:25] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:10:25,442 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:25] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:10:26,274 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:26] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 14:10:26,289 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:26] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:10:26,304 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:10:26,336 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:26] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:10:27,163 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:27] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-14 14:10:27,176 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:10:27,189 - INFO - 127.0.0.1 - - [14/Jan/2025 14:10:27] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:12:39,445 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-14 14:12:39,445 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-14 14:12:39,445 - INFO -  * Restarting with stat
+2025-01-14 14:12:40,295 - WARNING -  * Debugger is active!
+2025-01-14 14:12:40,297 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:12:40,772 - INFO - 127.0.0.1 - - [14/Jan/2025 14:12:40] "[35m[1mGET /settings/parametres HTTP/1.1[0m" 500 -
+2025-01-14 14:12:40,785 - INFO - 127.0.0.1 - - [14/Jan/2025 14:12:40] "GET /settings/parametres?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-14 14:12:40,785 - INFO - 127.0.0.1 - - [14/Jan/2025 14:12:40] "GET /settings/parametres?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-14 14:12:40,798 - INFO - 127.0.0.1 - - [14/Jan/2025 14:12:40] "GET /settings/parametres?__debugger__=yes&cmd=resource&f=console.png&s=LP13hHRhVoMIyKkb2wG7 HTTP/1.1" 200 -
+2025-01-14 14:12:40,802 - INFO - 127.0.0.1 - - [14/Jan/2025 14:12:40] "GET /settings/parametres?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-14 14:12:41,849 - INFO - 127.0.0.1 - - [14/Jan/2025 14:12:41] "[35m[1mGET /static/assets/favicon.ico HTTP/1.1[0m" 500 -
+2025-01-14 14:12:41,857 - INFO - 127.0.0.1 - - [14/Jan/2025 14:12:41] "[35m[1mGET /static/assets/favicon.svg HTTP/1.1[0m" 500 -
+2025-01-14 14:12:41,864 - INFO - 127.0.0.1 - - [14/Jan/2025 14:12:41] "[35m[1mGET /static/assets/favicon-96x96.png HTTP/1.1[0m" 500 -
+2025-01-14 14:12:42,858 - INFO - 127.0.0.1 - - [14/Jan/2025 14:12:42] "[35m[1mGET /programme/1 HTTP/1.1[0m" 500 -
+2025-01-14 14:12:42,868 - INFO - 127.0.0.1 - - [14/Jan/2025 14:12:42] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-14 14:12:42,870 - INFO - 127.0.0.1 - - [14/Jan/2025 14:12:42] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-14 14:12:42,878 - INFO - 127.0.0.1 - - [14/Jan/2025 14:12:42] "GET /programme/1?__debugger__=yes&cmd=resource&f=console.png&s=LP13hHRhVoMIyKkb2wG7 HTTP/1.1" 200 -
+2025-01-14 14:12:42,881 - INFO - 127.0.0.1 - - [14/Jan/2025 14:12:42] "[36mGET /programme/1?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-14 14:13:43,942 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/models.py', reloading
+2025-01-14 14:13:44,100 - INFO -  * Restarting with stat
+2025-01-14 14:13:44,970 - WARNING -  * Debugger is active!
+2025-01-14 14:13:44,972 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:14:24,402 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/auth.py', reloading
+2025-01-14 14:14:24,541 - INFO -  * Restarting with stat
+2025-01-14 14:14:25,393 - WARNING -  * Debugger is active!
+2025-01-14 14:14:25,395 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:14:26,422 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:26] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:14:26,436 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:14:26,460 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:26] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:14:26,462 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:26] "GET /static/assets/favicon.ico HTTP/1.1" 200 -
+2025-01-14 14:14:28,789 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:28] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-14 14:14:28,806 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:14:28,811 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:28] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:14:29,889 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:29] "GET /manage_users HTTP/1.1" 200 -
+2025-01-14 14:14:29,898 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:14:29,912 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:29] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:14:31,215 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:31] "GET /edit_user/8 HTTP/1.1" 200 -
+2025-01-14 14:14:31,227 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:14:31,238 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:31] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:14:36,207 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:36] "GET /edit_user/5 HTTP/1.1" 200 -
+2025-01-14 14:14:36,219 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:36] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:14:36,229 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:36] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:14:39,092 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:39] "GET /edit_user/10 HTTP/1.1" 200 -
+2025-01-14 14:14:39,111 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:39] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:14:39,120 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:39] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:14:41,645 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:41] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-14 14:14:41,659 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:41] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:14:41,677 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:41] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:14:43,602 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:43] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 14:14:43,612 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:43] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:14:43,625 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:43] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:14:43,646 - INFO - 127.0.0.1 - - [14/Jan/2025 14:14:43] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:14:47,661 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/auth.py', reloading
+2025-01-14 14:14:47,815 - INFO -  * Restarting with stat
+2025-01-14 14:14:48,653 - WARNING -  * Debugger is active!
+2025-01-14 14:14:48,654 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:15:43,204 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/forms.py', reloading
+2025-01-14 14:15:43,340 - INFO -  * Restarting with stat
+2025-01-14 14:15:44,180 - WARNING -  * Debugger is active!
+2025-01-14 14:15:44,182 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:16:58,921 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/models.py', reloading
+2025-01-14 14:16:59,057 - INFO -  * Restarting with stat
+2025-01-14 14:16:59,891 - WARNING -  * Debugger is active!
+2025-01-14 14:16:59,893 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:17:15,067 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/models.py', reloading
+2025-01-14 14:17:15,208 - INFO -  * Restarting with stat
+2025-01-14 14:17:16,062 - WARNING -  * Debugger is active!
+2025-01-14 14:17:16,064 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:18:44,957 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/forms.py', reloading
+2025-01-14 14:18:45,095 - INFO -  * Restarting with stat
+2025-01-14 14:18:45,929 - WARNING -  * Debugger is active!
+2025-01-14 14:18:45,931 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:19:15,246 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-14 14:19:15,407 - INFO -  * Restarting with stat
+2025-01-14 14:21:31,123 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-14 14:21:31,123 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-14 14:21:31,124 - INFO -  * Restarting with stat
+2025-01-14 14:21:31,969 - WARNING -  * Debugger is active!
+2025-01-14 14:21:31,971 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:21:33,223 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:33] "[35m[1mGET /settings/parametres HTTP/1.1[0m" 500 -
+2025-01-14 14:21:33,232 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:33] "[36mGET /settings/parametres?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-14 14:21:33,233 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:33] "[36mGET /settings/parametres?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-14 14:21:33,247 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:33] "GET /settings/parametres?__debugger__=yes&cmd=resource&f=console.png&s=vR1n8UbZCNsOjJuSgrNY HTTP/1.1" 200 -
+2025-01-14 14:21:33,252 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:33] "[36mGET /settings/parametres?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-14 14:21:47,144 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-14 14:21:47,295 - INFO -  * Restarting with stat
+2025-01-14 14:21:47,978 - WARNING -  * Debugger is active!
+2025-01-14 14:21:47,979 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:21:51,311 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:51] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-14 14:21:51,327 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:21:51,341 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:51] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:21:51,342 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:51] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 14:21:52,515 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:52] "[35m[1mGET /gestion_programmes_ministeriels HTTP/1.1[0m" 500 -
+2025-01-14 14:21:52,528 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:52] "GET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-14 14:21:52,530 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:52] "GET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-14 14:21:52,538 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:52] "GET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=console.png&s=QZ9OlOKeB7nes0mnoEe3 HTTP/1.1" 200 -
+2025-01-14 14:21:52,543 - INFO - 127.0.0.1 - - [14/Jan/2025 14:21:52] "GET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-14 14:22:22,362 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-14 14:22:22,515 - INFO -  * Restarting with stat
+2025-01-14 14:22:23,384 - WARNING -  * Debugger is active!
+2025-01-14 14:22:23,386 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:22:28,453 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-14 14:22:28,600 - INFO -  * Restarting with stat
+2025-01-14 14:22:29,479 - WARNING -  * Debugger is active!
+2025-01-14 14:22:29,481 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:22:29,545 - INFO - 127.0.0.1 - - [14/Jan/2025 14:22:29] "[35m[1mGET /gestion_programmes_ministeriels HTTP/1.1[0m" 500 -
+2025-01-14 14:22:29,558 - INFO - 127.0.0.1 - - [14/Jan/2025 14:22:29] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-14 14:22:29,559 - INFO - 127.0.0.1 - - [14/Jan/2025 14:22:29] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-14 14:22:29,566 - INFO - 127.0.0.1 - - [14/Jan/2025 14:22:29] "GET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=console.png&s=tYNt2yQ3VXhHsDyO57z2 HTTP/1.1" 200 -
+2025-01-14 14:22:29,570 - INFO - 127.0.0.1 - - [14/Jan/2025 14:22:29] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-14 14:22:55,730 - INFO - 127.0.0.1 - - [14/Jan/2025 14:22:55] "[35m[1mGET /gestion_programmes_ministeriels HTTP/1.1[0m" 500 -
+2025-01-14 14:22:55,739 - INFO - 127.0.0.1 - - [14/Jan/2025 14:22:55] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-14 14:22:55,740 - INFO - 127.0.0.1 - - [14/Jan/2025 14:22:55] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-14 14:22:55,748 - INFO - 127.0.0.1 - - [14/Jan/2025 14:22:55] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=console.png&s=tYNt2yQ3VXhHsDyO57z2 HTTP/1.1[0m" 304 -
+2025-01-14 14:22:55,754 - INFO - 127.0.0.1 - - [14/Jan/2025 14:22:55] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-14 14:23:03,649 - INFO - 127.0.0.1 - - [14/Jan/2025 14:23:03] "[35m[1mGET /gestion_programmes_ministeriels HTTP/1.1[0m" 500 -
+2025-01-14 14:23:03,657 - INFO - 127.0.0.1 - - [14/Jan/2025 14:23:03] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-14 14:23:03,660 - INFO - 127.0.0.1 - - [14/Jan/2025 14:23:03] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-14 14:23:03,667 - INFO - 127.0.0.1 - - [14/Jan/2025 14:23:03] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=console.png&s=tYNt2yQ3VXhHsDyO57z2 HTTP/1.1[0m" 304 -
+2025-01-14 14:23:03,676 - INFO - 127.0.0.1 - - [14/Jan/2025 14:23:03] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-14 14:23:39,286 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-14 14:23:39,456 - INFO -  * Restarting with stat
+2025-01-14 14:23:40,331 - WARNING -  * Debugger is active!
+2025-01-14 14:23:40,333 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:23:40,414 - INFO - 127.0.0.1 - - [14/Jan/2025 14:23:40] "[35m[1mGET /gestion_programmes_ministeriels HTTP/1.1[0m" 500 -
+2025-01-14 14:23:40,423 - INFO - 127.0.0.1 - - [14/Jan/2025 14:23:40] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-14 14:23:40,424 - INFO - 127.0.0.1 - - [14/Jan/2025 14:23:40] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-14 14:23:40,435 - INFO - 127.0.0.1 - - [14/Jan/2025 14:23:40] "GET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=console.png&s=wqctg1oSJ3YR81u4Kfak HTTP/1.1" 200 -
+2025-01-14 14:23:40,440 - INFO - 127.0.0.1 - - [14/Jan/2025 14:23:40] "[36mGET /gestion_programmes_ministeriels?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-14 14:25:14,380 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-14 14:25:14,529 - INFO -  * Restarting with stat
+2025-01-14 14:25:15,406 - WARNING -  * Debugger is active!
+2025-01-14 14:25:15,408 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 14:25:25,292 - INFO - 127.0.0.1 - - [14/Jan/2025 14:25:25] "GET /gestion_programmes_ministeriels HTTP/1.1" 200 -
+2025-01-14 14:25:25,307 - INFO - 127.0.0.1 - - [14/Jan/2025 14:25:25] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:25:25,316 - INFO - 127.0.0.1 - - [14/Jan/2025 14:25:25] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:25:25,318 - INFO - 127.0.0.1 - - [14/Jan/2025 14:25:25] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 14:25:49,424 - INFO - 127.0.0.1 - - [14/Jan/2025 14:25:49] "GET /parametres/gestion_departements HTTP/1.1" 200 -
+2025-01-14 14:25:49,438 - INFO - 127.0.0.1 - - [14/Jan/2025 14:25:49] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:25:49,449 - INFO - 127.0.0.1 - - [14/Jan/2025 14:25:49] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:25:49,922 - INFO - 127.0.0.1 - - [14/Jan/2025 14:25:49] "GET /gestion_programmes_ministeriels HTTP/1.1" 200 -
+2025-01-14 14:25:49,942 - INFO - 127.0.0.1 - - [14/Jan/2025 14:25:49] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:25:49,947 - INFO - 127.0.0.1 - - [14/Jan/2025 14:25:49] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:26:03,962 - INFO - 127.0.0.1 - - [14/Jan/2025 14:26:03] "[32mPOST /gestion_programmes_ministeriels HTTP/1.1[0m" 302 -
+2025-01-14 14:26:03,968 - INFO - 127.0.0.1 - - [14/Jan/2025 14:26:03] "GET /gestion_programmes_ministeriels HTTP/1.1" 200 -
+2025-01-14 14:26:03,982 - INFO - 127.0.0.1 - - [14/Jan/2025 14:26:03] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:26:03,992 - INFO - 127.0.0.1 - - [14/Jan/2025 14:26:03] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:26:06,161 - INFO - 127.0.0.1 - - [14/Jan/2025 14:26:06] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 14:26:06,180 - INFO - 127.0.0.1 - - [14/Jan/2025 14:26:06] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:26:06,196 - INFO - 127.0.0.1 - - [14/Jan/2025 14:26:06] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:26:06,215 - INFO - 127.0.0.1 - - [14/Jan/2025 14:26:06] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:26:07,745 - INFO - 127.0.0.1 - - [14/Jan/2025 14:26:07] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 14:26:07,755 - INFO - 127.0.0.1 - - [14/Jan/2025 14:26:07] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:26:07,765 - INFO - 127.0.0.1 - - [14/Jan/2025 14:26:07] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:26:07,782 - INFO - 127.0.0.1 - - [14/Jan/2025 14:26:07] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:27:47,377 - INFO - 127.0.0.1 - - [14/Jan/2025 14:27:47] "[32mGET /logout HTTP/1.1[0m" 302 -
+2025-01-14 14:27:47,390 - INFO - 127.0.0.1 - - [14/Jan/2025 14:27:47] "GET /login HTTP/1.1" 200 -
+2025-01-14 14:27:47,403 - INFO - 127.0.0.1 - - [14/Jan/2025 14:27:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:27:47,412 - INFO - 127.0.0.1 - - [14/Jan/2025 14:27:47] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 14:27:53,830 - INFO - 127.0.0.1 - - [14/Jan/2025 14:27:53] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-01-14 14:27:53,834 - INFO - 127.0.0.1 - - [14/Jan/2025 14:27:53] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 14:27:53,845 - INFO - 127.0.0.1 - - [14/Jan/2025 14:27:53] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 14:27:53,865 - INFO - 127.0.0.1 - - [14/Jan/2025 14:27:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 14:27:53,887 - INFO - 127.0.0.1 - - [14/Jan/2025 14:27:53] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
