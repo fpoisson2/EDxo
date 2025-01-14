@@ -9910,3 +9910,94 @@ fields.3.content
 2025-01-14 16:02:14,071 - INFO - 127.0.0.1 - - [14/Jan/2025 16:02:14] "GET /programme/1 HTTP/1.1" 200 -
 2025-01-14 16:02:14,083 - INFO - 127.0.0.1 - - [14/Jan/2025 16:02:14] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
 2025-01-14 16:02:14,114 - INFO - 127.0.0.1 - - [14/Jan/2025 16:02:14] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:12:00,788 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-14 16:12:00,788 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-14 16:12:00,789 - INFO -  * Restarting with stat
+2025-01-14 16:12:01,640 - WARNING -  * Debugger is active!
+2025-01-14 16:12:01,642 - INFO -  * Debugger PIN: 134-907-754
+2025-01-14 16:12:05,745 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:05] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 16:12:05,777 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:05] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 16:12:05,788 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:05] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:12:06,220 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:06] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:12:06,223 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:06] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 16:12:08,856 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:08] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-14 16:12:08,869 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:08] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:12:08,887 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:08] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:12:09,712 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:09] "GET /add_element_competence HTTP/1.1" 200 -
+2025-01-14 16:12:09,724 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:09] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:12:09,738 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:09] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:12:17,306 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:17] "GET /add_element_competence HTTP/1.1" 200 -
+2025-01-14 16:12:17,318 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:17] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:12:17,334 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:17] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:12:17,336 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:17] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 16:12:18,011 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:18] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 16:12:18,025 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:18] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 16:12:18,038 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:18] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:12:18,062 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:18] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:12:26,092 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:26] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-14 16:12:26,107 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:12:26,115 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:26] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:12:27,036 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:27] "GET /add_element_competence HTTP/1.1" 200 -
+2025-01-14 16:12:27,047 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:12:27,057 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:27] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:12:53,873 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:53] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-14 16:12:53,892 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:12:53,898 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:53] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:12:53,901 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:53] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 16:12:54,774 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:54] "GET /add_element_competence HTTP/1.1" 200 -
+2025-01-14 16:12:54,785 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:54] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:12:54,795 - INFO - 127.0.0.1 - - [14/Jan/2025 16:12:54] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:13:28,440 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:28] "GET /add_element_competence HTTP/1.1" 200 -
+2025-01-14 16:13:28,450 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:13:28,467 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:28] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:13:28,469 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:28] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 16:13:34,635 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:34] "[32mPOST /add_element_competence HTTP/1.1[0m" 302 -
+2025-01-14 16:13:34,653 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:34] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 16:13:34,667 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:34] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:13:34,699 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:34] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:13:39,864 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:39] "[32mGET /programme/competence/code/02GN HTTP/1.1[0m" 302 -
+2025-01-14 16:13:39,886 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:39] "GET /programme/competence/1 HTTP/1.1" 200 -
+2025-01-14 16:13:39,897 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:39] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:13:39,907 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:39] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:13:44,400 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:44] "GET /element_competence/88/edit HTTP/1.1" 200 -
+2025-01-14 16:13:44,412 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:44] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:13:44,424 - INFO - 127.0.0.1 - - [14/Jan/2025 16:13:44] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:14:10,188 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:10] "GET /programme/competence/1 HTTP/1.1" 200 -
+2025-01-14 16:14:10,196 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:10] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:14:10,203 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:10] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:14:10,206 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:10] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-14 16:14:19,127 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:19] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 16:14:19,142 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:19] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 16:14:19,153 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:19] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:14:19,168 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:19] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:14:27,495 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:27] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 16:14:27,505 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:27] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:14:27,532 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:27] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:14:28,754 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:28] "GET /programme/2 HTTP/1.1" 200 -
+2025-01-14 16:14:28,770 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:14:28,780 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:28] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:14:30,246 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:30] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 16:14:30,261 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:30] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:14:30,288 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:30] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:14:31,406 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:31] "GET /programme/2 HTTP/1.1" 200 -
+2025-01-14 16:14:31,418 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:14:31,425 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:31] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:14:45,665 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:45] "[32mGET /cours/33/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-14 16:14:45,716 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:45] "GET /cours/33/plan_cadre/32 HTTP/1.1" 200 -
+2025-01-14 16:14:45,727 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:45] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:14:45,752 - INFO - 127.0.0.1 - - [14/Jan/2025 16:14:45] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:16:19,543 - INFO - 127.0.0.1 - - [14/Jan/2025 16:16:19] "[32mGET /cours/33/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-14 16:16:19,557 - INFO - 127.0.0.1 - - [14/Jan/2025 16:16:19] "GET /cours/33/plan_cadre/32 HTTP/1.1" 200 -
+2025-01-14 16:16:19,571 - INFO - 127.0.0.1 - - [14/Jan/2025 16:16:19] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:16:19,604 - INFO - 127.0.0.1 - - [14/Jan/2025 16:16:19] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:17:08,437 - INFO - 127.0.0.1 - - [14/Jan/2025 16:17:08] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-14 16:17:08,453 - INFO - 127.0.0.1 - - [14/Jan/2025 16:17:08] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-14 16:17:08,467 - INFO - 127.0.0.1 - - [14/Jan/2025 16:17:08] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:17:08,494 - INFO - 127.0.0.1 - - [14/Jan/2025 16:17:08] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-14 16:17:11,423 - INFO - 127.0.0.1 - - [14/Jan/2025 16:17:11] "[32mGET /cours/9/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-14 16:17:11,436 - INFO - 127.0.0.1 - - [14/Jan/2025 16:17:11] "GET /cours/9/plan_cadre/9 HTTP/1.1" 200 -
+2025-01-14 16:17:11,448 - INFO - 127.0.0.1 - - [14/Jan/2025 16:17:11] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-14 16:17:11,469 - INFO - 127.0.0.1 - - [14/Jan/2025 16:17:11] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
