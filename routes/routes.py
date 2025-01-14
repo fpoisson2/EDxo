@@ -35,7 +35,8 @@ from forms import (
     DepartmentPIEAForm,
     DeleteForm,
     EditUserForm,
-    ProgrammeMinisterielForm
+    ProgrammeMinisterielForm,
+    ProgrammeForm
 )
 from flask_ckeditor import CKEditor
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -55,8 +56,8 @@ import bleach
 from docxtpl import DocxTemplate
 from io import BytesIO 
 from werkzeug.security import generate_password_hash, check_password_hash
-from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_list, get_cegep_details_data, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template, get_all_cegeps, get_all_departments, get_all_programmes, get_programmes_by_user
-from models import User, db, Department, DepartmentRegles, DepartmentPIEA, ListeProgrammeMinisteriel
+from utils import get_db_connection, get_programme_id, parse_html_to_list, parse_html_to_nested_list, get_cegep_details_data, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template, get_all_cegeps, get_all_departments, get_all_programmes, get_programmes_by_user
+from models import User, db, Department, DepartmentRegles, DepartmentPIEA, ListeProgrammeMinisteriel, Programme
 
 
 
@@ -66,6 +67,65 @@ main = Blueprint('main', __name__)
 @main.app_template_filter('markdown')
 def markdown_filter(text):
     return markdown.markdown(text)
+
+@main.route('/gestion_programmes_cegep', methods=['GET', 'POST'])
+@login_required
+def gestion_programmes_cegep():
+    # Récupérer la liste des cégeps
+    cegeps = get_all_cegeps()  # Ex.: [{'id': 1, 'nom': 'Cégep A'}, {'id': 2, 'nom': 'Cégep B'}]
+    
+    # Récupérer la liste des départements et des programmes ministériels
+    # Adaptez ces fonctions à votre code – ici on part d'une requête via SQLAlchemy
+    departments = [ (d.id, d.nom) for d in Department.query.order_by(Department.nom).all() ]
+    # Ajouter une option par défaut pour Programme ministériel
+    programmes_ministeriels = [(0, 'Aucun')] + [(pm.id, pm.nom) for pm in ListeProgrammeMinisteriel.query.order_by(ListeProgrammeMinisteriel.nom).all()]
+    
+    form = ProgrammeForm()
+    # Alimenter les menus déroulants
+    form.cegep_id.choices = [(c['id'], c['nom']) for c in cegeps]
+    form.department_id.choices = departments
+    form.liste_programme_ministeriel_id.choices = programmes_ministeriels
+
+    # Si un cégep est sélectionné dans la query string, on le récupère;
+    # sinon, on prend le premier dans la liste (si disponible)
+    selected_cegep = request.args.get('cegep_id', type=int)
+    if not selected_cegep and form.cegep_id.choices:
+        selected_cegep = form.cegep_id.choices[0][0]  # Choix par défaut (premier cégep)
+    form.cegep_id.data = selected_cegep
+
+    # Si le formulaire est soumis, créer le nouveau programme associé à ce cégep
+    if form.validate_on_submit():
+        nouveau_programme = Programme(
+            nom=form.nom.data,
+            department_id=form.department_id.data,
+            liste_programme_ministeriel_id=form.liste_programme_ministeriel_id.data or None,
+            cegep_id=form.cegep_id.data,
+            variante=form.variante.data or None
+        )
+        try:
+            db.session.add(nouveau_programme)
+            db.session.commit()
+            flash("Programme ajouté avec succès.", "success")
+            # Rediriger en passant le cégep sélectionné dans l'URL pour conserver le filtre
+            return redirect(url_for('main.gestion_programmes_cegep', cegep_id=form.cegep_id.data))
+        except Exception as e:
+            db.session.rollback()
+            flash("Erreur lors de l'ajout du programme: " + str(e), "danger")
+
+    # Récupérer les programmes pour le cégep sélectionné (via le modèle Programme)
+    programmes = Programme.query.filter_by(cegep_id=selected_cegep).all() if selected_cegep else []
+
+    return render_template(
+        'gestion_programmes_cegep.html',
+        form=form,
+        programmes=programmes,
+        selected_cegep=selected_cegep,
+        cegeps=cegeps
+    )
+
+
+
+
 
 @main.route('/gestion_programmes_ministeriels', methods=['GET', 'POST'])
 def gestion_programmes_ministeriels():
@@ -479,9 +539,10 @@ def add_competence():
 def add_element_competence():
     form = ElementCompetenceForm()
     conn = get_db_connection()
-    competences = conn.execute('SELECT id, nom FROM Competence').fetchall()
+    competences = conn.execute('SELECT id, code, nom FROM Competence').fetchall()
     conn.close()
-    form.competence.choices = [(c['id'], c['nom']) for c in competences]
+    form.competence.choices = [(c['id'], f"{c['code']} - {c['nom']}") for c in competences]
+
 
     if form.validate_on_submit():
         competence_id = form.competence.data
@@ -972,6 +1033,24 @@ def gestion_departements():
     delete_piea_form = DeleteForm()
 
     if request.method == 'POST':
+        if 'ajouter_depart' in request.form:
+            # Traitement pour ajouter un département
+            if department_form.validate_on_submit():
+                nouveau_dep = Department(
+                    nom=department_form.nom.data
+                )
+                db.session.add(nouveau_dep)
+                try:
+                    db.session.commit()
+                    flash("Département ajouté avec succès.", 'success')
+                    return redirect(url_for('main.gestion_departements'))
+                except Exception as e:
+                    print(f"Error adding department: {e}")
+                    db.session.rollback()
+                    flash(f"Erreur lors de l'ajout du département : {e}", 'danger')
+            else:
+                flash("Veuillez remplir tous les champs correctement pour le département.", 'danger')
+
         if 'ajouter_regle' in request.form:
             department_id = request.form.get('department_id')
             print(f"Processing rule addition for department {department_id}")
