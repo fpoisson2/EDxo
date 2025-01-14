@@ -8225,3 +8225,435 @@ fields.3.content
 2025-01-13 20:28:29,683 - INFO -  * Restarting with stat
 2025-01-13 20:28:30,506 - WARNING -  * Debugger is active!
 2025-01-13 20:28:30,508 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:32:17,809 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-13 21:32:17,809 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-13 21:32:17,810 - INFO -  * Restarting with stat
+2025-01-13 21:32:18,624 - WARNING -  * Debugger is active!
+2025-01-13 21:32:18,626 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:42:12,944 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-13 21:42:12,944 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-13 21:42:12,944 - INFO -  * Restarting with stat
+2025-01-13 21:42:13,771 - WARNING -  * Debugger is active!
+2025-01-13 21:42:13,773 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:42:22,661 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:22] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 21:42:22,674 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:22] "GET /login?next=/ HTTP/1.1" 200 -
+2025-01-13 21:42:22,683 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:22] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:42:23,108 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:23] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-01-13 21:42:29,184 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:29] "[32mPOST /login?next=/ HTTP/1.1[0m" 302 -
+2025-01-13 21:42:29,188 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:29] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 21:42:29,210 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:29] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 21:42:29,221 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:42:30,431 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:30] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-13 21:42:30,444 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:30] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:42:32,080 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:32] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 21:42:32,091 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:42:34,057 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:34] "[35m[1mGET /edit_user/8 HTTP/1.1[0m" 500 -
+2025-01-13 21:42:34,068 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:34] "GET /edit_user/8?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-13 21:42:34,070 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:34] "GET /edit_user/8?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-13 21:42:34,076 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:34] "GET /edit_user/8?__debugger__=yes&cmd=resource&f=console.png&s=cdkTb5PA7FlwMHX1mIgz HTTP/1.1" 200 -
+2025-01-13 21:42:34,083 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:34] "GET /edit_user/8?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-13 21:42:45,145 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/forms.py', reloading
+2025-01-13 21:42:45,285 - INFO -  * Restarting with stat
+2025-01-13 21:42:46,108 - WARNING -  * Debugger is active!
+2025-01-13 21:42:46,109 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:42:53,191 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 21:42:53,324 - INFO -  * Restarting with stat
+2025-01-13 21:42:54,169 - WARNING -  * Debugger is active!
+2025-01-13 21:42:54,171 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:42:54,766 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:54] "GET /edit_user/8 HTTP/1.1" 200 -
+2025-01-13 21:42:54,780 - INFO - 127.0.0.1 - - [13/Jan/2025 21:42:54] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:43:38,017 - INFO - 127.0.0.1 - - [13/Jan/2025 21:43:38] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 21:43:38,028 - INFO - 127.0.0.1 - - [13/Jan/2025 21:43:38] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:44:42,166 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 21:44:42,323 - INFO -  * Restarting with stat
+2025-01-13 21:44:43,040 - WARNING -  * Debugger is active!
+2025-01-13 21:44:43,041 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:45:01,240 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/forms.py', reloading
+2025-01-13 21:45:01,372 - INFO -  * Restarting with stat
+2025-01-13 21:45:02,250 - WARNING -  * Debugger is active!
+2025-01-13 21:45:02,251 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:45:22,470 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 21:45:22,602 - INFO -  * Restarting with stat
+2025-01-13 21:45:23,260 - WARNING -  * Debugger is active!
+2025-01-13 21:45:23,262 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:45:51,575 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/utils.py', reloading
+2025-01-13 21:45:51,709 - INFO -  * Restarting with stat
+2025-01-13 21:45:52,528 - WARNING -  * Debugger is active!
+2025-01-13 21:45:52,530 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:46:02,640 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 21:46:02,800 - INFO -  * Restarting with stat
+2025-01-13 21:47:04,136 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-13 21:47:04,136 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-13 21:47:04,137 - INFO -  * Restarting with stat
+2025-01-13 21:47:04,957 - WARNING -  * Debugger is active!
+2025-01-13 21:47:04,959 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:47:06,028 - INFO - 127.0.0.1 - - [13/Jan/2025 21:47:06] "[35m[1mGET /edit_user/12 HTTP/1.1[0m" 500 -
+2025-01-13 21:47:06,039 - INFO - 127.0.0.1 - - [13/Jan/2025 21:47:06] "GET /edit_user/12?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-13 21:47:06,039 - INFO - 127.0.0.1 - - [13/Jan/2025 21:47:06] "GET /edit_user/12?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-13 21:47:06,055 - INFO - 127.0.0.1 - - [13/Jan/2025 21:47:06] "GET /edit_user/12?__debugger__=yes&cmd=resource&f=console.png&s=NHu0EjI8pcN0FyOo7JRl HTTP/1.1" 200 -
+2025-01-13 21:47:06,059 - INFO - 127.0.0.1 - - [13/Jan/2025 21:47:06] "GET /edit_user/12?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-13 21:47:18,744 - INFO - 127.0.0.1 - - [13/Jan/2025 21:47:18] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 21:47:18,754 - INFO - 127.0.0.1 - - [13/Jan/2025 21:47:18] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:47:19,831 - INFO - 127.0.0.1 - - [13/Jan/2025 21:47:19] "[35m[1mGET /edit_user/5 HTTP/1.1[0m" 500 -
+2025-01-13 21:47:19,842 - INFO - 127.0.0.1 - - [13/Jan/2025 21:47:19] "GET /edit_user/5?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-13 21:47:19,843 - INFO - 127.0.0.1 - - [13/Jan/2025 21:47:19] "GET /edit_user/5?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-13 21:47:19,848 - INFO - 127.0.0.1 - - [13/Jan/2025 21:47:19] "GET /edit_user/5?__debugger__=yes&cmd=resource&f=console.png&s=NHu0EjI8pcN0FyOo7JRl HTTP/1.1" 200 -
+2025-01-13 21:47:19,851 - INFO - 127.0.0.1 - - [13/Jan/2025 21:47:19] "GET /edit_user/5?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-13 21:47:53,506 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 21:47:53,649 - INFO -  * Restarting with stat
+2025-01-13 21:47:54,486 - WARNING -  * Debugger is active!
+2025-01-13 21:47:54,488 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:48:00,167 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:00] "[35m[1mGET /edit_user/5 HTTP/1.1[0m" 500 -
+2025-01-13 21:48:00,178 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:00] "[36mGET /edit_user/5?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 21:48:00,180 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:00] "[36mGET /edit_user/5?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 21:48:00,188 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:00] "GET /edit_user/5?__debugger__=yes&cmd=resource&f=console.png&s=A8qO9cn0V0rv5rhFLTdT HTTP/1.1" 200 -
+2025-01-13 21:48:00,191 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:00] "[36mGET /edit_user/5?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 21:48:27,819 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 21:48:27,961 - INFO -  * Restarting with stat
+2025-01-13 21:48:28,786 - WARNING -  * Debugger is active!
+2025-01-13 21:48:28,788 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:48:33,125 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:33] "[35m[1mGET /edit_user/5 HTTP/1.1[0m" 500 -
+2025-01-13 21:48:33,137 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:33] "[36mGET /edit_user/5?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 21:48:33,138 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:33] "[36mGET /edit_user/5?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 21:48:33,142 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:33] "GET /edit_user/5?__debugger__=yes&cmd=resource&f=console.png&s=5u5E5VGiCMZdoMEYkUv2 HTTP/1.1" 200 -
+2025-01-13 21:48:33,146 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:33] "[36mGET /edit_user/5?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 21:48:35,569 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:35] "[35m[1mGET /edit_user/12 HTTP/1.1[0m" 500 -
+2025-01-13 21:48:35,577 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:35] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 21:48:35,578 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:35] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 21:48:35,586 - INFO - 127.0.0.1 - - [13/Jan/2025 21:48:35] "GET /edit_user/12?__debugger__=yes&cmd=resource&f=console.png&s=5u5E5VGiCMZdoMEYkUv2 HTTP/1.1" 200 -
+2025-01-13 21:49:40,050 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:40] "[35m[1mGET /edit_user/12 HTTP/1.1[0m" 500 -
+2025-01-13 21:49:40,058 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:40] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 21:49:40,059 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:40] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 21:49:40,062 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:40] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=console.png&s=5u5E5VGiCMZdoMEYkUv2 HTTP/1.1[0m" 304 -
+2025-01-13 21:49:40,066 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:40] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 21:49:41,498 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:41] "[35m[1mGET /edit_user/12 HTTP/1.1[0m" 500 -
+2025-01-13 21:49:41,505 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:41] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 21:49:41,506 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:41] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 21:49:41,508 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:41] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=console.png&s=5u5E5VGiCMZdoMEYkUv2 HTTP/1.1[0m" 304 -
+2025-01-13 21:49:41,513 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:41] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 21:49:50,955 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:50] "[35m[1mGET /edit_user/12 HTTP/1.1[0m" 500 -
+2025-01-13 21:49:50,963 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:50] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 21:49:50,964 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:50] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 21:49:50,967 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:50] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=console.png&s=5u5E5VGiCMZdoMEYkUv2 HTTP/1.1[0m" 304 -
+2025-01-13 21:49:50,981 - INFO - 127.0.0.1 - - [13/Jan/2025 21:49:50] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 21:50:42,024 - INFO - 127.0.0.1 - - [13/Jan/2025 21:50:42] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 21:50:42,032 - INFO - 127.0.0.1 - - [13/Jan/2025 21:50:42] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:50:50,805 - INFO - 127.0.0.1 - - [13/Jan/2025 21:50:50] "GET /get_cegep_details/91 HTTP/1.1" 200 -
+2025-01-13 21:50:57,284 - INFO - 127.0.0.1 - - [13/Jan/2025 21:50:57] "GET /get_cegep_details/1 HTTP/1.1" 200 -
+2025-01-13 21:51:10,152 - INFO - 127.0.0.1 - - [13/Jan/2025 21:51:10] "[32mPOST /edit_user/12 HTTP/1.1[0m" 302 -
+2025-01-13 21:51:10,167 - INFO - 127.0.0.1 - - [13/Jan/2025 21:51:10] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 21:51:10,181 - INFO - 127.0.0.1 - - [13/Jan/2025 21:51:10] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:51:12,510 - INFO - 127.0.0.1 - - [13/Jan/2025 21:51:12] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 21:51:12,523 - INFO - 127.0.0.1 - - [13/Jan/2025 21:51:12] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:52:12,065 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 21:52:12,243 - INFO -  * Restarting with stat
+2025-01-13 21:52:13,079 - WARNING -  * Debugger is active!
+2025-01-13 21:52:13,080 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:52:15,919 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:15] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 21:52:15,932 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:15] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:52:17,376 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:17] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 21:52:17,386 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:17] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:52:25,098 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:25] "[32mPOST /edit_user/12 HTTP/1.1[0m" 302 -
+2025-01-13 21:52:25,104 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:25] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 21:52:25,115 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:25] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:52:28,257 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:28] "GET /edit_user/11 HTTP/1.1" 200 -
+2025-01-13 21:52:28,270 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:52:31,684 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:31] "GET /get_cegep_details/1 HTTP/1.1" 200 -
+2025-01-13 21:52:34,535 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:34] "POST /edit_user/11 HTTP/1.1" 200 -
+2025-01-13 21:52:34,546 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:34] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:52:45,069 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:45] "GET /edit_user/11 HTTP/1.1" 200 -
+2025-01-13 21:52:50,266 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:50] "GET /edit_user/11 HTTP/1.1" 200 -
+2025-01-13 21:52:50,280 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:50] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:52:53,040 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:53] "GET /get_cegep_details/1 HTTP/1.1" 200 -
+2025-01-13 21:52:56,902 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:56] "POST /edit_user/11 HTTP/1.1" 200 -
+2025-01-13 21:52:56,914 - INFO - 127.0.0.1 - - [13/Jan/2025 21:52:56] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:53:01,079 - INFO - 127.0.0.1 - - [13/Jan/2025 21:53:01] "GET /get_cegep_details/91 HTTP/1.1" 200 -
+2025-01-13 21:53:03,097 - INFO - 127.0.0.1 - - [13/Jan/2025 21:53:03] "GET /get_cegep_details/1 HTTP/1.1" 200 -
+2025-01-13 21:53:06,737 - INFO - 127.0.0.1 - - [13/Jan/2025 21:53:06] "POST /edit_user/11 HTTP/1.1" 200 -
+2025-01-13 21:53:06,749 - INFO - 127.0.0.1 - - [13/Jan/2025 21:53:06] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:53:08,428 - INFO - 127.0.0.1 - - [13/Jan/2025 21:53:08] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 21:53:08,446 - INFO - 127.0.0.1 - - [13/Jan/2025 21:53:08] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 21:53:08,456 - INFO - 127.0.0.1 - - [13/Jan/2025 21:53:08] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:53:41,976 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/forms.py', reloading
+2025-01-13 21:53:42,139 - INFO -  * Restarting with stat
+2025-01-13 21:54:47,907 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-13 21:54:47,908 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-13 21:54:47,908 - INFO -  * Restarting with stat
+2025-01-13 21:54:48,727 - WARNING -  * Debugger is active!
+2025-01-13 21:54:48,728 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:54:50,120 - INFO - 127.0.0.1 - - [13/Jan/2025 21:54:50] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-13 21:54:50,134 - INFO - 127.0.0.1 - - [13/Jan/2025 21:54:50] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:54:51,614 - INFO - 127.0.0.1 - - [13/Jan/2025 21:54:51] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 21:54:51,623 - INFO - 127.0.0.1 - - [13/Jan/2025 21:54:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:54:53,323 - INFO - 127.0.0.1 - - [13/Jan/2025 21:54:53] "[35m[1mGET /edit_user/9 HTTP/1.1[0m" 500 -
+2025-01-13 21:54:53,331 - INFO - 127.0.0.1 - - [13/Jan/2025 21:54:53] "GET /edit_user/9?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-13 21:54:53,333 - INFO - 127.0.0.1 - - [13/Jan/2025 21:54:53] "GET /edit_user/9?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-13 21:54:53,351 - INFO - 127.0.0.1 - - [13/Jan/2025 21:54:53] "GET /edit_user/9?__debugger__=yes&cmd=resource&f=console.png&s=JDBE64pao71IxyMCiiZK HTTP/1.1" 200 -
+2025-01-13 21:54:53,359 - INFO - 127.0.0.1 - - [13/Jan/2025 21:54:53] "GET /edit_user/9?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-13 21:55:14,983 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/utils.py', reloading
+2025-01-13 21:55:15,082 - INFO -  * Restarting with stat
+2025-01-13 21:55:15,919 - WARNING -  * Debugger is active!
+2025-01-13 21:55:15,920 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:55:18,943 - INFO - 127.0.0.1 - - [13/Jan/2025 21:55:18] "[35m[1mGET /edit_user/9 HTTP/1.1[0m" 500 -
+2025-01-13 21:55:18,955 - INFO - 127.0.0.1 - - [13/Jan/2025 21:55:18] "[36mGET /edit_user/9?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 21:55:18,956 - INFO - 127.0.0.1 - - [13/Jan/2025 21:55:18] "[36mGET /edit_user/9?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 21:55:18,965 - INFO - 127.0.0.1 - - [13/Jan/2025 21:55:18] "GET /edit_user/9?__debugger__=yes&cmd=resource&f=console.png&s=OLUAnqXqPnb97O0ft2Ak HTTP/1.1" 200 -
+2025-01-13 21:55:18,973 - INFO - 127.0.0.1 - - [13/Jan/2025 21:55:18] "[36mGET /edit_user/9?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 21:56:26,643 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 21:56:26,791 - INFO -  * Restarting with stat
+2025-01-13 21:56:27,633 - WARNING -  * Debugger is active!
+2025-01-13 21:56:27,635 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:56:31,870 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:31] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 21:56:31,881 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:56:38,236 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:38] "GET /get_cegep_details?cegep_id=1 HTTP/1.1" 200 -
+2025-01-13 21:56:41,913 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:41] "[35m[1mPOST /edit_user/9 HTTP/1.1[0m" 500 -
+2025-01-13 21:56:41,923 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:41] "[36mGET /edit_user/9?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 21:56:41,923 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:41] "[36mGET /edit_user/9?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 21:56:41,928 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:41] "GET /edit_user/9?__debugger__=yes&cmd=resource&f=console.png&s=cFcOLrX59pwWezQJBUiD HTTP/1.1" 200 -
+2025-01-13 21:56:41,937 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:41] "[36mGET /edit_user/9?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 21:56:47,900 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:47] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 21:56:48,676 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:48] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 21:56:48,700 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:48] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 21:56:48,710 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:48] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:56:50,200 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:50] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-13 21:56:50,215 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:50] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:56:51,255 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:51] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 21:56:51,264 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:56:52,599 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:52] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 21:56:52,625 - INFO - 127.0.0.1 - - [13/Jan/2025 21:56:52] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:57:56,776 - INFO - 127.0.0.1 - - [13/Jan/2025 21:57:56] "[32mPOST /edit_user/12 HTTP/1.1[0m" 302 -
+2025-01-13 21:57:56,780 - INFO - 127.0.0.1 - - [13/Jan/2025 21:57:56] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 21:57:56,791 - INFO - 127.0.0.1 - - [13/Jan/2025 21:57:56] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:57:58,412 - INFO - 127.0.0.1 - - [13/Jan/2025 21:57:58] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 21:57:58,427 - INFO - 127.0.0.1 - - [13/Jan/2025 21:57:58] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:58:00,914 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:00] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 21:58:00,925 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:58:03,764 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:03] "GET /get_cegep_details?cegep_id=1 HTTP/1.1" 200 -
+2025-01-13 21:58:06,499 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:06] "[35m[1mPOST /edit_user/9 HTTP/1.1[0m" 500 -
+2025-01-13 21:58:06,506 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:06] "[36mGET /edit_user/9?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 21:58:06,507 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:06] "[36mGET /edit_user/9?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 21:58:06,515 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:06] "[36mGET /edit_user/9?__debugger__=yes&cmd=resource&f=console.png&s=cFcOLrX59pwWezQJBUiD HTTP/1.1[0m" 304 -
+2025-01-13 21:58:06,519 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:06] "[36mGET /edit_user/9?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 21:58:46,059 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 21:58:46,227 - INFO -  * Restarting with stat
+2025-01-13 21:58:47,067 - WARNING -  * Debugger is active!
+2025-01-13 21:58:47,069 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:58:50,763 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:50] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 21:58:51,643 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:51] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 21:58:51,656 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 21:58:54,918 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:54] "GET /get_cegep_details?cegep_id=1 HTTP/1.1" 200 -
+2025-01-13 21:58:58,272 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:58] "[35m[1mPOST /edit_user/9 HTTP/1.1[0m" 500 -
+2025-01-13 21:58:58,279 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:58] "[36mGET /edit_user/9?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 21:58:58,280 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:58] "[36mGET /edit_user/9?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 21:58:58,284 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:58] "GET /edit_user/9?__debugger__=yes&cmd=resource&f=console.png&s=kewV33scrDNRjnUbVGL5 HTTP/1.1" 200 -
+2025-01-13 21:58:58,290 - INFO - 127.0.0.1 - - [13/Jan/2025 21:58:58] "[36mGET /edit_user/9?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 21:59:35,590 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/forms.py', reloading
+2025-01-13 21:59:35,758 - INFO -  * Restarting with stat
+2025-01-13 21:59:36,603 - WARNING -  * Debugger is active!
+2025-01-13 21:59:36,605 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 21:59:39,851 - INFO - 127.0.0.1 - - [13/Jan/2025 21:59:39] "POST /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 21:59:39,863 - INFO - 127.0.0.1 - - [13/Jan/2025 21:59:39] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:00:10,923 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/forms.py', reloading
+2025-01-13 22:00:11,099 - INFO -  * Restarting with stat
+2025-01-13 22:00:11,838 - WARNING -  * Debugger is active!
+2025-01-13 22:00:11,840 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:00:27,007 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:00:27,150 - INFO -  * Restarting with stat
+2025-01-13 22:00:28,009 - WARNING -  * Debugger is active!
+2025-01-13 22:00:28,011 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:00:31,396 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:31] "POST /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:00:31,410 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:00:34,671 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:34] "GET /get_cegep_details?cegep_id=89 HTTP/1.1" 200 -
+2025-01-13 22:00:36,891 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:36] "GET /get_cegep_details?cegep_id=1 HTTP/1.1" 200 -
+2025-01-13 22:00:40,610 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:40] "POST /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:00:40,621 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:00:41,974 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:41] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 22:00:41,992 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:41] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 22:00:42,003 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:42] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:00:43,534 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:43] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-13 22:00:43,545 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:43] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:00:44,750 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:44] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 22:00:44,760 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:44] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:00:47,322 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:47] "GET /edit_user/11 HTTP/1.1" 200 -
+2025-01-13 22:00:47,334 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:00:50,116 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:50] "GET /get_cegep_details?cegep_id=1 HTTP/1.1" 200 -
+2025-01-13 22:00:53,221 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:53] "POST /edit_user/11 HTTP/1.1" 200 -
+2025-01-13 22:00:53,234 - INFO - 127.0.0.1 - - [13/Jan/2025 22:00:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:01:40,736 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:01:40,892 - INFO -  * Restarting with stat
+2025-01-13 22:01:41,747 - WARNING -  * Debugger is active!
+2025-01-13 22:01:41,749 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:02:05,397 - INFO - 127.0.0.1 - - [13/Jan/2025 22:02:05] "POST /edit_user/11 HTTP/1.1" 200 -
+2025-01-13 22:02:05,409 - INFO - 127.0.0.1 - - [13/Jan/2025 22:02:05] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:02:14,020 - INFO - 127.0.0.1 - - [13/Jan/2025 22:02:14] "GET /edit_user/11 HTTP/1.1" 200 -
+2025-01-13 22:02:17,618 - INFO - 127.0.0.1 - - [13/Jan/2025 22:02:17] "GET /get_cegep_details?cegep_id=87 HTTP/1.1" 200 -
+2025-01-13 22:02:19,224 - INFO - 127.0.0.1 - - [13/Jan/2025 22:02:19] "GET /get_cegep_details?cegep_id=1 HTTP/1.1" 200 -
+2025-01-13 22:02:21,521 - INFO - 127.0.0.1 - - [13/Jan/2025 22:02:21] "POST /edit_user/11 HTTP/1.1" 200 -
+2025-01-13 22:02:21,534 - INFO - 127.0.0.1 - - [13/Jan/2025 22:02:21] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:03:08,629 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/forms.py', reloading
+2025-01-13 22:03:08,798 - INFO -  * Restarting with stat
+2025-01-13 22:03:09,682 - WARNING -  * Debugger is active!
+2025-01-13 22:03:09,684 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:03:22,764 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:03:22,861 - INFO -  * Restarting with stat
+2025-01-13 22:03:23,718 - WARNING -  * Debugger is active!
+2025-01-13 22:03:23,720 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:03:43,459 - INFO - 127.0.0.1 - - [13/Jan/2025 22:03:43] "[35m[1mGET /edit_user/11 HTTP/1.1[0m" 500 -
+2025-01-13 22:03:43,471 - INFO - 127.0.0.1 - - [13/Jan/2025 22:03:43] "GET /edit_user/11?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-13 22:03:43,471 - INFO - 127.0.0.1 - - [13/Jan/2025 22:03:43] "GET /edit_user/11?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-13 22:03:43,479 - INFO - 127.0.0.1 - - [13/Jan/2025 22:03:43] "GET /edit_user/11?__debugger__=yes&cmd=resource&f=console.png&s=ktDDi54frCkQ4fIgaEN9 HTTP/1.1" 200 -
+2025-01-13 22:03:43,483 - INFO - 127.0.0.1 - - [13/Jan/2025 22:03:43] "GET /edit_user/11?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-13 22:03:46,897 - INFO - 127.0.0.1 - - [13/Jan/2025 22:03:46] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 22:03:46,905 - INFO - 127.0.0.1 - - [13/Jan/2025 22:03:46] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:03:47,910 - INFO - 127.0.0.1 - - [13/Jan/2025 22:03:47] "[35m[1mGET /edit_user/5 HTTP/1.1[0m" 500 -
+2025-01-13 22:03:47,919 - INFO - 127.0.0.1 - - [13/Jan/2025 22:03:47] "[36mGET /edit_user/5?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 22:03:47,920 - INFO - 127.0.0.1 - - [13/Jan/2025 22:03:47] "[36mGET /edit_user/5?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 22:03:47,927 - INFO - 127.0.0.1 - - [13/Jan/2025 22:03:47] "GET /edit_user/5?__debugger__=yes&cmd=resource&f=console.png&s=ktDDi54frCkQ4fIgaEN9 HTTP/1.1" 200 -
+2025-01-13 22:04:09,213 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:04:09,371 - INFO -  * Restarting with stat
+2025-01-13 22:04:10,240 - WARNING -  * Debugger is active!
+2025-01-13 22:04:10,241 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:04:15,667 - INFO - 127.0.0.1 - - [13/Jan/2025 22:04:15] "[35m[1mGET /edit_user/5 HTTP/1.1[0m" 500 -
+2025-01-13 22:04:15,676 - INFO - 127.0.0.1 - - [13/Jan/2025 22:04:15] "[36mGET /edit_user/5?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 22:04:15,676 - INFO - 127.0.0.1 - - [13/Jan/2025 22:04:15] "[36mGET /edit_user/5?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 22:04:15,683 - INFO - 127.0.0.1 - - [13/Jan/2025 22:04:15] "GET /edit_user/5?__debugger__=yes&cmd=resource&f=console.png&s=1N3Su7CXRksyqUINqets HTTP/1.1" 200 -
+2025-01-13 22:04:15,687 - INFO - 127.0.0.1 - - [13/Jan/2025 22:04:15] "[36mGET /edit_user/5?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 22:04:21,524 - INFO - 127.0.0.1 - - [13/Jan/2025 22:04:21] "[35m[1mGET /edit_user/12 HTTP/1.1[0m" 500 -
+2025-01-13 22:04:21,531 - INFO - 127.0.0.1 - - [13/Jan/2025 22:04:21] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-13 22:04:21,532 - INFO - 127.0.0.1 - - [13/Jan/2025 22:04:21] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-13 22:04:21,543 - INFO - 127.0.0.1 - - [13/Jan/2025 22:04:21] "GET /edit_user/12?__debugger__=yes&cmd=resource&f=console.png&s=1N3Su7CXRksyqUINqets HTTP/1.1" 200 -
+2025-01-13 22:04:21,550 - INFO - 127.0.0.1 - - [13/Jan/2025 22:04:21] "[36mGET /edit_user/12?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-13 22:04:47,592 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/forms.py', reloading
+2025-01-13 22:04:47,791 - INFO -  * Restarting with stat
+2025-01-13 22:04:48,678 - WARNING -  * Debugger is active!
+2025-01-13 22:04:48,680 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:05:02,845 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:05:02,979 - INFO -  * Restarting with stat
+2025-01-13 22:05:03,845 - WARNING -  * Debugger is active!
+2025-01-13 22:05:03,847 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:05:23,059 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:05:23,207 - INFO -  * Restarting with stat
+2025-01-13 22:05:24,052 - WARNING -  * Debugger is active!
+2025-01-13 22:05:24,054 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:05:36,946 - INFO - 127.0.0.1 - - [13/Jan/2025 22:05:36] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:05:36,959 - INFO - 127.0.0.1 - - [13/Jan/2025 22:05:36] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:05:41,581 - INFO - 127.0.0.1 - - [13/Jan/2025 22:05:41] "[32mPOST /edit_user/12 HTTP/1.1[0m" 302 -
+2025-01-13 22:05:41,591 - INFO - 127.0.0.1 - - [13/Jan/2025 22:05:41] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 22:05:41,601 - INFO - 127.0.0.1 - - [13/Jan/2025 22:05:41] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:05:43,507 - INFO - 127.0.0.1 - - [13/Jan/2025 22:05:43] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:05:43,519 - INFO - 127.0.0.1 - - [13/Jan/2025 22:05:43] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:05:57,993 - INFO - 127.0.0.1 - - [13/Jan/2025 22:05:57] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:05:58,006 - INFO - 127.0.0.1 - - [13/Jan/2025 22:05:58] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:06:00,899 - INFO - 127.0.0.1 - - [13/Jan/2025 22:06:00] "GET /get_cegep_details?cegep_id=1 HTTP/1.1" 200 -
+2025-01-13 22:06:04,971 - INFO - 127.0.0.1 - - [13/Jan/2025 22:06:04] "POST /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:06:04,983 - INFO - 127.0.0.1 - - [13/Jan/2025 22:06:04] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:06:49,897 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:06:50,052 - INFO -  * Restarting with stat
+2025-01-13 22:06:50,905 - WARNING -  * Debugger is active!
+2025-01-13 22:06:50,907 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:07:02,037 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:07:02,172 - INFO -  * Restarting with stat
+2025-01-13 22:07:03,003 - WARNING -  * Debugger is active!
+2025-01-13 22:07:03,005 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:07:39,397 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/forms.py', reloading
+2025-01-13 22:07:39,532 - INFO -  * Restarting with stat
+2025-01-13 22:07:40,366 - WARNING -  * Debugger is active!
+2025-01-13 22:07:40,368 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:07:45,272 - INFO - 127.0.0.1 - - [13/Jan/2025 22:07:45] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:07:47,880 - INFO - 127.0.0.1 - - [13/Jan/2025 22:07:47] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:07:47,895 - INFO - 127.0.0.1 - - [13/Jan/2025 22:07:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:07:50,218 - INFO - 127.0.0.1 - - [13/Jan/2025 22:07:50] "GET /get_departments_and_programmes/1 HTTP/1.1" 200 -
+2025-01-13 22:07:53,187 - INFO - 127.0.0.1 - - [13/Jan/2025 22:07:53] "[32mPOST /edit_user/9 HTTP/1.1[0m" 302 -
+2025-01-13 22:07:53,205 - INFO - 127.0.0.1 - - [13/Jan/2025 22:07:53] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 22:07:53,215 - INFO - 127.0.0.1 - - [13/Jan/2025 22:07:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:07:59,439 - INFO - 127.0.0.1 - - [13/Jan/2025 22:07:59] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:07:59,453 - INFO - 127.0.0.1 - - [13/Jan/2025 22:07:59] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:09:49,639 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:09:49,803 - INFO -  * Restarting with stat
+2025-01-13 22:09:50,664 - WARNING -  * Debugger is active!
+2025-01-13 22:09:50,666 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:09:55,730 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:09:55,864 - INFO -  * Restarting with stat
+2025-01-13 22:09:56,642 - WARNING -  * Debugger is active!
+2025-01-13 22:09:56,643 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:10:01,993 - INFO - 127.0.0.1 - - [13/Jan/2025 22:10:01] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:10:02,005 - INFO - 127.0.0.1 - - [13/Jan/2025 22:10:02] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:10:02,721 - INFO - 127.0.0.1 - - [13/Jan/2025 22:10:02] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:10:02,730 - INFO - 127.0.0.1 - - [13/Jan/2025 22:10:02] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:10:03,342 - INFO - 127.0.0.1 - - [13/Jan/2025 22:10:03] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:10:03,352 - INFO - 127.0.0.1 - - [13/Jan/2025 22:10:03] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:11:08,304 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:11:08,447 - INFO -  * Restarting with stat
+2025-01-13 22:11:09,288 - WARNING -  * Debugger is active!
+2025-01-13 22:11:09,291 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:11:11,172 - INFO - 127.0.0.1 - - [13/Jan/2025 22:11:11] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:11:11,182 - INFO - 127.0.0.1 - - [13/Jan/2025 22:11:11] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:11:13,894 - INFO - 127.0.0.1 - - [13/Jan/2025 22:11:13] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:11:13,909 - INFO - 127.0.0.1 - - [13/Jan/2025 22:11:13] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:11:16,481 - INFO - 127.0.0.1 - - [13/Jan/2025 22:11:16] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:11:16,498 - INFO - 127.0.0.1 - - [13/Jan/2025 22:11:16] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:12:12,912 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:12:13,081 - INFO -  * Restarting with stat
+2025-01-13 22:12:13,821 - WARNING -  * Debugger is active!
+2025-01-13 22:12:13,823 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:12:17,156 - INFO - 127.0.0.1 - - [13/Jan/2025 22:12:17] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:12:17,168 - INFO - 127.0.0.1 - - [13/Jan/2025 22:12:17] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:12:42,278 - INFO - 127.0.0.1 - - [13/Jan/2025 22:12:42] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:12:42,287 - INFO - 127.0.0.1 - - [13/Jan/2025 22:12:42] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:12:49,439 - INFO - 127.0.0.1 - - [13/Jan/2025 22:12:49] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:12:49,451 - INFO - 127.0.0.1 - - [13/Jan/2025 22:12:49] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:12:53,498 - INFO - 127.0.0.1 - - [13/Jan/2025 22:12:53] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:12:53,507 - INFO - 127.0.0.1 - - [13/Jan/2025 22:12:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:13:07,857 - INFO - 127.0.0.1 - - [13/Jan/2025 22:13:07] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:13:07,869 - INFO - 127.0.0.1 - - [13/Jan/2025 22:13:07] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:13:15,746 - INFO - 127.0.0.1 - - [13/Jan/2025 22:13:15] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:13:15,757 - INFO - 127.0.0.1 - - [13/Jan/2025 22:13:15] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:13:58,864 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:13:59,008 - INFO -  * Restarting with stat
+2025-01-13 22:13:59,850 - WARNING -  * Debugger is active!
+2025-01-13 22:13:59,852 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:14:04,763 - INFO - 127.0.0.1 - - [13/Jan/2025 22:14:04] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:14:04,775 - INFO - 127.0.0.1 - - [13/Jan/2025 22:14:04] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:14:06,677 - INFO - 127.0.0.1 - - [13/Jan/2025 22:14:06] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:14:06,687 - INFO - 127.0.0.1 - - [13/Jan/2025 22:14:06] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:14:35,575 - INFO - 127.0.0.1 - - [13/Jan/2025 22:14:35] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:14:35,583 - INFO - 127.0.0.1 - - [13/Jan/2025 22:14:35] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:16:40,414 - INFO -  * Detected change in '/home/fpoisson/Documents/GitHub/edxo-dev/routes/routes.py', reloading
+2025-01-13 22:16:40,590 - INFO -  * Restarting with stat
+2025-01-13 22:17:09,939 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-13 22:17:09,939 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-13 22:17:09,940 - INFO -  * Restarting with stat
+2025-01-13 22:17:10,782 - WARNING -  * Debugger is active!
+2025-01-13 22:17:10,784 - INFO -  * Debugger PIN: 134-907-754
+2025-01-13 22:17:11,263 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:11] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:17:11,275 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:11] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:17:14,926 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:14] "[32mPOST /edit_user/12 HTTP/1.1[0m" 302 -
+2025-01-13 22:17:14,940 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:14] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 22:17:14,955 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:14] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:17:19,432 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:19] "GET /edit_user/12 HTTP/1.1" 200 -
+2025-01-13 22:17:19,446 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:19] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:17:36,127 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:36] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:17:36,139 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:36] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:17:38,551 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:38] "[32mPOST /edit_user/9 HTTP/1.1[0m" 302 -
+2025-01-13 22:17:38,557 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:38] "GET /manage_users HTTP/1.1" 200 -
+2025-01-13 22:17:38,568 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:38] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:17:39,647 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:39] "GET /edit_user/9 HTTP/1.1" 200 -
+2025-01-13 22:17:39,660 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:39] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-13 22:17:47,178 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:47] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-13 22:17:47,195 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:47] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-13 22:17:47,206 - INFO - 127.0.0.1 - - [13/Jan/2025 22:17:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -

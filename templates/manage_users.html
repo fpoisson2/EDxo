@@ -41,7 +41,10 @@
                                 </span>
                             </td>
                             <td>
-                                <form method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
+                                <a href="{{ url_for('main.edit_user', user_id=user['id']) }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i> Modifier
+                                </a>
+                                <form method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
                                     {{ delete_forms[user['id']].csrf_token }}
                                     {{ delete_forms[user['id']].user_id(value=user['id']) }}
                                     <button type="submit" name="delete-submit-{{ user['id'] }}" class="btn btn-sm btn-outline-danger">
@@ -49,6 +52,7 @@
                                     </button>
                                 </form>
                             </td>
+
                         </tr>
                         {% endfor %}
                     </tbody>
