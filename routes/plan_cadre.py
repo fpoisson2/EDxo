@@ -48,7 +48,7 @@ from docxtpl import DocxTemplate
 from io import BytesIO 
 from werkzeug.security import generate_password_hash, check_password_hash
 from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_list, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template
-from models import User
+from models import User, PlanCadre
 
 class AIField(BaseModel):
     """Represents older PlanCadre fields (e.g. place_intro, objectif_terminal)."""
@@ -634,18 +634,30 @@ def generate_plan_cadre_content(plan_id):
 @plan_cadre_bp.route('/<int:plan_id>/export', methods=['GET'])
 @login_required
 def export_plan_cadre(plan_id):
+    # Récupérer le plan cadre avec le cours associé
+    plan_cadre = PlanCadre.query.get(plan_id)
+    
+    if not plan_cadre:
+        flash('Plan Cadre non trouvé', 'danger')
+        return redirect(url_for('main.index'))
+    
     # Générer le fichier DOCX à partir du modèle
     docx_file = generate_docx_with_template(plan_id)
     
     if not docx_file:
-        flash('Plan Cadre non trouvé', 'danger')
+        flash('Erreur lors de la génération du document', 'danger')
         return redirect(url_for('main.index'))
-
-    # Renommer le fichier pour le téléchargement
-    filename = f"Plan_Cadre_{plan_id}.docx"
+    
+    # Créer un nom de fichier sécurisé avec le code et le nom du cours
+    safe_course_name = plan_cadre.cours.nom.replace(' ', '_')
+    filename = f"Plan_Cadre_{plan_cadre.cours.code}_{safe_course_name}.docx"
     
     # Envoyer le fichier à l'utilisateur
-    return send_file(docx_file, as_attachment=True, download_name=filename, mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    return send_file(docx_file, 
+                    as_attachment=True, 
+                    download_name=filename,
+                    mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    
 
 @plan_cadre_bp.route('/<int:plan_id>/edit', methods=['GET', 'POST'])
 @role_required('admin')
