@@ -2,671 +2,643 @@
 
 {% block content %}
 <div class="container mt-5">
-
     <h1>Plan de cours</h1>
     <hr>
 
-    <!-- Informations Générales sur le Cours -->
-    <div class="card mb-4">
-        <div class="card-header bg-secondary text-white">
-            <h3 class="mb-0">Informations Générales sur le Cours</h3>
-        </div>
-        <div class="card-body">
-            <p><strong>Code du cours :</strong> {{ cours.code }}</p>
-            <p><strong>Nom du cours :</strong> {{ cours.nom }}</p>
-            <p><strong>Nombre d'unités :</strong> {{ cours.nombre_unites }}</p>
-            <!-- Champ "Session" retiré -->
-            <p><strong>Heures Théorie :</strong> {{ cours.heures_theorie }}</p>
-            <p><strong>Heures Laboratoire :</strong> {{ cours.heures_laboratoire }}</p>
-            <p><strong>Heures Travail Maison :</strong> {{ cours.heures_travail_maison }}</p>
-            <!-- Champ "Fil Conducteur" retiré -->
-
-            <!-- Ajout du Nom du Programme -->
-            <p><strong>Nom du programme :</strong> 
-                {% if cours.programme %}
-                    {{ cours.programme.nom }}
-                {% else %}
-                    Non défini
-                {% endif %}
-            </p>
-
-            <!-- Nom du Département -->
-            <p><strong>Nom du département :</strong> 
-                {% if departement %}
-                    {{ departement.nom }}
-                {% else %}
-                    Non défini
-                {% endif %}
-            </p>
-        </div>
-    </div>
-
-    <!-- Section PlanCadre en lecture seule -->
-    <div class="card mb-4">
-        <div class="card-header bg-light">
-            <h3 class="mb-0">Informations PlanCadre</h3>
-        </div>
-        <div class="card-body">
-
-            <p><strong>Place et rôle du cours dans le programme :</strong></p>
-            <div class="bg-light p-2 mb-3">
-                {{ plan_cadre.place_intro | safe }}
-            </div>
-
-            <hr>
-
-            <h5>Capacités (incluant savoirs, savoir-faire)</h5>
-            {% if plan_cadre.capacites %}
-                <ul class="list-group mb-3">
-                    {% for cap in plan_cadre.capacites %}
-                        <li class="list-group-item">
-                            <h5 class="mb-1">Capacité : {{ cap.capacite }}</h5>
-                            {% if cap.description_capacite %}
-                                <p class="mb-1">{{ cap.description_capacite }}</p>
-                            {% endif %}
-
-                            <p class="mb-1">
-                                <strong>Pondération min/max :</strong> {{ cap.ponderation_min }} / {{ cap.ponderation_max }}
-                            </p>
-
-                            {# Liste des savoirs nécessaires #}
-                            {% if cap.savoirs_necessaires %}
-                                <p><strong>Savoirs nécessaires :</strong></p>
-                                <ul>
-                                    {% for sn in cap.savoirs_necessaires %}
-                                        <li>{{ sn.texte }}</li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p>Aucun savoir nécessaire défini.</p>
-                            {% endif %}
-
-                            {# Liste des savoirs-faire #}
-                            {% if cap.savoirs_faire %}
-                                <p><strong>Savoir-faire :</strong></p>
-                                <ul>
-                                    {% for sf in cap.savoirs_faire %}
-                                        <li>
-                                            {{ sf.texte }}
-                                            {% if sf.cible %}  
-                                              &nbsp; — *Cible:* {{ sf.cible }}
-                                            {% endif %}
-                                            {% if sf.seuil_reussite %}
-                                              &nbsp; — *Seuil de réussite:* {{ sf.seuil_reussite }}
-                                            {% endif %}
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p>Aucun savoir-faire défini.</p>
-                            {% endif %}
-
-                            {# Moyens d'évaluation #}
-                            {% if cap.moyens_evaluation %}
-                                <p><strong>Moyens d'évaluation :</strong></p>
-                                <ul>
-                                    {% for me in cap.moyens_evaluation %}
-                                        <li>{{ me.texte }}</li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p>Aucun moyen d'évaluation défini.</p>
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Aucune capacité définie.</p>
-            {% endif %}
-
-            <hr>
-
-            <h5>Savoir-être</h5>
-            {% if plan_cadre.savoirs_etre %}
-                <ul class="list-group mb-3">
-                    {% for se in plan_cadre.savoirs_etre %}
-                        <li class="list-group-item">
-                            {{ se.texte }}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Aucun savoir-être.</p>
-            {% endif %}
-
-        </div>
-    </div>
-
-<!-- Section Règles Départementales -->
-<div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-        <h3 class="mb-0">Règles Départementales</h3>
-    </div>
-    <div class="card-body">
-        {% if regles_departementales %}
-            <ul class="list-group mb-3">
-                {% for regle in regles_departementales %}
-                    <li class="list-group-item">
-                        <div class="fw-bold mb-2">{{ regle.regle }}</div>
-                        <div>
-                            {{ regle.contenu|markdown|safe }}
-                        </div>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>Aucune règle départementale définie.</p>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Section Règles de PIEA -->
-<div class="card mb-4">
-    <div class="card-header bg-warning text-dark">
-        <h3 class="mb-0">Règles de PIEA</h3>
-    </div>
-    <div class="card-body">
-        {% if regles_piea %}
-            <ul class="list-group mb-3">
-                {% for piea in regles_piea %}
-                    <li class="list-group-item">
-                        <div class="fw-bold mb-2">{{ piea.article }}</div>
-                        <div>
-                            {{ piea.contenu|markdown|safe }}
-                        </div>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>Aucune règle de PIEA définie.</p>
-        {% endif %}
-    </div>
-</div>
-
-    <!-- Section PlanDeCours en mode édition -->
-    <div class="card">
-        <div class="card-header bg-info text-white">
-            <h3 class="mb-0">Édition du PlanDeCours</h3>
-        </div>
-        <div class="card-body">
-            <form method="POST" 
-                  action="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=cours.id) }}"
-                  id="planDeCoursForm">
-                {{ form.hidden_tag() }}
-
-                <!-- Champs Principaux -->
-                <h4>Informations Principales</h4>
-                <div class="mb-3">
-                    {{ form.campus.label(class="form-label fw-bold") }}
-                    {{ form.campus(class="form-control") }}
-                </div>
-
-                <div class="mb-3">
-                    {{ form.session.label(class="form-label fw-bold") }}
-                    {{ form.session(class="form-control") }}
-                </div>
-
-                <div class="mb-3">
-                    {{ form.presentation_du_cours.label(class="form-label fw-bold") }}
-                    {{ form.presentation_du_cours(class="form-control", rows="3") }}
-                </div>
-
-                <div class="mb-3">
-                    {{ form.objectif_terminal_du_cours.label(class="form-label fw-bold") }}
-                    {{ form.objectif_terminal_du_cours(class="form-control", rows="3") }}
-                </div>
-
-                <div class="mb-3">
-                    {{ form.organisation_et_methodes.label(class="form-label fw-bold") }}
-                    {{ form.organisation_et_methodes(class="form-control", rows="3") }}
-                </div>
-
-                <div class="mb-3">
-                    {{ form.accomodement.label(class="form-label fw-bold") }}
-                    {{ form.accomodement(class="form-control", rows="3") }}
-                </div>
-
-                <div class="mb-3">
-                    {{ form.evaluation_formative_apprentissages.label(class="form-label fw-bold") }}
-                    {{ form.evaluation_formative_apprentissages(class="form-control", rows="3") }}
-                </div>
-
-                <div class="mb-3">
-                    {{ form.evaluation_expression_francais.label(class="form-label fw-bold") }}
-                    {{ form.evaluation_expression_francais(class="form-control", rows="3") }}
-                </div>
-
-                <div class="mb-3">
-                    {{ form.seuil_reussite.label(class="form-label fw-bold") }}
-                    {{ form.seuil_reussite(class="form-control", rows="3") }}
-                </div>
-
-                <div class="mb-3">
-                    {{ form.materiel.label(class="form-label fw-bold") }}
-                    {{ form.materiel(class="form-control") }}
-                </div>
-
-                <hr>
-                <h4>Informations sur l'enseignant</h4>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            {{ form.nom_enseignant.label(class="form-label fw-bold") }}
-                            {{ form.nom_enseignant(class="form-control") }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.telephone_enseignant.label(class="form-label fw-bold") }}
-                            {{ form.telephone_enseignant(class="form-control") }}
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            {{ form.courriel_enseignant.label(class="form-label fw-bold") }}
-                            {{ form.courriel_enseignant(class="form-control") }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.bureau_enseignant.label(class="form-label fw-bold") }}
-                            {{ form.bureau_enseignant(class="form-control") }}
-                        </div>
-                    </div>
-                </div>
-
-<!-- Section Calendrier -->
-<div class="mb-3">
-    <h4>Calendrier des activités</h4>
-    <div id="calendrier-container" class="mb-3" {% if not form.calendriers %}style="display: none;"{% endif %}>
-        {% for subform in form.calendriers %}
-            <div class="calendar-item border p-2 mb-2">
-                <div class="row align-items-end">
-                    <div class="col">
-                        {{ subform.semaine.label(class="form-label") }}
-                        {{ subform.semaine(class="form-control") }}
-                    </div>
-                    <div class="col">
-                        {{ subform.sujet.label(class="form-label") }}
-                        {{ subform.sujet(class="form-control") }}
-                    </div>
-                    <div class="col">
-                        {{ subform.activites.label(class="form-label") }}
-                        {{ subform.activites(class="form-control") }}
-                    </div>
-                    <div class="col">
-                        {{ subform.travaux_hors_classe.label(class="form-label") }}
-                        {{ subform.travaux_hors_classe(class="form-control") }}
-                    </div>
-                    <div class="col">
-                        {{ subform.evaluations.label(class="form-label") }}
-                        {{ subform.evaluations(class="form-control") }}
-                    </div>
-                    <div class="col-auto">
-                        <button type="button" class="btn btn-danger btn-sm remove-calendar">
-                            <i class="bi bi-dash-circle"></i>
-                        </button>
-                    </div>
+    <div class="accordion" id="accordionPlanCours">
+        <!-- Accordéon : Informations Générales sur le Cours -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingInfoGen">
+                <button class="accordion-button collapsed bg-primary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInfoGen" aria-expanded="false" aria-controls="collapseInfoGen">
+                    Informations générales sur le cours
+                </button>
+            </h2>
+            <div id="collapseInfoGen" class="accordion-collapse collapse" aria-labelledby="headingInfoGen">
+                <div class="accordion-body">
+                    <p><strong>Code du cours :</strong> {{ cours.code }}</p>
+                    <p><strong>Nom du cours :</strong> {{ cours.nom }}</p>
+                    <p><strong>Nombre d'unités :</strong> {{ cours.nombre_unites | round(2) }}</p>
+                    <p><strong>Heures Théorie :</strong> {{ cours.heures_theorie }}</p>
+                    <p><strong>Heures Laboratoire :</strong> {{ cours.heures_laboratoire }}</p>
+                    <p><strong>Heures Travail Maison :</strong> {{ cours.heures_travail_maison }}</p>
+                    <p><strong>Nom du programme :</strong> 
+                        {% if cours.programme %}
+                            {{ cours.programme.nom }}
+                        {% else %}
+                            Non défini
+                        {% endif %}
+                    </p>
+                    <p><strong>Nom du département :</strong> 
+                        {% if departement %}
+                            {{ departement.nom }}
+                        {% else %}
+                            Non défini
+                        {% endif %}
+                    </p>
                 </div>
             </div>
-        {% endfor %}
-    </div>
-    <div class="d-flex justify-content-end">
-        <button type="button" class="btn btn-success btn-sm" id="add-calendrier" title="Ajouter">
-            <i class="bi bi-plus-circle"></i>
-        </button>
-    </div>
-</div>
+        </div>
 
-<!-- Section Médiagraphie -->
-<div class="mb-3">
-    <h4>Médiagraphie</h4>
-    <div id="mediagraphie-container" class="mb-3" {% if not form.mediagraphies %}style="display: none;"{% endif %}>
-        {% for subform in form.mediagraphies %}
-            <div class="mediagraphie-item mb-2">
-                <div class="row align-items-end">
-                    <div class="col">
-                        {{ subform.reference_bibliographique.label(class="form-label") }}
-                        {{ subform.reference_bibliographique(class="form-control") }}
+        <!-- Accordéon : Informations PlanCadre -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingPlanCadre">
+                <button class="accordion-button collapsed bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePlanCadre" aria-expanded="false" aria-controls="collapsePlanCadre">
+                    Capacités du cours
+                </button>
+            </h2>
+            <div id="collapsePlanCadre" class="accordion-collapse collapse" aria-labelledby="headingPlanCadre">
+                <div class="accordion-body">
+                    <p><strong>Place et rôle du cours dans le programme :</strong></p>
+                    <div class="bg-light p-2 mb-3">
+                        {{ plan_cadre.place_intro | safe }}
                     </div>
-                    <div class="col-auto">
-                        <button type="button" class="btn btn-danger btn-sm remove-mediagraphie">
-                            <i class="bi bi-dash-circle"></i>
-                        </button>
-                    </div>
+
+                    <hr>
+
+                    <h5>Capacités (incluant savoirs, savoir-faire)</h5>
+                    {% if plan_cadre.capacites %}
+                        <ul class="list-group mb-3">
+                            {% for cap in plan_cadre.capacites %}
+                                <li class="list-group-item">
+                                    <h5 class="mb-1">Capacité : {{ cap.capacite }}</h5>
+                                    {% if cap.description_capacite %}
+                                        <p class="mb-1">{{ cap.description_capacite }}</p>
+                                    {% endif %}
+                                    <p class="mb-1">
+                                        <strong>Pondération min/max :</strong> {{ cap.ponderation_min }} / {{ cap.ponderation_max }}
+                                    </p>
+                                    {% if cap.savoirs_necessaires %}
+                                        <p><strong>Savoirs nécessaires :</strong></p>
+                                        <ul>
+                                            {% for sn in cap.savoirs_necessaires %}
+                                                <li>{{ sn.texte }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p>Aucun savoir nécessaire défini.</p>
+                                    {% endif %}
+                                    {% if cap.savoirs_faire %}
+                                        <p><strong>Savoir-faire :</strong></p>
+                                        <ul>
+                                            {% for sf in cap.savoirs_faire %}
+                                                <li>
+                                                    {{ sf.texte }}
+                                                    {% if sf.cible %}  
+                                                      &nbsp; — <em>Cible:</em> {{ sf.cible }}
+                                                    {% endif %}
+                                                    {% if sf.seuil_reussite %}
+                                                      &nbsp; — <em>Seuil de réussite:</em> {{ sf.seuil_reussite }}
+                                                    {% endif %}
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p>Aucun savoir-faire défini.</p>
+                                    {% endif %}
+                                    {% if cap.moyens_evaluation %}
+                                        <p><strong>Moyens d'évaluation :</strong></p>
+                                        <ul>
+                                            {% for me in cap.moyens_evaluation %}
+                                                <li>{{ me.texte }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p>Aucun moyen d'évaluation défini.</p>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Aucune capacité définie.</p>
+                    {% endif %}
+
+                    <hr>
+
+                    <h5>Savoir-être</h5>
+                    {% if plan_cadre.savoirs_etre %}
+                        <ul class="list-group mb-3">
+                            {% for se in plan_cadre.savoirs_etre %}
+                                <li class="list-group-item">
+                                    {{ se.texte }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Aucun savoir-être.</p>
+                    {% endif %}
                 </div>
             </div>
-        {% endfor %}
-    </div>
-    <div class="d-flex justify-content-end">
-        <button type="button" class="btn btn-success btn-sm" id="add-mediagraphie" title="Ajouter">
-            <i class="bi bi-plus-circle"></i>
-        </button>
-    </div>
-</div>
+        </div>
 
-<!-- Section Disponibilités -->
-<div class="mb-3">
-    <h4>Disponibilités de l'enseignant</h4>
-    <div id="disponibilites-container" class="mb-3" {% if not form.disponibilites %}style="display: none;"{% endif %}>
-        {% for subform in form.disponibilites %}
-            <div class="disponibilite-item mb-2">
-                <div class="row align-items-end">
-                    <div class="col">
-                        {{ subform.jour_semaine.label(class="form-label") }}
-                        {{ subform.jour_semaine(class="form-control") }}
-                    </div>
-                    <div class="col">
-                        {{ subform.plage_horaire.label(class="form-label") }}
-                        {{ subform.plage_horaire(class="form-control") }}
-                    </div>
-                    <div class="col">
-                        {{ subform.lieu.label(class="form-label") }}
-                        {{ subform.lieu(class="form-control") }}
-                    </div>
-                    <div class="col-auto">
-                        <button type="button" class="btn btn-danger btn-sm remove-disponibilite">
-                            <i class="bi bi-dash-circle"></i>
-                        </button>
-                    </div>
+        <!-- Accordéon : Règles Départementales -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingReglesDept">
+                <button class="accordion-button collapsed bg-danger text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReglesDept" aria-expanded="false" aria-controls="collapseReglesDept">
+                    Règles départementales
+                </button>
+            </h2>
+            <div id="collapseReglesDept" class="accordion-collapse collapse" aria-labelledby="headingReglesDept">
+                <div class="accordion-body">
+                    {% if regles_departementales %}
+                        <ul class="list-group mb-3">
+                            {% for regle in regles_departementales %}
+                                <li class="list-group-item">
+                                    <div class="fw-bold mb-2">{{ regle.regle }}</div>
+                                    <div>{{ regle.contenu|markdown|safe }}</div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Aucune règle départementale définie.</p>
+                    {% endif %}
                 </div>
             </div>
-        {% endfor %}
-    </div>
-    <div class="d-flex justify-content-end">
-        <button type="button" class="btn btn-success btn-sm" id="add-disponibilite" title="Ajouter">
-            <i class="bi bi-plus-circle"></i>
-        </button>
-    </div>
-</div>
-<!-- Section Évaluations -->
-<div class="mb-3">
-    <h4>Évaluations</h4>
-    <div id="evaluations-container" class="mb-3" {% if not form.evaluations %}style="display: none;"{% endif %}>
-        {% for evaluation_subform in form.evaluations %}
-            <div class="card mb-3 evaluation-item" data-eval-index="{{ loop.index0 }}">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <strong>Évaluation {{ loop.index }}</strong>
-                    <button type="button" class="btn btn-danger btn-sm remove-evaluation" title="Supprimer l'évaluation">
-                        <i class="bi bi-dash-circle"></i>
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col">
-                            {{ evaluation_subform.titre_evaluation.label(class="form-label") }}
-                            {{ evaluation_subform.titre_evaluation(class="form-control") }}
-                        </div>
-                        <div class="col">
-                            {{ evaluation_subform.semaine.label(class="form-label") }}
-                            {{ evaluation_subform.semaine(class="form-control") }}
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        {{ evaluation_subform.texte_description.label(class="form-label") }}
-                        {{ evaluation_subform.texte_description(class="form-control") }}
-                    </div>
+        </div>
 
-                    <!-- Capacités évaluées -->
-                    <div class="capacites-section">
-                        <h5>Capacités évaluées</h5>
-                        <div class="capacites-container">
-                            {% for cap_subform in evaluation_subform.capacites %}
-                                <div class="capacite-item card bg-light mb-2 p-2">
-                                    <div class="row align-items-end">
-                                        <div class="col">
-                                            {{ cap_subform.capacite_id.label(class="form-label") }}
-                                            {{ cap_subform.capacite_id(class="form-control") }}
+        <!-- Accordéon : Règles de PIEA -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingReglesPIEA">
+                <button class="accordion-button collapsed bg-warning text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReglesPIEA" aria-expanded="false" aria-controls="collapseReglesPIEA">
+                    Règles de PIEA
+                </button>
+            </h2>
+            <div id="collapseReglesPIEA" class="accordion-collapse collapse" aria-labelledby="headingReglesPIEA">
+                <div class="accordion-body">
+                    {% if regles_piea %}
+                        <ul class="list-group mb-3">
+                            {% for piea in regles_piea %}
+                                <li class="list-group-item">
+                                    <div class="fw-bold mb-2">{{ piea.article }}</div>
+                                    <div>{{ piea.contenu|markdown|safe }}</div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Aucune règle de PIEA définie.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Accordéon : Édition du PlanDeCours -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingEdition">
+                <button class="accordion-button collapsed bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEdition" aria-expanded="false" aria-controls="collapseEdition">
+                    Contenu du cours
+                </button>
+            </h2>
+            <div id="collapseEdition" class="accordion-collapse collapse" aria-labelledby="headingEdition">
+                <div class="accordion-body">
+                    <form method="POST" action="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=cours.id) }}" id="planDeCoursForm">
+                        {{ form.hidden_tag() }}
+                        <!-- Informations Principales -->
+                        <h4>Informations Principales</h4>
+                        <div class="mb-3">
+                            {{ form.campus.label(class="form-label fw-bold") }}
+                            {{ form.campus(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.session.label(class="form-label fw-bold") }}
+                            {{ form.session(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.presentation_du_cours.label(class="form-label fw-bold") }}
+                            {{ form.presentation_du_cours(class="form-control", rows="3") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.objectif_terminal_du_cours.label(class="form-label fw-bold") }}
+                            {{ form.objectif_terminal_du_cours(class="form-control", rows="3") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.organisation_et_methodes.label(class="form-label fw-bold") }}
+                            {{ form.organisation_et_methodes(class="form-control", rows="3") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.accomodement.label(class="form-label fw-bold") }}
+                            {{ form.accomodement(class="form-control", rows="3") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.evaluation_formative_apprentissages.label(class="form-label fw-bold") }}
+                            {{ form.evaluation_formative_apprentissages(class="form-control", rows="3") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.evaluation_expression_francais.label(class="form-label fw-bold") }}
+                            {{ form.evaluation_expression_francais(class="form-control", rows="3") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.seuil_reussite.label(class="form-label fw-bold") }}
+                            {{ form.seuil_reussite(class="form-control", rows="3") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.materiel.label(class="form-label fw-bold") }}
+                            {{ form.materiel(class="form-control") }}
+                        </div>
+
+                        <hr>
+                        <h4>Informations sur l'enseignant</h4>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.nom_enseignant.label(class="form-label fw-bold") }}
+                                    {{ form.nom_enseignant(class="form-control") }}
+                                </div>
+                                <div class="mb-3">
+                                    {{ form.telephone_enseignant.label(class="form-label fw-bold") }}
+                                    {{ form.telephone_enseignant(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.courriel_enseignant.label(class="form-label fw-bold") }}
+                                    {{ form.courriel_enseignant(class="form-control") }}
+                                </div>
+                                <div class="mb-3">
+                                    {{ form.bureau_enseignant.label(class="form-label fw-bold") }}
+                                    {{ form.bureau_enseignant(class="form-control") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Calendrier -->
+                        <div class="mb-3">
+                            <h4>Calendrier des activités</h4>
+                            <div id="calendrier-container" class="mb-3" {% if not form.calendriers %}style="display: none;"{% endif %}>
+                                {% for subform in form.calendriers %}
+                                    <div class="calendar-item border p-2 mb-2 {% if loop.index0 is even %}bg-light{% else %}bg-secondary text-white{% endif %}">
+                                        <div class="row align-items-end">
+                                            <div class="col">
+                                                {{ subform.semaine.label(class="form-label") }}
+                                                {{ subform.semaine(class="form-control") }}
+                                            </div>
+                                            <div class="col">
+                                                {{ subform.sujet.label(class="form-label") }}
+                                                {{ subform.sujet(class="form-control") }}
+                                            </div>
+                                            <div class="col">
+                                                {{ subform.activites.label(class="form-label") }}
+                                                {{ subform.activites(class="form-control") }}
+                                            </div>
+                                            <div class="col">
+                                                {{ subform.travaux_hors_classe.label(class="form-label") }}
+                                                {{ subform.travaux_hors_classe(class="form-control") }}
+                                            </div>
+                                            <div class="col">
+                                                {{ subform.evaluations.label(class="form-label") }}
+                                                {{ subform.evaluations(class="form-control") }}
+                                            </div>
+                                            <div class="col-auto">
+                                                <button type="button" class="btn btn-danger btn-sm remove-calendar">
+                                                    <i class="bi bi-dash-circle"></i>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div class="col">
-                                            {{ cap_subform.ponderation.label(class="form-label") }}
-                                            {{ cap_subform.ponderation(class="form-control") }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-success btn-sm" id="add-calendrier" title="Ajouter">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+
+
+                        <!-- Médiagraphie -->
+                        <div class="mb-3">
+                            <h4>Médiagraphie</h4>
+                            <div id="mediagraphie-container" class="mb-3" {% if not form.mediagraphies %}style="display: none;"{% endif %}>
+                                {% for subform in form.mediagraphies %}
+                                    <div class="mediagraphie-item mb-2">
+                                        <div class="row align-items-end">
+                                            <div class="col">
+                                                {{ subform.reference_bibliographique.label(class="form-label") }}
+                                                {{ subform.reference_bibliographique(class="form-control") }}
+                                            </div>
+                                            <div class="col-auto">
+                                                <button type="button" class="btn btn-danger btn-sm remove-mediagraphie">
+                                                    <i class="bi bi-dash-circle"></i>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div class="col-auto">
-                                            <button type="button" class="btn btn-danger btn-sm remove-capacite" title="Supprimer la capacité">
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-success btn-sm" id="add-mediagraphie" title="Ajouter">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Disponibilités -->
+                        <div class="mb-3">
+                            <h4>Disponibilités de l'enseignant</h4>
+                            <div id="disponibilites-container" class="mb-3" {% if not form.disponibilites %}style="display: none;"{% endif %}>
+                                {% for subform in form.disponibilites %}
+                                    <div class="disponibilite-item mb-2">
+                                        <div class="row align-items-end">
+                                            <div class="col">
+                                                {{ subform.jour_semaine.label(class="form-label") }}
+                                                {{ subform.jour_semaine(class="form-control") }}
+                                            </div>
+                                            <div class="col">
+                                                {{ subform.plage_horaire.label(class="form-label") }}
+                                                {{ subform.plage_horaire(class="form-control") }}
+                                            </div>
+                                            <div class="col">
+                                                {{ subform.lieu.label(class="form-label") }}
+                                                {{ subform.lieu(class="form-control") }}
+                                            </div>
+                                            <div class="col-auto">
+                                                <button type="button" class="btn btn-danger btn-sm remove-disponibilite">
+                                                    <i class="bi bi-dash-circle"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-success btn-sm" id="add-disponibilite" title="Ajouter">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Évaluations -->
+                        <div class="mb-3">
+                            <h4>Évaluations</h4>
+                            <div id="evaluations-container" class="mb-3" {% if not form.evaluations %}style="display: none;"{% endif %}>
+                                {% for evaluation_subform in form.evaluations %}
+                                    <div class="card mb-3 evaluation-item {% if loop.index0 is even %}bg-light{% else %}bg-secondary text-white{% endif %}" data-eval-index="{{ loop.index0 }}">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <strong>Évaluation {{ loop.index }}</strong>
+                                            <button type="button" class="btn btn-danger btn-sm remove-evaluation" title="Supprimer l'évaluation">
                                                 <i class="bi bi-dash-circle"></i>
                                             </button>
                                         </div>
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col">
+                                                    {{ evaluation_subform.titre_evaluation.label(class="form-label") }}
+                                                    {{ evaluation_subform.titre_evaluation(class="form-control") }}
+                                                </div>
+                                                <div class="col">
+                                                    {{ evaluation_subform.semaine.label(class="form-label") }}
+                                                    {{ evaluation_subform.semaine(class="form-control") }}
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                {{ evaluation_subform.texte_description.label(class="form-label") }}
+                                                {{ evaluation_subform.texte_description(class="form-control") }}
+                                            </div>
+                                            <div class="capacites-section">
+                                                <h5>Capacités évaluées</h5>
+                                                <div class="capacites-container">
+                                                    {% for cap_subform in evaluation_subform.capacites %}
+                                                        <div class="capacite-item card bg-light mb-2 p-2">
+                                                            <div class="row align-items-end">
+                                                                <div class="col">
+                                                                    {{ cap_subform.capacite_id.label(class="form-label") }}
+                                                                    {{ cap_subform.capacite_id(class="form-control") }}
+                                                                </div>
+                                                                <div class="col">
+                                                                    {{ cap_subform.ponderation.label(class="form-label") }}
+                                                                    {{ cap_subform.ponderation(class="form-control") }}
+                                                                </div>
+                                                                <div class="col-auto">
+                                                                    <button type="button" class="btn btn-danger btn-sm remove-capacite" title="Supprimer la capacité">
+                                                                        <i class="bi bi-dash-circle"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                                <div class="d-flex justify-content-end mt-2">
+                                                    <button type="button" class="btn btn-success btn-sm add-capacite" title="Ajouter une capacité">
+                                                        <i class="bi bi-plus-circle"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            {% endfor %}
+                                {% endfor %}
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-success btn-sm" id="add-evaluation" title="Ajouter une évaluation">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="d-flex justify-content-end mt-2">
-                            <button type="button" class="btn btn-success btn-sm add-capacite" title="Ajouter une capacité">
-                                <i class="bi bi-plus-circle"></i>
+
+                        <button type="submit" id="floatingSaveBtn" class="btn d-none">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                        <button type="button" id="floatingCancelBtn" class="btn d-none">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        <div class="mt-4">
+                            <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" class="btn btn-success" role="button">
+                                Exporter le Plan de Cours en .docx
+                            </a>
+                        </div>
+                    </form>
+
+                    <!-- Modèles cachés pour clonage -->
+                    <div id="templates" style="display: none;">
+                        <!-- Template Calendrier -->
+                        <div id="calendrier-template" class="calendar-item border p-2 mb-2">
+                            <div class="row align-items-end">
+                                <div class="col">
+                                    <label class="form-label" for="calendriers-__index__-semaine">Semaine</label>
+                                    <input type="text" name="calendriers-__index__-semaine" class="form-control" id="calendriers-__index__-semaine" />
+                                </div>
+                                <div class="col">
+                                    <label class="form-label" for="calendriers-__index__-sujet">Sujet</label>
+                                    <input type="text" name="calendriers-__index__-sujet" class="form-control" id="calendriers-__index__-sujet" />
+                                </div>
+                                <div class="col">
+                                    <label class="form-label" for="calendriers-__index__-activites">Activités</label>
+                                    <input type="text" name="calendriers-__index__-activites" class="form-control" id="calendriers-__index__-activites" />
+                                </div>
+                                <div class="col">
+                                    <label class="form-label" for="calendriers-__index__-travaux_hors_classe">Travaux hors classe</label>
+                                    <input type="text" name="calendriers-__index__-travaux_hors_classe" class="form-control" id="calendriers-__index__-travaux_hors_classe" />
+                                </div>
+                                <div class="col">
+                                    <label class="form-label" for="calendriers-__index__-evaluations">Évaluations</label>
+                                    <input type="text" name="calendriers-__index__-evaluations" class="form-control" id="calendriers-__index__-evaluations" />
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-danger btn-sm remove-calendar">
+                                        <i class="bi bi-dash-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Template Médiagraphie -->
+                        <div id="mediagraphie-template" class="mediagraphie-item mb-2">
+                            <div class="row align-items-end">
+                                <div class="col">
+                                    <label class="form-label" for="mediagraphies-__index__-reference_bibliographique">Référence bibliographique</label>
+                                    <input type="text" name="mediagraphies-__index__-reference_bibliographique" class="form-control" id="mediagraphies-__index__-reference_bibliographique" />
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-danger btn-sm remove-mediagraphie">
+                                        <i class="bi bi-dash-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Template Disponibilité -->
+                        <div id="disponibilite-template" class="disponibilite-item mb-2">
+                            <div class="row align-items-end">
+                                <div class="col">
+                                    <label class="form-label" for="disponibilites-__index__-jour_semaine">Jour</label>
+                                    <input type="text" name="disponibilites-__index__-jour_semaine" class="form-control" id="disponibilites-__index__-jour_semaine" />
+                                </div>
+                                <div class="col">
+                                    <label class="form-label" for="disponibilites-__index__-plage_horaire">Plage horaire</label>
+                                    <input type="text" name="disponibilites-__index__-plage_horaire" class="form-control" id="disponibilites-__index__-plage_horaire" />
+                                </div>
+                                <div class="col">
+                                    <label class="form-label" for="disponibilites-__index__-lieu">Lieu</label>
+                                    <input type="text" name="disponibilites-__index__-lieu" class="form-control" id="disponibilites-__index__-lieu" />
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-danger btn-sm remove-disponibilite">
+                                        <i class="bi bi-dash-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Template Évaluation -->
+                        <div id="evaluation-template" class="evaluation-item border p-2 mb-2">
+                            <button type="button" class="btn btn-danger btn-sm float-end remove-evaluation">
+                                <i class="bi bi-dash-circle"></i>
                             </button>
+                            <div class="row mb-2">
+                                <div class="col">
+                                    <label class="form-label" for="evaluations-__index__-titre_evaluation">Titre</label>
+                                    <input type="text" name="evaluations-__index__-titre_evaluation" class="form-control" id="evaluations-__index__-titre_evaluation" />
+                                </div>
+                                <div class="col">
+                                    <label class="form-label" for="evaluations-__index__-semaine">Semaine</label>
+                                    <input type="text" name="evaluations-__index__-semaine" class="form-control" id="evaluations-__index__-semaine" />
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label" for="evaluations-__index__-texte_description">Description</label>
+                                <textarea name="evaluations-__index__-texte_description" class="form-control" id="evaluations-__index__-texte_description"></textarea>
+                            </div>
+                            <h5>Capacités évaluées</h5>
+                            <div class="capacites-container">
+                            </div>
+                            <div class="d-flex justify-content-end mb-2">
+                                <button type="button" class="btn btn-success btn-sm add-capacite">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Template Capacité Évaluée -->
+                        <div id="evaluation-capacite-template" class="capacite-item mb-2 border p-2">
+                            <div class="row align-items-end">
+                                <div class="col">
+                                    <label class="form-label" for="evaluations-__eval_index__-capacites-__cap_index__-capacite_id">Capacité</label>
+                                    <select class="form-control" name="evaluations-__eval_index__-capacites-__cap_index__-capacite_id" id="evaluations-__eval_index__-capacites-__cap_index__-capacite_id">
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label class="form-label" for="evaluations-__eval_index__-capacites-__cap_index__-ponderation">Pondération</label>
+                                    <input type="text" class="form-control" name="evaluations-__eval_index__-capacites-__cap_index__-ponderation" id="evaluations-__eval_index__-capacites-__cap_index__-ponderation">
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-danger btn-sm remove-capacite">
+                                        <i class="bi bi-dash-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-    <div class="d-flex justify-content-end">
-        <button type="button" class="btn btn-success btn-sm" id="add-evaluation" title="Ajouter une évaluation">
-            <i class="bi bi-plus-circle"></i>
-        </button>
-    </div>
-</div>
-
-
-<button type="submit" id="floatingSaveBtn" class="btn d-none">
-    <i class="bi bi-check-lg"></i>
-</button>
-<button type="button" id="floatingCancelBtn" class="btn d-none">
-    <i class="bi bi-x-lg"></i>
-</button>
-<!-- Bouton d'exportation du plan de cours en .docx -->
-<div class="mt-4">
-    <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" 
-       class="btn btn-success" role="button">
-        Exporter le Plan de Cours en .docx
-    </a>
-</div>
-            </form>
-        </div>
-    </div>
-
-<!-- Modèles cachés pour clonage -->
-    <div id="templates" style="display: none;">
-        <!-- Template Calendrier -->
-        <div id="calendrier-template" class="calendar-item border p-2 mb-2">
-            <div class="row align-items-end">
-                <div class="col">
-                    <label class="form-label" for="calendriers-__index__-semaine">Semaine</label>
-                    <input type="text" name="calendriers-__index__-semaine" class="form-control" id="calendriers-__index__-semaine" />
-                </div>
-                <div class="col">
-                    <label class="form-label" for="calendriers-__index__-sujet">Sujet</label>
-                    <input type="text" name="calendriers-__index__-sujet" class="form-control" id="calendriers-__index__-sujet" />
-                </div>
-                <div class="col">
-                    <label class="form-label" for="calendriers-__index__-activites">Activités</label>
-                    <input type="text" name="calendriers-__index__-activites" class="form-control" id="calendriers-__index__-activites" />
-                </div>
-                <div class="col">
-                    <label class="form-label" for="calendriers-__index__-travaux_hors_classe">Travaux hors classe</label>
-                    <input type="text" name="calendriers-__index__-travaux_hors_classe" class="form-control" id="calendriers-__index__-travaux_hors_classe" />
-                </div>
-                <div class="col">
-                    <label class="form-label" for="calendriers-__index__-evaluations">Évaluations</label>
-                    <input type="text" name="calendriers-__index__-evaluations" class="form-control" id="calendriers-__index__-evaluations" />
-                </div>
-                <div class="col-auto">
-                    <button type="button" class="btn btn-danger btn-sm remove-calendar">
-                        <i class="bi bi-dash-circle"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Template Médiagraphie -->
-        <div id="mediagraphie-template" class="mediagraphie-item mb-2">
-            <div class="row align-items-end">
-                <div class="col">
-                    <label class="form-label" for="mediagraphies-__index__-reference_bibliographique">Référence bibliographique</label>
-                    <input type="text" name="mediagraphies-__index__-reference_bibliographique" class="form-control" id="mediagraphies-__index__-reference_bibliographique" />
-                </div>
-                <div class="col-auto">
-                    <button type="button" class="btn btn-danger btn-sm remove-mediagraphie">
-                        <i class="bi bi-dash-circle"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Template Disponibilité -->
-        <div id="disponibilite-template" class="disponibilite-item mb-2">
-            <div class="row align-items-end">
-                <div class="col">
-                    <label class="form-label" for="disponibilites-__index__-jour_semaine">Jour</label>
-                    <input type="text" name="disponibilites-__index__-jour_semaine" class="form-control" id="disponibilites-__index__-jour_semaine" />
-                </div>
-                <div class="col">
-                    <label class="form-label" for="disponibilites-__index__-plage_horaire">Plage horaire</label>
-                    <input type="text" name="disponibilites-__index__-plage_horaire" class="form-control" id="disponibilites-__index__-plage_horaire" />
-                </div>
-                <div class="col">
-                    <label class="form-label" for="disponibilites-__index__-lieu">Lieu</label>
-                    <input type="text" name="disponibilites-__index__-lieu" class="form-control" id="disponibilites-__index__-lieu" />
-                </div>
-                <div class="col-auto">
-                    <button type="button" class="btn btn-danger btn-sm remove-disponibilite">
-                        <i class="bi bi-dash-circle"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Template Évaluation -->
-        <div id="evaluation-template" class="evaluation-item border p-2 mb-2">
-            <button type="button" class="btn btn-danger btn-sm float-end remove-evaluation">
-                <i class="bi bi-dash-circle"></i>
-            </button>
-            <div class="row mb-2">
-                <div class="col">
-                    <label class="form-label" for="evaluations-__index__-titre_evaluation">Titre</label>
-                    <input type="text" name="evaluations-__index__-titre_evaluation" class="form-control" id="evaluations-__index__-titre_evaluation" />
-                </div>
-                <div class="col">
-                    <label class="form-label" for="evaluations-__index__-semaine">Semaine</label>
-                    <input type="text" name="evaluations-__index__-semaine" class="form-control" id="evaluations-__index__-semaine" />
-                </div>
-            </div>
-            <div class="mb-2">
-                <label class="form-label" for="evaluations-__index__-texte_description">Description</label>
-                <textarea name="evaluations-__index__-texte_description" class="form-control" id="evaluations-__index__-texte_description"></textarea>
-            </div>
-            <h5>Capacités évaluées</h5>
-            <div class="capacites-container">
-                <!-- Capacités ajoutées dynamiquement ici -->
-            </div>
-            <div class="d-flex justify-content-end mb-2">
-                <button type="button" class="btn btn-success btn-sm add-capacite">
-                    <i class="bi bi-plus-circle"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Template Capacité Évaluée -->
-        <div id="evaluation-capacite-template" class="capacite-item mb-2 border p-2">
-            <div class="row align-items-end">
-                <div class="col">
-                    <label class="form-label" for="evaluations-__eval_index__-capacites-__cap_index__-capacite_id">Capacité</label>
-                    <select class="form-control" name="evaluations-__eval_index__-capacites-__cap_index__-capacite_id" id="evaluations-__eval_index__-capacites-__cap_index__-capacite_id">
-                        <!-- Les options seront copiées depuis #capacites-hidden -->
+                    <select id="capacites-hidden" style="display: none;">
+                        {% for cap in plan_cadre.capacites %}
+                            <option value="{{ cap.id }}">{{ cap.capacite }}</option>
+                        {% endfor %}
                     </select>
                 </div>
-                <div class="col">
-                    <label class="form-label" for="evaluations-__eval_index__-capacites-__cap_index__-ponderation">Pondération</label>
-                    <input type="text" class="form-control" name="evaluations-__eval_index__-capacites-__cap_index__-ponderation" id="evaluations-__eval_index__-capacites-__cap_index__-ponderation">
-                </div>
-                <div class="col-auto">
-                    <button type="button" class="btn btn-danger btn-sm remove-capacite">
-                        <i class="bi bi-dash-circle"></i>
-                    </button>
-                </div>
             </div>
         </div>
     </div>
-
-    <!-- Liste des Capacités pour les sélecteurs -->
-    <select id="capacites-hidden" style="display: none;">
-        {% for cap in plan_cadre.capacites %}
-            <option value="{{ cap.id }}">{{ cap.capacite }}</option>
-        {% endfor %}
-    </select>
-
 </div>
 {% endblock %}
 
 {% block scripts %}
 <style>
-.evaluation-item {
-    transition: all 0.3s ease;
-}
-
-.evaluation-item:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.remove-evaluation, .remove-capacite {
-    opacity: 0.8;
-}
-
-.remove-evaluation:hover, .remove-capacite:hover {
-    opacity: 1;
-}
-  #floatingSaveBtn, #floatingCancelBtn {
-      position: fixed;
-      bottom: 20px;
-      z-index: 1000;
-      width: 60px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  #floatingSaveBtn {
-      right: 20px;
-      background-color: #0d6efd;
-      color: white;
-  }
-  #floatingCancelBtn {
-      right: 90px;
-      background-color: #dc3545;
-      color: white;
-  }
-  #floatingSaveBtn .bi, #floatingCancelBtn .bi {
-      font-size: 1.5rem;
-  }
-  #floatingSaveBtn.d-none, #floatingCancelBtn.d-none {
-      display: none !important;
-  }
-  .spinner-border {
-      display: none;
-      width: 1.5rem;
-      height: 1.5rem;
-  }
-  #floatingSaveBtn.loading .bi {
-      display: none;
-  }
-  #floatingSaveBtn.loading .spinner-border {
-      display: inline-block;
-  }
+    .evaluation-item {
+        transition: all 0.3s ease;
+    }
+    .evaluation-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .remove-evaluation, .remove-capacite {
+        opacity: 0.8;
+    }
+    .remove-evaluation:hover, .remove-capacite:hover {
+        opacity: 1;
+    }
+    #floatingSaveBtn, #floatingCancelBtn {
+        position: fixed;
+        bottom: 20px;
+        z-index: 1000;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    #floatingSaveBtn {
+        right: 20px;
+        background-color: #0d6efd;
+        color: white;
+    }
+    #floatingCancelBtn {
+        right: 90px;
+        background-color: #dc3545;
+        color: white;
+    }
+    #floatingSaveBtn .bi, #floatingCancelBtn .bi {
+        font-size: 1.5rem;
+    }
+    #floatingSaveBtn.d-none, #floatingCancelBtn.d-none {
+        display: none !important;
+    }
+    .spinner-border {
+        display: none;
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+    #floatingSaveBtn.loading .bi {
+        display: none;
+    }
+    #floatingSaveBtn.loading .spinner-border {
+        display: inline-block;
+    }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Récupération des éléments
     const planDeCoursForm = document.getElementById('planDeCoursForm');
     const floatingSaveBtn = document.getElementById('floatingSaveBtn');
     const floatingCancelBtn = document.getElementById('floatingCancelBtn');
 
-    // Indices pour les listes dynamiques
     let calendrierIndex = document.querySelectorAll('.calendar-item').length;
     let mediagraphieIndex = document.querySelectorAll('.mediagraphie-item').length;
     let disponibiliteIndex = document.querySelectorAll('.disponibilite-item').length;
     let evaluationIndex = document.querySelectorAll('.evaluation-item').length;
 
-    // Fonction pour afficher les boutons flottants
     function showFloatingButtons() {
         if (floatingSaveBtn && floatingCancelBtn) {
             floatingSaveBtn.classList.remove('d-none');
@@ -674,25 +646,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Gestion des modifications du formulaire
     if (planDeCoursForm) {
         planDeCoursForm.addEventListener('input', showFloatingButtons);
         planDeCoursForm.addEventListener('change', showFloatingButtons);
     }
 
-    // Gestion de la sauvegarde asynchrone
     if (floatingSaveBtn && planDeCoursForm) {
         floatingSaveBtn.addEventListener('click', async function(e) {
             e.preventDefault();
-            
-            // Ajouter la classe loading et désactiver le bouton
             floatingSaveBtn.classList.add('loading');
             floatingSaveBtn.disabled = true;
-            
             try {
                 const formData = new FormData(planDeCoursForm);
                 const url = planDeCoursForm.getAttribute('action');
-                
                 const response = await fetch(url, {
                     method: 'POST',
                     body: formData,
@@ -700,15 +666,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
-                
                 const result = await response.json();
-                
                 if (result.success) {
-                    // Masquer les boutons flottants
                     floatingSaveBtn.classList.add('d-none');
                     floatingCancelBtn.classList.add('d-none');
-                    
-                    // Afficher le toast de succès
                     const toast = new bootstrap.Toast(document.getElementById('saveSuccessToast'));
                     toast.show();
                 } else {
@@ -716,68 +677,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 console.error('Erreur:', error);
-                // Afficher le toast d'erreur
                 const errorToast = new bootstrap.Toast(document.getElementById('saveErrorToast'));
                 errorToast.show();
             } finally {
-                // Retirer la classe loading et réactiver le bouton
                 floatingSaveBtn.classList.remove('loading');
                 floatingSaveBtn.disabled = false;
             }
         });
     }
 
-// Gestion du clic sur le bouton "Annuler"
-if (floatingCancelBtn) {
-    floatingCancelBtn.addEventListener('click', async function() {
-        if (confirm('Êtes-vous sûr de vouloir annuler les modifications ?')) {
-            try {
-                // Recharger la page actuelle pour restaurer l'état initial
-                const currentUrl = window.location.href;
-                const response = await fetch(currentUrl);
-                const html = await response.text();
-                
-                // Créer un DOM temporaire pour extraire le contenu
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                
-                // Restaurer chaque conteneur
-                ['calendrier-container', 'mediagraphie-container', 'disponibilites-container', 'evaluations-container'].forEach(containerId => {
-                    const container = document.getElementById(containerId);
-                    const newContent = doc.getElementById(containerId);
-                    if (container && newContent) {
-                        container.innerHTML = newContent.innerHTML;
-                        if (newContent.children.length > 0) {
-                            container.style.display = 'block';
-                        } else {
-                            container.style.display = 'none';
+    if (floatingCancelBtn) {
+        floatingCancelBtn.addEventListener('click', async function() {
+            if (confirm('Êtes-vous sûr de vouloir annuler les modifications ?')) {
+                try {
+                    const currentUrl = window.location.href;
+                    const response = await fetch(currentUrl);
+                    const html = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    ['calendrier-container', 'mediagraphie-container', 'disponibilites-container', 'evaluations-container'].forEach(containerId => {
+                        const container = document.getElementById(containerId);
+                        const newContent = doc.getElementById(containerId);
+                        if (container && newContent) {
+                            container.innerHTML = newContent.innerHTML;
+                            container.style.display = newContent.children.length > 0 ? 'block' : 'none';
                         }
-                    }
-                });
-
-                // Restaurer les autres champs du formulaire
-                planDeCoursForm?.reset();
-                
-                // Réinitialiser les indices
-                calendrierIndex = document.querySelectorAll('.calendar-item').length;
-                mediagraphieIndex = document.querySelectorAll('.mediagraphie-item').length;
-                disponibiliteIndex = document.querySelectorAll('.disponibilite-item').length;
-                evaluationIndex = document.querySelectorAll('.evaluation-item').length;
-
-                // Masquer les boutons flottants
-                floatingSaveBtn?.classList.add('d-none');
-                floatingCancelBtn?.classList.add('d-none');
-
-            } catch (error) {
-                console.error('Erreur lors de la restauration:', error);
-                // En cas d'erreur, recharger simplement la page
-                window.location.reload();
+                    });
+                    planDeCoursForm?.reset();
+                    calendrierIndex = document.querySelectorAll('.calendar-item').length;
+                    mediagraphieIndex = document.querySelectorAll('.mediagraphie-item').length;
+                    disponibiliteIndex = document.querySelectorAll('.disponibilite-item').length;
+                    evaluationIndex = document.querySelectorAll('.evaluation-item').length;
+                    floatingSaveBtn?.classList.add('d-none');
+                    floatingCancelBtn?.classList.add('d-none');
+                } catch (error) {
+                    console.error('Erreur lors de la restauration:', error);
+                    window.location.reload();
+                }
             }
-        }
-    });
-}
+        });
+    }
 
-    // Fonction pour réindexer les évaluations
     function reindexEvaluations() {
         const evaluations = document.querySelectorAll('.evaluation-item');
         evaluations.forEach((evaluation, evalIndex) => {
@@ -796,22 +736,15 @@ if (floatingCancelBtn) {
         });
     }
 
-// Gestion de la suppression
     document.addEventListener('click', function(e) {
-        // Trouver le bouton, que ce soit le bouton lui-même ou l'icône qui a été cliquée
         const button = e.target.closest('.remove-calendar, .remove-mediagraphie, .remove-disponibilite, .remove-evaluation, .remove-capacite');
-        
         if (button) {
-            // Trouver l'élément parent à supprimer
             const parentDiv = button.closest('.calendar-item, .mediagraphie-item, .disponibilite-item, .evaluation-item, .capacite-item');
             if (parentDiv) {
                 parentDiv.remove();
-                
-                // Gestion spéciale pour les évaluations
                 if (parentDiv.classList.contains('evaluation-item')) {
                     reindexEvaluations();
                 }
-                // Gestion spéciale pour les capacités
                 if (parentDiv.classList.contains('capacite-item')) {
                     const evaluationItem = parentDiv.closest('.evaluation-item');
                     if (evaluationItem) {
@@ -825,8 +758,6 @@ if (floatingCancelBtn) {
                         });
                     }
                 }
-
-                // Vérifier si le conteneur doit être masqué
                 const container = parentDiv.parentElement;
                 if (container && container.children.length === 0) {
                     container.style.display = 'none';
@@ -836,106 +767,83 @@ if (floatingCancelBtn) {
         }
     });
 
-    // Ajout de calendrier
     document.getElementById('add-calendrier')?.addEventListener('click', function() {
         const container = document.getElementById('calendrier-container');
         container.style.display = 'block';
         const newItem = document.createElement('div');
         newItem.className = 'calendar-item border p-2 mb-2';
-        newItem.innerHTML = document.getElementById('calendrier-template')
-            .innerHTML.replace(/__index__/g, calendrierIndex++);
+        newItem.innerHTML = document.getElementById('calendrier-template').innerHTML.replace(/__index__/g, calendrierIndex++);
         container.appendChild(newItem);
         showFloatingButtons();
     });
 
-    // Ajout de médiagraphie
     document.getElementById('add-mediagraphie')?.addEventListener('click', function() {
         const container = document.getElementById('mediagraphie-container');
         container.style.display = 'block';
         const newItem = document.createElement('div');
         newItem.className = 'mediagraphie-item mb-2';
-        newItem.innerHTML = document.getElementById('mediagraphie-template')
-            .innerHTML.replace(/__index__/g, mediagraphieIndex++);
+        newItem.innerHTML = document.getElementById('mediagraphie-template').innerHTML.replace(/__index__/g, mediagraphieIndex++);
         container.appendChild(newItem);
         showFloatingButtons();
     });
 
-    // Ajout de disponibilité
     document.getElementById('add-disponibilite')?.addEventListener('click', function() {
         const container = document.getElementById('disponibilites-container');
         container.style.display = 'block';
         const newItem = document.createElement('div');
         newItem.className = 'disponibilite-item row g-2 mb-2';
-        newItem.innerHTML = document.getElementById('disponibilite-template')
-            .innerHTML.replace(/__index__/g, disponibiliteIndex++);
+        newItem.innerHTML = document.getElementById('disponibilite-template').innerHTML.replace(/__index__/g, disponibiliteIndex++);
         container.appendChild(newItem);
         showFloatingButtons();
     });
 
-    // Ajout d'évaluation
     document.getElementById('add-evaluation')?.addEventListener('click', function() {
         const container = document.getElementById('evaluations-container');
         container.style.display = 'block';
         const newItem = document.createElement('div');
         newItem.className = 'evaluation-item border p-2 mb-2';
-        newItem.innerHTML = document.getElementById('evaluation-template')
-            .innerHTML.replace(/__index__/g, evaluationIndex++);
+        newItem.innerHTML = document.getElementById('evaluation-template').innerHTML.replace(/__index__/g, evaluationIndex++);
         container.appendChild(newItem);
         reindexEvaluations();
         showFloatingButtons();
     });
 
-    // Gestion de l'ajout des capacités
     document.addEventListener('click', function(e) {
-        // Trouver le bouton, que ce soit le bouton lui-même ou l'icône qui a été cliquée
         const button = e.target.closest('.add-capacite');
-        
         if (button) {
             const evaluationItem = button.closest('.evaluation-item');
             if (!evaluationItem) return;
-
             let evalIndex = evaluationItem.getAttribute('data-eval-index');
             if (evalIndex === null) {
                 evalIndex = evaluationIndex++;
                 evaluationItem.setAttribute('data-eval-index', evalIndex);
                 reindexEvaluations();
             }
-
             const capacitesContainer = evaluationItem.querySelector('.capacites-container');
             if (!capacitesContainer) return;
-
             let capIndex = capacitesContainer.querySelectorAll('.capacite-item').length;
-
             const newCap = document.createElement('div');
             newCap.className = 'capacite-item mb-2 border p-2';
-            newCap.innerHTML = document.getElementById('evaluation-capacite-template')
-                .innerHTML
-                .replace(/__eval_index__/g, evalIndex)
-                .replace(/__cap_index__/g, capIndex);
-
+            newCap.innerHTML = document.getElementById('evaluation-capacite-template').innerHTML.replace(/__eval_index__/g, evalIndex).replace(/__cap_index__/g, capIndex);
             const hiddenSelect = document.getElementById('capacites-hidden');
             const newSelect = newCap.querySelector('select');
             if (hiddenSelect && newSelect) {
                 newSelect.innerHTML = hiddenSelect.innerHTML;
             }
-
             capacitesContainer.appendChild(newCap);
             showFloatingButtons();
         }
     });
 
-    // Initialisation des conteneurs vides
-    ['calendrier-container', 'mediagraphie-container', 'disponibilites-container', 'evaluations-container']
-        .forEach(function(id) {
-            const container = document.getElementById(id);
-            if (container && container.children.length === 0) {
-                container.style.display = 'none';
-            }
-        });
+    ['calendrier-container', 'mediagraphie-container', 'disponibilites-container', 'evaluations-container'].forEach(function(id) {
+        const container = document.getElementById(id);
+        if (container && container.children.length === 0) {
+            container.style.display = 'none';
+        }
+    });
 });
 </script>
 
-<!-- Toast notifications -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3">
     <div id="saveSuccessToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
@@ -945,7 +853,6 @@ if (floatingCancelBtn) {
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     </div>
-    
     <div id="saveErrorToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
             <div class="toast-body">
