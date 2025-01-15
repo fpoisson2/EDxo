@@ -1,0 +1,469 @@
+{
+  "courses": [
+    {
+      "code": "243-115-LI",
+      "titre": "Introduction à la profession",
+      "compétences": [
+        {
+          "code": "02H8",
+          "description": "Explorer la profession",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HG",
+          "description": "Réaliser des travaux d’atelier",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HP",
+          "description": "Produire des documents techniques",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-136-LI",
+      "titre": "Développement de produits 1 : introduction",
+      "compétences": [
+        {
+          "code": "02HD",
+          "description": "Produire des schémas électroniques",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-156-LI",
+      "titre": "Programmation 1 : introduction",
+      "compétences": [
+        {
+          "code": "02HJ",
+          "description": "Programmer des éléments programmables",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-176-LI",
+      "titre": "Électronique 1: composants et circuits de base",
+      "compétences": [
+        {
+          "code": "02HA",
+          "description": "Résoudre des problèmes en électronique",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HB",
+          "description": "Analyser des informations techniques",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HF",
+          "description": "Réaliser des prises de mesures",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-214-LI",
+      "titre": "Réalisation de projets électroniques programmables",
+      "compétences": [
+        {
+          "code": "02HG",
+          "description": "Réaliser des travaux d’atelier",
+          "statut": "Atteint"
+        }
+      ]
+    },
+    {
+      "code": "243-236-LI",
+      "titre": "Développement de produits 2: dessin et prototypes",
+      "compétences": [
+        {
+          "code": "02HD",
+          "description": "Produire des schémas électroniques",
+          "statut": "Atteint"
+        },
+        {
+          "code": "02HH",
+          "description": "Assurer la fabrication de circuits imprimés",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-256-LI",
+      "titre": "Programmation 2: outils et microcontrôleurs",
+      "compétences": [
+        {
+          "code": "02HB",
+          "description": "Analyser des informations techniques",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HJ",
+          "description": "Programmer des éléments programmables",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-276-LI",
+      "titre": "Électronique 2: circuits numériques",
+      "compétences": [
+        {
+          "code": "02HA",
+          "description": "Résoudre des problèmes en électronique",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HB",
+          "description": "Analyser des informations techniques",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HC",
+          "description": "Analyser des circuits",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HF",
+          "description": "Réaliser des prises de mesures",
+          "statut": "Atteint"
+        }
+      ]
+    },
+    {
+      "code": "243-315-LI",
+      "titre": "Introduction aux systèmes d’exploitation",
+      "compétences": [
+        {
+          "code": "02HL",
+          "description": "Exploiter des systèmes d’exploitation",
+          "statut": "Atteint"
+        }
+      ]
+    },
+    {
+      "code": "243-336-LI",
+      "titre": "Développement de produits 3: dessin et assemblages",
+      "compétences": [
+        {
+          "code": "02HH",
+          "description": "Assurer la fabrication de circuits imprimés",
+          "statut": "Atteint"
+        },
+        {
+          "code": "02HQ",
+          "description": "Effectuer un diagnostic",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-356-LI",
+      "titre": "Programmation 3: microcontrôleurs et périphériques",
+      "compétences": [
+        {
+          "code": "02HB",
+          "description": "Analyser des informations techniques",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HJ",
+          "description": "Programmer des éléments programmables",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HK",
+          "description": "Établir des communications avec un élément programmable",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-376-LI",
+      "titre": "Électronique 3: circuits analogiques",
+      "compétences": [
+        {
+          "code": "02HA",
+          "description": "Résoudre des problèmes en électronique",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HB",
+          "description": "Analyser des informations techniques",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HC",
+          "description": "Analyser des circuits",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-436-LI",
+      "titre": "Développement de produits 4 : dessin et certifications",
+      "compétences": [
+        {
+          "code": "02HR",
+          "description": "Réaliser des tests",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HW",
+          "description": "Contrôler la qualité d’équipements et/ou de systèmes",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-456-LI",
+      "titre": "Programmation 4 : objets et systèmes",
+      "compétences": [
+        {
+          "code": "02HJ",
+          "description": "Programmer des éléments programmables",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HK",
+          "description": "Établir des communications avec un élément programmable",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HM",
+          "description": "Exploiter des objets connectés en réseau",
+          "statut": "Atteint"
+        }
+      ]
+    },
+    {
+      "code": "243-476-LI",
+      "titre": "Électronique 4 : circuits spécialisés",
+      "compétences": [
+        {
+          "code": "02HA",
+          "description": "Résoudre des problèmes en électronique",
+          "statut": "Atteint"
+        },
+        {
+          "code": "02HB",
+          "description": "Analyser des informations techniques",
+          "statut": "Atteint"
+        },
+        {
+          "code": "02HC",
+          "description": "Analyser des circuits",
+          "statut": "Atteint"
+        }
+      ]
+    },
+    {
+      "code": "235-010-LI",
+      "titre": "Gestion d’activités en milieu de travail",
+      "compétences": [
+        {
+          "code": "02HE",
+          "description": "Planifier la réalisation des tâches professionnelles",
+          "statut": "Atteint"
+        },
+        {
+          "code": "02HP",
+          "description": "Produire des documents techniques",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HY",
+          "description": "Contribuer au changement technologique",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-538-LI",
+      "titre": "Fabrication de systèmes et tests",
+      "compétences": [
+        {
+          "code": "02HQ",
+          "description": "Effectuer un diagnostic",
+          "statut": "Atteint"
+        },
+        {
+          "code": "02HR",
+          "description": "Réaliser des tests",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HX",
+          "description": "Assurer le soutien technique",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-557-LI",
+      "titre": "Programmation de systèmes et tests",
+      "compétences": [
+        {
+          "code": "02HK",
+          "description": "Établir des communications avec un élément programmable",
+          "statut": "Atteint"
+        },
+        {
+          "code": "02HU",
+          "description": "Participer au développement de la partie logicielle",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-577-LI",
+      "titre": "Conception de systèmes et tests",
+      "compétences": [
+        {
+          "code": "02HC",
+          "description": "Analyser des circuits",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HN",
+          "description": "Exploiter des capteurs et des actionneurs",
+          "statut": "Atteint"
+        },
+        {
+          "code": "02HT",
+          "description": "Participer au développement d’un prototype",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HY",
+          "description": "Contribuer au changement technologique",
+          "statut": "Atteint"
+        }
+      ]
+    },
+    {
+      "code": "350-021-LI",
+      "titre": "Psychologie du travail en électronique programmable",
+      "compétences": [
+        {
+          "code": "02H9",
+          "description": "Interagir en contexte professionnel",
+          "statut": "Atteint"
+        },
+        {
+          "code": "02HX",
+          "description": "Assurer le soutien technique",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-614-LI",
+      "titre": "Développement d’un projet d’inspiration",
+      "compétences": [
+        {
+          "code": "02HP",
+          "description": "Produire des documents techniques",
+          "statut": "Atteint"
+        },
+        {
+          "code": "02HT",
+          "description": "Participer au développement d’un prototype",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HY",
+          "description": "Contribuer au changement technologique",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-637-LI",
+      "titre": "Fabrication d’un projet d’inspiration",
+      "compétences": [
+        {
+          "code": "02HR",
+          "description": "Réaliser des tests",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HS",
+          "description": "Élaborer une preuve de concept",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HW",
+          "description": "Contrôler la qualité d’équipements et/ou de systèmes",
+          "statut": "Atteint"
+        }
+      ]
+    },
+    {
+      "code": "243-656-LI",
+      "titre": "Programmation d’un projet d’inspiration",
+      "compétences": [
+        {
+          "code": "02HU",
+          "description": "Participer au développement de la partie logicielle",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HV",
+          "description": "Intégrer les parties d’un système programmable",
+          "statut": "Développé significativement"
+        }
+      ]
+    },
+    {
+      "code": "243-675-LI",
+      "titre": "Fabrication d’un projet dirigé (ASP)",
+      "compétences": [
+        {
+          "code": "02HR",
+          "description": "Réaliser des tests",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HT",
+          "description": "Participer au développement d’un prototype",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HW",
+          "description": "Contrôler la qualité d’équipements et/ou de systèmes",
+          "statut": "Développé significativement"
+        },
+        {
+          "code": "02HX",
+          "description": "Assurer le soutien technique",
+          "statut": "Atteint"
+        }
+      ]
+    },
+    {
+      "code": "243-695-LI",
+      "titre": "Programmation d’un projet dirigé (ASP)",
+      "compétences": [
+        {
+          "code": "02HS",
+          "description": "Élaborer une preuve de concept",
+          "statut": "Atteint"
+        },
+        {
+          "code": "02HU",
+          "description": "Participer au développement de la partie logicielle",
+          "statut": "Atteint"
+        },
+        {
+          "code": "02HV",
+          "description": "Intégrer les parties d’un système programmable",
+          "statut": "Atteint"
+        }
+      ]
+    }
+  ]
+}
