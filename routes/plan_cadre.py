@@ -106,7 +106,7 @@ plan_cadre_bp = Blueprint('plan_cadre', __name__, url_prefix='/plan_cadre')
 
 
 @plan_cadre_bp.route('/<int:plan_id>/generate_content', methods=['POST'])
-@role_required('admin')
+@roles_required('admin', 'coordo')
 def generate_plan_cadre_content(plan_id):
     """
     Gère la génération du contenu d’un plan-cadre via GPT.
@@ -660,7 +660,7 @@ def export_plan_cadre(plan_id):
     
 
 @plan_cadre_bp.route('/<int:plan_id>/edit', methods=['GET', 'POST'])
-@role_required('admin')
+@roles_required('admin', 'coordo')
 def edit_plan_cadre(plan_id):
     form = PlanCadreForm()
     conn = get_db_connection()
