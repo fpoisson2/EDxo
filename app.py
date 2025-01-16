@@ -6,6 +6,7 @@ import os
 from utils import get_db_connection
 from auth import login_manager
 from routes.cours import cours_bp
+from routes.chat import chat
 from routes.programme import programme_bp
 from routes import routes
 from routes.settings import settings_bp
@@ -117,6 +118,7 @@ app.register_blueprint(cours_bp)
 app.register_blueprint(programme_bp)
 app.register_blueprint(plan_cadre_bp)
 app.register_blueprint(plan_de_cours_bp)
+app.register_blueprint(chat)
 
 # Register the checkpoint function to be called on exit
 atexit.register(checkpoint_wal)

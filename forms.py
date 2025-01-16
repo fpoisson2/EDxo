@@ -21,6 +21,11 @@ from wtforms.widgets import ListWidget, CheckboxInput
 from flask_ckeditor import CKEditorField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
+
+class ChatForm(FlaskForm):
+    message = StringField('Message', validators=[DataRequired()])
+    submit = SubmitField('Envoyer')
+    
 # Exemple de widget pour le champ multi-select sous forme de cases à cocher
 class MultiCheckboxField(SelectMultipleField):
     widget = ListWidget(prefix_label=False)

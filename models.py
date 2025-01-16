@@ -153,6 +153,45 @@ class PlanCadre(db.Model):
     def __repr__(self):
         return f"<PlanCadre id={self.id} pour Cours id={self.cours_id}>"
 
+    @classmethod
+    def get_by_cours_info(cls, nom=None, code=None):
+        """Récupère un plan-cadre à partir du nom ou du code du cours."""
+        print(f"[DEBUG] get_by_cours_info appelé avec: nom={nom}, code={code}")
+        
+        if not nom and not code:
+            print("[DEBUG] Aucun critère de recherche fourni")
+            return None
+
+        try:
+            print("[DEBUG] Construction de la requête")
+            query = db.session.query(cls).join(Cours)
+            
+            conditions = []
+            print("[DEBUG] Ajout des conditions de filtrage")
+            if nom:
+                print(f"[DEBUG] Ajout condition nom: {nom}")
+                conditions.append(Cours.nom.ilike(f"%{nom}%"))
+            if code:
+                print(f"[DEBUG] Ajout condition code: {code}")
+                conditions.append(Cours.code.ilike(f"%{code}%"))
+
+            query = query.filter(db.or_(*conditions))
+            print(f"[DEBUG] Requête finale: {str(query)}")
+            
+            result = query.first()
+            print(f"[DEBUG] Résultat de la requête: {result}")
+            
+            return result
+
+        except Exception as e:
+            print(f"[DEBUG] Erreur dans get_by_cours_info: {str(e)}")
+            print(f"[DEBUG] Type d'erreur: {type(e)}")
+            import traceback
+            print("[DEBUG] Traceback:")
+            traceback.print_exc()
+            return None
+
+
 class PlanCadreCapacites(db.Model):
     __tablename__ = "PlanCadreCapacites"
     id = db.Column(db.Integer, primary_key=True)

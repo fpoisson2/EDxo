@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block head %}
+<!-- Include marked.js for Markdown rendering -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<!-- Include highlight.js for code syntax highlighting -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<style>
+.chat-message {
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    max-width: 85%;
+}
+
+.user-message {
+    background-color: #e9ecef;
+    margin-left: auto;
+}
+
+.ai-message {
+    background-color: #f8f9fa;
+    margin-right: auto;
+}
+
+.system-message {
+    background-color: #fff3cd;
+    color: #856404;
+    margin: 8px auto;
+    text-align: center;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+#chat-messages {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+}
+
+.message-content {
+    margin-top: 4px;
+}
+
+.message-content h1,
+.message-content h2,
+.message-content h3 {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.message-content p {
+    margin-bottom: 0.5em;
+}
+
+.message-content ul,
+.message-content ol {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    padding-left: 1.5em;
+}
+
+.message-content code {
+    background-color: #f6f8fa;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+}
+
+.message-content pre {
+    background-color: #f6f8fa;
+    padding: 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 8px 0;
+}
+
+.message-content pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.message-sender {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Chat</h5>
+            </div>
+            <div class="card-body">
+                <div id="chat-messages" class="mb-3" style="flex-grow: 1; overflow-y: auto;">
+                    <!-- Messages will appear here -->
+                </div>
+                <form id="chat-form" class="d-flex gap-2">
+                    {{ form.csrf_token }}
+                    {{ form.message(class="form-control", placeholder="Tapez votre message...", id="message-input") }}
+                    {{ form.submit(class="btn btn-primary") }}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+marked.setOptions({
+    breaks: true,
+    gfm: true,
+    headerIds: false,
+    highlight: function(code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+            try {
+                return hljs.highlight(code, { language: lang }).value;
+            } catch (err) {}
+        }
+        return hljs.highlightAuto(code).value;
+    }
+});
+
+document.getElementById('chat-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    const message = formData.get('message').trim();
+    if (!message) return;
+    
+    // Add user message to chat
+    addMessage('Vous', message, 'user');
+    form.reset();
+
+    try {
+        const response = await fetch('{{ url_for("chat.send_message") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{ form.csrf_token.current_token }}'
+            },
+            body: JSON.stringify({
+                message: message,
+                csrf_token: '{{ form.csrf_token.current_token }}'
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Handle the response
+        if (data.error) {
+            addMessage('Système', data.error, 'system', true);
+        } else if (data.content) {
+            addMessage('EDxo', data.content, 'ai');
+        } else {
+            addMessage('Système', 'Erreur: Format de réponse inattendu', 'system', true);
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        addMessage('Système', error.message, 'system', true);
+    }
+});
+
+function addMessage(sender, message, type = 'user', isError = false) {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    
+    // Set appropriate classes based on message type
+    messageDiv.className = `chat-message ${type}-message`;
+    if (isError) messageDiv.classList.add('error-message');
+    
+    // Create sender element
+    const senderDiv = document.createElement('div');
+    senderDiv.className = 'message-sender';
+    senderDiv.textContent = sender;
+    
+    // Create content element with Markdown rendering
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.innerHTML = type === 'user' ? message : marked.parse(message);
+    
+    // Add elements to message container
+    messageDiv.appendChild(senderDiv);
+    messageDiv.appendChild(contentDiv);
+    
+    // Add message to chat and scroll to bottom
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Initialize syntax highlighting for code blocks
+    messageDiv.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+    });
+}
+</script>
+{% endblock %}
