@@ -13652,3 +13652,31 @@ fields.3.content
 2025-01-16 15:11:20,058 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:20] "GET /programme/1 HTTP/1.1" 200 -
 2025-01-16 15:11:20,092 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:20] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
 2025-01-16 15:11:20,116 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:20] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 15:25:52,993 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-16 15:25:52,993 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-16 15:25:52,993 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 15:25:54,660 - WARNING -  * Debugger is active!
+2025-01-16 15:25:54,660 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 15:25:56,648 - INFO - 127.0.0.1 - - [16/Jan/2025 15:25:56] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-16 15:25:56,682 - INFO - 127.0.0.1 - - [16/Jan/2025 15:25:56] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-16 15:25:56,726 - INFO - 127.0.0.1 - - [16/Jan/2025 15:25:56] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 15:25:57,076 - INFO - 127.0.0.1 - - [16/Jan/2025 15:25:57] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 15:25:58,622 - INFO - 127.0.0.1 - - [16/Jan/2025 15:25:58] "GET /chat HTTP/1.1" 200 -
+2025-01-16 15:25:58,645 - INFO - 127.0.0.1 - - [16/Jan/2025 15:25:58] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 15:25:58,664 - INFO - 127.0.0.1 - - [16/Jan/2025 15:25:58] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 15:26:07,844 - INFO - 127.0.0.1 - - [16/Jan/2025 15:26:07] "POST /chat/send HTTP/1.1" 200 -
+2025-01-16 15:26:33,384 - INFO - 127.0.0.1 - - [16/Jan/2025 15:26:33] "POST /chat/send HTTP/1.1" 200 -
+2025-01-16 15:27:34,944 - INFO - 127.0.0.1 - - [16/Jan/2025 15:27:34] "POST /chat/send HTTP/1.1" 200 -
+2025-01-16 15:28:10,371 - INFO - 127.0.0.1 - - [16/Jan/2025 15:28:10] "POST /chat/send HTTP/1.1" 200 -
+2025-01-16 15:29:15,181 - INFO - 127.0.0.1 - - [16/Jan/2025 15:29:15] "GET /chat HTTP/1.1" 200 -
+2025-01-16 15:29:15,206 - INFO - 127.0.0.1 - - [16/Jan/2025 15:29:15] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 15:29:15,239 - INFO - 127.0.0.1 - - [16/Jan/2025 15:29:15] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 15:29:15,248 - INFO - 127.0.0.1 - - [16/Jan/2025 15:29:15] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 15:29:22,514 - INFO - 127.0.0.1 - - [16/Jan/2025 15:29:22] "POST /chat/send HTTP/1.1" 200 -
+2025-01-16 15:29:50,936 - INFO - 127.0.0.1 - - [16/Jan/2025 15:29:50] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-16 15:29:50,971 - INFO - 127.0.0.1 - - [16/Jan/2025 15:29:50] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-16 15:29:51,034 - INFO - 127.0.0.1 - - [16/Jan/2025 15:29:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 15:29:51,072 - INFO - 127.0.0.1 - - [16/Jan/2025 15:29:51] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
