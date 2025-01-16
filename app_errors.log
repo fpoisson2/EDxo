@@ -13509,3 +13509,102 @@ fields.3.content
 2025-01-16 10:07:19,143 - INFO -  * Restarting with watchdog (windowsapi)
 2025-01-16 10:07:20,311 - WARNING -  * Debugger is active!
 2025-01-16 10:07:20,313 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 14:33:22,810 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-16 14:33:22,810 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-16 14:33:22,818 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 14:33:24,294 - WARNING -  * Debugger is active!
+2025-01-16 14:33:24,302 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 14:33:25,604 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:25] "[32mPOST /cours/5/plan_cadre/18 HTTP/1.1[0m" 302 -
+2025-01-16 14:33:25,612 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:25] "[32mPOST /cours/5/plan_cadre/18 HTTP/1.1[0m" 302 -
+2025-01-16 14:33:25,702 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:25] "GET /cours/5/plan_cadre/18 HTTP/1.1" 200 -
+2025-01-16 14:33:25,702 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:25] "GET /cours/5/plan_cadre/18 HTTP/1.1" 200 -
+2025-01-16 14:33:36,517 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-16 14:33:36,517 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-16 14:33:36,527 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 14:33:38,077 - WARNING -  * Debugger is active!
+2025-01-16 14:33:38,077 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 14:33:40,171 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:40] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-16 14:33:40,221 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:40] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:33:40,238 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:40] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:33:41,420 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:41] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-16 14:33:41,444 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:41] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-16 14:33:41,470 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:41] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:33:41,502 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:41] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:33:43,018 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:43] "[32mGET /cours/2/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-16 14:33:43,078 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:43] "GET /cours/2/plan_cadre/2 HTTP/1.1" 200 -
+2025-01-16 14:33:43,094 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:43] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:33:43,128 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:43] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:33:46,151 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:46] "[32mPOST /cours/2/plan_cadre/2 HTTP/1.1[0m" 302 -
+2025-01-16 14:33:46,167 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:46] "[32mPOST /cours/2/plan_cadre/2 HTTP/1.1[0m" 302 -
+2025-01-16 14:33:46,208 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:46] "GET /cours/2/plan_cadre/2 HTTP/1.1" 200 -
+2025-01-16 14:33:46,219 - INFO - 127.0.0.1 - - [16/Jan/2025 14:33:46] "GET /cours/2/plan_cadre/2 HTTP/1.1" 200 -
+2025-01-16 14:33:58,350 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-16 14:33:58,350 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-16 14:33:58,356 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 14:34:00,133 - WARNING -  * Debugger is active!
+2025-01-16 14:34:00,133 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 14:34:00,215 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:00] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-16 14:34:00,264 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:34:00,272 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:00] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:34:00,737 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:00] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-16 14:34:00,754 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:34:00,762 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:00] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:34:01,698 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:01] "[32mGET /settings/generation HTTP/1.1[0m" 302 -
+2025-01-16 14:34:01,707 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:01] "GET /settings/parametres HTTP/1.1" 200 -
+2025-01-16 14:34:01,723 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:01] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:34:01,731 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:01] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:34:02,659 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:02] "GET /change_password HTTP/1.1" 200 -
+2025-01-16 14:34:02,674 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:02] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:34:02,693 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:02] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:34:03,891 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:03] "GET /parametres/gestion_departements HTTP/1.1" 200 -
+2025-01-16 14:34:03,916 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:03] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:34:03,932 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:03] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:34:08,047 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:08] "[32mGET /add_competence HTTP/1.1[0m" 302 -
+2025-01-16 14:34:08,080 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:08] "GET /parametres/gestion_departements HTTP/1.1" 200 -
+2025-01-16 14:34:08,104 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:08] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:34:08,120 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:08] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:34:17,778 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:17] "[32mGET /add_element_competence HTTP/1.1[0m" 302 -
+2025-01-16 14:34:17,819 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:17] "GET /parametres/gestion_departements HTTP/1.1" 200 -
+2025-01-16 14:34:17,848 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:17] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:34:17,862 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:17] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:34:18,959 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:18] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-16 14:34:19,018 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:19] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-16 14:34:19,048 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:19] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:34:19,074 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:19] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:34:21,291 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:21] "GET /chat HTTP/1.1" 200 -
+2025-01-16 14:34:21,316 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:21] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:34:21,334 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:21] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:34:22,878 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:22] "[31m[1mPOST /chat/send HTTP/1.1[0m" 400 -
+2025-01-16 14:34:41,390 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-16 14:34:41,390 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-16 14:34:41,397 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 14:34:42,928 - WARNING -  * Debugger is active!
+2025-01-16 14:34:42,933 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 14:34:43,003 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:43] "[32mGET /logout HTTP/1.1[0m" 302 -
+2025-01-16 14:34:43,018 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:43] "GET /login HTTP/1.1" 200 -
+2025-01-16 14:34:43,068 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:43] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:34:43,088 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:43] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:34:43,092 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:43] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 14:34:50,681 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:50] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-01-16 14:34:50,698 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:50] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-16 14:34:50,755 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:50] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-16 14:34:50,795 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:50] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:34:50,918 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:50] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:34:52,785 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:52] "[32mGET /cours/2/plan_cadre HTTP/1.1[0m" 302 -
+2025-01-16 14:34:52,909 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:52] "GET /cours/2/plan_cadre/2 HTTP/1.1" 200 -
+2025-01-16 14:34:52,936 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:52] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 14:34:52,975 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:52] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 14:34:57,107 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:57] "POST /cours/2/plan_cadre/2 HTTP/1.1" 200 -
+2025-01-16 14:34:57,148 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:57] "POST /cours/2/plan_cadre/2 HTTP/1.1" 200 -
