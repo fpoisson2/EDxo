@@ -205,7 +205,7 @@ def send_message():
             
             # Premier appel à OpenAI
             initial_response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-4o",
                 messages=messages,
                 functions=[get_plan_cadre_function()],
                 stream=True
@@ -251,7 +251,7 @@ def send_message():
                         ])
                         
                         follow_up_response = client.chat.completions.create(
-                            model="gpt-4o-mini",
+                            model="gpt-4o",
                             messages=follow_up_messages,
                             stream=True
                         )
