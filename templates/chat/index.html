@@ -8,15 +8,64 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
 <style>
+body, html {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+}
+
+.chat-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 12px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chat-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 16px;
+    background-color: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 70px;
+    scroll-behavior: smooth;
+}
+
+.chat-footer {
+    background-color: #ffffff;
+    border-top: 1px solid #dee2e6;
+    padding: 12px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .chat-message {
     padding: 12px;
     margin-bottom: 12px;
     border-radius: 8px;
     max-width: 85%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease-in-out;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.3s ease forwards;
 }
 
 .user-message {
-    background-color: #e9ecef;
+    background-color: #d1e7dd;
     margin-left: auto;
 }
 
@@ -37,39 +86,8 @@
     color: #721c24;
 }
 
-#chat-messages {
-    display: flex;
-    flex-direction: column;
-    padding: 16px;
-}
-
 .message-content {
     margin-top: 4px;
-}
-
-.message-content h1,
-.message-content h2,
-.message-content h3 {
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-}
-
-.message-content p {
-    margin-bottom: 0.5em;
-}
-
-.message-content ul,
-.message-content ol {
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-    padding-left: 1.5em;
-}
-
-.message-content code {
-    background-color: #f6f8fa;
-    padding: 0.2em 0.4em;
-    border-radius: 3px;
-    font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
 }
 
 .message-content pre {
@@ -89,27 +107,35 @@
     font-weight: 600;
     margin-bottom: 4px;
 }
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 </style>
+
 {% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Chat</h5>
-            </div>
-            <div class="card-body">
-                <div id="chat-messages" class="mb-3" style="flex-grow: 1; overflow-y: auto;">
-                    <!-- Messages will appear here -->
-                </div>
-                <form id="chat-form" class="d-flex gap-2">
-                    {{ form.csrf_token }}
-                    {{ form.message(class="form-control", placeholder="Tapez votre message...", id="message-input") }}
-                    {{ form.submit(class="btn btn-primary") }}
-                </form>
-            </div>
-        </div>
+<div class="chat-container">
+    <div class="chat-header">
+        <h5 class="mb-0">Chat</h5>
+    </div>
+    <div id="chat-messages" class="chat-body">
+        <!-- Messages will appear here -->
+    </div>
+    <div class="chat-footer">
+        <form id="chat-form" class="d-flex gap-2">
+            {{ form.csrf_token }}
+            {{ form.message(class="form-control", placeholder="Tapez votre message...", id="message-input") }}
+            {{ form.submit(class="btn btn-primary") }}
+        </form>
     </div>
 </div>
 {% endblock %}
@@ -130,18 +156,92 @@ marked.setOptions({
     }
 });
 
+// Fonction pour scroller soit vers le haut, soit vers le bas selon le contexte
+function scrollChat(smooth = false) {
+    const chatMessages = document.getElementById('chat-messages');
+    const isReverseFlow = window.getComputedStyle(chatMessages).flexDirection === 'column-reverse';
+    
+    const options = smooth 
+        ? { behavior: 'smooth' } 
+        : {};
+
+    if (isReverseFlow) {
+        // Mode reverse : scroller vers le haut
+        options.top = 0;
+    } else {
+        // Mode normal : scroller vers le bas
+        options.top = chatMessages.scrollHeight;
+    }
+
+    chatMessages.scrollTo(options);
+}
+
+// Modifier la fonction addMessage pour gérer les deux modes de flux
+function addMessage(sender, message, type = 'user', isError = false) {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+
+    // Déterminer si le flux est inversé
+    const isReverseFlow = window.getComputedStyle(chatMessages).flexDirection === 'column-reverse';
+
+    // Set appropriate classes based on message type
+    messageDiv.className = `chat-message ${type}-message`;
+    if (isError) messageDiv.classList.add('error-message');
+
+    // Create sender element
+    const senderDiv = document.createElement('div');
+    senderDiv.className = 'message-sender';
+    senderDiv.textContent = sender;
+
+    // Create content element with Markdown rendering
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.innerHTML = type === 'user' ? message : marked.parse(message);
+
+    // Add elements to message container
+    messageDiv.appendChild(senderDiv);
+    messageDiv.appendChild(contentDiv);
+
+    // Ajouter le message selon le mode de flux
+    if (isReverseFlow) {
+        // Mode reverse : ajouter au début
+        chatMessages.insertBefore(messageDiv, chatMessages.firstChild);
+    } else {
+        // Mode normal : ajouter à la fin
+        chatMessages.appendChild(messageDiv);
+    }
+
+    // Scroller après un court délai
+    setTimeout(() => {
+        scrollChat(true);
+    }, 100);
+
+    // Initialize syntax highlighting for code blocks
+    messageDiv.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+    });
+
+    return messageDiv;
+}
+
+document.getElementById('message-input').addEventListener('input', function () {
+    this.style.height = '40px';  // Reset height to default
+    this.style.height = (this.scrollHeight) + 'px';  // Adjust height based on content
+});
+
 document.getElementById('chat-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const form = e.target;
     const formData = new FormData(form);
-    
+
     const message = formData.get('message').trim();
     if (!message) return;
-    
+
     // Add user message to chat
     addMessage('Vous', message, 'user');
     form.reset();
+    document.getElementById('message-input').style.height = '40px';
 
     try {
         const response = await fetch('{{ url_for("chat.send_message") }}', {
@@ -155,13 +255,13 @@ document.getElementById('chat-form').addEventListener('submit', async (e) => {
                 csrf_token: '{{ form.csrf_token.current_token }}'
             })
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         // Handle the response
         if (data.error) {
             addMessage('Système', data.error, 'system', true);
@@ -170,43 +270,41 @@ document.getElementById('chat-form').addEventListener('submit', async (e) => {
         } else {
             addMessage('Système', 'Erreur: Format de réponse inattendu', 'system', true);
         }
-        
+
     } catch (error) {
         console.error('Error:', error);
         addMessage('Système', error.message, 'system', true);
     }
 });
 
-function addMessage(sender, message, type = 'user', isError = false) {
+// Scroller au chargement initial
+document.addEventListener('DOMContentLoaded', () => {
+    scrollChat();
+});
+
+// Fonction pour basculer le mode de flux
+function toggleChatFlow() {
     const chatMessages = document.getElementById('chat-messages');
-    const messageDiv = document.createElement('div');
+    const currentFlow = window.getComputedStyle(chatMessages).flexDirection;
     
-    // Set appropriate classes based on message type
-    messageDiv.className = `chat-message ${type}-message`;
-    if (isError) messageDiv.classList.add('error-message');
+    chatMessages.style.flexDirection = currentFlow === 'column-reverse' 
+        ? 'column' 
+        : 'column-reverse';
     
-    // Create sender element
-    const senderDiv = document.createElement('div');
-    senderDiv.className = 'message-sender';
-    senderDiv.textContent = sender;
+    // Reordonner les messages
+    const messages = Array.from(chatMessages.children);
+    chatMessages.innerHTML = '';
     
-    // Create content element with Markdown rendering
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    contentDiv.innerHTML = type === 'user' ? message : marked.parse(message);
+    if (currentFlow === 'column-reverse') {
+        // Passer en mode normal (du bas vers le haut)
+        messages.reverse().forEach(msg => chatMessages.appendChild(msg));
+    } else {
+        // Passer en mode reverse (du haut vers le bas)
+        messages.reverse().forEach(msg => chatMessages.appendChild(msg));
+    }
     
-    // Add elements to message container
-    messageDiv.appendChild(senderDiv);
-    messageDiv.appendChild(contentDiv);
-    
-    // Add message to chat and scroll to bottom
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    
-    // Initialize syntax highlighting for code blocks
-    messageDiv.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightElement(block);
-    });
+    // Scroller
+    scrollChat(true);
 }
 </script>
 {% endblock %}
