@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, request, jsonify, current_app, Response, stream_with_context
+from flask import Blueprint, render_template, request, jsonify, current_app, Response, stream_with_context, session
 from flask_login import login_required, current_user
 from openai import OpenAI
 from forms import ChatForm
-from models import User, PlanCadre, db
+from models import User, PlanCadre, db, ChatHistory
 import json
 
 chat = Blueprint('chat', __name__)
@@ -146,10 +146,14 @@ def handle_get_plan_cadre(params):
 def index():
     print("[DEBUG] Accessing chat index route")
     form = ChatForm()
+    # Initialiser l'historique du chat s'il n'existe pas
+    if 'chat_history' not in session:
+        session['chat_history'] = []
+        session.modified = True  # Marquer la session comme modifiée
     return render_template('chat/index.html', form=form)
 
 
-
+# Dans routes/chat.py
 @chat.route('/chat/send', methods=['POST'])
 @login_required
 def send_message():
@@ -157,148 +161,170 @@ def send_message():
     print("DÉBUT DE LA REQUÊTE CHAT")
     print("="*50)
     
+    # Récupération de l'historique depuis la base de données
+    recent_messages = ChatHistory.get_recent_history(current_user.id)
+    current_history = [
+        {"role": msg.role, "content": msg.content}
+        for msg in reversed(recent_messages)  # Inverser pour avoir l'ordre chronologique
+    ]
+    
+    print("\nHISTORIQUE ACTUEL:")
+    print(json.dumps(current_history, indent=2))
+    
     # Vérification de la requête
-    print("\n1. VÉRIFICATION DE LA REQUÊTE")
-    print(f"Method: {request.method}")
-    print(f"Content-Type: {request.headers.get('Content-Type')}")
-    print(f"Data reçue: {request.get_json()}")
+    data = request.get_json()
+    if not data or 'message' not in data:
+        return jsonify({'error': 'Message manquant'}), 400
+        
+    message = data.get('message')
+    print(f"\nMESSAGE REÇU: {message}")
     
     # Vérification de l'utilisateur
-    print("\n2. VÉRIFICATION DE L'UTILISATEUR")
     user = User.query.get(current_user.id)
-    print(f"User ID: {current_user.id}")
-    print(f"OpenAI Key présente: {'Oui' if user and user.openai_key else 'Non'}")
-    
     if not user or not user.openai_key:
-        print("❌ Pas de clé OpenAI")
         return jsonify({'error': 'Clé OpenAI non configurée'}), 400
-
-    form = ChatForm()
-    if form.validate_on_submit():
+        
+    client = OpenAI(api_key=user.openai_key)
+    
+    def generate_stream():
         try:
-            message = form.message.data
-            print(f"\n3. MESSAGE REÇU: {message}")
-            
-            client = OpenAI(api_key=user.openai_key)
-            print("✅ Client OpenAI créé")
-            
-            def generate_stream():
-                print("\n4. DÉBUT DU STREAMING")
-                
-                def send_event(event_type, content):
-                    """Helper function to format SSE messages"""
-                    data = json.dumps({"type": event_type, "content": content})
-                    print(f"📤 Envoi SSE: {data}")
-                    return f"data: {data}\n\n"
-                
-                try:
-                    print("\n5. APPEL INITIAL À OPENAI")
-                    initial_response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {
-                                "role": "system",
-                                "content": "Vous êtes EDxo, un assistant spécialisé dans les informations pédagogiques."
-                            },
-                            {"role": "user", "content": message}
-                        ],
-                        functions=[get_plan_cadre_function()],
-                        stream=True
-                    )
-                    print("✅ Connexion au stream établie")
-                    
-                    yield send_event("processing", "Connexion établie...")
-                    
-                    function_call_data = None
-                    function_args = ""
-                    collected_content = ""
-                    
-                    print("\n6. TRAITEMENT DES CHUNKS")
-                    for chunk_index, chunk in enumerate(initial_response):
-                        print(f"\nChunk #{chunk_index}:")
-                        print(f"Raw chunk: {chunk}")
-                        
-                        if not hasattr(chunk.choices[0], 'delta'):
-                            print("⚠️ Pas de delta dans le chunk")
-                            continue
-                        
-                        delta = chunk.choices[0].delta
-                        print(f"Delta content: {delta}")
-                        
-                        # Gestion des function calls
-                        if hasattr(delta, 'function_call') and delta.function_call is not None:
-                            print("Function call détectée dans le delta")
-                            if function_call_data is None and hasattr(delta.function_call, 'name'):
-                                function_call_data = delta.function_call.name
-                                print(f"Nom de la fonction: {function_call_data}")
-                            if hasattr(delta.function_call, 'arguments'):
-                                function_args += delta.function_call.arguments
-                                print(f"Arguments ajoutés: {delta.function_call.arguments}")
-                        
-                        # Gestion du contenu normal
-                        elif hasattr(delta, 'content') and delta.content:
-                            print(f"Contenu reçu: {delta.content}")
-                            collected_content += delta.content
-                            yield send_event("content", delta.content)
-                    
-                    # Traitement de la function call si présente
-                    if function_call_data and function_args:
-                        print(f"\n7. TRAITEMENT FUNCTION CALL: {function_call_data}")
-                        print(f"Arguments complets: {function_args}")
-                        
-                        try:
-                            args = json.loads(function_args)
-                            func_result = handle_get_plan_cadre(args)
-                            
-                            if func_result:
-                                yield send_event("processing", "Recherche des informations du plan-cadre...")
-                                
-                                follow_up_response = client.chat.completions.create(
-                                    model="gpt-4o-mini",
-                                    messages=[
-                                        {"role": "system", "content": "Vous devez fournir une réponse concise."},
-                                        {"role": "user", "content": message},
-                                        {"role": "assistant", "content": collected_content, 
-                                         "function_call": {"name": function_call_data, "arguments": function_args}},
-                                        {"role": "function", "name": "get_plan_cadre", "content": json.dumps(func_result)}
-                                    ],
-                                    stream=True
-                                )
-                                
-                                for chunk in follow_up_response:
-                                    if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
-                                        yield send_event("content", chunk.choices[0].delta.content)
-                            else:
-                                yield send_event("error", "Plan-cadre non trouvé")
-                        except Exception as e:
-                            print(f"❌ Erreur function call: {str(e)}")
-                            yield send_event("error", str(e))
-                    
-                    yield send_event("done", "")
-                    
-                except Exception as e:
-                    print(f"❌ Erreur stream: {str(e)}")
-                    yield send_event("error", str(e))
-                    yield send_event("done", "")
-
-            print("\n10. PRÉPARATION DE LA RÉPONSE")
-            response = Response(
-                stream_with_context(generate_stream()),
-                mimetype='text/event-stream',
-                headers={
-                    'Cache-Control': 'no-cache',
-                    'Content-Type': 'text/event-stream',
-                    'X-Accel-Buffering': 'no'
+            # Création des messages avec l'historique actuel
+            messages = [
+                {
+                    "role": "system",
+                    "content": "Vous êtes EDxo, un assistant spécialisé dans les informations pédagogiques."
                 }
+            ]
+            messages.extend(current_history)
+            messages.append({"role": "user", "content": message})
+            
+            # Sauvegarde du message utilisateur dans la BD
+            new_message = ChatHistory(user_id=current_user.id, role="user", content=message)
+            db.session.add(new_message)
+            db.session.commit()
+            
+            # Premier appel à OpenAI
+            initial_response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages,
+                functions=[get_plan_cadre_function()],
+                stream=True
             )
-            print("✅ Réponse prête à être envoyée")
-            return response
-
+            
+            function_call_data = None
+            function_args = ""
+            collected_content = ""
+            
+            for chunk in initial_response:
+                if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+                    content = chunk.choices[0].delta.content
+                    collected_content += content
+                    yield f"data: {json.dumps({'type': 'content', 'content': content})}\n\n"
+                elif hasattr(chunk.choices[0].delta, 'function_call'):
+                    if function_call_data is None and hasattr(chunk.choices[0].delta.function_call, 'name'):
+                        function_call_data = chunk.choices[0].delta.function_call.name
+                    if hasattr(chunk.choices[0].delta.function_call, 'arguments'):
+                        function_args += chunk.choices[0].delta.function_call.arguments
+            
+            # Traitement de la function call
+            if function_call_data and function_args:
+                try:
+                    args = json.loads(function_args)
+                    result = handle_get_plan_cadre(args)
+                    
+                    if result:
+                        follow_up_messages = messages.copy()
+                        follow_up_messages.extend([
+                            {
+                                "role": "assistant",
+                                "content": collected_content,
+                                "function_call": {
+                                    "name": function_call_data,
+                                    "arguments": function_args
+                                }
+                            },
+                            {
+                                "role": "function",
+                                "name": "get_plan_cadre",
+                                "content": json.dumps(result)
+                            }
+                        ])
+                        
+                        follow_up_response = client.chat.completions.create(
+                            model="gpt-4o-mini",
+                            messages=follow_up_messages,
+                            stream=True
+                        )
+                        
+                        follow_up_content = ""
+                        for chunk in follow_up_response:
+                            if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+                                content = chunk.choices[0].delta.content
+                                follow_up_content += content
+                                yield f"data: {json.dumps({'type': 'content', 'content': content})}\n\n"
+                        
+                        if follow_up_content:
+                            # Sauvegarde de la réponse dans la BD
+                            assistant_message = ChatHistory(
+                                user_id=current_user.id,
+                                role="assistant",
+                                content=follow_up_content
+                            )
+                            db.session.add(assistant_message)
+                            db.session.commit()
+                    else:
+                        error_msg = "Plan-cadre non trouvé"
+                        assistant_message = ChatHistory(
+                            user_id=current_user.id,
+                            role="assistant",
+                            content=error_msg
+                        )
+                        db.session.add(assistant_message)
+                        db.session.commit()
+                        yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
+                        
+                except Exception as e:
+                    error_msg = f"Erreur: {str(e)}"
+                    assistant_message = ChatHistory(
+                        user_id=current_user.id,
+                        role="assistant",
+                        content=error_msg
+                    )
+                    db.session.add(assistant_message)
+                    db.session.commit()
+                    yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
+            else:
+                # Sauvegarde de la réponse normale dans la BD
+                if collected_content:
+                    assistant_message = ChatHistory(
+                        user_id=current_user.id,
+                        role="assistant",
+                        content=collected_content
+                    )
+                    db.session.add(assistant_message)
+                    db.session.commit()
+            
+            print("\nHISTORIQUE FINAL:")
+            recent_messages = ChatHistory.get_recent_history(current_user.id)
+            final_history = [
+                {"role": msg.role, "content": msg.content}
+                for msg in reversed(recent_messages)
+            ]
+            print(json.dumps(final_history, indent=2))
+            yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
+            
         except Exception as e:
-            error_msg = f"Erreur lors de l'envoi du message: {str(e)}"
-            print(f"❌ Erreur générale: {error_msg}")
-            current_app.logger.error(error_msg)
-            return jsonify({'error': error_msg}), 500
-
-    print("❌ Validation du formulaire échouée")
-    return jsonify({'error': 'Validation failed'}), 400
+            error_msg = f"Erreur: {str(e)}"
+            print(f"Erreur dans generate_stream: {error_msg}")
+            yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
+            yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
+    
+    return Response(
+        stream_with_context(generate_stream()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'Content-Type': 'text/event-stream',
+            'X-Accel-Buffering': 'no'
+        }
+    )

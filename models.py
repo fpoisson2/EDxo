@@ -1,5 +1,6 @@
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -365,6 +366,23 @@ class PlanDeCoursCalendrier(db.Model):
 
     def __repr__(self):
         return f"<PlanDeCoursCalendrier id={self.id}>"
+
+class ChatHistory(db.Model):
+    __tablename__ = 'chat_history'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relation avec User
+    user = db.relationship('User', backref=db.backref('chat_histories', lazy=True))
+
+    @classmethod
+    def get_recent_history(cls, user_id, limit=10):
+        return cls.query.filter_by(user_id=user_id).order_by(cls.timestamp.desc()).limit(limit).all()
+
 
 class PlanDeCoursMediagraphie(db.Model):
     __tablename__ = "PlanDeCoursMediagraphie"
