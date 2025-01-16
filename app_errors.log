@@ -13608,3 +13608,47 @@ fields.3.content
 2025-01-16 14:34:52,975 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:52] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
 2025-01-16 14:34:57,107 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:57] "POST /cours/2/plan_cadre/2 HTTP/1.1" 200 -
 2025-01-16 14:34:57,148 - INFO - 127.0.0.1 - - [16/Jan/2025 14:34:57] "POST /cours/2/plan_cadre/2 HTTP/1.1" 200 -
+2025-01-16 15:10:41,847 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-16 15:10:41,847 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-16 15:10:41,855 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 15:10:43,467 - WARNING -  * Debugger is active!
+2025-01-16 15:10:43,467 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 15:10:43,541 - INFO - 127.0.0.1 - - [16/Jan/2025 15:10:43] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-16 15:10:43,574 - INFO - 127.0.0.1 - - [16/Jan/2025 15:10:43] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-16 15:10:43,648 - INFO - 127.0.0.1 - - [16/Jan/2025 15:10:43] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 15:10:43,697 - INFO - 127.0.0.1 - - [16/Jan/2025 15:10:43] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 15:10:45,242 - INFO - 127.0.0.1 - - [16/Jan/2025 15:10:45] "[32mGET /logout HTTP/1.1[0m" 302 -
+2025-01-16 15:10:45,276 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask\\app.py', reloading
+2025-01-16 15:10:45,291 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\routes.py', reloading
+2025-01-16 15:10:45,300 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask\\templating.py', reloading
+2025-01-16 15:10:45,316 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\jinja2\\environment.py', reloading
+2025-01-16 15:10:45,332 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\werkzeug\\routing\\map.py', reloading
+2025-01-16 15:10:45,341 - INFO - 127.0.0.1 - - [16/Jan/2025 15:10:45] "[35m[1mGET /login HTTP/1.1[0m" 500 -
+2025-01-16 15:10:45,373 - INFO - 127.0.0.1 - - [16/Jan/2025 15:10:45] "GET /login?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-01-16 15:10:45,382 - INFO - 127.0.0.1 - - [16/Jan/2025 15:10:45] "GET /login?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-01-16 15:10:45,390 - INFO - 127.0.0.1 - - [16/Jan/2025 15:10:45] "GET /login?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-01-16 15:10:45,423 - INFO - 127.0.0.1 - - [16/Jan/2025 15:10:45] "[36mGET /login?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-16 15:10:45,737 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 15:10:47,415 - WARNING -  * Debugger is active!
+2025-01-16 15:10:47,418 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 15:11:05,785 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:05] "GET /login HTTP/1.1" 200 -
+2025-01-16 15:11:05,860 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:05] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 15:11:05,880 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:05] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 15:11:05,880 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:05] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 15:11:12,119 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:12] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-01-16 15:11:12,137 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:12] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-16 15:11:12,203 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:12] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-16 15:11:12,252 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:12] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 15:11:12,294 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:12] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 15:11:17,575 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:17] "[32mGET /logout HTTP/1.1[0m" 302 -
+2025-01-16 15:11:17,582 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:17] "GET /login HTTP/1.1" 200 -
+2025-01-16 15:11:17,601 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:17] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 15:11:17,611 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:17] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 15:11:20,017 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:20] "[32mPOST /login HTTP/1.1[0m" 302 -
+2025-01-16 15:11:20,026 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:20] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-16 15:11:20,058 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:20] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-16 15:11:20,092 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:20] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 15:11:20,116 - INFO - 127.0.0.1 - - [16/Jan/2025 15:11:20] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
