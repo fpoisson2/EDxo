@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, current_app
+from flask import Blueprint, render_template, request, jsonify, current_app, Response, stream_with_context
 from flask_login import login_required, current_user
 from openai import OpenAI
 from forms import ChatForm
@@ -149,94 +149,156 @@ def index():
     return render_template('chat/index.html', form=form)
 
 
+
 @chat.route('/chat/send', methods=['POST'])
 @login_required
 def send_message():
-    print("[DEBUG] send_message route called")
+    print("\n" + "="*50)
+    print("DÉBUT DE LA REQUÊTE CHAT")
+    print("="*50)
     
+    # Vérification de la requête
+    print("\n1. VÉRIFICATION DE LA REQUÊTE")
+    print(f"Method: {request.method}")
+    print(f"Content-Type: {request.headers.get('Content-Type')}")
+    print(f"Data reçue: {request.get_json()}")
+    
+    # Vérification de l'utilisateur
+    print("\n2. VÉRIFICATION DE L'UTILISATEUR")
     user = User.query.get(current_user.id)
-    openai_key = user.openai_key if user else None
+    print(f"User ID: {current_user.id}")
+    print(f"OpenAI Key présente: {'Oui' if user and user.openai_key else 'Non'}")
     
-    if not openai_key:
-        print("[DEBUG] No OpenAI key configured")
+    if not user or not user.openai_key:
+        print("❌ Pas de clé OpenAI")
         return jsonify({'error': 'Clé OpenAI non configurée'}), 400
 
     form = ChatForm()
     if form.validate_on_submit():
         try:
             message = form.message.data
-            print(f"[DEBUG] Received message: {message}")
+            print(f"\n3. MESSAGE REÇU: {message}")
             
-            client = OpenAI(api_key=openai_key)
+            client = OpenAI(api_key=user.openai_key)
+            print("✅ Client OpenAI créé")
             
-            edxo_function = {
-                "role": "system",
-                "content": "Vous êtes EDxo, un assistant spécialisé dans les informations pédagogiques liées aux programmes de cégep. Vous aidez à fournir des renseignements détaillés et des conseils en matière de gestion pédagogique."
-            }
-
-            # Premier appel à OpenAI pour identifier si on a besoin du plan-cadre
-            print("[DEBUG] Sending initial request to OpenAI")
-            initial_response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    edxo_function,
-                    {"role": "user", "content": message}
-                ],
-                functions=[get_plan_cadre_function()]
-            )
-            
-            initial_message = initial_response.choices[0].message
-            
-            # Si OpenAI demande des informations du plan-cadre
-            if initial_message.function_call:
-                print(f"[DEBUG] Function call detected: {initial_message.function_call}")
-                args = json.loads(initial_message.function_call.arguments)
-                func_result = handle_get_plan_cadre(args)
+            def generate_stream():
+                print("\n4. DÉBUT DU STREAMING")
                 
-                if func_result:
-                    # Deuxième appel à OpenAI avec le résultat du plan-cadre
-                    print("[DEBUG] Sending follow-up request to OpenAI")
-                    follow_up_response = client.chat.completions.create(
+                def send_event(event_type, content):
+                    """Helper function to format SSE messages"""
+                    data = json.dumps({"type": event_type, "content": content})
+                    print(f"📤 Envoi SSE: {data}")
+                    return f"data: {data}\n\n"
+                
+                try:
+                    print("\n5. APPEL INITIAL À OPENAI")
+                    initial_response = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=[
-                            {"role": "system", "content": "Vous devez fournir des réponses concises et ciblées, en vous concentrant uniquement sur les éléments spécifiquement demandés par l'utilisateur. Évitez d'inclure des informations supplémentaires non demandées."},
-                            {"role": "user", "content": message},
-                            {"role": "assistant", "content": None, "function_call": initial_message.function_call},
-                            {"role": "function", "name": "get_plan_cadre", "content": json.dumps(func_result)}
+                            {
+                                "role": "system",
+                                "content": "Vous êtes EDxo, un assistant spécialisé dans les informations pédagogiques."
+                            },
+                            {"role": "user", "content": message}
                         ],
-                        temperature=0.7  # Ajout d'un peu de température pour des réponses plus naturelles
+                        functions=[get_plan_cadre_function()],
+                        stream=True
                     )
+                    print("✅ Connexion au stream établie")
                     
-                    final_response = follow_up_response.choices[0].message.content
+                    yield send_event("processing", "Connexion établie...")
                     
-                    response_data = {
-                        'status': 'success',
-                        'content': final_response,
-                        'type': 'message',
-                        'function_result': func_result  # Optionnel: garder les données brutes si nécessaire
-                    }
-                else:
-                    response_data = {
-                        'status': 'error',
-                        'content': "Plan-cadre non trouvé",
-                        'type': 'message'
-                    }
-                
-                return jsonify(response_data)
-            
-            # Si pas de function call, retourner la réponse directe
-            response_data = {
-                'status': 'success',
-                'content': initial_message.content,
-                'type': 'message'
-            }
-            return jsonify(response_data)
+                    function_call_data = None
+                    function_args = ""
+                    collected_content = ""
+                    
+                    print("\n6. TRAITEMENT DES CHUNKS")
+                    for chunk_index, chunk in enumerate(initial_response):
+                        print(f"\nChunk #{chunk_index}:")
+                        print(f"Raw chunk: {chunk}")
+                        
+                        if not hasattr(chunk.choices[0], 'delta'):
+                            print("⚠️ Pas de delta dans le chunk")
+                            continue
+                        
+                        delta = chunk.choices[0].delta
+                        print(f"Delta content: {delta}")
+                        
+                        # Gestion des function calls
+                        if hasattr(delta, 'function_call') and delta.function_call is not None:
+                            print("Function call détectée dans le delta")
+                            if function_call_data is None and hasattr(delta.function_call, 'name'):
+                                function_call_data = delta.function_call.name
+                                print(f"Nom de la fonction: {function_call_data}")
+                            if hasattr(delta.function_call, 'arguments'):
+                                function_args += delta.function_call.arguments
+                                print(f"Arguments ajoutés: {delta.function_call.arguments}")
+                        
+                        # Gestion du contenu normal
+                        elif hasattr(delta, 'content') and delta.content:
+                            print(f"Contenu reçu: {delta.content}")
+                            collected_content += delta.content
+                            yield send_event("content", delta.content)
+                    
+                    # Traitement de la function call si présente
+                    if function_call_data and function_args:
+                        print(f"\n7. TRAITEMENT FUNCTION CALL: {function_call_data}")
+                        print(f"Arguments complets: {function_args}")
+                        
+                        try:
+                            args = json.loads(function_args)
+                            func_result = handle_get_plan_cadre(args)
+                            
+                            if func_result:
+                                yield send_event("processing", "Recherche des informations du plan-cadre...")
+                                
+                                follow_up_response = client.chat.completions.create(
+                                    model="gpt-4o-mini",
+                                    messages=[
+                                        {"role": "system", "content": "Vous devez fournir une réponse concise."},
+                                        {"role": "user", "content": message},
+                                        {"role": "assistant", "content": collected_content, 
+                                         "function_call": {"name": function_call_data, "arguments": function_args}},
+                                        {"role": "function", "name": "get_plan_cadre", "content": json.dumps(func_result)}
+                                    ],
+                                    stream=True
+                                )
+                                
+                                for chunk in follow_up_response:
+                                    if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
+                                        yield send_event("content", chunk.choices[0].delta.content)
+                            else:
+                                yield send_event("error", "Plan-cadre non trouvé")
+                        except Exception as e:
+                            print(f"❌ Erreur function call: {str(e)}")
+                            yield send_event("error", str(e))
+                    
+                    yield send_event("done", "")
+                    
+                except Exception as e:
+                    print(f"❌ Erreur stream: {str(e)}")
+                    yield send_event("error", str(e))
+                    yield send_event("done", "")
+
+            print("\n10. PRÉPARATION DE LA RÉPONSE")
+            response = Response(
+                stream_with_context(generate_stream()),
+                mimetype='text/event-stream',
+                headers={
+                    'Cache-Control': 'no-cache',
+                    'Content-Type': 'text/event-stream',
+                    'X-Accel-Buffering': 'no'
+                }
+            )
+            print("✅ Réponse prête à être envoyée")
+            return response
 
         except Exception as e:
             error_msg = f"Erreur lors de l'envoi du message: {str(e)}"
-            print(f"[DEBUG] General error: {error_msg}")
+            print(f"❌ Erreur générale: {error_msg}")
             current_app.logger.error(error_msg)
             return jsonify({'error': error_msg}), 500
 
-    print("[DEBUG] Form validation failed")
+    print("❌ Validation du formulaire échouée")
     return jsonify({'error': 'Validation failed'}), 400

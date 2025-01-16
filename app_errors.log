@@ -12944,3 +12944,210 @@ fields.3.content
 2025-01-15 22:47:22,722 - INFO - 127.0.0.1 - - [15/Jan/2025 22:47:22] "POST /chat/send HTTP/1.1" 200 -
 2025-01-15 22:47:24,971 - INFO - 127.0.0.1 - - [15/Jan/2025 22:47:24] "POST /chat/send HTTP/1.1" 200 -
 2025-01-15 22:47:31,733 - INFO - 127.0.0.1 - - [15/Jan/2025 22:47:31] "POST /chat/send HTTP/1.1" 200 -
+2025-01-15 22:57:24,974 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.44:5000
+2025-01-15 22:57:24,974 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-15 22:57:24,978 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-15 22:57:26,435 - WARNING -  * Debugger is active!
+2025-01-15 22:57:26,436 - INFO -  * Debugger PIN: 342-468-122
+2025-01-15 22:57:26,507 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:26] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-15 22:57:26,544 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:26] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-15 22:57:26,594 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:26] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-15 22:57:26,653 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:26] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-15 22:57:26,663 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:26] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-15 22:57:28,703 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:28] "GET /chat HTTP/1.1" 200 -
+2025-01-15 22:57:28,726 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:28] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-15 22:57:28,742 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:28] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-15 22:57:35,203 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:35] "POST /chat/send HTTP/1.1" 200 -
+2025-01-15 22:57:42,305 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:42] "GET /chat HTTP/1.1" 200 -
+2025-01-15 22:57:42,330 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:42] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-15 22:57:42,345 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:42] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-15 22:57:42,354 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:42] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-15 22:57:45,151 - INFO - 127.0.0.1 - - [15/Jan/2025 22:57:45] "POST /chat/send HTTP/1.1" 200 -
+2025-01-16 09:09:29,374 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-16 09:09:29,374 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-16 09:09:29,384 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 09:09:30,457 - WARNING -  * Debugger is active!
+2025-01-16 09:09:30,458 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 09:09:32,229 - INFO - 127.0.0.1 - - [16/Jan/2025 09:09:32] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-16 09:09:32,280 - INFO - 127.0.0.1 - - [16/Jan/2025 09:09:32] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-16 09:09:32,324 - INFO - 127.0.0.1 - - [16/Jan/2025 09:09:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:09:32,366 - INFO - 127.0.0.1 - - [16/Jan/2025 09:09:32] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:09:32,366 - INFO - 127.0.0.1 - - [16/Jan/2025 09:09:32] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 09:09:33,818 - INFO - 127.0.0.1 - - [16/Jan/2025 09:09:33] "GET /chat HTTP/1.1" 200 -
+2025-01-16 09:09:33,831 - INFO - 127.0.0.1 - - [16/Jan/2025 09:09:33] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:09:33,844 - INFO - 127.0.0.1 - - [16/Jan/2025 09:09:33] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:09:36,724 - INFO - 127.0.0.1 - - [16/Jan/2025 09:09:36] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kTHQ.elp0I7Oav3jH9uPC70grkKnjvW0&message=allo&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:09:36,746 - INFO - 127.0.0.1 - - [16/Jan/2025 09:09:36] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:09:36,746 - INFO - 127.0.0.1 - - [16/Jan/2025 09:09:36] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:10:15,342 - INFO - 127.0.0.1 - - [16/Jan/2025 09:10:15] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kTHQ.elp0I7Oav3jH9uPC70grkKnjvW0&message=allo&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:10:15,364 - INFO - 127.0.0.1 - - [16/Jan/2025 09:10:15] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:10:15,374 - INFO - 127.0.0.1 - - [16/Jan/2025 09:10:15] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:10:15,381 - INFO - 127.0.0.1 - - [16/Jan/2025 09:10:15] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 09:10:17,602 - INFO - 127.0.0.1 - - [16/Jan/2025 09:10:17] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kTRw.8l73NRg868xQsuRAmzK7uVwbYEo&message=allo&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:10:17,620 - INFO - 127.0.0.1 - - [16/Jan/2025 09:10:17] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:10:17,631 - INFO - 127.0.0.1 - - [16/Jan/2025 09:10:17] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:11:11,744 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:11:11,744 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:11:11,744 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:11:12,054 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 09:11:13,338 - WARNING -  * Debugger is active!
+2025-01-16 09:11:13,340 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 09:11:30,346 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:30] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kTRw.8l73NRg868xQsuRAmzK7uVwbYEo&message=allo&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:11:30,436 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:30] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:11:30,460 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:30] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:11:30,470 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:30] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 09:11:32,650 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:32] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kTkg.Y50Dy27sbbLlFWyTjbo5-uJg1Io&message=allo&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:11:32,674 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:32] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:11:32,684 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:32] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:11:47,101 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:47] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kTkg.Y50Dy27sbbLlFWyTjbo5-uJg1Io&message=allo&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:11:47,115 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:47] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:11:47,119 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:47] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:11:47,119 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:47] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 09:11:49,438 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:49] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kTow.yXlw6MAF7H5qspLRrivtIc7yORs&message=allo&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:11:49,459 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:49] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:11:49,460 - INFO - 127.0.0.1 - - [16/Jan/2025 09:11:49] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:13:25,711 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:13:25,711 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:13:25,711 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:13:26,062 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 09:13:27,062 - WARNING -  * Debugger is active!
+2025-01-16 09:13:27,062 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 09:13:29,581 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:29] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kTow.yXlw6MAF7H5qspLRrivtIc7yORs&message=allo&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:13:29,615 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:29] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:13:29,622 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:29] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:13:29,622 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:29] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 09:13:31,965 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:31] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUCQ.PdpSf3XWk0LETD5dUubUNj5HgFI&message=allo&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:13:31,989 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:31] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:13:31,994 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:31] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:13:37,356 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:37] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-16 09:13:37,380 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:37] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-16 09:13:37,389 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:37] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:13:37,410 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:37] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:13:38,308 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:38] "GET /chat HTTP/1.1" 200 -
+2025-01-16 09:13:38,328 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:38] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:13:38,330 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:38] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:13:41,353 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:41] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUEg.szauL6GovZ0oefujLE2HCxVhgh8&message=allo&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:13:41,381 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:41] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:13:41,389 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:41] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:13:47,938 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:47] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:13:56,585 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:56] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUFQ.lentrXf0YpBKbMINZWkgnwOu5Lw&message=assda&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:13:56,608 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:56] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:13:56,655 - INFO - 127.0.0.1 - - [16/Jan/2025 09:13:56] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:14:34,346 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:14:34,346 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:14:34,356 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:14:35,500 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 09:14:36,717 - WARNING -  * Debugger is active!
+2025-01-16 09:14:36,717 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 09:14:51,377 - INFO - 127.0.0.1 - - [16/Jan/2025 09:14:51] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUFQ.lentrXf0YpBKbMINZWkgnwOu5Lw&message=assda&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:14:51,483 - INFO - 127.0.0.1 - - [16/Jan/2025 09:14:51] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:14:51,496 - INFO - 127.0.0.1 - - [16/Jan/2025 09:14:51] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:14:51,501 - INFO - 127.0.0.1 - - [16/Jan/2025 09:14:51] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 09:14:53,830 - INFO - 127.0.0.1 - - [16/Jan/2025 09:14:53] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUFQ.lentrXf0YpBKbMINZWkgnwOu5Lw&message=assda&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:14:53,861 - INFO - 127.0.0.1 - - [16/Jan/2025 09:14:53] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:14:53,907 - INFO - 127.0.0.1 - - [16/Jan/2025 09:14:53] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:14:53,911 - INFO - 127.0.0.1 - - [16/Jan/2025 09:14:53] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 09:14:56,274 - INFO - 127.0.0.1 - - [16/Jan/2025 09:14:56] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUXQ.Dgyh7fWZJVs3za3x22aKupWup5M&message=asddsadas&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:14:56,296 - INFO - 127.0.0.1 - - [16/Jan/2025 09:14:56] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:14:56,338 - INFO - 127.0.0.1 - - [16/Jan/2025 09:14:56] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:15:57,536 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:15:57,536 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:15:57,536 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:15:58,298 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 09:15:59,469 - WARNING -  * Debugger is active!
+2025-01-16 09:15:59,479 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 09:16:00,021 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:00] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUXQ.Dgyh7fWZJVs3za3x22aKupWup5M&message=asddsadas&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:16:00,063 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:00] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:16:00,087 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:00] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:16:00,090 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:00] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 09:16:04,113 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:04] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUoA.M1ZecO500CfKmYbbK5u7CUvAHNc&message=sdadassda&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:16:04,131 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:04] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:16:04,170 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:04] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:16:09,693 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.14:5000
+2025-01-16 09:16:09,693 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-16 09:16:09,703 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 09:16:10,719 - WARNING -  * Debugger is active!
+2025-01-16 09:16:10,720 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 09:16:12,196 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:12] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUoA.M1ZecO500CfKmYbbK5u7CUvAHNc&message=sdadassda&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:16:12,228 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:12] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:16:12,252 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:12] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:16:12,254 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:12] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 09:16:13,488 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:13] "GET /chat HTTP/1.1" 200 -
+2025-01-16 09:16:13,509 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:13] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:16:13,552 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:13] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:16:15,480 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:15] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUrQ.IFvxY0WoPmgti2cKHZDyBThQIl4&message=fdsfddfs&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:16:15,499 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:15] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:16:15,543 - INFO - 127.0.0.1 - - [16/Jan/2025 09:16:15] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:17:12,773 - INFO - 127.0.0.1 - - [16/Jan/2025 09:17:12] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUrQ.IFvxY0WoPmgti2cKHZDyBThQIl4&message=fdsfddfs&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:17:12,809 - INFO - 127.0.0.1 - - [16/Jan/2025 09:17:12] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:17:12,853 - INFO - 127.0.0.1 - - [16/Jan/2025 09:17:12] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:17:12,857 - INFO - 127.0.0.1 - - [16/Jan/2025 09:17:12] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 09:17:16,472 - ERROR - Erreur lors de l'envoi du message: name 'Response' is not defined
+2025-01-16 09:17:16,472 - INFO - 127.0.0.1 - - [16/Jan/2025 09:17:16] "[35m[1mPOST /chat/send HTTP/1.1[0m" 500 -
+2025-01-16 09:17:40,762 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:17:40,762 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:17:40,762 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:17:41,314 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 09:17:42,321 - WARNING -  * Debugger is active!
+2025-01-16 09:17:42,322 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 09:17:43,068 - INFO - 127.0.0.1 - - [16/Jan/2025 09:17:43] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUrQ.IFvxY0WoPmgti2cKHZDyBThQIl4&message=fdsfddfs&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:17:43,097 - INFO - 127.0.0.1 - - [16/Jan/2025 09:17:43] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:17:43,124 - INFO - 127.0.0.1 - - [16/Jan/2025 09:17:43] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:17:43,126 - INFO - 127.0.0.1 - - [16/Jan/2025 09:17:43] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 09:17:45,247 - ERROR - Erreur lors de l'envoi du message: name 'stream_with_context' is not defined
+2025-01-16 09:17:45,247 - INFO - 127.0.0.1 - - [16/Jan/2025 09:17:45] "[35m[1mPOST /chat/send HTTP/1.1[0m" 500 -
+2025-01-16 09:18:08,473 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:18:08,473 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:18:08,473 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:18:08,473 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:18:09,626 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 09:18:10,649 - WARNING -  * Debugger is active!
+2025-01-16 09:18:10,650 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 09:18:11,939 - INFO - 127.0.0.1 - - [16/Jan/2025 09:18:11] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUrQ.IFvxY0WoPmgti2cKHZDyBThQIl4&message=fdsfddfs&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:18:11,969 - INFO - 127.0.0.1 - - [16/Jan/2025 09:18:11] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:18:11,996 - INFO - 127.0.0.1 - - [16/Jan/2025 09:18:11] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:18:11,999 - INFO - 127.0.0.1 - - [16/Jan/2025 09:18:11] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 09:18:15,172 - INFO - 127.0.0.1 - - [16/Jan/2025 09:18:15] "POST /chat/send HTTP/1.1" 200 -
+2025-01-16 09:19:02,801 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:19:02,801 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:19:02,801 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:19:03,051 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 09:19:04,056 - WARNING -  * Debugger is active!
+2025-01-16 09:19:04,056 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 09:19:08,851 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask\\app.py', reloading
+2025-01-16 09:19:08,861 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask_login\\utils.py', reloading
+2025-01-16 09:19:08,871 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\flask\\templating.py', reloading
+2025-01-16 09:19:08,881 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\jinja2\\environment.py', reloading
+2025-01-16 09:19:08,891 - INFO -  * Detected change in 'C:\\Users\\Francis\\radioconda\\Lib\\site-packages\\werkzeug\\routing\\map.py', reloading
+2025-01-16 09:19:08,901 - INFO - 127.0.0.1 - - [16/Jan/2025 09:19:08] "[35m[1mGET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUrQ.IFvxY0WoPmgti2cKHZDyBThQIl4&message=fdsfddfs&submit=Envoyer HTTP/1.1[0m" 500 -
+2025-01-16 09:19:08,944 - INFO - 127.0.0.1 - - [16/Jan/2025 09:19:08] "[36mGET /chat?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2025-01-16 09:19:08,944 - INFO - 127.0.0.1 - - [16/Jan/2025 09:19:08] "[36mGET /chat?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2025-01-16 09:19:08,984 - INFO - 127.0.0.1 - - [16/Jan/2025 09:19:08] "[36mGET /chat?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-16 09:19:08,993 - INFO - 127.0.0.1 - - [16/Jan/2025 09:19:08] "[36mGET /chat?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2025-01-16 09:19:09,230 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 09:19:10,237 - WARNING -  * Debugger is active!
+2025-01-16 09:19:10,238 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 09:20:18,399 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:20:18,399 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:20:18,399 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:20:18,399 - INFO -  * Detected change in 'C:\\Users\\Francis\\Documents\\GitHub\\edxo-dev\\routes\\chat.py', reloading
+2025-01-16 09:20:18,710 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-16 09:20:19,691 - WARNING -  * Debugger is active!
+2025-01-16 09:20:19,691 - INFO -  * Debugger PIN: 342-468-122
+2025-01-16 09:20:21,644 - INFO - 127.0.0.1 - - [16/Jan/2025 09:20:21] "GET /chat?csrf_token=Ijc4MDJiYTc3NDlmMjljMzllODNiY2I1ODA2ZTlmNDUyOGU4ZmMzOWMi.Z4kUrQ.IFvxY0WoPmgti2cKHZDyBThQIl4&message=fdsfddfs&submit=Envoyer HTTP/1.1" 200 -
+2025-01-16 09:20:21,672 - INFO - 127.0.0.1 - - [16/Jan/2025 09:20:21] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-16 09:20:21,704 - INFO - 127.0.0.1 - - [16/Jan/2025 09:20:21] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-16 09:20:21,707 - INFO - 127.0.0.1 - - [16/Jan/2025 09:20:21] "[36mGET /static/assets/favicon.ico HTTP/1.1[0m" 304 -
+2025-01-16 09:20:24,888 - INFO - 127.0.0.1 - - [16/Jan/2025 09:20:24] "POST /chat/send HTTP/1.1" 200 -
+2025-01-16 09:20:36,451 - INFO - 127.0.0.1 - - [16/Jan/2025 09:20:36] "POST /chat/send HTTP/1.1" 200 -
+2025-01-16 09:20:53,293 - INFO - 127.0.0.1 - - [16/Jan/2025 09:20:53] "POST /chat/send HTTP/1.1" 200 -
+2025-01-16 09:20:59,365 - INFO - 127.0.0.1 - - [16/Jan/2025 09:20:59] "POST /chat/send HTTP/1.1" 200 -
