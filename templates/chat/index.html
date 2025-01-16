@@ -230,23 +230,40 @@ document.getElementById('message-input').addEventListener('input', function () {
     this.style.height = (this.scrollHeight) + 'px';  // Adjust height based on content
 });
 
+const DEBUG = true;
+function debugLog(...args) {
+    if (DEBUG) {
+        console.log('[Chat Debug]', ...args);
+    }
+}
+
+// Modified form submit handler
 document.getElementById('chat-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-
+    debugLog('Form submitted');
+    
     const form = e.target;
     const formData = new FormData(form);
-
+    
     const message = formData.get('message').trim();
-    if (!message) return;
-
+    if (!message) {
+        debugLog('Empty message, ignoring');
+        return;
+    }
+    
+    debugLog('Message to send:', message);
+    
     // Add user message to chat
     addMessage('Vous', message, 'user');
     form.reset();
     document.getElementById('message-input').style.height = '40px';
-
-    document.getElementById('message-input').focus();
-
+    
+    // Create AI message placeholder
+    debugLog('Creating AI message placeholder');
+    const aiMessage = addMessage('EDxo', '', 'ai');
+    
     try {
+        debugLog('Sending fetch request');
         const response = await fetch('{{ url_for("chat.send_message") }}', {
             method: 'POST',
             headers: {
@@ -258,24 +275,35 @@ document.getElementById('chat-form').addEventListener('submit', async (e) => {
                 csrf_token: '{{ form.csrf_token.current_token }}'
             })
         });
-
+        
+        debugLog('Response received:', response);
+        debugLog('Response headers:', Object.fromEntries([...response.headers]));
+        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        const data = await response.json();
-
-        // Handle the response
-        if (data.error) {
-            addMessage('Système', data.error, 'system', true);
-        } else if (data.content) {
-            addMessage('EDxo', data.content, 'ai');
+        
+        const contentType = response.headers.get('content-type');
+        debugLog('Content-Type:', contentType);
+        
+        if (contentType && contentType.includes('text/event-stream')) {
+            debugLog('Starting stream handling');
+            const reader = response.body.getReader();
+            await handleStreamResponse(reader, aiMessage);
         } else {
-            addMessage('Système', 'Erreur: Format de réponse inattendu', 'system', true);
+            debugLog('Handling regular JSON response');
+            const data = await response.json();
+            debugLog('JSON data:', data);
+            
+            if (data.error) {
+                addMessage('Système', data.error, 'system', true);
+            } else {
+                aiMessage.querySelector('.message-content').innerHTML = marked.parse(data.content);
+            }
         }
-
     } catch (error) {
         console.error('Error:', error);
+        debugLog('Error occurred:', error);
         addMessage('Système', error.message, 'system', true);
     }
 });
@@ -308,6 +336,108 @@ function toggleChatFlow() {
     
     // Scroller
     scrollChat(true);
+}
+
+async function handleStreamResponse(reader, messageElement) {
+    debugLog('=== Starting Stream Handler ===');
+    const decoder = new TextDecoder();
+    let accumulatedContent = '';
+    const contentDiv = messageElement.querySelector('.message-content');
+    
+    try {
+        let buffer = '';
+        let chunkCounter = 0;
+        
+        while (true) {
+            debugLog(`Reading chunk #${++chunkCounter}`);
+            const { value, done } = await reader.read();
+            
+            if (done) {
+                debugLog('Stream complete');
+                break;
+            }
+            
+            // Log raw chunk
+            debugLog('Raw chunk received:', value);
+            
+            // Decode and add to buffer
+            const chunk = decoder.decode(value, { stream: true });
+            debugLog('Decoded chunk:', chunk);
+            buffer += chunk;
+            
+            // Process complete messages
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop() || '';
+            
+            debugLog(`Processing ${lines.length} complete messages, ${buffer.length} bytes remaining in buffer`);
+            
+            for (const line of lines) {
+                if (line.trim() && line.startsWith('data: ')) {
+                    try {
+                        const jsonStr = line.slice(6);
+                        debugLog('Parsing JSON:', jsonStr);
+                        
+                        const data = JSON.parse(jsonStr);
+                        debugLog('Parsed data:', data);
+                        
+                        switch (data.type) {
+                            case 'content':
+                                debugLog('Content update');
+                                accumulatedContent += data.content;
+                                contentDiv.innerHTML = marked.parse(accumulatedContent);
+                                
+                                debugLog('Highlighting code blocks');
+                                contentDiv.querySelectorAll('pre code').forEach((block) => {
+                                    hljs.highlightElement(block);
+                                });
+                                break;
+                                
+                            case 'processing':
+                                debugLog('Processing message');
+                                contentDiv.innerHTML = marked.parse(accumulatedContent + 
+                                    '\n\n*' + data.content + '*');
+                                break;
+                                
+                            case 'error':
+                                debugLog('Error message:', data.content);
+                                messageElement.classList.add('error-message');
+                                contentDiv.innerHTML = marked.parse(data.content);
+                                break;
+                                
+                            case 'done':
+                                debugLog('Stream done');
+                                break;
+                                
+                            default:
+                                debugLog('Unknown message type:', data.type);
+                        }
+                        
+                        // Scroll handling
+                        if (data.type !== 'done') {
+                            debugLog('Scrolling to message');
+                            messageElement.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'end'
+                            });
+                        }
+                        
+                    } catch (e) {
+                        console.error('JSON parsing error:', e);
+                        debugLog('Problematic line:', line);
+                        debugLog('Parse error:', e);
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Stream error:', error);
+        debugLog('Stream error:', error);
+        contentDiv.innerHTML = marked.parse(
+            accumulatedContent + '\n\n**Erreur de lecture du flux:** ' + error.message
+        );
+    }
+    
+    debugLog('=== Stream Handler Complete ===');
 }
 </script>
 {% endblock %}
