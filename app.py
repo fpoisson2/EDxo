@@ -32,7 +32,7 @@ print(os.path.abspath('programme.db'))
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['WTF_CSRF_ENABLED'] = True
 app.config['CKEDITOR_PKG_TYPE'] = 'standard'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)  
 app.config['SESSION_COOKIE_SECURE'] = True  # Use HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Mitigate CSRF
