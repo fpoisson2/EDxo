@@ -188,7 +188,6 @@ def send_message():
     
     def generate_stream():
         try:
-            # Création des messages avec l'historique actuel
             messages = [
                 {
                     "role": "system",
@@ -198,12 +197,12 @@ def send_message():
             messages.extend(current_history)
             messages.append({"role": "user", "content": message})
             
-            # Sauvegarde du message utilisateur dans la BD
+            # Save user message
             new_message = ChatHistory(user_id=current_user.id, role="user", content=message)
             db.session.add(new_message)
             db.session.commit()
             
-            # Premier appel à OpenAI
+            # Initial response
             initial_response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=messages,
@@ -221,18 +220,26 @@ def send_message():
                     collected_content += content
                     yield f"data: {json.dumps({'type': 'content', 'content': content})}\n\n"
                 elif hasattr(chunk.choices[0].delta, 'function_call'):
+                    # Send function call status
+                    yield f"data: {json.dumps({'type': 'function_call', 'content': 'Appel de fonction en cours...'})}\n\n"
+                    
                     if function_call_data is None and hasattr(chunk.choices[0].delta.function_call, 'name'):
                         function_call_data = chunk.choices[0].delta.function_call.name
                     if hasattr(chunk.choices[0].delta.function_call, 'arguments'):
                         function_args += chunk.choices[0].delta.function_call.arguments
             
-            # Traitement de la function call
+            # Handle function call
             if function_call_data and function_args:
+                yield f"data: {json.dumps({'type': 'processing', 'content': 'Traitement des données du plan-cadre...'})}\n\n"
+                
                 try:
                     args = json.loads(function_args)
                     result = handle_get_plan_cadre(args)
                     
                     if result:
+                        # Send processing status
+                        yield f"data: {json.dumps({'type': 'processing', 'content': 'Analyse des informations...'})}\n\n"
+                        
                         follow_up_messages = messages.copy()
                         follow_up_messages.extend([
                             {
@@ -250,6 +257,7 @@ def send_message():
                             }
                         ])
                         
+                        # Process follow-up response
                         follow_up_response = client.chat.completions.create(
                             model="gpt-4o",
                             messages=follow_up_messages,
@@ -263,8 +271,8 @@ def send_message():
                                 follow_up_content += content
                                 yield f"data: {json.dumps({'type': 'content', 'content': content})}\n\n"
                         
+                        # Save response
                         if follow_up_content:
-                            # Sauvegarde de la réponse dans la BD
                             assistant_message = ChatHistory(
                                 user_id=current_user.id,
                                 role="assistant",
@@ -272,50 +280,15 @@ def send_message():
                             )
                             db.session.add(assistant_message)
                             db.session.commit()
-                    else:
-                        error_msg = "Plan-cadre non trouvé"
-                        assistant_message = ChatHistory(
-                            user_id=current_user.id,
-                            role="assistant",
-                            content=error_msg
-                        )
-                        db.session.add(assistant_message)
-                        db.session.commit()
-                        yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
-                        
+                    
                 except Exception as e:
-                    error_msg = f"Erreur: {str(e)}"
-                    assistant_message = ChatHistory(
-                        user_id=current_user.id,
-                        role="assistant",
-                        content=error_msg
-                    )
-                    db.session.add(assistant_message)
-                    db.session.commit()
+                    error_msg = f"Erreur lors du traitement: {str(e)}"
                     yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
-            else:
-                # Sauvegarde de la réponse normale dans la BD
-                if collected_content:
-                    assistant_message = ChatHistory(
-                        user_id=current_user.id,
-                        role="assistant",
-                        content=collected_content
-                    )
-                    db.session.add(assistant_message)
-                    db.session.commit()
             
-            print("\nHISTORIQUE FINAL:")
-            recent_messages = ChatHistory.get_recent_history(current_user.id)
-            final_history = [
-                {"role": msg.role, "content": msg.content}
-                for msg in reversed(recent_messages)
-            ]
-            print(json.dumps(final_history, indent=2))
             yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
             
         except Exception as e:
             error_msg = f"Erreur: {str(e)}"
-            print(f"Erreur dans generate_stream: {error_msg}")
             yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
             yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
     

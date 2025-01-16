@@ -107,6 +107,28 @@ body, html {
     margin-bottom: 4px;
 }
 
+.processing-status, .function-call-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    margin-top: 8px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    font-style: italic;
+    color: #666;
+}
+
+.spinner {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -348,106 +370,83 @@ function toggleChatFlow() {
     scrollChat(true);
 }
 
+const styleSheet = document.createElement("style");
+styleSheet.textContent = styles;
+document.head.appendChild(styleSheet);
+
 async function handleStreamResponse(reader, messageElement) {
-    debugLog('=== Starting Stream Handler ===');
     const decoder = new TextDecoder();
     let accumulatedContent = '';
     const contentDiv = messageElement.querySelector('.message-content');
     
     try {
         let buffer = '';
-        let chunkCounter = 0;
+        let isProcessing = false;
         
         while (true) {
-            debugLog(`Reading chunk #${++chunkCounter}`);
             const { value, done } = await reader.read();
             
-            if (done) {
-                debugLog('Stream complete');
-                break;
-            }
+            if (done) break;
             
-            // Log raw chunk
-            debugLog('Raw chunk received:', value);
-            
-            // Decode and add to buffer
             const chunk = decoder.decode(value, { stream: true });
-            debugLog('Decoded chunk:', chunk);
             buffer += chunk;
             
-            // Process complete messages
             const lines = buffer.split('\n\n');
             buffer = lines.pop() || '';
-            
-            debugLog(`Processing ${lines.length} complete messages, ${buffer.length} bytes remaining in buffer`);
             
             for (const line of lines) {
                 if (line.trim() && line.startsWith('data: ')) {
                     try {
-                        const jsonStr = line.slice(6);
-                        debugLog('Parsing JSON:', jsonStr);
-                        
-                        const data = JSON.parse(jsonStr);
-                        debugLog('Parsed data:', data);
+                        const data = JSON.parse(line.slice(6));
                         
                         switch (data.type) {
                             case 'content':
-                                debugLog('Content update');
+                                isProcessing = false;
                                 accumulatedContent += data.content;
                                 contentDiv.innerHTML = marked.parse(accumulatedContent);
-                                
-                                debugLog('Highlighting code blocks');
-                                contentDiv.querySelectorAll('pre code').forEach((block) => {
-                                    hljs.highlightElement(block);
-                                });
                                 break;
                                 
                             case 'processing':
-                                debugLog('Processing message');
-                                contentDiv.innerHTML = marked.parse(accumulatedContent + 
-                                    '\n\n*' + data.content + '*');
-                                break;
-                                
-                            case 'error':
-                                debugLog('Error message:', data.content);
-                                messageElement.classList.add('error-message');
-                                contentDiv.innerHTML = marked.parse(data.content);
+                            case 'function_call':
+                                isProcessing = true;
+                                // Afficher le message de statut sans l'ajouter au contenu accumulé
+                                contentDiv.innerHTML = marked.parse(accumulatedContent) + 
+                                    `<div class="processing-status">
+                                        <span class="spinner">⟳</span> 
+                                        ${data.content}
+                                    </div>`;
                                 break;
                                 
                             case 'done':
-                                debugLog('Stream done');
+                                isProcessing = false;
+                                // S'assurer que seul le contenu final est affiché
+                                contentDiv.innerHTML = marked.parse(accumulatedContent);
                                 break;
-                                
-                            default:
-                                debugLog('Unknown message type:', data.type);
                         }
                         
-                        // Scroll handling
-                        if (data.type !== 'done') {
-                            debugLog('Scrolling to message');
-                            messageElement.scrollIntoView({ 
-                                behavior: 'smooth', 
-                                block: 'end'
-                            });
-                        }
-                        
+                        // Highlight code blocks if any
+                        contentDiv.querySelectorAll('pre code').forEach((block) => {
+                            hljs.highlightElement(block);
+                        });
                     } catch (e) {
                         console.error('JSON parsing error:', e);
-                        debugLog('Problematic line:', line);
-                        debugLog('Parse error:', e);
                     }
                 }
             }
         }
+
+        // S'assurer qu'à la fin, on n'affiche que le contenu final sans les messages de statut
+        if (!isProcessing) {
+            contentDiv.innerHTML = marked.parse(accumulatedContent);
+        }
+        
     } catch (error) {
         console.error('Stream error:', error);
-        debugLog('Stream error:', error);
         contentDiv.innerHTML = marked.parse(
             accumulatedContent + '\n\n**Erreur de lecture du flux:** ' + error.message
         );
     }
-    
-    debugLog('=== Stream Handler Complete ===');
 }
+
 </script>
 {% endblock %}
