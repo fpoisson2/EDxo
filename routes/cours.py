@@ -1,5 +1,6 @@
 # plan_cadre.py
 from flask import Blueprint, Flask, render_template, redirect, url_for, request, flash, send_file, jsonify
+from flask_login import current_user
 from forms import (
     ProgrammeForm,
     CompetenceForm,
@@ -910,6 +911,13 @@ def view_plan_cadre(cours_id, plan_id):
             )
 
         elif request.method == 'POST':
+            # -- Contrôle du rôle ------------------------------------------
+            # On vérifie que l'utilisateur actuel dispose du rôle admin OU coordo
+            if not (current_user.role == 'admin' or current_user.role == 'coordo'):
+                flash("Vous n'avez pas l'autorisation de modifier ce plan-cadre.", 'danger')
+                return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
+            # -------------------------------------------------------------
+
             print("DEBUG - Form data:", request.form)  # Pour voir les données reçues
             plan_form = prepare_plan_form(request.form)
             if plan_form.validate_on_submit():
