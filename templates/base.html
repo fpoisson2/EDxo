@@ -28,6 +28,9 @@
         <div>
           {% if current_user.is_authenticated %}
             <span>Connecté en tant que {{ current_user.username }}</span>
+<a href="{{ url_for('chat.index') }}" class="btn btn-outline-primary btn-sm ms-2">
+  <i class="bi bi-chat"></i>  <!-- Icône Bootstrap pour Chat -->
+</a>
             <a href="{{ url_for('main.logout') }}" class="btn btn-outline-danger btn-sm ms-2">Se déconnecter</a>
             <a href="{{ url_for('settings.parametres') }}" class="btn btn-outline-secondary btn-sm ms-2">Paramètres</a>
           {% else %}
