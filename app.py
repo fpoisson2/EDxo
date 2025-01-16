@@ -1,4 +1,5 @@
 from flask import Flask, session
+import tempfile
 from flask_login import current_user
 from flask_ckeditor import CKEditor
 from dotenv import load_dotenv
@@ -53,21 +54,16 @@ def before_request():
     try:
         # Test the database connection
         db.session.execute(text("SELECT 1"))
-        db.session.commit()  # Commit to ensure the session is active
+        db.session.commit()
         print("Database connection successful")
-        
-        # Test retrieving a Cours record (first one in the database)
-        cours = Cours.query.first()  # Or you can use .get() or other query methods
-        if cours:
-            print(f"Retrieved Cours: {cours.nom} (ID: {cours.id})")
-        else:
-            print("No Cours record found in the database.")
+
+        session.permanent = True
+        now = datetime.now(timezone.utc)
+        session['last_activity'] = now.isoformat()
         
     except SQLAlchemyError as e:
-        # Catch database-related errors
         print(f"Database connection failed: {e}")
     except Exception as e:
-        # Catch any other unexpected errors
         print(f"Unexpected error: {e}")
 
 
@@ -94,7 +90,7 @@ def before_request():
 
 @app.after_request
 def after_request(response):
-    if current_user.is_authenticated:
+    if current_user.is_authenticated and session.modified:
         session.modified = True  # Optionally regenerate session ID
     return response
 
