@@ -244,6 +244,8 @@ document.getElementById('chat-form').addEventListener('submit', async (e) => {
     form.reset();
     document.getElementById('message-input').style.height = '40px';
 
+    document.getElementById('message-input').focus();
+
     try {
         const response = await fetch('{{ url_for("chat.send_message") }}', {
             method: 'POST',
