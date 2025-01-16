@@ -128,8 +128,12 @@ class GenerateContentForm(FlaskForm):
     submit = SubmitField('Générer le plan-cadre')
 
 class LoginForm(FlaskForm):
-    username = StringField('Nom d\'utilisateur', validators=[DataRequired(), Length(min=3, max=25)])
-    password = PasswordField('Mot de passe', validators=[DataRequired(), Length(min=8)])
+    username = StringField('Nom d\'utilisateur', 
+                         validators=[DataRequired(), Length(min=3, max=25)],
+                         render_kw={"autocomplete": "username"})
+    password = PasswordField('Mot de passe', 
+                          validators=[DataRequired(), Length(min=8)],
+                          render_kw={"autocomplete": "current-password"})
     submit = SubmitField('Se connecter')
     
 class PlanCadreCompetenceCertifieeForm(Form):
