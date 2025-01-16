@@ -176,7 +176,6 @@ function scrollChat(smooth = false) {
     chatMessages.scrollTo(options);
 }
 
-// Modifier la fonction addMessage pour gérer les deux modes de flux
 function addMessage(sender, message, type = 'user', isError = false) {
     const chatMessages = document.getElementById('chat-messages');
     const messageDiv = document.createElement('div');
@@ -184,45 +183,47 @@ function addMessage(sender, message, type = 'user', isError = false) {
     // Déterminer si le flux est inversé
     const isReverseFlow = window.getComputedStyle(chatMessages).flexDirection === 'column-reverse';
 
-    // Set appropriate classes based on message type
+    // Définir les classes en fonction du type de message
     messageDiv.className = `chat-message ${type}-message`;
     if (isError) messageDiv.classList.add('error-message');
 
-    // Create sender element
+    // Créer l'élément pour le nom de l'émetteur
     const senderDiv = document.createElement('div');
     senderDiv.className = 'message-sender';
     senderDiv.textContent = sender;
 
-    // Create content element with Markdown rendering
+    // Créer l'élément de contenu avec le rendu Markdown
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
     contentDiv.innerHTML = type === 'user' ? message : marked.parse(message);
 
-    // Add elements to message container
+    // Ajouter les éléments à notre conteneur
     messageDiv.appendChild(senderDiv);
     messageDiv.appendChild(contentDiv);
 
-    // Ajouter le message selon le mode de flux
+    // Insérer le message dans le conteneur en fonction du mode de flux
     if (isReverseFlow) {
-        // Mode reverse : ajouter au début
+        // En mode reverse, l'ajout se fait en début de liste
         chatMessages.insertBefore(messageDiv, chatMessages.firstChild);
     } else {
-        // Mode normal : ajouter à la fin
+        // En mode normal, l'ajout se fait à la fin
         chatMessages.appendChild(messageDiv);
     }
 
-    // Scroller après un court délai
-    setTimeout(() => {
-        scrollChat(true);
-    }, 100);
-
-    // Initialize syntax highlighting for code blocks
+    // Initialisation du code de syntaxe si nécessaire
     messageDiv.querySelectorAll('pre code').forEach((block) => {
         hljs.highlightElement(block);
     });
 
+    // SCROLL : faire défiler jusqu'au nouveau message
+    // Avec un léger délai pour s'assurer que le message soit bien ajouté au DOM
+    setTimeout(() => {
+        messageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+
     return messageDiv;
 }
+
 
 document.getElementById('message-input').addEventListener('input', function () {
     this.style.height = '40px';  // Reset height to default
