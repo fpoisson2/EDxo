@@ -16,6 +16,8 @@ class User(UserMixin, db.Model):
     openai_key = db.Column(db.Text, nullable=True)
     cegep_id = db.Column(db.Integer, nullable=True)
     department_id = db.Column(db.Integer, nullable=True)
+    credits = db.Column(db.Float, nullable=False, default=0.0)
+
 
     def __repr__(self):
         return f"<User {self.username}>"

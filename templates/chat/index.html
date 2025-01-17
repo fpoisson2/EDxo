@@ -290,10 +290,6 @@ document.getElementById('chat-form').addEventListener('submit', async (e) => {
     form.reset();
     document.getElementById('message-input').style.height = '40px';
     
-    // Create AI message placeholder
-    debugLog('Creating AI message placeholder');
-    const aiMessage = addMessage('EDxo', '', 'ai');
-    
     try {
         debugLog('Sending fetch request');
         const response = await fetch('{{ url_for("chat.send_message") }}', {
@@ -311,18 +307,28 @@ document.getElementById('chat-form').addEventListener('submit', async (e) => {
         debugLog('Response received:', response);
         debugLog('Response headers:', Object.fromEntries([...response.headers]));
         
+        const contentType = response.headers.get('content-type');
+        debugLog('Content-Type:', contentType);
+
+        // Si la réponse n'est pas ok, on vérifie d'abord s'il y a un message d'erreur JSON
         if (!response.ok) {
+            const errorData = await response.json();
+            debugLog('Error response:', errorData);
+            if (errorData.error) {
+                addMessage('Système', errorData.error, 'system', true);
+                return;
+            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const contentType = response.headers.get('content-type');
-        debugLog('Content-Type:', contentType);
-        
+        // Si c'est un stream, on traite normalement
         if (contentType && contentType.includes('text/event-stream')) {
             debugLog('Starting stream handling');
             const reader = response.body.getReader();
+            const aiMessage = addMessage('EDxo', '', 'ai');
             await handleStreamResponse(reader, aiMessage);
         } else {
+            // Sinon on traite comme une réponse JSON normale
             debugLog('Handling regular JSON response');
             const data = await response.json();
             debugLog('JSON data:', data);
@@ -330,13 +336,14 @@ document.getElementById('chat-form').addEventListener('submit', async (e) => {
             if (data.error) {
                 addMessage('Système', data.error, 'system', true);
             } else {
+                const aiMessage = addMessage('EDxo', '', 'ai');
                 aiMessage.querySelector('.message-content').innerHTML = marked.parse(data.content);
             }
         }
     } catch (error) {
         console.error('Error:', error);
         debugLog('Error occurred:', error);
-        addMessage('Système', error.message, 'system', true);
+        addMessage('Système', `Une erreur est survenue: ${error.message}`, 'system', true);
     }
 });
 

@@ -4,8 +4,40 @@ from openai import OpenAI
 from forms import ChatForm
 from models import User, PlanCadre, db, ChatHistory
 import json
+import tiktoken
+
+encoding = tiktoken.encoding_for_model("gpt-4o")
 
 chat = Blueprint('chat', __name__)
+
+def estimate_tokens_for_text(text, model="gpt-4o"):
+    """Retourne une estimation du nombre de tokens d'un texte pur avec des prints de débogage."""
+    
+    print(f"Texte d'entrée : {text}")
+    print(f"Modèle demandé : {model}")
+    
+    try:
+        encoding = tiktoken.encoding_for_model(model)
+        print(f"Encodage sélectionné pour le modèle {model}: {encoding.name}")
+    except KeyError:
+        print(f"⚠️ Modèle '{model}' non trouvé. Sélection d'un encodage alternatif...")
+
+        # Vérifier les encodages disponibles
+        available_encodings = tiktoken.list_encoding_names()
+        print(f"Encodages disponibles : {available_encodings}")
+
+        # Sélectionner un encodage de repli
+        encoding_name = "o200k_base" if "o200k_base" in available_encodings else "cl100k_base"
+        encoding = tiktoken.get_encoding(encoding_name)
+        
+        print(f"Encodage de repli sélectionné : {encoding.name}")
+
+    # Encodage du texte
+    encoded_text = encoding.encode(text)
+    print(f"Texte encodé : {encoded_text}")
+    print(f"Nombre de tokens : {len(encoded_text)}")
+    
+    return len(encoded_text)
 
 def get_plan_cadre_function():
     """Définition de la fonction pour OpenAI"""
@@ -153,7 +185,6 @@ def index():
     return render_template('chat/index.html', form=form)
 
 
-# Dans routes/chat.py
 @chat.route('/chat/send', methods=['POST'])
 @login_required
 def send_message():
@@ -165,7 +196,7 @@ def send_message():
     recent_messages = ChatHistory.get_recent_history(current_user.id)
     current_history = [
         {"role": msg.role, "content": msg.content}
-        for msg in reversed(recent_messages)  # Inverser pour avoir l'ordre chronologique
+        for msg in reversed(recent_messages)
     ]
     
     print("\nHISTORIQUE ACTUEL:")
@@ -175,6 +206,13 @@ def send_message():
     data = request.get_json()
     if not data or 'message' not in data:
         return jsonify({'error': 'Message manquant'}), 400
+        
+    # Vérification des crédits de l'utilisateur
+    user = User.query.get(current_user.id)
+    if user.credits is None:
+        user.credits = 0.0
+    if user.credits <= 0:
+        return jsonify({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}), 403
         
     message = data.get('message')
     print(f"\nMESSAGE REÇU: {message}")
@@ -201,34 +239,46 @@ def send_message():
             new_message = ChatHistory(user_id=current_user.id, role="user", content=message)
             db.session.add(new_message)
             db.session.commit()
+
+            model = "gpt-4o"
+            prompt_text = "\n".join([msg["content"] for msg in messages])
+            prompt_tokens = estimate_tokens_for_text(prompt_text, model)
             
             # Initial response
             initial_response = client.chat.completions.create(
-                model="gpt-4o",
+                model=model,
                 messages=messages,
                 functions=[get_plan_cadre_function()],
                 stream=True
             )
             
+            output_chunks = []
             function_call_data = None
             function_args = ""
             collected_content = ""
-            
+
             for chunk in initial_response:
                 if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
+                    output_chunks.append(content)
                     collected_content += content
                     yield f"data: {json.dumps({'type': 'content', 'content': content})}\n\n"
                 elif hasattr(chunk.choices[0].delta, 'function_call'):
-                    # Send function call status
+                    fc = chunk.choices[0].delta.function_call
                     yield f"data: {json.dumps({'type': 'function_call', 'content': 'Appel de fonction en cours...'})}\n\n"
-                    
-                    if function_call_data is None and hasattr(chunk.choices[0].delta.function_call, 'name'):
-                        function_call_data = chunk.choices[0].delta.function_call.name
-                    if hasattr(chunk.choices[0].delta.function_call, 'arguments'):
-                        function_args += chunk.choices[0].delta.function_call.arguments
+                    if function_call_data is None and hasattr(fc, 'name'):
+                        function_call_data = fc.name
+                    if hasattr(fc, 'arguments'):
+                        function_args += fc.arguments
+
+            full_output = "".join(output_chunks)
+            completion_tokens = estimate_tokens_for_text(full_output, model)
+
+            cost_input_initial = (prompt_tokens / 1000000) * 2.5
+            cost_output_initial = (completion_tokens / 1000000) * 10
+            total_cost_initial = cost_input_initial + cost_output_initial
+            total_cost_follow_up = 0
             
-            # Handle function call
             if function_call_data and function_args:
                 yield f"data: {json.dumps({'type': 'processing', 'content': 'Traitement des données du plan-cadre...'})}\n\n"
                 
@@ -237,7 +287,6 @@ def send_message():
                     result = handle_get_plan_cadre(args)
                     
                     if result:
-                        # Send processing status
                         yield f"data: {json.dumps({'type': 'processing', 'content': 'Analyse des informations...'})}\n\n"
                         
                         follow_up_messages = messages.copy()
@@ -257,21 +306,38 @@ def send_message():
                             }
                         ])
                         
-                        # Process follow-up response
                         follow_up_response = client.chat.completions.create(
                             model="gpt-4o",
                             messages=follow_up_messages,
                             stream=True
                         )
-                        
+
+                        follow_up_chunks = []
                         follow_up_content = ""
+                        function_call_follow_up = None
+                        function_args_follow_up = ""
+
                         for chunk in follow_up_response:
                             if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
                                 content = chunk.choices[0].delta.content
+                                follow_up_chunks.append(content)
                                 follow_up_content += content
                                 yield f"data: {json.dumps({'type': 'content', 'content': content})}\n\n"
-                        
-                        # Save response
+                            elif hasattr(chunk.choices[0].delta, 'function_call'):
+                                fc = chunk.choices[0].delta.function_call
+                                yield f"data: {json.dumps({'type': 'function_call', 'content': 'Appel de fonction en cours...'})}\n\n"
+                                if function_call_follow_up is None and hasattr(fc, 'name'):
+                                    function_call_follow_up = fc.name
+                                if hasattr(fc, 'arguments'):
+                                    function_args_follow_up += fc.arguments
+
+                        full_follow_up_output = "".join(follow_up_chunks)
+                        completion_tokens_follow_up = estimate_tokens_for_text(full_follow_up_output, model)
+
+                        cost_input_follow_up = round((prompt_tokens / 1000000) * 2.5, 6)
+                        cost_output_follow_up = round((completion_tokens_follow_up / 1000000) * 10, 6)
+                        total_cost_follow_up = round(cost_input_follow_up + cost_output_follow_up, 6)
+
                         if follow_up_content:
                             assistant_message = ChatHistory(
                                 user_id=current_user.id,
@@ -280,18 +346,35 @@ def send_message():
                             )
                             db.session.add(assistant_message)
                             db.session.commit()
-                    
+
                 except Exception as e:
                     error_msg = f"Erreur lors du traitement: {str(e)}"
                     yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
             
+            total_cost_global = round(total_cost_initial + total_cost_follow_up, 6)
+            
+            # Update user's credits
+            try:
+                user = User.query.get(current_user.id)
+                if user.credits is None:
+                    user.credits = 0.0
+                user.credits = round(user.credits - total_cost_global, 6)
+                db.session.commit()
+                print(f"💰 Crédit utilisateur mis à jour. Nouveau solde: ${user.credits}")
+            except Exception as e:
+                print(f"❌ Erreur lors de la mise à jour du crédit: {str(e)}")
+                # On ne lève pas l'exception pour ne pas interrompre la réponse
+            
+            print(f"Coût estimé initial => input: ${cost_input_initial}, output: ${cost_output_initial}, total: ${total_cost_initial}")
+            print(f"🔹 💰 Coût total combiné: ${total_cost_global}")
+
             yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
             
         except Exception as e:
             error_msg = f"Erreur: {str(e)}"
             yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
             yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
-    
+
     return Response(
         stream_with_context(generate_stream()),
         mimetype='text/event-stream',
