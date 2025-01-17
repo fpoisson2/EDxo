@@ -174,6 +174,33 @@ def liste_programmes_ministeriels():
     programmes = ListeProgrammeMinisteriel.query.all()
     return render_template('liste_programmes_ministeriels.html', programmes=programmes)
 
+@main.route('/get_credit_balance', methods=['GET'])
+@login_required
+def get_credit_balance():
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Not authenticated'}), 401
+        
+    try:
+        # Si on utilise SQLAlchemy
+        user = User.query.get(current_user.id)
+        if user is None:
+            return jsonify({'error': 'User not found'}), 404
+            
+        credit_value = user.credits if user.credits is not None else 0.0
+        
+        # Log pour le debugging
+        print(f"Returning credit value: {credit_value} for user {user.username}")
+        
+        return jsonify({
+            'success': True,
+            'credit': "{:.2f}".format(float(credit_value))
+        })
+    except Exception as e:
+        print(f"Error in get_credit_balance: {str(e)}")  # Log l'erreur
+        return jsonify({
+            'error': str(e),
+            'credit': "0.00"  # Valeur par défaut en cas d'erreur
+        }), 500
 
 @main.route('/get_cegep_details')
 @role_required('admin')
