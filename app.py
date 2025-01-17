@@ -28,7 +28,7 @@ app = Flask(__name__)
 
 login_manager.init_app(app)
 
-print(os.path.abspath('programme.db'))
+#print(os.path.abspath('programme.db'))
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['WTF_CSRF_ENABLED'] = True
@@ -44,7 +44,7 @@ def checkpoint_wal():
         try:
             db.session.execute(text("PRAGMA wal_checkpoint(TRUNCATE);"))
             db.session.commit()
-            print("WAL checkpointed successfully.")
+            #print("WAL checkpointed successfully.")
         except SQLAlchemyError as e:
             print(f"Error during WAL checkpoint: {e}")
 
@@ -55,7 +55,6 @@ def before_request():
         # Test the database connection
         db.session.execute(text("SELECT 1"))
         db.session.commit()
-        print("Database connection successful")
 
         session.permanent = True
         now = datetime.now(timezone.utc)

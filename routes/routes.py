@@ -187,10 +187,6 @@ def get_credit_balance():
             return jsonify({'error': 'User not found'}), 404
             
         credit_value = user.credits if user.credits is not None else 0.0
-        
-        # Log pour le debugging
-        print(f"Returning credit value: {credit_value} for user {user.username}")
-        
         return jsonify({
             'success': True,
             'credit': "{:.2f}".format(float(credit_value))
