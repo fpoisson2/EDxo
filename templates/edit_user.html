@@ -44,6 +44,14 @@
                 <div class="text-danger">{{ error }}</div>
             {% endfor %}
         </div>
+
+        <div class="mb-3">
+            {{ form.openai_key.label(class="form-label") }}
+            {{ form.openai_key(class="form-control", placeholder="Clé API OpenAI") }}
+            {% for error in form.openai_key.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
         
 <div class="mb-3">
     {{ form.programmes.label(class="form-label") }}

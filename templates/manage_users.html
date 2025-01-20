@@ -17,6 +17,7 @@
                             <th>ID</th>
                             <th>Nom d'utilisateur</th>
                             <th>Rôle</th>
+                            <th>Crédits</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -40,10 +41,17 @@
                                     {{ user['role']|capitalize }}
                                 </span>
                             </td>
+                            <td>{{ user['credits']|round(2) }}</td>
                             <td>
                                 <a href="{{ url_for('main.edit_user', user_id=user['id']) }}" class="btn btn-sm btn-outline-secondary">
                                     <i class="bi bi-pencil"></i> Modifier
                                 </a>
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-primary" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#creditModal{{ user['id'] }}">
+                                    <i class="bi bi-currency-dollar"></i> Gérer crédits
+                                </button>
                                 <form method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
                                     {{ delete_forms[user['id']].csrf_token }}
                                     {{ delete_forms[user['id']].user_id(value=user['id']) }}
@@ -51,8 +59,41 @@
                                         <i class="bi bi-trash"></i> Supprimer
                                     </button>
                                 </form>
-                            </td>
 
+                                <!-- Modal pour gérer les crédits -->
+                                <div class="modal fade" id="creditModal{{ user['id'] }}" tabindex="-1" aria-labelledby="creditModalLabel{{ user['id'] }}" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="creditModalLabel{{ user['id'] }}">Gérer les crédits de {{ user['username'] }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form method="POST">
+                                                {{ credit_forms[user['id']].csrf_token }}
+                                                {{ credit_forms[user['id']].user_id(value=user['id']) }}
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Crédits actuels</label>
+                                                        <input type="text" class="form-control" value="{{ user['credits']|round(2) }}" disabled>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        {{ credit_forms[user['id']].amount.label(class="form-label") }}
+                                                        {{ credit_forms[user['id']].amount(class="form-control") }}
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        {{ credit_forms[user['id']].operation.label(class="form-label") }}
+                                                        {{ credit_forms[user['id']].operation(class="form-select") }}
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <button type="submit" name="credit-submit-{{ user['id'] }}" class="btn btn-primary">Confirmer</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
