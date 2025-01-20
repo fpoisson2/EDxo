@@ -21,6 +21,16 @@ from wtforms.widgets import ListWidget, CheckboxInput
 from flask_ckeditor import CKEditorField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
+class CreditManagementForm(FlaskForm):
+    user_id = HiddenField('User ID')
+    amount = FloatField('Montant', validators=[
+        DataRequired(), 
+        NumberRange(min=0.01, message="Le montant doit être supérieur à 0")
+    ])
+    operation = SelectField('Opération', choices=[
+        ('add', 'Ajouter des crédits'),
+        ('remove', 'Retirer des crédits')
+    ])
 
 class ChatForm(FlaskForm):
     message = StringField('Message', validators=[DataRequired()])
@@ -35,10 +45,11 @@ class EditUserForm(FlaskForm):
     user_id = HiddenField('ID')
     username = StringField("Nom d'utilisateur", validators=[DataRequired()])
     password = PasswordField("Nouveau mot de passe", validators=[Optional()])
-    role = SelectField("Rôle", choices=[('admin', 'Admin'), ('professeur', 'Professeur'), ('coordo', 'Coordo'), ('invite', 'Invite')], validators=[DataRequired()])
+    role = SelectField("Rôle", choices=[('admin', 'Admin'), ('professeur', 'Professeur'), ('cp', 'CP'), ('coordo', 'Coordo'), ('invite', 'Invite')], validators=[DataRequired()])
     cegep_id = SelectField("Cégep", coerce=int, validators=[Optional()])
     department_id = SelectField("Département", coerce=int, validators=[Optional()])
     programmes = MultiCheckboxField("Programmes", coerce=int, default=[])
+    openai_key = StringField('Clé API OpenAI')
     submit = SubmitField("Enregistrer les modifications")
 
     def __init__(self, *args, **kwargs):

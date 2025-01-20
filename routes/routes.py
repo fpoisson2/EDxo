@@ -36,7 +36,8 @@ from forms import (
     DeleteForm,
     EditUserForm,
     ProgrammeMinisterielForm,
-    ProgrammeForm
+    ProgrammeForm,
+    CreditManagementForm
 )
 from flask_ckeditor import CKEditor
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -264,6 +265,8 @@ def manage_users():
 
     create_form = CreateUserForm(prefix='create')
     delete_forms = {user['id']: DeleteUserForm(prefix=f'delete_{user["id"]}') for user in users}
+    credit_forms = {user['id']: CreditManagementForm(prefix=f'credit_{user["id"]}') for user in users}
+    
 
     if request.method == 'POST':
         if 'create-submit' in request.form and create_form.validate_on_submit():
@@ -307,7 +310,45 @@ def manage_users():
                     conn.close()
                 return redirect(url_for('main.manage_users'))
 
-    return render_template('manage_users.html', users=users, create_form=create_form, delete_forms=delete_forms, current_user_id=current_user.id)
+            if f'credit-submit-{user["id"]}' in request.form:
+                form = credit_forms[user['id']]
+                if form.validate_on_submit():
+                    try:
+                        conn = get_db_connection()
+                        amount = form.amount.data
+                        operation = form.operation.data
+                        
+                        # Récupérer les crédits actuels
+                        current_credits = conn.execute(
+                            'SELECT credits FROM User WHERE id = ?', 
+                            (user['id'],)
+                        ).fetchone()['credits']
+                        
+                        # Calculer les nouveaux crédits
+                        new_credits = current_credits + amount if operation == 'add' else current_credits - amount
+                        
+                        # Vérifier que les crédits ne deviennent pas négatifs
+                        if new_credits < 0:
+                            flash('Les crédits ne peuvent pas être négatifs.', 'danger')
+                            return redirect(url_for('main.manage_users'))
+                        
+                        # Mettre à jour les crédits
+                        conn.execute(
+                            'UPDATE User SET credits = ? WHERE id = ?',
+                            (new_credits, user['id'])
+                        )
+                        conn.commit()
+                        
+                        operation_text = "ajoutés à" if operation == 'add' else "retirés de"
+                        flash(f'{amount} crédits ont été {operation_text} {user["username"]}.', 'success')
+                        
+                    except Exception as e:
+                        flash(f'Erreur lors de la modification des crédits : {e}', 'danger')
+                    finally:
+                        conn.close()
+                    return redirect(url_for('main.manage_users'))
+
+    return render_template('manage_users.html', users=users, credit_forms=credit_forms, create_form=create_form, delete_forms=delete_forms, current_user_id=current_user.id)
 
 @main.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
 @role_required('admin')
@@ -353,6 +394,7 @@ def edit_user(user_id):
         form.cegep_id.data = user['cegep_id'] if user['cegep_id'] else 0
         form.department_id.data = user['department_id'] if user['department_id'] else 0
         form.programmes.data = user['programmes']  # Set the programmes data here
+        form.openai_key.data = user['openai_key']
         
         print("GET request - form.programmes.data:", form.programmes.data)
         print("GET request - form.programmes.choices:", form.programmes.choices)
@@ -381,7 +423,8 @@ def edit_user(user_id):
                     password = ?, 
                     role = ?, 
                     cegep_id = ?, 
-                    department_id = ? 
+                    department_id = ? ,
+                    openai_key = ?
                 WHERE id = ?''',
                 (
                     form.username.data,
@@ -389,6 +432,7 @@ def edit_user(user_id):
                     form.role.data,
                     form.cegep_id.data if form.cegep_id.data != 0 else None,
                     form.department_id.data if form.department_id.data != 0 else None,
+                    form.openai_key.data,  # Ajout de l'openai_key
                     user_id
                 )
             )
