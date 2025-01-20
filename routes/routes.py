@@ -70,7 +70,7 @@ def markdown_filter(text):
     return markdown.markdown(text)
 
 @main.route('/gestion_programmes_cegep', methods=['GET', 'POST'])
-@login_required
+@roles_required('admin')
 def gestion_programmes_cegep():
     # Récupérer la liste des cégeps
     cegeps = get_all_cegeps()  # Ex.: [{'id': 1, 'nom': 'Cégep A'}, {'id': 2, 'nom': 'Cégep B'}]
@@ -129,6 +129,7 @@ def gestion_programmes_cegep():
 
 
 @main.route('/gestion_programmes_ministeriels', methods=['GET', 'POST'])
+@roles_required('admin')
 def gestion_programmes_ministeriels():
     form = ProgrammeMinisterielForm()  # Crée le formulaire
     if form.validate_on_submit():
@@ -149,6 +150,7 @@ def gestion_programmes_ministeriels():
 
 
 @main.route('/ajouter_programme_ministeriel', methods=['GET', 'POST'])
+@roles_required('admin')
 def ajouter_programme_ministeriel():
     form = ProgrammeMinisterielForm()
     if form.validate_on_submit():
@@ -171,12 +173,13 @@ def ajouter_programme_ministeriel():
 
 # Exemple d'une route de listing
 @main.route('/liste_programmes_ministeriels')
+@roles_required('admin')
 def liste_programmes_ministeriels():
     programmes = ListeProgrammeMinisteriel.query.all()
     return render_template('liste_programmes_ministeriels.html', programmes=programmes)
 
 @main.route('/get_credit_balance', methods=['GET'])
-@login_required
+@roles_required('admin')
 def get_credit_balance():
     if not current_user.is_authenticated:
         return jsonify({'error': 'Not authenticated'}), 401
@@ -1089,7 +1092,7 @@ def edit_cours(cours_id):
     return render_template('edit_cours.html', form=form, elements_competence=elements_competence, cours_choices=cours_choices)
 
 @main.route('/parametres/gestion_departements', methods=['GET', 'POST'])
-@login_required
+@roles_required('admin')
 def gestion_departements():
     print("Request method:", request.method)
     print("Form data:", request.form)
@@ -1189,7 +1192,7 @@ def gestion_departements():
     )
 
 @main.route('/parametres/gestion_departements/supprimer/<int:departement_id>', methods=['POST'])
-@login_required
+@roles_required('admin')
 def supprimer_departement(departement_id):
     department = Department.query.get_or_404(departement_id)
     try:
@@ -1202,7 +1205,7 @@ def supprimer_departement(departement_id):
     return redirect(url_for('main.gestion_departements'))
 
 @main.route('/parametres/gestion_departements/supprimer_regle/<int:regle_id>', methods=['POST'])
-@login_required
+@roles_required('admin')
 def supprimer_regle(regle_id):
     regle = DepartmentRegles.query.get_or_404(regle_id)
     try:
@@ -1215,7 +1218,7 @@ def supprimer_regle(regle_id):
     return redirect(url_for('main.gestion_departements'))
 
 @main.route('/parametres/gestion_departements/supprimer_piea/<int:piea_id>', methods=['POST'])
-@login_required
+@roles_required('admin')
 def supprimer_piea(piea_id):
     piea = DepartmentPIEA.query.get_or_404(piea_id)
     try:
@@ -1228,7 +1231,7 @@ def supprimer_piea(piea_id):
     return redirect(url_for('main.gestion_departements'))
 
 @main.route('/parametres/gestion_departements/edit_regle/<int:regle_id>', methods=['GET', 'POST'])
-@login_required
+@roles_required('admin')
 def edit_regle(regle_id):
     regle = DepartmentRegles.query.get_or_404(regle_id)
     form = DepartmentRegleForm()
@@ -1256,7 +1259,7 @@ def edit_regle(regle_id):
                          title='Modifier la Règle')
 
 @main.route('/parametres/gestion_departements/edit_piea/<int:piea_id>', methods=['GET', 'POST'])
-@login_required
+@roles_required('admin')
 def edit_piea(piea_id):
     piea = DepartmentPIEA.query.get_or_404(piea_id)
     form = DepartmentPIEAForm()
