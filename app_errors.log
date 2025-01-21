@@ -25965,3 +25965,50 @@ fields.3.content
 2025-01-20 12:27:59,398 - INFO - 127.0.0.1 - - [20/Jan/2025 12:27:59] "GET /get_credit_balance HTTP/1.1" 200 -
 2025-01-20 12:28:00,387 - INFO - 127.0.0.1 - - [20/Jan/2025 12:28:00] "GET /get_credit_balance HTTP/1.1" 200 -
 2025-01-20 12:28:01,398 - INFO - 127.0.0.1 - - [20/Jan/2025 12:28:01] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 15:57:53,045 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.50.91.11:5000
+2025-01-21 15:57:53,046 - INFO - [33mPress CTRL+C to quit[0m
+2025-01-21 15:57:53,051 - INFO -  * Restarting with watchdog (windowsapi)
+2025-01-21 15:57:54,526 - WARNING -  * Debugger is active!
+2025-01-21 15:57:54,527 - INFO -  * Debugger PIN: 659-492-446
+2025-01-21 15:59:51,944 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:51] "[32mGET / HTTP/1.1[0m" 302 -
+2025-01-21 15:59:52,002 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:52] "GET /programme/1 HTTP/1.1" 200 -
+2025-01-21 15:59:52,076 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:52] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 15:59:52,081 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:52] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-21 15:59:52,158 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:52] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-21 15:59:53,105 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:53] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 15:59:54,693 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:54] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 15:59:55,692 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:55] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 15:59:56,690 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:56] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 15:59:57,103 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:57] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 15:59:58,107 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:58] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 15:59:58,165 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:58] "GET /chat HTTP/1.1" 200 -
+2025-01-21 15:59:58,187 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:58] "[36mGET /static/assets/EDxologo.png HTTP/1.1[0m" 304 -
+2025-01-21 15:59:58,198 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:58] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 15:59:58,203 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:58] "[36mGET /static/assets/site.webmanifest HTTP/1.1[0m" 304 -
+2025-01-21 15:59:59,214 - INFO - 127.0.0.1 - - [21/Jan/2025 15:59:59] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:00,215 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:00] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:01,221 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:01] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:02,220 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:02] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:03,215 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:03] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:03,948 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:03] "POST /chat/send HTTP/1.1" 200 -
+2025-01-21 16:00:04,209 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:04] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:05,215 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:05] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:06,216 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:06] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:07,221 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:07] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:08,218 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:08] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:09,217 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:09] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:10,220 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:10] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:11,212 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:11] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:12,220 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:12] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:13,203 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:13] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:14,204 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:14] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:15,212 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:15] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:16,214 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:16] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:17,211 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:17] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:18,215 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:18] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:19,227 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:19] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:20,219 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:20] "GET /get_credit_balance HTTP/1.1" 200 -
+2025-01-21 16:00:21,221 - INFO - 127.0.0.1 - - [21/Jan/2025 16:00:21] "GET /get_credit_balance HTTP/1.1" 200 -

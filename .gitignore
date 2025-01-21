@@ -2,3 +2,6 @@
 add_user.py
 /venv
 app_errors.log
+*.db
+*.db-wal
+*.db-shm
