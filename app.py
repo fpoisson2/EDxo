@@ -10,6 +10,7 @@ from routes.cours import cours_bp
 from routes.chat import chat
 from routes.programme import programme_bp
 from routes import routes
+from routes.system import system_bp
 from routes.settings import settings_bp
 from routes.plan_cadre import plan_cadre_bp
 from flask_wtf import CSRFProtect
@@ -114,6 +115,7 @@ app.register_blueprint(programme_bp)
 app.register_blueprint(plan_cadre_bp)
 app.register_blueprint(plan_de_cours_bp)
 app.register_blueprint(chat)
+app.register_blueprint(system_bp)
 
 # Register the checkpoint function to be called on exit
 atexit.register(checkpoint_wal)

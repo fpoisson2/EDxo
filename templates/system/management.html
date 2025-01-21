@@ -1,0 +1,24 @@
+<!-- templates/system/management.html -->
+{% extends "parametres.html" %}
+
+{% block parametres_content %}
+<div class="container mt-4">
+    <h2>Gestion Système</h2>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            Base de données
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Téléchargement de la base de données</h5>
+            <p class="card-text">Cette action permettra de télécharger une copie de la base de données actuelle.</p>
+            <div class="alert alert-warning">
+                <strong>Attention :</strong> Cette opération est sensible. Assurez-vous de garder ce fichier en sécurité.
+            </div>
+            <a href="{{ url_for('system.download_db') }}" class="btn btn-primary">
+                Télécharger la base de données
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
