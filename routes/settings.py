@@ -51,14 +51,6 @@ def edit_global_generation_settings():
 
     if form.validate_on_submit():
         try:
-            # Save the OpenAI key for the logged-in user
-            openai_key = form.openai_key.data.strip()
-            conn.execute('''
-                UPDATE User
-                SET openai_key = ?
-                WHERE id = ?
-            ''', (openai_key, current_user.id))
-
             # Save the sections
             for i, section in enumerate(SECTIONS):
                 use_ai = form.sections[i].use_ai.data
