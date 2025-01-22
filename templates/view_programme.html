@@ -29,7 +29,7 @@
 
   <!-- Grille des Cours par Session -->
   <div class="d-flex justify-content-between align-items-start mb-3">
-    <h3 class="mb-0">Cours par Session</h3>
+    <h3 class="mb-0">Cours par session</h3>
   </div>
 
   <div class="table-responsive">
@@ -41,12 +41,21 @@
         </tr>
       </thead>
       <tbody>
-        {% for session, cours_list in cours_par_session.items() %}
-        <tr>
-          <td>{{ session }}</td>
-          <td>
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6">
-              {% for c in cours_list %}
+{% for session, cours_list in cours_par_session.items() %}
+<tr>
+  <td>
+    <div class="d-flex flex-column align-items-start">
+      <span class="mb-2">{{ session }}</span>
+      <a href="{{ url_for('plan_de_cours.export_session_plans', programme_id=programme.id, session=session) }}" 
+         class="btn btn-sm btn-outline-primary" 
+         title="Exporter tous les plans de cours de la session {{ session }}">
+        <i class="fas fa-file-export"></i> Exporter tous les plans de cours
+      </a>
+    </div>
+  </td>
+  <td>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6">
+      {% for c in cours_list %}
               <div class="col mb-3">
                 <div class="card h-100 d-flex flex-column">
                   <!-- En-tête cliquable -->
@@ -86,17 +95,17 @@
                     </p>
                   </div>
 
-<!-- Boutons Plan-Cadre et Plan-de-cours -->
-<div class="card-footer mt-auto text-center">
-  <!-- Bouton Plan-Cadre existant -->
-  <a href="{{ url_for('cours.view_or_add_plan_cadre', cours_id=c.id) }}" class="btn btn-sm btn-info w-100 fs-6 mb-2">
-    Plan-Cadre
-  </a>
-  <!-- Nouveau bouton Plan-de-cours -->
-  <a href="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=c.id) }}" class="btn btn-sm btn-secondary w-100 fs-6">
-    Plan de cours
-  </a>
-</div>
+                  <!-- Boutons Plan-Cadre et Plan-de-cours -->
+                  <div class="card-footer mt-auto text-center">
+                    <!-- Bouton Plan-Cadre existant -->
+                    <a href="{{ url_for('cours.view_or_add_plan_cadre', cours_id=c.id) }}" class="btn btn-sm btn-info w-100 fs-6 mb-2">
+                      Plan-Cadre
+                    </a>
+                    <!-- Nouveau bouton Plan-de-cours -->
+                    <a href="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=c.id) }}" class="btn btn-sm btn-secondary w-100 fs-6">
+                      Plan de cours
+                    </a>
+                  </div>
 
                 </div>
               </div>
