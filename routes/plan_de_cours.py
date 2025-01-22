@@ -351,26 +351,23 @@ def export_docx(cours_id, session):
 
     # 6. Prepare Data for Pivot Table
 
-    # a. Gather all unique capacités and calculate totals
-    all_caps = set()
-    cap_total_map = {}  # Dictionary to store total ponderation for each capacity
-    cap_id_total_map = {}  # Dictionary to store total ponderation by capacity ID
+    # Remplacer la section de création all_caps par:
+    all_caps = []
+    cap_total_map = {}
+    cap_id_total_map = {}
 
+    # Maintenir l'ordre du plan cadre
+    for cap in plan_cadre.capacites:
+        all_caps.append(cap.capacite)
+        cap_total_map[cap.capacite] = 0.0
+        cap_id_total_map[cap.id] = 0.0
+
+    # Calculer les totaux
     for ev in plan_de_cours.evaluations:
         for cap_link in ev.capacites:
             cap_name = cap_link.capacite.capacite
             cap_id = cap_link.capacite_id
             
-            # Add to name-based map
-            all_caps.add(cap_name)
-            if cap_name not in cap_total_map:
-                cap_total_map[cap_name] = 0.0
-                
-            # Add to ID-based map
-            if cap_id not in cap_id_total_map:
-                cap_id_total_map[cap_id] = 0.0
-            
-            # Convert string ponderation to float before adding
             try:
                 ponderation_str = str(cap_link.ponderation).strip().replace('%', '')
                 ponderation_value = float(ponderation_str) if ponderation_str else 0.0
