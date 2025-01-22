@@ -179,7 +179,7 @@ def liste_programmes_ministeriels():
     return render_template('liste_programmes_ministeriels.html', programmes=programmes)
 
 @main.route('/get_credit_balance', methods=['GET'])
-@roles_required('admin')
+@login_required
 def get_credit_balance():
     if not current_user.is_authenticated:
         return jsonify({'error': 'Not authenticated'}), 401
