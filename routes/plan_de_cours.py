@@ -379,7 +379,7 @@ def export_docx(cours_id, session):
             except (ValueError, TypeError) as e:
                 print(f"Warning: Invalid ponderation value for {cap_name}: {str(e)}")
 
-    all_caps = sorted(all_caps)  # Sort for consistent ordering
+    #all_caps = sorted(all_caps)  # Sort for consistent ordering
 
     # Clean up the total maps to ensure they're formatted properly for the template
     cleaned_cap_total_map = {cap: f"{total:.1f}" for cap, total in cap_total_map.items()}
