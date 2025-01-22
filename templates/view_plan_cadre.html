@@ -386,6 +386,7 @@
     <div id="capacites-container">
         {% for capacite in plan_form.capacites %}
             <div class="capacite-item mb-4">
+                <input type="hidden" name="capacites-{{ loop.index0 }}-id" value="{{ capacite.id }}">
                 <div class="accordion" id="capaciteAccordion{{ loop.index }}">
                     <div class="accordion-item">
                         <!-- En-tête de l'accordéon avec le bouton de suppression à droite -->

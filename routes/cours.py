@@ -874,6 +874,7 @@ def view_plan_cadre(cours_id, plan_id):
             # Mise à jour du formulaire avec les données des capacités
             for cap_data in capacites_data:
                 form_cap = plan_form.capacites.append_entry()
+                form_cap.id = cap_data['capacite']['id']  # Changed this line
                 form_cap.capacite.data = cap_data['capacite']['capacite']
                 form_cap.description_capacite.data = cap_data['capacite']['description_capacite']
                 form_cap.ponderation_min.data = cap_data['capacite']['ponderation_min']
@@ -945,75 +946,91 @@ def view_plan_cadre(cours_id, plan_id):
                     update_list_items(cursor, 'PlanCadreSavoirEtre', 
                                     plan_form.savoir_etre, plan_id)
 
-                    # Mise à jour des capacités
-                    cursor.execute('DELETE FROM PlanCadreCapacites WHERE plan_cadre_id = ?', (plan_id,))
-                    
-                    # Récupérer toutes les clés du formulaire qui concernent les capacités
-                    capacite_keys = [key for key in request.form.keys() if key.startswith('capacites-') and key.endswith('-capacite')]
-                    capacite_indices = set()
-                    for key in capacite_keys:
-                        try:
-                            index = int(key.split('-')[1])  # Extraire l'index du nom du champ
-                            capacite_indices.add(index)
-                        except (ValueError, IndexError):
-                            continue
+                    # Fetch existing capacities and their IDs
+                    existing_capacities = cursor.execute(
+                        'SELECT id FROM PlanCadreCapacites WHERE plan_cadre_id = ?', 
+                        (plan_id,)
+                    ).fetchall()
+                    existing_ids = {row['id'] for row in existing_capacities}
 
-                    print("DEBUG - Capacité indices trouvés:", capacite_indices)  # Debug
+                    capacite_keys = [key for key in request.form.keys() if key.startswith('capacites-') and key.endswith('-capacite')]
+                    capacite_indices = {int(key.split('-')[1]) for key in capacite_keys}
 
                     for index in sorted(capacite_indices):
                         prefix = f'capacites-{index}'
                         capacite = request.form.get(f'{prefix}-capacite', '').strip()
+                        if not capacite:
+                            continue
+                            
+                        capacite_id = request.form.get(f'{prefix}-id')
+                        description = request.form.get(f'{prefix}-description_capacite', '').strip()
+                        ponderation_min = request.form.get(f'{prefix}-ponderation_min', 0)
+                        ponderation_max = request.form.get(f'{prefix}-ponderation_max', 100)
                         
-                        if capacite:  # Seulement traiter si une capacité est présente
-                            description = request.form.get(f'{prefix}-description_capacite', '').strip()
-                            ponderation_min = request.form.get(f'{prefix}-ponderation_min', 0)
-                            ponderation_max = request.form.get(f'{prefix}-ponderation_max', 100)
-
-                            print(f"DEBUG - Insertion capacité: {capacite}, {description}, {ponderation_min}, {ponderation_max}")  # Debug
-
-                            # Insérer la capacité
+                        if capacite_id and int(capacite_id) in existing_ids:
+                            # Update existing capacity
+                            cursor.execute("""
+                                UPDATE PlanCadreCapacites 
+                                SET capacite = ?, description_capacite = ?, 
+                                    ponderation_min = ?, ponderation_max = ?
+                                WHERE id = ?
+                            """, (capacite, description, ponderation_min, ponderation_max, capacite_id))
+                            
+                            # Update related items
+                            cursor.execute('DELETE FROM PlanCadreCapaciteSavoirsNecessaires WHERE capacite_id = ?', (capacite_id,))
+                            cursor.execute('DELETE FROM PlanCadreCapaciteSavoirsFaire WHERE capacite_id = ?', (capacite_id,))
+                            cursor.execute('DELETE FROM PlanCadreCapaciteMoyensEvaluation WHERE capacite_id = ?', (capacite_id,))
+                            
+                            existing_ids.remove(int(capacite_id))
+                        else:
+                            # Insert new capacity
                             cursor.execute("""
                                 INSERT INTO PlanCadreCapacites 
                                 (plan_cadre_id, capacite, description_capacite, ponderation_min, ponderation_max)
                                 VALUES (?, ?, ?, ?, ?)
                             """, (plan_id, capacite, description, ponderation_min, ponderation_max))
-                            
                             capacite_id = cursor.lastrowid
-                            print(f"DEBUG - Nouvelle capacité ID: {capacite_id}")  # Debug
 
-                            # Traiter les savoirs nécessaires
-                            savoirs_keys = [k for k in request.form.keys() if k.startswith(f'{prefix}-savoirs_necessaires-')]
-                            for sav_key in savoirs_keys:
-                                savoir = request.form.get(sav_key, '').strip()
-                                if savoir:
-                                    cursor.execute("""
-                                        INSERT INTO PlanCadreCapaciteSavoirsNecessaires (capacite_id, texte)
-                                        VALUES (?, ?)
-                                    """, (capacite_id, savoir))
+                        # Add savoirs necessaires
+                        savoirs_keys = [k for k in request.form.keys() if k.startswith(f'{prefix}-savoirs_necessaires-')]
+                        for sav_key in savoirs_keys:
+                            savoir = request.form.get(sav_key, '').strip()
+                            if savoir:
+                                cursor.execute("""
+                                    INSERT INTO PlanCadreCapaciteSavoirsNecessaires (capacite_id, texte)
+                                    VALUES (?, ?)
+                                """, (capacite_id, savoir))
 
-                            # Traiter les savoirs faire
-                            savoirs_faire_keys = [k for k in request.form.keys() if k.startswith(f'{prefix}-savoirs_faire-') and k.endswith('-texte')]
-                            for sf_key in savoirs_faire_keys:
-                                base_key = sf_key[:-6]  # Enlever '-texte'
-                                texte = request.form.get(sf_key, '').strip()
-                                if texte:
-                                    cible = request.form.get(f'{base_key}-cible', '').strip()
-                                    seuil = request.form.get(f'{base_key}-seuil_reussite', '').strip()
-                                    cursor.execute("""
-                                        INSERT INTO PlanCadreCapaciteSavoirsFaire 
-                                        (capacite_id, texte, cible, seuil_reussite)
-                                        VALUES (?, ?, ?, ?)
-                                    """, (capacite_id, texte, cible, seuil))
+                        # Add savoirs faire
+                        savoirs_faire_keys = [k for k in request.form.keys() if k.startswith(f'{prefix}-savoirs_faire-') and k.endswith('-texte')]
+                        for sf_key in savoirs_faire_keys:
+                            base_key = sf_key[:-6]
+                            texte = request.form.get(sf_key, '').strip()
+                            if texte:
+                                cible = request.form.get(f'{base_key}-cible', '').strip()
+                                seuil = request.form.get(f'{base_key}-seuil_reussite', '').strip()
+                                cursor.execute("""
+                                    INSERT INTO PlanCadreCapaciteSavoirsFaire 
+                                    (capacite_id, texte, cible, seuil_reussite)
+                                    VALUES (?, ?, ?, ?)
+                                """, (capacite_id, texte, cible, seuil))
 
-                            # Traiter les moyens d'évaluation
-                            moyens_keys = [k for k in request.form.keys() if k.startswith(f'{prefix}-moyens_evaluation-')]
-                            for moyen_key in moyens_keys:
-                                moyen = request.form.get(moyen_key, '').strip()
-                                if moyen:
-                                    cursor.execute("""
-                                        INSERT INTO PlanCadreCapaciteMoyensEvaluation (capacite_id, texte)
-                                        VALUES (?, ?)
-                                    """, (capacite_id, moyen))
+                        # Add moyens evaluation
+                        moyens_keys = [k for k in request.form.keys() if k.startswith(f'{prefix}-moyens_evaluation-')]
+                        for moyen_key in moyens_keys:
+                            moyen = request.form.get(moyen_key, '').strip()
+                            if moyen:
+                                cursor.execute("""
+                                    INSERT INTO PlanCadreCapaciteMoyensEvaluation (capacite_id, texte)
+                                    VALUES (?, ?)
+                                """, (capacite_id, moyen))
+
+                    # Delete remaining unused capacities
+                    for old_id in existing_ids:
+                        cursor.execute('DELETE FROM PlanCadreCapaciteSavoirsNecessaires WHERE capacite_id = ?', (old_id,))
+                        cursor.execute('DELETE FROM PlanCadreCapaciteSavoirsFaire WHERE capacite_id = ?', (old_id,))
+                        cursor.execute('DELETE FROM PlanCadreCapaciteMoyensEvaluation WHERE capacite_id = ?', (old_id,))
+                        cursor.execute('DELETE FROM PlanCadreCapacites WHERE id = ?', (old_id,))
 
                     conn.commit()
                     success_message = "Plan-cadre et capacités mis à jour avec succès."
