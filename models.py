@@ -4,6 +4,13 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+
+# Association table for User-Programme many-to-many relationship
+user_programme = db.Table('User_Programme',
+    db.Column('user_id', db.Integer, db.ForeignKey('User.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
+)
+
 # ------------------------------------------------------------------------------
 # Modèle User (mise à jour pour correspondre au schéma)
 # ------------------------------------------------------------------------------
@@ -14,13 +21,15 @@ class User(UserMixin, db.Model):
     password = db.Column(db.Text, nullable=False)
     role = db.Column(db.Text, nullable=False, server_default="invite")
     openai_key = db.Column(db.Text, nullable=True)
-    cegep_id = db.Column(db.Integer, nullable=True)
-    department_id = db.Column(db.Integer, nullable=True)
+    cegep_id = db.Column(db.Integer, db.ForeignKey("ListeCegep.id"), nullable=True)
+    department_id = db.Column(db.Integer, db.ForeignKey("Department.id"), nullable=True)
     credits = db.Column(db.Float, nullable=False, default=0.0)
 
+    # Relations
+    programmes = db.relationship('Programme', 
+                               secondary=user_programme,
+                               backref=db.backref('users', lazy='dynamic'))
 
-    def __repr__(self):
-        return f"<User {self.username}>"
 
 # ------------------------------------------------------------------------------
 # Modèles liés aux compétences et éléments de compétences
@@ -126,7 +135,7 @@ class ElementCompetenceParCours(db.Model):
 class PlanCadre(db.Model):
     __tablename__ = "PlanCadre"
     id = db.Column(db.Integer, primary_key=True)
-    cours_id = db.Column(db.Integer, db.ForeignKey("Cours.id"), nullable=False, unique=True)
+    cours_id = db.Column(db.Integer, db.ForeignKey("Cours.id"), nullable=False)
     # Champs du schéma étendu :
     place_intro = db.Column(db.Text, nullable=True)
     objectif_terminal = db.Column(db.Text, nullable=True)
@@ -150,6 +159,7 @@ class PlanCadre(db.Model):
     objets_cibles = db.relationship("PlanCadreObjetsCibles", back_populates="plan_cadre", cascade="all, delete-orphan")
     cours_relies = db.relationship("PlanCadreCoursRelies", back_populates="plan_cadre", cascade="all, delete-orphan")
     cours_prealables = db.relationship("PlanCadreCoursPrealables", back_populates="plan_cadre", cascade="all, delete-orphan")
+    cours_corequis = db.relationship("PlanCadreCoursCorequis", back_populates="plan_cadre", cascade="all, delete-orphan")
     competences_certifiees = db.relationship("PlanCadreCompetencesCertifiees", back_populates="plan_cadre", cascade="all, delete-orphan")
     competences_developpees = db.relationship("PlanCadreCompetencesDeveloppees", back_populates="plan_cadre", cascade="all, delete-orphan")
 
@@ -194,6 +204,17 @@ class PlanCadre(db.Model):
             traceback.print_exc()
             return None
 
+class PlanCadreCoursCorequis(db.Model):
+    __tablename__ = "PlanCadreCoursCorequis"
+    id = db.Column(db.Integer, primary_key=True)
+    plan_cadre_id = db.Column(db.Integer, db.ForeignKey("PlanCadre.id"), nullable=False)
+    texte = db.Column(db.Text, nullable=False)
+    description = db.Column(db.Text, nullable=True)
+
+    plan_cadre = db.relationship("PlanCadre", back_populates="cours_corequis")
+
+    def __repr__(self):
+        return f"<PlanCadreCoursCorequis id={self.id}>"
 
 class PlanCadreCapacites(db.Model):
     __tablename__ = "PlanCadreCapacites"
@@ -376,7 +397,7 @@ class ChatHistory(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=False)
     role = db.Column(db.String(50), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, server_default=db.text('CURRENT_TIMESTAMP'))
 
     # Relation avec User
     user = db.relationship('User', backref=db.backref('chat_histories', lazy=True))
@@ -390,7 +411,7 @@ class PlanDeCoursMediagraphie(db.Model):
     __tablename__ = "PlanDeCoursMediagraphie"
     id = db.Column(db.Integer, primary_key=True)
     plan_de_cours_id = db.Column(db.Integer, db.ForeignKey("PlanDeCours.id"), nullable=False)
-    reference_bibliographique = db.Column(db.Text, nullable=False)
+    reference_bibliographique = db.Column(db.Text, nullable=True)
 
     plan_de_cours = db.relationship("PlanDeCours", back_populates="mediagraphies")
 
@@ -432,7 +453,7 @@ class PlanDeCoursEvaluationsCapacites(db.Model):
     ponderation = db.Column(db.Text, nullable=True)
 
     evaluation = db.relationship("PlanDeCoursEvaluations", back_populates="capacites")
-    capacite = db.relationship("PlanCadreCapacites")  
+    capacite = db.relationship("PlanCadreCapacites", backref="evaluation_capacites")
 
     def __repr__(self):
         return f"<PlanDeCoursEvaluationsCapacites id={self.id}>"
@@ -444,15 +465,15 @@ class PlanDeCoursEvaluationsCapacites(db.Model):
 class Department(db.Model):
     __tablename__ = "Department"
     id = db.Column(db.Integer, primary_key=True)
-    nom = db.Column(db.Text, nullable=False, unique=True)
-    cegep_id = db.Column(db.Integer, nullable=True)
+    nom = db.Column(db.Text, nullable=False)
+    cegep_id = db.Column(db.Integer, db.ForeignKey("ListeCegep.id"), nullable=True)
 
+    # Relations
     regles = db.relationship("DepartmentRegles", back_populates="department", cascade="all, delete-orphan")
     piea = db.relationship("DepartmentPIEA", back_populates="department", cascade="all, delete-orphan")
     programmes = db.relationship("Programme", back_populates="department")
+    users = db.relationship('User', backref='department_rel', foreign_keys='User.department_id')
 
-    def __repr__(self):
-        return f"<Department {self.nom}>"
 
 class DepartmentRegles(db.Model):
     __tablename__ = "DepartmentRegles"
@@ -495,9 +516,8 @@ class Programme(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.Text, nullable=False)
     department_id = db.Column(db.Integer, db.ForeignKey("Department.id"), nullable=False)
-    # Ajout de la référence à ListeProgrammeMinisteriel
     liste_programme_ministeriel_id = db.Column(db.Integer, db.ForeignKey("ListeProgrammeMinisteriel.id"), nullable=True)
-    cegep_id = db.Column(db.Integer, nullable=True)
+    cegep_id = db.Column(db.Integer, db.ForeignKey("ListeCegep.id"), nullable=True)
     variante = db.Column(db.Text, nullable=True)
 
     # Relations
@@ -531,3 +551,29 @@ class Cours(db.Model):
 
     def __repr__(self):
         return f"<Cours {self.code} - {self.nom}>"
+
+class ListeCegep(db.Model):
+    __tablename__ = "ListeCegep"
+    id = db.Column(db.Integer, primary_key=True)
+    nom = db.Column(db.Text, nullable=False)
+    type = db.Column(db.Text, nullable=False, server_default="'Public'")
+    region = db.Column(db.Text, nullable=False, server_default="'Capitale-Nationale'")
+
+    # Relations avec les clés étrangères explicites
+    users = db.relationship('User', backref='cegep', foreign_keys='User.cegep_id')
+    departments = db.relationship('Department', backref='cegep', foreign_keys='Department.cegep_id')
+    programmes = db.relationship('Programme', backref='cegep', foreign_keys='Programme.cegep_id')
+
+    def __repr__(self):
+        return f"<ListeCegep {self.nom}>"
+
+class GlobalGenerationSettings(db.Model):
+    __tablename__ = "GlobalGenerationSettings"
+    id = db.Column(db.Integer, primary_key=True)
+    section = db.Column(db.Text, nullable=False)
+    use_ai = db.Column(db.Boolean, nullable=False, server_default="0")
+    text_content = db.Column(db.Numeric, nullable=True)
+
+    def __repr__(self):
+        return f"<GlobalGenerationSettings {self.section}>"
+
