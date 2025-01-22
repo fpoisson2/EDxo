@@ -318,6 +318,7 @@ class GlobalGenerationSettingsForm(FlaskForm):
 class CapaciteItemForm(Form):
     class Meta:
         csrf = False
+    id = HiddenField('ID')
     capacite = StringField("Capacité", validators=[Optional()])
     description_capacite = TextAreaField("Description", validators=[Optional()])
     ponderation_min = IntegerField("Pondération minimale", validators=[Optional()])
