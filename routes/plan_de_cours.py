@@ -2,15 +2,20 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from models import (
     db, Cours, PlanCadre, PlanCadreCapacites, PlanCadreSavoirEtre,
     PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
-    PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites
+    PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, Programme
 )
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from forms import PlanDeCoursForm
 import os
 from docxtpl import DocxTemplate
 import io
 from flask import send_file
 import markdown
+from sqlalchemy import func
 from bs4 import BeautifulSoup
+import zipfile
+from datetime import datetime
+from utils import get_initials
 
 def parse_markdown_nested(md_text):
     """
@@ -77,6 +82,7 @@ plan_de_cours_bp = Blueprint("plan_de_cours", __name__, template_folder="templat
 @plan_de_cours_bp.route(
     "/cours/<int:cours_id>/plan_de_cours/<string:session>/", methods=["GET", "POST"]
 )
+@login_required
 def view_plan_de_cours(cours_id, session=None):
     # 1. Récupération du Cours
     cours = Cours.query.get(cours_id)
@@ -314,10 +320,217 @@ def view_plan_de_cours(cours_id, session=None):
                                         regles_departementales=regles_departementales,
                                         regles_piea=regles_piea)
 
+
+@plan_de_cours_bp.route(
+    "/export_session_plans/<int:programme_id>/<string:session>", 
+    methods=["GET"]
+)
+@login_required
+def export_session_plans(programme_id, session):
+    """
+    Exporte tous les plans de cours d'une session donnée dans un fichier ZIP
+    """
+
+    programme = Programme.query.get_or_404(programme_id)
+    # Convertir le numéro de session en format attendu (ex: 2 -> h25 ou a24)
+    session_num = int(session)
+    current_year = datetime.now().year % 100  # Obtenir les 2 derniers chiffres de l'année
+    
+    # Pour les sessions paires (2,4,6), on utilise l'année suivante car c'est l'hiver
+    if session_num % 2 == 0:  
+        session_code = f"H{current_year}"  # Session d'hiver de l'année suivante
+    else:
+        session_code = f"A{current_year}"  # Session d'automne de l'année courante
+
+    # Créer un buffer en mémoire pour le fichier ZIP
+    memory_file = io.BytesIO()
+    
+    # Créer l'archive ZIP
+    with zipfile.ZipFile(memory_file, 'w') as zf:
+        # Récupérer tous les plans de cours de la session
+        plans_de_cours = PlanDeCours.query.join(Cours).filter(
+            PlanDeCours.session == session_code,
+            Cours.programme_id == programme_id,
+            func.substr(Cours.code, 5, 1) == str(session_num)  # Position 5, longueur 1
+        ).all()
+
+        filtered_plans = []
+        for plan_de_cours in plans_de_cours:
+            cours = Cours.query.get_or_404(plan_de_cours.cours_id)
+            try:
+                session_cours = int(cours.code[0])
+                if session_cours == session_num:
+                    filtered_plans.append(plan_de_cours)
+            except ValueError:
+                print(f"Warning: Code de cours invalide: {cours.code}")
+                continue
+
+        # Utiliser filtered_plans au lieu de plans_de_cours pour la suite
+        plans_de_cours = filtered_plans
+
+        if not plans_de_cours:
+            flash(f"Aucun plan de cours trouvé pour la session {session}.", "warning")
+            return redirect(url_for('main.index'))
+            
+        # Pour chaque plan de cours
+        for plan_de_cours in plans_de_cours:
+            # Récupérer le cours associé
+            cours = Cours.query.get_or_404(plan_de_cours.cours_id)
+            
+            # Récupérer le plan cadre
+            plan_cadre = PlanCadre.query.options(
+                db.joinedload(PlanCadre.capacites),
+                db.joinedload(PlanCadre.savoirs_etre)
+            ).filter_by(cours_id=cours.id).first()
+            
+            if not plan_cadre:
+                continue
+                
+            # Récupérer les autres informations nécessaires
+            programme = cours.programme
+            departement = programme.department if programme else None
+            regles_departementales = departement.regles if departement else []
+            regles_piea = departement.piea if departement else []
+            
+            # Charger le template Word
+            template_path = os.path.join('static', 'docs', 'plan_de_cours_template.docx')
+            doc = DocxTemplate(template_path)
+            
+            # Préparer les données pour le tableau croisé
+            all_caps = []
+            cap_total_map = {}
+            cap_id_total_map = {}
+            
+            # Maintenir l'ordre du plan cadre
+            for cap in plan_cadre.capacites:
+                all_caps.append(cap.capacite)
+                cap_total_map[cap.capacite] = 0.0
+                cap_id_total_map[cap.id] = 0.0
+                
+            # Calculer les totaux
+            for ev in plan_de_cours.evaluations:
+                for cap_link in ev.capacites:
+                    cap_name = cap_link.capacite.capacite
+                    cap_id = cap_link.capacite_id
+                    
+                    try:
+                        ponderation_str = str(cap_link.ponderation).strip().replace('%', '')
+                        ponderation_value = float(ponderation_str) if ponderation_str else 0.0
+                        cap_total_map[cap_name] += ponderation_value
+                        cap_id_total_map[cap_id] += ponderation_value
+                    except (ValueError, TypeError) as e:
+                        print(f"Warning: Invalid ponderation value for {cap_name}: {str(e)}")
+            
+            # Nettoyer les maps de totaux
+            cleaned_cap_total_map = {cap: f"{total:.1f}" for cap, total in cap_total_map.items()}
+            cleaned_cap_id_total_map = {cap_id: f"{total:.1f}" for cap_id, total in cap_id_total_map.items()}
+            
+            # Attacher la pondération totale à chaque capacité
+            for capacite in plan_cadre.capacites:
+                capacite.total_ponderation = cleaned_cap_id_total_map.get(capacite.id, "0.0")
+            
+            # Créer la map capacité-pondération pour chaque évaluation
+            for ev in plan_de_cours.evaluations:
+                cap_map = {cap: "" for cap in all_caps}
+                for cap_link in ev.capacites:
+                    cap_name = cap_link.capacite.capacite
+                    ponderation_str = str(cap_link.ponderation).strip().replace('%', '')
+                    try:
+                        value = float(ponderation_str)
+                        cap_map[cap_name] = f"{value:.1f}"
+                    except (ValueError, TypeError):
+                        cap_map[cap_name] = "0.0"
+                ev.cap_map = cap_map
+            
+            # Traiter les contenus markdown
+            for piea in regles_piea:
+                bullet_points = parse_markdown_nested(piea.contenu)
+                setattr(piea, 'bullet_points', bullet_points)
+            
+            for regle in regles_departementales:
+                bullet_points = parse_markdown_nested(regle.contenu)
+                setattr(regle, 'bullet_points', bullet_points)
+            
+            if plan_de_cours.evaluation_formative_apprentissages:
+                bullet_points = parse_markdown_nested(plan_de_cours.evaluation_formative_apprentissages)
+                setattr(plan_de_cours, 'evaluation_formative_apprentissages_bullet_points', bullet_points)
+            
+            if plan_de_cours.accomodement:
+                bullet_points = parse_markdown_nested(plan_de_cours.accomodement)
+                setattr(plan_de_cours, 'accomodement_bullet_points', bullet_points)
+            
+            if plan_de_cours.objectif_terminal_du_cours:
+                bullet_points = parse_markdown_nested(plan_de_cours.objectif_terminal_du_cours)
+                setattr(plan_de_cours, 'objectif_terminal_bullet_points', bullet_points)
+            
+            # Construire le contexte
+            context = {
+                "cours": cours,
+                "plan_cadre": plan_cadre,
+                "programme": programme,
+                "departement": departement,
+                "savoirs_etre": plan_cadre.savoirs_etre,
+                "capacites_plan_cadre": plan_cadre.capacites,
+                "cap_id_total_map": cleaned_cap_id_total_map,
+                "plan_de_cours": plan_de_cours,
+                "campus": plan_de_cours.campus,
+                "session": plan_de_cours.session,
+                "presentation_du_cours": plan_de_cours.presentation_du_cours,
+                "objectif_terminal_du_cours": plan_de_cours.objectif_terminal_du_cours,
+                "objectif_terminal_bullet_points": getattr(plan_de_cours, 'objectif_terminal_bullet_points', []),
+                "organisation_et_methodes": plan_de_cours.organisation_et_methodes,
+                "accomodement": plan_de_cours.accomodement,
+                "accomodement_bullet_points": getattr(plan_de_cours, 'accomodement_bullet_points', []),
+                "evaluation_formative_apprentissages": plan_de_cours.evaluation_formative_apprentissages,
+                "evaluation_formative_apprentissages_bullet_points": getattr(plan_de_cours, 'evaluation_formative_apprentissages_bullet_points', []),
+                "evaluation_expression_francais": plan_de_cours.evaluation_expression_francais,
+                "seuil_reussite": plan_de_cours.seuil_reussite,
+                "nom_enseignant": plan_de_cours.nom_enseignant,
+                "telephone_enseignant": plan_de_cours.telephone_enseignant,
+                "courriel_enseignant": plan_de_cours.courriel_enseignant,
+                "bureau_enseignant": plan_de_cours.bureau_enseignant,
+                "materiel": plan_de_cours.materiel,
+                "calendriers": plan_de_cours.calendriers,
+                "mediagraphies": plan_de_cours.mediagraphies,
+                "disponibilites": plan_de_cours.disponibilites,
+                "evaluations": plan_de_cours.evaluations,
+                "all_caps": all_caps,
+                "cap_total_map": cleaned_cap_total_map,
+                "regles_departementales": regles_departementales,
+                "regles_piea": regles_piea
+            }
+            
+            # Générer le document Word
+            doc.render(context)
+            
+            # Sauvegarder le document dans le ZIP
+            doc_bytes = io.BytesIO()
+            doc.save(doc_bytes)
+            doc_bytes.seek(0)
+
+            nom_enseignant = context['nom_enseignant']
+            initiales = get_initials(nom_enseignant)
+
+            # Nouveau nom de fichier avec les initiales
+            filename = f"Plan_de_cours_{cours.code}_{session_code}_{initiales}.docx"
+            zf.writestr(filename, doc_bytes.getvalue())
+    
+    # Préparer le fichier ZIP pour l'envoi
+    memory_file.seek(0)
+    
+    return send_file(
+            memory_file,
+            download_name=f"Plans_de_cours_{programme.nom}_{session_code}.zip",
+            as_attachment=True,
+            mimetype='application/zip'
+        )
+
+
 @plan_de_cours_bp.route(
     "/cours/<int:cours_id>/plan_de_cours/<string:session>/export_docx", 
     methods=["GET"]
 )
+@login_required
 def export_docx(cours_id, session):
     # 1. Récupérer le Cours
     cours = Cours.query.get_or_404(cours_id)

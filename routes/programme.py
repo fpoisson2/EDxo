@@ -46,6 +46,7 @@ from io import BytesIO
 from werkzeug.security import generate_password_hash, check_password_hash
 from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_list, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template
 from models import User
+from routes.plan_de_cours import plan_de_cours_bp
 
 programme_bp = Blueprint('programme', __name__, url_prefix='/programme')
 

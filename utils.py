@@ -9,6 +9,25 @@ from dotenv import load_dotenv
 
 DATABASE = 'programme.db'
 
+def get_initials(nom_complet):
+    """
+    Extrait les initiales d'un nom complet.
+    
+    Args:
+        nom_complet (str): Le nom complet de l'enseignant
+        
+    Returns:
+        str: Les initiales en majuscules
+    """
+    # Supprimer les espaces superflus et séparer les mots
+    mots = nom_complet.strip().split()
+    
+    # Obtenir la première lettre de chaque mot et la convertir en majuscule
+    initiales = ''.join(mot[0].upper() for mot in mots if mot)
+    
+    return initiales
+
+    
 def get_all_cegeps():
     conn = get_db_connection()
     cegeps = conn.execute('SELECT id, nom FROM ListeCegep').fetchall()

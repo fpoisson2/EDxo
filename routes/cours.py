@@ -1,6 +1,5 @@
 # plan_cadre.py
 from flask import Blueprint, Flask, render_template, redirect, url_for, request, flash, send_file, jsonify
-from flask_login import current_user
 from forms import (
     ProgrammeForm,
     CompetenceForm,
