@@ -12,3 +12,4 @@ bleach
 gunicorn
 flask_sqlalchemy
 tiktoken
+flask-migrate
