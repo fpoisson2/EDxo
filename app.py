@@ -19,6 +19,7 @@ from routes.plan_de_cours import plan_de_cours_bp
 from models import db, Cours  # Import specific models
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
+from flask_migrate import Migrate
 import atexit
 
 
@@ -99,6 +100,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize db
 db.init_app(app)
+
+migrate = Migrate(app, db)
 
 ckeditor = CKEditor(app)
 
