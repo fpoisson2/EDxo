@@ -8,7 +8,8 @@ from flask import (
     flash, 
     redirect, 
     url_for,
-    jsonify
+    jsonify,
+    request
 )
 from flask_login import login_required, current_user
 from datetime import datetime
@@ -32,6 +33,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from utils import send_backup_email
 from utilitaires.scheduler_instance import scheduler, schedule_backup
 import pytz
+import subprocess
 
 import logging
 
@@ -40,6 +42,34 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 system_bp = Blueprint('system', __name__)
+
+@system_bp.route('/update_site', methods=['POST'])
+def update_site():
+    """
+    Exécute les commandes pour mettre à jour le site.
+    """
+    try:
+        # IMPORTANT : Adaptez 'cd /chemin/vers/votre/projet' selon votre structure
+        # Les commandes sont enchaînées dans un seul appel bash via shell=True
+        cmd = (
+            "cd /home/edxo/edxo-dev && "
+            "source venv/bin/activate && "
+            "git pull origin main && "
+            "pip install -r requirements.txt && "
+            "flask db migrate && "
+            "sudo systemctl restart edxo-dev"
+        )
+        
+        # L'option shell=True est utilisée pour permettre l'utilisation de 'source'
+        # (qui est un built-in bash).
+        # check=True permet de lever une exception CalledProcessError en cas d'erreur.
+        subprocess.run(cmd, shell=True, check=True)
+
+        return jsonify({"message": "Site mis à jour avec succès."})
+    except subprocess.CalledProcessError as e:
+        print("Erreur lors de la mise à jour : ", e)
+        return jsonify({"message": "Une erreur s'est produite lors de la mise à jour."}), 500
+
 
 @system_bp.route('/save_backup_config', methods=['POST'])
 @roles_required('admin')
