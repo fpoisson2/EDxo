@@ -14,7 +14,6 @@ from forms import (
     DeleteForm,
     MultiCheckboxField,
     PlanCadreForm,
-    CapaciteForm,
     SavoirEtreForm,
     CompetenceDeveloppeeForm,
     ObjetCibleForm,
@@ -28,12 +27,23 @@ from forms import (
     GlobalGenerationSettingsForm, 
     GenerationSettingForm,
     ChangePasswordForm,
-    LoginForm
+    LoginForm,
+    CreateUserForm, 
+    DeleteUserForm,
+    DepartmentForm, 
+    DepartmentRegleForm, 
+    DepartmentPIEAForm,
+    DeleteForm,
+    EditUserForm,
+    ProgrammeMinisterielForm,
+    ProgrammeForm,
+    CreditManagementForm
 )
 from flask_ckeditor import CKEditor
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import sqlite3
 import json
+from decorator import role_required, roles_required
 import logging
 from collections import defaultdict
 from openai import OpenAI
@@ -47,8 +57,9 @@ import bleach
 from docxtpl import DocxTemplate
 from io import BytesIO 
 from werkzeug.security import generate_password_hash, check_password_hash
-from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_list, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template
-from models import User
+from utils import get_db_connection, get_programme_id, parse_html_to_list, parse_html_to_nested_list, get_cegep_details_data, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template, get_all_cegeps, get_all_departments, get_all_programmes, get_programmes_by_user
+from models import User, db, Department, DepartmentRegles, DepartmentPIEA, ListeProgrammeMinisteriel, Programme
+
 
 
 main = Blueprint('main', __name__)
@@ -58,19 +69,170 @@ main = Blueprint('main', __name__)
 def markdown_filter(text):
     return markdown.markdown(text)
 
+@main.route('/gestion_programmes_cegep', methods=['GET', 'POST'])
+@roles_required('admin')
+def gestion_programmes_cegep():
+    # Récupérer la liste des cégeps
+    cegeps = get_all_cegeps()  # Ex.: [{'id': 1, 'nom': 'Cégep A'}, {'id': 2, 'nom': 'Cégep B'}]
+    
+    # Récupérer la liste des départements et des programmes ministériels
+    # Adaptez ces fonctions à votre code – ici on part d'une requête via SQLAlchemy
+    departments = [ (d.id, d.nom) for d in Department.query.order_by(Department.nom).all() ]
+    # Ajouter une option par défaut pour Programme ministériel
+    programmes_ministeriels = [(0, 'Aucun')] + [(pm.id, pm.nom) for pm in ListeProgrammeMinisteriel.query.order_by(ListeProgrammeMinisteriel.nom).all()]
+    
+    form = ProgrammeForm()
+    # Alimenter les menus déroulants
+    form.cegep_id.choices = [(c['id'], c['nom']) for c in cegeps]
+    form.department_id.choices = departments
+    form.liste_programme_ministeriel_id.choices = programmes_ministeriels
+
+    # Si un cégep est sélectionné dans la query string, on le récupère;
+    # sinon, on prend le premier dans la liste (si disponible)
+    selected_cegep = request.args.get('cegep_id', type=int)
+    if not selected_cegep and form.cegep_id.choices:
+        selected_cegep = form.cegep_id.choices[0][0]  # Choix par défaut (premier cégep)
+    form.cegep_id.data = selected_cegep
+
+    # Si le formulaire est soumis, créer le nouveau programme associé à ce cégep
+    if form.validate_on_submit():
+        nouveau_programme = Programme(
+            nom=form.nom.data,
+            department_id=form.department_id.data,
+            liste_programme_ministeriel_id=form.liste_programme_ministeriel_id.data or None,
+            cegep_id=form.cegep_id.data,
+            variante=form.variante.data or None
+        )
+        try:
+            db.session.add(nouveau_programme)
+            db.session.commit()
+            flash("Programme ajouté avec succès.", "success")
+            # Rediriger en passant le cégep sélectionné dans l'URL pour conserver le filtre
+            return redirect(url_for('main.gestion_programmes_cegep', cegep_id=form.cegep_id.data))
+        except Exception as e:
+            db.session.rollback()
+            flash("Erreur lors de l'ajout du programme: " + str(e), "danger")
+
+    # Récupérer les programmes pour le cégep sélectionné (via le modèle Programme)
+    programmes = Programme.query.filter_by(cegep_id=selected_cegep).all() if selected_cegep else []
+
+    return render_template(
+        'gestion_programmes_cegep.html',
+        form=form,
+        programmes=programmes,
+        selected_cegep=selected_cegep,
+        cegeps=cegeps
+    )
+
+
+
+
+
+@main.route('/gestion_programmes_ministeriels', methods=['GET', 'POST'])
+@roles_required('admin')
+def gestion_programmes_ministeriels():
+    form = ProgrammeMinisterielForm()  # Crée le formulaire
+    if form.validate_on_submit():
+        nouveau_programme_min = ListeProgrammeMinisteriel(
+            nom=form.nom.data,
+            code=form.code.data
+        )
+        try:
+            db.session.add(nouveau_programme_min)
+            db.session.commit()
+            flash("Programme ministériel ajouté avec succès.", "success")
+            return redirect(url_for('main.gestion_programmes_ministeriels'))
+        except Exception as e:
+            db.session.rollback()
+            flash("Erreur lors de l'ajout du programme ministériel : " + str(e), "danger")
+    programmes = ListeProgrammeMinisteriel.query.all()
+    return render_template('gestion_programmes_ministeriels.html', programmes=programmes, form=form)
+
+
+@main.route('/ajouter_programme_ministeriel', methods=['GET', 'POST'])
+@roles_required('admin')
+def ajouter_programme_ministeriel():
+    form = ProgrammeMinisterielForm()
+    if form.validate_on_submit():
+        # Création de l'objet ListeProgrammeMinisteriel
+        nouveau_programme_min = ListeProgrammeMinisteriel(
+            nom=form.nom.data,
+            code=form.code.data
+        )
+        try:
+            db.session.add(nouveau_programme_min)
+            db.session.commit()
+            flash("Programme ministériel ajouté avec succès.", "success")
+            # Redirigez vers une page de liste ou l'accueil, par exemple.
+            return redirect(url_for('liste_programmes_ministeriels'))
+        except Exception as e:
+            db.session.rollback()
+            flash("Erreur lors de l'ajout du programme ministériel : " + str(e), "danger")
+    
+    return render_template('ajouter_programme_ministeriel.html', form=form)
+
+# Exemple d'une route de listing
+@main.route('/liste_programmes_ministeriels')
+@roles_required('admin')
+def liste_programmes_ministeriels():
+    programmes = ListeProgrammeMinisteriel.query.all()
+    return render_template('liste_programmes_ministeriels.html', programmes=programmes)
+
+@main.route('/get_credit_balance', methods=['GET'])
+@login_required
+def get_credit_balance():
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Not authenticated'}), 401
+        
+    try:
+        # Si on utilise SQLAlchemy
+        user = User.query.get(current_user.id)
+        if user is None:
+            return jsonify({'error': 'User not found'}), 404
+            
+        credit_value = user.credits if user.credits is not None else 0.0
+        return jsonify({
+            'success': True,
+            'credit': "{:.2f}".format(float(credit_value))
+        })
+    except Exception as e:
+        print(f"Error in get_credit_balance: {str(e)}")  # Log l'erreur
+        return jsonify({
+            'error': str(e),
+            'credit': "0.00"  # Valeur par défaut en cas d'erreur
+        }), 500
+
+@main.route('/get_cegep_details')
+@role_required('admin')
+def get_cegep_details():
+    cegep_id = request.args.get('cegep_id', type=int)
+    if not cegep_id:
+        return jsonify({'departments': [], 'programmes': []})
+
+    conn = get_db_connection()
+    departments = conn.execute('SELECT id, nom FROM Department WHERE cegep_id = ?', (cegep_id,)).fetchall()
+    programmes = conn.execute('SELECT id, nom FROM Programme WHERE cegep_id = ?', (cegep_id,)).fetchall()
+    conn.close()
+
+    return jsonify({
+        'departments': [{'id': d['id'], 'nom': d['nom']} for d in departments],
+        'programmes': [{'id': p['id'], 'nom': p['nom']} for p in programmes]
+    })
+
+
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))  # Redirigez vers une page appropriée si déjà connecté
+        return redirect(url_for('main.index'))  # Redirige si déjà connecté
 
     form = LoginForm()
     if form.validate_on_submit():
-        username = form.username.data
+        username = form.username.data.lower()  # Convertir en minuscule
         password = form.password.data
 
         conn = get_db_connection()
-        user_row = conn.execute('SELECT * FROM User WHERE username = ?', (username,)).fetchone()
+        user_row = conn.execute('SELECT * FROM User WHERE LOWER(username) = ?', (username,)).fetchone()  # Recherche en minuscule
         conn.close()
 
         if user_row and check_password_hash(user_row['password'], password):
@@ -85,6 +247,7 @@ def login():
     return render_template('login.html', form=form)
 
 
+
 # Route pour la déconnexion
 @main.route('/logout')
 @login_required
@@ -94,9 +257,9 @@ def logout():
     return redirect(url_for('main.login'))
 
 @main.route('/manage_users', methods=['GET', 'POST'])
-@login_required
+@role_required('admin')
 def manage_users():
-    if current_user.role != 'admin':  # Vérifiez que seul l'admin a accès
+    if current_user.role != 'admin':
         flash('Accès interdit.', 'danger')
         return redirect(url_for('settings.parametres'))
 
@@ -104,58 +267,239 @@ def manage_users():
     users = conn.execute('SELECT * FROM User').fetchall()
     conn.close()
 
+    create_form = CreateUserForm(prefix='create')
+    delete_forms = {user['id']: DeleteUserForm(prefix=f'delete_{user["id"]}') for user in users}
+    credit_forms = {user['id']: CreditManagementForm(prefix=f'credit_{user["id"]}') for user in users}
+    
     if request.method == 'POST':
-        if 'create_user' in request.form:
-            username = request.form.get('username')
-            password = request.form.get('password')
-            role = request.form.get('role')
+        if 'create-submit' in request.form and create_form.validate_on_submit():
+            username = create_form.username.data.strip().lower()
+            password = create_form.password.data
+            role = create_form.role.data
 
-            # Vérification des champs
-            if not username or not password or not role:
-                flash('Tous les champs sont requis pour créer un utilisateur.', 'warning')
+            with get_db_connection() as conn:
+                existing_user = conn.execute(
+                    'SELECT 1 FROM User WHERE username = ?', (username,)
+                ).fetchone()
+
+                if existing_user:
+                    flash("Ce nom d'utilisateur est déjà pris.", "danger")
+                    return redirect(url_for('main.manage_users'))
+
+                hashed_password = generate_password_hash(password, method='scrypt')
+
+                try:
+                    conn.execute(
+                        'INSERT INTO User (username, password, role, credits) VALUES (?, ?, ?, ?)',
+                        (username, hashed_password, role, 0)
+                    )
+                    conn.commit()
+                    flash('Utilisateur créé avec succès.', 'success')
+                except Exception as e:
+                    conn.rollback()
+                    # Logguer l'erreur au lieu de l'afficher directement à l'utilisateur
+                    print(f"Erreur lors de la création d'utilisateur : {e}")
+                    flash("Une erreur s'est produite lors de la création de l'utilisateur.", "danger")
+
+            return redirect(url_for('main.manage_users'))
+
+
+        # Handle delete user forms
+        for user in users:
+            form = delete_forms[user['id']]
+            if f'delete-submit-{user["id"]}' in request.form and form.validate_on_submit():
+                user_id = form.user_id.data
+
+                if str(user_id) == str(current_user.id):
+                    flash('Vous ne pouvez pas supprimer votre propre compte.', 'danger')
+                    return redirect(url_for('main.manage_users'))
+
+                try:
+                    conn = get_db_connection()
+                    conn.execute('DELETE FROM User WHERE id = ?', (user_id,))
+                    conn.commit()
+                    flash('Utilisateur supprimé avec succès.', 'success')
+                except Exception as e:
+                    flash(f'Erreur lors de la suppression : {e}', 'danger')
+                finally:
+                    conn.close()
                 return redirect(url_for('main.manage_users'))
 
-            hashed_password = generate_password_hash(password, method='scrypt')
-            try:
-                conn = get_db_connection()
-                conn.execute(
-                    'INSERT INTO User (username, password, role) VALUES (?, ?, ?)',
-                    (username, hashed_password, role)
+            if f'credit-submit-{user["id"]}' in request.form:
+                form = credit_forms[user['id']]
+                if form.validate_on_submit():
+                    try:
+                        conn = get_db_connection()
+                        amount = form.amount.data
+                        operation = form.operation.data
+                        
+                        # Récupérer les crédits actuels
+                        current_credits = conn.execute(
+                            'SELECT credits FROM User WHERE id = ?', 
+                            (user['id'],)
+                        ).fetchone()['credits']
+                        
+                        # Calculer les nouveaux crédits
+                        new_credits = current_credits + amount if operation == 'add' else current_credits - amount
+                        
+                        # Vérifier que les crédits ne deviennent pas négatifs
+                        if new_credits < 0:
+                            flash('Les crédits ne peuvent pas être négatifs.', 'danger')
+                            return redirect(url_for('main.manage_users'))
+                        
+                        # Mettre à jour les crédits
+                        conn.execute(
+                            'UPDATE User SET credits = ? WHERE id = ?',
+                            (new_credits, user['id'])
+                        )
+                        conn.commit()
+                        
+                        operation_text = "ajoutés à" if operation == 'add' else "retirés de"
+                        flash(f'{amount} crédits ont été {operation_text} {user["username"]}.', 'success')
+                        
+                    except Exception as e:
+                        flash(f'Erreur lors de la modification des crédits : {e}', 'danger')
+                    finally:
+                        conn.close()
+                    return redirect(url_for('main.manage_users'))
+
+    return render_template('manage_users.html', users=users, credit_forms=credit_forms, create_form=create_form, delete_forms=delete_forms, current_user_id=current_user.id)
+
+@main.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
+@role_required('admin')
+def edit_user(user_id):
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM User WHERE id = ?', (user_id,)).fetchone()
+    if user:
+        user = dict(user)
+        # Get user's programmes immediately
+        user_programmes = conn.execute('''
+            SELECT programme_id 
+            FROM User_Programme 
+            WHERE user_id = ?
+        ''', (user_id,)).fetchall()
+        user['programmes'] = [p['programme_id'] for p in user_programmes]
+        print("User programmes loaded:", user['programmes'])  # Debug print
+    conn.close()
+
+    if not user:
+        flash("Utilisateur non trouvé.", "danger")
+        return redirect(url_for('main.manage_users'))
+    
+    form = EditUserForm()
+
+    # Set initial choices for all dropdowns
+    cegeps = get_all_cegeps()
+    form.cegep_id.choices = [(0, 'Aucun')] + [(c['id'], c['nom']) for c in cegeps]
+
+    # Handle GET request first (for initial load)
+    if request.method == 'GET':
+        if user['cegep_id']:
+            details = get_cegep_details_data(user['cegep_id'])
+            form.department_id.choices = [(0, 'Aucun')] + [(d['id'], d['nom']) for d in details['departments']]
+            form.programmes.choices = [(p['id'], p['nom']) for p in details['programmes']]
+        else:
+            form.department_id.choices = [(0, 'Aucun')]
+            form.programmes.choices = []
+
+        # Pre-fill form data
+        form.user_id.data = user['id']
+        form.username.data = user['username']
+        form.role.data = user['role']
+        form.cegep_id.data = user['cegep_id'] if user['cegep_id'] else 0
+        form.department_id.data = user['department_id'] if user['department_id'] else 0
+        form.programmes.data = user['programmes']  # Set the programmes data here
+        form.openai_key.data = user['openai_key']
+        
+        print("GET request - form.programmes.data:", form.programmes.data)
+        print("GET request - form.programmes.choices:", form.programmes.choices)
+
+    # Handle POST request
+    else:
+        submitted_cegep_id = request.form.get('cegep_id', type=int)
+        if submitted_cegep_id and submitted_cegep_id != 0:
+            details = get_cegep_details_data(submitted_cegep_id)
+            form.department_id.choices = [(0, 'Aucun')] + [(d['id'], d['nom']) for d in details['departments']]
+            form.programmes.choices = [(p['id'], p['nom']) for p in details['programmes']]
+        else:
+            form.department_id.choices = [(0, 'Aucun')]
+            form.programmes.choices = []
+        
+        print("POST request - submitted data:", request.form.getlist('programmes'))
+
+    if form.validate_on_submit():
+        try:
+            conn = get_db_connection()
+            
+            # Update user info
+            conn.execute(
+                '''UPDATE User SET 
+                    username = ?, 
+                    password = ?, 
+                    role = ?, 
+                    cegep_id = ?, 
+                    department_id = ? ,
+                    openai_key = ?
+                WHERE id = ?''',
+                (
+                    form.username.data,
+                    generate_password_hash(form.password.data, method='scrypt') if form.password.data else user['password'],
+                    form.role.data,
+                    form.cegep_id.data if form.cegep_id.data != 0 else None,
+                    form.department_id.data if form.department_id.data != 0 else None,
+                    form.openai_key.data,  # Ajout de l'openai_key
+                    user_id
                 )
-                conn.commit()
-                flash('Utilisateur créé avec succès.', 'success')
-            except Exception as e:
-                flash(f'Erreur lors de la création : {e}', 'danger')
-            finally:
-                conn.close()
+            )
+            
+            # Update programmes - get directly from form submission
+            submitted_programmes = request.form.getlist('programmes')
+            print("Submitted programmes:", submitted_programmes)  # Debug print
+            
+            conn.execute('DELETE FROM User_Programme WHERE user_id = ?', (user_id,))
+            
+            if submitted_programmes:
+                for prog_id in submitted_programmes:
+                    prog_id = int(prog_id)  # Convert to integer
+                    print(f"Inserting programme {prog_id} for user {user_id}")  # Debug print
+                    conn.execute(
+                        'INSERT INTO User_Programme (user_id, programme_id) VALUES (?, ?)', 
+                        (user_id, prog_id)
+                    )
+            
+            conn.commit()
+            flash('Utilisateur mis à jour avec succès.', 'success')
             return redirect(url_for('main.manage_users'))
+            
+        except Exception as e:
+            conn.rollback()
+            flash(f'Erreur lors de la mise à jour : {e}', 'danger')
+        finally:
+            conn.close()
 
-        elif 'delete_user' in request.form:
-            user_id = request.form.get('user_id')
+    print("Final form.programmes.data:", form.programmes.data)
+    print("Final form.programmes.choices:", form.programmes.choices)
 
-            # Empêcher la suppression de l'utilisateur actuel
-            if str(user_id) == str(current_user.id):
-                flash('Vous ne pouvez pas supprimer votre propre compte.', 'danger')
-                return redirect(url_for('main.manage_users'))
+    return render_template('edit_user.html', form=form, user=user)
 
-            # Optionnel : Empêcher la suppression des comptes administrateurs (sauf si vous le souhaitez)
-            # user_to_delete = conn.execute('SELECT * FROM User WHERE id = ?', (user_id,)).fetchone()
-            # if user_to_delete and user_to_delete['role'] == 'admin':
-            #     flash('Vous ne pouvez pas supprimer un compte administrateur.', 'danger')
-            #     return redirect(url_for('main.manage_users'))
+@main.route('/get_departments_and_programmes/<int:cegep_id>')
+@login_required
+def get_departments_and_programmes(cegep_id):
+    if cegep_id == 0:
+        return jsonify({
+            'departments': [{'id': 0, 'nom': 'Aucun'}],
+            'programmes': []
+        })
+    
+    details = get_cegep_details_data(cegep_id)
+    return jsonify({
+        'departments': [{'id': 0, 'nom': 'Aucun'}] + details['departments'],
+        'programmes': details['programmes']
+    })
 
-            try:
-                conn = get_db_connection()
-                conn.execute('DELETE FROM User WHERE id = ?', (user_id,))
-                conn.commit()
-                flash('Utilisateur supprimé avec succès.', 'success')
-            except Exception as e:
-                flash(f'Erreur lors de la suppression : {e}', 'danger')
-            finally:
-                conn.close()
-            return redirect(url_for('main.manage_users'))
 
-    return render_template('manage_users.html', users=users, current_user_id=current_user.id)
+
+
 @main.route('/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
@@ -193,10 +537,18 @@ def index():
     conn = get_db_connection()
     programmes = conn.execute('SELECT * FROM Programme').fetchall()
     conn.close()
-    return render_template('index.html', programmes=programmes)
+    
+    if programmes:
+        # Sélectionner le premier programme comme défaut
+        default_programme_id = programmes[0]['id']  # Assurez-vous que 'id' est la clé correcte
+        return redirect(url_for('programme.view_programme', programme_id=default_programme_id))
+    else:
+        # Si aucun programme n'existe, rediriger vers la page d'ajout
+        flash('Aucun programme trouvé. Veuillez en ajouter un.', 'warning')
+        return redirect(url_for('main.add_programme'))
 
 @main.route('/add_programme', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_programme():
     form = ProgrammeForm()
     if form.validate_on_submit():
@@ -211,7 +563,7 @@ def add_programme():
 
 # --------------------- Competence Routes ---------------------
 @main.route('/add_competence', methods=['GET', 'POST'])
-@login_required
+@role_required('admin')
 def add_competence():
     form = CompetenceForm()
     conn = get_db_connection()
@@ -262,18 +614,17 @@ def add_competence():
 
     return render_template('add_competence.html', form=form)
 
-
-
 # --------------------- ElementCompetence Routes ---------------------
 
 @main.route('/add_element_competence', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_element_competence():
     form = ElementCompetenceForm()
     conn = get_db_connection()
-    competences = conn.execute('SELECT id, nom FROM Competence').fetchall()
+    competences = conn.execute('SELECT id, code, nom FROM Competence').fetchall()
     conn.close()
-    form.competence.choices = [(c['id'], c['nom']) for c in competences]
+    form.competence.choices = [(c['id'], f"{c['code']} - {c['nom']}") for c in competences]
+
 
     if form.validate_on_submit():
         competence_id = form.competence.data
@@ -303,7 +654,7 @@ def add_element_competence():
 
 
 @main.route('/add_fil_conducteur', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_fil_conducteur():
     form = FilConducteurForm()
     conn = get_db_connection()
@@ -328,7 +679,7 @@ def add_fil_conducteur():
 
 
 @main.route('/add_cours', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_cours():
     form = CoursForm()
     conn = get_db_connection()
@@ -406,7 +757,7 @@ def add_cours():
 # --------------------- CoursPrealable Routes ---------------------
 
 @main.route('/add_cours_prealable', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_cours_prealable():
     form = CoursPrealableForm()
     conn = get_db_connection()
@@ -433,7 +784,7 @@ def add_cours_prealable():
 # --------------------- CoursCorequis Routes ---------------------
 
 @main.route('/add_cours_corequis', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_cours_corequis():
     form = CoursCorequisForm()
     conn = get_db_connection()
@@ -459,7 +810,7 @@ def add_cours_corequis():
 # --------------------- CompetenceParCours Routes ---------------------
 
 @main.route('/add_competence_par_cours', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_competence_par_cours():
     form = CompetenceParCoursForm()
     conn = get_db_connection()
@@ -488,7 +839,7 @@ def add_competence_par_cours():
 # --------------------- ElementCompetenceParCours Routes ---------------------
 
 @main.route('/add_element_competence_par_cours', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def add_element_competence_par_cours():
     form = ElementCompetenceParCoursForm()
     conn = get_db_connection()
@@ -519,7 +870,7 @@ def add_element_competence_par_cours():
 
 
 @main.route('/element_competence/<int:element_id>/edit', methods=['GET', 'POST'])
-@login_required
+@role_required('admin')
 def edit_element_competence(element_id):
     conn = get_db_connection()
     element = conn.execute('SELECT * FROM ElementCompetence WHERE id = ?', (element_id,)).fetchone()
@@ -576,10 +927,17 @@ def edit_element_competence(element_id):
     return render_template('edit_element_competence.html', form=form)
 
 @main.route('/edit_cours/<int:cours_id>', methods=('GET', 'POST'))
-@login_required
+@role_required('admin')
 def edit_cours(cours_id):
     conn = get_db_connection()
-    cours = conn.execute('SELECT * FROM Cours WHERE id = ?', (cours_id,)).fetchone()
+    # Modifier la requête initiale pour inclure le fil_conducteur_id
+    cours = conn.execute('''
+        SELECT c.*, fc.id as fil_conducteur_id 
+        FROM Cours c 
+        LEFT JOIN FilConducteur fc ON c.fil_conducteur_id = fc.id 
+        WHERE c.id = ?
+    ''', (cours_id,)).fetchone()
+    
     if cours is None:
         conn.close()
         flash('Cours non trouvé.', 'danger')
@@ -598,7 +956,13 @@ def edit_cours(cours_id):
     corequis_existants = [c['cours_corequis_id'] for c in corequis_rows]
 
     # Récupérer les éléments de compétence
-    elements_competence_rows = conn.execute('SELECT id, nom FROM ElementCompetence').fetchall()
+    # Modifier la requête pour inclure le code de la compétence
+    elements_competence_rows = conn.execute('''
+        SELECT ec.id, c.code || ' - ' || ec.nom as nom 
+        FROM ElementCompetence ec
+        JOIN Competence c ON ec.competence_id = c.id
+        ORDER BY c.code, ec.nom
+    ''').fetchall()
     elements_competence = [dict(row) for row in elements_competence_rows]
 
     ec_assoc_rows = conn.execute('SELECT element_competence_id, status FROM ElementCompetenceParCours WHERE cours_id = ?', (cours_id,)).fetchall()
@@ -610,8 +974,6 @@ def edit_cours(cours_id):
     # Récupérer les fils conducteurs
     fils_conducteurs_rows = conn.execute('SELECT id, description FROM FilConducteur').fetchall()
     fils_conducteurs = [(fc['id'], fc['description']) for fc in fils_conducteurs_rows]
-
-    conn.close()
 
     form = CoursForm()
     form.programme.choices = [(p['id'], p['nom']) for p in programmes]
@@ -632,12 +994,15 @@ def edit_cours(cours_id):
         form.heures_travail_maison.data = cours['heures_travail_maison']
         form.corequis.data = corequis_existants
 
-        # Pré-remplir le fil conducteur (s'il est associé au cours)
-        if 'fil_conducteur_id' in cours:
-            form.fil_conducteur.data = cours['fil_conducteur_id']
-        else:
-            form.fil_conducteur.data = None  # Ou une autre valeur par défaut
-        # Vider les entrées existantes d'éléments de compétence
+        cours = conn.execute('''
+            SELECT c.*, fc.id as fil_conducteur_id 
+            FROM Cours c 
+            LEFT JOIN FilConducteur fc ON c.fil_conducteur_id = fc.id 
+            WHERE c.id = ?
+        ''', (cours_id,)).fetchone()
+
+        form.fil_conducteur.data = cours['fil_conducteur_id'] if cours['fil_conducteur_id'] else None
+
         form.elements_competence.entries = []
         for ec in ec_assoc:
             subform = form.elements_competence.append_entry()
@@ -667,6 +1032,8 @@ def edit_cours(cours_id):
         for p_subform in form.prealables:
             p_subform.cours_prealable_id.choices = cours_choices
 
+    conn.close()
+    
     if form.validate_on_submit():
         # Récupérer les données
         programme_id = form.programme.data
@@ -735,3 +1102,198 @@ def edit_cours(cours_id):
             return redirect(url_for('main.edit_cours', cours_id=cours_id))
 
     return render_template('edit_cours.html', form=form, elements_competence=elements_competence, cours_choices=cours_choices)
+
+@main.route('/parametres/gestion_departements', methods=['GET', 'POST'])
+@roles_required('admin')
+def gestion_departements():
+    print("Request method:", request.method)
+    print("Form data:", request.form)
+
+    department_form = DepartmentForm()
+    delete_department_form = DeleteForm()
+    delete_rule_form = DeleteForm()
+    delete_piea_form = DeleteForm()
+
+    if request.method == 'POST':
+        if 'ajouter_depart' in request.form:
+            # Traitement pour ajouter un département
+            if department_form.validate_on_submit():
+                nouveau_dep = Department(
+                    nom=department_form.nom.data
+                )
+                db.session.add(nouveau_dep)
+                try:
+                    db.session.commit()
+                    flash("Département ajouté avec succès.", 'success')
+                    return redirect(url_for('main.gestion_departements'))
+                except Exception as e:
+                    print(f"Error adding department: {e}")
+                    db.session.rollback()
+                    flash(f"Erreur lors de l'ajout du département : {e}", 'danger')
+            else:
+                flash("Veuillez remplir tous les champs correctement pour le département.", 'danger')
+
+        if 'ajouter_regle' in request.form:
+            department_id = request.form.get('department_id')
+            print(f"Processing rule addition for department {department_id}")
+            
+            regle_form = DepartmentRegleForm()
+            if regle_form.regle.data and regle_form.contenu.data:
+                department = Department.query.get(department_id)
+                if department:
+                    nouvelle_regle = DepartmentRegles(
+                        regle=regle_form.regle.data,
+                        contenu=regle_form.contenu.data,
+                        department_id=department.id
+                    )
+                    db.session.add(nouvelle_regle)
+                    try:
+                        db.session.commit()
+                        flash("Règle ajoutée avec succès.", 'success')
+                        return redirect(url_for('main.gestion_departements'))
+                    except Exception as e:
+                        print(f"Error adding rule: {e}")
+                        db.session.rollback()
+                        flash(f"Erreur lors de l'ajout de la règle : {e}", 'danger')
+                else:
+                    flash("Département non trouvé.", 'danger')
+            else:
+                flash("Veuillez remplir tous les champs.", 'danger')
+
+        elif 'ajouter_piea' in request.form:
+            department_id = request.form.get('department_id')
+            print(f"Processing PIEA addition for department {department_id}")
+            
+            piea_form = DepartmentPIEAForm()
+            if piea_form.article.data and piea_form.contenu.data:
+                department = Department.query.get(department_id)
+                if department:
+                    nouvelle_piea = DepartmentPIEA(
+                        article=piea_form.article.data,
+                        contenu=piea_form.contenu.data,
+                        department_id=department.id
+                    )
+                    db.session.add(nouvelle_piea)
+                    try:
+                        db.session.commit()
+                        flash("Règle de PIEA ajoutée avec succès.", 'success')
+                        return redirect(url_for('main.gestion_departements'))
+                    except Exception as e:
+                        print(f"Error adding PIEA: {e}")
+                        db.session.rollback()
+                        flash(f"Erreur lors de l'ajout de la règle de PIEA : {e}", 'danger')
+                else:
+                    flash("Département non trouvé.", 'danger')
+            else:
+                flash("Veuillez remplir tous les champs.", 'danger')
+
+    # Pour le GET request ou si la validation échoue
+    regle_form = DepartmentRegleForm()
+    piea_form = DepartmentPIEAForm()
+    departments = Department.query.order_by(Department.nom).all()
+    
+    return render_template(
+        'gestion_departements.html',
+        department_form=department_form,
+        regle_form=regle_form,
+        piea_form=piea_form,
+        delete_department_form=delete_department_form,
+        delete_rule_form=delete_rule_form,
+        delete_piea_form=delete_piea_form,
+        departments=departments
+    )
+
+@main.route('/parametres/gestion_departements/supprimer/<int:departement_id>', methods=['POST'])
+@roles_required('admin')
+def supprimer_departement(departement_id):
+    department = Department.query.get_or_404(departement_id)
+    try:
+        db.session.delete(department)
+        db.session.commit()
+        flash(f"Département '{department.nom}' supprimé avec succès.", 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erreur lors de la suppression du département : {e}", 'danger')
+    return redirect(url_for('main.gestion_departements'))
+
+@main.route('/parametres/gestion_departements/supprimer_regle/<int:regle_id>', methods=['POST'])
+@roles_required('admin')
+def supprimer_regle(regle_id):
+    regle = DepartmentRegles.query.get_or_404(regle_id)
+    try:
+        db.session.delete(regle)
+        db.session.commit()
+        flash("Règle supprimée avec succès.", 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erreur lors de la suppression de la règle : {e}", 'danger')
+    return redirect(url_for('main.gestion_departements'))
+
+@main.route('/parametres/gestion_departements/supprimer_piea/<int:piea_id>', methods=['POST'])
+@roles_required('admin')
+def supprimer_piea(piea_id):
+    piea = DepartmentPIEA.query.get_or_404(piea_id)
+    try:
+        db.session.delete(piea)
+        db.session.commit()
+        flash("Règle de PIEA supprimée avec succès.", 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erreur lors de la suppression de la règle de PIEA : {e}", 'danger')
+    return redirect(url_for('main.gestion_departements'))
+
+@main.route('/parametres/gestion_departements/edit_regle/<int:regle_id>', methods=['GET', 'POST'])
+@roles_required('admin')
+def edit_regle(regle_id):
+    regle = DepartmentRegles.query.get_or_404(regle_id)
+    form = DepartmentRegleForm()
+
+    if form.validate_on_submit():
+        regle.regle = form.regle.data
+        regle.contenu = form.contenu.data
+        try:
+            db.session.commit()
+            flash('Règle mise à jour avec succès.', 'success')
+            return redirect(url_for('main.gestion_departements'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur lors de la mise à jour de la règle : {e}', 'danger')
+            return redirect(url_for('main.gestion_departements'))
+
+    # Pré-remplir le formulaire avec les données existantes
+    if request.method == 'GET':
+        form.regle.data = regle.regle
+        form.contenu.data = regle.contenu
+
+    return render_template('edit_regle.html', 
+                         form=form, 
+                         regle=regle,
+                         title='Modifier la Règle')
+
+@main.route('/parametres/gestion_departements/edit_piea/<int:piea_id>', methods=['GET', 'POST'])
+@roles_required('admin')
+def edit_piea(piea_id):
+    piea = DepartmentPIEA.query.get_or_404(piea_id)
+    form = DepartmentPIEAForm()
+
+    if form.validate_on_submit():
+        piea.article = form.article.data
+        piea.contenu = form.contenu.data
+        try:
+            db.session.commit()
+            flash('Règle PIEA mise à jour avec succès.', 'success')
+            return redirect(url_for('main.gestion_departements'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur lors de la mise à jour de la règle PIEA : {e}', 'danger')
+            return redirect(url_for('main.gestion_departements'))
+
+    # Pré-remplir le formulaire avec les données existantes
+    if request.method == 'GET':
+        form.article.data = piea.article
+        form.contenu.data = piea.contenu
+
+    return render_template('edit_piea.html', 
+                         form=form, 
+                         piea=piea,
+                         title='Modifier la Règle PIEA')

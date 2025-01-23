@@ -13,9 +13,9 @@ from forms import (
     DeleteForm,
     MultiCheckboxField,
     PlanCadreForm,
-    CapaciteForm,
     SavoirEtreForm,
     CompetenceDeveloppeeForm,
+    CapaciteItemForm,
     ObjetCibleForm,
     CoursRelieForm,
     CoursPrealableForm,
@@ -36,6 +36,7 @@ from collections import defaultdict
 from openai import OpenAI
 from openai import OpenAIError
 from dotenv import load_dotenv
+from decorator import role_required, roles_required
 from bs4 import BeautifulSoup
 import os
 import markdown
@@ -46,13 +47,14 @@ from io import BytesIO
 from werkzeug.security import generate_password_hash, check_password_hash
 from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_list, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template
 from models import User
+from flask_wtf.csrf import validate_csrf, CSRFError
 
 
 cours_bp = Blueprint('cours', __name__, url_prefix='/cours')
 
 
 @cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>/import_json', methods=['POST'])
-@login_required
+@role_required('admin')
 def import_plan_cadre_json(cours_id, plan_id):
     form = ImportPlanCadreForm()
     if form.validate_on_submit():
@@ -395,78 +397,711 @@ def add_plan_cadre(cours_id):
         flash(f'Erreur lors de l\'ajout du Plan Cadre : {e}', 'danger')
     finally:
         conn.close()
+def get_plan_cadre(conn, plan_id, cours_id):
+    plan_row = conn.execute(
+        'SELECT * FROM PlanCadre WHERE id = ? AND cours_id = ?',
+        (plan_id, cours_id)
+    ).fetchone()
+    return plan_row
 
+def get_cours_details(conn, cours_id):
+    cours = conn.execute('''
+        SELECT Cours.*, Programme.nom as programme_nom 
+        FROM Cours 
+        JOIN Programme ON Cours.programme_id = Programme.id 
+        WHERE Cours.id = ?
+    ''', (cours_id,)).fetchone()
+    return cours
 
-
+def get_related_courses(conn, cours_id, relation_table, relation_field):
+    related = conn.execute(f'SELECT {relation_field} FROM {relation_table} WHERE cours_id = ?', (cours_id,)).fetchall()
+    related_ids = [item[0] for item in related]  # Access the first column of each result
     
+    details = []
+    if related_ids:
+        placeholders = ','.join(['?'] * len(related_ids))
+        details = conn.execute(f'''
+            SELECT id, nom, code 
+            FROM Cours 
+            WHERE id IN ({placeholders})
+        ''', related_ids).fetchall()
+    return details
+
+
+def get_competences(conn, cours_id, type_competence):
+    if type_competence == 'developpees':
+        query = '''
+            SELECT Competence.nom 
+            FROM CompetenceParCours
+            JOIN Competence ON CompetenceParCours.competence_developpee_id = Competence.id
+            WHERE CompetenceParCours.cours_id = ? AND CompetenceParCours.competence_developpee_id IS NOT NULL
+        '''
+    elif type_competence == 'atteintes':
+        query = '''
+            SELECT Competence.nom 
+            FROM CompetenceParCours
+            JOIN Competence ON CompetenceParCours.competence_atteinte_id = Competence.id
+            WHERE CompetenceParCours.cours_id = ? AND CompetenceParCours.competence_atteinte_id IS NOT NULL
+        '''
+    else:
+        return []
+    
+    competences = conn.execute(query, (cours_id,)).fetchall()
+    return competences
+
+def get_elements_competence(conn, cours_id):
+    elements = conn.execute('''
+        SELECT 
+            c.id AS competence_id,
+            ec.nom AS element_competence_nom, 
+            c.code AS competence_code,
+            c.nom AS competence_nom,
+            ecp.status
+        FROM ElementCompetenceParCours ecp
+        JOIN ElementCompetence ec ON ecp.element_competence_id = ec.id
+        JOIN Competence c ON ec.competence_id = c.id
+        WHERE ecp.cours_id = ?
+    ''', (cours_id,)).fetchall()
+    
+    grouped = {}
+    for ec in elements:
+        competence_id = ec['competence_id']
+        if competence_id not in grouped:
+            grouped[competence_id] = {
+                'nom': ec['competence_nom'],
+                'code': ec['competence_code'],
+                'elements': []
+            }
+        grouped[competence_id]['elements'].append({
+            'element_competence_nom': ec['element_competence_nom'],
+            'status': ec['status']
+        })
+    return grouped
+
+# --- Form Preparation Helpers ---
+
+def prepare_plan_form(plan_row):
+    plan_data = {
+        'place_intro': plan_row['place_intro'] or "",
+        'objectif_terminal': plan_row['objectif_terminal'] or "",
+        'structure_intro': plan_row['structure_intro'] or "",
+        'structure_activites_theoriques': plan_row['structure_activites_theoriques'] or "",
+        'structure_activites_pratiques': plan_row['structure_activites_pratiques'] or "",
+        'structure_activites_prevues': plan_row['structure_activites_prevues'] or "",
+        'eval_evaluation_sommative': plan_row['eval_evaluation_sommative'] or "",
+        'eval_nature_evaluations_sommatives': plan_row['eval_nature_evaluations_sommatives'] or "",
+        'eval_evaluation_de_la_langue': plan_row['eval_evaluation_de_la_langue'] or "",
+        'eval_evaluation_sommatives_apprentissages': plan_row['eval_evaluation_sommatives_apprentissages'] or ""
+    }
+    plan_form = PlanCadreForm(data=plan_data)
+    return plan_form
+
+def populate_field_lists(conn, plan_id, plan_form):
+    # Define the mapping between form fields and database tables
+    field_mappings = {
+        'competences_developpees': 'PlanCadreCompetencesDeveloppees',
+        'objets_cibles': 'PlanCadreObjetsCibles',
+        'competences_certifiees': 'PlanCadreCompetencesCertifiees',
+        'cours_corequis': 'PlanCadreCoursCorequis',
+        'cours_prealables': 'PlanCadreCoursPrealables',
+        'cours_relies': 'PlanCadreCoursRelies',
+        'savoir_etre': 'PlanCadreSavoirEtre'
+    }
+    
+    # Map database columns to WTForms fields if names differ
+    column_to_field_map = {
+        'texte': 'texte',
+        'description': 'texte_description'
+    }
+    
+    for field, table in field_mappings.items():
+        rows = conn.execute(
+            f'SELECT * FROM {table} WHERE plan_cadre_id = ?',
+            (plan_id,)
+        ).fetchall()
+        for row in rows:
+            entry = getattr(plan_form, field).append_entry()
+            for column_name in row.keys():
+                # Map database column to WTForms field name
+                field_name = column_to_field_map.get(column_name, column_name)
+                if hasattr(entry, field_name) and hasattr(getattr(entry, field_name), 'data'):
+                    setattr(getattr(entry, field_name), 'data', row[column_name])  # Set data attribute
+
+
+
+def prepare_capacites(conn, plan_id):
+    capacites_rows = conn.execute(
+        'SELECT * FROM PlanCadreCapacites WHERE plan_cadre_id = ?',
+        (plan_id,)
+    ).fetchall()
+    
+    capacites_data = []
+    for cap_row in capacites_rows:
+        cap_id = cap_row['id']
+        cap_form = CapaciteItemForm(prefix=f'cap_{cap_id}')
+        cap_form.capacite.data = cap_row['capacite']
+        cap_form.description_capacite.data = cap_row['description_capacite']
+        cap_form.ponderation_min.data = cap_row['ponderation_min']
+        cap_form.ponderation_max.data = cap_row['ponderation_max']
+        
+        # Populate Savoirs Nécessaires
+        sav_necessaires = conn.execute(
+            'SELECT * FROM PlanCadreCapaciteSavoirsNecessaires WHERE capacite_id = ?',
+            (cap_id,)
+        ).fetchall()
+        for sn in sav_necessaires:
+            cap_form.savoirs_necessaires.append_entry(sn['texte'])
+        
+        # Populate Savoirs Faire
+        sav_faire = conn.execute(
+            'SELECT * FROM PlanCadreCapaciteSavoirsFaire WHERE capacite_id = ?',
+            (cap_id,)
+        ).fetchall()
+        for sf in sav_faire:
+            entry_sf = cap_form.savoirs_faire.append_entry()
+            entry_sf.texte.data = sf['texte']
+            entry_sf.cible.data = sf['cible']
+            entry_sf.seuil_reussite.data = sf['seuil_reussite']
+        
+        # Populate Moyens d'Evaluation
+        moyens_eval = conn.execute(
+            'SELECT * FROM PlanCadreCapaciteMoyensEvaluation WHERE capacite_id = ?',
+            (cap_id,)
+        ).fetchall()
+        for me in moyens_eval:
+            cap_form.moyens_evaluation.append_entry(me['texte'])
+        
+        capacites_data.append({
+            'capacite_obj': cap_row,
+            'form': cap_form
+        })
+    
+    return capacites_data
+
+def prepare_delete_forms(capacites_rows):
+    delete_forms_capacites = {
+        cap_row['id']: DeleteForm(prefix=f"capacite-{cap_row['id']}")
+        for cap_row in capacites_rows
+    }
+    return delete_forms_capacites
+
+# --- Update Helpers ---
+
+def update_main_plan_cadre(cursor, plan_form, plan_id, cours_id):
+    cursor.execute("""
+        UPDATE PlanCadre
+        SET place_intro = ?,
+            objectif_terminal = ?,
+            structure_intro = ?,
+            structure_activites_theoriques = ?,
+            structure_activites_pratiques = ?,
+            structure_activites_prevues = ?,
+            eval_evaluation_sommative = ?,
+            eval_nature_evaluations_sommatives = ?,
+            eval_evaluation_de_la_langue = ?,
+            eval_evaluation_sommatives_apprentissages = ?
+        WHERE id = ? AND cours_id = ?
+    """, (
+        plan_form.place_intro.data,
+        plan_form.objectif_terminal.data,
+        plan_form.structure_intro.data,
+        plan_form.structure_activites_theoriques.data,
+        plan_form.structure_activites_pratiques.data,
+        plan_form.structure_activites_prevues.data,
+        plan_form.eval_evaluation_sommative.data,
+        plan_form.eval_nature_evaluations_sommatives.data,
+        plan_form.eval_evaluation_de_la_langue.data,
+        plan_form.eval_evaluation_sommatives_apprentissages.data,
+        plan_id,
+        cours_id
+    ))
+
+def update_list_items(cursor, table_name, form_data, plan_id):
+    try:
+        print(f"\n=== Debug for {table_name} ===")
+        print(f"Form data type: {type(form_data)}")
+        print(f"Raw form_data: {form_data}")
+        print(f"Number of entries: {len(form_data) if form_data else 0}")
+        
+        # Delete existing entries
+        cursor.execute(f"DELETE FROM {table_name} WHERE plan_cadre_id = ?", (plan_id,))
+        rows_deleted = cursor.rowcount
+        print(f"Deleted {rows_deleted} existing rows")
+        
+        # Insert new entries
+        insert_count = 0
+        seen_entries = set()
+        
+        for entry in form_data:
+            # Handle different form field types
+            if hasattr(entry, 'texte'):
+                # Direct field access
+                texte = entry.texte.data if entry.texte.data else None
+            elif hasattr(entry, 'form') and hasattr(entry.form, 'texte'):
+                # Nested form access
+                texte = entry.form.texte.data if entry.form.texte.data else None
+            elif hasattr(entry, 'data') and isinstance(entry.data, dict) and 'texte' in entry.data:
+                # Dictionary data access
+                texte = entry.data['texte']
+            else:
+                print(f"Skipping entry - unexpected structure: {entry}")
+                continue
+                
+            # Process valid text
+            if texte and isinstance(texte, str):
+                texte = texte.strip()
+                if texte and texte not in seen_entries:
+                    seen_entries.add(texte)
+                    print(f"Inserting entry: {texte}")
+                    
+                    if 'description' in [row[1] for row in cursor.execute(f"PRAGMA table_info({table_name});").fetchall()]:
+                        # Handle tables with description field
+                        description = None
+                        if hasattr(entry, 'texte_description'):
+                            description = entry.texte_description.data
+                        elif hasattr(entry, 'form') and hasattr(entry.form, 'texte_description'):
+                            description = entry.form.texte_description.data
+                        elif hasattr(entry, 'data') and isinstance(entry.data, dict) and 'texte_description' in entry.data:
+                            description = entry.data['texte_description']
+                            
+                        cursor.execute(
+                            f"INSERT INTO {table_name} (plan_cadre_id, texte, description) VALUES (?, ?, ?)",
+                            (plan_id, texte, description)
+                        )
+                    else:
+                        # Handle tables without description field
+                        cursor.execute(
+                            f"INSERT INTO {table_name} (plan_cadre_id, texte) VALUES (?, ?)",
+                            (plan_id, texte)
+                        )
+                    
+                    insert_count += 1
+                else:
+                    print(f"Skipping entry - empty, None, or duplicate: {texte}")
+            else:
+                print(f"Skipping entry - invalid texte: {texte}")
+        
+        print(f"Total entries inserted: {insert_count}")
+        return True
+        
+    except Exception as e:
+        print(f"Error in update_list_items for {table_name}: {str(e)}")
+        print(f"Error type: {type(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
+
+def handle_update_capacity(conn, cursor, cap_form, cap_id, plan_id):
+    try:
+        # Récupérer les valeurs de pondération depuis le formulaire
+        ponderation_min = cap_form.ponderation_min.data
+        ponderation_max = cap_form.ponderation_max.data
+
+        # Validation: la pondération minimale ne doit pas dépasser la pondération maximale
+        if ponderation_min > ponderation_max:
+            raise ValueError("La pondération minimale ne peut pas être supérieure à la pondération maximale.")
+        
+        # Mettre à jour les champs principaux de la capacité
+        cursor.execute("""
+            UPDATE PlanCadreCapacites
+            SET capacite = ?,
+                description_capacite = ?,
+                ponderation_min = ?,
+                ponderation_max = ?
+            WHERE id = ? AND plan_cadre_id = ?
+        """, (
+            cap_form.capacite.data.strip(),
+            cap_form.description_capacite.data.strip(),
+            ponderation_min,
+            ponderation_max,
+            cap_id,
+            plan_id
+        ))
+        
+        # Mettre à jour les Savoirs Nécessaires
+        cursor.execute("DELETE FROM PlanCadreCapaciteSavoirsNecessaires WHERE capacite_id = ?", (cap_id,))
+        for sn in cap_form.savoirs_necessaires.entries:
+            sn_txt = sn.data.strip()
+            if sn_txt:
+                cursor.execute("""
+                    INSERT INTO PlanCadreCapaciteSavoirsNecessaires (capacite_id, texte)
+                    VALUES (?, ?)
+                """, (cap_id, sn_txt))
+        
+        # Mettre à jour les Savoirs Faire
+        cursor.execute("DELETE FROM PlanCadreCapaciteSavoirsFaire WHERE capacite_id = ?", (cap_id,))
+        for sf in cap_form.savoirs_faire.entries:
+            sf_txt = sf.texte.data.strip() if sf.texte.data else None
+            sf_cible = sf.cible.data.strip() if sf.cible.data else None
+            sf_seuil = sf.seuil_reussite.data.strip() if sf.seuil_reussite.data else None
+            if sf_txt:
+                cursor.execute("""
+                    INSERT INTO PlanCadreCapaciteSavoirsFaire (capacite_id, texte, cible, seuil_reussite)
+                    VALUES (?, ?, ?, ?)
+                """, (cap_id, sf_txt, sf_cible, sf_seuil))
+        
+        # Mettre à jour les Moyens d'Evaluation
+        cursor.execute("DELETE FROM PlanCadreCapaciteMoyensEvaluation WHERE capacite_id = ?", (cap_id,))
+        for me in cap_form.moyens_evaluation.entries:
+            # Accéder directement au champ 'texte' de chaque entrée
+            me_txt = me.texte.data.strip() if me.texte.data else None
+            if me_txt:
+                cursor.execute("""
+                    INSERT INTO PlanCadreCapaciteMoyensEvaluation (capacite_id, texte)
+                    VALUES (?, ?)
+                """, (cap_id, me_txt))
+        
+        # Valider la transaction
+        conn.commit()
+        return True
+
+    except Exception as e:
+        # Annuler la transaction en cas d'erreur
+        conn.rollback()
+        print(f"Erreur lors de la mise à jour de la capacité {cap_id}: {e}")
+        raise
+        
+def handle_delete_capacity(cursor, cap_id, plan_id):
+    try:
+        # Delete capacity and related entries
+        cursor.execute("DELETE FROM PlanCadreCapacites WHERE id = ? AND plan_cadre_id = ?", (cap_id, plan_id))
+        cursor.execute("DELETE FROM PlanCadreCapaciteSavoirsNecessaires WHERE capacite_id = ?", (cap_id,))
+        cursor.execute("DELETE FROM PlanCadreCapaciteSavoirsFaire WHERE capacite_id = ?", (cap_id,))
+        cursor.execute("DELETE FROM PlanCadreCapaciteMoyensEvaluation WHERE capacite_id = ?", (cap_id,))
+        return True
+    except Exception as e:
+        print(f"Error deleting capacity {cap_id}: {e}")
+        raise
+
+# --- Utility Helpers ---
+
+def initialize_delete_forms(capacites_rows):
+    return {
+        cap_row['id']: DeleteForm(prefix=f"capacite-{cap_row['id']}")
+        for cap_row in capacites_rows
+    }
 @cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>', methods=['GET', 'POST'])
 @login_required
 def view_plan_cadre(cours_id, plan_id):
+    print("DEBUG => request.method:", request.method)
+    print("DEBUG => request.form:", request.form.to_dict())
 
     conn = get_db_connection()
-    # On récupère d'abord le Plan Cadre en s'assurant qu'il correspond au cours_id
-    plan = conn.execute('SELECT * FROM PlanCadre WHERE id = ? AND cours_id = ?', (plan_id, cours_id)).fetchone()
-    cours = conn.execute('SELECT * FROM Cours WHERE id = ?', (cours_id,)).fetchone()
-    
-    if not plan:
-        flash('Plan Cadre non trouvé pour ce cours.', 'danger')
-        conn.close()
-        return redirect(url_for('cours_bp.view_cours', cours_id=cours_id))
-    
-    # Récupérer les sections
-    competences_developpees = conn.execute('SELECT * FROM PlanCadreCompetencesDeveloppees WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-    objets_cibles = conn.execute('SELECT * FROM PlanCadreObjetsCibles WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-    cours_relies = conn.execute('SELECT * FROM PlanCadreCoursRelies WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-    cours_prealables = conn.execute('SELECT * FROM PlanCadreCoursPrealables WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-    competences_certifiees = conn.execute('SELECT texte, description FROM PlanCadreCompetencesCertifiees WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-    cours_corequis = conn.execute('SELECT texte, description FROM PlanCadreCoursCorequis WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
 
-    # Récupérer les capacités
-    capacites = conn.execute('SELECT * FROM PlanCadreCapacites WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-    capacites_detail = []
-    for cap in capacites:
-
-        cap_id = cap['id']
-        print("cap id:", cap_id)
-        sav_necessaires = conn.execute('SELECT * FROM PlanCadreCapaciteSavoirsNecessaires WHERE capacite_id = ?', (cap_id,)).fetchall()
-        sav_faire = conn.execute('SELECT * FROM PlanCadreCapaciteSavoirsFaire WHERE capacite_id = ?', (cap_id,)).fetchall()
-        moyens_eval = conn.execute('SELECT * FROM PlanCadreCapaciteMoyensEvaluation WHERE capacite_id = ?', (cap_id,)).fetchall()
-        
-        capacites_detail.append({
-            'capacite': cap,  # cap est un Row contenant les infos de la capacité
-            'savoirs_necessaires': sav_necessaires,
-            'savoirs_faire': sav_faire,
-            'moyens_evaluation': moyens_eval
-        })
-    
-    # Récupérer le savoir-être
-    savoir_etre = conn.execute('SELECT * FROM PlanCadreSavoirEtre WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-    
-    # Instancier les formulaires de suppression pour chaque capacité
-    delete_forms_capacites = {cap['id']: DeleteForm(prefix=f"capacite-{cap['id']}") for cap in capacites}
-    
-    # Instancier le formulaire d'importation JSON
+    # Initialisation des formulaires
     import_form = ImportPlanCadreForm()
-    
-    conn.close()
-    
-    return render_template(
-        'view_plan_cadre.html',
-        plan=plan,
-        cours=cours,
-        competences_developpees=competences_developpees,
-        competences_certifiees=competences_certifiees,
-        cours_corequis=cours_corequis,
-        objets_cibles=objets_cibles,
-        cours_relies=cours_relies,
-        cours_prealables=cours_prealables,
-        capacites=capacites_detail,
-        savoir_etre=savoir_etre,
-        delete_forms_capacites=delete_forms_capacites,
-        cours_id=cours_id,
-        plan_id=plan_id,
-        import_form=import_form  # Passer le formulaire au template
-    )
+
+    try:
+        if request.method == 'GET':
+            # Récupération des détails du plan-cadre et du cours
+            plan_row = get_plan_cadre(conn, plan_id, cours_id)
+            cours = get_cours_details(conn, cours_id)
+            
+            if not plan_row or not cours:
+                flash('Plan Cadre ou Cours non trouvé.', 'danger')
+                return redirect(url_for('cours.view_cours', cours_id=cours_id))
+
+            # Ajout de la récupération des cours reliés
+            cours_relies = conn.execute('''
+                SELECT texte, description 
+                FROM PlanCadreCoursRelies 
+                WHERE plan_cadre_id = ?
+            ''', (plan_id,)).fetchall()
+
+            # Récupération des détails des cours préalables et corequis
+            prealables_details = get_related_courses(conn, cours_id, 'CoursPrealable', 'cours_prealable_id')
+            corequisites_details = get_related_courses(conn, cours_id, 'CoursCorequis', 'cours_corequis_id')
+            
+            # Récupération des compétences
+            competences_developpees_from_cours = get_competences(conn, cours_id, 'developpees')
+            competences_atteintes = get_competences(conn, cours_id, 'atteintes')
+            elements_competence_par_cours = get_elements_competence(conn, cours_id)
+
+            # Préparation du formulaire principal
+            plan_form = prepare_plan_form(plan_row)
+            populate_field_lists(conn, plan_id, plan_form)
+            generate_form = GenerateContentForm(
+                additional_info=plan_row['additional_info'],
+                ai_model=plan_row['ai_model']
+            )
+
+            # Récupération des données des capacités
+            capacites_data = []
+            capacites_rows = conn.execute(
+                'SELECT * FROM PlanCadreCapacites WHERE plan_cadre_id = ? ORDER BY id',
+                (plan_id,)
+            ).fetchall()
+
+            for cap_row in capacites_rows:
+                cap_id = cap_row['id']
+                
+                # Récupération des savoirs nécessaires pour chaque capacité
+                savoirs_necessaires = conn.execute(
+                    'SELECT texte FROM PlanCadreCapaciteSavoirsNecessaires WHERE capacite_id = ?',
+                    (cap_id,)
+                ).fetchall()
+                
+                # Récupération des savoirs faire pour chaque capacité
+                savoirs_faire = conn.execute(
+                    'SELECT texte, cible, seuil_reussite FROM PlanCadreCapaciteSavoirsFaire WHERE capacite_id = ?',
+                    (cap_id,)
+                ).fetchall()
+                
+                # Récupération des moyens d'évaluation pour chaque capacité
+                moyens_evaluation = conn.execute(
+                    'SELECT texte FROM PlanCadreCapaciteMoyensEvaluation WHERE capacite_id = ?',
+                    (cap_id,)
+                ).fetchall()
+
+                capacites_data.append({
+                    'capacite': {
+                        'id': cap_id,
+                        'capacite': cap_row['capacite'],
+                        'description_capacite': cap_row['description_capacite'],
+                        'ponderation_min': cap_row['ponderation_min'],
+                        'ponderation_max': cap_row['ponderation_max']
+                    },
+                    'savoirs_necessaires': [{'texte': sn['texte']} for sn in savoirs_necessaires],
+                    'savoirs_faire': [{
+                        'texte': sf['texte'],
+                        'cible': sf['cible'],
+                        'seuil_reussite': sf['seuil_reussite']
+                    } for sf in savoirs_faire],
+                    'moyens_evaluation': [{'texte': me['texte']} for me in moyens_evaluation]
+                })
+
+            # Mise à jour du formulaire avec les données des capacités
+            for cap_data in capacites_data:
+                form_cap = plan_form.capacites.append_entry()
+                form_cap.id = cap_data['capacite']['id']  # Changed this line
+                form_cap.capacite.data = cap_data['capacite']['capacite']
+                form_cap.description_capacite.data = cap_data['capacite']['description_capacite']
+                form_cap.ponderation_min.data = cap_data['capacite']['ponderation_min']
+                form_cap.ponderation_max.data = cap_data['capacite']['ponderation_max']
+                
+                # Ajout des savoirs nécessaires
+                for sn in cap_data['savoirs_necessaires']:
+                    form_cap.savoirs_necessaires.append_entry(sn['texte'])
+                
+                # Ajout des savoirs faire
+                for sf in cap_data['savoirs_faire']:
+                    sf_entry = form_cap.savoirs_faire.append_entry()
+                    sf_entry.texte.data = sf['texte']
+                    sf_entry.cible.data = sf['cible']
+                    sf_entry.seuil_reussite.data = sf['seuil_reussite']
+                
+                # Ajout des moyens d'évaluation
+                for me in cap_data['moyens_evaluation']:
+                    form_cap.moyens_evaluation.append_entry(me['texte'])
+
+            return render_template(
+                'view_plan_cadre.html',
+                cours=cours,
+                plan=plan_row,
+                prealables_details=prealables_details,
+                corequisites_details=corequisites_details,
+                cours_relies=cours_relies,
+                plan_form=plan_form,
+                capacites_data=capacites_data,  # Pass the capacities data to the template
+                generate_form=generate_form,
+                import_form=import_form,
+                competences_developpees_from_cours=competences_developpees_from_cours,
+                competences_atteintes=competences_atteintes,
+                elements_competence_par_cours=elements_competence_par_cours
+            )
+
+        elif request.method == 'POST':
+            # -- Contrôle du rôle ------------------------------------------
+            # On vérifie que l'utilisateur actuel dispose du rôle admin OU coordo
+            if not (current_user.role == 'admin' or current_user.role == 'coordo'):
+                flash("Vous n'avez pas l'autorisation de modifier ce plan-cadre.", 'danger')
+                return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
+            # -------------------------------------------------------------
+
+            print("DEBUG - Form data:", request.form)  # Pour voir les données reçues
+            plan_form = prepare_plan_form(request.form)
+            if plan_form.validate_on_submit():
+                cursor = conn.cursor()
+                try:
+                    # Démarrer une transaction
+                    cursor.execute('BEGIN')
+
+                    # Mise à jour du plan-cadre principal
+                    update_main_plan_cadre(cursor, plan_form, plan_id, cours_id)
+
+                    # Mise à jour des listes associées
+                    update_list_items(cursor, 'PlanCadreCompetencesDeveloppees', 
+                                    plan_form.competences_developpees, plan_id)
+                    update_list_items(cursor, 'PlanCadreObjetsCibles', 
+                                    plan_form.objets_cibles, plan_id)
+                    update_list_items(cursor, 'PlanCadreCompetencesCertifiees', 
+                                    plan_form.competences_certifiees, plan_id)
+                    update_list_items(cursor, 'PlanCadreCoursCorequis', 
+                                    plan_form.cours_corequis, plan_id)
+                    update_list_items(cursor, 'PlanCadreCoursPrealables', 
+                                    plan_form.cours_prealables, plan_id)
+                    update_list_items(cursor, 'PlanCadreCoursRelies',   # Ajout de cette ligne
+                                    plan_form.cours_relies, plan_id)     # pour les cours reliés
+                    update_list_items(cursor, 'PlanCadreSavoirEtre', 
+                                    plan_form.savoir_etre, plan_id)
+
+                    # Fetch existing capacities and their IDs
+                    existing_capacities = cursor.execute(
+                        'SELECT id FROM PlanCadreCapacites WHERE plan_cadre_id = ?', 
+                        (plan_id,)
+                    ).fetchall()
+                    existing_ids = {row['id'] for row in existing_capacities}
+
+                    capacite_keys = [key for key in request.form.keys() if key.startswith('capacites-') and key.endswith('-capacite')]
+                    capacite_indices = {int(key.split('-')[1]) for key in capacite_keys}
+
+                    for index in sorted(capacite_indices):
+                        prefix = f'capacites-{index}'
+                        capacite = request.form.get(f'{prefix}-capacite', '').strip()
+                        if not capacite:
+                            continue
+                            
+                        capacite_id = request.form.get(f'{prefix}-id')
+                        description = request.form.get(f'{prefix}-description_capacite', '').strip()
+                        ponderation_min = request.form.get(f'{prefix}-ponderation_min', 0)
+                        ponderation_max = request.form.get(f'{prefix}-ponderation_max', 100)
+                        
+                        if capacite_id and int(capacite_id) in existing_ids:
+                            # Update existing capacity
+                            cursor.execute("""
+                                UPDATE PlanCadreCapacites 
+                                SET capacite = ?, description_capacite = ?, 
+                                    ponderation_min = ?, ponderation_max = ?
+                                WHERE id = ?
+                            """, (capacite, description, ponderation_min, ponderation_max, capacite_id))
+                            
+                            # Update related items
+                            cursor.execute('DELETE FROM PlanCadreCapaciteSavoirsNecessaires WHERE capacite_id = ?', (capacite_id,))
+                            cursor.execute('DELETE FROM PlanCadreCapaciteSavoirsFaire WHERE capacite_id = ?', (capacite_id,))
+                            cursor.execute('DELETE FROM PlanCadreCapaciteMoyensEvaluation WHERE capacite_id = ?', (capacite_id,))
+                            
+                            existing_ids.remove(int(capacite_id))
+                        else:
+                            # Insert new capacity
+                            cursor.execute("""
+                                INSERT INTO PlanCadreCapacites 
+                                (plan_cadre_id, capacite, description_capacite, ponderation_min, ponderation_max)
+                                VALUES (?, ?, ?, ?, ?)
+                            """, (plan_id, capacite, description, ponderation_min, ponderation_max))
+                            capacite_id = cursor.lastrowid
+
+                        # Add savoirs necessaires
+                        savoirs_keys = [k for k in request.form.keys() if k.startswith(f'{prefix}-savoirs_necessaires-')]
+                        for sav_key in savoirs_keys:
+                            savoir = request.form.get(sav_key, '').strip()
+                            if savoir:
+                                cursor.execute("""
+                                    INSERT INTO PlanCadreCapaciteSavoirsNecessaires (capacite_id, texte)
+                                    VALUES (?, ?)
+                                """, (capacite_id, savoir))
+
+                        # Add savoirs faire
+                        savoirs_faire_keys = [k for k in request.form.keys() if k.startswith(f'{prefix}-savoirs_faire-') and k.endswith('-texte')]
+                        for sf_key in savoirs_faire_keys:
+                            base_key = sf_key[:-6]
+                            texte = request.form.get(sf_key, '').strip()
+                            if texte:
+                                cible = request.form.get(f'{base_key}-cible', '').strip()
+                                seuil = request.form.get(f'{base_key}-seuil_reussite', '').strip()
+                                cursor.execute("""
+                                    INSERT INTO PlanCadreCapaciteSavoirsFaire 
+                                    (capacite_id, texte, cible, seuil_reussite)
+                                    VALUES (?, ?, ?, ?)
+                                """, (capacite_id, texte, cible, seuil))
+
+                        # Add moyens evaluation
+                        moyens_keys = [k for k in request.form.keys() if k.startswith(f'{prefix}-moyens_evaluation-')]
+                        for moyen_key in moyens_keys:
+                            moyen = request.form.get(moyen_key, '').strip()
+                            if moyen:
+                                cursor.execute("""
+                                    INSERT INTO PlanCadreCapaciteMoyensEvaluation (capacite_id, texte)
+                                    VALUES (?, ?)
+                                """, (capacite_id, moyen))
+
+                    # Delete remaining unused capacities
+                    for old_id in existing_ids:
+                        cursor.execute('DELETE FROM PlanCadreCapaciteSavoirsNecessaires WHERE capacite_id = ?', (old_id,))
+                        cursor.execute('DELETE FROM PlanCadreCapaciteSavoirsFaire WHERE capacite_id = ?', (old_id,))
+                        cursor.execute('DELETE FROM PlanCadreCapaciteMoyensEvaluation WHERE capacite_id = ?', (old_id,))
+                        cursor.execute('DELETE FROM PlanCadreCapacites WHERE id = ?', (old_id,))
+
+                    conn.commit()
+                    success_message = "Plan-cadre et capacités mis à jour avec succès."
+
+                    # Détection de la nature de la requête
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        # Requête AJAX
+                        return jsonify({'success': True, 'message': success_message}), 200
+                    else:
+                        # Requête traditionnelle
+                        flash(success_message, "success")
+
+                except Exception as e:
+                    conn.rollback()
+                    error_message = f"Erreur lors de la mise à jour : {str(e)}"
+                    print(f"Error updating plan-cadre: {e}")  # Debug
+                    traceback.print_exc()  # Pour avoir le traceback complet
+
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        # Requête AJAX
+                        return jsonify({'success': False, 'message': error_message}), 500
+                    else:
+                        # Requête traditionnelle
+                        flash(error_message, "danger")
+            else:
+                error_message = "Formulaire invalide. Veuillez vérifier vos entrées."
+                print(f"DEBUG - Form validation failed: {plan_form.errors}")  # Debug
+
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    # Requête AJAX
+                    return jsonify({'success': False, 'message': error_message, 'errors': plan_form.errors}), 400
+                else:
+                    # Requête traditionnelle
+                    flash(error_message, "danger")
+
+            # Redirection après POST pour les requêtes traditionnelles
+            if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+                return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
+
+    finally:
+        conn.close()
+
+
+
+
+
+@cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>/update_intro', methods=['POST'])
+@login_required
+def update_intro(cours_id, plan_id):
+    try:
+        # Validate CSRF token
+        csrf_token = request.headers.get('X-CSRFToken')
+        validate_csrf(csrf_token)
+
+        data = request.get_json()
+        new_intro = data.get('place_intro', '').strip()
+
+        if not new_intro:
+            return jsonify({'success': False, 'message': 'Le texte de l\'introduction ne peut pas être vide.'}), 400
+
+        conn = get_db_connection()
+        # Update the place_intro field
+        conn.execute('UPDATE PlanCadre SET place_intro = ? WHERE id = ? AND cours_id = ?', (new_intro, plan_id, cours_id))
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True}), 200
+    except CSRFError:
+        return jsonify({'success': False, 'message': 'CSRF token invalide.'}), 400
+    except Exception as e:
+        # Log the error as needed
+        return jsonify({'success': False, 'message': 'Une erreur est survenue.'}), 500
 
 @cours_bp.route('/<int:cours_id>/plan_cadre', methods=['GET'])
 @login_required
@@ -609,9 +1244,9 @@ def view_cours(cours_id):
 
 
 @cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>/capacite/<int:capacite_id>/edit', methods=['GET', 'POST'])
-@login_required
+@role_required('admin')
 def edit_capacite(cours_id, plan_id, capacite_id):
-    form = CapaciteForm()
+    form = CapaciteItemForm()
     conn = get_db_connection()
 
     # Récupérer la capacité
@@ -736,7 +1371,7 @@ def edit_capacite(cours_id, plan_id, capacite_id):
 
 # Nouvelle Route pour Supprimer un Cours
 @cours_bp.route('/<int:cours_id>/delete', methods=['POST'])
-@login_required
+@role_required('admin')
 def delete_cours(cours_id):
     form = DeleteForm(prefix=f"cours-{cours_id}")
     

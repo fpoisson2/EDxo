@@ -1,13 +1,169 @@
 import os
 import sqlite3
+from datetime import datetime
+from io import BytesIO
+
 from jinja2 import Template
 from bs4 import BeautifulSoup
 from docxtpl import DocxTemplate
-from io import BytesIO
-import os
 from dotenv import load_dotenv
+from flask_wtf import FlaskForm
+from wtforms import StringField, SelectField, TimeField, BooleanField
+from wtforms.validators import DataRequired, Email
+from apscheduler.schedulers.background import BackgroundScheduler
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+
+from utilitaires.scheduler_instance import scheduler, start_scheduler
+
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email.mime.text import MIMEText
+from email import encoders
+
+from models import BackupConfig
+
+import base64
+
+import pytz
+
+import logging
+
+# Configuration de base du logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 DATABASE = 'programme.db'
+
+def send_backup_email(app, recipient_email, db_path):
+    import os
+    import base64
+    from google.oauth2.credentials import Credentials
+    from google.auth.transport.requests import Request
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from googleapiclient.discovery import build
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.base import MIMEBase
+    from email.mime.text import MIMEText
+    from email import encoders
+
+    logger.info(f"Starting scheduled backup to {recipient_email}")
+
+    SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+    creds = None
+
+    # Vérification du token
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+            # ✅ Utilisation de run_local_server avec open_browser=False
+            creds = flow.run_local_server(port=0, open_browser=False)
+
+        # Sauvegarde du token
+        with open('token.json', 'w') as token:
+            token.write(creds.to_json())
+
+    service = build('gmail', 'v1', credentials=creds)
+
+    # Créer le message
+    message = MIMEMultipart()
+    message['to'] = recipient_email
+    message['from'] = recipient_email
+    message['subject'] = "BD EDxo"
+
+    # Corps du message (texte)
+    text_part = MIMEText('Bonjour, voici la dernière version de la BD de EDxo', 'plain')
+    message.attach(text_part)
+
+    # Lecture du fichier .db et ajout en pièce jointe
+    with open(db_path, 'rb') as f:
+        file_data = f.read()
+
+    attachment = MIMEBase('application', 'octet-stream')
+    attachment.set_payload(file_data)
+    encoders.encode_base64(attachment)
+    attachment.add_header('Content-Disposition', 'attachment', filename='backup.db')
+    message.attach(attachment)
+
+    # Encoder le message en base64
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
+
+    # Envoi via l'API Gmail
+    try:
+        sent_message = service.users().messages().send(
+            userId='me', 
+            body={'raw': raw}
+        ).execute()
+        print("Message envoyé. ID:", sent_message['id'])
+    except Exception as e:
+        print("Erreur:", e)
+
+
+
+
+def get_initials(nom_complet):
+    """
+    Extrait les initiales d'un nom complet.
+    
+    Args:
+        nom_complet (str): Le nom complet de l'enseignant
+        
+    Returns:
+        str: Les initiales en majuscules
+    """
+    # Supprimer les espaces superflus et séparer les mots
+    mots = nom_complet.strip().split()
+    
+    # Obtenir la première lettre de chaque mot et la convertir en majuscule
+    initiales = ''.join(mot[0].upper() for mot in mots if mot)
+    
+    return initiales
+
+    
+def get_all_cegeps():
+    conn = get_db_connection()
+    cegeps = conn.execute('SELECT id, nom FROM ListeCegep').fetchall()
+    conn.close()
+    return cegeps
+
+def get_cegep_details_data(cegep_id):
+    conn = get_db_connection()
+    departments = conn.execute('SELECT id, nom FROM Department WHERE cegep_id = ?', (cegep_id,)).fetchall()
+    programmes = conn.execute('SELECT id, nom FROM Programme WHERE cegep_id = ?', (cegep_id,)).fetchall()
+    conn.close()
+
+    return {
+        'departments': [{'id': d['id'], 'nom': d['nom']} for d in departments],
+        'programmes': [{'id': p['id'], 'nom': p['nom']} for p in programmes]
+    }
+
+
+
+def get_all_departments():
+    conn = get_db_connection()
+    departments = conn.execute('SELECT id, nom FROM Department').fetchall()
+    conn.close()
+    return departments
+
+def get_all_programmes():
+    conn = get_db_connection()
+    programmes = conn.execute('SELECT id, nom FROM Programme').fetchall()
+    conn.close()
+    return programmes
+
+def get_programmes_by_user(user_id):
+    conn = get_db_connection()
+    programmes = conn.execute('SELECT programme_id FROM User_Programme WHERE user_id = ?', (user_id,)).fetchall()
+    conn.close()
+    return programmes
+
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
@@ -395,7 +551,12 @@ def generate_docx_with_template(plan_id):
         return None
 
     # Récupérer les informations du programme associé au cours
-    programme = conn.execute('SELECT nom, discipline FROM Programme WHERE id = ?', (cours['programme_id'],)).fetchone()
+    programme = conn.execute('''
+        SELECT Programme.nom AS programme_nom, Department.nom AS department_nom
+        FROM Programme
+        JOIN Department ON Programme.department_id = Department.id
+        WHERE Programme.id = ?
+    ''', (cours['programme_id'],)).fetchone()
 
     # Récupérer les compétences développées avec leur texte et description
     competences_developpees = conn.execute('''
@@ -404,60 +565,44 @@ def generate_docx_with_template(plan_id):
         WHERE plan_cadre_id = ?
     ''', (plan_id,)).fetchall()
 
-    # Récupérer les données de la base de données
+    # Récupérer les données de la base de données pour les compétences développées
     element_competences_par_cours = conn.execute('SELECT element_competence_id, status FROM ElementCompetenceParCours WHERE cours_id = ?', (cours['id'],)).fetchall()
 
-    # Créer un ensemble pour stocker les IDs uniques
+    # Créer un ensemble pour stocker les IDs uniques des compétences développées
     competence_ids = set()
-
-    # Parcourir chaque élément
     for element in element_competences_par_cours:
-        # Vérifier si le status est vrai
-        if element[1] == 'Développé significativement':  # element[1] est 'status' car fetchall() retourne des tuples
-            competence_ids.add(element[0])  # element[0] est 'element_competence_id'
+        if element[1] == 'Développé significativement':
+            competence_ids.add(element[0])
 
-    # Convertir l'ensemble en liste pour l'affichage ou traitement ultérieur
     competence_ids_uniques = list(competence_ids)
-
     competence_ids = set()
 
-    # Parcourir les IDs uniques des éléments de compétence
+    # Récupérer les IDs des compétences pour les éléments de compétence
     for elemcompid in competence_ids_uniques:
-        # Récupérer le competence_id correspondant à chaque element_competence_id
         competence_cours = conn.execute('SELECT competence_id FROM ElementCompetence WHERE id = ?', (elemcompid,)).fetchall()
-
-        # Afficher chaque competence_id pour l'élément
         for i in competence_cours:
-            competence_ids.add(i[0])  # 'i[0]' car fetchall() retourne des tuples, et 'competence_id' est le premier élément
+            competence_ids.add(i[0])
     
     competence_ids_uniques = list(competence_ids)
-
     competence_info_developes = {}
 
     for elemcompid in competence_ids_uniques:
-        # Create a cursor object
         cursor = conn.cursor()
-
-        # Execute the query and fetch the results for the given element competence ID
         competence_cours = cursor.execute(
             'SELECT id, code, nom, criteria_de_performance, contexte_de_realisation FROM Competence WHERE id = ?',
             (elemcompid,)
         ).fetchall()
 
-        # Convert the results (list of tuples) to a dictionary using column names
-        columns = [column[0] for column in cursor.description]  # Get column names from cursor description
+        columns = [column[0] for column in cursor.description]
         for row in competence_cours:
-            # Create a dictionary from the tuple by pairing column names with values
-            row_dict = dict(zip(columns, row))  # Create the dictionary
+            row_dict = dict(zip(columns, row))
 
-            # Parse the HTML fields (assuming you have the functions for this)
             contexte_html = row_dict['contexte_de_realisation']
             row_dict['contexte_de_realisation'] = parse_html_to_nested_list(contexte_html)
 
             criteria_html = row_dict['criteria_de_performance']
             row_dict['criteria_de_performance'] = parse_html_to_list(criteria_html)
 
-            # Initialize the competence in the dictionary if it doesn't already exist
             if row_dict['id'] not in competence_info_developes:
                 competence_info_developes[row_dict['id']] = {
                     "id": row_dict['id'],
@@ -465,36 +610,40 @@ def generate_docx_with_template(plan_id):
                     "nom": row_dict['nom'],
                     "criteria_de_performance": row_dict['criteria_de_performance'],
                     "contexte_de_realisation": row_dict['contexte_de_realisation'],
-                    "elements": []  # Initialize elements list
+                    "elements": []
                 }
 
-            # Now fetch related elements for this competence
+            # Récupérer les éléments de compétence
             element_competence_data = cursor.execute("""
                 SELECT 
                     ec.id AS element_competence_id, 
                     ec.nom, 
-                    ec.competence_id,
-                    GROUP_CONCAT(ecc.criteria, ', ') AS all_criteria
+                    ec.competence_id
                 FROM 
                     ElementCompetence AS ec
-                JOIN 
-                    ElementCompetenceCriteria AS ecc ON ec.id = ecc.element_competence_id
                 WHERE 
                     ec.competence_id = ?
-                GROUP BY 
-                    ec.id, ec.nom, ec.competence_id;
             """, (row_dict['id'],)).fetchall()
 
-            # Loop through the results and add the element competence info to the corresponding competence
+            # Pour chaque élément de compétence, récupérer ses critères individuellement
             for row in element_competence_data:
                 element_competence = {
                     "element_competence_id": row[0],
                     "nom": row[1],
-                    "criteria": row[3],  # Concatenated criteria
-                    "competence_id": row[2]
+                    "competence_id": row[2],
+                    "criteria": []
                 }
-
-                # Add the element_competence to the elements list of the corresponding competence
+                
+                # Récupérer les critères individuellement
+                criteria_data = cursor.execute("""
+                    SELECT criteria
+                    FROM ElementCompetenceCriteria
+                    WHERE element_competence_id = ?
+                """, (row[0],)).fetchall()
+                
+                # Ajouter chaque critère à la liste
+                element_competence["criteria"] = [criterion[0] for criterion in criteria_data]
+                
                 competence_info_developes[row_dict['id']]["elements"].append(element_competence)
 
     # Ajouter les informations sur les cours associés
@@ -504,7 +653,7 @@ def generate_docx_with_template(plan_id):
 
             if "cours_associes" not in element:
                 element["cours_associes"] = []
-            # Requête pour récupérer les cours associés
+
             cursor.execute("""
                 SELECT 
                     c.id AS cours_id,
@@ -519,11 +668,9 @@ def generate_docx_with_template(plan_id):
                 WHERE 
                     ecpc.element_competence_id = ?
                 ORDER BY 
-                    c.session;  -- Trie les résultats par la colonne 'session'
-
+                    c.session;
             """, (element_competence_id,))
 
-            # Ajouter les cours associés à l'élément
             element["cours_associes"].extend([
                 {
                     "cours_id": row[0],
@@ -535,68 +682,126 @@ def generate_docx_with_template(plan_id):
                 for row in cursor.fetchall()
             ])
 
-
-
-
-    # Récupérer les compétences développées avec leur texte et description
-    competences_developpees = conn.execute('''
-        SELECT texte, description
-        FROM PlanCadreCompetencesDeveloppees
-        WHERE plan_cadre_id = ?
-    ''', (plan_id,)).fetchall()
-
-    # Récupérer les données de la base de données
+    # Répéter le même processus pour les compétences atteintes
+    competence_ids = set()
     element_competences_par_cours = conn.execute('SELECT element_competence_id, status FROM ElementCompetenceParCours WHERE cours_id = ?', (cours['id'],)).fetchall()
-
-    # Créer un ensemble pour stocker les IDs uniques
-    competence_ids = set()
-
-    # Parcourir chaque élément
+    
     for element in element_competences_par_cours:
-        # Vérifier si le status est vrai
-        if element[1] == 'Atteint':  # element[1] est 'status' car fetchall() retourne des tuples
-            competence_ids.add(element[0])  # element[0] est 'element_competence_id'
+        if element[1] == 'Atteint':
+            competence_ids.add(element[0])
 
-    # Convertir l'ensemble en liste pour l'affichage ou traitement ultérieur
     competence_ids_uniques = list(competence_ids)
-
     competence_ids = set()
 
-    # Parcourir les IDs uniques des éléments de compétence
     for elemcompid in competence_ids_uniques:
-        # Récupérer le competence_id correspondant à chaque element_competence_id
         competence_cours = conn.execute('SELECT competence_id FROM ElementCompetence WHERE id = ?', (elemcompid,)).fetchall()
-
-        # Afficher chaque competence_id pour l'élément
         for i in competence_cours:
-            competence_ids.add(i[0])  # 'i[0]' car fetchall() retourne des tuples, et 'competence_id' est le premier élément
+            competence_ids.add(i[0])
     
     competence_ids_uniques = list(competence_ids)
+    competence_info_atteint = {}
 
-    competence_info_atteint = []
-
-
-    # Loop over each unique element competence ID
     for elemcompid in competence_ids_uniques:
-        # Execute the query and fetch the results for the given element competence ID
-        competence_cours = conn.execute('SELECT id, code, nom, criteria_de_performance, contexte_de_realisation FROM Competence WHERE id = ?', (elemcompid,)).fetchall()
-        
-        # Append the results (list of tuples) to the competence_info list
+        cursor = conn.cursor()
+        competence_cours = cursor.execute(
+            'SELECT id, code, nom, criteria_de_performance, contexte_de_realisation FROM Competence WHERE id = ?',
+            (elemcompid,)
+        ).fetchall()
+
+        columns = [column[0] for column in cursor.description]
         for row in competence_cours:
-            row_dict = dict(row)  # Convert sqlite3.Row to dictionary
+            row_dict = dict(zip(columns, row))
+
             contexte_html = row_dict['contexte_de_realisation']
             row_dict['contexte_de_realisation'] = parse_html_to_nested_list(contexte_html)
-            contexte_html = row_dict['criteria_de_performance']
-            row_dict['criteria_de_performance'] = parse_html_to_list(contexte_html)
-            competence_info_atteint.append(row_dict)
 
-    # Récupérer les objets cibles
+            criteria_html = row_dict['criteria_de_performance']
+            row_dict['criteria_de_performance'] = parse_html_to_list(criteria_html)
+
+            if row_dict['id'] not in competence_info_atteint:
+                competence_info_atteint[row_dict['id']] = {
+                    "id": row_dict['id'],
+                    "code": row_dict['code'],
+                    "nom": row_dict['nom'],
+                    "criteria_de_performance": row_dict['criteria_de_performance'],
+                    "contexte_de_realisation": row_dict['contexte_de_realisation'],
+                    "elements": []
+                }
+
+            # Récupérer les éléments de compétence
+            element_competence_data = cursor.execute("""
+                SELECT 
+                    ec.id AS element_competence_id, 
+                    ec.nom, 
+                    ec.competence_id
+                FROM 
+                    ElementCompetence AS ec
+                WHERE 
+                    ec.competence_id = ?
+            """, (row_dict['id'],)).fetchall()
+
+            # Pour chaque élément de compétence, récupérer ses critères individuellement
+            for row in element_competence_data:
+                element_competence = {
+                    "element_competence_id": row[0],
+                    "nom": row[1],
+                    "competence_id": row[2],
+                    "criteria": []
+                }
+                
+                # Récupérer les critères individuellement
+                criteria_data = cursor.execute("""
+                    SELECT criteria
+                    FROM ElementCompetenceCriteria
+                    WHERE element_competence_id = ?
+                """, (row[0],)).fetchall()
+                
+                # Ajouter chaque critère à la liste
+                element_competence["criteria"] = [criterion[0] for criterion in criteria_data]
+                
+                competence_info_atteint[row_dict['id']]["elements"].append(element_competence)
+
+    # Ajouter les informations sur les cours associés pour les compétences atteintes
+    for competence in competence_info_atteint.values():
+        for element in competence["elements"]:
+            element_competence_id = element["element_competence_id"]
+
+            if "cours_associes" not in element:
+                element["cours_associes"] = []
+
+            cursor.execute("""
+                SELECT 
+                    c.id AS cours_id,
+                    c.code AS cours_code,
+                    c.nom AS cours_nom,
+                    c.session AS cours_session,
+                    ecpc.status AS element_competence_status
+                FROM 
+                    Cours AS c
+                JOIN 
+                    ElementCompetenceParCours AS ecpc ON c.id = ecpc.cours_id
+                WHERE 
+                    ecpc.element_competence_id = ?
+                ORDER BY 
+                    c.session;
+            """, (element_competence_id,))
+
+            element["cours_associes"].extend([
+                {
+                    "cours_id": row[0],
+                    "cours_code": row[1],
+                    "cours_nom": row[2],
+                    "cours_session": row[3],
+                    "status": row[4]
+                }
+                for row in cursor.fetchall()
+            ])
+
+    # Récupérer les autres informations nécessaires
     objets_cibles = conn.execute('SELECT texte, description FROM PlanCadreObjetsCibles WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-
-    # Récupérer les cours reliés
     cours_relies = conn.execute('SELECT texte, description FROM PlanCadreCoursRelies WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-
-    # Récupérer les capacités
+    
+    # Récupérer et structurer les capacités
     capacites = conn.execute('SELECT * FROM PlanCadreCapacites WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
     capacites_detail = []
     for cap in capacites:
@@ -621,22 +826,9 @@ def generate_docx_with_template(plan_id):
             'moyens_evaluation': [me['texte'] for me in moyens_eval]
         })
 
-    # Récupérer le savoir-être
     savoir_etre = conn.execute('SELECT texte FROM PlanCadreSavoirEtre WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-
-    # Récupérer les cours corequis
-    cours_corequis = conn.execute('''
-        SELECT texte, description
-        FROM PlanCadreCoursCorequis
-        WHERE plan_cadre_id = ?
-    ''', (plan_id,)).fetchall() 
-
-    # Récupérer les compétences certifiées et leur description
-    competences_certifiees = conn.execute('''
-        SELECT texte, description
-        FROM PlanCadreCompetencesCertifiees
-        WHERE plan_cadre_id = ?
-    ''', (plan_id,)).fetchall() 
+    cours_corequis = conn.execute('SELECT texte, description FROM PlanCadreCoursCorequis WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
+    competences_certifiees = conn.execute('SELECT texte, description FROM PlanCadreCompetencesCertifiees WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
 
 
     # 9. Cours développant une même compétence avant, pendant et après
@@ -663,14 +855,30 @@ def generate_docx_with_template(plan_id):
             C.id, C.nom, C.code, C.session;
     """, (plan['cours_id'],)).fetchall() 
 
+    # Récupérer les cours corequis avec leur nom et code
+    cc = conn.execute('''
+        SELECT DISTINCT C2.nom AS nom, C2.code AS code
+        FROM CoursCorequis CC
+        JOIN Cours C2 ON CC.cours_corequis_id = C2.id
+        WHERE CC.cours_id = ?
+    ''', (plan['cours_id'],)).fetchall()
+
+    # Récupérer les cours préalables avec leur nom, code et note nécessaire
+    cp = conn.execute('''
+        SELECT DISTINCT C2.nom AS nom, C2.code AS code, CP.note_necessaire
+        FROM CoursPrealable CP
+        JOIN Cours C2 ON CP.cours_prealable_id = C2.id
+        WHERE CP.cours_id = ?
+    ''', (plan['cours_id'],)).fetchall()
+
     # Fermer la connexion
     conn.close()
 
     # Structurer les données dans un dictionnaire de contexte
     context = {
         'programme': {
-            'nom': programme['nom'] if programme else 'Non défini',
-            'discipline': programme['discipline'] if programme else 'Non définie'
+            'nom': programme['programme_nom'] if programme else 'Non défini',
+            'departement': programme['department_nom'] if programme else 'Non défini'
         },
         'cours': {
             'code': cours['code'],
@@ -701,10 +909,22 @@ def generate_docx_with_template(plan_id):
         'capacites': capacites_detail,
         'savoir_etre': [dict(se) for se in savoir_etre],
         'competences_info_developes': [competence for competence in competence_info_developes.values()],
-        'competences_info_atteint': [dict(cid) for cid in competence_info_atteint],
+        'competences_info_atteint': [competence for competence in competence_info_atteint.values()],
         'cours_corequis': [dict(cro) for cro in cours_corequis],
         'competences_certifiees': [dict(cc) for cc in competences_certifiees],
-        'cours_developpant_une_meme_competence': [dict(cdmc) for cdmc in cours_meme_competence]
+        'cours_developpant_une_meme_competence': [dict(cdmc) for cdmc in cours_meme_competence],
+        'cc': [
+            {'nom': cc['nom'], 'code': cc['code']} 
+            for cc in cc
+        ],
+        'cp': [
+            {
+                'nom': cp['nom'], 
+                'code': cp['code'],
+                'note_necessaire': cp['note_necessaire']
+            } 
+            for cp in cp
+        ]
     }
 
     # Charger le modèle DOCX

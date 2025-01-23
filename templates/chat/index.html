@@ -1,0 +1,459 @@
+{% extends "base.html" %}
+
+{% block head %}
+<!-- Include marked.js for Markdown rendering -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<!-- Include highlight.js for code syntax highlighting -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<style>
+body, html {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: relative;
+    padding-bottom: 120px; /* Hauteur du footer + padding */
+}
+
+.chat-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 12px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    background-color: #f5f5f5;
+    margin-bottom: 76px; /* Hauteur du footer + padding */
+}
+
+
+.chat-footer {
+    background-color: #ffffff;
+    border-top: 1px solid #dee2e6;
+    padding: 12px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.chat-message {
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    max-width: 85%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease-in-out;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.3s ease forwards;
+}
+
+.user-message {
+    background-color: #d1e7dd;
+    margin-left: auto;
+}
+
+.ai-message {
+    background-color: #f8f9fa;
+    margin-right: auto;
+}
+
+.system-message {
+    background-color: #fff3cd;
+    color: #856404;
+    margin: 8px auto;
+    text-align: center;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.message-content {
+    margin-top: 4px;
+}
+
+.messages-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.message-content pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.message-sender {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.processing-status, .function-call-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    margin-top: 8px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    font-style: italic;
+    color: #666;
+}
+
+.spinner {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <h5 class="mb-0">Chat</h5>
+    </div>
+    <div id="chat-messages" class="chat-body">
+        <!-- Messages will appear here -->
+        <div class="messages-content">
+            <!-- Les messages s'afficheront ici -->
+        </div>
+    </div>
+    <footer class="chat-footer">
+        <form id="chat-form" class="d-flex gap-2">
+            {{ form.csrf_token }}
+            {{ form.message(class="form-control", placeholder="Tapez votre message...", id="message-input") }}
+            {{ form.submit(class="btn btn-primary") }}
+        </form>
+    </footer>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+marked.setOptions({
+    breaks: true,
+    gfm: true,
+    headerIds: false,
+    highlight: function(code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+            try {
+                return hljs.highlight(code, { language: lang }).value;
+            } catch (err) {}
+        }
+        return hljs.highlightAuto(code).value;
+    }
+});
+
+// Fonction pour scroller soit vers le haut, soit vers le bas selon le contexte
+function scrollChat(smooth = false) {
+    const chatBody = document.getElementById('chat-messages');
+    const messagesContainer = document.querySelector('.messages-content');
+    const isReverseFlow = window.getComputedStyle(messagesContainer).flexDirection === 'column-reverse';
+    
+    const options = smooth 
+        ? { behavior: 'smooth' } 
+        : {};
+
+    if (isReverseFlow) {
+        options.top = 0;
+    } else {
+        options.top = chatBody.scrollHeight;
+    }
+
+    chatBody.scrollTo(options);
+}
+
+function addMessage(sender, message, type = 'user', isError = false) {
+    const messagesContainer = document.querySelector('.messages-content');
+    const messageDiv = document.createElement('div');
+
+    // Déterminer si le flux est inversé
+    const isReverseFlow = window.getComputedStyle(messagesContainer).flexDirection === 'column-reverse';
+
+    // Définir les classes en fonction du type de message
+    messageDiv.className = `chat-message ${type}-message`;
+    if (isError) messageDiv.classList.add('error-message');
+
+    // Créer l'élément pour le nom de l'émetteur
+    const senderDiv = document.createElement('div');
+    senderDiv.className = 'message-sender';
+    senderDiv.textContent = sender;
+
+    // Créer l'élément de contenu avec le rendu Markdown
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.innerHTML = type === 'user' ? message : marked.parse(message);
+
+    // Ajouter les éléments à notre conteneur
+    messageDiv.appendChild(senderDiv);
+    messageDiv.appendChild(contentDiv);
+
+    // Insérer le message dans le conteneur en fonction du mode de flux
+    if (isReverseFlow) {
+        // En mode reverse, l'ajout se fait en début de liste
+        messagesContainer.insertBefore(messageDiv, messagesContainer.firstChild);
+    } else {
+        // En mode normal, l'ajout se fait à la fin
+        messagesContainer.appendChild(messageDiv);
+    }
+
+    // Initialisation du code de syntaxe si nécessaire
+    messageDiv.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+    });
+
+    // Faire défiler jusqu'au nouveau message
+    setTimeout(() => {
+        const chatBody = document.getElementById('chat-messages');
+        const lastMessage = messageDiv;
+        
+        // Calculer la position de défilement
+        const containerRect = chatBody.getBoundingClientRect();
+        const messageRect = lastMessage.getBoundingClientRect();
+        const scrollPosition = messageRect.bottom - containerRect.bottom + chatBody.scrollTop + 100; // Ajouter un peu d'espace
+
+        chatBody.scrollTo({
+            top: scrollPosition,
+            behavior: 'smooth'
+        });
+    }, 50);
+
+    return messageDiv;
+}
+
+document.getElementById('message-input').addEventListener('input', function () {
+    this.style.height = '40px';  // Reset height to default
+    this.style.height = (this.scrollHeight) + 'px';  // Adjust height based on content
+});
+
+const DEBUG = true;
+function debugLog(...args) {
+    if (DEBUG) {
+        console.log('[Chat Debug]', ...args);
+    }
+}
+
+// Modified form submit handler
+document.getElementById('chat-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    debugLog('Form submitted');
+    
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    const message = formData.get('message').trim();
+    if (!message) {
+        debugLog('Empty message, ignoring');
+        return;
+    }
+    
+    debugLog('Message to send:', message);
+    
+    // Add user message to chat
+    addMessage('Vous', message, 'user');
+    form.reset();
+    document.getElementById('message-input').style.height = '40px';
+    
+    try {
+        debugLog('Sending fetch request');
+        const response = await fetch('{{ url_for("chat.send_message") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{ form.csrf_token.current_token }}'
+            },
+            body: JSON.stringify({
+                message: message,
+                csrf_token: '{{ form.csrf_token.current_token }}'
+            })
+        });
+        
+        debugLog('Response received:', response);
+        debugLog('Response headers:', Object.fromEntries([...response.headers]));
+        
+        const contentType = response.headers.get('content-type');
+        debugLog('Content-Type:', contentType);
+
+        // Si la réponse n'est pas ok, on vérifie d'abord s'il y a un message d'erreur JSON
+        if (!response.ok) {
+            const errorData = await response.json();
+            debugLog('Error response:', errorData);
+            if (errorData.error) {
+                addMessage('Système', errorData.error, 'system', true);
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Si c'est un stream, on traite normalement
+        if (contentType && contentType.includes('text/event-stream')) {
+            debugLog('Starting stream handling');
+            const reader = response.body.getReader();
+            const aiMessage = addMessage('EDxo', '', 'ai');
+            await handleStreamResponse(reader, aiMessage);
+        } else {
+            // Sinon on traite comme une réponse JSON normale
+            debugLog('Handling regular JSON response');
+            const data = await response.json();
+            debugLog('JSON data:', data);
+            
+            if (data.error) {
+                addMessage('Système', data.error, 'system', true);
+            } else {
+                const aiMessage = addMessage('EDxo', '', 'ai');
+                aiMessage.querySelector('.message-content').innerHTML = marked.parse(data.content);
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        debugLog('Error occurred:', error);
+        addMessage('Système', `Une erreur est survenue: ${error.message}`, 'system', true);
+    }
+});
+
+// Scroller au chargement initial
+document.addEventListener('DOMContentLoaded', () => {
+    scrollChat();
+});
+
+// Fonction pour basculer le mode de flux
+function toggleChatFlow() {
+    const chatMessages = document.getElementById('chat-messages');
+    const currentFlow = window.getComputedStyle(chatMessages).flexDirection;
+    
+    chatMessages.style.flexDirection = currentFlow === 'column-reverse' 
+        ? 'column' 
+        : 'column-reverse';
+    
+    // Reordonner les messages
+    const messages = Array.from(chatMessages.children);
+    chatMessages.innerHTML = '';
+    
+    if (currentFlow === 'column-reverse') {
+        // Passer en mode normal (du bas vers le haut)
+        messages.reverse().forEach(msg => chatMessages.appendChild(msg));
+    } else {
+        // Passer en mode reverse (du haut vers le bas)
+        messages.reverse().forEach(msg => chatMessages.appendChild(msg));
+    }
+    
+    // Scroller
+    scrollChat(true);
+}
+
+const styleSheet = document.createElement("style");
+styleSheet.textContent = styles;
+document.head.appendChild(styleSheet);
+
+async function handleStreamResponse(reader, messageElement) {
+    const decoder = new TextDecoder();
+    let accumulatedContent = '';
+    const contentDiv = messageElement.querySelector('.message-content');
+    
+    try {
+        let buffer = '';
+        let isProcessing = false;
+        
+        while (true) {
+            const { value, done } = await reader.read();
+            
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+            
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop() || '';
+            
+            for (const line of lines) {
+                if (line.trim() && line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        
+                        switch (data.type) {
+                            case 'content':
+                                isProcessing = false;
+                                accumulatedContent += data.content;
+                                contentDiv.innerHTML = marked.parse(accumulatedContent);
+                                break;
+                                
+                            case 'processing':
+                            case 'function_call':
+                                isProcessing = true;
+                                // Afficher le message de statut sans l'ajouter au contenu accumulé
+                                contentDiv.innerHTML = marked.parse(accumulatedContent) + 
+                                    `<div class="processing-status">
+                                        <span class="spinner">⟳</span> 
+                                        ${data.content}
+                                    </div>`;
+                                break;
+                                
+                            case 'done':
+                                isProcessing = false;
+                                // S'assurer que seul le contenu final est affiché
+                                contentDiv.innerHTML = marked.parse(accumulatedContent);
+                                break;
+                        }
+                        
+                        // Highlight code blocks if any
+                        contentDiv.querySelectorAll('pre code').forEach((block) => {
+                            hljs.highlightElement(block);
+                        });
+                    } catch (e) {
+                        console.error('JSON parsing error:', e);
+                    }
+                }
+            }
+        }
+
+        // S'assurer qu'à la fin, on n'affiche que le contenu final sans les messages de statut
+        if (!isProcessing) {
+            contentDiv.innerHTML = marked.parse(accumulatedContent);
+        }
+        
+    } catch (error) {
+        console.error('Stream error:', error);
+        contentDiv.innerHTML = marked.parse(
+            accumulatedContent + '\n\n**Erreur de lecture du flux:** ' + error.message
+        );
+    }
+}
+
+</script>
+{% endblock %}

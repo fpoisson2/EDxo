@@ -1,12 +1,14 @@
 <!-- templates/add_competence.html et templates/edit_competence.html -->
-{% extends 'base.html' %}
+{% extends "parametres.html" %}
+
+
 
 {% block head %}
   {{ super() }}
   {{ ckeditor.load() }}
 {% endblock %}
 
-{% block content %}
+{% block parametres_content %}
   <h2>{{ 'Ajouter' if 'add' in request.path else 'Modifier' }} Compétence</h2>
   <form method="POST">
     {{ form.hidden_tag() }}

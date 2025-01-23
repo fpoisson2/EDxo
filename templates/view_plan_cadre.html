@@ -1,347 +1,725 @@
-<!-- templates/view_plan_cadre.html -->
 {% extends 'base.html' %}
 
 {% block content %}
-
 <div class="container mt-5">
+
+    <!-- Message Flash -->
+    <div id="flash-message" class="alert d-none" role="alert">
+        <!-- Le contenu du message sera injecté (ou géré par Flask flash) -->
+    </div>
+    
     <!-- Titre du Cours -->
-    <div class="mb-4">
-        <h1 class="text-center">Plan-cadre pour le cours: {{ cours.code }} - {{ cours.nom }}</h1>
+    <div class="mb-3 text-center">
+        <h1>Plan-cadre pour le cours : {{ cours.code }} - {{ cours.nom }}</h1>
     </div>
 
     <!-- Boutons d'Action Supplémentaires -->
-<div class="d-flex gap-3 mb-5 align-items-center">
-    <a href="{{ url_for('plan_cadre.edit_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary d-flex align-items-center">
-        <i class="bi bi-pencil-square me-2"></i> Éditer le plan-cadre
-    </a>
-    <a href="{{ url_for('cours.view_cours', cours_id=plan.cours_id) }}" class="btn btn-secondary d-flex align-items-center">
-        <i class="bi bi-arrow-left-circle me-2"></i> Retour au cours
-    </a>
-    <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post" class="d-flex align-items-center">
-        {{ import_form.hidden_tag() }}  <!-- CSRF token -->
-        <button type="submit" class="btn btn-success d-flex align-items-center">
-            <i class="bi bi-box-arrow-up-right me-2"></i> Générer du Contenu Automatiquement
+    <div class="d-flex gap-3 mb-5 align-items-center">
+        <button type="button" class="btn btn-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
+            <i class="bi bi-box-arrow-up-right me-2"></i>
+            <span class="btn-text">Générer le plan-cadre</span>
+            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="loadingSpinner">
+                <span class="visually-hidden">Chargement...</span>
+            </span>
         </button>
-    </form>
+    </div>
+
+    <!-- Formulaire global englobant pour le PlanCadreForm -->
+    <form method="POST" 
+          action="{{ url_for('cours.view_plan_cadre', cours_id=cours.id, plan_id=plan.id) }}" 
+          enctype="multipart/form-data" 
+          id="planCadreForm" 
+          style="width: 100%;">
+        {{ plan_form.hidden_tag() }}
+
+        <div class="accordion" id="planCadreAccordion">
+            <!-- PARTIE 1: Identification du cours -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingGeneralInfo">
+                    <button class="accordion-button bg-light" type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#collapseGeneralInfo"
+                            aria-expanded="true"
+                            aria-controls="collapseGeneralInfo">
+                        Partie 1 - Identification du cours
+                    </button>
+                </h2>
+                <div id="collapseGeneralInfo" class="accordion-collapse collapse show"
+                     aria-labelledby="headingGeneralInfo"
+                     data-bs-parent="#planCadreAccordion">
+                    <div class="accordion-body">
+                        <p class="fs-5 mb-1"><strong>Programme :</strong> {{ cours.programme_nom }}</p>
+                        <p class="fs-5 mb-1"><strong>Code :</strong> {{ cours.code }}</p>
+                        <p class="fs-5 mb-1"><strong>Nombre d'unités :</strong> {{ cours.nombre_unites | round(2) }}</p>
+                        <p class="fs-5 mb-1"><strong>Session :</strong> {{ cours.session }}</p>
+                        <p class="fs-5 mb-1"><strong>Heures de théorie :</strong> {{ cours.heures_theorie }}</p>
+                        <p class="fs-5 mb-1"><strong>Heures de laboratoire :</strong> {{ cours.heures_laboratoire }}</p>
+                        <p class="fs-5 mb-1"><strong>Heures de travail à la maison :</strong> {{ cours.heures_travail_maison }}</p>
+
+                        <p class="fs-5 mb-1"><strong>Cours préalables :</strong>
+                            {% if prealables_details %}
+                                <ul class="list-group mb-1">
+                                    {% for pre in prealables_details %}
+                                        <li class="list-group-item py-1">
+                                            <a href="{{ url_for('cours.view_cours', cours_id=pre.id) }}"
+                                               class="text-decoration-none">
+                                                {{ pre.nom }}
+                                            </a> (Code: {{ pre.code }})
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                Aucun cours préalable.
+                            {% endif %}
+                        </p>
+
+                        <p class="fs-5 mb-1"><strong>Cours corequis :</strong>
+                            {% if corequisites_details %}
+                                <ul class="list-group mb-1">
+                                    {% for core in corequisites_details %}
+                                        <li class="list-group-item py-1">
+                                            <a href="{{ url_for('cours.view_cours', cours_id=core.id) }}"
+                                               class="text-decoration-none">
+                                                {{ core.nom }}
+                                            </a> (Code: {{ core.code }})
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                Aucun cours corequis.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PARTIE 2: Repères généraux au sujet du cours -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingIntroduction">
+                    <button class="accordion-button bg-primary text-white" type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#collapseIntroduction"
+                            aria-expanded="true"
+                            aria-controls="collapseIntroduction">
+                        Partie 2 - Repères généraux au sujet du cours
+                    </button>
+                </h2>
+                <div id="collapseIntroduction" class="accordion-collapse collapse show"
+                     aria-labelledby="headingIntroduction"
+                     data-bs-parent="#planCadreAccordion">
+                    <div class="accordion-body">
+                        <!-- place_intro (champ éditable) -->
+                        <div class="mb-2">
+                            <label class="fw-bold"><strong>Place et rôle du cours dans le programme</strong></label>
+                            {{ plan_form.place_intro(class="form-control border-0 auto-resize",
+                                                     oninput="autoResize(this)",
+                                                     style="overflow:hidden; resize:none;") }}
+                        </div>
+
+                        <!-- Compétences développées -->
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold">Compétences développées</h6>
+                                <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-competence-developpee" title="Ajouter">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
+                            <div id="competences-developpees-container">
+                                {% for subform in plan_form.competences_developpees %}
+                                    <div class="competences_developpees-item mb-1">
+                                        <div class="d-flex align-items-start">
+                                            <div class="flex-fill me-2">
+                                                {{ subform.texte(
+                                                    class="form-control fw-bold mb-1 auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Titre"
+                                                )}}
+                                                {{ subform.texte_description(
+                                                    class="form-control auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Description"
+                                                )}}
+                                            </div>
+                                            <!-- Bouton "Supprimer" remplacé par icône -->
+                                            <button type="button"
+                                                    class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                                                    style="border: none;"
+                                                    title="Supprimer">
+                                                <i class="bi bi-dash-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Objets cibles -->
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold">Objets cibles</h6>
+                                <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-objet-cible" title="Ajouter">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
+                            <div id="objets-cibles-container">
+                                {% for subform in plan_form.objets_cibles %}
+                                    <div class="objets_cibles-item mb-1">
+                                        <div class="d-flex align-items-start">
+                                            <div class="flex-fill me-2">
+                                                {{ subform.texte(
+                                                    class="form-control fw-bold mb-1 auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Titre"
+                                                )}}
+                                                {{ subform.texte_description(
+                                                    class="form-control auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Description"
+                                                )}}
+                                            </div>
+                                            <!-- Bouton "Supprimer" remplacé par icône -->
+                                            <button type="button"
+                                                    class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                                                    style="border: none;"
+                                                    title="Supprimer">
+                                                <i class="bi bi-dash-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Compétences certifiées -->
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold">Compétences certifiées</h6>
+                                <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-competence-certifiee" title="Ajouter">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
+                            <div id="competences-certifiees-container">
+                                {% for subform in plan_form.competences_certifiees %}
+                                    <div class="competences_certifiees-item mb-1">
+                                        <div class="d-flex align-items-start">
+                                            <div class="flex-fill me-2">
+                                                {{ subform.texte(
+                                                    class="form-control fw-bold mb-1 auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Titre"
+                                                )}}
+                                                {{ subform.texte_description(
+                                                    class="form-control auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Description"
+                                                )}}
+                                            </div>
+                                            <!-- Bouton "Supprimer" remplacé par icône -->
+                                            <button type="button"
+                                                    class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                                                    style="border: none;"
+                                                    title="Supprimer">
+                                                <i class="bi bi-dash-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Cours corequis (texte libre) -->
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold">Cours corequis</h6>
+                                <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-cours-corequis" title="Ajouter">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
+                            <div id="cours-corequis-container">
+                                {% for subform in plan_form.cours_corequis %}
+                                    <div class="cours_corequis-item mb-1">
+                                        <div class="d-flex align-items-start">
+                                            <div class="flex-fill me-2">
+                                                {{ subform.texte(
+                                                    class="form-control fw-bold mb-1 auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Titre"
+                                                )}}
+                                                {{ subform.texte_description(
+                                                    class="form-control auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Description"
+                                                )}}
+                                            </div>
+                                            <!-- Bouton "Supprimer" remplacé par icône -->
+                                            <button type="button"
+                                                    class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                                                    style="border: none;"
+                                                    title="Supprimer">
+                                                <i class="bi bi-dash-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Cours préalables (texte libre) -->
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold">Cours préalables</h6>
+                                <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-cours-prealable" title="Ajouter">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
+                            <div id="cours-prealables-container">
+                                {% for subform in plan_form.cours_prealables %}
+                                    <div class="cours_prealables-item mb-1">
+                                        <div class="d-flex align-items-start">
+                                            <div class="flex-fill me-2">
+                                                {{ subform.texte(
+                                                    class="form-control fw-bold mb-1 auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Titre"
+                                                )}}
+                                                {{ subform.texte_description(
+                                                    class="form-control auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Description"
+                                                )}}
+                                            </div>
+                                            <!-- Bouton "Supprimer" remplacé par icône -->
+                                            <button type="button"
+                                                    class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                                                    style="border: none;"
+                                                    title="Supprimer">
+                                                <i class="bi bi-dash-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <!-- Cours reliés -->
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold">Cours reliés</h6>
+                                <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-cours-relie" title="Ajouter">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
+                            <div id="cours-relies-container">
+                                {% for subform in plan_form.cours_relies %}
+                                    <div class="cours_relies-item mb-1">
+                                        <div class="d-flex align-items-start">
+                                            <div class="flex-fill me-2">
+                                                {{ subform.texte(
+                                                    class="form-control fw-bold mb-1 auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Titre"
+                                                )}}
+                                                {{ subform.texte_description(
+                                                    class="form-control auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Description"
+                                                )}}
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                                                    style="border: none;"
+                                                    title="Supprimer">
+                                                <i class="bi bi-dash-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+<!-- PARTIE 3: Résultats visés -->
+<div class="accordion-item">
+    <h2 class="accordion-header" id="headingResultatsVises">
+        <button class="accordion-button bg-info text-white" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseResultatsVises"
+                aria-expanded="true"
+                aria-controls="collapseResultatsVises">
+            Partie 3 - Résultats visés
+        </button>
+    </h2>
+    <div id="collapseResultatsVises" class="accordion-collapse collapse show"
+         aria-labelledby="headingResultatsVises"
+         data-bs-parent="#planCadreAccordion">
+        <div class="accordion-body">
+            <!-- Objectif Terminal -->
+            <div class="mb-3">
+                <label class="fw-bold">Objectif terminal</label>
+                {{ plan_form.objectif_terminal(class="form-control border-0 auto-resize",
+                                             oninput="autoResize(this)",
+                                             style="overflow:hidden; resize:none;") }}
+            </div>
+
+<!-- Capacités -->
+<div class="mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold">Capacités</h6>
+        <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-capacite" title="Ajouter">
+            <i class="bi bi-plus-circle"></i>
+        </button>
+    </div>
+    
+    <div id="capacites-container">
+        {% for capacite in plan_form.capacites %}
+            <div class="capacite-item mb-4">
+                <input type="hidden" name="capacites-{{ loop.index0 }}-id" value="{{ capacite.id }}">
+                <div class="accordion" id="capaciteAccordion{{ loop.index }}">
+                    <div class="accordion-item">
+                        <!-- En-tête de l'accordéon avec le bouton de suppression à droite -->
+                        <h2 class="accordion-header d-flex justify-content-between align-items-center">
+                            <button class="accordion-button collapsed flex-grow-1" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseCapacite{{ loop.index }}"
+                                    aria-expanded="false">
+                                {{ capacite.capacite.data or "Nouvelle capacité" }}
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm remove-capacite ms-2"
+                                    onclick="removeCapacite(this)" title="Supprimer cette capacité">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </h2>
+                        <div id="collapseCapacite{{ loop.index }}" class="accordion-collapse collapse"
+                             data-bs-parent="#capaciteAccordion{{ loop.index }}">
+                            <div class="accordion-body">
+                                <!-- Énoncé de la capacité -->
+                                <div class="mb-3">
+                                    <label class="fw-bold">Énoncé de la capacité</label>
+                                    {{ capacite.capacite(class="form-control fw-bold auto-resize border-0",
+                                                       oninput="autoResize(this)",
+                                                       style="overflow:hidden; resize:none;") }}
+                                </div>
+                                
+                                <!-- Description -->
+                                <div class="mb-3">
+                                    <label class="fw-bold">Description</label>
+                                    {{ capacite.description_capacite(class="form-control auto-resize border-0",
+                                                                  oninput="autoResize(this)",
+                                                                  style="overflow:hidden; resize:none;") }}
+                                </div>
+                                
+                                <!-- Pondération -->
+                                <div class="mb-3">
+                                    <label class="fw-bold">Pondération</label>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-1">(</span>
+                                        {{ capacite.ponderation_min(class="form-control border-0 me-2", style="width: 80px;") }}
+                                        <span class="me-2">-</span>
+                                        {{ capacite.ponderation_max(class="form-control border-0 me-2", style="width: 80px;") }}
+                                        <span>%)</span>
+                                    </div>
+                                </div>
+
+                                <!-- Savoirs nécessaires -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="fw-bold">Savoirs nécessaires</label>
+                                        <button type="button" class="btn btn-success btn-sm add-savoir"
+                                                onclick="addSavoir({{ loop.index0 }}, 'necessaire')">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div id="savoirs-necessaires-{{ loop.index0 }}" class="savoirs-list">
+                                        {% for savoir in capacite.savoirs_necessaires %}
+                                            <div class="savoir-item d-flex align-items-center gap-2 mb-2">
+                                                {{ savoir(class="form-control auto-resize border-0",
+                                                        oninput="autoResize(this)") }}
+                                                <button type="button" class="btn btn-danger btn-sm remove-item"
+                                                        onclick="removeItem(this)">
+                                                    <i class="bi bi-dash-circle"></i>
+                                                </button>
+                                            </div>
+                                            <hr>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <!-- Savoirs faire -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="fw-bold">Savoirs faire</label>
+                                        <button type="button" class="btn btn-success btn-sm add-savoir-faire"
+                                                onclick="addSavoirFaire({{ loop.index0 }})">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div id="savoirs-faire-{{ loop.index0 }}" class="savoirs-faire-list">
+                                        {% for savoir in capacite.savoirs_faire %}
+                                            <div class="savoir-faire-item mb-4">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div class="flex-grow-1 me-2">
+                                                        {{ savoir.texte(class="form-control fw-bold mb-2 auto-resize border-0",
+                                                                      placeholder="Savoir faire") }}
+                                                        <div class="row mb-2">
+                                                            <div class="col-6 mb-2">
+                                                                <label class="fw-bold text-dark px-2 rounded" style="background-color: #28a745;">
+                                                                    Cible
+                                                                </label>
+                                                                {{ savoir.cible(class="form-control border-0 mt-1", placeholder="Cible") }}
+                                                            </div>
+                                                            <div class="col-6 mb-2">
+                                                                <label class="fw-bold text-dark px-2 rounded" style="background-color: #ffc107;">
+                                                                    Seuil de réussite
+                                                                </label>
+                                                                {{ savoir.seuil_reussite(class="form-control border-0 mt-1", placeholder="Seuil de réussite") }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" class="btn btn-danger btn-sm remove-item"
+                                                            onclick="removeItem(this)">
+                                                        <i class="bi bi-dash-circle"></i>
+                                                    </button>
+                                                </div>
+                                                <hr>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <!-- Moyens d'évaluation -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="fw-bold">Moyens d'évaluation</label>
+                                        <button type="button" class="btn btn-success btn-sm add-moyen"
+                                                onclick="addMoyen({{ loop.index0 }})">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div id="moyens-evaluation-{{ loop.index0 }}" class="moyens-list">
+                                        {% for moyen in capacite.moyens_evaluation %}
+                                            <div class="moyen-item d-flex align-items-center gap-2 mb-2">
+                                                {{ moyen(class="form-control auto-resize border-0",
+                                                        oninput="autoResize(this)") }}
+                                                <button type="button" class="btn btn-danger btn-sm remove-item"
+                                                        onclick="removeItem(this)">
+                                                    <i class="bi bi-dash-circle"></i>
+                                                </button>
+                                            </div>
+                                            <hr>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+
+                                <!-- Bouton de suppression déplacé dans l'en-tête de l'accordéon -->
+                                <!--
+                                <button type="button" class="btn btn-danger btn-sm remove-capacite"
+                                        onclick="removeCapacite(this)">
+                                    <i class="bi bi-trash"></i> Supprimer cette capacité
+                                </button>
+                                -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 </div>
 
 
-    <!-- Accordion Principal sans Restriction d'Ouverture -->
-    <div class="accordion" id="planCadreAccordion">
-        <!-- Introduction -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingIntroduction">
-                <button class="accordion-button bg-primary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIntroduction" aria-expanded="true" aria-controls="collapseIntroduction">
-                    Introduction et place et rôle du cours
-                </button>
-            </h2>
-            <div id="collapseIntroduction" class="accordion-collapse collapse show" aria-labelledby="headingIntroduction">
-                <div class="accordion-body">
-                    <p>{{ plan.place_intro or "Non renseigné." }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Objectif Terminal -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingObjectif">
-                <button class="accordion-button bg-success text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseObjectif" aria-expanded="true" aria-controls="collapseObjectif">
-                    Objectif terminal
-                </button>
-            </h2>
-            <div id="collapseObjectif" class="accordion-collapse collapse show" aria-labelledby="headingObjectif">
-                <div class="accordion-body">
-                    <p>{{ plan.objectif_terminal or "Non renseigné." }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Structure du Cours -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingStructure">
-                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStructure" aria-expanded="true" aria-controls="collapseStructure">
-                    Structure du cours
-                </button>
-            </h2>
-            <div id="collapseStructure" class="accordion-collapse collapse show" aria-labelledby="headingStructure">
-                <div class="accordion-body">
-                    <p><strong>Introduction:</strong> {{ plan.structure_intro or "Non renseigné." }}</p>
-                    <p><strong>Activités Théoriques:</strong> {{ plan.structure_activites_theoriques or "Non renseigné." }}</p>
-                    <p><strong>Activités Pratiques:</strong> {{ plan.structure_activites_pratiques or "Non renseigné." }}</p>
-                    <div><strong>Activités Prévues:</strong> {{ plan.structure_activites_prevues | markdown | safe or "Non renseigné." }}</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Évaluation des Apprentissages -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingEvaluation">
-                <button class="accordion-button bg-warning text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEvaluation" aria-expanded="true" aria-controls="collapseEvaluation">
-                    Évaluation des apprentissages
-                </button>
-            </h2>
-            <div id="collapseEvaluation" class="accordion-collapse collapse show" aria-labelledby="headingEvaluation">
-                <div class="accordion-body">
-                    <p><strong>Évaluation sommative:</strong> {{ plan.eval_evaluation_sommative or "Non renseigné." }}</p>
-                    <p><strong>Nature des évaluations sommatives:</strong> {{ plan.eval_nature_evaluations_sommatives or "Non renseigné." }}</p>
-                    <p><strong>Évaluation de la langue:</strong> {{ plan.eval_evaluation_de_la_langue or "Non renseigné." }}</p>
-                    <p><strong>Évaluation formative des apprentissages:</strong> {{ plan.eval_evaluation_sommatives_apprentissages | markdown | safe or "Non renseigné." }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Compétences Développées -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingCompetencesDeveloppees">
-                <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCompetencesDeveloppees" aria-expanded="true" aria-controls="collapseCompetencesDeveloppees">
-                    Compétences développées
-                </button>
-            </h2>
-            <div id="collapseCompetencesDeveloppees" class="accordion-collapse collapse show" aria-labelledby="headingCompetencesDeveloppees">
-                <div class="accordion-body">
-                    {% if competences_developpees %}
-                        <ul class="list-group list-group-flush">
-                            {% for comp in competences_developpees %}
-                                <li class="list-group-item">
-                                    <strong>{{ comp.texte }}</strong>: {{ comp.description or "Pas de description." }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Aucune compétence développée.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Compétences Certifiées -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingCompetencesCertifiees">
-                <button class="accordion-button bg-danger text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCompetencesCertifiees" aria-expanded="true" aria-controls="collapseCompetencesCertifiees">
-                    Compétences certifiées
-                </button>
-            </h2>
-            <div id="collapseCompetencesCertifiees" class="accordion-collapse collapse show" aria-labelledby="headingCompetencesCertifiees">
-                <div class="accordion-body">
-                    {% if competences_certifiees %}
-                        <ul class="list-group list-group-flush">
-                            {% for cc in competences_certifiees %}
-                                <li class="list-group-item">
-                                    <strong>{{ cc.texte }}</strong>: {{ cc.description or "Pas de description." }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Aucune compétence certifiée.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Cours Corequis -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingCoursCorequis">
-                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCoursCorequis" aria-expanded="true" aria-controls="collapseCoursCorequis">
-                    Cours corequis
-                </button>
-            </h2>
-            <div id="collapseCoursCorequis" class="accordion-collapse collapse show" aria-labelledby="headingCoursCorequis">
-                <div class="accordion-body">
-                    {% if cours_corequis %}
-                        <ul class="list-group list-group-flush">
-                            {% for cc in cours_corequis %}
-                                <li class="list-group-item">
-                                    <strong>{{ cc.texte }}</strong>: {{ cc.description or "Pas de description." }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Aucun cours corequis.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Cours Préalables -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingCoursPrealables">
-                <button class="accordion-button bg-warning text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCoursPrealables" aria-expanded="true" aria-controls="collapseCoursPrealables">
-                    Cours Préalables
-                </button>
-            </h2>
-            <div id="collapseCoursPrealables" class="accordion-collapse collapse show" aria-labelledby="headingCoursPrealables">
-                <div class="accordion-body">
-                    {% if cours_prealables %}
-                        <ul class="list-group list-group-flush">
-                            {% for cp in cours_prealables %}
-                                <li class="list-group-item">
-                                    <strong>{{ cp.texte }}</strong>: Note nécessaire: {{ cp.description or "Non spécifiée." }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Aucun cours préalable.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Capacités avec Accordéon Intérieur -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingCapacites">
-                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCapacites" aria-expanded="true" aria-controls="collapseCapacites">
-                    Capacités
-                </button>
-            </h2>
-            <div id="collapseCapacites" class="accordion-collapse collapse show" aria-labelledby="headingCapacites">
-                <div class="accordion-body">
-                    {% if capacites %}
-                        <!-- Accordion Intérieur pour Capacités -->
-                        <div class="accordion" id="capacitesAccordion">
-                            {% for cap in capacites %}
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" id="headingCapacite{{ cap['capacite']['id'] }}">
-                                        <button class="accordion-button bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCapacite{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseCapacite{{ cap['capacite']['id'] }}">
-                                            {{ cap['capacite']['capacite'] }} (Pondération: {{ cap['capacite']['ponderation_min'] }}% - {{ cap['capacite']['ponderation_max'] }}%)
-                                        </button>
-                                    </h2>
-                                    <div id="collapseCapacite{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingCapacite{{ cap['capacite']['id'] }}">
-                                        <div class="accordion-body">
-                                            <p>{{ cap['capacite']['description_capacite'] or "Pas de description." }}</p>
-                                            
-                                            <!-- Sous-Accordion pour Savoirs Nécessaires -->
-                                            <div class="accordion mb-3" id="savoirsNecessairesAccordion{{ cap['capacite']['id'] }}">
-                                                <div class="accordion-item">
-                                                    <h2 class="accordion-header" id="headingSavoirsNecessaires{{ cap['capacite']['id'] }}">
-                                                        <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavoirsNecessaires{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseSavoirsNecessaires{{ cap['capacite']['id'] }}">
-                                                            Savoirs Nécessaires
-                                                        </button>
-                                                    </h2>
-                                                    <div id="collapseSavoirsNecessaires{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingSavoirsNecessaires{{ cap['capacite']['id'] }}">
-                                                        <div class="accordion-body">
-                                                            {% if cap['savoirs_necessaires'] %}
-                                                                <ul class="list-group list-group-flush">
-                                                                    {% for sav in cap['savoirs_necessaires'] %}
-                                                                        <li class="list-group-item">{{ sav.texte }}</li>
-                                                                    {% endfor %}
-                                                                </ul>
-                                                            {% else %}
-                                                                <p>Aucun savoir nécessaire.</p>
-                                                            {% endif %}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Sous-Accordion pour Savoirs Faire -->
-                                            <div class="accordion mb-3" id="savoirsFaireAccordion{{ cap['capacite']['id'] }}">
-                                                <div class="accordion-item">
-                                                    <h2 class="accordion-header" id="headingSavoirsFaire{{ cap['capacite']['id'] }}">
-                                                        <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavoirsFaire{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseSavoirsFaire{{ cap['capacite']['id'] }}">
-                                                            Savoirs Faire
-                                                        </button>
-                                                    </h2>
-                                                    <div id="collapseSavoirsFaire{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingSavoirsFaire{{ cap['capacite']['id'] }}">
-                                                        <div class="accordion-body">
-                                                            {% if cap['savoirs_faire'] %}
-                                                                <ul class="list-group list-group-flush">
-                                                                    {% for sf in cap['savoirs_faire'] %}
-                                                                        <li class="list-group-item">
-                                                                            {{ sf.texte }} 
-                                                                            <span class="badge bg-success">Cible: {{ sf.cible }}</span> 
-                                                                            <span class="badge bg-warning text-dark">Seuil: {{ sf.seuil_reussite }}</span>
-                                                                        </li>
-                                                                    {% endfor %}
-                                                                </ul>
-                                                            {% else %}
-                                                                <p>Aucun savoir faire.</p>
-                                                            {% endif %}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Sous-Accordion pour Moyens d'Évaluation -->
-                                            <div class="accordion mb-3" id="moyensEvaluationAccordion{{ cap['capacite']['id'] }}">
-                                                <div class="accordion-item">
-                                                    <h2 class="accordion-header" id="headingMoyensEvaluation{{ cap['capacite']['id'] }}">
-                                                        <button class="accordion-button bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMoyensEvaluation{{ cap['capacite']['id'] }}" aria-expanded="true" aria-controls="collapseMoyensEvaluation{{ cap['capacite']['id'] }}">
-                                                            Moyens d'Évaluation
-                                                        </button>
-                                                    </h2>
-                                                    <div id="collapseMoyensEvaluation{{ cap['capacite']['id'] }}" class="accordion-collapse collapse show" aria-labelledby="headingMoyensEvaluation{{ cap['capacite']['id'] }}">
-                                                        <div class="accordion-body">
-                                                            {% if cap['moyens_evaluation'] %}
-                                                                <ul class="list-group list-group-flush">
-                                                                    {% for me in cap['moyens_evaluation'] %}
-                                                                        <li class="list-group-item">{{ me.texte }}</li>
-                                                                    {% endfor %}
-                                                                </ul>
-                                                            {% else %}
-                                                                <p>Aucun moyen d'évaluation.</p>
-                                                            {% endif %}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Boutons d'Action -->
-                                            <div>
-                                                <a href="{{ url_for('cours.edit_capacite', cours_id=plan.cours_id, plan_id=plan.id, capacite_id=cap['capacite']['id']) }}" class="btn btn-primary btn-sm">Éditer</a>
-                                                <form method="POST" action="{{ url_for('plan_cadre.delete_capacite', plan_id=plan.id, capacite_id=cap['capacite']['id']) }}" style="display:inline;">
-                                                    {{ delete_forms_capacites[cap['capacite']['id']].hidden_tag() }}
-                                                    <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
+            <!-- PARTIE 4: Organisation de l'apprentissage et de l'enseignement -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOrganisation">
+                    <button class="accordion-button bg-secondary text-white" type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#collapseOrganisation"
+                            aria-expanded="true"
+                            aria-controls="collapseOrganisation">
+                        Partie 4 - Organisation de l'apprentissage et de l'enseignement
+                    </button>
+                </h2>
+                <div id="collapseOrganisation" class="accordion-collapse collapse show"
+                     aria-labelledby="headingOrganisation"
+                     data-bs-parent="#planCadreAccordion">
+                    <div class="accordion-body">
+                        <div class="mb-2">
+                            <label class="fw-bold">Structure du cours</label>
+                            {{ plan_form.structure_intro(class="form-control border-0 auto-resize",
+                                                         oninput="autoResize(this)",
+                                                         style="overflow:hidden; resize:none;") }}
                         </div>
-                    {% else %}
-                        <p>Aucune capacité ajoutée.</p>
-                    {% endif %}
+                        <div class="mb-2">
+                            <label class="fw-bold">Activités théoriques</label>
+                            {{ plan_form.structure_activites_theoriques(class="form-control border-0 auto-resize",
+                                                                       oninput="autoResize(this)",
+                                                                       style="overflow:hidden; resize:none;") }}
+                        </div>
+                        <div class="mb-2">
+                            <label class="fw-bold">Activités pratiques</label>
+                            {{ plan_form.structure_activites_pratiques(class="form-control border-0 auto-resize",
+                                                                      oninput="autoResize(this)",
+                                                                      style="overflow:hidden; resize:none;") }}
+                        </div>
+                        <div class="mb-2">
+                            <label class="fw-bold">Organisation du cours (activités prévues)</label>
+                            {{ plan_form.structure_activites_prevues(class="form-control border-0 auto-resize",
+                                                                     oninput="autoResize(this)",
+                                                                     style="overflow:hidden; resize:none;") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PARTIE 5: Évaluation des apprentissages -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingEvaluation">
+                    <button class="accordion-button bg-warning text-dark" type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#collapseEvaluation"
+                            aria-expanded="true"
+                            aria-controls="collapseEvaluation">
+                        Partie 5 - Évaluation des apprentissages
+                    </button>
+                </h2>
+                <div id="collapseEvaluation" class="accordion-collapse collapse show"
+                     aria-labelledby="headingEvaluation"
+                     data-bs-parent="#planCadreAccordion">
+                    <div class="accordion-body">
+                        <div class="mb-2">
+                            <label class="fw-bold">Évaluation sommative des apprentissages</label>
+                            {{ plan_form.eval_evaluation_sommative(class="form-control border-0 auto-resize",
+                                                                   oninput="autoResize(this)",
+                                                                   style="overflow:hidden; resize:none;") }}
+                        </div>
+                        <div class="mb-2">
+                            <label class="fw-bold">Nature des évaluations sommatives</label>
+                            {{ plan_form.eval_nature_evaluations_sommatives(class="form-control border-0 auto-resize",
+                                                                            oninput="autoResize(this)",
+                                                                            style="overflow:hidden; resize:none;") }}
+                        </div>
+                        <div class="mb-2">
+                            <label class="fw-bold">Évaluation de la langue</label>
+                            {{ plan_form.eval_evaluation_de_la_langue(class="form-control border-0 auto-resize",
+                                                                      oninput="autoResize(this)",
+                                                                      style="overflow:hidden; resize:none;") }}
+                        </div>
+                        <div class="mb-2">
+                            <label class="fw-bold">Évaluation formative des apprentissages</label>
+                            {{ plan_form.eval_evaluation_sommatives_apprentissages(class="form-control border-0 auto-resize",
+                                                                                   oninput="autoResize(this)",
+                                                                                   style="overflow:hidden; resize:none;") }}
+                        </div>
+
+<!-- Savoir-être -->
+<div class="mb-2">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+        <label class="fw-bold">Savoir-être</label>
+        <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-savoir-etre" title="Ajouter">
+            <i class="bi bi-plus-circle"></i>
+        </button>
+    </div>
+    <div id="savoir-etre-container">
+        {% for subform in plan_form.savoir_etre %}
+            <div class="savoir-etre-item mb-1">
+                <div class="d-flex align-items-start">
+                    <div class="flex-fill me-2">
+                        {{ subform.texte(
+                            class="form-control auto-resize border-0",
+                            oninput="autoResize(this)",
+                            style="overflow:hidden; resize:none;",
+                            placeholder="Savoir-être (en gras)"
+                        ) }}
+                    </div>
+                    <button type="button"
+                            class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                            style="border: none;"
+                            title="Supprimer">
+                        <i class="bi bi-dash-circle"></i>
+                    </button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+                </div>
+            </div>
+
+            <!-- PARTIE 6: Éléments de compétence associés -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingElementsCompetence">
+                    <button class="accordion-button bg-primary text-white" type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#collapseElementsCompetence"
+                            aria-expanded="true"
+                            aria-controls="collapseElementsCompetence">
+                        Partie 6 - Éléments de compétence associés
+                    </button>
+                </h2>
+                <div id="collapseElementsCompetence" class="accordion-collapse collapse show"
+                     aria-labelledby="headingElementsCompetence"
+                     data-bs-parent="#planCadreAccordion">
+                    <div class="accordion-body">
+                        {% if elements_competence_par_cours %}
+                            <ul class="list-group mb-1">
+                                {% for competence_id, competence_data in elements_competence_par_cours.items() %}
+                                    <li class="list-group-item py-1">
+                                        <strong>
+                                            <a href="{{ url_for('programme.view_competence', competence_id=competence_id) }}"
+                                               class="text-decoration-none">
+                                                {{ competence_data.nom }} ({{ competence_data.code }})
+                                            </a>
+                                        </strong>
+                                        <ul class="mt-1">
+                                            {% for ec in competence_data.elements %}
+                                                <li>
+                                                    {{ ec.element_competence_nom }}
+                                                    <span class="badge bg-secondary">Statut : {{ ec.status }}</span>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Aucun élément de compétence.</p>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
+    </form>
 
-        <!-- Savoir-être -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingSavoirEtre">
-                <button class="accordion-button bg-success text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavoirEtre" aria-expanded="true" aria-controls="collapseSavoirEtre">
-                    Savoir-être
-                </button>
-            </h2>
-            <div id="collapseSavoirEtre" class="accordion-collapse collapse show" aria-labelledby="headingSavoirEtre">
-                <div class="accordion-body">
-                    {% if savoir_etre %}
-                        <ul class="list-group list-group-flush">
-                            {% for se in savoir_etre %}
-                                <li class="list-group-item">{{ se.texte }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Aucun savoir-être.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Gestion des Fichiers -->
+    <!-- Gestion des Fichiers (formulaire séparé en dehors du formulaire principal) -->
+    <div class="accordion mt-4" id="gestionFichiersAccordion">
         <div class="accordion-item">
             <h2 class="accordion-header" id="headingGestionFichiers">
                 <button class="accordion-button bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGestionFichiers" aria-expanded="true" aria-controls="collapseGestionFichiers">
                     Gestion des Fichiers
                 </button>
             </h2>
-            <div id="collapseGestionFichiers" class="accordion-collapse collapse show" aria-labelledby="headingGestionFichiers">
+            <div id="collapseGestionFichiers" class="accordion-collapse collapse show" aria-labelledby="headingGestionFichiers" data-bs-parent="#gestionFichiersAccordion">
                 <div class="accordion-body">
                     <div class="d-flex flex-wrap gap-2 mb-3">
-                        <a href="{{ url_for('plan_cadre.export_plan_cadre', plan_id=plan_id) }}" class="btn btn-primary">Exporter en DOCX</a>
-                        <a href="{{ url_for('cours.export_plan_cadre_json', cours_id=cours_id, plan_id=plan_id) }}" class="btn btn-secondary">Exporter en JSON</a>
+                        <a href="{{ url_for('plan_cadre.export_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary">Exporter en DOCX</a>
+                        <a href="{{ url_for('cours.export_plan_cadre_json', cours_id=cours.id, plan_id=plan.id) }}" class="btn btn-secondary">Exporter en JSON</a>
                     </div>
                     <hr>
-                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('cours.import_plan_cadre_json', cours_id=cours_id, plan_id=plan_id) }}">
+                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('cours.import_plan_cadre_json', cours_id=cours.id, plan_id=plan.id) }}">
                         {{ import_form.hidden_tag() }}
                         <div class="mb-3">
                             {{ import_form.json_file.label(class="form-label") }}
@@ -359,11 +737,586 @@
         </div>
     </div>
 
-    <!-- Boutons d'Action Supplémentaires (répétition si nécessaire) -->
-    <div class="d-flex gap-2 mt-5">
-        <a href="{{ url_for('plan_cadre.edit_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary">Éditer le plan-cadre</a>
-        <a href="{{ url_for('cours.view_cours', cours_id=plan.cours_id) }}" class="btn btn-secondary">Retour au cours</a>
-    </div>
-</div>
+    <!-- Bouton d'Enregistrement Flottant -->
+    <button type="submit" 
+            form="planCadreForm" 
+            id="floatingSaveBtn" 
+            class="btn btn-primary btn-lg rounded-circle shadow-lg d-none"
+            title="Enregistrer le Plan-cadre"
+            name="submit_plan"
+            value="submit_plan">
+        <i class="bi bi-save"></i>
+    </button>
 
+<!-- Bouton Flottant "Annuler" -->
+<button type="button" 
+        id="floatingCancelBtn" 
+        class="btn btn-danger btn-lg rounded-circle shadow-lg d-none"
+        title="Annuler les modifications">
+    <i class="bi bi-x-circle"></i>
+</button>
+
+    <!-- Modal Génération du Plan-cadre (Formulaire Séparé) -->
+    <div class="modal fade" id="generateModal" tabindex="-1" aria-labelledby="generateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post" id="generateContentForm">
+                    {{ generate_form.hidden_tag() }}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="generateModalLabel">Générer le plan-cadre</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            {{ generate_form.additional_info.label(class="form-label") }}
+                            {{ generate_form.additional_info(class="form-control border-0", rows="3") }}
+                            {% for error in generate_form.additional_info.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="mb-3">
+                            {{ generate_form.ai_model.label(class="form-label") }}
+                            {{ generate_form.ai_model(class="form-select border-0") }}
+                            {% for error in generate_form.ai_model.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary" id="confirmGenerateBtn">
+                            <span class="btn-text">Générer le plan-cadre</span>
+                            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="modalLoadingSpinner">
+                                <span class="visually-hidden">Chargement...</span>
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<style>
+    /* Styles pour les boutons flottants */
+    label.fw-bold {
+        color: black; /* Couleur du texte */
+        padding: 0.2rem; /* Ajouter un peu d'espace autour du texte */
+        border-bottom: 1px solid black; /* Ligne en dessous du texte */
+    }
+    h6 {
+        color: black; /* Couleur du texte */
+        padding: 0.2rem; /* Ajouter un peu d'espace autour du texte */
+        border-bottom: 1px solid black; /* Ligne en dessous du texte */
+    }
+    #floatingSaveBtn, #floatingCancelBtn {
+        position: fixed;
+        bottom: 20px;
+        z-index: 1000;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    #floatingSaveBtn {
+        right: 20px;
+        background-color: #0d6efd; /* Couleur primaire de Bootstrap */
+        color: white;
+    }
+    #floatingCancelBtn {
+        right: 90px; /* Espacement entre les boutons */
+        background-color: #dc3545; /* Couleur danger de Bootstrap */
+        color: white;
+    }
+    #floatingSaveBtn .bi, #floatingCancelBtn .bi {
+        font-size: 1.5rem;
+    }
+
+    /* Optionnel : Transition douce pour l'apparition des boutons */
+    #floatingSaveBtn, #floatingCancelBtn {
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    #floatingSaveBtn.d-none, #floatingCancelBtn.d-none {
+        opacity: 0;
+        visibility: hidden;
+    }
+</style>
+<script>
+    // Fonction autoResize pour ajuster la hauteur des textarea
+    function autoResize(element) {
+        if (element.tagName.toLowerCase() === 'textarea') {
+            element.style.height = 'auto';
+            element.style.height = element.scrollHeight + 'px';
+        }
+    }
+
+    // Fonction pour ajouter des items avec description
+    function addItemWithDescription(containerId, fieldPrefix) {
+        let container = document.getElementById(containerId);
+        let index = container.querySelectorAll('.' + fieldPrefix + '-item').length;
+        let html = `
+        <div class="${fieldPrefix}-item mb-1">
+            <div class="d-flex align-items-start">
+                <div class="flex-fill me-2">
+                    <input id="${fieldPrefix}-${index}-texte" name="${fieldPrefix}-${index}-texte"
+                           class="form-control fw-bold mb-1 auto-resize border-0"
+                           oninput="autoResize(this)"
+                           style="overflow:hidden; resize:none;"
+                           placeholder="Titre"
+                           type="text">
+                    <textarea id="${fieldPrefix}-${index}-texte_description" name="${fieldPrefix}-${index}-texte_description"
+                              class="form-control auto-resize border-0"
+                              oninput="autoResize(this)"
+                              style="overflow:hidden; resize:none;"
+                              placeholder="Description"></textarea>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                        style="border: none;" title="Supprimer">
+                    <i class="bi bi-dash-circle"></i>
+                </button>
+            </div>
+        </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+        showFloatingButtons();
+    }
+
+    // Fonction pour ajouter un savoir-être
+    function addSavoirEtre() {
+        let container = document.getElementById('savoir-etre-container');
+        let index = container.querySelectorAll('.savoir-etre-item').length;
+        let html = `
+            <div class="savoir-etre-item mb-1">
+                <div class="d-flex align-items-start">
+                    <div class="flex-fill me-2">
+                        <input type="text" 
+                               id="savoir_etre-${index}-texte" 
+                               name="savoir_etre-${index}-texte" 
+                               class="form-control fw-bold auto-resize border-0"
+                               oninput="autoResize(this)"
+                               style="overflow:hidden; resize:none;"
+                               placeholder="Savoir-être (en gras)"
+                               value="">
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                            style="border: none;" title="Supprimer">
+                        <i class="bi bi-dash-circle"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+        showFloatingButtons();
+    }
+
+    // Fonction pour ajouter une capacité
+    function addCapacite() {
+        const container = document.getElementById('capacites-container');
+        const index = container.querySelectorAll('.capacite-item').length;
+        
+        const html = `
+            <div class="capacite-item mb-3">
+                <div class="accordion" id="capaciteAccordion${index}">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseCapacite${index}"
+                                    aria-expanded="false">
+                                Nouvelle capacité
+                            </button>
+                        </h2>
+                        <div id="collapseCapacite${index}" class="accordion-collapse collapse"
+                             data-bs-parent="#capaciteAccordion${index}">
+                            <div class="accordion-body">
+                                <div class="mb-1">
+                                    <label class="fw-bold">Capacité</label>
+                                    <input type="text" name="capacites-${index}-capacite" 
+                                           class="form-control fw-bold auto-resize border-0"
+                                           oninput="autoResize(this)"
+                                           style="overflow:hidden; resize:none;"
+                                           placeholder="Capacité">
+                                </div>
+                                <div class="mb-1">
+                                    <label class="fw-bold">Description</label>
+                                    <textarea name="capacites-${index}-description_capacite" 
+                                             class="form-control auto-resize border-0"
+                                             oninput="autoResize(this)"
+                                             style="overflow:hidden; resize:none;"
+                                             placeholder="Description"></textarea>
+                                </div>
+                                <div class="row mb-1">
+                                    <div class="col">
+                                        <label class="fw-bold">Pondération minimale</label>
+                                        <input type="number" name="capacites-${index}-ponderation_min"
+                                               class="form-control border-0" value="0">
+                                    </div>
+                                    <div class="col">
+                                        <label class="fw-bold">Pondération maximale</label>
+                                        <input type="number" name="capacites-${index}-ponderation_max"
+                                               class="form-control border-0" value="100">
+                                    </div>
+                                </div>
+                                
+                                <!-- Savoirs nécessaires -->
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="fw-bold">Savoirs nécessaires</label>
+                                        <button type="button" class="btn btn-success btn-sm add-savoir"
+                                                onclick="addSavoir(${index}, 'necessaire')">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div id="savoirs-necessaires-${index}" class="savoirs-list"></div>
+                                </div>
+
+                                <!-- Savoirs faire -->
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="fw-bold">Savoirs faire</label>
+                                        <button type="button" class="btn btn-success btn-sm add-savoir-faire"
+                                                onclick="addSavoirFaire(${index})">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div id="savoirs-faire-${index}" class="savoirs-faire-list"></div>
+                                </div>
+
+                                <!-- Moyens d'évaluation -->
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="fw-bold">Moyens d'évaluation</label>
+                                        <button type="button" class="btn btn-success btn-sm add-moyen"
+                                                onclick="addMoyen(${index})">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div id="moyens-evaluation-${index}" class="moyens-list"></div>
+                                </div>
+
+                                <button type="button" class="btn btn-danger btn-sm remove-capacite"
+                                        onclick="removeCapacite(this)">
+                                    <i class="bi bi-trash"></i> Supprimer cette capacité
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', html);
+        showFloatingButtons();
+    }
+
+    // Fonctions pour les savoirs dans les capacités
+    function addSavoir(capaciteIndex, type) {
+        const container = document.getElementById(`savoirs-${type}s-${capaciteIndex}`);
+        if (!container) return; // Vérifie que le conteneur existe
+        const index = container.querySelectorAll('.savoir-item').length;
+        
+        const html = `
+            <div class="savoir-item d-flex align-items-center gap-2 mb-1">
+                <input type="text" name="capacites-${capaciteIndex}-savoirs_${type}s-${index}"
+                       class="form-control auto-resize border-0"
+                       oninput="autoResize(this)">
+                <button type="button" class="btn btn-danger btn-sm remove-item"
+                        onclick="removeItem(this)">
+                    <i class="bi bi-dash-circle"></i>
+                </button>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', html);
+        showFloatingButtons();
+    }
+
+    // Fonction pour ajouter un savoir-faire
+    function addSavoirFaire(capaciteIndex) {
+        const container = document.getElementById(`savoirs-faire-${capaciteIndex}`);
+        if (!container) return; // Vérifie que le conteneur existe
+        const index = container.querySelectorAll('.savoir-faire-item').length;
+        
+        const html = `
+            <div class="savoir-faire-item mb-2">
+                <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-texte"
+                       class="form-control fw-bold mb-1 auto-resize border-0"
+                       placeholder="Savoir faire">
+                <div class="row">
+                    <div class="col">
+                        <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-cible"
+                               class="form-control border-0"
+                               placeholder="Cible">
+                    </div>
+                    <div class="col">
+                        <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-seuil_reussite"
+                               class="form-control border-0"
+                               placeholder="Seuil de réussite">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm remove-item mt-1"
+                        onclick="removeItem(this)">
+                    <i class="bi bi-dash-circle"></i>
+                </button>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', html);
+        showFloatingButtons();
+    }
+
+    // Fonction pour ajouter un moyen d'évaluation
+    function addMoyen(capaciteIndex) {
+        const container = document.getElementById(`moyens-evaluation-${capaciteIndex}`);
+        if (!container) return; // Vérifie que le conteneur existe
+        const index = container.querySelectorAll('.moyen-item').length;
+        
+        const html = `
+            <div class="moyen-item d-flex align-items-center gap-2 mb-1">
+                <input type="text" name="capacites-${capaciteIndex}-moyens_evaluation-${index}"
+                       class="form-control auto-resize border-0"
+                       oninput="autoResize(this)">
+                <button type="button" class="btn btn-danger btn-sm remove-item"
+                        onclick="removeItem(this)">
+                    <i class="bi bi-dash-circle"></i>
+                </button>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', html);
+        showFloatingButtons();
+    }
+
+    // Fonctions de suppression
+    function removeItem(button) {
+        const parentItem = button.closest('.savoir-item, .savoir-faire-item, .moyen-item, .competences_developpees-item, .objets_cibles-item, .competences_certifiees-item, .cours_corequis-item, .cours_prealables-item, .savoir-etre-item, .cours_relies-item');  // Ajout de .cours_relies-item
+        if (parentItem) {
+            parentItem.remove();
+            showFloatingButtons();
+        }
+    }
+
+    function removeCapacite(button) {
+        if (confirm('Êtes-vous sûr de vouloir supprimer cette capacité ?')) {
+            const capaciteItem = button.closest('.capacite-item');
+            if (capaciteItem) {
+                capaciteItem.remove();
+                showFloatingButtons();
+            }
+        }
+    }
+
+    // Fonction pour réindexer les savoir-être après suppression (si nécessaire)
+    function reindexSavoirEtre() {
+        const container = document.getElementById('savoir-etre-container');
+        const items = container.querySelectorAll('.savoir-etre-item');
+        items.forEach((item, index) => {
+            const input = item.querySelector('input');
+            if (input) {
+                input.id = `savoir_etre-${index}-texte`;
+                input.name = `savoir_etre-${index}-texte`;
+            }
+        });
+    }
+
+    // Fonction pour afficher les boutons flottants
+    function showFloatingButtons() {
+        const floatingSaveBtn = document.getElementById('floatingSaveBtn');
+        const floatingCancelBtn = document.getElementById('floatingCancelBtn');
+        if (floatingSaveBtn && floatingCancelBtn) {
+            floatingSaveBtn.classList.remove('d-none');
+            floatingCancelBtn.classList.remove('d-none');
+        }
+    }
+
+    // Fonction pour masquer les boutons flottants
+    function hideFloatingButtons() {
+        const floatingSaveBtn = document.getElementById('floatingSaveBtn');
+        const floatingCancelBtn = document.getElementById('floatingCancelBtn');
+        if (floatingSaveBtn && floatingCancelBtn) {
+            floatingSaveBtn.classList.add('d-none');
+            floatingCancelBtn.classList.add('d-none');
+        }
+    }
+
+    // Fonction pour afficher des messages flash
+    function showFlashMessage(message, type) {
+        const flashMessage = document.getElementById('flash-message');
+        flashMessage.className = `alert alert-${type}`;
+        flashMessage.textContent = message;
+        flashMessage.classList.remove('d-none');
+
+        // Masquer le message après 5 secondes
+        setTimeout(() => {
+            flashMessage.classList.add('d-none');
+        }, 5000);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const planCadreForm = document.getElementById('planCadreForm');
+        const floatingSaveBtn = document.getElementById('floatingSaveBtn');
+        const floatingCancelBtn = document.getElementById('floatingCancelBtn');
+
+        // Gestion des boutons d'ajout avec icônes
+        document.querySelectorAll('.add-item-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(){
+                const id = btn.id;
+                switch(id) {
+                    case 'add-competence-developpee':
+                        addItemWithDescription('competences-developpees-container', 'competences_developpees');
+                        break;
+                    case 'add-objet-cible':
+                        addItemWithDescription('objets-cibles-container', 'objets_cibles');
+                        break;
+                    case 'add-competence-certifiee':
+                        addItemWithDescription('competences-certifiees-container', 'competences_certifiees');
+                        break;
+                    case 'add-cours-corequis':
+                        addItemWithDescription('cours-corequis-container', 'cours_corequis');
+                        break;
+                    case 'add-cours-prealable':
+                        addItemWithDescription('cours-prealables-container', 'cours_prealables');
+                        break;
+                    case 'add-cours-relie':
+                        addItemWithDescription('cours-relies-container', 'cours_relies');
+                        break;
+                    case 'add-savoir-etre':
+                        addSavoirEtre();
+                        break;
+                    case 'add-capacite': // Nouveau cas ajouté
+                        addCapacite();
+                        break;
+                }
+            });
+        });
+
+        // Gestion de la soumission du formulaire principal via AJAX
+        if (planCadreForm && floatingSaveBtn && floatingCancelBtn) {
+            // Afficher les boutons flottants lors des modifications du formulaire
+            planCadreForm.addEventListener('input', showFloatingButtons);
+            planCadreForm.addEventListener('change', showFloatingButtons);
+
+            // Gestion de la soumission du formulaire
+            planCadreForm.addEventListener('submit', function(event) {
+                event.preventDefault(); // Empêche la soumission traditionnelle
+
+                // Afficher un indicateur de chargement si nécessaire
+                const loadingSpinner = floatingSaveBtn.querySelector('#loadingSpinner');
+                const btnText = floatingSaveBtn.querySelector('.btn-text');
+                if (loadingSpinner && btnText) {
+                    loadingSpinner.classList.remove('d-none');
+                    btnText.classList.add('d-none');
+                }
+
+                // Collecter les données du formulaire
+                const formData = new FormData(planCadreForm);
+
+                // Envoyer les données via Fetch API
+                fetch(planCadreForm.action, {
+                    method: planCadreForm.method,
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest' // Pour identifier la requête AJAX côté serveur
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Masquer l'indicateur de chargement
+                    if (loadingSpinner && btnText) {
+                        loadingSpinner.classList.add('d-none');
+                        btnText.classList.remove('d-none');
+                    }
+
+                    if (data.success) {
+                        // Cacher les boutons flottants
+                        hideFloatingButtons();
+
+                        // Afficher un message de succès
+                        showFlashMessage('Plan-cadre sauvegardé avec succès.', 'success');
+                    } else {
+                        // Afficher les erreurs
+                        if (data.errors) {
+                            // Convertir les erreurs en une chaîne de caractères
+                            let errorMessages = '';
+                            for (const [field, errors] of Object.entries(data.errors)) {
+                                errorMessages += `${field}: ${errors.join(', ')}\n`;
+                            }
+                            showFlashMessage('Erreur lors de la sauvegarde :\n' + errorMessages, 'danger');
+                        } else {
+                            showFlashMessage('Erreur inconnue lors de la sauvegarde.', 'danger');
+                        }
+                    }
+                })
+                .catch((error) => {
+                    // Masquer l'indicateur de chargement
+                    if (loadingSpinner && btnText) {
+                        loadingSpinner.classList.add('d-none');
+                        btnText.classList.remove('d-none');
+                    }
+
+                    console.error('Erreur:', error);
+                    // Afficher un message d'erreur
+                    showFlashMessage('Erreur lors de la sauvegarde du plan-cadre.', 'danger');
+                });
+            });
+
+            // Gestion du clic sur le bouton flottant "Enregistrer"
+            floatingSaveBtn.addEventListener('click', function() {
+                planCadreForm.requestSubmit(); // Déclenche la soumission du formulaire
+            });
+
+            // Gestion du bouton flottant "Annuler"
+            floatingCancelBtn.addEventListener('click', function() {
+                if (confirm('Êtes-vous sûr de vouloir annuler les modifications ? Toutes les modifications non sauvegardées seront perdues.')) {
+                    // Option 1: Réinitialiser le formulaire
+                    planCadreForm.reset();
+
+                    // Option 2: Recharger la page pour restaurer les données initiales
+                    // location.reload();
+
+                    // Masquer les boutons flottants après l'annulation
+                    hideFloatingButtons();
+
+                    // Afficher un message flash
+                    showFlashMessage('Modifications annulées.', 'warning');
+                }
+            });
+        }
+
+        // Dans l'écouteur d'événements pour la suppression
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-item-btn')) {
+                const parentItem = e.target.closest('.savoir-item, .savoir-faire-item, .moyen-item, .competences_developpees-item, .objets_cibles-item, .competences_certifiees-item, .cours_corequis-item, .cours_prealables-item, .savoir-etre-item, .cours_relies-item');  // Ajout de .cours_relies-item
+                if (parentItem) {
+                    parentItem.remove();
+                    showFloatingButtons();
+                }
+            }
+        });
+
+        // Auto-resize initial pour tous les champs
+        document.querySelectorAll('.auto-resize').forEach(autoResize);
+
+        // --- Ajout des modifications pour le bouton "Générer le plan-cadre" ---
+        const generateForm = document.getElementById('generateContentForm');
+        const confirmGenerateBtn = document.getElementById('confirmGenerateBtn');
+        const modalLoadingSpinner = document.getElementById('modalLoadingSpinner');
+
+        if (generateForm && confirmGenerateBtn && modalLoadingSpinner) {
+            generateForm.addEventListener('submit', function(event) {
+                // Désactiver le bouton et afficher le spinner
+                confirmGenerateBtn.disabled = true;
+                modalLoadingSpinner.classList.remove('d-none');
+                confirmGenerateBtn.querySelector('.btn-text').textContent = 'Génération en cours...';
+            });
+        }
+    });
+</script>
 {% endblock %}
