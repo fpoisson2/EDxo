@@ -47,25 +47,22 @@ def shutdown_scheduler():
 
 @with_scheduler_lock
 def schedule_backup(app):
+    logger.info("Starting schedule_backup function")
+    logger.info(f"Current jobs before scheduling: {scheduler.get_jobs()}")
+    logger.info(f"Scheduler running status: {scheduler.running}")
+
     if not is_main_process():
-        logger.info("Skipping backup scheduling on non-primary worker")
-        return
-    logger.info("Scheduling backup...")
-    if os.getenv('GUNICORN_WORKER_PROCESS_NAME') == 'Worker':
+        logger.info(f"Process info - Name: {multiprocessing.current_process().name}")
         return
 
-    from utils import send_backup_email
-    
     with app.app_context():
         config = BackupConfig.query.first()
+        logger.info(f"Backup config: {config.__dict__ if config else None}")
+        
         if config and config.enabled:
             try:
                 backup_time = datetime.strptime(config.backup_time, '%H:%M').time()
-                frequency = config.frequency.lower()
-                
-                job_id = f"{frequency}_backup"
-                if scheduler.get_job(job_id):
-                    scheduler.remove_job(job_id)
+                logger.info(f"Scheduled backup time: {backup_time}")
                 
                 job_args = {
                     'func': send_backup_email,
@@ -73,18 +70,25 @@ def schedule_backup(app):
                     'hour': backup_time.hour,
                     'minute': backup_time.minute,
                     'args': [app, config.email, app.config['DB_PATH']],
-                    'id': job_id,
+                    'id': f"{config.frequency.lower()}_backup",
                     'replace_existing': True,
-                    'name': f'Backup {frequency}'
+                    'name': f'Backup {config.frequency}'
                 }
                 
-                if frequency == 'weekly':
-                    job_args['day_of_week'] = 'mon'
-                elif frequency == 'monthly':
-                    job_args['day'] = 1
-                
                 scheduler.add_job(**job_args)
-                logger.info(f"Job de backup planifié: {job_id}")
-                
+                logger.info(f"All jobs after scheduling: {scheduler.get_jobs()}")
+                for job in scheduler.get_jobs():
+                    logger.info(f"Job {job.id} next run: {job.next_run_time}")
+                    
             except Exception as e:
-                logger.error(f"Erreur planification: {e}", exc_info=True)
+                logger.error(f"Scheduling error: {e}", exc_info=True)
+
+from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
+def job_error_handler(event):
+    logger.error(f"Job failed: {event.job_id}, error: {event.exception}")
+
+def job_executed_handler(event):
+    logger.info(f"Job executed: {event.job_id}, runtime: {event.scheduled_run_time}")
+
+scheduler.add_listener(job_error_handler, EVENT_JOB_ERROR)
+scheduler.add_listener(job_executed_handler, EVENT_JOB_EXECUTED)
