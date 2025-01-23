@@ -52,7 +52,7 @@ def update_site():
         # IMPORTANT : Adaptez 'cd /chemin/vers/votre/projet' selon votre structure
         # Les commandes sont enchaînées dans un seul appel bash via shell=True
         cmd = (
-            "cd /home/edxo/edxo-dev && "
+            "cd /home/fpoisson/edxo-dev && "
             "source venv/bin/activate && "
             "git pull origin main && "
             "pip install -r requirements.txt && "
