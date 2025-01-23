@@ -13,3 +13,8 @@ gunicorn
 flask_sqlalchemy
 tiktoken
 flask-migrate
+apscheduler
+email-validator
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib

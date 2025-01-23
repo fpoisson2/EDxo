@@ -12,6 +12,14 @@ user_programme = db.Table('User_Programme',
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
+
+class BackupConfig(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False)
+    frequency = db.Column(db.String(20), nullable=False)
+    backup_time = db.Column(db.String(5), nullable=False)  # Format: HH:MM
+    enabled = db.Column(db.Boolean, default=False)
+    
 # ------------------------------------------------------------------------------
 # Modèle User (mise à jour pour correspondre au schéma)
 # ------------------------------------------------------------------------------
