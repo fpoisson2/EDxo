@@ -23,8 +23,9 @@ def is_main_process():
 
 def start_scheduler():
     if not scheduler.running and is_main_process():
+        logger.debug(f"Current jobs before start: {scheduler.get_jobs()}")
         scheduler.start()
-        logger.info("Scheduler démarré.")
+        logger.debug(f"Current jobs after start: {scheduler.get_jobs()}")
 
 
 def shutdown_scheduler():
@@ -36,7 +37,7 @@ def shutdown_scheduler():
 def schedule_backup(app):
     if not is_main_process():
         return
-    # Only schedule in the main process
+    logger.debug("Scheduling backup...")
     if os.getenv('GUNICORN_WORKER_PROCESS_NAME') == 'Worker':
         return
 
