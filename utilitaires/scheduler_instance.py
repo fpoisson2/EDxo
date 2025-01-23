@@ -29,8 +29,8 @@ scheduler = BackgroundScheduler(
 )
 
 def is_main_process():
-    import multiprocessing
-    return multiprocessing.current_process().name == 'MainProcess'
+    worker_id = os.getenv('GUNICORN_WORKER_ID')
+    return worker_id == '0' or worker_id is None
 
 def start_scheduler():
     if not scheduler.running and is_main_process():
