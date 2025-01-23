@@ -31,6 +31,8 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
+
+
 # Initialize Flask application
 app = Flask(__name__)
 
@@ -101,6 +103,12 @@ def before_request():
     # Update last_activity to current time in ISO format
     session['last_activity'] = now.isoformat()
 
+def init_app():
+    with app.app_context():
+        if not scheduler.running:
+            start_scheduler()
+            schedule_backup(app)
+
 @app.after_request
 def after_request(response):
     if current_user.is_authenticated and session.modified:
@@ -135,11 +143,7 @@ app.register_blueprint(system_bp)
 
 # Run the application
 if __name__ == '__main__':
-    # Démarrer le planificateur une seule fois
-    start_scheduler()
-    # Planifier les sauvegardes initiales
-    schedule_backup(app)
-    # Enregistrer les fonctions d'arrêt
+    init_app()
     atexit.register(shutdown_scheduler)
     atexit.register(checkpoint_wal)
     app.run(host='0.0.0.0', port=5000, debug=True)

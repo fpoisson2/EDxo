@@ -33,6 +33,12 @@ from utils import send_backup_email, schedule_backup
 from utilitaires.scheduler_instance import scheduler
 import pytz
 
+import logging
+
+# Configuration de base du logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 system_bp = Blueprint('system', __name__)
 
 @system_bp.route('/save_backup_config', methods=['POST'])
@@ -114,39 +120,33 @@ def management():
     if config:
         form.email.data = config.email
         form.frequency.data = config.frequency
-        
-        # Conversion de UTC à l'heure locale pour l'affichage
-        user_timezone = 'Europe/Paris'  # Remplacez par la méthode de récupération du fuseau horaire de l'utilisateur
-        backup_time_str = config.backup_time  # Format 'HH:MM'
-        backup_time_utc = datetime.strptime(backup_time_str, '%H:%M').replace(tzinfo=pytz.UTC)
-        local_tz = pytz.timezone(user_timezone)
-        backup_time_local = backup_time_utc.astimezone(local_tz).time()
-        form.backup_time.data = backup_time_local
-        
+        form.backup_time.data = datetime.strptime(config.backup_time, '%H:%M').time()
         form.enabled.data = config.enabled
     
-    # Récupérer les jobs planifiés pour afficher les prochaines sauvegardes
-    jobs = scheduler.get_jobs()
-    next_backup_times = []
-    for job in jobs:
-        if job.id.endswith('_backup'):
-            if hasattr(job, 'next_run_time') and job.next_run_time:
-                next_run_utc = job.next_run_time.astimezone(pytz.utc)
-                formatted_time = next_run_utc.strftime('%Y-%m-%d %H:%M:%S')
-            else:
-                formatted_time = 'Non planifié'
-            next_backup_times.append({
-                'id': job.id,
-                'next_run_time': formatted_time
-            })
+    try:
+        jobs = scheduler.get_jobs()
+        next_backup_times = []
+        for job in jobs:
+            if job.id and job.id.endswith('_backup'):
+                next_run_time = 'Non planifié'
+                if job.next_run_time:
+                    next_run_time = job.next_run_time.strftime('%Y-%m-%d %H:%M:%S UTC')
+                    
+                next_backup_times.append({
+                    'id': job.id,
+                    'next_run_time': next_run_time
+                })
+        
+        logger.info(f"Jobs trouvés: {next_backup_times}")
+    except Exception as e:
+        logger.error(f"Erreur lors de la récupération des jobs: {e}")
+        next_backup_times = []
     
-    # Obtenir l'heure actuelle en UTC et locale
     now_utc = datetime.now(pytz.UTC)
-    now_local = now_utc.astimezone(local_tz)
     
     return render_template(
-        'system/management.html', 
-        form=form, 
+        'system/management.html',
+        form=form,
         next_backup_times=next_backup_times,
         current_time_utc=now_utc.strftime('%Y-%m-%d %H:%M:%S')
     )

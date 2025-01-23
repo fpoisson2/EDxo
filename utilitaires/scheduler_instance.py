@@ -3,12 +3,17 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import pytz
 import logging
 
-# Configuration du logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Créer une instance unique du planificateur
-scheduler = BackgroundScheduler(timezone=pytz.UTC)
+scheduler = BackgroundScheduler(
+    timezone=pytz.UTC,
+    job_defaults={
+        'coalesce': True,
+        'max_instances': 1,
+        'misfire_grace_time': 3600
+    }
+)
 
 def start_scheduler():
     if not scheduler.running:
@@ -16,7 +21,7 @@ def start_scheduler():
         logger.info("Scheduler démarré.")
     else:
         logger.info("Scheduler déjà en cours d'exécution.")
-
+        
 def shutdown_scheduler():
     if scheduler.running:
         scheduler.shutdown()
