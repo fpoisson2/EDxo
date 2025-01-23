@@ -31,7 +31,11 @@ load_dotenv()
 
 def create_app():
     app = Flask(__name__)
-    
+
+
+    worker_id = os.getenv('GUNICORN_WORKER_ID')
+    is_primary_worker = worker_id == '0' or worker_id is None
+     
     login_manager.init_app(app)
     
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -108,7 +112,7 @@ def create_app():
         with db.engine.connect() as connection:
             connection.execute(text('PRAGMA journal_mode=WAL;'))
         
-        if not scheduler.running:
+        if not scheduler.running and is_primary_worker:
             start_scheduler()
             schedule_backup(app)
 
