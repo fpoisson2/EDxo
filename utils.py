@@ -29,43 +29,69 @@ DATABASE = 'programme.db'
 
 
 def send_backup_email(app, recipient_email, db_path):
-   SCOPES = ['https://www.googleapis.com/auth/gmail.send']
-   credentials_path = 'credentials.json'
-   token_path = 'token.json' 
-   creds = None
+    import os
+    import base64
+    from google.oauth2.credentials import Credentials
+    from google.auth.transport.requests import Request
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from googleapiclient.discovery import build
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.base import MIMEBase
+    from email.mime.text import MIMEText
+    from email import encoders
+    
+    SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+    creds = None
 
-   if os.path.exists(token_path):
-       creds = Credentials.from_authorized_user_file(token_path, SCOPES)
-   if not creds or not creds.valid:
-       if creds and creds.expired and creds.refresh_token:
-           creds.refresh(Request())
-       else:
-           flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
-           creds = flow.run_local_server(port=0)
-       with open(token_path, 'w') as token:
-           token.write(creds.to_json())
-           
-   service = build('gmail', 'v1', credentials=creds)
+    # Vérification du token
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+            creds = flow.run_local_server(port=0)
+        with open('token.json', 'w') as token:
+            token.write(creds.to_json())
 
-   config = BackupConfig.query.filter_by(enabled=True).first()
-   sender_email = config.email if config else "default@gmail.com"
+    service = build('gmail', 'v1', credentials=creds)
 
-   message = MIMEMultipart()
-   message['to'] = recipient_email 
-   message['from'] = sender_email
-   message['subject'] = f"DB Backup {datetime.now():%Y-%m-%d}"
+    # Créer le message
+    message = MIMEMultipart()
+    message['to'] = recipient_email
+    message['from'] = recipient_email  # Utilisez la même adresse (ou compte "sendAs" configuré)
+    message['subject'] = "Test avec pièce jointe"
 
-   with open(db_path, 'rb') as f:
-       part = MIMEBase('application', 'x-sqlite3')
-       part.set_payload(f.read())
-       encoders.encode_base64(part)
-       part.add_header('Content-Disposition', 'attachment',
-                      filename=f'backup_{datetime.now():%Y%m%d}.db')
-   message.attach(part)
+    # Corps du message (texte)
+    text_part = MIMEText('Bonjour, ceci est un test de mail avec la BD en pièce jointe.', 'plain')
+    message.attach(text_part)
 
-   raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
-   service.users().messages().send(userId='me', body={'raw': raw}).execute()
-   
+    # Lecture du fichier .db et ajout en pièce jointe
+    with open(db_path, 'rb') as f:
+        file_data = f.read()
+
+    attachment = MIMEBase('application', 'octet-stream')
+    attachment.set_payload(file_data)
+    encoders.encode_base64(attachment)
+    # Nom du fichier joint (modifiez si besoin)
+    attachment.add_header('Content-Disposition', 'attachment', filename='backup.db')
+    message.attach(attachment)
+
+    # Encoder le message en base64
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
+
+    # Envoi via l'API Gmail
+    try:
+        sent_message = service.users().messages().send(
+            userId='me', 
+            body={'raw': raw}
+        ).execute()
+        print("Message envoyé. ID:", sent_message['id'])
+    except Exception as e:
+        print("Erreur:", e)
+
+
 
 def schedule_backup(app):
     scheduler = BackgroundScheduler()
