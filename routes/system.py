@@ -53,7 +53,7 @@ def update_site():
         # Les commandes sont enchaînées dans un seul appel bash via shell=True
         cmd = (
             "cd /home/fpoisson/edxo-dev && "
-            "git pull origin main && "
+            "/usr/bin/git pull origin && "
             "./venv/bin/pip install -r requirements.txt && "
             "./venv/bin/flask db migrate && "
             "sudo systemctl restart edxo-dev"
