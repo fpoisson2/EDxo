@@ -89,7 +89,6 @@ function updateClock() {
     .then(response => response.json())
     .then(data => {
         document.getElementById('current-time-utc').innerText = data.current_time_utc;
-        document.getElementById('current-time-local').innerText = data.current_time_local;
     })
     .catch(error => {
         console.error('Erreur lors de la mise à jour de l\'heure:', error);
