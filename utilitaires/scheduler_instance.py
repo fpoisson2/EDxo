@@ -7,6 +7,8 @@ from models import BackupConfig
 from functools import wraps
 import threading
 
+from utils import send_backup_email  # Move to top with other imports
+
 _scheduler_lock = threading.Lock()
 
 def with_scheduler_lock(f):
