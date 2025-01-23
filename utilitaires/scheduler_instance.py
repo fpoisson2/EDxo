@@ -33,7 +33,7 @@ def shutdown_scheduler():
 
 
 def schedule_backup(app):
-    from utils import send_backup_email  # Import ici pour avoir le bon contexte
+    from utils import send_backup_email
     
     with app.app_context():
         config = BackupConfig.query.first()
@@ -43,14 +43,13 @@ def schedule_backup(app):
                 frequency = config.frequency.lower()
                 
                 job_id = f"{frequency}_backup"
-                
                 if scheduler.get_job(job_id):
                     scheduler.remove_job(job_id)
                 
                 job_args = {
                     'func': send_backup_email,
                     'trigger': 'cron',
-                    'hour': backup_time.hour,
+                    'hour': backup_time.hour,  # Déjà en UTC
                     'minute': backup_time.minute,
                     'args': [app, config.email, app.config['DB_PATH']],
                     'id': job_id,
@@ -62,9 +61,8 @@ def schedule_backup(app):
                     job_args['day_of_week'] = 'mon'
                 elif frequency == 'monthly':
                     job_args['day'] = 1
-                    
+                
                 scheduler.add_job(**job_args)
-                logger.info(f"Job '{job_id}' planifié: {job_args}")
                 
             except Exception as e:
                 logger.error(f"Erreur planification: {e}", exc_info=True)

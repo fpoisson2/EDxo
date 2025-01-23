@@ -4,7 +4,7 @@ from flask_login import current_user
 from flask_ckeditor import CKEditor
 from dotenv import load_dotenv
 import os
-from utils import get_db_connection, schedule_backup
+from utils import get_db_connection
 from auth import login_manager
 from routes.cours import cours_bp
 from routes.chat import chat
@@ -21,7 +21,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
 from flask_migrate import Migrate
 import atexit
-from utilitaires.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler
+from utilitaires.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 import logging
 
 logging.basicConfig(level=logging.INFO)

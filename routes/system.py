@@ -53,15 +53,12 @@ def save_backup_config():
         
         config.email = form.email.data
         config.frequency = form.frequency.data
-        config.backup_time = form.backup_time.data.strftime('%H:%M')
+        config.backup_time = form.backup_time.data.strftime('%H:%M')  # Déjà en UTC
         config.enabled = form.enabled.data
         
         db.session.commit()
-        
-        # Supprimer tous les jobs existants
         scheduler.remove_all_jobs()
         
-        # Planifier de nouveaux jobs si la sauvegarde est activée
         if config.enabled:
             schedule_backup(current_app)
         
@@ -148,9 +145,8 @@ def management():
         'system/management.html',
         form=form,
         next_backup_times=next_backup_times,
-        current_time_utc=now_utc.strftime('%Y-%m-%d %H:%M:%S')
+        current_time_utc=now_utc.strftime('%Y-%m-%d %H:%M:%S UTC')
     )
-
 
 @system_bp.route('/system/download-db')
 @roles_required('admin')
