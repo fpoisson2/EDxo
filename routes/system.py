@@ -53,11 +53,10 @@ def update_site():
         # Les commandes sont enchaînées dans un seul appel bash via shell=True
         cmd = (
             "cd /home/fpoisson/edxo-dev && "
-            "bash -c 'source venv/bin/activate && "
-            "git pull origin main && "
-            "pip install -r requirements.txt && "
-            "flask db migrate && "
-            "sudo systemctl restart edxo-dev'"
+            "./venv/bin/git pull origin main && "
+            "./venv/bin/pip install -r requirements.txt && "
+            "./venv/bin/flask db migrate && "
+            "sudo systemctl restart edxo-dev"
         )
         
         # L'option shell=True est utilisée pour permettre l'utilisation de 'source'
