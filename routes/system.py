@@ -29,8 +29,8 @@ from email import encoders
 from datetime import datetime
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
-from utils import send_backup_email, schedule_backup
-from utilitaires.scheduler_instance import scheduler
+from utils import send_backup_email
+from utilitaires.scheduler_instance import scheduler, schedule_backup
 import pytz
 
 import logging
