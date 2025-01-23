@@ -224,15 +224,15 @@ def get_cegep_details():
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))  # Redirigez vers une page appropriée si déjà connecté
+        return redirect(url_for('main.index'))  # Redirige si déjà connecté
 
     form = LoginForm()
     if form.validate_on_submit():
-        username = form.username.data
+        username = form.username.data.lower()  # Convertir en minuscule
         password = form.password.data
 
         conn = get_db_connection()
-        user_row = conn.execute('SELECT * FROM User WHERE username = ?', (username,)).fetchone()
+        user_row = conn.execute('SELECT * FROM User WHERE LOWER(username) = ?', (username,)).fetchone()  # Recherche en minuscule
         conn.close()
 
         if user_row and check_password_hash(user_row['password'], password):
@@ -245,6 +245,7 @@ def login():
             flash('Nom d\'utilisateur ou mot de passe incorrect.', 'danger')
 
     return render_template('login.html', form=form)
+
 
 
 # Route pour la déconnexion
@@ -270,27 +271,38 @@ def manage_users():
     delete_forms = {user['id']: DeleteUserForm(prefix=f'delete_{user["id"]}') for user in users}
     credit_forms = {user['id']: CreditManagementForm(prefix=f'credit_{user["id"]}') for user in users}
     
-
     if request.method == 'POST':
         if 'create-submit' in request.form and create_form.validate_on_submit():
-            username = create_form.username.data
+            username = create_form.username.data.strip().lower()
             password = create_form.password.data
             role = create_form.role.data
 
-            hashed_password = generate_password_hash(password, method='scrypt')
-            try:
-                conn = get_db_connection()
-                conn.execute(
-                    'INSERT INTO User (username, password, role) VALUES (?, ?, ?)',
-                    (username, hashed_password, role)
-                )
-                conn.commit()
-                flash('Utilisateur créé avec succès.', 'success')
-            except Exception as e:
-                flash(f'Erreur lors de la création : {e}', 'danger')
-            finally:
-                conn.close()
+            with get_db_connection() as conn:
+                existing_user = conn.execute(
+                    'SELECT 1 FROM User WHERE username = ?', (username,)
+                ).fetchone()
+
+                if existing_user:
+                    flash("Ce nom d'utilisateur est déjà pris.", "danger")
+                    return redirect(url_for('main.manage_users'))
+
+                hashed_password = generate_password_hash(password, method='scrypt')
+
+                try:
+                    conn.execute(
+                        'INSERT INTO User (username, password, role, credits) VALUES (?, ?, ?, ?)',
+                        (username, hashed_password, role, 0)
+                    )
+                    conn.commit()
+                    flash('Utilisateur créé avec succès.', 'success')
+                except Exception as e:
+                    conn.rollback()
+                    # Logguer l'erreur au lieu de l'afficher directement à l'utilisateur
+                    print(f"Erreur lors de la création d'utilisateur : {e}")
+                    flash("Une erreur s'est produite lors de la création de l'utilisateur.", "danger")
+
             return redirect(url_for('main.manage_users'))
+
 
         # Handle delete user forms
         for user in users:
