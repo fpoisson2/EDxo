@@ -1,34 +1,24 @@
-import os
-from apscheduler.schedulers.background import BackgroundScheduler
-import pytz
+import threading
+from functools import wraps
 import logging
 from datetime import datetime
+import os
+from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 from models import BackupConfig
-from functools import wraps
-import threading
+from utilitaires.backup_utils import send_backup_email, get_scheduler_instance
 
-from utils import send_backup_email  # Move to top with other imports
-
-_scheduler_lock = threading.Lock()
-
-def with_scheduler_lock(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        with _scheduler_lock:
-            return f(*args, **kwargs)
-    return wrapper
+scheduler_lock = threading.Lock()
+scheduler = get_scheduler_instance()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-scheduler = BackgroundScheduler(
-    timezone=pytz.UTC,
-    job_defaults={
-        'coalesce': True,
-        'max_instances': 1,
-        'misfire_grace_time': 3600
-    }
-)
+def with_scheduler_lock(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        with scheduler_lock:
+            return f(*args, **kwargs)
+    return wrapper
 
 def is_main_process():
     worker_id = os.getenv('GUNICORN_WORKER_ID')
@@ -36,25 +26,21 @@ def is_main_process():
 
 def start_scheduler():
     if not scheduler.running and is_main_process():
-        logger.info(f"Current jobs before start: {scheduler.get_jobs()}")
+        logger.info("Starting scheduler")
         scheduler.start()
-        logger.info(f"Current jobs after start: {scheduler.get_jobs()}")
-
 
 def shutdown_scheduler():
     if scheduler.running:
         scheduler.shutdown()
-        logger.info("Scheduler arrêté.")
-
+        logger.info("Scheduler stopped")
 
 @with_scheduler_lock
 def schedule_backup(app):
     logger.info("Starting schedule_backup function")
-    logger.info(f"Current jobs before scheduling: {scheduler.get_jobs()}")
-    logger.info(f"Scheduler running status: {scheduler.running}")
+    logger.info(f"Current jobs: {scheduler.get_jobs()}")
+    logger.info(f"Scheduler running: {scheduler.running}")
 
     if not is_main_process():
-        logger.info(f"Process info - Name: {multiprocessing.current_process().name}")
         return
 
     with app.app_context():
@@ -64,7 +50,7 @@ def schedule_backup(app):
         if config and config.enabled:
             try:
                 backup_time = datetime.strptime(config.backup_time, '%H:%M').time()
-                logger.info(f"Scheduled backup time: {backup_time}")
+                logger.info(f"Scheduled time: {backup_time}")
                 
                 job_args = {
                     'func': send_backup_email,
@@ -78,14 +64,13 @@ def schedule_backup(app):
                 }
                 
                 scheduler.add_job(**job_args)
-                logger.info(f"All jobs after scheduling: {scheduler.get_jobs()}")
+                logger.info(f"Jobs after scheduling: {scheduler.get_jobs()}")
                 for job in scheduler.get_jobs():
                     logger.info(f"Job {job.id} next run: {job.next_run_time}")
                     
             except Exception as e:
                 logger.error(f"Scheduling error: {e}", exc_info=True)
 
-from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 def job_error_handler(event):
     logger.error(f"Job failed: {event.job_id}, error: {event.exception}")
 
