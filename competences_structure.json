@@ -1,0 +1,1042 @@
+{
+    "titre": "Technologie du génie électrique : Électronique programmable (243.G0)",
+    "competences": [
+        {
+            "code": "02H8",
+            "objectif": {
+                "enonce": "Explorer la profession.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Sur des équipements ou des systèmes.</li><li>Dans une optique d’orientation et de formation tout</li><li>au long de la carrière.</li><li>Individuellement ou en collaboration avec des</li><li>technologues et des ingénieures ou ingénieurs.</li><li>À l’aide :</li><li>de plateformes de publication (médias) ;</li><li>de documentation sur le développement durable;</li><li>des technologies de l’information et de la</li><li>communication (TIC).</li><li>À partir :</li><li>de la réglementation encadrant la profession ;</li><li>d’informations sur le milieu du travail.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Pertinence de l’information recueillie.</li><li>Détermination adéquate de l’information.</li><li>Utilisation responsable de l’environnement</li><li>numérique.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Différencier les milieux de travail.",
+                    "criteres_performance": [
+                        "Distinction juste des grands secteurs d’activités  technologiques.",
+                        "Identification appropriée de types d’entreprises."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Caractériser la profession et ses \nperspectives.",
+                    "criteres_performance": [
+                        "Interprétation correcte des lois et règlements en  vigueur.",
+                        "Examen adéquat des perspectives d’emploi.",
+                        "Reconnaissance des principales tendances du  domaine.",
+                        "Définition juste de la place du développement  durable dans la profession.",
+                        "Identification juste des responsabilités au regard de  la profession."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Examiner les tâches et les opérations de la \nprofession.",
+                    "criteres_performance": [
+                        "Prise en compte de l’importance de la gestion du  temps et du stress."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Examiner les habiletés et les comportements \nattendus dans la profession.",
+                    "criteres_performance": [
+                        "Reconnaissance des aspects relatifs à la recherche  de consensus concernant les décisions de l’équipe.",
+                        "Identification juste des attitudes et des  comportements facilitant le travail d’équipe.",
+                        "Examen attentif des moyens assurant le  développement de ses propres compétences, tout  au long de sa carrière."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02H9",
+            "objectif": {
+                "enonce": "Interagir en contexte professionnel.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Dans des situations professionnelles variées.</li><li>Pour tout type de communication verbale ou</li><li>écrite.</li><li>À l’aide :</li><li>des technologies utilisées dans les milieux de</li><li>travail.</li><li>À partir :</li><li>de politiques d’entreprise.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect :</li><li>de l’interlocutrice ou l’interlocuteur ;</li><li>des règles de politesse ;</li><li>de la culture d’entreprise.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Communiquer avec des personnes.",
+                    "criteres_performance": [
+                        "Choix adéquat des outils de communication.",
+                        "Interprétation juste des messages reçus.",
+                        "Formulation claire d’un message.",
+                        "Vérification appropriée de la compréhension de  ses interlocutrices ou interlocuteurs."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Évaluer la qualité des interactions.",
+                    "criteres_performance": [
+                        "Appréciation réaliste de la qualité de ses  interactions.",
+                        "Mise en place de moyens d’amélioration."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Travailler au sein d’une équipe \nmultidisciplinaire.",
+                    "criteres_performance": [
+                        "Respect des décisions prises par l’équipe.",
+                        "Respect du rôle, des responsabilités et de  l’expertise de chaque personne."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HA",
+            "objectif": {
+                "enonce": "Résoudre des problèmes en électronique.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>de formules liées à l’électronique, à des</li><li>circuits, etc. ;</li><li>de logiciels spécialisés ;</li><li>de concepts scientifiques ;</li><li>d’instruments de mesure ;</li><li>de documentation technique.</li><li>À partir :</li><li>de problèmes simples ;</li><li>de circuits.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Rigueur de la démarche.</li><li>Respect des unités du s ystème international</li><li>d’unités .</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Caractériser les concepts scientifiques en \njeu dans la résolution d’un problème.",
+                    "criteres_performance": [
+                        "Nomination juste du concept.",
+                        "Reconnaissance juste des contextes liés au  problème.",
+                        "Description adéquate du concept."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Appliquer les lois et les équations à la \nrésolution d’un problème.",
+                    "criteres_performance": [
+                        "Reconnaissance juste des paramètres applicables  en lien avec le problème.",
+                        "Formulation cohérente des équations relatives au  problème.",
+                        "Mise en pratique appropriée des équations dans le  cadre du problème."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Produire les résultats qualitatifs et/ou \nquantitatifs.",
+                    "criteres_performance": [
+                        "Résolution adéquate des équations.",
+                        "Expression numérique précise des  résultats.",
+                        "Représentation soignée des résultats  (graphiquement ou numériquement)."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Interpréter les résultats.",
+                    "criteres_performance": [
+                        "Qualification et/ou quantification juste des  résultats."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HB",
+            "objectif": {
+                "enonce": "Analyser des informations techniques.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Sur des équipements ou des systèmes.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>de documents techniques  tels que :</li><li> de fiches techniques ;</li><li> de plans de réseaux .</li><li>de programmes ;</li><li>d’organigrammes ;</li><li>de forums d’expertes et d’experts.</li><li>À partir :</li><li>de normes nationales et internationales et de</li><li>standards ;</li><li>de gabarits de document et autres ;</li><li>de documents techniques.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Aucun .</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Rassembler de l’information technique.",
+                    "criteres_performance": [
+                        "Identification adéquate du besoin.",
+                        "Utilisation efficace de stratégies de recherche.",
+                        "Validation juste des sources.",
+                        "Sélection appropriée des informations."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Interpréter de l’information technique.",
+                    "criteres_performance": [
+                        "Synthèse appropriée de l’information."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HC",
+            "objectif": {
+                "enonce": "Analyser des circuits.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Sur des équipements ou des systèmes.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>de documentation technique ;</li><li>de logiciels (modélisation, simulation, calcul) ;</li><li>de références.</li><li>À partir :</li><li>de diagrammes schématiques ;</li><li>de diagrammes de montage ;</li><li>de résultats de calculs.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Rigueur de la démarche.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Identifier les pièces constitutives du circuit et \nleur fonction.",
+                    "criteres_performance": [
+                        "Reconnaissance juste des pièces constitutives du  circuit.",
+                        "Consultation adéquate de la documentation  technique ou des références relatives à chaque  pièce.",
+                        "Détermination précise de la fonction de chaque  pièce dans le circuit."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Décomposer le circuit.",
+                    "criteres_performance": [
+                        "Délimitation claire de chaque partie du circuit en  considérant sa fonction propre.",
+                        "Identification exhaustive de chaque entrée-sortie  pour chaque partie du circuit.",
+                        "Désignation précise de la fonction de chaque  partie du circuit."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Déduire l’état de fonct ionnement du circuit.",
+                    "criteres_performance": [
+                        "Énonciation juste d’hypothèses de  fonctionnement.",
+                        "Mise à l’épreuve appropriée de l’hypothèse.",
+                        "Vérification adéquate du résultat.",
+                        "Expression pertinente de l’état de fonctionnement."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Documenter l’analyse.",
+                    "criteres_performance": [
+                        "Communication concise de l’ avancement de  l’analyse."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HD",
+            "objectif": {
+                "enonce": "Produire des schémas électroniques.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>de logiciels spécialisés ;</li><li>de librairies de composants ;</li><li>d’outils d’information et de communication ;</li><li>de gabarits ;</li><li>de calculs ;</li><li>d’outils de simulation.</li><li>À partir :</li><li>de normes nationales et internationales et de</li><li>standards ;</li><li>d’un croquis ;</li><li>de documentation technique.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Clarté du document.</li><li>Respect des normes nationales  et internationales</li><li>et des standards.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Consulter les informations.",
+                    "criteres_performance": [
+                        "Recueil exhaustif des informations.",
+                        "Examen suffisant des informations.",
+                        "Estimation juste des éléments requis (mise en  page, librairie de composants, etc.)."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Réaliser le schéma.",
+                    "criteres_performance": [
+                        "Respect des règles de représentation en vigueur.",
+                        "Respect des lois et des conventions électriques.",
+                        "Utilisation adéquate de gabarits et/ou librairies de  composants.",
+                        "Vérification exhaustive du travail."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Archiver le document.",
+                    "criteres_performance": [
+                        "Choix app roprié du mode d’archivage."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HE",
+            "objectif": {
+                "enonce": "",
+                "contexte_realisation": "<ul><li>Planifier la réalisation de tâches</li><li>professionnelles.  • En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Individuellement ou en équipe.</li><li>En collaboration avec des conceptrices ou</li><li>concepteurs, des opératrices ou opérateurs, la</li><li>client èle, etc.</li><li>En collaboration avec un sous -traitant.</li><li>À l’aide :</li><li>de logiciels de planification et/ou de gestion de</li><li>projet ;</li><li>de versions antérieures ;</li><li>de documentation technique ;</li><li>d’outils d’information et de communication ;</li><li>de prototypes ;</li><li>d’équipements, ou de systèmes.</li><li>À partir :</li><li>d’un cahier des charges ;</li><li>de documents relatifs à la tâche à planifier  ;</li><li>de méthodes de planification.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect du cahier des charges.</li><li>Respect des règles de communication</li><li>professionnelle.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Consulter les informations.",
+                    "criteres_performance": [
+                        "Recueil exhaustif des informations.",
+                        "Examen suffisant des informations.",
+                        "Synthèse pertinente des informations relatives à la  planification."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Élaborer la planification.",
+                    "criteres_performance": [
+                        "Énumération complète des opérations.",
+                        "Estimation cohérente des caractéris tiques de chaque  opération.",
+                        "Examen minutieux des interdépendances des  opérations.",
+                        "Élaboration judicieuse d’un échéancier."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Effectuer un suivi de la planification.",
+                    "criteres_performance": [
+                        "Estimation continue des risques liés à la planification.",
+                        "Anticipation réaliste des actions nécessaires à la  réalisation du projet.",
+                        "Communication efficace du suivi.",
+                        "Gestion efficace des imprévus."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Documenter la planification.",
+                    "criteres_performance": [
+                        "Réalisation systématique d’un journal de suivi.",
+                        "Communication concise de la planification."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HF",
+            "objectif": {
+                "enonce": "Réaliser des prises de mesures.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Sur des preuves de concepts ou des prototypes.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>d’instruments de mesure ;</li><li>d’outils spécialisés ;</li><li>de documentation technique.</li><li>À partir :</li><li>d’équipements, de systèmes ou de sous -</li><li>systèmes ;</li><li>de circuits imprimés ;</li><li>de composants ;</li><li>d’une procédure.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des normes :</li><li>de qualité en vigueur ;</li><li>d’interférence électromagnétique ;</li><li>de protection contre les phénomènes</li><li>électrostatiques.</li><li>Respect des lois et des règlements en matière de</li><li>santé et de sécurité du travail.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Prendre connaissance de la situation.",
+                    "criteres_performance": [
+                        "Examen méthodique du besoin de prise de mesure.",
+                        "Identification précise du ou des points de mesures.",
+                        "Identification juste des risques liés à la mesure.",
+                        "Prise en compte effective de l’impact de la mesure."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Préparer la prise de mesures.",
+                    "criteres_performance": [
+                        "Choix approprié d’un ou de plusieurs instruments de  mesure.",
+                        "Vérification complète de l’état d’un ou de plusieurs  instruments.",
+                        "Configuration adéquate d’un ou de plusieurs  instruments.",
+                        "Mise en place adéquate d’un ou de plusieurs  instruments de mesure ."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Procéder à la prise de mesures.",
+                    "criteres_performance": [
+                        "Réalisation sécuritaire du ou des branchements.",
+                        "Validation adéquate de la procédure.",
+                        "Exactitude de la mesure."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Relever la mesure.",
+                    "criteres_performance": [
+                        "Relevé précis  de la mesure.",
+                        "Réalisation systématique du relevé."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HG",
+            "objectif": {
+                "enonce": "Réaliser des travaux d’atelier.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire.</li><li>Chez la clientèle.</li><li>Dans un atelier de fabrication.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>d’outils :</li><li> de brasure ;</li><li> de sertissage ;</li><li> manuels et électriques ;</li><li> optiques grossissants ;</li><li> autres .</li><li>de l’équipement de protection individuelle ;</li><li>de l’équipement de protection collective ;</li><li>de machines -outils ;</li><li>de matériel d’impression et de fabrication</li><li>numérique ;</li><li>d’instructions d’assemblage ou de</li><li>désassemblage.</li><li>À partir :</li><li>de matériaux ;</li><li>d’équipements et/ou de systèmes ;</li><li>de circuits imprimés.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des lois et des règlements en matière de</li><li>santé et de sécurité du travail.</li><li>Respect du code de pratique en matière de protection</li><li>électrostatique.</li><li>Respect des contraintes d’assemblage.</li><li>Respect des principes relatifs au développement</li><li>durable.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Préparer le travail.",
+                    "criteres_performance": [
+                        "Sélection appropriée des outils.",
+                        "Préparation appropriée de l’espace de travail.",
+                        "Vérification rigoureuse de l’équipement de protection  individuelle."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Exécuter un travail d’atelier.",
+                    "criteres_performance": [
+                        "Réalisation méthodique des travaux.",
+                        "Manipulation minutieuse des pièces coûteuses.",
+                        "Pertinence du remplacement de composants  électroniques.",
+                        "Maintien d’un espace de travail fonctionnel.",
+                        "Maintien d’une protection électrostatique adéquate."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Vérifier le travail.",
+                    "criteres_performance": [
+                        "Vérification de la conformité du travail."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HH",
+            "objectif": {
+                "enonce": "Assurer la fabrication de circuits imprimés.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Individuellement ou en équipe.</li><li>En collaboration avec des conceptrices ou</li><li>concepteurs, opératrices ou opérateurs, la client èle,</li><li>etc.</li><li>En collaboration avec un sous -traitant.</li><li>À l’aide :</li><li>d’une liste de pièces ;</li><li>de schémas ;</li><li>de librairies de composants ;</li><li>d’équipements spécialisés ;</li><li>de logiciels spécialisés ;</li><li>d’outils ;</li><li>de l’équipement de protection individuelle ;</li><li>de l’équipement de protection collective.</li><li>À partir :</li><li>de normes nationales et internationales et de</li><li>standards  ;</li><li>de spécifications et d’exigences techniques ;</li><li>de matériaux et de produits chimiques.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des normes de qualité en vigueur.</li><li>Respect des lois et des règlements en matière de</li><li>santé et de sécurité du travail.</li><li>Respect du code de pratique en matière de protection</li><li>électrostatique.</li><li>Respect des contraintes d’assemblage.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Planifier la fabrication du circuit imprimé.",
+                    "criteres_performance": [
+                        "Préparation appropriée des documents.",
+                        "Préparation appropriée des composants.",
+                        "Choix approprié de la méthode de fabrication et/ou du  sous -traitant."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Élaborer le fichier Gerber.",
+                    "criteres_performance": [
+                        "Respect des règles de conception.",
+                        "Validation adéquate par simulation du fonctionnement  du circuit.",
+                        "Pertinence de la modification du fichier Gerber."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Suivre la fabrication du circuit imprimé.",
+                    "criteres_performance": [
+                        "Coordination rigoureuse des étapes de fabrication.",
+                        "Réalisation soignée d’une ou de plusieurs étapes de  fabrication.",
+                        "Vérification adéquate de la qualité d’une ou de  plusieurs étapes de fabrication."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Vérifier la conformité du circuit imprimé.",
+                    "criteres_performance": [
+                        "Validation exhaustive de l’intégrité des traces.",
+                        "Montage minutieux des composants sur le circuit  imprimé.",
+                        "Validation exhaustive du fonctionnement.",
+                        "Validation suffisante des performances du circuit."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HJ",
+            "objectif": {
+                "enonce": "Programmer des éléments programmables.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Sur des équipements physiques ou virtuels.</li><li>Sur des preuves de concept ou des prototypes.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>d’environnements de développement intégrés ;</li><li>de sources d’information spécialisées ;</li><li>de documentation technique ;</li><li>de librairies ;</li><li>de simulateurs et/ou d’émulateurs ;</li><li>de câbles et/ou de matériel de téléversement de</li><li>programme ;</li><li>de matériel de débogage.</li><li>À partir :</li><li>d’éléments programmables ;</li><li>de plateformes de développement ;</li><li>de langages de programmation de base ;</li><li>de logiciel s de programmation.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des normes de programmation.</li><li>Application rigoureuse des conventions d’écriture de</li><li>programme.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Préparer la programmation.",
+                    "criteres_performance": [
+                        "Identification appropriée des caractéristiques de  l’élément programmable.",
+                        "Définition complète des éléments algorithmiques.",
+                        "Mise en place minutieuse des éléments nécessaires  au téléversement : (logiciel, branchements,  interfaces, alimentation )."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Élaborer le programme.",
+                    "criteres_performance": [
+                        "Transcription fidèle des éléments algorithmiques en  programme.",
+                        "Écriture claire d’un programme explicite.",
+                        "Respect de la syntaxe du langage de programmation."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Vérifier les fonctionnalités du programme.",
+                    "criteres_performance": [
+                        "Manipulation consciencieuse du matériel.",
+                        "Validation du téléversement du fichier exécutable  vers l’élément programmable.",
+                        "Exécution rigoureuse du programme.",
+                        "Vérification rigoureuse des fonctionnalités réalisées."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HK",
+            "objectif": {
+                "enonce": "",
+                "contexte_realisation": "<ul><li>Établir des communications avec un élément</li><li>programmable.  • En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Sur des équipements physiques ou virtuels.</li><li>Sur des preuves de concept ou des prototypes.</li><li>Individuellement ou en équip e.</li><li>À l’aide :</li><li>d’un protocole normalisé de communication ;</li><li>de branchements ;</li><li>d’outils ;</li><li>de sources d’information spécialisées ;</li><li>de documentation technique ;</li><li>de librairies logicielles ;</li><li>de composants.</li><li>À partir :</li><li>de normes nationales et internationales et de</li><li>standards ;</li><li>d’un élément programmable ;</li><li>d’un circuit ;</li><li>d’un équipement ou d’un système.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Manipulation consciencieuse du matériel.</li><li>Respect des règles de compatibilité matériel/logiciel.</li><li>Respect des normes et des protocoles en vigueur .</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Sélectionner une solution technique.",
+                    "criteres_performance": [
+                        "Caractérisation pertinen te des besoins de  communication.",
+                        "Consultation suffisante de la documentation  technique.",
+                        "Choix approprié d’une solution technique."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Connecter les éléments.",
+                    "criteres_performance": [
+                        "Branchement  conforme  des éléments (sauf dans le  cas d’une communication sans fil).",
+                        "Configuration adéquate de l’élément programmable.",
+                        "Vérification exhaustive des fonctionnalités."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Documenter le travail.",
+                    "criteres_performance": [
+                        "Communication concise de l’avancement."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HL",
+            "objectif": {
+                "enonce": "Exploiter des systèmes d’exploitation.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Sur des équipements physiques ou virtuels.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>de logiciels de programmation ou de mises à jour ;</li><li>de forums d’expertes ou d’experts ;</li><li>de documentation technique.</li><li>À partir :</li><li>d’objets connectés ;</li><li>de plateformes ;</li><li>de systèmes d’exploitation ;</li><li>d’un élément ou d’un circuit programmables  ;</li><li>d’un support physique ou virtuel.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des règles de compatibilité matériel/logiciel.</li><li>Manipulation consciencieuse de l’équipement ou du</li><li>système.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Installer un système d’exploitation.",
+                    "criteres_performance": [
+                        "Choix judicieux du système d’exploitation.",
+                        "Adéquation entre le système d’exploitation choisi et le  matériel.",
+                        "Installation fonctionnelle du système d’exploitation.",
+                        "Paramétrage approprié lors de l’installation.",
+                        "Vérification systématique des fonctionnalités.",
+                        "Pertinence de la virtualisation."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Mettre à jour un système d’exploitation.",
+                    "criteres_performance": [
+                        "Mise en place adéquate d’un point de restauration du  système.",
+                        "Gestion efficace de la compatibilité.",
+                        "Vérification complète du fonctionnement et/ou de la  communication avec les périphériques.",
+                        "Planification adéquate de la prochaine mise à jour."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Configurer un système d’exploitation.",
+                    "criteres_performance": [
+                        "Utilisation adaptée du mode de contrôle.",
+                        "Modification adéquate d’un ou des éléments de la  configuration.",
+                        "Fonctionnement adéquat de la communication avec  les périphériques.",
+                        "Vérification complète de la nouvelle configuration."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Documenter l’exploitation.",
+                    "criteres_performance": [
+                        "Communication concise de l’avancement."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HM",
+            "objectif": {
+                "enonce": "Exploiter des objets connectés en réseau.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Sur des équipements physiques ou virtuels.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>de commutateurs ;</li><li>de routeurs ;</li><li>de points d’accès ;</li><li>de branchements ;</li><li>de documentation technique ;</li><li>de plans du réseau ;</li><li>de fichiers de configuration.</li><li>À partir :</li><li>de normes nationales et internationales et de</li><li>standards ;</li><li>d’un réseau ;</li><li>d’objets connectés ;</li><li>de logiciels de simulation ;</li><li>de plans d’adressage.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des bonnes pratiques.</li><li>Respect de l’intégrité du réseau.</li><li>Respect des normes et des protocoles en vigueur.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Installer des objets connectés en réseau.",
+                    "criteres_performance": [
+                        "Branchement soigné du matériel.",
+                        "Respect des protocoles et des normes de connexion.",
+                        "Pertinence de la mise à jour du matériel."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Configurer les objets connectés.",
+                    "criteres_performance": [
+                        "Vérification préalable de la configuration.",
+                        "Configuration correcte du matériel.",
+                        "Vérification complète de la configuration."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Configurer le réseau.",
+                    "criteres_performance": [
+                        "Pertinence de la modification des caractéristiques du  réseau.",
+                        "Anticipation adéquate des impacts sur le  fonctionnement global du réseau.",
+                        "Paramétrage adapté du réseau en fonction des  objets."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Vérifier le fonctionnement des objets \nconnectés.",
+                    "criteres_performance": [
+                        "Validation exhaustive des fonctionnalités de l’objet  connecté en réseau.",
+                        "Respect des règles de limitations du réseau."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HN",
+            "objectif": {
+                "enonce": "Exploiter des capteurs et des actionneurs.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Sur des équipements ou des systèmes.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>de logiciels spécialisés ;</li><li>de librairies ;</li><li>d’instruments de mesure ;</li><li>d’outils ;</li><li>d’interconnexions ;</li><li>de sources d’information spécialisées ;</li><li>de protocoles de communication.</li><li>À partir :</li><li>de preuves de concept ou de prototypes ;</li><li>de normes nationales et internationales et de</li><li>standards ;</li><li>de documentation technique ;</li><li>de capteurs ;</li><li>d’actionneurs ;</li><li>d’éléments programmables.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des lois et des règlements en matière de</li><li>santé et de sécurité du travail.</li><li>Respect des règles de compatibilité matériel/logiciel.</li><li>Respect des normes de protection contre les</li><li>phénomènes électrostatiques.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Sélectionner les éléments en vue d’interagir \navec l’environnement physique.",
+                    "criteres_performance": [
+                        "Identification adéquate de la ou des grandeurs  physiques à mesurer par les capteurs.",
+                        "Quantification précise de la ou des actions physiques  à réaliser par les actionneurs.",
+                        "Consultation pertinente des fiches techniques.",
+                        "Association judicieuse d’ un ou plusieurs capteurs  et/ou actionneurs avec un microcontrôleur."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Connecter les capteurs ou les actionneurs.",
+                    "criteres_performance": [
+                        "Manipulation consciencieuse de l’équipement, du  système et/ou des composants.",
+                        "Branchement soigneux du matériel.",
+                        "Respect des protocoles et des normes de connexion.",
+                        "Mise en lien fonctionnelle des éléments.",
+                        "Vérification adéquate du fonctionnement de  l’ensemble."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Documenter l’exploitation.",
+                    "criteres_performance": [
+                        "Communication itérative des choix."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HP",
+            "objectif": {
+                "enonce": "Produire des documents techniques.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>de logiciels spécialisés ;</li><li>de versions antérieures  ;</li><li>des technologies de l’information et de la</li><li>communication (TIC).</li><li>À partir :</li><li>de normes nationales et internationales et de</li><li>standards ;</li><li>de règlements relatifs aux droits d’auteur ;</li><li>de fiches techniques ;</li><li>de plans du fabricant ;</li><li>de gabarits de document et autres ;</li><li>d’informations archivées.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect de normes nationales et internationales et de</li><li>standards.</li><li>Respect des droits d’auteur.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Préparer la production du document.",
+                    "criteres_performance": [
+                        "Choix approprié des éléments à documenter.",
+                        "Choix approprié du format de document."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Élaborer le document.",
+                    "criteres_performance": [
+                        "Respect des normes et des standards propres au  domaine.",
+                        "Exploitation efficace de l’outil de production.",
+                        "Vérification complète de la conformité.",
+                        "Rédaction soignée du document."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Diffuser le document.",
+                    "criteres_performance": [
+                        "Choix approprié du mode de diffusion.",
+                        "Gestion efficace des versions."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HQ",
+            "objectif": {
+                "enonce": "Effectuer un diagnostic.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Sur des équipements ou des systèmes.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>de fiches techniques ;</li><li>de plans du fabricant ;</li><li>de logiciels de programmation ;</li><li>d’outils de déverminage logiciel ;</li><li>d’instruments de mesure ;</li><li>d’outils ;</li><li>d’archives issues de communautés de</li><li>praticiennes ou de praticiens.</li><li>À partir :</li><li>de preuves de concept ou de prototypes ;</li><li>de normes nationales  et internationales et de</li><li>standards ;</li><li>de gabarits et/ou d’une unité de référence ;</li><li>de prises de mesures ;</li><li>de résultats de tests.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des lois et des règlements en matière de</li><li>santé et de sécurité du travail.</li><li>Respect de l’intégrité de l’équipement ou du système.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Prendre connaissance du problème.",
+                    "criteres_performance": [
+                        "Reconnaissance juste de la complexité du problème.",
+                        "Consultation appropriée des ressources."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Examiner les éléments.",
+                    "criteres_performance": [
+                        "Inspection « quatre sens » exhaustive de  l’équipement ou du système.",
+                        "Examen approprié de la documentation technique."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Procéder à une boucle de débogage.",
+                    "criteres_performance": [
+                        "Planification claire des tests à effectuer.",
+                        "Isolation appropriée des éléments.",
+                        "Vérification méthodique des constituants des  éléments (partie logicielle et/ou matérielle).",
+                        "Interprétation juste des résultats des prises de  mesures."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Communiquer les résultats du diagnostic.",
+                    "criteres_performance": [
+                        "Communication itérative de l’avancement du  diagnostic.",
+                        "Présentation claire des conclusions."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HR",
+            "objectif": {
+                "enonce": "Réaliser des tests.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>Sur des équipements ou des systèmes.</li><li>Sur des preuves de concept ou des prototypes.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>de fiches techniques ;</li><li>de plans du fabricant ;</li><li>de logiciels spécialisés ;</li><li>d’instruments de mesure spécialisés ;</li><li>d’outils ;</li><li>de sources d’information spécialisées ;</li><li>d’un banc de test.</li><li>À partir :</li><li>de normes nationales et internationales et de</li><li>standards ;</li><li>de gabarits et/ou d’une unité de référence ;</li><li>de prises de mesures.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des normes :</li><li>d’interférence électromagnétique ;</li><li>de protection contre les phénomènes</li><li>électrostatiques.</li><li>Respect des lois et des règlements en matière de</li><li>santé et de sécurité du travail.</li><li>Respect de l’intégrité de l’équipement ou du système.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Prendre connaissance de la situation.",
+                    "criteres_performance": [
+                        "Présentation claire  du portrait global.",
+                        "Identification précise du système.",
+                        "Identification juste des risques liés aux tests.",
+                        "Prise en compte effective de l’impact du test."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Planifier le test.",
+                    "criteres_performance": [
+                        "Mise en place de l’équipement ou du système.",
+                        "Vérification complète de l’état du banc de test.",
+                        "Préparation méthodique de la séquence de test.",
+                        "Détermination appropriée des conditions  environnementales pour la réalisation du test."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Exécuter le test.",
+                    "criteres_performance": [
+                        "Exécution méthodique de la séquence de test.",
+                        "Vérification de la cohérence de la séquence de  test.",
+                        "Exactitude des résultats."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Documenter le test.",
+                    "criteres_performance": [
+                        "Réalisation systématique de la saisie.",
+                        "Documentation pertinente des résultats."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HS",
+            "objectif": {
+                "enonce": "Élaborer une preuve de concept.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>En collaboration avec des conceptrices ou</li><li>concepteurs, la client èle, etc.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>de matériel de prototypage ;</li><li>de circuits imprimés ;</li><li>de schémas ;</li><li>de composants ;</li><li>d’outils spécialisés ;</li><li>de documents techniques ;</li><li>d’instruments de mesure ;</li><li>d’équipements de protection individuelle ;</li><li>d’équipements de protection collective.</li><li>À partir :</li><li>d’un cahier des charges ;</li><li>de spécifications et d’exigences techniques.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des lois et des règlements en matière de</li><li>santé et de sécurité du travail.</li><li>Respect des normes :</li><li>d’interférence électromagnétique ;</li><li>de protection contre les phénomènes</li><li>électrostatiques.</li><li>Respect des contraintes d’assemblage.</li><li>Respect des spécifications du cahier des charges.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Définir la preuve de concept.",
+                    "criteres_performance": [
+                        "Préparation adéquate de la documentation.",
+                        "Examen pertinent  des informations relatives au  dossier.",
+                        "Sélection appropriée des éléments techniques  problématiques."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Sélectionner des éléments existants.",
+                    "criteres_performance": [
+                        "Consultation appropriée des ressources.",
+                        "Recens ion méthodique d'éléments."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Développer la preuve de concept.",
+                    "criteres_performance": [
+                        "Élaboration efficiente d’un circuit et/ou d’un  programme."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Intégrer les résultats au projet de \nconception.",
+                    "criteres_performance": [
+                        "Vérification de la concordance entre la preuve de  concept et les performances et/ou les fonctionnalités  attendues."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HT",
+            "objectif": {
+                "enonce": "Participer au développement d’un prototype.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>En collaboration avec des conceptrices ou</li><li>concepteurs, la clientèle, etc.</li><li>À l’aide :</li><li>de matériel de prototypage ;</li><li>de circuits imprimés ;</li><li>de schémas ;</li><li>de composants ;</li><li>d’outils spécialisés ;</li><li>de documents techniques ;</li><li>d’instruments de mesure ;</li><li>de l’équipement de protection individuelle ;</li><li>de l’équipement de protection collective ;</li><li>de versions antérieures.</li><li>À partir :</li><li>d’un cahier des charges ;</li><li>de spécifications et d’exigences techniques ;</li><li>de processus itératifs.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des lois et des règlements en matière de</li><li>santé et de sécurité du travail.</li><li>Respect des normes :</li><li>d’interférence électromagnétique ;</li><li>de protection contre les phénomènes</li><li>électrostatiques.</li><li>Respect des contraintes d’assemblage.</li><li>Respect des spécifications du cahier des charges.</li><li>Participation active aux réunions de l’équipe de</li><li>conception du projet.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Analyser les informations.",
+                    "criteres_performance": [
+                        "Analyse pertinente de la documentation relative au  projet (plans, schémas, fiches techniques, cahier des  charges)."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Réaliser une version du prototype.",
+                    "criteres_performance": [
+                        "Assemblage minutieux des parties constituantes du  prototype.",
+                        "Vérification exhaustive des  fonctionnalités du  montage."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Vérifier l’atteinte des exigences.",
+                    "criteres_performance": [
+                        "Vérification minutieuse de l’atteinte des exigences."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Documenter le développement.",
+                    "criteres_performance": [
+                        "Réalisation systématique d’un journal de suivi."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HU",
+            "objectif": {
+                "enonce": "",
+                "contexte_realisation": "<ul><li>Participer au développement de la partie</li><li>logicielle.  • En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>En collaboration avec des conceptrices ou</li><li>concepteurs, la client èle, etc.</li><li>À l’aide :</li><li>d’environnements de développement intégrés ;</li><li>de librairies ;</li><li>de sources d’information spécialisées ;</li><li>de documents techniques ;</li><li>de versions antérieures ;</li><li>de logigrammes ;</li><li>d’algorithmes.</li><li>À partir :</li><li>d’un cahier des charges ;</li><li>de systèmes physiques ou virtuels ;</li><li>de spécifications et d’exigences techniques ;</li><li>de processus itératifs.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des spécifications du cahier des charges.</li><li>Respect des normes de programmation.</li><li>Application rigoureuse des conventions d’écriture de</li><li>programme.</li><li>Participation active aux réunions de l’équipe de</li><li>conception du projet.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Analyser les informations.",
+                    "criteres_performance": [
+                        "Analyse pertinente de la documentation relative au  projet (architecture logicielle, logigrammes,  algorithmes, cahier des charges)."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Réaliser une version de la partie logicielle.",
+                    "criteres_performance": [
+                        "Pertinence de la réutilisabilité d'éléments existants.",
+                        "Élaboration fonctionnelle des éléments constitutifs de  la partie logicielle.",
+                        "Intégration des éléments de programmation système.",
+                        "Vérification exhaustive des fonctionnalités de la partie  logicielle au sein du système."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Vérifier l’atteinte des exigences.",
+                    "criteres_performance": [
+                        "Vérification minutieuse de l’atteinte des exigences.",
+                        "Pertinence de la réalisation d’une nouvelle version de  la partie logicielle."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Documenter le développement.",
+                    "criteres_performance": [
+                        "Réalisation systématique d’un journal de suivi."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HV",
+            "objectif": {
+                "enonce": "Intégrer les parties d’un système programmable.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>En collaboration avec des  conceptrices ou</li><li>concepteurs , la client èle, etc.</li><li>Individuellement ou en équipe.</li><li>À l’aide :</li><li>d’une architecture de système ;</li><li>d’une ou de plusieurs parties logicielles ;</li><li>d’une ou de plusieurs parties matérielles</li><li>(prototype, équipement, etc.) ;</li><li>de documents techniques ;</li><li>d’instruments de mesure ;</li><li>de l’équipement de protection individuelle ;</li><li>de l’équipement de protection collective ;</li><li>de versions antérieures.</li><li>À partir :</li><li>d’un cahier des charges ;</li><li>de spécifications et d’exigences techniques.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des lois et des règlements en matière de</li><li>santé et de sécurité du travail.</li><li>Respect des normes :</li><li>d’interférence électromagnétique ;</li><li>de protection contre les phénomènes</li><li>électrostatiques.</li><li>Respect des contraintes d’assemblage.</li><li>Respect des spécifications du cahier des charges.</li><li>Manipulation consciencieuse de l’équipement ou du</li><li>système connecté.</li><li>Participation active aux r éunions de l’équipe de</li><li>conception du projet.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Analyser les informations.",
+                    "criteres_performance": [
+                        "Analyse pertinente de  la document ation  relati ve aux  parties logicielles et matérielles."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Réaliser l’intégration des éléments du projet.",
+                    "criteres_performance": [
+                        "Choix méthodique d’une stratégie d’intégration  progressive.",
+                        "Intégration efficiente des éléments du projet."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Valider l’atteinte des exigences.",
+                    "criteres_performance": [
+                        "Pertinence de la vérification des impacts de  l’intégration.",
+                        "Vérification juste des fonctionnalités par parties  isolées du projet."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Documenter le développement.",
+                    "criteres_performance": [
+                        "Réalisation systématique d’un suivi des travaux  d’intégration.",
+                        "Documentation pertinente des résultats de  l’intégration."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HW",
+            "objectif": {
+                "enonce": "",
+                "contexte_realisation": "<ul><li>Contrôler la qualité d’équipements et/ou de</li><li>systèmes programmables.  • En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>En collaboration avec des conceptrices ou</li><li>concepteurs, opérateurs, la client èle, des réparatrices</li><li>u réparateurs, des firmes d’audit, etc.</li><li>À l’aide :</li><li>de plans ;</li><li>de statistiques de tests ;</li><li>de logiciels spécialisés ;</li><li>d’instruments de mesure ;</li><li>d’outils ;</li><li>de bancs de tests automatisés ;</li><li>de procédures d’étalonnage ;</li><li>d’équipement de protection contre les</li><li>phénomènes électrostatiques.</li><li>À partir :</li><li>de normes nationales et internationales et de</li><li>standards ;</li><li>de gabarits et/ou d’une unité de référence ;</li><li>de spécifications et d’exigences techniques ;</li><li>de résultats d ’audits.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des lois et des règlements en matière de</li><li>santé et de sécurité du travail.</li><li>Respect des normes de qualité en vigueur.</li><li>Respect du code de pratique en matière de protection</li><li>électrostatique.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Examiner l’équipement ou le système \nprogrammables.",
+                    "criteres_performance": [
+                        "Consultation pertinente des documents  (spécifications, normes, etc.).",
+                        "Interprétation juste des objectifs du contrôle.",
+                        "Consultation appropriée des collaboratrices et  collaborateurs."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Élaborer la procédure de contrôle de \nqualité.",
+                    "criteres_performance": [
+                        "Sélection pertinente des critères d’acceptabilité.",
+                        "Détermination appropriée des conditions  environnementales pour la réalisation du test de  contrôle de qualité.",
+                        "Choix approprié des instruments de mesure.",
+                        "Élaboration méthodique de procédures de tests."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Procéder au contrôle de qualité de \nl’équipement ou du système.",
+                    "criteres_performance": [
+                        "Validation minutieuse de la qualité selon les critères  établis.",
+                        "Réglage précis de l’équipement.",
+                        "Vérification régulière de l’exécution des tests (tests  automatisés ou exécutés par un tiers).",
+                        "Pertinence de la rétroaction aux collaboratrices et  collaborateurs."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Documenter le contrôle de qualité.",
+                    "criteres_performance": [
+                        "Rédaction conforme d’un rapport (rapport de tests,  d’étalonnage, etc.).",
+                        "Validation du rapport par les interv enantes ou  intervenants."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HX",
+            "objectif": {
+                "enonce": "Assurer le soutien technique.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>Chez la clientèle,  en présence ou à distance.</li><li>En collaboration avec des conceptrices ou</li><li>concepteurs, des opératrices ou opérateurs, la</li><li>client èle, des réparatrices ou réparateurs, etc.</li><li>À l’aide :</li><li>de documents techniques ;</li><li>du matériel requis ;</li><li>de supports de communication ;</li><li>de données de requêtes ;</li><li>des technologies de l’information et de la</li><li>communication (TIC).</li><li>À partir :</li><li>de normes nationales  et internationales et de</li><li>standards ;</li><li>de l’historique de traitement des requêtes ;</li><li>de données issues de discussions avec les</li><li>personnes concernées ;</li><li>de rapports de diagnostic.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Respect des règles de courtoisie.</li><li>Assurance continue de la satisfaction.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Recueillir les attentes et les besoins.",
+                    "criteres_performance": [
+                        "Consultation appropriée de l’historique.",
+                        "Consultation appropriée des personnes concernées.",
+                        "Identification juste des actions déjà entreprises.",
+                        "Examen de l’information nécessaire au soutien  technique ."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Analyser les attentes et les besoins.",
+                    "criteres_performance": [
+                        "Interprétation juste du contexte.",
+                        "Estimation appropriée du niveau de priorité de la  requête.",
+                        "Ébauche réaliste de pistes de solution ou de  résolution de problème."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Procéder au soutien technique.",
+                    "criteres_performance": [
+                        "Pertinence du transfert de la requête à la personne  ou au service concernés.",
+                        "Application juste des solutions.",
+                        "Suivi rigoureux de l’avancement de la requête.",
+                        "Transmission claire des instructions.",
+                        "Vulgarisation appropriée des informations."
+                    ]
+                },
+                {
+                    "numero": "4",
+                    "titre": "Veiller au suivi de la requête.",
+                    "criteres_performance": [
+                        "Vérification appropriée du résultat."
+                    ]
+                }
+            ]
+        },
+        {
+            "code": "02HY",
+            "objectif": {
+                "enonce": "Contribuer au changement technologique.",
+                "contexte_realisation": "<ul><li>En industrie, au laboratoire ou dans un bureau .</li><li>En collaboration avec des conceptrices ou</li><li>concepteurs, des opératrices ou opérateurs, la</li><li>client èle, etc.</li><li>À l’aide :</li><li>de logiciels spécialisés ;</li><li>de stratégies d’autoformation;</li><li>de médias spécialisés et généralistes ;</li><li>de réseaux sociaux professionnels ;</li><li>de blogues d’expertes ou d’experts ;</li><li>de communautés de praticiennes ou praticiens.</li><li>À partir :</li><li>de stratégies de changement en entreprise ;</li><li>de sites Web d’entreprises ;</li><li>de documentation technique ;</li><li>de formations.</li></ul>",
+                "criteres_performance_ensemble": "<ul><li>Aucun.</li></ul>"
+            },
+            "elements_competence": [
+                {
+                    "numero": "1",
+                    "titre": "Réaliser une veille technologique.",
+                    "criteres_performance": [
+                        "Choix approprié des sources d’information.",
+                        "Distinction appropriée des technologies.",
+                        "Compréhension suffisante de la technologie.",
+                        "Rapport critique des sources d’information."
+                    ]
+                },
+                {
+                    "numero": "2",
+                    "titre": "Participer à l’implantation d’une \ntechnologie.",
+                    "criteres_performance": [
+                        "Reconnaissance appropriée du besoin.",
+                        "Adéquation du changement technologique avec le  besoin.",
+                        "Participation active à l’implantation."
+                    ]
+                },
+                {
+                    "numero": "3",
+                    "titre": "Documenter l’implantation d’une \ntechnologie.",
+                    "criteres_performance": [
+                        "Réalisation systématique d’un suivi de l’implantation.",
+                        "Documentation pertinente des résultats relatifs à  l’implantation."
+                    ]
+                }
+            ]
+        }
+    ]
+}

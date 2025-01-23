@@ -1,5 +1,8 @@
 *.pyc
 add_user.py
-app_errors.log
 /venv
 app_errors.log
+*.db
+*.db-wal
+*.db-shm
+token.json
