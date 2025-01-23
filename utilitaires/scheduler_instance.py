@@ -21,8 +21,8 @@ def with_scheduler_lock(f):
     return wrapper
 
 def is_main_process():
-    worker_id = os.getenv('GUNICORN_WORKER_ID')
-    return worker_id == '0' or worker_id is None
+    # Force True if you want a single worker to do scheduling
+    return True
 
 def start_scheduler():
     if not scheduler.running and is_main_process():
