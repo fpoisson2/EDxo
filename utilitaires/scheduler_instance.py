@@ -17,13 +17,15 @@ scheduler = BackgroundScheduler(
     }
 )
 
+def is_main_process():
+    import multiprocessing
+    return multiprocessing.current_process().name == 'MainProcess'
+
 def start_scheduler():
-    # Only start scheduler in the main process
-    if not scheduler.running and os.getenv('GUNICORN_WORKER_PROCESS_NAME') != 'Worker':
+    if not scheduler.running and is_main_process():
         scheduler.start()
         logger.info("Scheduler démarré.")
-    else:
-        logger.info("Scheduler déjà en cours d'exécution ou processus worker.")
+
 
 def shutdown_scheduler():
     if scheduler.running:
@@ -32,6 +34,8 @@ def shutdown_scheduler():
 
 
 def schedule_backup(app):
+    if not is_main_process():
+        return
     # Only schedule in the main process
     if os.getenv('GUNICORN_WORKER_PROCESS_NAME') == 'Worker':
         return
