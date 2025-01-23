@@ -4,6 +4,17 @@ import pytz
 import logging
 from datetime import datetime
 from models import BackupConfig
+from functools import wraps
+import threading
+
+_scheduler_lock = threading.Lock()
+
+def with_scheduler_lock(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        with _scheduler_lock:
+            return f(*args, **kwargs)
+    return wrapper
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,6 +45,7 @@ def shutdown_scheduler():
         logger.info("Scheduler arrêté.")
 
 
+@with_scheduler_lock
 def schedule_backup(app):
     if not is_main_process():
         return
