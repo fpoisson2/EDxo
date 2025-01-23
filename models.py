@@ -1,6 +1,7 @@
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from sqlalchemy import UniqueConstraint
 
 db = SQLAlchemy()
 
@@ -24,6 +25,11 @@ class User(UserMixin, db.Model):
     cegep_id = db.Column(db.Integer, db.ForeignKey("ListeCegep.id"), nullable=True)
     department_id = db.Column(db.Integer, db.ForeignKey("Department.id"), nullable=True)
     credits = db.Column(db.Float, nullable=False, default=0.0)
+    email = db.Column(db.String(120), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint('email', name='uq_user_email'),  # ✅ Explicit constraint name
+    )
 
     # Relations
     programmes = db.relationship('Programme', 
