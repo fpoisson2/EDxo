@@ -13,13 +13,24 @@ from wtforms import (
     Form,
     BooleanField,
     PasswordField,
-    HiddenField
+    HiddenField,
+    TimeField
 )
 from wtforms import ValidationError, ColorField, SubmitField
-from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional, Length, EqualTo
+from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional, Length, EqualTo, Email
 from wtforms.widgets import ListWidget, CheckboxInput
 from flask_ckeditor import CKEditorField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
+
+class BackupConfigForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    frequency = SelectField('Frequency', choices=[
+        ('daily', 'Quotidien'),
+        ('weekly', 'Hebdomadaire'),
+        ('monthly', 'Mensuel')
+    ])
+    backup_time = TimeField('Backup Time', validators=[DataRequired()])
+    enabled = BooleanField('Enabled')
 
 class CreditManagementForm(FlaskForm):
     user_id = HiddenField('User ID')

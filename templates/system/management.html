@@ -1,24 +1,68 @@
 <!-- templates/system/management.html -->
 {% extends "parametres.html" %}
-
 {% block parametres_content %}
 <div class="container mt-4">
     <h2>Gestion Système</h2>
     
     <div class="card mt-4">
-        <div class="card-header">
-            Base de données
-        </div>
+        <div class="card-header">Configuration des sauvegardes</div>
         <div class="card-body">
-            <h5 class="card-title">Téléchargement de la base de données</h5>
-            <p class="card-text">Cette action permettra de télécharger une copie de la base de données actuelle.</p>
-            <div class="alert alert-warning">
-                <strong>Attention :</strong> Cette opération est sensible. Assurez-vous de garder ce fichier en sécurité.
-            </div>
-            <a href="{{ url_for('system.download_db') }}" class="btn btn-primary">
+            <form method="POST" action="{{ url_for('system.save_backup_config') }}">
+                {{ form.csrf_token }}
+                
+                <div class="mb-3">
+                    <label class="form-label">Email pour les sauvegardes</label>
+                    {{ form.email(class="form-control") }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Fréquence des sauvegardes</label>
+                    {{ form.frequency(class="form-control") }}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Heure de la sauvegarde (24h)</label>
+                    {{ form.backup_time(class="form-control", type="time") }}
+                </div>
+
+                <div class="form-check mb-3">
+                    {{ form.enabled(class="form-check-input") }}
+                    <label class="form-check-label">Activer les sauvegardes automatiques</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Sauvegarder la configuration</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">Sauvegarde manuelle</div>
+        <div class="card-body">
+            <a href="{{ url_for('system.download_db') }}" class="btn btn-secondary">
                 Télécharger la base de données
             </a>
+            <button class="btn btn-primary ms-2" onclick="sendManualBackup()">
+                Envoyer une sauvegarde par email
+            </button>
         </div>
     </div>
 </div>
+
+<script>
+function sendManualBackup() {
+    fetch("{{ url_for('system.manual_backup') }}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': "{{ csrf_token() }}"
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+    })
+    .catch(error => {
+        alert('Erreur lors de la sauvegarde');
+    });
+}
+</script>
 {% endblock %}

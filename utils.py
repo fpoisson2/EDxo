@@ -1,13 +1,109 @@
 import os
 import sqlite3
+from datetime import datetime
+from io import BytesIO
+
 from jinja2 import Template
 from bs4 import BeautifulSoup
 from docxtpl import DocxTemplate
-from io import BytesIO
-import os
 from dotenv import load_dotenv
+from flask_wtf import FlaskForm
+from wtforms import StringField, SelectField, TimeField, BooleanField
+from wtforms.validators import DataRequired, Email
+from apscheduler.schedulers.background import BackgroundScheduler
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email.mime.text import MIMEText
+from email import encoders
+
+from models import BackupConfig
+
+import base64
 
 DATABASE = 'programme.db'
+
+
+def send_backup_email(app, recipient_email, db_path):
+   SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+   credentials_path = 'credentials.json'
+   token_path = 'token.json' 
+   creds = None
+
+   if os.path.exists(token_path):
+       creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+   if not creds or not creds.valid:
+       if creds and creds.expired and creds.refresh_token:
+           creds.refresh(Request())
+       else:
+           flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
+           creds = flow.run_local_server(port=0)
+       with open(token_path, 'w') as token:
+           token.write(creds.to_json())
+           
+   service = build('gmail', 'v1', credentials=creds)
+
+   config = BackupConfig.query.filter_by(enabled=True).first()
+   sender_email = config.email if config else "default@gmail.com"
+
+   message = MIMEMultipart()
+   message['to'] = recipient_email 
+   message['from'] = sender_email
+   message['subject'] = f"DB Backup {datetime.now():%Y-%m-%d}"
+
+   with open(db_path, 'rb') as f:
+       part = MIMEBase('application', 'x-sqlite3')
+       part.set_payload(f.read())
+       encoders.encode_base64(part)
+       part.add_header('Content-Disposition', 'attachment',
+                      filename=f'backup_{datetime.now():%Y%m%d}.db')
+   message.attach(part)
+
+   raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
+   service.users().messages().send(userId='me', body={'raw': raw}).execute()
+   
+
+def schedule_backup(app):
+    scheduler = BackgroundScheduler()
+    with app.app_context():
+        config = BackupConfig.query.first()
+        if config and config.enabled:
+            backup_time = datetime.strptime(config.backup_time, '%H:%M').time()
+            
+            if config.frequency == 'daily':
+                scheduler.add_job(
+                    send_backup_email,
+                    'cron',
+                    hour=backup_time.hour,
+                    minute=backup_time.minute,
+                    args=[app, config.email, app.config['DB_PATH']]
+                )
+            elif config.frequency == 'weekly':
+                scheduler.add_job(
+                    send_backup_email,
+                    'cron',
+                    day_of_week='mon',
+                    hour=backup_time.hour,
+                    minute=backup_time.minute,
+                    args=[app, config.email, app.config['DB_PATH']]
+                )
+            elif config.frequency == 'monthly':
+                scheduler.add_job(
+                    send_backup_email,
+                    'cron',
+                    day=1,
+                    hour=backup_time.hour,
+                    minute=backup_time.minute,
+                    args=[app, config.email, app.config['DB_PATH']]
+                )
+    
+    scheduler.start()
+    return scheduler
+
 
 def get_initials(nom_complet):
     """

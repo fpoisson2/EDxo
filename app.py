@@ -4,7 +4,7 @@ from flask_login import current_user
 from flask_ckeditor import CKEditor
 from dotenv import load_dotenv
 import os
-from utils import get_db_connection
+from utils import get_db_connection, schedule_backup
 from auth import login_manager
 from routes.cours import cours_bp
 from routes.chat import chat
@@ -16,12 +16,12 @@ from routes.plan_cadre import plan_cadre_bp
 from flask_wtf import CSRFProtect
 from datetime import timedelta, datetime, timezone
 from routes.plan_de_cours import plan_de_cours_bp
-from models import db, Cours  # Import specific models
+from models import db, Cours, BackupConfig  # Import specific models
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
 from flask_migrate import Migrate
 import atexit
-
+from utilitaires.scheduler_instance import scheduler
 
 load_dotenv()
 
@@ -43,6 +43,11 @@ csrf = CSRFProtect(app)
 
 def checkpoint_wal():
     with app.app_context():
+
+        config = BackupConfig.query.first()
+        if config and config.enabled:
+            scheduler.start()
+            schedule_backup(app)
         try:
             db.session.execute(text("PRAGMA wal_checkpoint(TRUNCATE);"))
             db.session.commit()
@@ -109,6 +114,7 @@ with app.app_context():
     with db.engine.connect() as connection:
         connection.execute(text('PRAGMA journal_mode=WAL;'))
 
+app.config['DB_PATH'] = os.path.abspath('programme.db')  # Add this after the other app.config settings
 
 # Import and register routes
 app.register_blueprint(routes.main)
@@ -119,6 +125,8 @@ app.register_blueprint(plan_cadre_bp)
 app.register_blueprint(plan_de_cours_bp)
 app.register_blueprint(chat)
 app.register_blueprint(system_bp)
+
+scheduler = schedule_backup(app)
 
 # Register the checkpoint function to be called on exit
 atexit.register(checkpoint_wal)
