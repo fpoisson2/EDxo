@@ -1,5 +1,8 @@
 from utilitaires.scheduler_instance import start_scheduler, schedule_backup
 
 def on_starting(server):
-    schedule_backup(server.app)
-    start_scheduler()
+    from app import app  # Import the Flask app
+    with app.app_context():
+        from utilitaires.scheduler_instance import start_scheduler, schedule_backup
+        schedule_backup(app)
+        start_scheduler()
