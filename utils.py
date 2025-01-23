@@ -106,60 +106,6 @@ def send_backup_email(app, recipient_email, db_path):
 
 
 
-
-def schedule_backup(app):
-    with app.app_context():
-        config = BackupConfig.query.first()
-        if config and config.enabled:
-            try:
-                backup_time = datetime.strptime(config.backup_time, '%H:%M').time()
-                frequency = config.frequency.lower()
-                
-                job_id = f"{frequency}_backup"
-
-                # Supprimer le job existant s'il existe
-                if scheduler.get_job(job_id):
-                    scheduler.remove_job(job_id)
-                    logger.info(f"Job '{job_id}' supprimé pour mise à jour.")
-
-                if frequency == 'daily':
-                    scheduler.add_job(
-                        send_backup_email,
-                        'cron',
-                        hour=backup_time.hour,
-                        minute=backup_time.minute,
-                        args=[app, config.email, app.config['DB_PATH']],
-                        id=job_id,
-                        replace_existing=True
-                    )
-                elif frequency == 'weekly':
-                    scheduler.add_job(
-                        send_backup_email,
-                        'cron',
-                        day_of_week='mon',
-                        hour=backup_time.hour,
-                        minute=backup_time.minute,
-                        args=[app, config.email, app.config['DB_PATH']],
-                        id=job_id,
-                        replace_existing=True
-                    )
-                elif frequency == 'monthly':
-                    scheduler.add_job(
-                        send_backup_email,
-                        'cron',
-                        day=1,
-                        hour=backup_time.hour,
-                        minute=backup_time.minute,
-                        args=[app, config.email, app.config['DB_PATH']],
-                        id=job_id,
-                        replace_existing=True
-                    )
-                logger.info(f"Job '{job_id}' planifié avec succès.")
-            except Exception as e:
-                logger.error(f"Erreur lors de la planification des sauvegardes: {e}")
-        else:
-            logger.info("Sauvegarde désactivée ou configuration manquante.")
-
 def get_initials(nom_complet):
     """
     Extrait les initiales d'un nom complet.
