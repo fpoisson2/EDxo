@@ -1,0 +1,504 @@
+{
+  "programName": "Technologie du génie électrique : Électronique programmable - 243.G0",
+  "date": "24 janvier 2024",
+  "courses": [
+    {
+      "code": "243-114-LI",
+      "name": "Introduction à la profession",
+      "prerequisites": [],
+      "corequisites": [],
+      "competencies": [
+        "02H8 Explorer la profession",
+        "02HG Réaliser des travaux d'atelier",
+        "02HP Produire des documents techniques"
+      ],
+      "description": "Cours d'orientation et de validation de choix de carrière qui permet un survol du métier, du processus d'innovation et de ses phases par la réalisation de projets simples"
+    },
+    {
+      "code": "243-214-LI",
+      "name": "Réalisation de projets électroniques programmables",
+      "prerequisites": [],
+      "corequisites": [],
+      "competencies": [
+        "02HG Réaliser des travaux d'atelier"
+      ],
+      "description": "Cours d'introduction à la manipulation de différents outils par la réalisation de projets qui comprennent des parties mécaniques"
+    },
+    {
+      "code": "243-315-LI",
+      "name": "Introduction aux systèmes d'exploitation",
+      "prerequisites": [],
+      "corequisites": [],
+      "competencies": [
+        "02HL Exploiter des systèmes d'exploitation"
+      ],
+      "description": "Cours d'introduction qui permet un survol des différents types de systèmes d'exploitation plus ou moins complexes qui sont utilisés pour faire fonctionner les programmes"
+    },
+    {
+      "code": "235-010-LI",
+      "name": "Gestion d'activités en milieu de travail",
+      "prerequisites": [],
+      "corequisites": [],
+      "competencies": [
+        "02HE Planifier la réalisation des tâches professionnelles",
+        "02HP Produire des documents techniques",
+        "02HY Contribuer au changement technologique"
+      ],
+      "description": "Cours offert par le département de génie industriel qui initie la personne étudiante à la gestion des tâches à faire en fonction de leurs priorités respectives ainsi qu'au domaine des normes"
+    },
+    {
+      "code": "350-021-LI",
+      "name": "Psychologie du travail en électronique programmable",
+      "prerequisites": [],
+      "corequisites": [],
+      "competencies": [
+        "02H9 Interagir en contexte professionnel",
+        "02HX Assurer le soutien technique"
+      ],
+      "description": "Cours offert par le département de psychologie qui porte sur les interactions écrites ou verbales au sein d'une équipe multidisciplinaire ou dans un contexte de service à la clientèle"
+    },
+    {
+      "code": "243-136-LI",
+      "name": "Développement de produits 1: Introduction",
+      "prerequisites": [],
+      "corequisites": [],
+      "competencies": [
+        "02HD Produire des schémas électroniques"
+      ],
+      "description": "Cours qui permet un survol des étapes, des techniques et des procédés utilisés pour passer de l'idée à un produit électronique programmable fonctionnel"
+    },
+    {
+      "code": "243-236-LI",
+      "name": "Développement de produits 2: Dessin et prototypes",
+      "prerequisites": ["50% 243-136-LI"],
+      "corequisites": [],
+      "competencies": [
+        "02HD Produire des schémas électroniques",
+        "02HH Assurer la fabrication de circuits imprimés"
+      ],
+      "description": "Cours d'initiation à l'usage de logiciels spécialisés pour créer des schémas électriques et des circuits imprimés qui sont utilisés par la suite pour assembler des prototypes simples"
+    },
+    {
+      "code": "243-336-LI",
+      "name": "Développement de produits 3: Dessin et assemblages",
+      "prerequisites": ["60% 243-236-LI"],
+      "corequisites": [],
+      "competencies": [
+        "02HH Assurer la fabrication de circuits imprimés",
+        "02HQ Effectuer un diagnostic"
+      ],
+      "description": "Cours qui permet d'exploiter les fonctionnalités avancées d'un logiciel spécialisé pour créer des schémas, des circuits imprimés et des listes de matériel d'assemblages complexes"
+    },
+    {
+      "code": "243-436-LI",
+      "name": "Développement de produits 4 : Dessin et certifications",
+      "prerequisites": ["60% 243-336-LI"],
+      "corequisites": [],
+      "competencies": [
+        "02HR Réaliser des tests",
+        "02HT Participer au développement d'un prototype",
+        "02HW Contrôler la qualité d'équipements et/ou de systèmes",
+        "02HX Assurer le soutien technique"
+      ],
+      "description": "Cours porteur de l'ASP qui demande de démontrer dans un contexte contrôlé que les compétences du programme liées au développement de produits ont été développées"
+    },
+    {
+      "code": "243-695-LI",
+      "name": "Programmation d'un projet dirigé (ASP)",
+      "prerequisites": [
+        "60% 243-538-LI",
+        "60% 243-557-LI",
+        "60% 243-577-LI"
+      ],
+      "corequisites": ["243-675-LI"],
+      "competencies": [
+        "02HS Élaborer une preuve de concept",
+        "02HU Participer au développement de la partie logicielle",
+        "02HV Intégrer les parties d'un système programmable"
+      ],
+      "description": "Cours porteur de l'ASP qui demande de démontrer dans un contexte contrôlé que les compétences du programme liées à la programmation de produits ont été développées"
+    }
+  ],
+  "semesters": [
+    {
+      "number": 1,
+      "season": "AUTOMNE",
+      "totalUnits": 16.33,
+      "weeklyHours": 32,
+      "courses": [
+        {
+          "code": "601-101-MQ",
+          "name": "Écriture et littérature",
+          "units": 2.33,
+          "hours": "2-2-3"
+        },
+        {
+          "code": "604-10*-MQ",
+          "name": "Anglais (Formation commune)",
+          "units": 2.00,
+          "hours": "2-1-3"
+        },
+        {
+          "code": "XXX-XXX-XX",
+          "name": "Complémentaire",
+          "units": 2.00,
+          "hours": "3 heures"
+        },
+        {
+          "code": "243-114-LI",
+          "name": "Introduction à la profession",
+          "units": 2.00,
+          "hours": "2-2-2"
+        },
+        {
+          "code": "243-136-LI",
+          "name": "Développement de produits 1",
+          "units": 2.66,
+          "hours": "2-4-2"
+        },
+        {
+          "code": "243-156-LI",
+          "name": "Programmation 1",
+          "units": 2.66,
+          "hours": "2-4-2"
+        },
+        {
+          "code": "243-176-LI",
+          "name": "Électronique 1",
+          "units": 2.66,
+          "hours": "2-4-2"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "season": "HIVER",
+      "totalUnits": 15.66,
+      "weeklyHours": 31,
+      "courses": [
+        {
+          "code": "340-101-MQ",
+          "name": "Philosophie et rationalité",
+          "units": 2.33,
+          "hours": "3-1-3"
+        },
+        {
+          "code": "109-101-MQ",
+          "name": "Activité physique et santé",
+          "units": 1.00,
+          "hours": "1-1-1"
+        },
+        {
+          "code": "604-8**-LI",
+          "name": "Anglais (Formation propre)",
+          "units": 2.00,
+          "hours": "2-1-3"
+        },
+        {
+          "code": "243-214-LI",
+          "name": "Réalisation de projets électroniques programmables",
+          "units": 2.33,
+          "hours": "2-2-3"
+        },
+        {
+          "code": "243-236-LI",
+          "name": "Développement de produits 2",
+          "units": 2.66,
+          "hours": "2-4-2"
+        },
+        {
+          "code": "243-256-LI",
+          "name": "Programmation 2",
+          "units": 2.66,
+          "hours": "2-4-2"
+        },
+        {
+          "code": "243-276-LI",
+          "name": "Électronique 2",
+          "units": 2.66,
+          "hours": "2-4-2"
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "season": "AUTOMNE",
+      "totalUnits": 16.00,
+      "weeklyHours": 32,
+      "courses": [
+        {
+          "code": "601-102-MQ",
+          "name": "Littérature et imaginaire",
+          "units": 2.33,
+          "hours": "3-1-3"
+        },
+        {
+          "code": "340-102-MQ",
+          "name": "L'être humain",
+          "units": 2.00,
+          "hours": "3-0-3"
+        },
+        {
+          "code": "109-102-MQ",
+          "name": "Activité physique et efficacité",
+          "units": 1.00,
+          "hours": "0-2-1"
+        },
+        {
+          "code": "243-315-LI",
+          "name": "Introduction aux systèmes d'exploitation",
+          "units": 2.66,
+          "hours": "2-3-3"
+        },
+        {
+          "code": "243-336-LI",
+          "name": "Développement de produits 3",
+          "units": 2.66,
+          "hours": "2-4-2"
+        },
+        {
+          "code": "243-356-LI",
+          "name": "Programmation 3",
+          "units": 2.66,
+          "hours": "2-4-2"
+        },
+        {
+          "code": "243-376-LI",
+          "name": "Électronique 3",
+          "units": 2.66,
+          "hours": "2-4-2"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "season": "HIVER",
+      "totalUnits": 16.33,
+      "weeklyHours": 32,
+      "courses": [
+        {
+          "code": "601-103-MQ",
+          "name": "Littérature québécoise",
+          "units": 2.66,
+          "hours": "3-1-4"
+        },
+        {
+          "code": "109-103-MQ",
+          "name": "Activité physique et autonomie",
+          "units": 1.00,
+          "hours": "1-1-1"
+        },
+        {
+          "code": "235-010-LI",
+          "name": "Gestion d'activités en milieu de travail",
+          "units": 2.66,
+          "hours": "2-3-3"
+        },
+       
+        "02HW Contrôler la qualité d'équipements et/ou de systèmes"
+      ],
+      "description": "Cours qui permet d'exploiter l'ensemble des fonctionnalités d'un logiciel spécialisé pour créer des schémas et des circuits imprimés qui répondent aux normes applicables du domaine"
+    },
+    {
+      "code": "243-156-LI",
+      "name": "Programmation 1 : Introduction",
+      "prerequisites": [],
+      "corequisites": [],
+      "competencies": [
+        "02HJ Programmer des éléments programmables"
+      ],
+      "description": "Cours qui permet un survol des étapes, des techniques, des procédés et de langages de programmation utilisés pour créer des logiciels qui donnent vie à des produits électroniques"
+    },
+    {
+      "code": "243-256-LI",
+      "name": "Programmation 2 : Outils et microcontrôleurs",
+      "prerequisites": ["50% 243-156-LI"],
+      "corequisites": [],
+      "competencies": [
+        "02HB Analyser des informations techniques",
+        "02HJ Programmer des éléments programmables"
+      ],
+      "description": "Cours d'initiation à l'usage de logiciels spécialisés pour créer des programmes qui permettent d'exploiter les fonctionnalités offertes par différents types de microcontrôleurs"
+    },
+    {
+      "code": "243-356-LI",
+      "name": "Programmation 3 : Microcontrôleurs et périphériques",
+      "prerequisites": ["60% 243-256-LI"],
+      "corequisites": [],
+      "competencies": [
+        "02HB Analyser des informations techniques",
+        "02HJ Programmer des éléments programmables",
+        "02HK Établir des communications avec un élément programmable"
+      ],
+      "description": "Cours qui permet d'exploiter les fonctionnalités avancées des microcontrôleurs qui leur permettent d'interagir avec les circuits électroniques auxquels ils sont reliés"
+    },
+    {
+      "code": "243-456-LI",
+      "name": "Programmation 4 : Objets et systèmes",
+      "prerequisites": ["60% 243-356-LI"],
+      "corequisites": [],
+      "competencies": [
+        "02HJ Programmer des éléments programmables",
+        "02HK Établir des communications avec un élément programmable",
+        "02HM Exploiter des objets connectés en réseau"
+      ],
+      "description": "Cours d'initiation à la programmation par objets pour permettre à des systèmes électroniques programmables de réaliser des tâches multiples et complexes"
+    },
+    {
+      "code": "243-176-LI",
+      "name": "Électronique 1 : Composants et circuits de base",
+      "prerequisites": [],
+      "corequisites": [],
+      "competencies": [
+        "02HA Résoudre des problèmes en électronique",
+        "02HB Analyser des informations techniques",
+        "02HF Réaliser des prises de mesures"
+      ],
+      "description": "Cours qui porte sur les composants électroniques de base et les lois électriques qui régissent le comportement des circuits électriques simples dans lesquels ils retrouvent généralement"
+    },
+    {
+      "code": "243-276-LI",
+      "name": "Électronique 2 : Circuits numériques",
+      "prerequisites": ["50% 243-176-LI"],
+      "corequisites": [],
+      "competencies": [
+        "02HA Résoudre des problèmes en électronique",
+        "02HB Analyser des informations techniques",
+        "02HC Analyser des circuits",
+        "02HF Réaliser des prises de mesures"
+      ],
+      "description": "Cours qui porte sur l'étude de circuits qui sont couramment utilisés pour interagir avec les microcontrôleurs ou être commandés par eux afin qu'ils puissent réaliser des tâches variées"
+    },
+    {
+      "code": "243-376-LI",
+      "name": "Électronique 3 : Circuits analogiques",
+      "prerequisites": ["60% 243-276-LI"],
+      "corequisites": [],
+      "competencies": [
+        "02HA Résoudre des problèmes en électronique",
+        "02HB Analyser des informations techniques",
+        "02HC Analyser des circuits"
+      ],
+      "description": "Cours qui porte sur l'étude de circuits qui sont couramment utilisés pour permettre aux circuits numériques à microcontrôleur de traiter ou de produire des signaux électriques"
+    },
+    {
+      "code": "243-476-LI",
+      "name": "Électronique 4 : Circuits spécialisés",
+      "prerequisites": ["60% 243-376-LI"],
+      "corequisites": [],
+      "competencies": [
+        "02HA Résoudre des problèmes en électronique",
+        "02HB Analyser des informations techniques",
+        "02HC Analyser des circuits"
+      ],
+      "description": "Cours qui porte sur l'étude de circuits intégrés complexes spécialement conçus pour réaliser des opérations qui ne peuvent être facilement mises en œuvre avec des circuits traditionnels"
+    },
+    {
+      "code": "243-538-LI",
+      "name": "Fabrication de systèmes",
+      "prerequisites": ["60% 243-436-LI"],
+      "corequisites": [],
+      "competencies": [
+        "02HQ Effectuer un diagnostic",
+        "02HR Réaliser des tests",
+        "02HX Assurer le soutien technique"
+      ],
+      "description": "Cours qui porte sur l'étude des étapes d'assemblage, de tests et de vérifications qui sont à faire tout au long du développement d'un produit et de sa fabrication"
+    },
+    {
+      "code": "243-557-LI",
+      "name": "Programmation de systèmes",
+      "prerequisites": ["60% 243-456-LI"],
+      "corequisites": [],
+      "competencies": [
+        "02HK Établir des communications avec un élément programmable",
+        "02HU Participer au développement de la partie logicielle"
+      ],
+      "description": "Cours qui porte sur l'étude des méthodes de programmation à utiliser et des vérifications à faire lorsqu'il s'agit de produire des logiciels de qualité professionnelle"
+    },
+    {
+      "code": "243-577-LI",
+      "name": "Conception de systèmes",
+      "prerequisites": ["60% 243-476-LI"],
+      "corequisites": [],
+      "competencies": [
+        "02HC Analyser des circuits",
+        "02HN Exploiter des capteurs et des actionneurs",
+        "02HT Participer au développement d'un prototype",
+        "02HY Contribuer au changement technologique"
+      ],
+      "description": "Cours qui porte sur l'étude des méthodes de conception et de dessin à utiliser et des vérifications à faire lorsqu'il s'agit de produire des circuits de qualité professionnelle"
+    },
+    {
+      "code": "243-614-LI",
+      "name": "Développement d'un projet d'inspiration",
+      "prerequisites": ["60% 243-476-LI"],
+      "corequisites": ["243-637-LI", "243-656-LI"],
+      "competencies": [
+        "02HP Produire des documents techniques",
+        "02HT Participer au développement d'un prototype",
+        "02HY Contribuer au changement technologique"
+      ],
+      "description": "Cours qui permet de faire appel aux compétences développées précédemment pour concevoir un produit de son choix dans un contexte qui se veut proche de ce qui se vit au travail"
+    },
+    {
+      "code": "243-637-LI",
+      "name": "Fabrication d'un projet d'inspiration",
+      "prerequisites": ["60% 243-436-LI"],
+      "corequisites": ["243-614-LI", "243-656-LI"],
+      "competencies": [
+        "02HR Réaliser des tests",
+        "02HS Élaborer une preuve de concept",
+        "02HW Contrôler la qualité d'équipements et/ou de systèmes"
+      ],
+      "description": "Cours qui permet de faire appel aux compétences développées précédemment pour assembler et tester un produit de son choix dans un contexte proche de ce qui se vit au travail"
+    },
+    {
+      "code": "243-656-LI",
+      "name": "Programmation d'un projet d'inspiration",
+      "prerequisites": ["60% 243-456-LI"],
+      "corequisites": ["243-614-LI", "243-637-LI"],
+      "competencies": [
+        "02HU Participer au développement de la partie logicielle",
+        "02HV Intégrer les parties d'un système programmable"
+      ],
+      "description": "Cours qui permet à la personne étudiante de faire appel aux compétences pour produire les programmes d'un produit de son choix dans un contexte proche de ce qui se vit au travail"
+    },
+{
+  "243-675-LI": {
+    "name": "Fabrication d'un projet dirigé (ASP)",
+    "prerequisites": [
+      "60% 243-538-LI",
+      "60% 243-557-LI",
+      "60% 243-577-LI"
+    ],
+    "corequisites": ["243-695-LI"],
+    "competencies": [
+      "02HR Réaliser des tests",
+      "02HT Participer au développement d'un prototype",
+      "02HW Contrôler la qualité d'équipements et/ou de systèmes",
+      "02HX Assurer le soutien technique"
+    ],
+    "description": "Cours porteur de l'ASP qui demande de démontrer dans un contexte contrôlé que les compétences du programme liées au développement de produits ont été développées",
+    "units": 2.33,
+    "hours": "2-3-2"
+  },
+
+  "243-695-LI": {
+    "name": "Programmation d'un projet dirigé (ASP)",
+    "prerequisites": [
+      "60% 243-538-LI",
+      "60% 243-557-LI",
+      "60% 243-577-LI"
+    ],
+    "corequisites": ["243-675-LI"],
+    "competencies": [
+      "02HS Élaborer une preuve de concept",
+      "02HU Participer au développement de la partie logicielle",
+      "02HV Intégrer les parties d'un système programmable"
+    ],
+    "description": "Cours porteur de l'ASP qui demande de démontrer dans un contexte contrôlé que les compétences du programme liées à la programmation de produits ont été développées",
+    "units": 2.33,
+    "hours": "2-3-2"
+  }
+}

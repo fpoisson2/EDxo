@@ -2,6 +2,7 @@ from flask import Blueprint, request, render_template, flash, redirect, url_for
 from flask_login import login_required, current_user
 from constants import SECTIONS  # Importer la liste des sections
 import sqlite3
+from decorator import role_required, roles_required
 from forms import (
     GlobalGenerationSettingsForm
 )
@@ -16,7 +17,7 @@ def parametres():
     return render_template('parametres.html')
 
 @settings_bp.route('/generation', methods=['GET', 'POST'])
-@login_required
+@roles_required('admin', 'coordo')
 def edit_global_generation_settings():
     form = GlobalGenerationSettingsForm()
     conn = get_db_connection()
@@ -50,14 +51,6 @@ def edit_global_generation_settings():
 
     if form.validate_on_submit():
         try:
-            # Save the OpenAI key for the logged-in user
-            openai_key = form.openai_key.data.strip()
-            conn.execute('''
-                UPDATE User
-                SET openai_key = ?
-                WHERE id = ?
-            ''', (openai_key, current_user.id))
-
             # Save the sections
             for i, section in enumerate(SECTIONS):
                 use_ai = form.sections[i].use_ai.data

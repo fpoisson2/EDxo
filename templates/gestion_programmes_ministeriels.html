@@ -1,0 +1,33 @@
+{% extends "parametres.html" %}
+
+{% block parametres_content %}
+<div class="container my-5">
+    <h1 class="mb-4">Ajouter un Programme Ministériel</h1>
+    <div class="card mb-5">
+        <div class="card-body">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.nom.label(class="form-label") }}
+                    {{ form.nom(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.code.label(class="form-label") }}
+                    {{ form.code(class="form-control") }}
+                </div>
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+            </form>
+        </div>
+    </div>
+    <h2 class="mb-4">Liste des Programmes Ministériels</h2>
+    <ul class="list-group">
+        {% for prog in programmes %}
+            <li class="list-group-item">
+                <strong>{{ prog.nom }}</strong> - Code : {{ prog.code }}
+            </li>
+        {% else %}
+            <li class="list-group-item">Aucun programme ministériel n'a été ajouté.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
