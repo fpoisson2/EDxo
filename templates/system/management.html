@@ -4,6 +4,14 @@
 <div class="container mt-4">
     <h2>Gestion Système</h2>
     
+    <!-- Affichage de l'heure actuelle -->
+    <div class="card mt-4">
+        <div class="card-header">Heure Actuelle</div>
+        <div class="card-body">
+            <p><strong>UTC :</strong> <span id="current-time-utc">{{ current_time_utc }}</span></p>
+        </div>
+    </div>
+    
     <div class="card mt-4">
         <div class="card-header">Configuration des sauvegardes</div>
         <div class="card-body">
@@ -21,7 +29,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Heure de la sauvegarde (24h)</label>
+                    <label class="form-label">Heure de la sauvegarde UTC (24h)</label>
                     {{ form.backup_time(class="form-control", type="time") }}
                 </div>
 
@@ -34,6 +42,31 @@
             </form>
         </div>
     </div>
+
+    <!-- Affichage des prochaines sauvegardes planifiées -->
+    {% if next_backup_times %}
+    <div class="card mt-4">
+        <div class="card-header">Prochaines Sauvegardes Planifiées</div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Type de Sauvegarde</th>
+                        <th>Prochaine Exécution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in next_backup_times %}
+                    <tr>
+                        <td>{{ job.id.replace('_backup', '').capitalize() }}</td>
+                        <td>{{ job.next_run_time }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="card mt-4">
         <div class="card-header">Sauvegarde manuelle</div>
@@ -48,12 +81,30 @@
     </div>
 </div>
 
+<!-- Script pour afficher une horloge en temps réel -->
 <script>
+// Fonction pour mettre à jour l'heure en temps réel
+function updateClock() {
+    fetch("{{ url_for('system.get_current_time') }}")
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('current-time-utc').innerText = data.current_time_utc;
+        document.getElementById('current-time-local').innerText = data.current_time_local;
+    })
+    .catch(error => {
+        console.error('Erreur lors de la mise à jour de l\'heure:', error);
+    });
+}
+
+// Mettre à jour l'horloge toutes les secondes
+setInterval(updateClock, 1000);
+
+// Fonction pour envoyer une sauvegarde manuelle
 function sendManualBackup() {
     fetch("{{ url_for('system.manual_backup') }}", {
         method: 'POST',
         headers: {
-            'X-CSRFToken': "{{ csrf_token() }}"
+            'X-CSRFToken': "{{ form.csrf_token._value() }}"
         }
     })
     .then(response => response.json())

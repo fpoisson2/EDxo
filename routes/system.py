@@ -31,6 +31,7 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from utils import send_backup_email, schedule_backup
 from utilitaires.scheduler_instance import scheduler
+import pytz
 
 system_bp = Blueprint('system', __name__)
 
@@ -51,14 +52,18 @@ def save_backup_config():
         
         db.session.commit()
         
-        # Restart scheduler if running
+        # Supprimer tous les jobs existants
         scheduler.remove_all_jobs()
+        
+        # Planifier de nouveaux jobs si la sauvegarde est activée
         if config.enabled:
-            scheduler.start()
             schedule_backup(current_app)
-            
+        
         flash('Configuration sauvegardée', 'success')
+    else:
+        flash('Erreur de validation du formulaire.', 'danger')
     return redirect(url_for('system.management'))
+
 
 @system_bp.route('/manual_backup', methods=['POST'])
 @roles_required('admin')
@@ -88,6 +93,18 @@ def check_db_status():
         current_app.logger.error(f"Erreur lors de la vérification de la BD: {e}")
         return False
 
+@system_bp.route('/get_current_time')
+@roles_required('admin')
+def get_current_time():
+    user_timezone = 'Europe/Paris'  # Remplacez par la méthode de récupération dynamique si nécessaire
+    now_utc = datetime.now(pytz.UTC)
+    local_tz = pytz.timezone(user_timezone)
+    now_local = now_utc.astimezone(local_tz)
+    
+    return jsonify({
+        'current_time_utc': now_utc.strftime('%Y-%m-%d %H:%M:%S'),
+    })
+
 @system_bp.route('/management')
 @roles_required('admin')
 def management():
@@ -97,10 +114,43 @@ def management():
     if config:
         form.email.data = config.email
         form.frequency.data = config.frequency
-        form.backup_time.data = datetime.strptime(config.backup_time, '%H:%M').time()
-        form.enabled.data = config.enabled
         
-    return render_template('system/management.html', form=form)
+        # Conversion de UTC à l'heure locale pour l'affichage
+        user_timezone = 'Europe/Paris'  # Remplacez par la méthode de récupération du fuseau horaire de l'utilisateur
+        backup_time_str = config.backup_time  # Format 'HH:MM'
+        backup_time_utc = datetime.strptime(backup_time_str, '%H:%M').replace(tzinfo=pytz.UTC)
+        local_tz = pytz.timezone(user_timezone)
+        backup_time_local = backup_time_utc.astimezone(local_tz).time()
+        form.backup_time.data = backup_time_local
+        
+        form.enabled.data = config.enabled
+    
+    # Récupérer les jobs planifiés pour afficher les prochaines sauvegardes
+    jobs = scheduler.get_jobs()
+    next_backup_times = []
+    for job in jobs:
+        if job.id.endswith('_backup'):
+            if job.next_run_time:
+                next_run_utc = job.next_run_time.astimezone(pytz.utc)
+                formatted_time = next_run_utc.strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                formatted_time = 'Non planifié'
+            next_backup_times.append({
+                'id': job.id,
+                'next_run_time': formatted_time
+            })
+    
+    # Obtenir l'heure actuelle en UTC et locale
+    now_utc = datetime.now(pytz.UTC)
+    now_local = now_utc.astimezone(local_tz)
+    
+    return render_template(
+        'system/management.html', 
+        form=form, 
+        next_backup_times=next_backup_times,
+        current_time_utc=now_utc.strftime('%Y-%m-%d %H:%M:%S')
+    )
+
 
 @system_bp.route('/system/download-db')
 @roles_required('admin')
