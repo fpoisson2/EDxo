@@ -50,6 +50,8 @@ def send_backup_email(app, recipient_email, db_path):
     from email.mime.text import MIMEText
     from email import encoders
 
+    logger.info(f"Starting scheduled backup to {recipient_email}")
+
     SCOPES = ['https://www.googleapis.com/auth/gmail.send']
     creds = None
 
