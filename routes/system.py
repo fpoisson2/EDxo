@@ -130,7 +130,7 @@ def management():
     next_backup_times = []
     for job in jobs:
         if job.id.endswith('_backup'):
-            if job.next_run_time:
+            if hasattr(job, 'next_run_time') and job.next_run_time:
                 next_run_utc = job.next_run_time.astimezone(pytz.utc)
                 formatted_time = next_run_utc.strftime('%Y-%m-%d %H:%M:%S')
             else:
