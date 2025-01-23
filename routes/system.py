@@ -56,7 +56,7 @@ def update_site():
             "/usr/bin/git pull origin && "
             "./venv/bin/pip install -r requirements.txt && "
             "./venv/bin/flask db migrate && "
-            "systemctl restart edxo-dev"
+            "/usr/bin/systemctl restart edxo-dev"
         )
         
         # L'option shell=True est utilisée pour permettre l'utilisation de 'source'
