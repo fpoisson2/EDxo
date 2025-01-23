@@ -1,10 +1,9 @@
-# utilitaires/scheduler_instance.py
+import os
 from apscheduler.schedulers.background import BackgroundScheduler
 import pytz
 import logging
 from datetime import datetime
 from models import BackupConfig
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,20 +18,24 @@ scheduler = BackgroundScheduler(
 )
 
 def start_scheduler():
-    if not scheduler.running:
+    # Only start scheduler in the main process
+    if not scheduler.running and os.getenv('GUNICORN_WORKER_PROCESS_NAME') != 'Worker':
         scheduler.start()
         logger.info("Scheduler démarré.")
     else:
-        logger.info("Scheduler déjà en cours d'exécution.")
-        
+        logger.info("Scheduler déjà en cours d'exécution ou processus worker.")
+
 def shutdown_scheduler():
     if scheduler.running:
         scheduler.shutdown()
         logger.info("Scheduler arrêté.")
 
 
-
 def schedule_backup(app):
+    # Only schedule in the main process
+    if os.getenv('GUNICORN_WORKER_PROCESS_NAME') == 'Worker':
+        return
+
     from utils import send_backup_email
     
     with app.app_context():
@@ -49,7 +52,7 @@ def schedule_backup(app):
                 job_args = {
                     'func': send_backup_email,
                     'trigger': 'cron',
-                    'hour': backup_time.hour,  # Déjà en UTC
+                    'hour': backup_time.hour,
                     'minute': backup_time.minute,
                     'args': [app, config.email, app.config['DB_PATH']],
                     'id': job_id,
@@ -63,6 +66,7 @@ def schedule_backup(app):
                     job_args['day'] = 1
                 
                 scheduler.add_job(**job_args)
+                logger.info(f"Job de backup planifié: {job_id}")
                 
             except Exception as e:
                 logger.error(f"Erreur planification: {e}", exc_info=True)
