@@ -126,11 +126,8 @@ app.register_blueprint(plan_de_cours_bp)
 app.register_blueprint(chat)
 app.register_blueprint(system_bp)
 
-scheduler = schedule_backup(app)
-
-# Register the checkpoint function to be called on exit
-atexit.register(checkpoint_wal)
-
 # Run the application
 if __name__ == '__main__':
+    scheduler = schedule_backup(app)
+    atexit.register(checkpoint_wal)
     app.run(host='0.0.0.0', port=5000, debug=True)
