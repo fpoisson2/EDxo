@@ -39,7 +39,7 @@ def send_backup_email(app, recipient_email, db_path):
     from email.mime.base import MIMEBase
     from email.mime.text import MIMEText
     from email import encoders
-    
+
     SCOPES = ['https://www.googleapis.com/auth/gmail.send']
     creds = None
 
@@ -51,7 +51,10 @@ def send_backup_email(app, recipient_email, db_path):
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0)
+            # ✅ Remplacez run_local_server() par run_console()
+            creds = flow.run_console()
+
+        # Sauvegarde du token
         with open('token.json', 'w') as token:
             token.write(creds.to_json())
 
@@ -60,7 +63,7 @@ def send_backup_email(app, recipient_email, db_path):
     # Créer le message
     message = MIMEMultipart()
     message['to'] = recipient_email
-    message['from'] = recipient_email  # Utilisez la même adresse (ou compte "sendAs" configuré)
+    message['from'] = recipient_email
     message['subject'] = "Test avec pièce jointe"
 
     # Corps du message (texte)
@@ -74,7 +77,6 @@ def send_backup_email(app, recipient_email, db_path):
     attachment = MIMEBase('application', 'octet-stream')
     attachment.set_payload(file_data)
     encoders.encode_base64(attachment)
-    # Nom du fichier joint (modifiez si besoin)
     attachment.add_header('Content-Disposition', 'attachment', filename='backup.db')
     message.attach(attachment)
 
@@ -90,6 +92,7 @@ def send_backup_email(app, recipient_email, db_path):
         print("Message envoyé. ID:", sent_message['id'])
     except Exception as e:
         print("Erreur:", e)
+
 
 
 
