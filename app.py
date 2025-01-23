@@ -21,7 +21,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
 from flask_migrate import Migrate
 import atexit
-from utilitaires.scheduler_instance import scheduler
+from utilitaires.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler
+
+import logging
+
+# Configuration de base du logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -43,17 +49,18 @@ csrf = CSRFProtect(app)
 
 def checkpoint_wal():
     with app.app_context():
-
         config = BackupConfig.query.first()
         if config and config.enabled:
-            scheduler.start()
-            schedule_backup(app)
+            try:
+                schedule_backup(app)
+            except Exception as e:
+                logger.error(f"Erreur lors de la planification des sauvegardes: {e}")
         try:
             db.session.execute(text("PRAGMA wal_checkpoint(TRUNCATE);"))
             db.session.commit()
-            #print("WAL checkpointed successfully.")
+            logger.info("WAL checkpointed successfully.")
         except SQLAlchemyError as e:
-            print(f"Error during WAL checkpoint: {e}")
+            logger.error(f"Error during WAL checkpoint: {e}")
 
 
 @app.before_request
@@ -128,6 +135,11 @@ app.register_blueprint(system_bp)
 
 # Run the application
 if __name__ == '__main__':
-    scheduler = schedule_backup(app)
+    # Démarrer le planificateur une seule fois
+    start_scheduler()
+    # Planifier les sauvegardes initiales
+    schedule_backup(app)
+    # Enregistrer les fonctions d'arrêt
+    atexit.register(shutdown_scheduler)
     atexit.register(checkpoint_wal)
     app.run(host='0.0.0.0', port=5000, debug=True)
