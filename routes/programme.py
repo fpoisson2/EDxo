@@ -13,7 +13,6 @@ from forms import (
     DeleteForm,
     MultiCheckboxField,
     PlanCadreForm,
-    CapaciteForm,
     SavoirEtreForm,
     CompetenceDeveloppeeForm,
     ObjetCibleForm,
@@ -35,6 +34,7 @@ import logging
 from collections import defaultdict
 from openai import OpenAI
 from openai import OpenAIError
+from decorator import role_required, roles_required
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import os
@@ -46,6 +46,7 @@ from io import BytesIO
 from werkzeug.security import generate_password_hash, check_password_hash
 from utils import get_db_connection, parse_html_to_list, parse_html_to_nested_list, get_plan_cadre_data, replace_tags_jinja2, process_ai_prompt, generate_docx_with_template
 from models import User
+from routes.plan_de_cours import plan_de_cours_bp
 
 programme_bp = Blueprint('programme', __name__, url_prefix='/programme')
 
@@ -114,10 +115,11 @@ def view_programme(programme_id):
     for c in cours:
         comps = conn.execute(''' 
             SELECT DISTINCT c.code AS competence_code
-            FROM ElementCompetenceParCours ecp
-            JOIN ElementCompetence ec ON ecp.element_competence_id = ec.id
-            JOIN Competence c ON ec.competence_id = c.id
-            WHERE ecp.cours_id = ?
+FROM ElementCompetenceParCours ecp
+JOIN ElementCompetence ec ON ecp.element_competence_id = ec.id
+JOIN Competence c ON ec.competence_id = c.id
+WHERE ecp.cours_id = ?
+  AND ecp.status IN ('Développé significativement', 'Atteint');
         ''', (c['id'],)).fetchall()
         competencies_codes[c['id']] = [comp['competence_code'] for comp in comps]
     
@@ -130,11 +132,14 @@ def view_programme(programme_id):
     # Créer des dictionnaires de formulaires de suppression pour les compétences et les cours
     delete_forms_competences = {competence['id']: DeleteForm(prefix=f"competence-{competence['id']}") for competence in competences}
     delete_forms_cours = {c['id']: DeleteForm(prefix=f"cours-{c['id']}") for c in cours}
-    
+
+    programmes = conn.execute('SELECT * FROM Programme').fetchall()
+
     conn.close()
     
     return render_template('view_programme.html', 
                            programme=programme, 
+                           programmes=programmes,
                            competences=competences, 
                            fil_conducteurs=fil_conducteurs, 
                            cours_par_session=cours_par_session,  # Groupement par session
@@ -150,7 +155,7 @@ def view_programme(programme_id):
                            )
 
 @programme_bp.route('/competence/<int:competence_id>/edit', methods=['GET', 'POST'])
-@login_required
+@role_required('admin')
 def edit_competence(competence_id):
     form = CompetenceForm()
     conn = get_db_connection()
@@ -196,7 +201,7 @@ def edit_competence(competence_id):
     return render_template('edit_competence.html', form=form, competence=competence)
 
 @programme_bp.route('/competence/<int:competence_id>/delete', methods=['POST'])
-@login_required
+@role_required('admin')
 def delete_competence(competence_id):
     # Instancier le formulaire avec le préfixe correspondant
     delete_form = DeleteForm(prefix=f"competence-{competence_id}")
@@ -236,7 +241,7 @@ def delete_competence(competence_id):
 
 
 @programme_bp.route('/competence/code/<string:competence_code>')
-@login_required
+@role_required('admin')
 def view_competence_by_code(competence_code):
     conn = get_db_connection()
     competence = conn.execute('SELECT id FROM Competence WHERE code = ?', (competence_code,)).fetchone()

@@ -1,47 +1,74 @@
-{% extends 'base.html' %}
+<!-- templates/edit_element_competence.html -->
+{% extends "parametres.html" %}
 
-{% block content %}
+{% block head %}
+  {{ super() }}
+  {{ ckeditor.load() }}
+{% endblock %}
+
+{% block parametres_content %}
   <div class="container mt-5">
-    <h2>Ajouter un Élément de Compétence</h2>
+    <h2>Ajouter un élément de Compétence</h2>
     <form method="POST">
       {{ form.hidden_tag() }}
-      
+
       <!-- Champ Compétence -->
       <div class="form-group">
-        {{ form.competence.label(class="form-label") }}
+        <label for="{{ form.competence.id }}">{{ form.competence.label }}</label>
         {{ form.competence(class="form-control") }}
+        <small class="form-text text-muted">Sélectionnez la compétence associée.</small>
         {% for error in form.competence.errors %}
             <span class="text-danger">[{{ error }}]</span>
         {% endfor %}
       </div>
-      
+
       <!-- Champ Nom -->
       <div class="form-group">
-        {{ form.nom.label(class="form-label") }}
+        <label for="{{ form.nom.id }}">{{ form.nom.label }}</label>
         {{ form.nom(class="form-control") }}
         {% for error in form.nom.errors %}
             <span class="text-danger">[{{ error }}]</span>
         {% endfor %}
       </div>
-      
+
       <!-- Section Critères de Performance -->
       <div class="form-group">
-        <h3>Critères de Performance</h3>
-        {% for crit in form.criteres_de_performance %}
-          <div class="criteria mb-3">
-            {{ crit.label }}
-            {{ crit(class="form-control", rows="3") }}
-            {% for error in crit.errors %}
+        <h4>Critères de Performance</h4>
+        {% for critere_field in form.criteres_de_performance %}
+          <div class="mb-2">
+            {{ critere_field(class="form-control", rows="3") }}
+            {% for error in critere_field.errors %}
                 <span class="text-danger">[{{ error }}]</span>
             {% endfor %}
           </div>
         {% endfor %}
-        <!-- Bouton pour ajouter un critère supplémentaire (optionnel) -->
-        <!-- Vous pouvez implémenter l'ajout dynamique avec JavaScript si nécessaire -->
+        <button type="button" class="btn btn-secondary" id="add-critere">Ajouter un critère</button>
       </div>
-      
+
       <!-- Bouton de Soumission -->
-      <button type="submit" class="btn btn-success">Ajouter</button>
+      <button type="submit" class="btn btn-primary">Ajouter l'élément de compétence</button>
     </form>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var addCritereButton = document.getElementById('add-critere');
+      var index = {{ form.criteres_de_performance|length }};
+
+      addCritereButton.addEventListener('click', function() {
+        if (index >= 10) {
+          alert('Nombre maximal de critères atteint.');
+          return;
+        }
+
+        // Créer un nouveau text-area dynamique
+        var newCritere = document.createElement('textarea');
+        newCritere.classList.add('form-control', 'mb-2');
+        newCritere.name = `criteres_de_performance-${index}`;
+        newCritere.rows = 3;
+        addCritereButton.parentElement.insertBefore(newCritere, addCritereButton);
+        index++;
+      });
+    });
+  </script>
 {% endblock %}

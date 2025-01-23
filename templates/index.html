@@ -1,17 +1,26 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Programmes</h2>
-  <ul class="list-group">
-    {% for programme in programmes %}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        <a href="{{ url_for('programme.view_programme', programme_id=programme.id) }}">{{ programme.nom }}</a>
-      </li>
-    {% else %}
-      <li class="list-group-item">Aucun programme trouvé.</li>
-    {% endfor %}
-  </ul>
-  <nav class="mb-4">
-    <a href="{{ url_for('main.add_programme') }}" class="btn btn-success">Ajouter Programme</a>
-  </nav>
+  <div class="dropdown mb-4">
+    <button class="btn btn-primary dropdown-toggle" type="button" id="programmeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      Sélectionnez un programme
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="programmeDropdown">
+      {% for programme in programmes %}
+        <li>
+          <a class="dropdown-item" href="{{ url_for('programme.view_programme', programme_id=programme.id) }}">
+            {{ programme.nom }}
+          </a>
+        </li>
+      {% else %}
+        <li><span class="dropdown-item-text">Aucun programme trouvé.</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Bloc Spécifique aux Sous-Templates -->
+  {% block programmes_specific %}
+    <!-- Contenu spécifique des sous-templates sera injecté ici -->
+  {% endblock %}
+
 {% endblock %}

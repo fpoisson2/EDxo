@@ -1,6 +1,4 @@
-<!-- templates/login.html -->
 {% extends "base.html" %}
-
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -10,18 +8,18 @@
                     <h3 class="mb-0">Se connecter</h3>
                 </div>
                 <div class="card-body">
-                    <form method="POST" novalidate>
+                    <form method="POST" action="{{ url_for('main.login') }}" novalidate>
                         {{ form.hidden_tag() }}
                         <div class="mb-3">
                             {{ form.username.label(class="form-label") }}
-                            {{ form.username(class="form-control", placeholder="Entrez votre nom d'utilisateur") }}
+                            {{ form.username(class="form-control", placeholder="Entrez votre nom d'utilisateur", autocomplete="username") }}
                             {% for error in form.username.errors %}
                                 <div class="text-danger">{{ error }}</div>
                             {% endfor %}
                         </div>
                         <div class="mb-3">
                             {{ form.password.label(class="form-label") }}
-                            {{ form.password(class="form-control", placeholder="Entrez votre mot de passe") }}
+                            {{ form.password(class="form-control", placeholder="Entrez votre mot de passe", autocomplete="current-password") }}
                             {% for error in form.password.errors %}
                                 <div class="text-danger">{{ error }}</div>
                             {% endfor %}

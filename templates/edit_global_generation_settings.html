@@ -30,11 +30,6 @@
   <form method="POST">
       {{ form.hidden_tag() }} <!-- Inclut le token CSRF -->
       
-      <div class="mb-4">
-          <label for="openai_key" class="form-label">Clé OpenAI</label>
-          {{ form.openai_key(class="form-control") }}
-      </div>
-      
       <div class="table-responsive">
           <table class="table table-bordered">
               <thead>

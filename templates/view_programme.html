@@ -1,156 +1,175 @@
-{% extends 'base.html' %}
+{% extends 'index.html' %}
 
-{% block content %}
-  <div class="container mt-5">
-    <!-- En-tête du Programme -->
-    <div class="d-flex justify-content-between align-items-start">
-      <h2>{{ programme.nom }}</h2>
-    </div>
-
-    <!-- Statistiques sur le Programme et Fils Conducteurs -->
-    <div class="d-flex justify-content-between align-items-start mb-4">
-      <div>
-        <p><strong>Total d'heures théoriques :</strong> {{ total_heures_theorie }} heures</p>
-        <p><strong>Total d'heures pratiques :</strong> {{ total_heures_laboratoire }} heures</p>
-        <p><strong>Total d'heures de travail à la maison :</strong> {{ total_heures_travail_maison }} heures</p>
-        <p><strong>Total d'unités :</strong> {{ "%.2f"|format(total_unites) }}</p>
-      </div>
-      <div class="small text-muted text-end" style="max-width: 40%; margin-top: 0; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-        <h5 style="flex-basis: 100%;">Fils Conducteurs <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-sm btn-primary">Ajouter</a></h5>
-        <ul class="list-inline mb-0">
-          {% for fil in fil_conducteurs %}
-            <li class="list-inline-item" style="background-color: {{ fil.couleur }}; color: {{ 'white' if fil.couleur else 'black' }}; padding: 0.2rem 0.5rem; border-radius: 0.2rem;">
-              {{ fil.description }}
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-
-    <!-- Grille des Cours par Session -->
-    <div class="d-flex justify-content-between align-items-start mb-3">
-      <h3 class="mb-0">Cours par Session</h3>
-    </div>
-
-    <div class="table-responsive">
-      <table class="table table-bordered table-striped">
-        <thead class="thead-dark">
-          <tr>
-            <th>Session</th>
-            <th>Cours</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for session, cours_list in cours_par_session.items() %}
-          <tr>
-            <td>{{ session }}</td>
-            <td>
-              <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6">
-                {% for c in cours_list %}
-                <div class="col mb-3">
-                  <div class="card h-100 d-flex flex-column">
-                    <!-- En-tête cliquable uniformisée et responsive -->
-                    <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}" class="text-decoration-none d-flex align-items-center justify-content-center card-header" style="background-color: {{ c.fil_couleur if c.fil_conducteur_id else '#f2f2f2' }}; color: {{ 'white' if c.fil_conducteur_id else 'black' }}; min-height: 3rem; text-align: center; word-wrap: break-word; white-space: break-spaces; overflow: hidden;">
-                      <span><strong>{{ c.code }}</strong> - {{ c.nom }}</span>
-                    </a>
-                    <div class="card-body p-2 flex-grow-1">
-                      <p><strong>Heures :</strong> {{ c.heures_theorie }} - {{ c.heures_laboratoire }} - {{ c.heures_travail_maison }}</p>
-                      <p><strong>Compétences :</strong>
-                        {% if competencies_codes[c.id] %}
-                          {% for code in competencies_codes[c.id] %}
-                            <a href="{{ url_for('programme.view_competence_by_code', competence_code=code) }}" class="badge bg-primary text-white">{{ code }}</a>
-                          {% endfor %}
-                        {% else %}
-                          <em>Aucune</em>
-                        {% endif %}
-                      </p>
-                      <p><strong>Prérequis :</strong>
-                        {% if prerequisites[c.id] %}
-                          {% for prereq, note in prerequisites[c.id] %}
-                            {{ prereq }} ({{ note }}%)
-                          {% endfor %}
-                        {% else %}
-                          <em>Aucun</em>
-                        {% endif %}
-                      </p>
-                      <p><strong>Co-requis :</strong>
-                        {% if corequisites[c.id] %}
-                          {{ corequisites[c.id]|join(', ') }}
-                        {% else %}
-                          <em>Aucun</em>
-                        {% endif %}
-                      </p>
-                    </div>
-                    <!-- Bouton Plan-Cadre -->
-                    <div class="card-footer mt-auto text-center">
-                      <a href="{{ url_for('cours.view_or_add_plan_cadre', cours_id=c.id) }}" class="btn btn-sm btn-info">
-                        Plan-Cadre
-                      </a>
-                    </div>
-                  </div>
-                </div>
-                {% endfor %}
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Ajouter un Nouveau Cours -->
-    <a href="{{ url_for('main.add_cours') }}" class="btn btn-primary mb-4">Ajouter un Cours</a>
+{% block programmes_specific %}
+<div class="container mt-5">
+  <!-- En-tête du Programme -->
+  <div class="d-flex justify-content-between align-items-start">
+    <h2>{{ programme.nom }}</h2>
   </div>
 
-  <!-- Styles personnalisés -->
-  <style>
-    .card-link {
-      display: block;
-      height: 100%;
-      color: inherit;
-    }
-    .card-link:hover {
-      text-decoration: none;
-    }
+  <!-- Statistiques sur le Programme et Fils Conducteurs -->
+  <div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <p><strong>Total d'heures théoriques :</strong> {{ total_heures_theorie }} heures</p>
+      <p><strong>Total d'heures pratiques :</strong> {{ total_heures_laboratoire }} heures</p>
+      <p><strong>Total d'heures de travail à la maison :</strong> {{ total_heures_travail_maison }} heures</p>
+      <p><strong>Total d'unités :</strong> {{ "%.2f"|format(total_unites) }}</p>
+    </div>
+    <div class="small text-muted text-end" style="max-width: 40%; margin-top: 0; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+      <h5 style="flex-basis: 100%;">Fils Conducteurs <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-sm btn-primary">Ajouter</a></h5>
+      <ul class="list-inline mb-0">
+        {% for fil in fil_conducteurs %}
+          <li class="list-inline-item" style="background-color: {{ fil.couleur }}; color: {{ 'white' if fil.couleur else 'black' }}; padding: 0.2rem 0.5rem; border-radius: 0.2rem;">
+            {{ fil.description }}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
 
-    .card {
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      height: 100%;
-      transition: transform 0.2s;
-      padding: 0;
-    }
-    .card:hover {
-      transform: scale(1.02);
-    }
-    .card-header {
-      font-size: 0.9rem;
-      padding: 0.4rem;
-      text-align: center;
-      white-space: normal;
-    }
-    .card-body {
-      padding: 0.4rem;
-      font-size: 0.75rem;
-    }
-    .card-body p {
-      margin-bottom: 0.2rem;
-    }
-    .card-footer {
-      background-color: #f8f9fa;
-      padding: 0.4rem;
-    }
-    .small.text-muted {
-      font-size: 0.8rem;
-    }
-    .list-inline {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-    .list-inline-item {
-      display: inline-block;
-      margin-right: 0.5rem;
-    }
-  </style>
+  <!-- Grille des Cours par Session -->
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <h3 class="mb-0">Cours par session</h3>
+  </div>
 
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th>Session</th>
+          <th>Cours</th>
+        </tr>
+      </thead>
+      <tbody>
+{% for session, cours_list in cours_par_session.items() %}
+<tr>
+  <td>
+    <div class="d-flex flex-column align-items-start">
+      <span class="mb-2">{{ session }}</span>
+      <a href="{{ url_for('plan_de_cours.export_session_plans', programme_id=programme.id, session=session) }}" 
+         class="btn btn-sm btn-outline-primary" 
+         title="Exporter tous les plans de cours de la session {{ session }}">
+        <i class="fas fa-file-export"></i> Exporter tous les plans de cours
+      </a>
+    </div>
+  </td>
+  <td>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6">
+      {% for c in cours_list %}
+              <div class="col mb-3">
+                <div class="card h-100 d-flex flex-column">
+                  <!-- En-tête cliquable -->
+                  <div class="text-decoration-none d-flex align-items-center justify-content-center card-header"
+                       style="background-color: {{ c.fil_couleur if c.fil_conducteur_id else '#f2f2f2' }};
+                              color: {{ 'white' if c.fil_conducteur_id else 'black' }};
+                              min-height: 3rem; text-align: center; word-wrap: break-word; white-space: break-spaces; overflow: hidden;">
+                    <span><strong>{{ c.code }}</strong> - {{ c.nom }}</span>
+                  </div>
+
+                  <div class="card-body p-2 flex-grow-1">
+                    <p><strong>Heures :</strong> {{ c.heures_theorie }} - {{ c.heures_laboratoire }} - {{ c.heures_travail_maison }}</p>
+                    <p><strong>Compétences :</strong>
+                      {% if competencies_codes[c.id] %}
+                        {% for code in competencies_codes[c.id] %}
+                          <a href="{{ url_for('programme.view_competence_by_code', competence_code=code) }}" class="badge bg-primary text-white">{{ code }}</a>
+                        {% endfor %}
+                      {% else %}
+                        <em>Aucune</em>
+                      {% endif %}
+                    </p>
+                    <p><strong>Prérequis :</strong>
+                      {% if prerequisites[c.id] %}
+                        {% for prereq, note in prerequisites[c.id] %}
+                          {{ prereq }} ({{ note }}%)
+                        {% endfor %}
+                      {% else %}
+                        <em>Aucun</em>
+                      {% endif %}
+                    </p>
+                    <p><strong>Co-requis :</strong>
+                      {% if corequisites[c.id] %}
+                        {{ corequisites[c.id]|join(', ') }}
+                      {% else %}
+                        <em>Aucun</em>
+                      {% endif %}
+                    </p>
+                  </div>
+
+                  <!-- Boutons Plan-Cadre et Plan-de-cours -->
+                  <div class="card-footer mt-auto text-center">
+                    <!-- Bouton Plan-Cadre existant -->
+                    <a href="{{ url_for('cours.view_or_add_plan_cadre', cours_id=c.id) }}" class="btn btn-sm btn-info w-100 fs-6 mb-2">
+                      Plan-Cadre
+                    </a>
+                    <!-- Nouveau bouton Plan-de-cours -->
+                    <a href="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=c.id) }}" class="btn btn-sm btn-secondary w-100 fs-6">
+                      Plan de cours
+                    </a>
+                  </div>
+
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Ajouter un Nouveau Cours -->
+  <a href="{{ url_for('main.add_cours') }}" class="btn btn-primary mb-4">Ajouter un Cours</a>
+</div>
+
+<!-- Styles personnalisés -->
+<style>
+  .card-link {
+    display: block;
+    height: 100%;
+    color: inherit;
+  }
+  .card-link:hover {
+    text-decoration: none;
+  }
+
+  .card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    height: 100%;
+    transition: transform 0.2s;
+    padding: 0;
+  }
+  .card:hover {
+    transform: scale(1.02);
+  }
+  .card-header {
+    font-size: 0.9rem;
+    padding: 0.4rem;
+    text-align: center;
+    white-space: normal;
+  }
+  .card-body {
+    padding: 0.4rem;
+    font-size: 0.75rem;
+  }
+  .card-body p {
+    margin-bottom: 0.2rem;
+  }
+  .card-footer {
+    background-color: #f8f9fa;
+    padding: 0.4rem;
+  }
+  .small.text-muted {
+    font-size: 0.8rem;
+  }
+  .list-inline {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .list-inline-item {
+    display: inline-block;
+    margin-right: 0.5rem;
+  }
+</style>
 {% endblock %}
