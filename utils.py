@@ -27,7 +27,6 @@ import base64
 
 DATABASE = 'programme.db'
 
-
 def send_backup_email(app, recipient_email, db_path):
     import os
     import base64
@@ -51,8 +50,8 @@ def send_backup_email(app, recipient_email, db_path):
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-            # ✅ Remplacez run_local_server() par run_console()
-            creds = flow.run_console()
+            # ✅ Utilisation de run_local_server avec open_browser=False
+            creds = flow.run_local_server(port=0, open_browser=False)
 
         # Sauvegarde du token
         with open('token.json', 'w') as token:
@@ -92,6 +91,7 @@ def send_backup_email(app, recipient_email, db_path):
         print("Message envoyé. ID:", sent_message['id'])
     except Exception as e:
         print("Erreur:", e)
+
 
 
 
