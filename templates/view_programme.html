@@ -57,14 +57,14 @@
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6">
       {% for c in cours_list %}
               <div class="col mb-3">
-                <div class="card h-100 d-flex flex-column">
-                  <!-- En-tête cliquable -->
-                  <div class="text-decoration-none d-flex align-items-center justify-content-center card-header"
-                       style="background-color: {{ c.fil_couleur if c.fil_conducteur_id else '#f2f2f2' }};
-                              color: {{ 'white' if c.fil_conducteur_id else 'black' }};
-                              min-height: 3rem; text-align: center; word-wrap: break-word; white-space: break-spaces; overflow: hidden;">
-                    <span><strong>{{ c.code }}</strong> - {{ c.nom }}</span>
-                  </div>
+<div class="card h-100 d-flex flex-column">
+ <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}" 
+    class="text-decoration-none d-flex align-items-center justify-content-center card-header"
+    style="background-color: {{ c.fil_couleur if c.fil_conducteur_id else '#f2f2f2' }};
+           color: {{ 'white' if c.fil_conducteur_id else 'black' }};
+           min-height: 3rem; text-align: center; word-wrap: break-word; white-space: break-spaces; overflow: hidden;">
+   <span><strong>{{ c.code }}</strong> - {{ c.nom }}</span>
+ </a>
 
                   <div class="card-body p-2 flex-grow-1">
                     <p><strong>Heures :</strong> {{ c.heures_theorie }} - {{ c.heures_laboratoire }} - {{ c.heures_travail_maison }}</p>
