@@ -1,6 +1,5 @@
 from flask_login import LoginManager
-from utils import get_db_connection
-from models import User
+from models import db, User
 
 # Configure Flask-Login
 login_manager = LoginManager()
@@ -9,10 +8,9 @@ login_manager.login_view = 'main.login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    conn = get_db_connection()
-    user_row = conn.execute('SELECT * FROM User WHERE id = ?', (user_id,)).fetchone()
-    conn.close()
-    if user_row:
-        # Ici on récupère l'objet via SQLAlchemy, ou on pourrait utiliser: User.query.get(user_id)
-        return User.query.get(user_id)
-    return None
+    """
+    Fonction Flask-Login pour charger l'utilisateur par son ID.
+    Utilise SQLAlchemy au lieu d'une connexion manuelle à SQLite.
+    """
+    # On peut simplement faire :
+    return User.query.get(int(user_id))

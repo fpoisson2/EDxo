@@ -100,6 +100,9 @@ class FilConducteur(db.Model):
     description = db.Column(db.Text, nullable=False)
     couleur = db.Column(db.Text, nullable=True)
 
+    # Relationship back to Cours
+    cours_list = db.relationship("Cours", back_populates="fil_conducteur")
+
     def __repr__(self):
         return f"<FilConducteur {self.description[:20]}>"
 
@@ -557,7 +560,12 @@ class Cours(db.Model):
     heures_theorie = db.Column(db.Integer, nullable=False, default=0)
     heures_laboratoire = db.Column(db.Integer, nullable=False, default=0)
     heures_travail_maison = db.Column(db.Integer, nullable=False, default=0)
-    fil_conducteur_id = db.Column(db.Integer, nullable=True)
+
+    # Add the missing ForeignKey to FilConducteur:
+    fil_conducteur_id = db.Column(db.Integer, db.ForeignKey("FilConducteur.id"), nullable=True)
+
+    # Relationship back to FilConducteur
+    fil_conducteur = db.relationship("FilConducteur", back_populates="cours_list")
 
     programme = db.relationship("Programme", back_populates="cours")
     plan_cadre = db.relationship("PlanCadre", back_populates="cours", uselist=False)
@@ -586,7 +594,7 @@ class GlobalGenerationSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     section = db.Column(db.Text, nullable=False)
     use_ai = db.Column(db.Boolean, nullable=False, server_default="0")
-    text_content = db.Column(db.Numeric, nullable=True)
+    text_content = db.Column(db.Text, nullable=True)
 
     def __repr__(self):
         return f"<GlobalGenerationSettings {self.section}>"
