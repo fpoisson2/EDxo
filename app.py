@@ -4,7 +4,6 @@ from flask_login import current_user
 from flask_ckeditor import CKEditor
 from dotenv import load_dotenv
 import os
-from utils import get_db_connection
 from auth import login_manager
 from routes.cours import cours_bp
 from routes.chat import chat
