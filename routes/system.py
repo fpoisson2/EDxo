@@ -43,33 +43,6 @@ logger = logging.getLogger(__name__)
 
 system_bp = Blueprint('system', __name__)
 
-@system_bp.route('/update_site', methods=['POST'])
-def update_site():
-    """
-    Exécute les commandes pour mettre à jour le site.
-    """
-    try:
-        # IMPORTANT : Adaptez 'cd /chemin/vers/votre/projet' selon votre structure
-        # Les commandes sont enchaînées dans un seul appel bash via shell=True
-        cmd = (
-            "cd /home/fpoisson/edxo-dev && "
-            "/usr/bin/git pull origin && "
-            "./venv/bin/pip install -r requirements.txt && "
-            "./venv/bin/flask db migrate && "
-            "/usr/bin/sudo /usr/bin/systemctl restart edxo-dev"
-        )
-        
-        # L'option shell=True est utilisée pour permettre l'utilisation de 'source'
-        # (qui est un built-in bash).
-        # check=True permet de lever une exception CalledProcessError en cas d'erreur.
-        subprocess.run(cmd, shell=True, check=True)
-
-        return jsonify({"message": "Site mis à jour avec succès."})
-    except subprocess.CalledProcessError as e:
-        print("Erreur lors de la mise à jour : ", e)
-        return jsonify({"message": "Une erreur s'est produite lors de la mise à jour."}), 500
-
-
 @system_bp.route('/save_backup_config', methods=['POST'])
 @roles_required('admin')
 def save_backup_config():
