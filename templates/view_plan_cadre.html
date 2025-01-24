@@ -704,7 +704,7 @@
         </div>
     </form>
 
-    <!-- Gestion des Fichiers (formulaire séparé en dehors du formulaire principal) -->
+        <!-- Gestion des Fichiers (formulaire séparé en dehors du formulaire principal) -->
     <div class="accordion mt-4" id="gestionFichiersAccordion">
         <div class="accordion-item">
             <h2 class="accordion-header" id="headingGestionFichiers">
@@ -716,22 +716,7 @@
                 <div class="accordion-body">
                     <div class="d-flex flex-wrap gap-2 mb-3">
                         <a href="{{ url_for('plan_cadre.export_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary">Exporter en DOCX</a>
-                        <a href="{{ url_for('cours.export_plan_cadre_json', cours_id=cours.id, plan_id=plan.id) }}" class="btn btn-secondary">Exporter en JSON</a>
                     </div>
-                    <hr>
-                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('cours.import_plan_cadre_json', cours_id=cours.id, plan_id=plan.id) }}">
-                        {{ import_form.hidden_tag() }}
-                        <div class="mb-3">
-                            {{ import_form.json_file.label(class="form-label") }}
-                            {{ import_form.json_file(class="form-control") }}
-                            {% for error in import_form.json_file.errors %}
-                                <div class="text-danger">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        <div>
-                            {{ import_form.submit(class="btn btn-success") }}
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>

@@ -1,13 +1,11 @@
 from flask import Blueprint, request, render_template, flash, redirect, url_for
 from flask_login import login_required, current_user
 from constants import SECTIONS  # Importer la liste des sections
-import sqlite3
 from decorator import role_required, roles_required
-from forms import (
-    GlobalGenerationSettingsForm
-)
+from forms import GlobalGenerationSettingsForm
 
-from utils import get_db_connection
+# Importez bien sûr db, User et GlobalGenerationSettings depuis vos modèles
+from models import db, User, GlobalGenerationSettings
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 
@@ -20,15 +18,14 @@ def parametres():
 @roles_required('admin', 'coordo')
 def edit_global_generation_settings():
     form = GlobalGenerationSettingsForm()
-    conn = get_db_connection()
 
     if request.method == 'GET':
-        # Retrieve the current OpenAI key for the logged-in user
-        user_id = current_user.id
-        openai_key_setting = conn.execute('SELECT openai_key FROM User WHERE id = ?', (current_user.id,)).fetchone()
-        form.openai_key.data = openai_key_setting['openai_key'] if openai_key_setting else ''
+        # Récupérer la clé OpenAI de l'utilisateur connecté via SQLAlchemy
+        user = User.query.get(current_user.id)
+        if user:
+            form.openai_key.data = user.openai_key
 
-        # Ensure the form sections match the SECTIONS list length
+        # Vérifier la cohérence entre le formulaire et le nombre de SECTIONS
         current_entries = len(form.sections)
         required_entries = len(SECTIONS)
         if current_entries < required_entries:
@@ -38,41 +35,45 @@ def edit_global_generation_settings():
             for _ in range(current_entries - required_entries):
                 form.sections.pop_entry()
 
-        # Fill the form with the existing settings for each section
-        settings = conn.execute('SELECT * FROM GlobalGenerationSettings').fetchall()
+        # Charger les réglages existants
+        settings = GlobalGenerationSettings.query.all()
+
         for i, section in enumerate(SECTIONS):
-            setting = next((s for s in settings if s['section'] == section), None)
+            setting = next((s for s in settings if s.section == section), None)
             if setting:
-                form.sections[i].use_ai.data = bool(setting['use_ai'])
-                form.sections[i].text_content.data = setting['text_content']
+                form.sections[i].use_ai.data = bool(setting.use_ai)
+                form.sections[i].text_content.data = setting.text_content
             else:
                 form.sections[i].use_ai.data = False
                 form.sections[i].text_content.data = ''
 
     if form.validate_on_submit():
         try:
-            # Save the sections
+            # Mettre à jour (ou créer) les entrées GlobalGenerationSettings
             for i, section in enumerate(SECTIONS):
                 use_ai = form.sections[i].use_ai.data
                 text_content = form.sections[i].text_content.data.strip()
-                existing = conn.execute('SELECT id FROM GlobalGenerationSettings WHERE section = ?', (section,)).fetchone()
-                if existing:
-                    conn.execute('''
-                        UPDATE GlobalGenerationSettings
-                        SET use_ai = ?, text_content = ?
-                        WHERE id = ?
-                    ''', (use_ai, text_content, existing['id']))
+
+                existing_setting = GlobalGenerationSettings.query.filter_by(section=section).first()
+                if existing_setting:
+                    existing_setting.use_ai = use_ai
+                    existing_setting.text_content = text_content
                 else:
-                    conn.execute('''
-                        INSERT INTO GlobalGenerationSettings (section, use_ai, text_content)
-                        VALUES (?, ?, ?)
-                    ''', (section, use_ai, text_content))
-            conn.commit()
+                    new_setting = GlobalGenerationSettings(
+                        section=section,
+                        use_ai=use_ai,
+                        text_content=text_content
+                    )
+                    db.session.add(new_setting)
+
+            db.session.commit()
             flash('Paramètres globaux de génération mis à jour avec succès!', 'success')
             return redirect(url_for('settings.edit_global_generation_settings'))
-        except sqlite3.Error as e:
-            conn.rollback()
+
+        except Exception as e:
+            db.session.rollback()
             flash(f'Erreur lors de la mise à jour des paramètres : {e}', 'danger')
+
     else:
         if request.method == 'POST':
             # Debugging form validation errors
@@ -81,7 +82,6 @@ def edit_global_generation_settings():
                     print(f"Erreurs dans le champ '{field_name}': {field.errors}")
             flash('Validation du formulaire échouée. Veuillez vérifier vos entrées.', 'danger')
 
-    # Prepare the list of sections with their forms
+    # Préparer la liste des sections pour le rendu
     sections_with_forms = list(zip(form.sections, SECTIONS))
-    conn.close()
     return render_template('edit_global_generation_settings.html', form=form, sections_with_forms=sections_with_forms)
