@@ -208,7 +208,7 @@ def send_message():
         return jsonify({'error': 'Message manquant'}), 400
         
     # Vérification des crédits de l'utilisateur
-    user = User.query.get(current_user.id)
+    user = db.session.get(User, current_user.id)
     if user.credits is None:
         user.credits = 0.0
     if user.credits <= 0:
@@ -218,7 +218,7 @@ def send_message():
     print(f"\nMESSAGE REÇU: {message}")
     
     # Vérification de l'utilisateur
-    user = User.query.get(current_user.id)
+    user = db.session.get(User, current_user.id)
     if not user or not user.openai_key:
         return jsonify({'error': 'Clé OpenAI non configurée'}), 400
         
@@ -355,7 +355,7 @@ def send_message():
             
             # Update user's credits
             try:
-                user = User.query.get(current_user.id)
+                user = db.session.get(User, current_user.id)
                 if user.credits is None:
                     user.credits = 0.0
                 user.credits = round(user.credits - total_cost_global, 6)

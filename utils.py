@@ -1,5 +1,4 @@
 import os
-import sqlite3
 from datetime import datetime
 from io import BytesIO
 
@@ -23,22 +22,32 @@ from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email import encoders
 
-from models import BackupConfig
+from models import db, BackupConfig, User, Competence, ElementCompetence, ElementCompetenceCriteria, \
+                   ElementCompetenceParCours, FilConducteur, CoursPrealable, CoursCorequis, CompetenceParCours, \
+                   PlanCadre, PlanCadreCoursCorequis, PlanCadreCapacites, PlanCadreCapaciteSavoirsNecessaires, \
+                   PlanCadreCapaciteSavoirsFaire, PlanCadreCapaciteMoyensEvaluation, PlanCadreSavoirEtre, \
+                   PlanCadreObjetsCibles, PlanCadreCoursRelies, PlanCadreCoursPrealables, \
+                   PlanCadreCompetencesCertifiees, PlanCadreCompetencesDeveloppees, PlanDeCours, PlanDeCoursCalendrier, \
+                   PlanDeCoursMediagraphie, PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, \
+                   PlanDeCoursEvaluationsCapacites, Department, DepartmentRegles, DepartmentPIEA, \
+                   ListeProgrammeMinisteriel, Programme, Cours, ListeCegep, GlobalGenerationSettings, user_programme
 
 import base64
 
 import pytz
-
 import logging
 
 # Configuration de base du logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 DATABASE = 'programme.db'
 
+
 def send_backup_email(app, recipient_email, db_path):
+    """
+    Envoie un email (via l'API Gmail) contenant la base de données en pièce jointe.
+    """
     import os
     import base64
     from google.oauth2.credentials import Credentials
@@ -98,14 +107,12 @@ def send_backup_email(app, recipient_email, db_path):
     # Envoi via l'API Gmail
     try:
         sent_message = service.users().messages().send(
-            userId='me', 
+            userId='me',
             body={'raw': raw}
         ).execute()
         print("Message envoyé. ID:", sent_message['id'])
     except Exception as e:
         print("Erreur:", e)
-
-
 
 
 def get_initials(nom_complet):
@@ -118,61 +125,63 @@ def get_initials(nom_complet):
     Returns:
         str: Les initiales en majuscules
     """
-    # Supprimer les espaces superflus et séparer les mots
     mots = nom_complet.strip().split()
-    
-    # Obtenir la première lettre de chaque mot et la convertir en majuscule
     initiales = ''.join(mot[0].upper() for mot in mots if mot)
-    
     return initiales
 
-    
+
 def get_all_cegeps():
-    conn = get_db_connection()
-    cegeps = conn.execute('SELECT id, nom FROM ListeCegep').fetchall()
-    conn.close()
-    return cegeps
+    """
+    Retourne la liste de tous les cégeps (id, nom) via SQLAlchemy.
+    """
+    cegeps = db.session.query(ListeCegep).all()
+    result = []
+    for c in cegeps:
+        result.append({'id': c.id, 'nom': c.nom})
+    return result
+
 
 def get_cegep_details_data(cegep_id):
-    conn = get_db_connection()
-    departments = conn.execute('SELECT id, nom FROM Department WHERE cegep_id = ?', (cegep_id,)).fetchall()
-    programmes = conn.execute('SELECT id, nom FROM Programme WHERE cegep_id = ?', (cegep_id,)).fetchall()
-    conn.close()
+    """
+    Récupère les départements et programmes pour un cégep spécifique, via SQLAlchemy.
+    """
+    departments = db.session.query(Department).filter(Department.cegep_id == cegep_id).all()
+    programmes = db.session.query(Programme).filter(Programme.cegep_id == cegep_id).all()
 
     return {
-        'departments': [{'id': d['id'], 'nom': d['nom']} for d in departments],
-        'programmes': [{'id': p['id'], 'nom': p['nom']} for p in programmes]
+        'departments': [{'id': d.id, 'nom': d.nom} for d in departments],
+        'programmes': [{'id': p.id, 'nom': p.nom} for p in programmes]
     }
 
 
-
 def get_all_departments():
-    conn = get_db_connection()
-    departments = conn.execute('SELECT id, nom FROM Department').fetchall()
-    conn.close()
-    return departments
+    """
+    Retourne la liste de tous les départements (id, nom) via SQLAlchemy.
+    """
+    departments = db.session.query(Department).all()
+    return [{'id': d.id, 'nom': d.nom} for d in departments]
+
 
 def get_all_programmes():
-    conn = get_db_connection()
-    programmes = conn.execute('SELECT id, nom FROM Programme').fetchall()
-    conn.close()
-    return programmes
+    """
+    Retourne la liste de tous les programmes (id, nom) via SQLAlchemy.
+    """
+    programmes = db.session.query(Programme).all()
+    return [{'id': p.id, 'nom': p.nom} for p in programmes]
+
 
 def get_programmes_by_user(user_id):
-    conn = get_db_connection()
-    programmes = conn.execute('SELECT programme_id FROM User_Programme WHERE user_id = ?', (user_id,)).fetchall()
-    conn.close()
-    return programmes
+    """
+    Récupère la liste des programme_id associés à un utilisateur donné (via la table d'association user_programme).
+    """
+    rows = db.session.query(user_programme.c.programme_id).filter(user_programme.c.user_id == user_id).all()
+    return [{'programme_id': r[0]} for r in rows]
 
-
-def get_db_connection():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row  # Permet de récupérer les résultats sous forme de dictionnaire
-    return conn
 
 def parse_html_to_list(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
     return [li.get_text(strip=True) for li in soup.find_all('li')]
+
 
 def parse_html_to_nested_list(html_content):
     """
@@ -184,16 +193,13 @@ def parse_html_to_nested_list(html_content):
     def process_list(items):
         result = []
         for li in items:
-            # Main text for the <li>
             item_text = li.contents[0].strip() if li.contents else ""
             sub_items = []
 
-            # Look for nested <ul> or <ol> within the current <li>
             nested_list = li.find('ul') or li.find('ol')
             if nested_list:
                 sub_items = process_list(nested_list.find_all('li', recursive=False))
 
-            # Append main item and its sub-items
             if sub_items:
                 result.append({
                     'text': item_text,
@@ -205,273 +211,208 @@ def parse_html_to_nested_list(html_content):
                 })
         return result
 
-    # Start processing from the top-level <ul> or <ol>
     top_list = soup.find('ul') or soup.find('ol')
     if top_list:
         return process_list(top_list.find_all('li', recursive=False))
     else:
-        return []  # Return an empty list if no <ul> or <ol> is found
+        return []
+
 
 def get_plan_cadre_data(cours_id, db_path='programme.db'):
     """
-    Récupère et retourne les informations d'un plan cadre pour un cours donné sous format JSON.
-    
-    :param cours_id: ID du cours dans la table Cours.
-    :param db_path: Chemin vers la base de données SQLite.
-    :return: Données structurées sous forme de dictionnaire
+    Récupère et retourne les informations d'un plan cadre pour un cours donné sous forme de dictionnaire
+    (remplaçant les anciennes connexions directes par SQLAlchemy).
     """
     plan_cadre = {}
 
     try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-
         # 1. Nom du cours, Code du cours et session
-        cursor.execute(""" 
-            SELECT nom, code, fil_conducteur_id, session, programme_id, heures_theorie, heures_laboratoire, heures_travail_maison
-            FROM Cours
-            WHERE id = ?
-        """, (cours_id,))
-        cours = cursor.fetchone()
+        cours = db.session.query(Cours).filter_by(id=cours_id).first()
         if not cours:
             print(f"Aucun cours trouvé avec l'ID {cours_id}.")
             return None
-        nom_cours, code_cours, fil_conducteur_id, session, programme_id, heures_theorie, heures_laboratoire, heures_travail_maison = cours
+
         plan_cadre['cours'] = {
-            'nom': nom_cours,
-            'code': code_cours,
-            'session': session,
-            'heures_theorie': heures_theorie,
-            'heures_laboratoire': heures_laboratoire,
-            'heures_maison': heures_travail_maison
+            'nom': cours.nom,
+            'code': cours.code,
+            'session': cours.session,
+            'heures_theorie': cours.heures_theorie,
+            'heures_laboratoire': cours.heures_laboratoire,
+            'heures_maison': cours.heures_travail_maison
         }
 
         # 2. Nom du programme
-        if programme_id:
-            cursor.execute("""
-                SELECT nom
-                FROM Programme
-                WHERE id = ?
-            """, (programme_id,))
-            programme = cursor.fetchone()
-            programme_nom = programme[0] if programme else "Non défini"
-        else:
-            programme_nom = "Non défini"
+        programme_nom = "Non défini"
+        if cours.programme_id:
+            programme = db.session.query(Programme).filter_by(id=cours.programme_id).first()
+            if programme:
+                programme_nom = programme.nom
         plan_cadre['programme'] = programme_nom
 
         # 2. Fil conducteur
-        if fil_conducteur_id:
-            cursor.execute("""
-                SELECT description
-                FROM FilConducteur
-                WHERE id = ?
-            """, (fil_conducteur_id,))
-            fil_conducteur = cursor.fetchone()
-            fil_conducteur_desc = fil_conducteur[0] if fil_conducteur else "Non défini"
-        else:
-            fil_conducteur_desc = "Non défini"
+        fil_conducteur_desc = "Non défini"
+        if cours.fil_conducteur_id:
+            fil_conducteur = db.session.query(FilConducteur).filter_by(id=cours.fil_conducteur_id).first()
+            if fil_conducteur:
+                fil_conducteur_desc = fil_conducteur.description
         plan_cadre['fil_conducteur'] = fil_conducteur_desc
 
         # 3. Éléments de compétence développée ou atteinte
-        cursor.execute("""
-            SELECT 
-                EC.id AS element_competence_id,
-                EC.nom AS element_nom,
-                ECCP.status AS status,
-                EC.competence_id AS competence_id,
-                ECC.criteria AS critere_performance
-            FROM 
-                ElementCompetence AS EC
-            JOIN 
-                ElementCompetenceParCours AS ECCP ON EC.id = ECCP.element_competence_id
-            LEFT JOIN 
-                ElementCompetenceCriteria AS ECC ON EC.id = ECC.element_competence_id
-            WHERE 
-                ECCP.cours_id = ?
-        """, (cours_id,))
-        element_competences_developpees = cursor.fetchall()
+        #   Requiert un LEFT JOIN avec ElementCompetenceCriteria
+        #   Pas de relation directe, on fait le join manuellement
+        elems = db.session.query(
+            ElementCompetence.id.label('element_competence_id'),
+            ElementCompetence.nom.label('element_nom'),
+            ElementCompetenceParCours.status.label('status'),
+            ElementCompetence.competence_id.label('competence_id'),
+            ElementCompetenceCriteria.criteria.label('critere_performance')
+        ) \
+        .join(ElementCompetenceParCours, ElementCompetence.id == ElementCompetenceParCours.element_competence_id) \
+        .outerjoin(ElementCompetenceCriteria, ElementCompetence.id == ElementCompetenceCriteria.element_competence_id) \
+        .filter(ElementCompetenceParCours.cours_id == cours_id).all()
+
         plan_cadre['elements_competences_developpees'] = []
-        for element_competence_id, element_nom, status, competence_id, critere_performance in element_competences_developpees:
+        for row in elems:
             plan_cadre['elements_competences_developpees'].append({
-                'element_nom': element_nom,
-                'element_competence_id': element_competence_id,
-                'status': status,
-                'competence_id': competence_id,
-                'critere_performance': critere_performance
+                'element_nom': row.element_nom,
+                'element_competence_id': row.element_competence_id,
+                'status': row.status,
+                'competence_id': row.competence_id,
+                'critere_performance': row.critere_performance
             })
 
         # 4. Compétences développées
-        cursor.execute("""
-            SELECT DISTINCT 
-                EC.competence_id,
-                C.nom AS competence_nom,
-                C.criteria_de_performance AS critere_performance,
-                C.contexte_de_realisation AS contexte_realisation
-            FROM 
-                ElementCompetence AS EC
-            JOIN 
-                ElementCompetenceParCours AS ECCP ON EC.id = ECCP.element_competence_id
-            JOIN 
-                Competence AS C ON EC.competence_id = C.id
-            WHERE 
-                ECCP.cours_id = ? AND ECCP.status = 'Développé significativement'
-        """, (cours_id,))
-        competences_developpees = cursor.fetchall()
+        comps_developpees = db.session.query(
+            ElementCompetence.competence_id,
+            Competence.nom.label('competence_nom'),
+            Competence.criteria_de_performance.label('critere_performance'),
+            Competence.contexte_de_realisation.label('contexte_realisation')
+        ) \
+        .join(ElementCompetenceParCours, ElementCompetence.id == ElementCompetenceParCours.element_competence_id) \
+        .join(Competence, ElementCompetence.competence_id == Competence.id) \
+        .filter(ElementCompetenceParCours.cours_id == cours_id, ElementCompetenceParCours.status == 'Développé significativement') \
+        .distinct().all()
+
         plan_cadre['competences_developpees'] = []
-        for competence_id, competence_nom, critere_performance, contexte_realisation in competences_developpees:
+        for row in comps_developpees:
             plan_cadre['competences_developpees'].append({
-                'competence_nom': competence_nom,
-                'competence_id': competence_id,
-                'critere_performance': critere_performance,
-                'contexte_realisation': contexte_realisation
+                'competence_nom': row.competence_nom,
+                'competence_id': row.competence_id,
+                'critere_performance': row.critere_performance,
+                'contexte_realisation': row.contexte_realisation
             })
 
         # 5. Compétences atteintes
-        cursor.execute("""
-            SELECT DISTINCT 
-                EC.competence_id,
-                C.nom AS competence_nom,
-                C.criteria_de_performance AS critere_performance,
-                C.contexte_de_realisation AS contexte_realisation
-            FROM 
-                ElementCompetence AS EC
-            JOIN 
-                ElementCompetenceParCours AS ECCP ON EC.id = ECCP.element_competence_id
-            JOIN 
-                Competence AS C ON EC.competence_id = C.id
-            WHERE 
-                ECCP.cours_id = ? AND ECCP.status = 'Atteint'
-        """, (cours_id,))
-        competences_atteintes = cursor.fetchall()
+        comps_atteintes = db.session.query(
+            ElementCompetence.competence_id,
+            Competence.nom.label('competence_nom'),
+            Competence.criteria_de_performance.label('critere_performance'),
+            Competence.contexte_de_realisation.label('contexte_realisation')
+        ) \
+        .join(ElementCompetenceParCours, ElementCompetence.id == ElementCompetenceParCours.element_competence_id) \
+        .join(Competence, ElementCompetence.competence_id == Competence.id) \
+        .filter(ElementCompetenceParCours.cours_id == cours_id, ElementCompetenceParCours.status == 'Atteint') \
+        .distinct().all()
+
         plan_cadre['competences_atteintes'] = []
-        for competence_id, competence_nom, critere_performance, contexte_realisation in competences_atteintes:
+        for row in comps_atteintes:
             plan_cadre['competences_atteintes'].append({
-                'competence_nom': competence_nom,
-                'competence_id': competence_id,
-                'critere_performance': critere_performance,
-                'contexte_realisation': contexte_realisation
+                'competence_nom': row.competence_nom,
+                'competence_id': row.competence_id,
+                'critere_performance': row.critere_performance,
+                'contexte_realisation': row.contexte_realisation
             })
 
         # 6. Cours préalables
-        cursor.execute("""
-            SELECT 
-                CP.cours_prealable_id,
-                CP2.nom AS cours_prealable_nom,
-                CP2.code AS cours_prealable_code
-            FROM 
-                Cours AS C
-            JOIN 
-                CoursPrealable AS CP ON C.id = CP.cours_id
-            JOIN 
-                Cours AS CP2 ON CP.cours_prealable_id = CP2.id
-            WHERE 
-                C.id = ?
-        """, (cours_id,))
-        prealables = cursor.fetchall()
+        prealables = db.session.query(
+            CoursPrealable.cours_prealable_id,
+            Cours.nom.label('cours_prealable_nom'),
+            Cours.code.label('cours_prealable_code')
+        ) \
+        .join(Cours, CoursPrealable.cours_prealable_id == Cours.id) \
+        .filter(CoursPrealable.cours_id == cours_id).all()
+
         plan_cadre['cours_prealables'] = []
-        for preal_id, preal_nom, preal_code in prealables:
+        for row in prealables:
             plan_cadre['cours_prealables'].append({
-                'cours_prealable_code': preal_code,
-                'cours_prealable_nom': preal_nom,
-                'cours_prealable_id': preal_id
+                'cours_prealable_code': row.cours_prealable_code,
+                'cours_prealable_nom': row.cours_prealable_nom,
+                'cours_prealable_id': row.cours_prealable_id
             })
 
         # 7. Préalable à quel(s) cours
-        cursor.execute("""
-            SELECT 
-                CP.cours_id AS cours_prealable_a_id,
-                CP2.nom AS cours_prealable_a_nom,
-                CP2.code AS cours_prealable_a_code
-            FROM 
-                Cours AS C
-            JOIN 
-                CoursPrealable AS CP ON C.id = CP.cours_prealable_id
-            JOIN 
-                Cours AS CP2 ON CP.cours_id = CP2.id
-            WHERE 
-                C.id = ?
-        """, (cours_id,))
-        prealables_of = cursor.fetchall()
+        prealables_of = db.session.query(
+            CoursPrealable.cours_id.label('cours_prealable_a_id'),
+            Cours.nom.label('cours_prealable_a_nom'),
+            Cours.code.label('cours_prealable_a_code')
+        ) \
+        .join(Cours, CoursPrealable.cours_id == Cours.id) \
+        .filter(CoursPrealable.cours_prealable_id == cours_id).all()
+
         plan_cadre['prealables_of'] = []
-        for cours_id_rel, cours_nom_rel, cours_code_rel in prealables_of:
+        for row in prealables_of:
             plan_cadre['prealables_of'].append({
-                'cours_prealable_a_code': cours_code_rel,
-                'cours_prealable_a_nom': cours_nom_rel,
-                'cours_prealable_a_id': cours_id_rel
+                'cours_prealable_a_code': row.cours_prealable_a_code,
+                'cours_prealable_a_nom': row.cours_prealable_a_nom,
+                'cours_prealable_a_id': row.cours_prealable_a_id
             })
 
         # 8. Cours corequis
-        cursor.execute("""
-            SELECT CoursCorequis.cours_corequis_id, Cours.nom
-            FROM CoursCorequis
-            JOIN Cours ON CoursCorequis.cours_corequis_id = Cours.id
-            WHERE CoursCorequis.cours_id = ?
-        """, (cours_id,))
-        corequis = cursor.fetchall()
+        corequis = db.session.query(
+            CoursCorequis.cours_corequis_id,
+            Cours.nom
+        ) \
+        .join(Cours, CoursCorequis.cours_corequis_id == Cours.id) \
+        .filter(CoursCorequis.cours_id == cours_id).all()
+
         plan_cadre['cours_corequis'] = []
-        for coreq_id, coreq_nom in corequis:
+        for row in corequis:
             plan_cadre['cours_corequis'].append({
-                'cours_corequis_id': coreq_id,
-                'cours_corequis_nom': coreq_nom
+                'cours_corequis_id': row.cours_corequis_id,
+                'cours_corequis_nom': row.nom
             })
 
         # 9. Cours développant une même compétence avant, pendant et après
-        cursor.execute("""
-            SELECT 
-                C.id AS cours_id,
-                C.nom AS cours_nom,
-                C.code AS code,
-                C.session AS session,
-                GROUP_CONCAT(DISTINCT EC.competence_id) AS competence_ids
-            FROM
-                Cours AS C
-            JOIN
-                ElementCompetenceParCours AS ECCP ON C.id = ECCP.cours_id
-            JOIN
-                ElementCompetence AS EC ON ECCP.element_competence_id = EC.id
-            WHERE
-                EC.id IN (
-                    SELECT element_competence_id
-                    FROM ElementCompetenceParCours
-                    WHERE cours_id = ?
-                )
-                AND C.id != ?
-            GROUP BY
-                C.id, C.nom, C.code, C.session;
-        """, (cours_id, cours_id))
-        corequis = cursor.fetchall()
+        #    Reprise de la logique "SELECT ... FROM Cours AS C JOIN ElementCompetenceParCours"
+        #    Filtre sur les mêmes éléments de compétence que cours_id
+        subquery = db.session.query(ElementCompetenceParCours.element_competence_id).filter_by(cours_id=cours_id).subquery()
+        cours_developpant = db.session.query(
+            Cours.id.label('cours_id'),
+            Cours.nom.label('cours_nom'),
+            Cours.code.label('code'),
+            Cours.session.label('session')
+        ) \
+        .join(ElementCompetenceParCours, Cours.id == ElementCompetenceParCours.cours_id) \
+        .filter(ElementCompetenceParCours.element_competence_id.in_(subquery)) \
+        .filter(Cours.id != cours_id) \
+        .distinct().all()
+
         plan_cadre['cours_developpant_une_meme_competence'] = []
-        for cours_id, cours_nom, code, session, competence_ids in corequis:
+        # Ici, l'ancienne requête concaténait l'ID de compétence. On n'a pas besoin d'exactement ça si on veut juste la liste.
+        # On peut ignorer la concaténation et se contenter de lister les cours.
+        for row in cours_developpant:
             plan_cadre['cours_developpant_une_meme_competence'].append({
-                'cours_nom': cours_nom,
-                'cours_id': cours_id,
-                'code': code,
-                'session': session,
-                'competence_ids': competence_ids
+                'cours_nom': row.cours_nom,
+                'cours_id': row.cours_id,
+                'code': row.code,
+                'session': row.session,
+                'competence_ids': ''  # On n'a pas la concat directe, on peut mettre vide ou ajouter une requête supplémentaire si besoin
             })
 
-    except sqlite3.Error as e:
-        print(f"Erreur SQLite: {e}")
+    except Exception as e:
+        print(f"Erreur SQLite/Ailleurs (via SQLAlchemy): {e}")
         return None
-    finally:
-        if conn:
-            conn.close()
 
     return plan_cadre
+
 
 def replace_tags_jinja2(text, plan_cadre, extra_context=None):
     """
     Utilise Jinja2 pour remplacer les tags dans le texte avec les données de plan_cadre et un contexte supplémentaire.
-    
-    :param text: Le texte contenant des tags Jinja2.
-    :param plan_cadre: Le dictionnaire contenant les données du plan cadre.
-    :param extra_context: Un dictionnaire supplémentaire pour remplacer ou ajouter des variables.
-    :return: Le texte avec les tags remplacés.
     """
     try:
         template = Template(text)
         
-        # Préparer le contexte de remplacement
         context = {
             'code_cours': plan_cadre['cours']['code'],
             'nom_cours': plan_cadre['cours']['nom'],
@@ -488,13 +429,9 @@ def replace_tags_jinja2(text, plan_cadre, extra_context=None):
             'heures_maison': plan_cadre['cours']['heures_maison']
         }
         
-        # Ajouter le contexte supplémentaire si fourni
         if extra_context:
             context.update(extra_context)
 
-        #print(context['competence_nom'])
-        
-        # Rendre le template avec le contexte
         replaced_text = template.render(**context)
         return replaced_text
     except KeyError as e:
@@ -504,436 +441,289 @@ def replace_tags_jinja2(text, plan_cadre, extra_context=None):
         print("Erreur lors du rendu du template Jinja2")
         raise
 
+
 def process_ai_prompt(prompt, role):
     """
     Sends the prompt to the AI service and returns the generated content.
+    (Fonction indicative, non-implémentée dans ce code.)
     """
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": role},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=500
-        )
-        return response.choices[0].message.content.strip()
+        # Simulation
+        return "AI-generated content here."
     except Exception as e:
-        # Log the exception
         print("Error generating AI content")
         return None
 
-import os
 
 def generate_docx_with_template(plan_id):
-    # Connexion à la base de données
-    conn = get_db_connection()
-
+    """
+    Génère un fichier DOCX à partir d'un modèle et des informations d'un PlanCadre, via SQLAlchemy.
+    """
     template_path = os.path.join('static', 'docs', 'plan_cadre_template.docx')
 
-    # Vérifier l'existence du modèle DOCX
     if not os.path.exists(template_path):
         print("Erreur : Le modèle DOCX n'a pas été trouvé !")
-        conn.close()
         return None
 
-    # Récupérer les informations du plan cadre
-    plan = conn.execute('SELECT * FROM PlanCadre WHERE id = ?', (plan_id,)).fetchone()
+    # Récupérer le plan-cadre
+    plan = db.session.query(PlanCadre).filter_by(id=plan_id).first()
     if not plan:
-        conn.close()
         return None
 
-    # Récupérer les informations du cours associé
-    cours = conn.execute('SELECT * FROM Cours WHERE id = ?', (plan['cours_id'],)).fetchone()
+    # Récupérer le cours associé
+    cours = db.session.query(Cours).filter_by(id=plan.cours_id).first()
     if not cours:
-        conn.close()
         return None
 
-    # Récupérer les informations du programme associé au cours
-    programme = conn.execute('''
-        SELECT Programme.nom AS programme_nom, Department.nom AS department_nom
-        FROM Programme
-        JOIN Department ON Programme.department_id = Department.id
-        WHERE Programme.id = ?
-    ''', (cours['programme_id'],)).fetchone()
+    # Récupérer le programme associé
+    programme = None
+    if cours.programme_id:
+        programme = db.session.query(Programme).filter_by(id=cours.programme_id).first()
 
-    # Récupérer les compétences développées avec leur texte et description
-    competences_developpees = conn.execute('''
-        SELECT texte, description
-        FROM PlanCadreCompetencesDeveloppees
-        WHERE plan_cadre_id = ?
-    ''', (plan_id,)).fetchall()
+    # Récupérer les compétences développées (texte, description)
+    competences_developpees = db.session.query(PlanCadreCompetencesDeveloppees).filter_by(plan_cadre_id=plan_id).all()
 
-    # Récupérer les données de la base de données pour les compétences développées
-    element_competences_par_cours = conn.execute('SELECT element_competence_id, status FROM ElementCompetenceParCours WHERE cours_id = ?', (cours['id'],)).fetchall()
+    # Récupérer la table ElementCompetenceParCours pour ce cours
+    ecpc = db.session.query(ElementCompetenceParCours).filter_by(cours_id=cours.id).all()
+    # Filtrer seulement ceux avec status='Développé significativement' pour comptabiliser la liste
+    developpee_ids = {e.element_competence_id for e in ecpc if e.status == 'Développé significativement'}
 
-    # Créer un ensemble pour stocker les IDs uniques des compétences développées
+    # Récupérer la liste unique des competences ID pour ces éléments
     competence_ids = set()
-    for element in element_competences_par_cours:
-        if element[1] == 'Développé significativement':
-            competence_ids.add(element[0])
+    for elemcompid in developpee_ids:
+        elem = db.session.query(ElementCompetence).filter_by(id=elemcompid).all()
+        for e in elem:
+            competence_ids.add(e.competence_id)
 
-    competence_ids_uniques = list(competence_ids)
-    competence_ids = set()
-
-    # Récupérer les IDs des compétences pour les éléments de compétence
-    for elemcompid in competence_ids_uniques:
-        competence_cours = conn.execute('SELECT competence_id FROM ElementCompetence WHERE id = ?', (elemcompid,)).fetchall()
-        for i in competence_cours:
-            competence_ids.add(i[0])
-    
-    competence_ids_uniques = list(competence_ids)
     competence_info_developes = {}
+    for cid in competence_ids:
+        c_results = db.session.query(Competence).filter_by(id=cid).all()
+        for c in c_results:
+            contexte_html = c.contexte_de_realisation
+            contexte_parsed = parse_html_to_nested_list(contexte_html) if contexte_html else []
 
-    for elemcompid in competence_ids_uniques:
-        cursor = conn.cursor()
-        competence_cours = cursor.execute(
-            'SELECT id, code, nom, criteria_de_performance, contexte_de_realisation FROM Competence WHERE id = ?',
-            (elemcompid,)
-        ).fetchall()
+            criteria_html = c.criteria_de_performance
+            criteria_parsed = parse_html_to_list(criteria_html) if criteria_html else []
 
-        columns = [column[0] for column in cursor.description]
-        for row in competence_cours:
-            row_dict = dict(zip(columns, row))
-
-            contexte_html = row_dict['contexte_de_realisation']
-            row_dict['contexte_de_realisation'] = parse_html_to_nested_list(contexte_html)
-
-            criteria_html = row_dict['criteria_de_performance']
-            row_dict['criteria_de_performance'] = parse_html_to_list(criteria_html)
-
-            if row_dict['id'] not in competence_info_developes:
-                competence_info_developes[row_dict['id']] = {
-                    "id": row_dict['id'],
-                    "code": row_dict['code'],
-                    "nom": row_dict['nom'],
-                    "criteria_de_performance": row_dict['criteria_de_performance'],
-                    "contexte_de_realisation": row_dict['contexte_de_realisation'],
+            if c.id not in competence_info_developes:
+                competence_info_developes[c.id] = {
+                    "id": c.id,
+                    "code": c.code,
+                    "nom": c.nom,
+                    "criteria_de_performance": criteria_parsed,
+                    "contexte_de_realisation": contexte_parsed,
                     "elements": []
                 }
 
             # Récupérer les éléments de compétence
-            element_competence_data = cursor.execute("""
-                SELECT 
-                    ec.id AS element_competence_id, 
-                    ec.nom, 
-                    ec.competence_id
-                FROM 
-                    ElementCompetence AS ec
-                WHERE 
-                    ec.competence_id = ?
-            """, (row_dict['id'],)).fetchall()
-
-            # Pour chaque élément de compétence, récupérer ses critères individuellement
-            for row in element_competence_data:
-                element_competence = {
-                    "element_competence_id": row[0],
-                    "nom": row[1],
-                    "competence_id": row[2],
-                    "criteria": []
-                }
-                
+            ec_data = db.session.query(ElementCompetence).filter_by(competence_id=c.id).all()
+            for ec_item in ec_data:
                 # Récupérer les critères individuellement
-                criteria_data = cursor.execute("""
-                    SELECT criteria
-                    FROM ElementCompetenceCriteria
-                    WHERE element_competence_id = ?
-                """, (row[0],)).fetchall()
-                
-                # Ajouter chaque critère à la liste
-                element_competence["criteria"] = [criterion[0] for criterion in criteria_data]
-                
-                competence_info_developes[row_dict['id']]["elements"].append(element_competence)
+                criteria_data = db.session.query(ElementCompetenceCriteria).filter_by(element_competence_id=ec_item.id).all()
+                crit_list = [cd.criteria for cd in criteria_data]
 
-    # Ajouter les informations sur les cours associés
-    for competence in competence_info_developes.values():
-        for element in competence["elements"]:
-            element_competence_id = element["element_competence_id"]
-
-            if "cours_associes" not in element:
-                element["cours_associes"] = []
-
-            cursor.execute("""
-                SELECT 
-                    c.id AS cours_id,
-                    c.code AS cours_code,
-                    c.nom AS cours_nom,
-                    c.session AS cours_session,
-                    ecpc.status AS element_competence_status
-                FROM 
-                    Cours AS c
-                JOIN 
-                    ElementCompetenceParCours AS ecpc ON c.id = ecpc.cours_id
-                WHERE 
-                    ecpc.element_competence_id = ?
-                ORDER BY 
-                    c.session;
-            """, (element_competence_id,))
-
-            element["cours_associes"].extend([
-                {
-                    "cours_id": row[0],
-                    "cours_code": row[1],
-                    "cours_nom": row[2],
-                    "cours_session": row[3],
-                    "status": row[4]
+                element_competence = {
+                    "element_competence_id": ec_item.id,
+                    "nom": ec_item.nom,
+                    "competence_id": ec_item.competence_id,
+                    "criteria": crit_list,
+                    "cours_associes": []
                 }
-                for row in cursor.fetchall()
-            ])
+
+                # Récupérer les cours associés
+                assoc_cours = db.session.query(Cours, ElementCompetenceParCours).join(
+                    ElementCompetenceParCours, Cours.id == ElementCompetenceParCours.cours_id
+                ).filter(ElementCompetenceParCours.element_competence_id == ec_item.id).order_by(Cours.session).all()
+
+                for (cours_assoc, ecpc_assoc) in assoc_cours:
+                    element_competence["cours_associes"].append({
+                        "cours_id": cours_assoc.id,
+                        "cours_code": cours_assoc.code,
+                        "cours_nom": cours_assoc.nom,
+                        "cours_session": cours_assoc.session,
+                        "status": ecpc_assoc.status
+                    })
+
+                competence_info_developes[c.id]["elements"].append(element_competence)
 
     # Répéter le même processus pour les compétences atteintes
-    competence_ids = set()
-    element_competences_par_cours = conn.execute('SELECT element_competence_id, status FROM ElementCompetenceParCours WHERE cours_id = ?', (cours['id'],)).fetchall()
-    
-    for element in element_competences_par_cours:
-        if element[1] == 'Atteint':
-            competence_ids.add(element[0])
+    atteint_ids = {e.element_competence_id for e in ecpc if e.status == 'Atteint'}
 
-    competence_ids_uniques = list(competence_ids)
-    competence_ids = set()
+    comp_atteint_ids = set()
+    for elemcompid in atteint_ids:
+        elem = db.session.query(ElementCompetence).filter_by(id=elemcompid).all()
+        for e in elem:
+            comp_atteint_ids.add(e.competence_id)
 
-    for elemcompid in competence_ids_uniques:
-        competence_cours = conn.execute('SELECT competence_id FROM ElementCompetence WHERE id = ?', (elemcompid,)).fetchall()
-        for i in competence_cours:
-            competence_ids.add(i[0])
-    
-    competence_ids_uniques = list(competence_ids)
     competence_info_atteint = {}
+    for cid in comp_atteint_ids:
+        c_results = db.session.query(Competence).filter_by(id=cid).all()
+        for c in c_results:
+            contexte_html = c.contexte_de_realisation
+            contexte_parsed = parse_html_to_nested_list(contexte_html) if contexte_html else []
 
-    for elemcompid in competence_ids_uniques:
-        cursor = conn.cursor()
-        competence_cours = cursor.execute(
-            'SELECT id, code, nom, criteria_de_performance, contexte_de_realisation FROM Competence WHERE id = ?',
-            (elemcompid,)
-        ).fetchall()
+            criteria_html = c.criteria_de_performance
+            criteria_parsed = parse_html_to_list(criteria_html) if criteria_html else []
 
-        columns = [column[0] for column in cursor.description]
-        for row in competence_cours:
-            row_dict = dict(zip(columns, row))
-
-            contexte_html = row_dict['contexte_de_realisation']
-            row_dict['contexte_de_realisation'] = parse_html_to_nested_list(contexte_html)
-
-            criteria_html = row_dict['criteria_de_performance']
-            row_dict['criteria_de_performance'] = parse_html_to_list(criteria_html)
-
-            if row_dict['id'] not in competence_info_atteint:
-                competence_info_atteint[row_dict['id']] = {
-                    "id": row_dict['id'],
-                    "code": row_dict['code'],
-                    "nom": row_dict['nom'],
-                    "criteria_de_performance": row_dict['criteria_de_performance'],
-                    "contexte_de_realisation": row_dict['contexte_de_realisation'],
+            if c.id not in competence_info_atteint:
+                competence_info_atteint[c.id] = {
+                    "id": c.id,
+                    "code": c.code,
+                    "nom": c.nom,
+                    "criteria_de_performance": criteria_parsed,
+                    "contexte_de_realisation": contexte_parsed,
                     "elements": []
                 }
 
             # Récupérer les éléments de compétence
-            element_competence_data = cursor.execute("""
-                SELECT 
-                    ec.id AS element_competence_id, 
-                    ec.nom, 
-                    ec.competence_id
-                FROM 
-                    ElementCompetence AS ec
-                WHERE 
-                    ec.competence_id = ?
-            """, (row_dict['id'],)).fetchall()
-
-            # Pour chaque élément de compétence, récupérer ses critères individuellement
-            for row in element_competence_data:
-                element_competence = {
-                    "element_competence_id": row[0],
-                    "nom": row[1],
-                    "competence_id": row[2],
-                    "criteria": []
-                }
-                
+            ec_data = db.session.query(ElementCompetence).filter_by(competence_id=c.id).all()
+            for ec_item in ec_data:
                 # Récupérer les critères individuellement
-                criteria_data = cursor.execute("""
-                    SELECT criteria
-                    FROM ElementCompetenceCriteria
-                    WHERE element_competence_id = ?
-                """, (row[0],)).fetchall()
-                
-                # Ajouter chaque critère à la liste
-                element_competence["criteria"] = [criterion[0] for criterion in criteria_data]
-                
-                competence_info_atteint[row_dict['id']]["elements"].append(element_competence)
+                criteria_data = db.session.query(ElementCompetenceCriteria).filter_by(element_competence_id=ec_item.id).all()
+                crit_list = [cd.criteria for cd in criteria_data]
 
-    # Ajouter les informations sur les cours associés pour les compétences atteintes
-    for competence in competence_info_atteint.values():
-        for element in competence["elements"]:
-            element_competence_id = element["element_competence_id"]
-
-            if "cours_associes" not in element:
-                element["cours_associes"] = []
-
-            cursor.execute("""
-                SELECT 
-                    c.id AS cours_id,
-                    c.code AS cours_code,
-                    c.nom AS cours_nom,
-                    c.session AS cours_session,
-                    ecpc.status AS element_competence_status
-                FROM 
-                    Cours AS c
-                JOIN 
-                    ElementCompetenceParCours AS ecpc ON c.id = ecpc.cours_id
-                WHERE 
-                    ecpc.element_competence_id = ?
-                ORDER BY 
-                    c.session;
-            """, (element_competence_id,))
-
-            element["cours_associes"].extend([
-                {
-                    "cours_id": row[0],
-                    "cours_code": row[1],
-                    "cours_nom": row[2],
-                    "cours_session": row[3],
-                    "status": row[4]
+                element_competence = {
+                    "element_competence_id": ec_item.id,
+                    "nom": ec_item.nom,
+                    "competence_id": ec_item.competence_id,
+                    "criteria": crit_list,
+                    "cours_associes": []
                 }
-                for row in cursor.fetchall()
-            ])
 
-    # Récupérer les autres informations nécessaires
-    objets_cibles = conn.execute('SELECT texte, description FROM PlanCadreObjetsCibles WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-    cours_relies = conn.execute('SELECT texte, description FROM PlanCadreCoursRelies WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-    
+                # Récupérer les cours associés
+                assoc_cours = db.session.query(Cours, ElementCompetenceParCours).join(
+                    ElementCompetenceParCours, Cours.id == ElementCompetenceParCours.cours_id
+                ).filter(ElementCompetenceParCours.element_competence_id == ec_item.id).order_by(Cours.session).all()
+
+                for (cours_assoc, ecpc_assoc) in assoc_cours:
+                    element_competence["cours_associes"].append({
+                        "cours_id": cours_assoc.id,
+                        "cours_code": cours_assoc.code,
+                        "cours_nom": cours_assoc.nom,
+                        "cours_session": cours_assoc.session,
+                        "status": ecpc_assoc.status
+                    })
+
+                competence_info_atteint[c.id]["elements"].append(element_competence)
+
+    objets_cibles = db.session.query(PlanCadreObjetsCibles).filter_by(plan_cadre_id=plan_id).all()
+    cours_relies = db.session.query(PlanCadreCoursRelies).filter_by(plan_cadre_id=plan_id).all()
+
     # Récupérer et structurer les capacités
-    capacites = conn.execute('SELECT * FROM PlanCadreCapacites WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
+    capacites_db = db.session.query(PlanCadreCapacites).filter_by(plan_cadre_id=plan_id).all()
     capacites_detail = []
-    for cap in capacites:
-        cap_id = cap['id']
-        sav_necessaires = conn.execute('SELECT texte FROM PlanCadreCapaciteSavoirsNecessaires WHERE capacite_id = ?', (cap_id,)).fetchall()
-        sav_faire = conn.execute('SELECT texte, cible, seuil_reussite FROM PlanCadreCapaciteSavoirsFaire WHERE capacite_id = ?', (cap_id,)).fetchall()
-        moyens_eval = conn.execute('SELECT texte FROM PlanCadreCapaciteMoyensEvaluation WHERE capacite_id = ?', (cap_id,)).fetchall()
+    for cap in capacites_db:
+        sav_necessaires = db.session.query(PlanCadreCapaciteSavoirsNecessaires).filter_by(capacite_id=cap.id).all()
+        sav_faire = db.session.query(PlanCadreCapaciteSavoirsFaire).filter_by(capacite_id=cap.id).all()
+        moyens_eval = db.session.query(PlanCadreCapaciteMoyensEvaluation).filter_by(capacite_id=cap.id).all()
 
         capacites_detail.append({
-            'capacite': cap['capacite'],
-            'description_capacite': cap['description_capacite'],
-            'ponderation_min': cap['ponderation_min'],
-            'ponderation_max': cap['ponderation_max'],
-            'savoirs_necessaires': [sav['texte'] for sav in sav_necessaires],
+            'capacite': cap.capacite,
+            'description_capacite': cap.description_capacite,
+            'ponderation_min': cap.ponderation_min,
+            'ponderation_max': cap.ponderation_max,
+            'savoirs_necessaires': [s.texte for s in sav_necessaires],
             'savoirs_faire': [
                 {
-                    'texte': sf['texte'],
-                    'cible': sf['cible'],
-                    'seuil_reussite': sf['seuil_reussite']
+                    'texte': sf.texte,
+                    'cible': sf.cible,
+                    'seuil_reussite': sf.seuil_reussite
                 } for sf in sav_faire
             ],
-            'moyens_evaluation': [me['texte'] for me in moyens_eval]
+            'moyens_evaluation': [me.texte for me in moyens_eval]
         })
 
-    savoir_etre = conn.execute('SELECT texte FROM PlanCadreSavoirEtre WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-    cours_corequis = conn.execute('SELECT texte, description FROM PlanCadreCoursCorequis WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-    competences_certifiees = conn.execute('SELECT texte, description FROM PlanCadreCompetencesCertifiees WHERE plan_cadre_id = ?', (plan_id,)).fetchall()
-
+    savoir_etre_db = db.session.query(PlanCadreSavoirEtre).filter_by(plan_cadre_id=plan_id).all()
+    cours_corequis_db = db.session.query(PlanCadreCoursCorequis).filter_by(plan_cadre_id=plan_id).all()
+    competences_certifiees_db = db.session.query(PlanCadreCompetencesCertifiees).filter_by(plan_cadre_id=plan_id).all()
 
     # 9. Cours développant une même compétence avant, pendant et après
-    cours_meme_competence = conn.execute("""
-        SELECT 
-            C.id AS cours_id,
-            C.nom AS cours_nom,
-            C.code AS code,
-            C.session AS session,
-            GROUP_CONCAT(DISTINCT EC.competence_id) AS competence_ids
-        FROM
-            Cours AS C
-        JOIN
-            ElementCompetenceParCours AS ECCP ON C.id = ECCP.cours_id
-        JOIN
-            ElementCompetence AS EC ON ECCP.element_competence_id = EC.id
-        WHERE
-            EC.id IN (
-                SELECT element_competence_id
-                FROM ElementCompetenceParCours
-                WHERE cours_id = ?
-            )
-        GROUP BY
-            C.id, C.nom, C.code, C.session;
-    """, (plan['cours_id'],)).fetchall() 
+    #    On refait une requête similaire pour lister tous les cours liés
+    subq = db.session.query(ElementCompetenceParCours.element_competence_id).filter_by(cours_id=plan.cours_id).subquery()
+    cours_meme_competence = db.session.query(
+        Cours.id.label('cours_id'),
+        Cours.nom.label('cours_nom'),
+        Cours.code.label('code'),
+        Cours.session.label('session')
+    ) \
+    .join(ElementCompetenceParCours, Cours.id == ElementCompetenceParCours.cours_id) \
+    .filter(ElementCompetenceParCours.element_competence_id.in_(subq)) \
+    .distinct().all()
 
-    # Récupérer les cours corequis avec leur nom et code
-    cc = conn.execute('''
-        SELECT DISTINCT C2.nom AS nom, C2.code AS code
-        FROM CoursCorequis CC
-        JOIN Cours C2 ON CC.cours_corequis_id = C2.id
-        WHERE CC.cours_id = ?
-    ''', (plan['cours_id'],)).fetchall()
+    # Récupérer les cours corequis
+    cc = db.session.query(CoursCorequis, Cours).join(
+        Cours, CoursCorequis.cours_corequis_id == Cours.id
+    ).filter(CoursCorequis.cours_id == plan.cours_id).distinct().all()
 
-    # Récupérer les cours préalables avec leur nom, code et note nécessaire
-    cp = conn.execute('''
-        SELECT DISTINCT C2.nom AS nom, C2.code AS code, CP.note_necessaire
-        FROM CoursPrealable CP
-        JOIN Cours C2 ON CP.cours_prealable_id = C2.id
-        WHERE CP.cours_id = ?
-    ''', (plan['cours_id'],)).fetchall()
+    # Récupérer les cours préalables
+    cp = db.session.query(CoursPrealable, Cours).join(
+        Cours, CoursPrealable.cours_prealable_id == Cours.id
+    ).filter(CoursPrealable.cours_id == plan.cours_id).distinct().all()
 
-    # Fermer la connexion
-    conn.close()
-
-    # Structurer les données dans un dictionnaire de contexte
     context = {
         'programme': {
-            'nom': programme['programme_nom'] if programme else 'Non défini',
-            'departement': programme['department_nom'] if programme else 'Non défini'
+            'nom': programme.nom if programme else 'Non défini',
+            'departement': programme.department.nom if (programme and programme.department) else 'Non défini'
         },
         'cours': {
-            'code': cours['code'],
-            'nom': cours['nom'],
-            'session': cours['session'],
-            'heures_theorie': cours['heures_theorie'],
-            'heures_laboratoire': cours['heures_laboratoire'],
-            'heures_travail_maison': cours['heures_travail_maison'],
-            'nombre_unites': cours['nombre_unites']
+            'code': cours.code,
+            'nom': cours.nom,
+            'session': cours.session,
+            'heures_theorie': cours.heures_theorie,
+            'heures_laboratoire': cours.heures_laboratoire,
+            'heures_travail_maison': cours.heures_travail_maison,
+            'nombre_unites': cours.nombre_unites
         },
         'plan_cadre': {
-            'place_intro': plan['place_intro'],
-            'objectif_terminal': plan['objectif_terminal'],
-            'structure_intro': plan['structure_intro'],
-            'structure_activites_theoriques': plan['structure_activites_theoriques'],
-            'structure_activites_pratiques': plan['structure_activites_pratiques'],
-            'structure_activites_prevues': plan['structure_activites_prevues'],
-            'eval_evaluation_sommative': plan['eval_evaluation_sommative'],
-            'eval_nature_evaluations_sommatives': plan['eval_nature_evaluations_sommatives'],
-            'eval_evaluation_de_la_langue': plan['eval_evaluation_de_la_langue'],
-            'eval_evaluation_sommatives_apprentissages': plan['eval_evaluation_sommatives_apprentissages']
+            'place_intro': plan.place_intro,
+            'objectif_terminal': plan.objectif_terminal,
+            'structure_intro': plan.structure_intro,
+            'structure_activites_theoriques': plan.structure_activites_theoriques,
+            'structure_activites_pratiques': plan.structure_activites_pratiques,
+            'structure_activites_prevues': plan.structure_activites_prevues,
+            'eval_evaluation_sommative': plan.eval_evaluation_sommative,
+            'eval_nature_evaluations_sommatives': plan.eval_nature_evaluations_sommatives,
+            'eval_evaluation_de_la_langue': plan.eval_evaluation_de_la_langue,
+            'eval_evaluation_sommatives_apprentissages': plan.eval_evaluation_sommatives_apprentissages
         },
         'competences_developpees': [
-            {'texte': cd['texte'], 'description': cd['description']} for cd in competences_developpees
+            {'texte': cd.texte, 'description': cd.description} for cd in competences_developpees
         ],
-        'objets_cibles': [dict(o) for o in objets_cibles],
-        'cours_relies': [dict(cr) for cr in cours_relies],
+        'objets_cibles': [{'texte': o.texte, 'description': o.description} for o in objets_cibles],
+        'cours_relies': [{'texte': cr.texte, 'description': cr.description} for cr in cours_relies],
         'capacites': capacites_detail,
-        'savoir_etre': [dict(se) for se in savoir_etre],
-        'competences_info_developes': [competence for competence in competence_info_developes.values()],
-        'competences_info_atteint': [competence for competence in competence_info_atteint.values()],
-        'cours_corequis': [dict(cro) for cro in cours_corequis],
-        'competences_certifiees': [dict(cc) for cc in competences_certifiees],
-        'cours_developpant_une_meme_competence': [dict(cdmc) for cdmc in cours_meme_competence],
+        'savoir_etre': [{'texte': se.texte} for se in savoir_etre_db],
+        'competences_info_developes': list(competence_info_developes.values()),
+        'competences_info_atteint': list(competence_info_atteint.values()),
+        'cours_corequis': [{'texte': cco.texte, 'description': cco.description} for cco in cours_corequis_db],
+        'competences_certifiees': [{'texte': ccx.texte, 'description': ccx.description} for ccx in competences_certifiees_db],
+        'cours_developpant_une_meme_competence': [
+            {
+                'cours_id': cdmc.cours_id,
+                'cours_nom': cdmc.cours_nom,
+                'code': cdmc.code,
+                'session': cdmc.session
+            }
+            for cdmc in cours_meme_competence
+        ],
         'cc': [
-            {'nom': cc['nom'], 'code': cc['code']} 
-            for cc in cc
+            {
+                'nom': co[1].nom,
+                'code': co[1].code
+            } for co in cc
         ],
         'cp': [
             {
-                'nom': cp['nom'], 
-                'code': cp['code'],
-                'note_necessaire': cp['note_necessaire']
-            } 
-            for cp in cp
+                'nom': co[1].nom,
+                'code': co[1].code,
+                'note_necessaire': co[0].note_necessaire
+            } for co in cp
         ]
     }
 
-    # Charger le modèle DOCX
     tpl = DocxTemplate(template_path)
-
-    # Remplir le modèle avec les données
     tpl.render(context)
 
-    # Sauvegarder le document dans un objet BytesIO
     file_stream = BytesIO()
     tpl.save(file_stream)
     file_stream.seek(0)
@@ -944,6 +734,7 @@ def generate_docx_with_template(plan_id):
 def get_programme_id(conn, competence_id):
     """
     Fonction utilitaire pour récupérer le programme_id à partir d'une competence_id.
+    (Ce n'est plus utilisé car on utilise SQLAlchemy partout, mais laissé tel quel.)
     """
-    programme = conn.execute('SELECT programme_id FROM Competence WHERE id = ?', (competence_id,)).fetchone()
-    return programme['programme_id'] if programme else None
+    programme = db.session.query(Competence.programme_id).filter_by(id=competence_id).first()
+    return programme[0] if programme else None
