@@ -1,63 +1,87 @@
-<!-- templates/edit_element_competence.html -->
 {% extends 'base.html' %}
-
 {% block head %}
   {{ super() }}
   {{ ckeditor.load() }}
 {% endblock %}
-
 {% block content %}
   <div class="container mt-5">
     <h2>Modifier Élément de Compétence</h2>
-    <form method="POST">
+    <form method="POST" id="competenceForm">
       {{ form.hidden_tag() }}
-
       <div class="form-group">
-        <label for="{{ form.competence.id }}">{{ form.competence.label }}</label>
+        {{ form.competence.label }}
         {{ form.competence(class="form-control") }}
-        <small class="form-text text-muted">Sélectionnez la compétence associée.</small>
       </div>
-
       <div class="form-group">
-        <label for="{{ form.nom.id }}">{{ form.nom.label }}</label>
+        {{ form.nom.label }}
         {{ form.nom(class="form-control") }}
       </div>
-
-      <!-- Champ Criteres_de_performance : FieldList de TextArea par exemple -->
       <div class="form-group">
         <h4>Critères de Performance</h4>
-        {% for critere_field in form.criteres_de_performance %}
-          <div class="mb-2">
-            {{ critere_field(class="form-control", rows="3") }}
-          </div>
-        {% endfor %}
+        <div id="criteres-container">
+          {% for critere in form.criteres_de_performance %}
+            <div class="critere-group mb-2 d-flex">
+              {{ critere(class="form-control me-2", rows="3") }}
+              <button type="button" class="btn btn-danger delete-critere">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          {% endfor %}
+        </div>
         <button type="button" class="btn btn-secondary" id="add-critere">Ajouter un Critère</button>
       </div>
-
-      <button type="submit" class="btn btn-primary">Mettre à Jour</button>
+      <button type="submit" class="btn btn-primary mt-3">Mettre à Jour</button>
     </form>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      var addCritereButton = document.getElementById('add-critere');
-      var criteresContainer = document.querySelectorAll('[name^="criteres_de_performance-"]');
-      var index = {{ form.criteres_de_performance|length }};
+      const criteresContainer = document.getElementById('criteres-container');
+      const form = document.getElementById('competenceForm');
+      
+      criteresContainer.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-critere')) {
+          const criteresCount = document.querySelectorAll('.critere-group').length;
+          if (criteresCount > 1) {
+            e.target.closest('.critere-group').remove();
+            renumberFields();
+          } else {
+            alert('Au moins un critère est requis.');
+          }
+        }
+      });
 
-      addCritereButton.addEventListener('click', function() {
-        if (index >= 10) {
+      document.getElementById('add-critere').addEventListener('click', function() {
+        const criteresCount = document.querySelectorAll('.critere-group').length;
+        if (criteresCount >= 10) {
           alert('Nombre maximal de critères atteint.');
           return;
         }
 
-        // Créer un nouveau text-area dynamique
-        var newCritere = document.createElement('textarea');
-        newCritere.classList.add('form-control', 'mb-2');
-        newCritere.name = `criteres_de_performance-${index}`;
-        newCritere.rows = 3;
-        addCritereButton.parentElement.insertBefore(newCritere, addCritereButton);
-        index++;
+        const newGroup = document.createElement('div');
+        newGroup.className = 'critere-group mb-2 d-flex';
+        newGroup.innerHTML = `
+          <textarea name="criteres_de_performance-${criteresCount}" 
+                    id="criteres_de_performance_${Date.now()}"
+                    class="form-control me-2" 
+                    rows="3"></textarea>
+          <button type="button" class="btn btn-danger delete-critere">
+            <i class="fas fa-trash"></i>
+          </button>
+        `;
+        criteresContainer.appendChild(newGroup);
       });
+
+      form.addEventListener('submit', function() {
+        renumberFields();
+      });
+
+      function renumberFields() {
+        const textareas = document.querySelectorAll('.critere-group textarea');
+        textareas.forEach((textarea, index) => {
+          textarea.name = `criteres_de_performance-${index}`;
+        });
+      }
     });
   </script>
 {% endblock %}
