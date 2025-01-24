@@ -1096,7 +1096,7 @@ def edit_cours(cours_id):
             conn.commit()
             conn.close()
             flash('Cours mis à jour avec succès!', 'success')
-            return redirect(url_for('programme.view_programme', programme_id=programme_id))
+            return redirect(url_for('cours.view_cours', cours_id=cours_id))
         except sqlite3.Error as e:
             flash(f'Erreur lors de la mise à jour du cours : {e}', 'danger')
             return redirect(url_for('main.edit_cours', cours_id=cours_id))
