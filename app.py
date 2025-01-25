@@ -22,6 +22,7 @@ from flask_migrate import Migrate
 import atexit
 from utilitaires.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 import logging
+from utilitaires.db_tracking import init_change_tracking
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -106,6 +107,7 @@ def create_app():
     db.init_app(app)
     migrate = Migrate(app, db)
     ckeditor = CKEditor(app)
+    init_change_tracking(db)
 
     with app.app_context():
         with db.engine.connect() as connection:
