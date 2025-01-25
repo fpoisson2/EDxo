@@ -80,6 +80,70 @@
         </div>
     </div>
 
+    <div class="card mt-4">
+        <div class="card-header">Journal des Modifications</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped" id="changes-table">
+                    <thead>
+                        <tr>
+                            <th>Date/Heure</th>
+                            <th>Utilisateur</th>
+                            <th>Action</th>
+                            <th>Table</th>
+                            <th>Enregistrement</th>
+                            <th>Modifications</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for change in changes %}
+                        <tr>
+                            <td>{{ change.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>{{ change.username if change.username else 'Système' }}</td>
+                            <td>
+                                {% if change.operation == 'INSERT' %}
+                                    <span class="badge bg-success">Ajout</span>
+                                {% elif change.operation == 'UPDATE' %}
+                                    <span class="badge bg-warning">Modification</span>
+                                {% elif change.operation == 'DELETE' %}
+                                    <span class="badge bg-danger">Suppression</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ change.table_name }}</td>
+                            <td>{{ change.record_id }}</td>
+                            <td>
+                                {% if change.changes %}
+                                    <button class="btn btn-sm btn-info" onclick='showChanges({{ change.changes|tojson }})'>
+                                        Voir détails
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="d-flex justify-content-center mt-3">
+                    <button class="btn btn-secondary" onclick="loadMoreChanges()">Charger plus</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for displaying change details -->
+    <div class="modal fade" id="changesModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Détails des modifications</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <pre id="changesDetail"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <!-- Script pour afficher une horloge en temps réel -->
@@ -114,6 +178,64 @@ function sendManualBackup() {
     .catch(error => {
         alert('Erreur lors de la sauvegarde');
     });
+}
+let page = 1;
+const PAGE_SIZE = 20;
+
+function showChanges(changes) {
+    let content = '';
+    if (changes.old_values && changes.new_values) {
+        content += '<h5>Modifications :</h5><ul>';
+        for (let key in changes.old_values) {
+            content += `<li><strong>${key}</strong>: ${changes.old_values[key]} → ${changes.new_values[key]}</li>`;
+        }
+        content += '</ul>';
+    } else if (changes.new_values) {
+        content += '<h5>Nouvelle Entrée :</h5><pre>' + JSON.stringify(changes.new_values, null, 2) + '</pre>';
+    } else if (changes.deleted_values) {
+        content += '<h5>Entrée Supprimée :</h5><pre>' + JSON.stringify(changes.deleted_values, null, 2) + '</pre>';
+    }
+    document.getElementById('changesDetail').innerHTML = content;
+    new bootstrap.Modal(document.getElementById('changesModal')).show();
+}
+
+function loadMoreChanges() {
+    page++;
+    fetch(`{{ url_for('system.get_changes') }}?page=${page}&size=${PAGE_SIZE}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.changes.length > 0) {
+                const tbody = document.querySelector('#changes-table tbody');
+                data.changes.forEach(change => {
+                    tbody.insertAdjacentHTML('beforeend', `
+                        <tr>
+                            <td>${new Date(change.timestamp).toLocaleString()}</td>
+                            <td>${change.username || 'Système'}</td>
+                            <td>
+                                <span class="badge bg-${change.operation === 'INSERT' ? 'success' : 
+                                                      change.operation === 'UPDATE' ? 'warning' : 
+                                                      'danger'}">
+                                    ${change.operation === 'INSERT' ? 'Ajout' :
+                                      change.operation === 'UPDATE' ? 'Modification' :
+                                      'Suppression'}
+                                </span>
+                            </td>
+                            <td>${change.table_name}</td>
+                            <td>${change.record_id}</td>
+                            <td>
+                                ${change.changes ? 
+                                    `<button class="btn btn-sm btn-info" onclick='showChanges(${JSON.stringify(change.changes)})'>
+                                        Voir détails
+                                    </button>` : 
+                                    ''}
+                            </td>
+                        </tr>
+                    `);
+                });
+            } else {
+                document.querySelector('.btn-secondary').disabled = true;
+            }
+        });
 }
 </script>
 {% endblock %}
