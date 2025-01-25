@@ -12,6 +12,14 @@ user_programme = db.Table('User_Programme',
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
+class DBChange(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    operation = db.Column(db.String(10))
+    table_name = db.Column(db.String(50))
+    record_id = db.Column(db.Integer)
+    changes = db.Column(db.JSON)
 
 class BackupConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
