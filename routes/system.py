@@ -16,8 +16,9 @@ from datetime import datetime
 import os
 from functools import wraps
 from decorator import role_required, roles_required
-from models import db, BackupConfig 
+from models import db, BackupConfig, DBChange, User
 from sqlalchemy import text 
+from sqlalchemy.orm import joinedload
 from forms import BackupConfigForm
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, TimeField, BooleanField
@@ -115,39 +116,56 @@ def get_current_time():
 def management():
     form = BackupConfigForm()
     config = BackupConfig.query.first()
-    
+   
     if config:
         form.email.data = config.email
         form.frequency.data = config.frequency
         form.backup_time.data = datetime.strptime(config.backup_time, '%H:%M').time()
         form.enabled.data = config.enabled
-    
+   
     try:
         jobs = scheduler.get_jobs()
-        next_backup_times = []
-        for job in jobs:
-            if job.id and job.id.endswith('_backup'):
-                next_run_time = 'Non planifié'
-                if job.next_run_time:
-                    next_run_time = job.next_run_time.strftime('%Y-%m-%d %H:%M:%S UTC')
-                    
-                next_backup_times.append({
-                    'id': job.id,
-                    'next_run_time': next_run_time
-                })
-        
+        next_backup_times = [
+            {
+                'id': job.id,
+                'next_run_time': job.next_run_time.strftime('%Y-%m-%d %H:%M:%S UTC') if job.next_run_time else 'Non planifié'
+            }
+            for job in jobs if job.id and job.id.endswith('_backup')
+        ]
         logger.info(f"Jobs trouvés: {next_backup_times}")
     except Exception as e:
         logger.error(f"Erreur lors de la récupération des jobs: {e}")
         next_backup_times = []
-    
+   
+    changes = db.session.query(  
+        DBChange.id,
+        DBChange.timestamp,
+        DBChange.operation,
+        DBChange.table_name,
+        DBChange.record_id,
+        DBChange.changes,
+        User.username
+    ).outerjoin(User, DBChange.user_id == User.id)\
+     .order_by(DBChange.timestamp.desc())\
+     .limit(20)\
+     .all()
+   
+    # Désérialiser 'changes' si c'est une chaîne JSON
+    for change in changes:
+        if isinstance(change.changes, str):
+            try:
+                change.changes = json.loads(change.changes)
+            except json.JSONDecodeError:
+                change.changes = {}
+   
     now_utc = datetime.now(pytz.UTC)
-    
+   
     return render_template(
         'system/management.html',
         form=form,
         next_backup_times=next_backup_times,
-        current_time_utc=now_utc.strftime('%Y-%m-%d %H:%M:%S UTC')
+        current_time_utc=now_utc.strftime('%Y-%m-%d %H:%M:%S UTC'),
+        changes=changes
     )
 
 @system_bp.route('/system/download-db')
@@ -175,3 +193,31 @@ def download_db():
         mimetype='application/x-sqlite3'
     )
 
+@system_bp.route('/get_changes')
+def get_changes():
+    page = request.args.get('page', 1, type=int)
+    size = request.args.get('size', 20, type=int)
+    
+    changes = db.session.query(
+        DBChange.id,
+        DBChange.timestamp,
+        DBChange.operation,
+        DBChange.table_name,
+        DBChange.record_id,
+        DBChange.changes,
+        User.username
+    ).outerjoin(User, DBChange.user_id == User.id)\
+     .order_by(DBChange.timestamp.desc())\
+     .paginate(page=page, per_page=size)
+
+        
+    return jsonify({
+        'changes': [{
+            'timestamp': change.timestamp.isoformat(),
+            'username': change.username if change.username else 'Système',
+            'operation': change.operation,
+            'table_name': change.table_name,
+            'record_id': change.record_id,
+            'changes': change.changes
+        } for change in changes.items]
+    })
