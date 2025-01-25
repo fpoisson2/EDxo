@@ -12,10 +12,12 @@ user_programme = db.Table('User_Programme',
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
+
 class DBChange(db.Model):
+    __tablename__ = "DBChange"
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id', name='fk_dbchange_user_id'))
     operation = db.Column(db.String(10))
     table_name = db.Column(db.String(50))
     record_id = db.Column(db.Integer)
@@ -570,7 +572,7 @@ class Cours(db.Model):
     heures_travail_maison = db.Column(db.Integer, nullable=False, default=0)
 
     # Add the missing ForeignKey to FilConducteur:
-    fil_conducteur_id = db.Column(db.Integer, db.ForeignKey("FilConducteur.id"), nullable=True)
+    fil_conducteur_id = db.Column(db.Integer, db.ForeignKey("FilConducteur.id", name="fk_cours_filconducteur"))
 
     # Relationship back to FilConducteur
     fil_conducteur = db.relationship("FilConducteur", back_populates="cours_list")
