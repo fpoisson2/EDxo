@@ -5,6 +5,15 @@
     <h1>Plan de cours</h1>
     <hr>
 
+    <!-- Export Button - Aligned Right -->
+    <div class="d-flex justify-content-start mb-4">
+        <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" 
+           class="btn btn-success d-flex align-items-center">
+            <i class="bi bi-file-earmark-word me-2"></i>
+            <span>Exporter en .docx</span>
+        </a>
+    </div>
+
     <div class="accordion" id="accordionPlanCours">
         <!-- Accordéon : Informations Générales sur le Cours -->
         <div class="accordion-item">

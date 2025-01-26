@@ -203,8 +203,8 @@ class CompetenceForm(FlaskForm):
     programme = SelectField('Programme', coerce=int, validators=[DataRequired()])
     code = StringField('Code', validators=[DataRequired()])
     nom = StringField('Nom', validators=[DataRequired()])
-    criteria_de_performance = CKEditorField('Critères de Performance', validators=[Optional()])
-    contexte_de_realisation = CKEditorField('Contexte de Réalisation', validators=[Optional()])
+    criteria_de_performance = TextAreaField('Critères de Performance', validators=[Optional()])
+    contexte_de_realisation = TextAreaField('Contexte de Réalisation', validators=[Optional()])
     submit = SubmitField('Ajouter/Mettre à Jour Compétence')
 
 class ElementCompetenceForm(FlaskForm):
