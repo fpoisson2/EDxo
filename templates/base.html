@@ -104,100 +104,105 @@
       {% block content %}{% endblock %}
     </div>
 
+    <!-- Footer avec la version -->
+    <footer class="text-center mt-4">
+      <p>Version: {{ version }}</p>
+    </footer>
+
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 
     <script>
-// Credit balance update module
-class CreditBalanceManager {
-    constructor(options = {}) {
-        this.displayElementId = options.displayElementId || 'credit-display';
-        this.updateInterval = options.updateInterval || 30000; // 30 seconds default
-        this.updateUrl = options.updateUrl || '/get_credit_balance';
-        this.displayElement = null;
-        this.updateTimer = null;
-        this.lastUpdate = null;
-    }
-
-    async initialize() {
-        this.displayElement = document.getElementById(this.displayElementId);
-        if (!this.displayElement) {
-            console.warn('Credit display element not found');
-            return false;
+    // Credit balance update module
+    class CreditBalanceManager {
+        constructor(options = {}) {
+            this.displayElementId = options.displayElementId || 'credit-display';
+            this.updateInterval = options.updateInterval || 30000; // 30 seconds default
+            this.updateUrl = options.updateUrl || '/get_credit_balance';
+            this.displayElement = null;
+            this.updateTimer = null;
+            this.lastUpdate = null;
         }
 
-        // Initial update
-        await this.updateCredit();
-        
-        // Start periodic updates
-        this.startPeriodicUpdates();
-        return true;
-    }
-
-    async updateCredit() {
-        try {
-            const response = await fetch(this.updateUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                },
-                credentials: 'same-origin' // Include cookies for authentication
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            if (data.success && data.credit) {
-                this.displayElement.innerHTML = `<i class="bi bi-coin me-1"></i>$${data.credit}`;
-                this.lastUpdate = new Date();
-                return true;
-            } else {
-                console.warn('Invalid credit data received:', data);
+        async initialize() {
+            this.displayElement = document.getElementById(this.displayElementId);
+            if (!this.displayElement) {
+                console.warn('Credit display element not found');
                 return false;
             }
-        } catch (error) {
-            console.error('Error updating credit balance:', error);
-            // Don't update UI on error to preserve last known good value
-            return false;
+
+            // Initial update
+            await this.updateCredit();
+            
+            // Start periodic updates
+            this.startPeriodicUpdates();
+            return true;
+        }
+
+        async updateCredit() {
+            try {
+                const response = await fetch(this.updateUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'same-origin' // Include cookies for authentication
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success && data.credit) {
+                    this.displayElement.innerHTML = `<i class="bi bi-coin me-1"></i>$${data.credit}`;
+                    this.lastUpdate = new Date();
+                    return true;
+                } else {
+                    console.warn('Invalid credit data received:', data);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error updating credit balance:', error);
+                // Don't update UI on error to preserve last known good value
+                return false;
+            }
+        }
+
+        startPeriodicUpdates() {
+            if (this.updateTimer) {
+                clearInterval(this.updateTimer);
+            }
+
+            this.updateTimer = setInterval(() => {
+                this.updateCredit();
+            }, this.updateInterval);
+        }
+
+        stopUpdates() {
+            if (this.updateTimer) {
+                clearInterval(this.updateTimer);
+                this.updateTimer = null;
+            }
         }
     }
 
-    startPeriodicUpdates() {
-        if (this.updateTimer) {
-            clearInterval(this.updateTimer);
-        }
-
-        this.updateTimer = setInterval(() => {
-            this.updateCredit();
-        }, this.updateInterval);
-    }
-
-    stopUpdates() {
-        if (this.updateTimer) {
-            clearInterval(this.updateTimer);
-            this.updateTimer = null;
-        }
-    }
-}
-
-// Initialize the credit manager when the DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    const creditManager = new CreditBalanceManager({
-        displayElementId: 'credit-display',
-        updateInterval: 1000,
-        updateUrl: '/get_credit_balance'
+    // Initialize the credit manager when the DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        const creditManager = new CreditBalanceManager({
+            displayElementId: 'credit-display',
+            updateInterval: 1000,
+            updateUrl: '/get_credit_balance'
+        });
+        
+        creditManager.initialize().then(success => {
+            if (!success) {
+                console.warn('Failed to initialize credit balance manager');
+            }
+        });
     });
-    
-    creditManager.initialize().then(success => {
-        if (!success) {
-            console.warn('Failed to initialize credit balance manager');
-        }
-    });
-});
     </script>
 
     {% block scripts %}    {% endblock %}

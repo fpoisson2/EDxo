@@ -1,4 +1,4 @@
-from flask import Flask, session
+from flask import Flask, session, jsonify
 import tempfile
 from flask_login import current_user
 from flask_ckeditor import CKEditor
@@ -23,6 +23,7 @@ import atexit
 from utilitaires.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 import logging
 from utilitaires.db_tracking import init_change_tracking
+from version import __version__ 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -46,6 +47,10 @@ def create_app():
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'
     csrf = CSRFProtect(app)
+
+    @app.context_processor
+    def inject_version():
+        return dict(version=__version__)
 
     def checkpoint_wal():
         with app.app_context():
@@ -125,6 +130,11 @@ def create_app():
     app.register_blueprint(plan_de_cours_bp)
     app.register_blueprint(chat)
     app.register_blueprint(system_bp)
+
+    @app.route('/version')
+    def version():
+        return jsonify(version=__version__)
+
 
     atexit.register(shutdown_scheduler)
     atexit.register(checkpoint_wal)
