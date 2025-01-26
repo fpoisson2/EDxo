@@ -1,49 +1,96 @@
-<!-- templates/add_competence.html et templates/edit_competence.html -->
 {% extends 'base.html' %}
 
 {% block head %}
-  {{ super() }}
-  {{ ckeditor.load() }}
+ {{ super() }}
+ {{ ckeditor.load() }}
+ <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.css" />
 {% endblock %}
 
 {% block content %}
-  <h2>{{ 'Ajouter' if 'add' in request.path else 'Modifier' }} Compétence</h2>
-  <form method="POST">
-    {{ form.hidden_tag() }}
-    
-    <!-- Champ Programme -->
-    <div class="form-group">
-      {{ form.programme.label(class="form-label") }}
-      {{ form.programme(class="form-control") }}
-    </div>
-    
-    <!-- Champ Code -->
-    <div class="form-group">
-      {{ form.code.label(class="form-label") }}
-      {{ form.code(class="form-control") }}
-    </div>
-    
-    <!-- Champ Nom -->
-    <div class="form-group">
-      {{ form.nom.label(class="form-label") }}
-      {{ form.nom(class="form-control") }}
-    </div>
-    
-    <!-- Champ Critères de Performance -->
+ <h2>{{ 'Ajouter' if 'add' in request.path else 'Modifier' }} Compétence</h2>
+ <form method="POST">
+   {{ form.hidden_tag() }}
+   
+   <div class="form-group">
+     {{ form.programme.label(class="form-label") }}
+     {{ form.programme(class="form-control") }}
+   </div>
+   
+   <div class="form-group">
+     {{ form.code.label(class="form-label") }}
+     {{ form.code(class="form-control") }}
+   </div>
+   
+   <div class="form-group">
+     {{ form.nom.label(class="form-label") }}
+     {{ form.nom(class="form-control") }}
+   </div>
+   
     <div class="form-group">
       {{ form.criteria_de_performance.label(class="form-label") }}
-      {{ form.criteria_de_performance(class="form-control") }}
-      <small class="form-text text-muted">Utilisez les boutons de l'éditeur pour formater vos critères.</small>
+      {{ form.criteria_de_performance(class="form-control toast-editor") }}
     </div>
     
-    <!-- Champ Contexte de Réalisation -->
     <div class="form-group">
       {{ form.contexte_de_realisation.label(class="form-label") }}
-      {{ form.contexte_de_realisation(class="form-control") }}
-      <small class="form-text text-muted">Utilisez les boutons de l'éditeur pour formater votre contexte.</small>
+      {{ form.contexte_de_realisation(class="form-control toast-editor") }}
     </div>
-    
-    <!-- Bouton Soumettre -->
-    <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
-  </form>
+   
+   <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+ </form>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+
+<script>
+function initToastEditor(textarea) {
+    const container = document.createElement('div');
+    container.classList.add('toastui-editor-container');
+    textarea.parentNode.insertBefore(container, textarea);
+    textarea.style.display = 'none';
+
+    const editor = new toastui.Editor({
+        el: container,
+        initialEditType: 'wysiwyg',
+        initialValue: textarea.value || '',
+        toolbarItems: [
+            ['bold', 'italic'],
+            ['ul', 'indent', 'outdent']
+        ],
+        usageStatistics: false,
+        hideModeSwitch: true,
+        height: 'auto',
+        minHeight: '100px'
+    });
+
+    editor.on('change', () => {
+        textarea.value = editor.getMarkdown();
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('textarea.toast-editor').forEach(function(textarea) {
+        initToastEditor(textarea);
+    });
+});
+
+// Inject dynamic CSS to style Toast UI Editor like Bootstrap inputs
+const style = document.createElement('style');
+style.innerHTML = `
+    .toastui-editor-defaultUI {
+        border: 1px solid #ced4da; /* Matches Bootstrap input border */
+        border-radius: 4px;
+        font-size: 1rem;
+        font-family: inherit;
+    }
+
+    .toastui-editor-contents {
+        font-size: 1rem; /* Match input text size */
+        font-family: inherit;
+        padding: 8px;
+    }
+`;
+document.head.appendChild(style);
+</script>
 {% endblock %}
