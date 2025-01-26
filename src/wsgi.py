@@ -1,5 +1,5 @@
-from app import create_app  # or however you import your Flask app factory
-from utilitaires.scheduler_instance import start_scheduler, schedule_backup
+from app.app import create_app  # or however you import your Flask app factory
+from utils.scheduler_instance import start_scheduler, schedule_backup
 
 app = create_app()
 
