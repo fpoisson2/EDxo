@@ -5,8 +5,8 @@ from datetime import datetime
 import os
 from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 
-from models import BackupConfig
-from utilitaires.backup_utils import send_backup_email, get_scheduler_instance
+from app.models import BackupConfig
+from utils.backup_utils import send_backup_email, get_scheduler_instance
 
 scheduler_lock = threading.Lock()
 scheduler = get_scheduler_instance()

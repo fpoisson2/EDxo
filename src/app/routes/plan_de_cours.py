@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
-from models import (
+from app.models import (
     db, Cours, PlanCadre, PlanCadreCapacites, PlanCadreSavoirEtre,
     PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
     PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, Programme
 )
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from forms import PlanDeCoursForm
+from app.forms import PlanDeCoursForm
 import os
 from docxtpl import DocxTemplate
 import io
@@ -15,7 +15,7 @@ from sqlalchemy import func
 from bs4 import BeautifulSoup
 import zipfile
 from datetime import datetime
-from utils import get_initials
+from utils.utils import get_initials
 
 def parse_markdown_nested(md_text):
     """

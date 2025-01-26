@@ -16,7 +16,7 @@ import bleach
 from docxtpl import DocxTemplate
 from io import BytesIO 
 from werkzeug.security import generate_password_hash, check_password_hash
-from utils import (
+from utils.utils import (
     parse_html_to_list, 
     parse_html_to_nested_list, 
     replace_tags_jinja2,
@@ -28,9 +28,9 @@ from utils import (
     get_cegep_details_data,
     get_programmes_by_user
 )
-from decorator import role_required, roles_required
+from utils.decorator import role_required, roles_required
 import sqlite3  # Kept as is, though no longer used for direct queries
-from forms import (
+from app.forms import (
     ProgrammeForm,
     CompetenceForm,
     ElementCompetenceForm,
@@ -66,7 +66,7 @@ from forms import (
     ProgrammeMinisterielForm,
     CreditManagementForm
 )
-from models import (
+from app.models import (
     db, 
     User, 
     Department, 
