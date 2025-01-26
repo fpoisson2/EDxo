@@ -4,26 +4,26 @@ from flask_login import current_user
 from flask_ckeditor import CKEditor
 from dotenv import load_dotenv
 import os
-from auth import login_manager
-from routes.cours import cours_bp
-from routes.chat import chat
-from routes.programme import programme_bp
-from routes import routes
-from routes.system import system_bp
-from routes.settings import settings_bp
-from routes.plan_cadre import plan_cadre_bp
+from utils.auth import login_manager
+from app.routes.cours import cours_bp
+from app.routes.chat import chat
+from app.routes.programme import programme_bp
+from app.routes import routes
+from app.routes.system import system_bp
+from app.routes.settings import settings_bp
+from app.routes.plan_cadre import plan_cadre_bp
 from flask_wtf import CSRFProtect
 from datetime import timedelta, datetime, timezone
-from routes.plan_de_cours import plan_de_cours_bp
-from models import db, Cours, BackupConfig
+from app.routes.plan_de_cours import plan_de_cours_bp
+from app.models import db, Cours, BackupConfig
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
 from flask_migrate import Migrate
 import atexit
-from utilitaires.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
+from utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 import logging
-from utilitaires.db_tracking import init_change_tracking
-from version import __version__ 
+from utils.db_tracking import init_change_tracking
+from config.version import __version__ 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder="app/templates")
 
 
     worker_id = os.getenv('GUNICORN_WORKER_ID')
@@ -105,9 +105,19 @@ def create_app():
             session.modified = True
         return response
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.abspath('programme.db?timeout=30')}"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['DB_PATH'] = os.path.abspath('programme.db')
+
+
+
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))  # Get the base directory (src/)
+    DB_DIR = os.path.join(BASE_DIR, "database")  # Define the database directory
+    DB_PATH = os.path.join(DB_DIR, "programme.db")  # Define the database file path
+
+    print(f"🔍 Debug: Database Path -> {DB_PATH}")  # Add this line to debug
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_PATH}?timeout=30"
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['DB_PATH'] = DB_PATH
 
     db.init_app(app)
     migrate = Migrate(app, db)

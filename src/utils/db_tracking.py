@@ -47,7 +47,7 @@ def process_changes(mapper, target, operation):
     return changes
 
 def track_changes(mapper, connection, target, operation):
-    from models import db, DBChange
+    from app.models import db, DBChange
     from flask_login import current_user
     
     try:
@@ -80,7 +80,7 @@ def track_delete(mapper, connection, target):
     track_changes(mapper, connection, target, 'DELETE')
 
 def init_change_tracking(db):
-    from models import (
+    from app.models import (
         User, Cours, Programme, PlanCadre, PlanDeCours, Department,
         Competence, ElementCompetence, ElementCompetenceCriteria,
         FilConducteur, CoursPrealable, CoursCorequis,

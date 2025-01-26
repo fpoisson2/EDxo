@@ -15,14 +15,14 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-from utilitaires.scheduler_instance import scheduler, start_scheduler
+from utils.scheduler_instance import scheduler, start_scheduler
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email import encoders
 
-from models import db, BackupConfig, User, Competence, ElementCompetence, ElementCompetenceCriteria, \
+from app.models import db, BackupConfig, User, Competence, ElementCompetence, ElementCompetenceCriteria, \
                    ElementCompetenceParCours, FilConducteur, CoursPrealable, CoursCorequis, CompetenceParCours, \
                    PlanCadre, PlanCadreCoursCorequis, PlanCadreCapacites, PlanCadreCapaciteSavoirsNecessaires, \
                    PlanCadreCapaciteSavoirsFaire, PlanCadreCapaciteMoyensEvaluation, PlanCadreSavoirEtre, \

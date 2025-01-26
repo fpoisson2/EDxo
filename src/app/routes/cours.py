@@ -1,6 +1,6 @@
 # cours.py
 from flask import Blueprint, Flask, render_template, redirect, url_for, request, flash, send_file, jsonify
-from forms import (
+from app.forms import (
     ProgrammeForm,
     CompetenceForm,
     ElementCompetenceForm,
@@ -32,7 +32,7 @@ import json
 import logging
 from collections import defaultdict
 from dotenv import load_dotenv
-from decorator import role_required, roles_required
+from utils.decorator import role_required, roles_required
 from bs4 import BeautifulSoup
 import os
 import markdown
@@ -41,7 +41,7 @@ import bleach
 from docxtpl import DocxTemplate
 from io import BytesIO
 from werkzeug.security import generate_password_hash, check_password_hash
-from utils import (
+from utils.utils import (
     parse_html_to_list,
     parse_html_to_nested_list,
     get_plan_cadre_data,
@@ -54,7 +54,7 @@ from flask_wtf.csrf import validate_csrf, CSRFError
 import traceback
 
 # Import all necessary models and the db session
-from models import (
+from app.models import (
     db,
     User,
     Cours,

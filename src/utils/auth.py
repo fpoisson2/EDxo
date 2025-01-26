@@ -1,5 +1,6 @@
 from flask_login import LoginManager
-from models import db, User
+from app.models import User  # Adjust path if necessary
+
 
 # Configure Flask-Login
 login_manager = LoginManager()

@@ -15,11 +15,11 @@ from flask_login import login_required, current_user
 from datetime import datetime
 import os
 from functools import wraps
-from decorator import role_required, roles_required
-from models import db, BackupConfig, DBChange, User
+from utils.decorator import role_required, roles_required
+from app.models import db, BackupConfig, DBChange, User
 from sqlalchemy import text 
 from sqlalchemy.orm import joinedload
-from forms import BackupConfigForm
+from app.forms import BackupConfigForm
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, TimeField, BooleanField
 from wtforms.validators import DataRequired, Email
@@ -31,8 +31,8 @@ from email import encoders
 from datetime import datetime
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
-from utils import send_backup_email
-from utilitaires.scheduler_instance import scheduler, schedule_backup
+from utils.utils import send_backup_email
+from utils.scheduler_instance import scheduler, schedule_backup
 import pytz
 import subprocess
 
