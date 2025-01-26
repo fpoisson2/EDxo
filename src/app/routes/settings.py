@@ -1,11 +1,11 @@
 from flask import Blueprint, request, render_template, flash, redirect, url_for
 from flask_login import login_required, current_user
-from constants import SECTIONS  # Importer la liste des sections
-from decorator import role_required, roles_required
-from forms import GlobalGenerationSettingsForm
+from config.constants import SECTIONS  # Importer la liste des sections
+from utils.decorator import role_required, roles_required
+from app.forms import GlobalGenerationSettingsForm
 
 # Importez bien sûr db, User et GlobalGenerationSettings depuis vos modèles
-from models import db, User, GlobalGenerationSettings
+from app.models import db, User, GlobalGenerationSettings
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 

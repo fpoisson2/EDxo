@@ -1,7 +1,7 @@
 # plan_de_cours.py
 from flask import Blueprint, render_template, redirect, url_for, request, flash, send_file, jsonify
 from flask_login import login_required, current_user
-from forms import (
+from app.forms import (
     ProgrammeForm,
     CompetenceForm,
     ElementCompetenceForm,
@@ -26,7 +26,7 @@ from forms import (
     GlobalGenerationSettingsForm,
     GenerationSettingForm
 )
-from decorator import roles_required, role_required
+from utils.decorator import roles_required, role_required
 import json
 import logging
 import traceback
@@ -42,7 +42,7 @@ from io import BytesIO
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Import SQLAlchemy DB and models
-from models import (
+from app.models import (
     db,
     User,
     PlanCadre,
@@ -71,7 +71,7 @@ from openai import OpenAIError
 
 from sqlalchemy import text
 
-from utils import (
+from utils.utils import (
     parse_html_to_list,
     parse_html_to_nested_list,
     get_plan_cadre_data,

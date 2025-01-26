@@ -1,6 +1,6 @@
 # programme.py
 from flask import Blueprint, Flask, render_template, redirect, url_for, request, flash, send_file, jsonify
-from forms import (
+from app.forms import (
     ProgrammeForm,
     CompetenceForm,
     ElementCompetenceForm,
@@ -33,7 +33,7 @@ import logging
 from collections import defaultdict
 from openai import OpenAI
 from openai import OpenAIError
-from decorator import role_required, roles_required
+from utils.decorator import role_required, roles_required
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import os
@@ -45,7 +45,7 @@ from io import BytesIO
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Utilities
-from utils import (
+from utils.utils import (
     parse_html_to_list,
     parse_html_to_nested_list,
     get_plan_cadre_data,
@@ -55,7 +55,7 @@ from utils import (
 )
 
 # Import SQLAlchemy models
-from models import (
+from app.models import (
     db,
     User,
     Programme,
@@ -70,7 +70,7 @@ from models import (
 )
 
 # Example of another blueprint import (unused here, just as in your snippet)
-from routes.plan_de_cours import plan_de_cours_bp
+from app.routes.plan_de_cours import plan_de_cours_bp
 
 
 programme_bp = Blueprint('programme', __name__, url_prefix='/programme')
