@@ -97,7 +97,7 @@
                     </thead>
                     <tbody>
                         {% for change in changes %}
-                        <tr>
+                        <tr> 
                             <td>{{ change.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                             <td>{{ change.username if change.username else 'Système' }}</td>
                             <td>
