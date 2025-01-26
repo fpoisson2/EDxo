@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify, current_app, Response, stream_with_context, session
 from flask_login import login_required, current_user
 from openai import OpenAI
-from forms import ChatForm
-from models import User, PlanCadre, db, ChatHistory
+from app.forms import ChatForm
+from app.models import User, PlanCadre, db, ChatHistory
 import json
 import tiktoken
 
