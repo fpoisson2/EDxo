@@ -20,7 +20,7 @@ from utils.utils import get_initials, get_programme_id_for_cours, is_teacher_in_
 def parse_markdown_nested(md_text):
     """
     Converts Markdown text into a nested list of dictionaries where bullet points
-    are treated as children of their preceding paragraph.
+    are treat ed as children of their preceding paragraph.
     Each dictionary has 'text' and 'children' keys.
     
     Example input:
