@@ -13,6 +13,37 @@ user_programme = db.Table('User_Programme',
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
+class EvaluationSavoirFaire(db.Model):
+    __tablename__ = 'evaluation_savoirfaire'
+    
+    evaluation_id = db.Column(db.Integer, 
+                            db.ForeignKey('PlanDeCoursEvaluations.id', 
+                                        name='fk_evaluation_savoirfaire_evaluation'))
+    capacite_id = db.Column(db.Integer, 
+                          db.ForeignKey('PlanCadreCapacites.id',
+                                      name='fk_evaluation_savoirfaire_capacite'))
+    savoir_faire_id = db.Column(db.Integer, 
+                               db.ForeignKey('PlanCadreCapaciteSavoirsFaire.id',
+                                           name='fk_evaluation_savoirfaire_savoirfaire'))
+    selected = db.Column(db.Boolean, default=True)
+    
+    __table_args__ = (
+        db.PrimaryKeyConstraint('evaluation_id', 'savoir_faire_id', 
+                              name='pk_evaluation_savoirfaire'),
+        # Retirer toute autre contrainte sur capacite_id
+    )
+    
+    evaluation = db.relationship('PlanDeCoursEvaluations', 
+                               backref=db.backref('savoir_faire_associations'),
+                               foreign_keys=[evaluation_id])
+    capacite = db.relationship('PlanCadreCapacites',
+                             foreign_keys=[capacite_id])
+    savoir_faire = db.relationship('PlanCadreCapaciteSavoirsFaire',
+                                 foreign_keys=[savoir_faire_id])
+
+    def __repr__(self):
+        return f"<EvaluationSavoirFaire evaluation_id={self.evaluation_id}>"
+
 
 class DBChange(db.Model):
     __tablename__ = "DBChange"
@@ -46,11 +77,6 @@ class User(UserMixin, db.Model):
     credits = db.Column(db.Float, nullable=False, default=0.0)
     email = db.Column(db.String(120), nullable=True)
 
-    def set_password(self, password):
-        self.password = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password, password)
 
     __table_args__ = (
         UniqueConstraint('email', name='uq_user_email'),  # ✅ Explicit constraint name

@@ -1,0 +1,15 @@
+<!-- templates/evaluation/select_evaluation.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Sélectionnez une Évaluation pour le Plan {{ plan.id }}</h2>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      {{ form.evaluation.label }}
+      {{ form.evaluation(class="form-control") }}
+    </div>
+    <button type="submit" name="submit_evaluation" class="btn btn-primary">{{ form.submit_evaluation.label }}</button>
+  </form>
+{% endblock %}
