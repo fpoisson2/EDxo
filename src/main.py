@@ -11,6 +11,7 @@ from app.routes.programme import programme_bp
 from app.routes import routes
 from app.routes.system import system_bp
 from app.routes.settings import settings_bp
+from app.routes.evaluation import evaluation_bp
 from app.routes.plan_cadre import plan_cadre_bp
 from flask_wtf import CSRFProtect
 from datetime import timedelta, datetime, timezone
@@ -168,6 +169,7 @@ def create_app():
     app.register_blueprint(plan_de_cours_bp)
     app.register_blueprint(chat)
     app.register_blueprint(system_bp)
+    app.register_blueprint(evaluation_bp)
 
     @app.route('/version')
     def version():
