@@ -1,8 +1,7 @@
 from flask_login import LoginManager
-from app.models import User  # Adjust path if necessary
+from flask import current_app
+from app.models import User, db
 
-
-# Configure Flask-Login
 login_manager = LoginManager()
 login_manager.login_message = "Veuillez vous connecter pour accéder à cette page."
 login_manager.login_view = 'main.login'
@@ -11,7 +10,6 @@ login_manager.login_view = 'main.login'
 def load_user(user_id):
     """
     Fonction Flask-Login pour charger l'utilisateur par son ID.
-    Utilise SQLAlchemy au lieu d'une connexion manuelle à SQLite.
+    Utilise la nouvelle méthode Session.get() de SQLAlchemy 2.0.
     """
-    # On peut simplement faire :
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
