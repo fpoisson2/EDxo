@@ -3,10 +3,12 @@
 from app.models import User, Programme, Cours, PlanCadre, PlanDeCours, Department, PlanCadreCapacites
 from flask import url_for
 from flask_login import login_user
-from app.models import User, Programme, Cours, PlanCadre, PlanDeCours, Department, PlanCadreCapacites
+from app.models import User, Programme, Cours, PlanCadre, PlanDeCours, Department, PlanCadreCapacites, Programme
 from flask import url_for
 import re
 from bs4 import BeautifulSoup
+
+
 
 import logging
 
@@ -387,3 +389,43 @@ def test_plan_cours_admin_permission_always_allowed(client, test_db):
         assert response.is_json
         response_data = response.get_json()
         assert response_data['success'] is True
+
+def test_redirect_to_available_programme(client, login_user_without_programme, test_app, test_db):
+    """Tester si un utilisateur sans programme est redirigé vers un programme disponible."""
+    # Store programme_id outside the context
+    programme_id = None
+    
+    with test_app.app_context():
+        # Create department first
+        department = Department(nom="Test Department")
+        test_db.session.add(department)
+        test_db.session.commit()
+
+        # Then create programme with department_id
+        programme = Programme(
+            nom="Programme Disponible",
+            department_id=department.id
+        )
+        test_db.session.add(programme)
+        test_db.session.commit()
+        
+        # Store the ID
+        programme_id = programme.id
+
+    response = client.get('/')
+    assert response.status_code == 302
+    expected_path = f'/programme/{programme_id}'
+    assert response.location == expected_path
+
+def test_redirect_to_user_programme(client, login_user):
+    """Tester si un utilisateur avec un programme est redirigé vers celui-ci."""
+    response = client.get('/')
+    assert response.status_code == 302
+    expected_path = f'/programme/{login_user.programmes[0].id}'
+    assert response.location == expected_path
+
+def test_redirect_to_add_programme(client, login_user_without_programme, test_app):
+    """Tester si un utilisateur sans programme et sans programme dispo est redirigé vers l'ajout de programme."""
+    response = client.get('/')
+    assert response.status_code == 302
+    assert response.location == '/add_programme'

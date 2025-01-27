@@ -467,16 +467,25 @@ def change_password():
 @main.route('/')
 @login_required
 def index():
-    # Sélectionner tous les programmes
-    programmes = Programme.query.all()
-    
-    if programmes:
-        # Sélectionner le premier programme comme défaut
-        default_programme_id = programmes[0].id
-        return redirect(url_for('programme.view_programme', programme_id=default_programme_id))
+    # Récupérer l'utilisateur connecté
+    user = current_user
+
+    # Vérifier si l'utilisateur est associé à un programme
+    if user.programmes:
+        default_programme_id = user.programmes[0].id
     else:
-        flash('Aucun programme trouvé. Veuillez en ajouter un.', 'warning')
-        return redirect(url_for('main.add_programme'))
+        # Récupérer tous les programmes disponibles
+        programmes = Programme.query.all()
+
+        if programmes:
+            # Sélectionner le premier programme disponible
+            default_programme_id = programmes[0].id
+        else:
+            flash("Aucun programme disponible. Veuillez en ajouter un.", "warning")
+            return redirect(url_for('main.add_programme'))
+
+    return redirect(url_for('programme.view_programme', programme_id=default_programme_id))
+
 
 @main.route('/add_programme', methods=('GET', 'POST'))
 @role_required('admin')

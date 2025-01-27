@@ -74,7 +74,7 @@ def is_teacher_in_programme(user_id, programme_id):
 
 def get_programme_id_for_cours(cours_id):
     """Get the programme ID associated with a course."""
-    cours = Cours.query.get(cours_id)
+    cours = db.session.get(Cours, cours_id)
     return cours.programme_id if cours else None
 
 def is_coordo_for_programme(user_id, programme_id):
