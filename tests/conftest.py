@@ -8,10 +8,13 @@ os.environ['TESTING'] = 'True'
 from main import create_app, db
 from app.routes.cours import cours_bp
 from app.routes.routes import main as main_bp
+from app.routes.plan_de_cours import plan_de_cours_bp
+
 from utils.auth import login_manager  # Importer login_manager
 
 class TestConfig:
     TESTING = True
+    WTF_CSRF_ENABLED = False  # Disable CSRF for testing
     SERVER_NAME = 'localhost.localdomain'
     APPLICATION_ROOT = '/'
     PREFERRED_URL_SCHEME = 'http'
@@ -27,6 +30,7 @@ def test_app():
     login_manager.init_app(app)
     app.register_blueprint(cours_bp)  # Explicitement enregistrer le blueprint
     app.register_blueprint(main_bp)
+    app.register_blueprint(plan_de_cours_bp)
     db.init_app(app)
     return app
 
@@ -41,3 +45,12 @@ def test_db(test_app):
 @pytest.fixture(scope='function')
 def client(test_app):
     return test_app.test_client()
+
+@pytest.fixture
+def login_user_helper(client, test_db):
+    """Helper to log in a user."""
+    def _login(user):
+        with client.session_transaction() as sess:
+            sess['user_id'] = user.id
+            sess['_fresh'] = True
+    return _login
