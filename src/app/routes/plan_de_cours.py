@@ -85,7 +85,7 @@ plan_de_cours_bp = Blueprint("plan_de_cours", __name__, template_folder="templat
 @login_required
 def view_plan_de_cours(cours_id, session=None):
     # 1. Récupération du Cours
-    cours = Cours.query.get(cours_id)
+    cours = db.session.get(Cours, cours_id)
     if not cours:
         abort(404, description="Cours non trouvé.")
 
