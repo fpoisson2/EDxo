@@ -15,7 +15,7 @@ from sqlalchemy import func
 from bs4 import BeautifulSoup
 import zipfile
 from datetime import datetime
-from utils.utils import get_initials
+from utils.utils import get_initials, get_programme_id_for_cours, is_teacher_in_programme
 
 def parse_markdown_nested(md_text):
     """
@@ -96,7 +96,7 @@ def view_plan_de_cours(cours_id, session=None):
 
     if not plan_cadre:
         flash("Aucun PlanCadre associé à ce cours.", "warning")
-        return redirect(url_for('main.view_programme', programme_id=cours.programme_id))
+        return redirect(url_for('programme.view_programme', programme_id=cours.programme_id))
 
     # 3. Détermination du PlanDeCours à utiliser
     if session:
@@ -194,6 +194,14 @@ def view_plan_de_cours(cours_id, session=None):
 
     # 5. Traitement du POST (sauvegarde)
     if request.method == "POST":
+        programme_id = get_programme_id_for_cours(cours_id)
+        if current_user.role not in ['admin', 'coordo']:
+            # Si l'utilisateur est enseignant, vérifier l'association avec le programme
+            if current_user.role == 'professeur':
+                if not is_teacher_in_programme(current_user.id, programme_id):
+                    abort(403, description="Accès interdit aux plans de cours de ce programme.")
+            else:
+                abort(403, description="Rôle utilisateur non autorisé.")
         # Vérifier si c'est une requête AJAX
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         
@@ -543,7 +551,7 @@ def export_docx(cours_id, session):
 
     if not plan_cadre:
         flash("Aucun PlanCadre associé à ce cours.", "warning")
-        return redirect(url_for('main.view_programme', programme_id=cours.programme_id))
+        return redirect(url_for('programme.view_programme', programme_id=cours.programme_id))
 
     # 3. Récupérer le PlanDeCours correspondant à la session demandée
     plan_de_cours = PlanDeCours.query.filter_by(cours_id=cours.id, session=session).first()
