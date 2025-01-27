@@ -121,14 +121,12 @@ def configure_grid(evaluation_id):
 
     form = EvaluationGridForm()
 
-    # Prepare grouped data for the template - now tracking savoir_faire origins
     grouped_cf = defaultdict(dict)
     for eval_cap in eval_capacites:
         if eval_cap.capacite and eval_cap.capacite.capacite:
             capacite_nom = eval_cap.capacite.capacite
             capacite_id = eval_cap.capacite.id
             for sf in eval_cap.capacite.savoirs_faire:
-                # On utilise un dictionnaire simple au lieu d'un defaultdict imbriqué
                 if sf.id not in grouped_cf[capacite_nom]:
                     grouped_cf[capacite_nom][sf.id] = {
                         'texte': sf.texte,
@@ -138,14 +136,8 @@ def configure_grid(evaluation_id):
                         'seuil_reussite': sf.seuil_reussite
                     }
 
-    selected_savoirs_faire = [
-        assoc for assoc in EvaluationSavoirFaire.query.filter_by(evaluation_id=evaluation_id, selected=True).all()
-    ]
-
     if request.method == 'GET':
         form.evaluations.entries = []
-        
-        # Fetch existing associations
         existing_assocs = EvaluationSavoirFaire.query.filter_by(evaluation_id=evaluation_id).all()
         existing_sf = {(assoc.savoir_faire_id, assoc.capacite_id) for assoc in existing_assocs}
 
@@ -155,13 +147,11 @@ def configure_grid(evaluation_id):
             'savoir_faire': []
         }
 
-        # Now we'll only add each savoir-faire once with its correct capacite
-        processed_sf = set()  # Track which savoir_faire we've already processed
+        processed_sf = set()
         for capacite_nom, savoirs_faire in grouped_cf.items():
             for sf_id, sf_data in savoirs_faire.items():
-                if sf_id not in processed_sf:  # Only process each savoir-faire once
+                if sf_id not in processed_sf:
                     is_selected = (sf_id, sf_data['capacite_id']) in existing_sf
-                    
                     savoir_faire_data = {
                         'capacite_id': str(sf_data['capacite_id']),
                         'capacite_nom': capacite_nom,
@@ -181,18 +171,16 @@ def configure_grid(evaluation_id):
             eval_form = form.evaluations[0]
             eval_id = eval_form.evaluation_id.data
 
-            # Clear existing associations
             EvaluationSavoirFaire.query.filter_by(evaluation_id=eval_id).delete()
 
-            # Track processed savoir-faire to avoid duplicates
             sf_processed = set()
+
+            selected_savoirs_faire = []
 
             for sf_form in eval_form.savoir_faire:
                 if sf_form.selected.data:
                     savoir_faire_id = int(sf_form.savoir_faire_id.data)
                     capacite_id = int(sf_form.capacite_id.data)
-                    
-                    # Create unique key for deduplication
                     sf_key = (savoir_faire_id, capacite_id)
                     if sf_key in sf_processed:
                         continue
@@ -205,6 +193,7 @@ def configure_grid(evaluation_id):
                     )
                     db.session.add(new_sf_assoc)
                     sf_processed.add(sf_key)
+                    selected_savoirs_faire.append(new_sf_assoc)
 
             db.session.commit()
             flash('Grille d\'évaluation enregistrée avec succès.', 'success')
@@ -212,7 +201,6 @@ def configure_grid(evaluation_id):
                 flash('Veuillez sélectionner au moins un savoir-faire avant de configurer la grille.', 'warning')
                 return redirect(url_for('evaluation.select_evaluation', plan_id=plan_id))
             return redirect(url_for('evaluation.configure_six_level_grid', evaluation_id=evaluation_id))
-
 
         except Exception as e:
             db.session.rollback()
