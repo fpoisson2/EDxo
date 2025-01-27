@@ -6,9 +6,10 @@ from flask import (
     redirect, 
     url_for, 
     flash, 
-    request
+    request,
+    jsonify
 )
-from flask_login import login_required
+from flask_login import login_required, current_user
 from functools import wraps
 from app.models import (
     db, 
@@ -34,6 +35,25 @@ from app.forms import (
 from utils.decorator import roles_required
 
 from collections import defaultdict
+
+from pydantic import BaseModel
+from typing import Optional
+import json
+
+from openai import OpenAI
+from openai import OpenAIError
+
+
+class AISixLevelGridResponse(BaseModel):
+    """
+    Représente la réponse structurée d'OpenAI pour une grille à six niveaux.
+    """
+    level1_description: Optional[str] = None
+    level2_description: Optional[str] = None
+    level3_description: Optional[str] = None
+    level4_description: Optional[str] = None
+    level5_description: Optional[str] = None
+    level6_description: Optional[str] = None
 
 evaluation_bp = Blueprint('evaluation', __name__, url_prefix='/evaluation')
 
@@ -288,3 +308,50 @@ def configure_six_level_grid(evaluation_id):
         form=form,
         evaluation=evaluation
     )
+
+@evaluation_bp.route('/generate_six_level_grid', methods=['POST'])
+@admin_required
+def generate_six_level_grid():
+    """
+    Génère automatiquement la grille à six niveaux en appelant OpenAI avec un format structuré.
+    """
+    data = request.get_json()
+    savoir_faire = data.get('savoir_faire', '')
+    capacite = data.get('capacite', '')
+
+    if not savoir_faire or not capacite:
+        return jsonify({'error': 'Savoir-faire et capacité requis'}), 400
+
+    schema_json = json.dumps(AISixLevelGridResponse.model_json_schema(), indent=4, ensure_ascii=False)
+
+    prompt = (
+        f"Tu es un expert en évaluation pédagogique. "
+        f"Crée une grille d'évaluation à six niveaux pour le savoir-faire '{savoir_faire}' associé à la capacité '{capacite}'. "
+        f"Chaque niveau doit être progressif et bien défini.\n\n"
+        f"Retourne un JSON strictement conforme à ce schéma :\n{schema_json}"
+    )
+
+    try:
+        client = OpenAI(api_key=current_user.openai_key)
+
+        response = client.beta.chat.completions.parse(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            response_format=AISixLevelGridResponse,
+        )
+
+        structured_data = response.choices[0].message.parsed
+
+        print(type(structured_data))
+
+
+        print(structured_data)
+
+
+        return jsonify(structured_data.model_dump())  # Convertir en dict JSON
+
+
+    except OpenAIError as e:
+        return jsonify({'error': f'Erreur API OpenAI: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': f'Erreur interne: {str(e)}'}), 500
