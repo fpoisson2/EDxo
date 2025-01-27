@@ -53,6 +53,8 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from flask_wtf.csrf import validate_csrf, CSRFError
 import traceback
 
+from utils.utils import get_programme_id_for_cours, is_coordo_for_programme
+
 # Import all necessary models and the db session
 from app.models import (
     db,
@@ -356,11 +358,22 @@ def view_plan_cadre(cours_id, plan_id):
 
     # POST -> Mise à jour du plan-cadre
     elif request.method == 'POST':
-        # -- Contrôle du rôle ------------------------------------------
-        if not (current_user.role == 'admin' or current_user.role == 'coordo'):
-            flash("Vous n'avez pas l'autorisation de modifier ce plan-cadre.", 'danger')
+        if current_user.role == 'admin':
+            pass  # Admin can edit all plans
+        elif current_user.role == 'coordo':
+            programme_id = get_programme_id_for_cours(cours_id)
+            if not programme_id or not is_coordo_for_programme(current_user.id, programme_id):
+                message = "Vous n'avez pas l'autorisation de modifier ce plan-cadre car vous n'êtes pas coordonnateur de ce programme."
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({'success': False, 'message': message}), 403
+                flash(message, 'danger')
+                return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
+        else:
+            message = "Vous n'avez pas l'autorisation de modifier ce plan-cadre."
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'message': message}), 403
+            flash(message, 'danger')
             return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
-        # -------------------------------------------------------------
 
         form_submitted = PlanCadreForm(request.form)
         if form_submitted.validate_on_submit():
