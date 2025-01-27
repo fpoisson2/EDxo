@@ -17,7 +17,7 @@ from googleapiclient.discovery import build
 
 from utils.scheduler_instance import scheduler, start_scheduler
 
-from app.models import User, Cours
+from app.models import User, Cours, Programme
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -45,6 +45,33 @@ logger = logging.getLogger(__name__)
 
 DATABASE = 'programme.db'
 
+def is_teacher_in_programme(user_id, programme_id):
+    """
+    Vérifie si un enseignant est associé à un programme donné.
+    
+    Args:
+        user_id (int): ID de l'utilisateur
+        programme_id (int): ID du programme
+        
+    Returns:
+        bool: True si l'enseignant est associé au programme
+    """
+
+    user = db.session.get(User, user_id)
+    if not user:
+        logging.debug(f"is_teacher_in_programme: Aucun utilisateur trouvé avec l'ID {user_id}")
+        return False
+    if user.role != 'professeur':
+        logging.debug(f"is_teacher_in_programme: L'utilisateur {user_id} a le rôle '{user.role}', et non 'enseignant'")
+        return False
+    
+    # Vérifie si le programme est associé à l'utilisateur via la table user_programme
+    associated = db.session.query(user_programme).filter_by(user_id=user_id, programme_id=programme_id).first() is not None
+    
+    logging.debug(f"is_teacher_in_programme: L'utilisateur {user_id} est associé au programme {programme_id}: {associated}")
+
+    return associated
+
 def get_programme_id_for_cours(cours_id):
     """Get the programme ID associated with a course."""
     cours = Cours.query.get(cours_id)
@@ -52,7 +79,7 @@ def get_programme_id_for_cours(cours_id):
 
 def is_coordo_for_programme(user_id, programme_id):
     """Check if user is coordinator for given programme."""
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     return programme_id in [p.id for p in user.programmes]
 
 def send_backup_email(app, recipient_email, db_path):
