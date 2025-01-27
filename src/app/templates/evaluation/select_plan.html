@@ -1,0 +1,19 @@
+<!-- templates/evaluation/select_plan.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Sélectionner un Plan de Cours</title>
+</head>
+<body>
+    <h1>Sélectionner un Plan de Cours</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.plan.label }}<br>
+            {{ form.plan() }}
+        </p>
+        <p>{{ form.submit_plan() }}</p>
+    </form>
+</body>
+</html>

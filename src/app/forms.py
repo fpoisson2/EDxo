@@ -22,6 +22,35 @@ from wtforms.widgets import ListWidget, CheckboxInput
 from flask_ckeditor import CKEditorField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
+from app.models import Cours, PlanDeCours, PlanDeCoursEvaluations, PlanCadreCapacites
+
+class CourseSelectionForm(FlaskForm):
+    course = SelectField('Cours', coerce=int, validators=[DataRequired()])
+    submit_course = SubmitField('Sélectionner le Cours')
+
+class PlanSelectionForm(FlaskForm):
+    plan = SelectField('Plan de Cours', coerce=int, validators=[DataRequired()])
+    submit_plan = SubmitField('Sélectionner le Plan de Cours')
+
+class SavoirFaireCheckboxForm(Form):
+    savoir_faire_id = HiddenField('Savoir Faire ID')
+    capacite_id = HiddenField('Capacite ID')
+    selected = BooleanField('Selected')
+
+class EvaluationForm(FlaskForm):
+    evaluation_id = HiddenField('Évaluation ID')
+    evaluation_titre = StringField('Titre Évaluation')  # Changer HiddenField en StringField
+    savoir_faire = FieldList(FormField(SavoirFaireCheckboxForm))
+
+class EvaluationSelectionForm(FlaskForm):
+    evaluation = SelectField('Sélectionnez une évaluation', coerce=int, validators=[DataRequired()])
+    submit_evaluation = SubmitField('Sélectionner l\'évaluation')
+
+    
+class EvaluationGridForm(FlaskForm):
+    evaluations = FieldList(FormField(EvaluationForm))
+    submit = SubmitField('Enregistrer la Grille d\'Évaluation')
+
 class BackupConfigForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     frequency = SelectField('Frequency', choices=[
