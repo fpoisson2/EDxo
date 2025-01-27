@@ -1414,41 +1414,23 @@ function initToastEditor(textarea) {
                 })
                 .then(response => response.json())
                 .then(data => {
-                    // Masquer l'indicateur de chargement
                     if (loadingSpinner && btnText) {
                         loadingSpinner.classList.add('d-none');
                         btnText.classList.remove('d-none');
                     }
 
                     if (data.success) {
-                        // Cacher les boutons flottants
                         hideFloatingButtons();
-
-                        // Afficher un message de succès
-                        showFlashMessage('Plan-cadre sauvegardé avec succès.', 'success');
+                        showFlashMessage(data.message || 'Plan-cadre sauvegardé avec succès.', 'success');
                     } else {
-                        // Afficher les erreurs
-                        if (data.errors) {
-                            // Convertir les erreurs en une chaîne de caractères
-                            let errorMessages = '';
-                            for (const [field, errors] of Object.entries(data.errors)) {
-                                errorMessages += `${field}: ${errors.join(', ')}\n`;
-                            }
-                            showFlashMessage('Erreur lors de la sauvegarde :\n' + errorMessages, 'danger');
-                        } else {
-                            showFlashMessage('Erreur inconnue lors de la sauvegarde.', 'danger');
-                        }
+                        showFlashMessage(data.message || 'Erreur lors de la sauvegarde.', 'danger');
                     }
                 })
-                .catch((error) => {
-                    // Masquer l'indicateur de chargement
+                .catch(() => {
                     if (loadingSpinner && btnText) {
                         loadingSpinner.classList.add('d-none');
                         btnText.classList.remove('d-none');
                     }
-
-                    console.error('Erreur:', error);
-                    // Afficher un message d'erreur
                     showFlashMessage('Erreur lors de la sauvegarde du plan-cadre.', 'danger');
                 });
             });
