@@ -2,6 +2,7 @@ from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy import UniqueConstraint
+from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
@@ -44,6 +45,12 @@ class User(UserMixin, db.Model):
     department_id = db.Column(db.Integer, db.ForeignKey("Department.id"), nullable=True)
     credits = db.Column(db.Float, nullable=False, default=0.0)
     email = db.Column(db.String(120), nullable=True)
+
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
 
     __table_args__ = (
         UniqueConstraint('email', name='uq_user_email'),  # ✅ Explicit constraint name
@@ -476,7 +483,7 @@ class PlanDeCoursEvaluationsCapacites(db.Model):
     __tablename__ = "PlanDeCoursEvaluationsCapacites"
     id = db.Column(db.Integer, primary_key=True)
     evaluation_id = db.Column(db.Integer, db.ForeignKey("PlanDeCoursEvaluations.id"), nullable=False)
-    capacite_id = db.Column(db.Integer, db.ForeignKey("PlanCadreCapacites.id"), nullable=False)
+    capacite_id = db.Column(db.Integer, db.ForeignKey("PlanCadreCapacites.id"), nullable=True)
     ponderation = db.Column(db.Text, nullable=True)
 
     evaluation = db.relationship("PlanDeCoursEvaluations", back_populates="capacites")

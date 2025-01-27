@@ -186,11 +186,18 @@ def view_plan_de_cours(cours_id, session=None):
                     })
                 form.evaluations.append_entry(eval_entry)
 
-        # 4.4. Assigner les choices pour chaque capacite_id dans le GET
-        choices_capacites = [(c.id, c.capacite) for c in plan_cadre.capacites]
-        for eval_f in form.evaluations:
-            for cap_f in eval_f.capacites:
-                cap_f.capacite_id.choices = choices_capacites
+            # 4.4. Assigner les choices pour chaque capacite_id dans le GET
+            choices_capacites = [(c.id, c.capacite) for c in plan_cadre.capacites]
+            if choices_capacites:
+                for eval_f in form.evaluations:
+                    for cap_f in eval_f.capacites:
+                        cap_f.capacite_id.choices = choices_capacites
+            else:
+                # Si aucune capacité n'est définie, désactiver ou masquer les champs capacite_id
+                for eval_f in form.evaluations:
+                    for cap_f in eval_f.capacites:
+                        cap_f.capacite_id.choices = []
+                        cap_f.capacite_id.render_kw = {'disabled': True}  # Optionnel: rendre le champ désactivé
 
     # 5. Traitement du POST (sauvegarde)
     if request.method == "POST":
@@ -277,14 +284,15 @@ def view_plan_de_cours(cours_id, session=None):
                         )
                         plan_de_cours.evaluations.append(new_ev)
                         
-                        # 2) Créer les liaisons (capacités + ponderation)
-                        for cap_f in ev_f.capacites.entries:
-                            cap_link = PlanDeCoursEvaluationsCapacites(
-                                evaluation=new_ev,
-                                capacite_id=cap_f.data.get("capacite_id"),
-                                ponderation=cap_f.data.get("ponderation")
-                            )
-                            new_ev.capacites.append(cap_link)  # Assure la liaison via back_populates
+                        # 2) Créer les liaisons (capacités + ponderation) seulement s'il y a des capacités
+                        if ev_f.capacites.entries:
+                            for cap_f in ev_f.capacites.entries:
+                                cap_link = PlanDeCoursEvaluationsCapacites(
+                                    evaluation=new_ev,
+                                    capacite_id=cap_f.data.get("capacite_id"),
+                                    ponderation=cap_f.data.get("ponderation")
+                                )
+                                new_ev.capacites.append(cap_link)
 
                 # 5.4. Commit des Changements
                 db.session.commit()
