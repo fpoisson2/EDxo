@@ -1,19 +1,24 @@
-<!-- templates/evaluation/select_course.html -->
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Sélectionner un Cours</title>
-</head>
-<body>
-    <h1>Sélectionner un Cours</h1>
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        <p>
-            {{ form.course.label }}<br>
-            {{ form.course() }}
-        </p>
-        <p>{{ form.submit_course() }}</p>
-    </form>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">Sélectionner un Cours</h1>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <form method="POST" class="card p-4 shadow-sm">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    <label for="{{ form.course.id }}" class="form-label">{{ form.course.label }}</label>
+                    {{ form.course(class="form-select") }}
+                </div>
+
+                <div class="text-center">
+                    {{ form.submit_course(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
