@@ -24,6 +24,25 @@ from flask_wtf.file import FileField, FileAllowed, FileRequired
 
 from app.models import Cours, PlanDeCours, PlanDeCoursEvaluations, PlanCadreCapacites
 
+class SavoirFaireEntryForm(FlaskForm):
+    evaluation_id = HiddenField('ID de l\'Évaluation')
+    savoir_faire_id = HiddenField('ID du Savoir-Faire')
+    capacite_id = HiddenField('ID de la Capacité')
+    savoir_faire_nom = StringField('Savoir-Faire', render_kw={'readonly': True})
+    capacite_nom = StringField("Capacité")
+    selected = BooleanField('Sélectionné')
+    
+    level1_description = StringField('Niveau 1 Description', validators=[Optional()])
+    level2_description = StringField('Niveau 2 Description', validators=[Optional()])
+    level3_description = StringField('Niveau 3 Description', validators=[Optional()])
+    level4_description = StringField('Niveau 4 Description', validators=[Optional()])
+    level5_description = StringField('Niveau 5 Description', validators=[Optional()])
+    level6_description = StringField('Niveau 6 Description', validators=[Optional()])
+
+class SixLevelGridForm(FlaskForm):
+    evaluations = FieldList(FormField(SavoirFaireEntryForm), min_entries=0)
+    submit = SubmitField('Enregistrer')
+
 class CourseSelectionForm(FlaskForm):
     course = SelectField('Cours', coerce=int, validators=[DataRequired()])
     submit_course = SubmitField('Sélectionner le Cours')

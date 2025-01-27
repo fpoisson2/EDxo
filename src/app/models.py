@@ -18,19 +18,26 @@ class EvaluationSavoirFaire(db.Model):
     
     evaluation_id = db.Column(db.Integer, 
                             db.ForeignKey('PlanDeCoursEvaluations.id', 
-                                        name='fk_evaluation_savoirfaire_evaluation'))
+                                        name='fk_evaluation_savoirfaire_evaluation'), primary_key=True)
+    savoir_faire_id = db.Column(db.Integer, 
+                               db.ForeignKey('PlanCadreCapaciteSavoirsFaire.id',
+                                           name='fk_evaluation_savoirfaire_savoirfaire'), primary_key=True)
     capacite_id = db.Column(db.Integer, 
                           db.ForeignKey('PlanCadreCapacites.id',
                                       name='fk_evaluation_savoirfaire_capacite'))
-    savoir_faire_id = db.Column(db.Integer, 
-                               db.ForeignKey('PlanCadreCapaciteSavoirsFaire.id',
-                                           name='fk_evaluation_savoirfaire_savoirfaire'))
     selected = db.Column(db.Boolean, default=True)
+    
+    # Champs pour les six niveaux
+    level1_description = db.Column(db.String(255), nullable=True)
+    level2_description = db.Column(db.String(255), nullable=True)
+    level3_description = db.Column(db.String(255), nullable=True)
+    level4_description = db.Column(db.String(255), nullable=True)
+    level5_description = db.Column(db.String(255), nullable=True)
+    level6_description = db.Column(db.String(255), nullable=True)
     
     __table_args__ = (
         db.PrimaryKeyConstraint('evaluation_id', 'savoir_faire_id', 
                               name='pk_evaluation_savoirfaire'),
-        # Retirer toute autre contrainte sur capacite_id
     )
     
     evaluation = db.relationship('PlanDeCoursEvaluations', 
@@ -40,9 +47,10 @@ class EvaluationSavoirFaire(db.Model):
                              foreign_keys=[capacite_id])
     savoir_faire = db.relationship('PlanCadreCapaciteSavoirsFaire',
                                  foreign_keys=[savoir_faire_id])
-
+    
     def __repr__(self):
-        return f"<EvaluationSavoirFaire evaluation_id={self.evaluation_id}>"
+        return f"<EvaluationSavoirFaire evaluation_id={self.evaluation_id}, savoir_faire_id={self.savoir_faire_id}>"
+
 
 
 class DBChange(db.Model):

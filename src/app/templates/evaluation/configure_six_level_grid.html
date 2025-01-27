@@ -1,0 +1,61 @@
+<!-- templates/evaluation/configure_six_level_grid.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container">
+    <h2>Configurer la Grille à Six Niveaux pour l'Évaluation: {{ evaluation.titre_evaluation }}</h2>
+    
+    <form method="POST">
+      {{ form.hidden_tag() }}
+      
+{% for savoir_form in form.evaluations %}
+    {% set idx = loop.index0 %}
+        <div class="card mb-3">
+          <div class="card-header">
+              Savoir-Faire {{ idx + 1 }}: {{ savoir_form.savoir_faire_nom.data }}
+              <br>
+              <small class="text-muted">Capacité: {{ savoir_form.capacite_nom.data }}</small>
+          </div>
+          <div class="card-body">
+            {{ savoir_form.savoir_faire_id }}
+            {{ savoir_form.capacite_id }}
+            {{ savoir_form.evaluation_id }}
+            
+            <div class="form-group form-check">
+              {{ savoir_form.selected(class="form-check-input") }}
+              {{ savoir_form.selected.label(class="form-check-label") }}
+            </div>
+            
+            <div class="form-group">
+              {{ savoir_form.level1_description.label }} 
+              {{ savoir_form.level1_description(class="form-control") }}
+            </div>
+            <div class="form-group">
+              {{ savoir_form.level2_description.label }} 
+              {{ savoir_form.level2_description(class="form-control") }}
+            </div>
+            <div class="form-group">
+              {{ savoir_form.level3_description.label }} 
+              {{ savoir_form.level3_description(class="form-control") }}
+            </div>
+            <div class="form-group">
+              {{ savoir_form.level4_description.label }} 
+              {{ savoir_form.level4_description(class="form-control") }}
+            </div>
+            <div class="form-group">
+              {{ savoir_form.level5_description.label }} 
+              {{ savoir_form.level5_description(class="form-control") }}
+            </div>
+            <div class="form-group">
+              {{ savoir_form.level6_description.label }} 
+              {{ savoir_form.level6_description(class="form-control") }}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+      
+      {{ form.submit(class="btn btn-primary") }}
+    </form>
+  </div>
+{% endblock %}

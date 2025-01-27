@@ -25,9 +25,11 @@ from app.forms import (
     CourseSelectionForm, 
     PlanSelectionForm, 
     EvaluationGridForm, 
-    EvaluationForm,               # Assurez-vous d'importer EvaluationForm
+    EvaluationForm,        
     SavoirFaireCheckboxForm,
-    EvaluationSelectionForm
+    EvaluationSelectionForm,
+    SixLevelGridForm,
+    SavoirFaireEntryForm
 )
 from utils.decorator import roles_required
 
@@ -136,6 +138,10 @@ def configure_grid(evaluation_id):
                         'seuil_reussite': sf.seuil_reussite
                     }
 
+    selected_savoirs_faire = [
+        assoc for assoc in EvaluationSavoirFaire.query.filter_by(evaluation_id=evaluation_id, selected=True).all()
+    ]
+
     if request.method == 'GET':
         form.evaluations.entries = []
         
@@ -202,7 +208,11 @@ def configure_grid(evaluation_id):
 
             db.session.commit()
             flash('Grille d\'évaluation enregistrée avec succès.', 'success')
-            return redirect(url_for('evaluation.create_evaluation_grid'))
+            if not selected_savoirs_faire:
+                flash('Veuillez sélectionner au moins un savoir-faire avant de configurer la grille.', 'warning')
+                return redirect(url_for('evaluation.select_evaluation', plan_id=plan_id))
+            return redirect(url_for('evaluation.configure_six_level_grid', evaluation_id=evaluation_id))
+
 
         except Exception as e:
             db.session.rollback()
@@ -210,3 +220,83 @@ def configure_grid(evaluation_id):
 
     return render_template('evaluation/configure_grid.html', form=form, plan=plan, 
                          evaluation=evaluation, grouped_cf=grouped_cf)
+
+
+@evaluation_bp.route('/configure_six_level_grid/<int:evaluation_id>', methods=['GET', 'POST'])
+@admin_required
+def configure_six_level_grid(evaluation_id):
+    evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
+    form = SixLevelGridForm()
+    
+    if request.method == 'GET':
+        # Get selected savoir-faire with eager loading
+        selected_savoirs_faire = EvaluationSavoirFaire.query\
+            .options(
+                db.joinedload(EvaluationSavoirFaire.savoir_faire),
+                db.joinedload(EvaluationSavoirFaire.capacite)
+            )\
+            .filter_by(
+                evaluation_id=evaluation_id,
+                selected=True
+            ).all()
+        
+        if not selected_savoirs_faire:
+            flash('Aucun savoir-faire sélectionné pour cette évaluation.', 'warning')
+            return redirect(url_for('evaluation.select_evaluation', plan_id=evaluation.plan_de_cours.id))
+        
+        # Clear existing entries
+        while len(form.evaluations):
+            form.evaluations.pop_entry()
+            
+        # Add entries for each selected savoir-faire
+        for assoc in selected_savoirs_faire:
+            form.evaluations.append_entry({
+                'evaluation_id': assoc.evaluation_id,
+                'savoir_faire_id': assoc.savoir_faire_id,
+                'capacite_id': assoc.capacite_id,
+                'savoir_faire_nom': assoc.savoir_faire.texte,
+                'capacite_nom': assoc.capacite.capacite if assoc.capacite else "Capacité inconnue",
+                'selected': assoc.selected,
+                'level1_description': assoc.level1_description or '',
+                'level2_description': assoc.level2_description or '',
+                'level3_description': assoc.level3_description or '',
+                'level4_description': assoc.level4_description or '',
+                'level5_description': assoc.level5_description or '',
+                'level6_description': assoc.level6_description or ''
+            })
+
+    
+    if form.validate_on_submit():
+        try:
+            # Clear existing associations
+            EvaluationSavoirFaire.query.filter_by(evaluation_id=evaluation_id).delete()
+            
+            for entry in form.evaluations:
+                if entry.selected.data:
+                    new_assoc = EvaluationSavoirFaire(
+                        evaluation_id=int(entry.evaluation_id.data),
+                        savoir_faire_id=int(entry.savoir_faire_id.data),
+                        capacite_id=int(entry.capacite_id.data),
+                        selected=True,
+                        level1_description=entry.level1_description.data,
+                        level2_description=entry.level2_description.data,
+                        level3_description=entry.level3_description.data,
+                        level4_description=entry.level4_description.data,
+                        level5_description=entry.level5_description.data,
+                        level6_description=entry.level6_description.data
+                    )
+                    db.session.add(new_assoc)
+            
+            db.session.commit()
+            flash('Grille à six niveaux enregistrée avec succès.', 'success')
+            return redirect(url_for('evaluation.configure_six_level_grid', evaluation_id=evaluation_id))
+        
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur lors de l\'enregistrement: {str(e)}', 'danger')
+    
+    return render_template(
+        'evaluation/configure_six_level_grid.html',
+        form=form,
+        evaluation=evaluation
+    )
