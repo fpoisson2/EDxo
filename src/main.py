@@ -148,7 +148,17 @@ def create_app():
         
         if not scheduler.running and is_primary_worker:
             start_scheduler()
-            schedule_backup(app)
+            
+            with app.app_context():
+                result = db.session.execute(text(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='backup_config';"
+                )).fetchone()
+                
+                if result:  # La table existe, on peut planifier les sauvegardes
+                    schedule_backup(app)
+                else:
+                    logger.warning("⚠️ Table 'backup_config' introuvable, planification des sauvegardes désactivée.")
+
 
     app.register_blueprint(routes.main)
     app.register_blueprint(settings_bp)
