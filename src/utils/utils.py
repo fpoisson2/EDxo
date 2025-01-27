@@ -17,6 +17,8 @@ from googleapiclient.discovery import build
 
 from utils.scheduler_instance import scheduler, start_scheduler
 
+from app.models import User, Cours
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
@@ -43,6 +45,15 @@ logger = logging.getLogger(__name__)
 
 DATABASE = 'programme.db'
 
+def get_programme_id_for_cours(cours_id):
+    """Get the programme ID associated with a course."""
+    cours = Cours.query.get(cours_id)
+    return cours.programme_id if cours else None
+
+def is_coordo_for_programme(user_id, programme_id):
+    """Check if user is coordinator for given programme."""
+    user = User.query.get(user_id)
+    return programme_id in [p.id for p in user.programmes]
 
 def send_backup_email(app, recipient_email, db_path):
     """

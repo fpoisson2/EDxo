@@ -33,6 +33,10 @@ load_dotenv()
 def create_app():
     app = Flask(__name__, template_folder="app/templates")
 
+    # Vérifier si on est en mode test
+    if os.environ.get('TESTING'):
+        return app  # Retourner l'app sans configurer le backup
+
 
     worker_id = os.getenv('GUNICORN_WORKER_ID')
     is_primary_worker = worker_id == '0' or worker_id is None
