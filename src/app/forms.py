@@ -94,7 +94,7 @@ class CapaciteEvaluationForm(FlaskForm):
     Sous-formulaire qui représente la liaison (capacite_id, ponderation)
     pour une évaluation donnée.
     """
-    capacite_id = SelectField("Capacité", coerce=int)
+    capacite_id = SelectField('Capacité', coerce=int, validators=[Optional()])
     ponderation = StringField("Pondération (ex: 20%)", validators=[Optional()])
 
 class EvaluationPlanCoursForm(FlaskForm):

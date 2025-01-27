@@ -1,20 +1,19 @@
 import pytest
 import sys, os
 from pathlib import Path
-
+from flask_wtf.csrf import CSRFProtect  # Add this import
 sys.path.append(str(Path(__file__).parent.parent / 'src'))
 os.environ['TESTING'] = 'True'
-
 from main import create_app, db
 from app.routes.cours import cours_bp
 from app.routes.routes import main as main_bp
 from app.routes.plan_de_cours import plan_de_cours_bp
-
 from utils.auth import login_manager  # Importer login_manager
+from flask_login import current_user
 
 class TestConfig:
     TESTING = True
-    WTF_CSRF_ENABLED = False  # Disable CSRF for testing
+    
     SERVER_NAME = 'localhost.localdomain'
     APPLICATION_ROOT = '/'
     PREFERRED_URL_SCHEME = 'http'
@@ -28,9 +27,13 @@ def test_app():
     app = create_app()
     app.config.from_object(TestConfig)
     login_manager.init_app(app)
-    app.register_blueprint(cours_bp)  # Explicitement enregistrer le blueprint
+    csrf = CSRFProtect(app)
+    csrf.init_app(app)  # Make sure CSRF is properly initialized
+    
+    app.register_blueprint(cours_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(plan_de_cours_bp)
+    
     db.init_app(app)
     return app
 
