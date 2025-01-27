@@ -1,0 +1,19 @@
+<!-- templates/evaluation/select_course.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Sélectionner un Cours</title>
+</head>
+<body>
+    <h1>Sélectionner un Cours</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.course.label }}<br>
+            {{ form.course() }}
+        </p>
+        <p>{{ form.submit_course() }}</p>
+    </form>
+</body>
+</html>
