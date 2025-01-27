@@ -58,18 +58,32 @@ def create_app():
 
     def checkpoint_wal():
         with app.app_context():
-            config = BackupConfig.query.first()
-            if config and config.enabled:
-                try:
-                    schedule_backup(app)
-                except Exception as e:
-                    logger.error(f"Erreur lors de la planification des sauvegardes: {e}")
             try:
+                # Vérifier si la table backup_config existe avant d'y accéder
+                result = db.session.execute(text(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='backup_config';"
+                )).fetchone()
+
+                if result:  # La table existe
+                    config = BackupConfig.query.first()
+                    if config and config.enabled:
+                        try:
+                            schedule_backup(app)
+                        except Exception as e:
+                            logger.error(f"Erreur lors de la planification des sauvegardes: {e}")
+                else:
+                    logger.warning("⚠️ Table 'backup_config' introuvable, la planification des sauvegardes est ignorée.")
+
+                # Effectuer un checkpoint WAL
                 db.session.execute(text("PRAGMA wal_checkpoint(TRUNCATE);"))
                 db.session.commit()
-                logger.info("WAL checkpointed successfully.")
+                logger.info("✅ WAL checkpointed successfully.")
+
             except SQLAlchemyError as e:
-                logger.error(f"Error during WAL checkpoint: {e}")
+                logger.error(f"❌ Erreur lors du checkpoint WAL : {e}")
+            except Exception as e:
+                logger.error(f"❌ Erreur inattendue : {e}")
+
 
     @app.before_request
     def before_request():
