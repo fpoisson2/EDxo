@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container">
+    <h2>Configurer la Grille à Six Niveaux pour l'Évaluation: {{ evaluation.titre_evaluation }}</h2>
+    
+    <form method="POST">
+      {{ form.hidden_tag() }}
+      
+      {% for savoir_form in form.evaluations %}
+        {% set idx = loop.index0 %}
+        <div class="card mb-3">
+          <div class="card-header">
+              Savoir-Faire {{ idx + 1 }}: {{ savoir_form.savoir_faire_nom.data }}
+              <br>
+              <small class="text-muted">Capacité: {{ savoir_form.capacite_nom.data }}</small>
+          </div>
+          <div class="card-body">
+            {{ savoir_form.savoir_faire_id }}
+            {{ savoir_form.capacite_id }}
+            {{ savoir_form.evaluation_id }}
+            
+            <div class="form-group form-check">
+              {{ savoir_form.selected(class="form-check-input") }}
+              {{ savoir_form.selected.label(class="form-check-label") }}
+            </div>
+            
+            <!-- Ajout du bouton pour appeler OpenAI -->
+            <button type="button" class="btn btn-sm btn-outline-primary mb-3"
+                    onclick="generateGrid('{{ savoir_form.savoir_faire_nom.data }}', '{{ savoir_form.capacite_nom.data }}', '{{ idx }}')">
+                Remplissage automatique
+            </button>
+
+            <div class="form-group">
+              {{ savoir_form.level1_description.label }} 
+              {{ savoir_form.level1_description(class="form-control", id="level1_description_{{ idx }}") }}
+            </div>
+            <div class="form-group">
+              {{ savoir_form.level2_description.label }} 
+              {{ savoir_form.level2_description(class="form-control", id="level2_description_{{ idx }}") }}
+            </div>
+            <div class="form-group">
+              {{ savoir_form.level3_description.label }} 
+              {{ savoir_form.level3_description(class="form-control", id="level3_description_{{ idx }}") }}
+            </div>
+            <div class="form-group">
+              {{ savoir_form.level4_description.label }} 
+              {{ savoir_form.level4_description(class="form-control", id="level4_description_{{ idx }}") }}
+            </div>
+            <div class="form-group">
+              {{ savoir_form.level5_description.label }} 
+              {{ savoir_form.level5_description(class="form-control", id="level5_description_{{ idx }}") }}
+            </div>
+            <div class="form-group">
+              {{ savoir_form.level6_description.label }} 
+              {{ savoir_form.level6_description(class="form-control", id="level6_description_{{ idx }}") }}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+      
+      {{ form.submit(class="btn btn-primary") }}
+    </form>
+  </div>
+
+<script>
+// Ensure this function is defined in the script
+function getCSRFToken() {
+    // Try multiple ways to get the CSRF token
+    const csrfTokenElement = document.querySelector('input[name="csrf_token"]');
+    if (csrfTokenElement) {
+        return csrfTokenElement.value;
+    }
+    
+    // Fallback method if the first doesn't work
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    if (metaTag) {
+        return metaTag.getAttribute('content');
+    }
+    
+    console.error('CSRF token not found');
+    return '';
+}
+
+function generateGrid(savoirFaire, capacite, index) {
+    console.log('Generate Grid Called With:', {
+        savoirFaire, 
+        capacite, 
+        index: parseInt(index), // Ensure it's a number
+        type_of_index: typeof index
+    });
+
+    const csrfToken = getCSRFToken();
+    
+    fetch("/evaluation/generate_six_level_grid", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken
+        },
+        body: JSON.stringify({ 
+            "savoir_faire": savoirFaire, 
+            "capacite": capacite 
+        })
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            return response.text().then(errorText => {
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Received data:', data);
+
+        const levels = [
+            'level1_description', 
+            'level2_description', 
+            'level3_description', 
+            'level4_description', 
+            'level5_description', 
+            'level6_description'
+        ];
+
+        // Find the correct card
+        const card = document.querySelectorAll('.card')[parseInt(index)];
+        
+        if (!card) {
+            console.error(`No card found for index ${index}`);
+            return;
+        }
+
+        levels.forEach(level => {
+            // Use the correct naming convention for input fields
+            const element = card.querySelector(`[name="evaluations-${index}-${level}"]`);
+            
+            if (element) {
+                element.value = data[level] || '';
+                console.log(`Successfully set ${element.name}:`, element.value);
+            } else {
+                console.error(`CRITICAL: No matching element found for ${level}_${index}`);
+
+                // Debugging: list all inputs in the current card
+                console.log('Inputs in this card:', 
+                    Array.from(card.querySelectorAll('input, textarea')).map(el => ({
+                        name: el.name,
+                        id: el.id
+                    }))
+                );
+            }
+        });
+    })
+    .catch(error => {
+        console.error('Full Fetch Error:', error);
+        alert(`Erreur lors de la génération automatique: ${error.message}`);
+    });
+}
+
+</script>
+
+{% endblock %}
