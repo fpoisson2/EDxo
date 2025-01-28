@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">Sélectionnez une Évaluation pour le Plan {{ plan.id }}</h2>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <form method="POST" class="card p-4 shadow-sm">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    <label for="{{ form.evaluation.id }}" class="form-label">{{ form.evaluation.label }}</label>
+                    {{ form.evaluation(class="form-select") }}
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">{{ form.submit_evaluation.label }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

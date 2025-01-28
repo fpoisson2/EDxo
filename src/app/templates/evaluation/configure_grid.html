@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">Configurer la Grille d'Évaluation pour le Plan : {{ plan.id }}</h1>
+    
+    <!-- Affichage des messages flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" class="evaluation-grid-form"> 
+        {{ form.hidden_tag() }}
+        
+        {% for eval_form in form.evaluations %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header text-white">
+                    <h5 class="card-title mb-0">{{ eval_form.evaluation_titre.data }}</h5>
+                </div>
+                <div class="card-body">
+                    {{ eval_form.evaluation_id() }}
+                    
+                    {% if grouped_cf %}
+                        {% set global_index = namespace(value=0) %}
+                        {% for capacite, savoirs_faire in grouped_cf.items() %}
+                            <div class="mb-3">
+                                <h6 class="mt-4">{{ capacite }}</h6>
+                                <ul class="list-group mb-3">
+                                    {% for sf_id, sf_data in savoirs_faire.items() %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            {{ sf_data.texte }}
+                                            <div class="form-check">
+                                                {{ eval_form.savoir_faire[global_index.value].savoir_faire_id(value=sf_id) }}
+                                                {{ eval_form.savoir_faire[global_index.value].capacite_id(value=sf_data.capacite_id) }}
+                                                {{ eval_form.savoir_faire[global_index.value].selected(class="form-check-input") }}
+                                            </div>
+                                        </li>
+                                        {% set global_index.value = global_index.value + 1 %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-5">
+            <a href="{{ url_for('evaluation.create_evaluation_grid') }}" class="btn btn-secondary me-md-2">Retour</a>
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .evaluation-grid-form .card-header {
+        background-color: #0d6efd;
+    }
+    .list-group-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .form-check-input {
+        margin-left: 1rem;
+    }
+</style>
+{% endblock %}
