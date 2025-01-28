@@ -582,7 +582,7 @@ def export_docx(cours_id, session):
     regles_piea = departement.piea if departement else []
 
     # 5. Charger le template Word avec le chemin absolu
-    base_path = os.path.dirname(os.path.dirname(current_app.root_path))
+    base_path = '/home/fpoisson/edxo-dev'
     template_path = os.path.join(base_path, 'src', 'static', 'docs', 'plan_de_cours_template.docx')
     
     # Ajoutons du logging pour déboguer
