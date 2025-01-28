@@ -417,7 +417,15 @@ def export_session_plans(programme_id, session):
             # Charger le template Word
             base_path = Path(__file__).parent.parent.parent
             template_path = os.path.join(base_path, 'static', 'docs', 'plan_de_cours_template.docx')
+            
+            current_app.logger.info(f"Looking for template at: {template_path}")
+            
+            if not os.path.exists(template_path):
+                current_app.logger.error(f"Template not found at: {template_path}")
+                flash("Erreur: Le template de plan de cours est introuvable.", "error")
+                return redirect(url_for('plan_de_cours.view_plan_de_cours', cours_id=cours_id))
 
+            doc = DocxTemplate(template_path)
             # Préparer les données pour le tableau croisé
             all_caps = []
             cap_total_map = {}
@@ -586,7 +594,6 @@ def export_docx(cours_id, session):
     base_path = Path(__file__).parent.parent.parent
     template_path = os.path.join(base_path, 'static', 'docs', 'plan_de_cours_template.docx')
     
-    # Log pour debug
     current_app.logger.info(f"Looking for template at: {template_path}")
     
     if not os.path.exists(template_path):
