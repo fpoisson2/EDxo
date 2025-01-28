@@ -44,11 +44,11 @@ class SixLevelGridForm(FlaskForm):
     submit = SubmitField('Enregistrer')
 
 class CourseSelectionForm(FlaskForm):
-    course = SelectField('Cours', coerce=int, validators=[DataRequired()])
+    course = SelectField('Cours', coerce=lambda x: int(x) if x else None)
     submit_course = SubmitField('Sélectionner le Cours')
 
 class PlanSelectionForm(FlaskForm):
-    plan = SelectField('Plan de Cours', coerce=int, validators=[DataRequired()])
+    plan = SelectField('Plan', coerce=lambda x: int(x) if x else None)
     submit_plan = SubmitField('Sélectionner le Plan de Cours')
 
 class SavoirFaireCheckboxForm(Form):
@@ -62,7 +62,7 @@ class EvaluationForm(FlaskForm):
     savoir_faire = FieldList(FormField(SavoirFaireCheckboxForm))
 
 class EvaluationSelectionForm(FlaskForm):
-    evaluation = SelectField('Sélectionnez une évaluation', coerce=int, validators=[DataRequired()])
+    evaluation = SelectField('Évaluation', coerce=lambda x: int(x) if x else None)
     submit_evaluation = SubmitField('Sélectionner l\'évaluation')
 
     

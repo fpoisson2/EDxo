@@ -56,6 +56,10 @@
     </style>
   </head>
   <body>
+  <div id="flash-messages" 
+     class="position-fixed top-0 start-50 translate-middle-x p-3" 
+     style="z-index: 1060; width: auto; max-width: 90vw;">
+</div>
     <div class="container mt-4">
       <div class="d-flex justify-content-between align-items-center mb-4 header-container">
         <div class="logo-container">
@@ -71,16 +75,16 @@
                 <i class="bi bi-coin me-1"></i>${{ "%.2f"|format(current_user.credit|default(0)) }}
               </span>
             </div>
-            <div class="action-buttons">
-              <a href="{{ url_for('evaluation.create_evaluation_grid') }}" class="btn btn-outline-success btn-sm">
-                  <i class="bi bi-grid-fill"></i> Créateur de grille d'évaluation
-              </a>
-              <a href="{{ url_for('chat.index') }}" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-chat"></i> Chat
-              </a>
-              <a href="{{ url_for('main.logout') }}" class="btn btn-outline-danger btn-sm">Se déconnecter</a>
-              <a href="{{ url_for('settings.parametres') }}" class="btn btn-outline-secondary btn-sm">Paramètres</a>
-            </div>
+<div class="action-buttons">
+    <a href="{{ url_for('evaluation.evaluation_wizard') }}" class="btn btn-outline-success btn-sm">
+        <i class="bi bi-grid-fill"></i> Créateur de grille d'évaluation
+    </a>
+    <a href="{{ url_for('chat.index') }}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-chat"></i> Chat
+    </a>
+    <a href="{{ url_for('main.logout') }}" class="btn btn-outline-danger btn-sm">Se déconnecter</a>
+    <a href="{{ url_for('settings.parametres') }}" class="btn btn-outline-secondary btn-sm">Paramètres</a>
+</div>
           {% else %}
             <a href="{{ url_for('main.login') }}" class="btn btn-outline-primary btn-sm">Se connecter</a>
           {% endif %}
@@ -202,6 +206,124 @@
     });
     </script>
 
-    {% block scripts %} {% endblock %}
+{% block scripts %} 
+<style>
+.flash-message {
+    opacity: 0;
+    transform: translateY(-100%);
+    transition: all 0.3s ease-in-out;
+    min-width: 250px;
+    margin-bottom: 0.5rem;
+}
+
+.flash-message.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.flash-message.hide {
+    opacity: 0;
+    transform: translateY(-100%);
+}
+
+@media (max-width: 768px) {
+    #flash-messages {
+        width: 90vw;
+    }
+    
+    .flash-message {
+        min-width: unset;
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+const flashMessageSystem = {
+    container: null,
+    
+    init() {
+        this.container = document.getElementById('flash-messages');
+        if (!this.container) {
+            this.container = document.createElement('div');
+            this.container.id = 'flash-messages';
+            this.container.className = 'position-fixed top-0 start-50 translate-middle-x p-3';
+            this.container.style.zIndex = '1060';
+            this.container.style.width = 'auto';
+            this.container.style.maxWidth = '90vw';
+            document.body.appendChild(this.container);
+        }
+    },
+
+    show(message, type = 'success', duration = 3000) {
+        if (!this.container) this.init();
+        
+        // Création du message avec les classes Bootstrap 5
+        const messageElement = document.createElement('div');
+        messageElement.className = `flash-message alert alert-${type} alert-dismissible fade`;
+        messageElement.setAttribute('role', 'alert');
+        messageElement.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        // Ajout au container
+        this.container.appendChild(messageElement);
+
+        // Force un reflow pour permettre l'animation
+        messageElement.offsetHeight;
+
+        // Affichage avec animation
+        messageElement.classList.add('show');
+
+        // Gestion du bouton de fermeture
+        const closeButton = messageElement.querySelector('.btn-close');
+        closeButton.addEventListener('click', () => this.hide(messageElement));
+
+        // Auto-suppression après la durée spécifiée
+        if (duration > 0) {
+            setTimeout(() => this.hide(messageElement), duration);
+        }
+
+        return messageElement;
+    },
+
+    hide(messageElement) {
+        if (!messageElement) return;
+        
+        messageElement.classList.add('hide');
+        messageElement.classList.remove('show');
+        
+        // Suppression après l'animation
+        setTimeout(() => {
+            if (messageElement.parentElement) {
+                messageElement.parentElement.removeChild(messageElement);
+            }
+        }, 300);
+    },
+
+    success(message, duration = 3000) {
+        return this.show(message, 'success', duration);
+    },
+
+    error(message, duration = 5000) {
+        return this.show(message, 'danger', duration);
+    },
+    
+    warning(message, duration = 4000) {
+        return this.show(message, 'warning', duration);
+    },
+    
+    info(message, duration = 3000) {
+        return this.show(message, 'info', duration);
+    }
+};
+
+// Initialiser le système de messages flash
+document.addEventListener('DOMContentLoaded', function() {
+    flashMessageSystem.init();
+});
+</script>
+{% endblock %}
   </body>
 </html>
