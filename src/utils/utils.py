@@ -501,8 +501,14 @@ def generate_docx_with_template(plan_id):
     """
     base_path = Path(__file__).parent.parent.parent
     template_path = os.path.join(base_path, 'static', 'docs', 'plan_cadre_template.docx')
+
+    # Ajoutons du logging pour déboguer
+    current_app.logger.info(f"Base path: {base_path}")
+    current_app.logger.info(f"Template path: {template_path}")
+    current_app.logger.info(f"File exists: {os.path.exists(template_path)}")
+
     if not os.path.exists(template_path):
-        print("Erreur : Le modèle DOCX n'a pas été trouvé !")
+        current_app.logger.error(f"Template not found at: {template_path}")
         return None
 
     # Récupérer le plan-cadre
