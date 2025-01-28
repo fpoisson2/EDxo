@@ -24,6 +24,7 @@ from flask_wtf.file import FileField, FileAllowed, FileRequired
 
 from app.models import Cours, PlanDeCours, PlanDeCoursEvaluations, PlanCadreCapacites
 
+
 class SavoirFaireEntryForm(FlaskForm):
     evaluation_id = HiddenField('ID de l\'Évaluation')
     savoir_faire_id = HiddenField('ID du Savoir-Faire')
@@ -62,8 +63,8 @@ class EvaluationForm(FlaskForm):
     savoir_faire = FieldList(FormField(SavoirFaireCheckboxForm))
 
 class EvaluationSelectionForm(FlaskForm):
-    evaluation = SelectField('Évaluation', coerce=lambda x: int(x) if x else None)
-    submit_evaluation = SubmitField('Sélectionner l\'évaluation')
+    evaluation = SelectField('Sélectionner une évaluation', coerce=int)
+    description = TextAreaField('Description détaillée de l\'évaluation')
 
     
 class EvaluationGridForm(FlaskForm):
