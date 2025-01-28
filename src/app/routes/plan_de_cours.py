@@ -17,6 +17,12 @@ import zipfile
 from datetime import datetime
 from utils.utils import get_initials, get_programme_id_for_cours, is_teacher_in_programme
 
+# Définir le chemin de base de l'application
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Dans la fonction export_session_plans, remplacer la ligne qui charge le template par :
+template_path = os.path.join(BASE_DIR, 'static', 'docs', 'plan_de_cours_template.docx')
+
 def parse_markdown_nested(md_text):
     """
     Converts Markdown text into a nested list of dictionaries where bullet points
