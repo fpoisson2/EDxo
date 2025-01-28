@@ -13,20 +13,32 @@
                 <h3>1. Sélection du cours</h3>
             </div>
             <div class="card-body">
-                {{ course_form.course.label }}
-                {{ course_form.course(class="form-control", id="courseSelect") }}
+                <div class="search-container">
+                    <div class="form-group">
+                        <label for="courseSearch">Rechercher un cours</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="courseSearch" 
+                               placeholder="Entrez le code ou le nom du cours..." 
+                               autocomplete="off">
+                        <input type="hidden" id="courseSelect" name="course" value="">
+                    </div>
+                    <div id="searchResults" class="search-results" style="display: none;">
+                    </div>
+                </div>
             </div>
         </div>
+
 
         <!-- Étape 2: Sélection du plan -->
         <div class="card mb-4" id="plan-section" style="display: none;">
             <div class="card-header">
-                <h3>2. Sélection du plan</h3>
+                <h3>2. Sélection du plan de cours</h3>
             </div>
             <div class="card-body">
-                <label for="planSelect">Plan</label>
+                <label for="planSelect">Session</label>
                 <select class="form-control" id="planSelect" name="plan">
-                    <option value="">-- Sélectionner un plan --</option>
+                    <option value="">-- Sélectionner un plan de cours--</option>
                 </select>
             </div>
         </div>
@@ -308,5 +320,209 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('courseSearch');
+    const searchResults = document.getElementById('searchResults');
+    const courseSelect = document.getElementById('courseSelect');
+    let courses = [];
+
+    // Fonction pour échapper les caractères spéciaux dans une regex
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Fonction pour mettre en surbrillance les termes de recherche
+    function highlightText(text, searchTerm) {
+        if (!searchTerm) return text;
+        const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi');
+        return text.replace(regex, '<span class="highlight">$1</span>');
+    }
+
+    // Fonction pour filtrer et afficher les résultats
+    function filterCourses(searchTerm) {
+        if (!searchTerm) {
+            searchResults.style.display = 'none';
+            return;
+        }
+
+        const searchTermLower = searchTerm.toLowerCase();
+        const filteredCourses = courses.filter(course => 
+            course.code.toLowerCase().includes(searchTermLower) ||
+            course.nom.toLowerCase().includes(searchTermLower)
+        );
+
+        if (filteredCourses.length > 0) {
+            searchResults.innerHTML = filteredCourses
+                .map(course => `
+                    <div class="search-result-item" data-id="${course.id}">
+                        <strong>${highlightText(course.code, searchTerm)}</strong> - 
+                        ${highlightText(course.nom, searchTerm)}
+                    </div>
+                `)
+                .join('');
+            searchResults.style.display = 'block';
+        } else {
+            searchResults.innerHTML = '<div class="search-result-item">Aucun résultat trouvé</div>';
+            searchResults.style.display = 'block';
+        }
+    }
+
+    // Charger la liste des cours depuis l'API
+    async function loadCourses() {
+        try {
+            const response = await fetch('/evaluation/get_courses', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            if (!response.ok) {
+                throw new Error('Erreur lors du chargement des cours');
+            }
+            courses = await response.json();
+        } catch (error) {
+            console.error('Erreur:', error);
+            flashMessageSystem.error('Erreur lors du chargement des cours');
+        }
+    }
+
+    // Initialiser la liste des cours
+    loadCourses();
+
+    // Gérer la saisie dans le champ de recherche
+    searchInput.addEventListener('input', function(e) {
+        filterCourses(e.target.value);
+    });
+
+    // Gérer la sélection d'un cours
+    searchResults.addEventListener('click', function(e) {
+        const resultItem = e.target.closest('.search-result-item');
+        if (resultItem) {
+            const courseId = resultItem.dataset.id;
+            const course = courses.find(c => c.id === courseId);
+            if (course) {
+                searchInput.value = `${course.code} - ${course.nom}`;
+                courseSelect.value = courseId;
+                searchResults.style.display = 'none';
+                
+                // Déclencher l'événement change sur courseSelect
+                courseSelect.dispatchEvent(new Event('change'));
+            }
+        }
+    });
+
+    // Fermer les résultats quand on clique en dehors
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+// Gestion de la navigation au clavier
+searchInput.addEventListener('keydown', function(e) {
+    // Ne faire rien si les résultats ne sont pas affichés, sauf pour la touche Down
+    if (searchResults.style.display === 'none' && e.key !== 'ArrowDown') {
+        return;
+    }
+
+    const items = searchResults.querySelectorAll('.search-result-item');
+    if (!items.length && e.key !== 'ArrowDown') {
+        return;
+    }
+
+    const currentIndex = Array.from(items).findIndex(item => item.classList.contains('selected'));
+
+    switch (e.key) {
+        case 'ArrowDown':
+            e.preventDefault();
+            if (searchResults.style.display === 'none') {
+                // Afficher les résultats filtrés
+                filterCourses(searchInput.value);
+                // Sélectionner le premier élément si des résultats existent
+                const firstItem = searchResults.querySelector('.search-result-item');
+                if (firstItem) {
+                    firstItem.classList.add('selected');
+                }
+            } else if (items.length > 0) {
+                // Passer à l'élément suivant
+                const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % items.length;
+                items.forEach(item => item.classList.remove('selected'));
+                items[nextIndex].classList.add('selected');
+                items[nextIndex].scrollIntoView({ block: 'nearest' });
+            }
+            break;
+
+        case 'ArrowUp':
+            e.preventDefault();
+            if (items.length > 0) {
+                // Passer à l'élément précédent
+                const prevIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+                items.forEach(item => item.classList.remove('selected'));
+                items[prevIndex].classList.add('selected');
+                items[prevIndex].scrollIntoView({ block: 'nearest' });
+            }
+            break;
+
+        case 'Enter':
+            e.preventDefault();
+            const selectedItem = searchResults.querySelector('.search-result-item.selected');
+            if (selectedItem) {
+                // Simuler un clic sur l'élément sélectionné
+                selectedItem.click();
+            }
+            break;
+
+        case 'Escape':
+            e.preventDefault();
+            // Cacher les résultats et enlever la sélection
+            searchResults.style.display = 'none';
+            searchInput.blur();
+            break;
+    }
+});
+});
 </script>
+
+<style>
+.search-container {
+    position: relative;
+}
+
+.search-results {
+    position: absolute;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.search-result-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.search-result-item:hover {
+    background-color: #f8f9fa;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.highlight {
+    background-color: #fff3cd;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+.search-result-item.selected {
+    background-color: #e9ecef;
+}
+</style>
 {% endblock %}
