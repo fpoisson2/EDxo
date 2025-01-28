@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
+from flask import current_app, Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
 from app.models import (
     db, Cours, PlanCadre, PlanCadreCapacites, PlanCadreSavoirEtre,
     PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
@@ -16,6 +16,12 @@ from bs4 import BeautifulSoup
 import zipfile
 from datetime import datetime
 from utils.utils import get_initials, get_programme_id_for_cours, is_teacher_in_programme
+from pathlib import Path
+
+# Définir le chemin de base de l'application
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
 
 def parse_markdown_nested(md_text):
     """
@@ -409,7 +415,7 @@ def export_session_plans(programme_id, session):
             regles_piea = departement.piea if departement else []
             
             # Charger le template Word
-            template_path = os.path.join('static', 'docs', 'plan_de_cours_template.docx')
+            template_path = os.path.join(os.path.dirname(current_app.root_path), 'static', 'docs', 'plan_de_cours_template.docx')
             doc = DocxTemplate(template_path)
             
             # Préparer les données pour le tableau croisé
@@ -527,6 +533,9 @@ def export_session_plans(programme_id, session):
             nom_enseignant = context['nom_enseignant']
             initiales = get_initials(nom_enseignant)
 
+            
+            
+
             # Nouveau nom de fichier avec les initiales
             filename = f"Plan_de_cours_{cours.code}_{session_code}_{initiales}.docx"
             zf.writestr(filename, doc_bytes.getvalue())
@@ -573,9 +582,18 @@ def export_docx(cours_id, session):
     regles_departementales = departement.regles if departement else []
     regles_piea = departement.piea if departement else []
 
-    # 5. Charger le template Word
-    #    -> Assurez-vous que le fichier existe dans votre projet (p.ex. dossier templates_docx)
-    template_path = os.path.join('static', 'docs', 'plan_de_cours_template.docx')
+    # 5. Charger le template Word avec le chemin absolu
+    base_path = Path(__file__).parent.parent.parent
+    template_path = os.path.join(base_path, 'static', 'docs', 'plan_de_cours_template.docx')
+    
+    # Log pour debug
+    current_app.logger.info(f"Looking for template at: {template_path}")
+    
+    if not os.path.exists(template_path):
+        current_app.logger.error(f"Template not found at: {template_path}")
+        flash("Erreur: Le template de plan de cours est introuvable.", "error")
+        return redirect(url_for('plan_de_cours.view_plan_de_cours', cours_id=cours_id))
+
     doc = DocxTemplate(template_path)
 
     # 6. Prepare Data for Pivot Table

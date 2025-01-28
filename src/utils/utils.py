@@ -19,6 +19,8 @@ from utils.scheduler_instance import scheduler, start_scheduler
 
 from app.models import User, Cours, Programme
 
+from flask import current_app
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
@@ -38,6 +40,8 @@ import base64
 
 import pytz
 import logging
+
+from pathlib import Path
 
 # Configuration de base du logging
 logging.basicConfig(level=logging.INFO)
@@ -497,10 +501,16 @@ def generate_docx_with_template(plan_id):
     """
     Génère un fichier DOCX à partir d'un modèle et des informations d'un PlanCadre, via SQLAlchemy.
     """
-    template_path = os.path.join('static', 'docs', 'plan_cadre_template.docx')
+    base_path = Path(__file__).parent.parent
+    template_path = os.path.join(base_path, 'static', 'docs', 'plan_cadre_template.docx')
+
+    # Ajoutons du logging pour déboguer
+    current_app.logger.info(f"Base path: {base_path}")
+    current_app.logger.info(f"Template path: {template_path}")
+    current_app.logger.info(f"File exists: {os.path.exists(template_path)}")
 
     if not os.path.exists(template_path):
-        print("Erreur : Le modèle DOCX n'a pas été trouvé !")
+        current_app.logger.error(f"Template not found at: {template_path}")
         return None
 
     # Récupérer le plan-cadre
