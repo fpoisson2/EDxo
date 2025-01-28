@@ -750,3 +750,4 @@ def export_docx(cours_id, session):
         download_name=filename,
         as_attachment=True
     )
+

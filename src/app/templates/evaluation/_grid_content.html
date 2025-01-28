@@ -1,8 +1,15 @@
 {% if selected_evaluation %}
 <div class="card mb-4" id="grid-section">
-    <div class="card-header">
-        <h3>Configuration de la grille</h3>
-        <h4 class="text-muted">{{ selected_evaluation.titre_evaluation }}</h4>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h3>Configuration de la grille</h3>
+            <h4 class="text-muted">{{ selected_evaluation.titre_evaluation }}</h4>
+        </div>
+        <a href="{{ url_for('evaluation.export_evaluation_docx', evaluation_id=selected_evaluation.id) }}" 
+           class="btn btn-outline-secondary">
+            <i class="fas fa-file-word me-2"></i>
+            Exporter en Word
+        </a>
     </div>
     <div class="card-body">
         <input type="hidden" name="evaluation_id" value="{{ selected_evaluation.id }}">
