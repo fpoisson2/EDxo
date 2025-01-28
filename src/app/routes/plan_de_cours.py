@@ -415,9 +415,9 @@ def export_session_plans(programme_id, session):
             regles_piea = departement.piea if departement else []
             
             # Charger le template Word
-            template_path = os.path.join(os.path.dirname(current_app.root_path), 'static', 'docs', 'plan_de_cours_template.docx')
-            doc = DocxTemplate(template_path)
-            
+            base_path = Path(__file__).parent.parent.parent
+            template_path = os.path.join(base_path, 'static', 'docs', 'plan_de_cours_template.docx')
+
             # Préparer les données pour le tableau croisé
             all_caps = []
             cap_total_map = {}
