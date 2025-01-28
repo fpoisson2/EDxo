@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Configuration de la grille d'évaluation</h2>
+    
+    <form method="POST" class="mb-4" id="evaluationForm">
+        {{ course_form.csrf_token }}
+        
+        <!-- Étape 1: Sélection du cours -->
+        <div class="card mb-4" id="course-section">
+            <div class="card-header">
+                <h3>1. Sélection du cours</h3>
+            </div>
+            <div class="card-body">
+                {{ course_form.course.label }}
+                {{ course_form.course(class="form-control", id="courseSelect") }}
+            </div>
+        </div>
+
+        <!-- Étape 2: Sélection du plan -->
+        <div class="card mb-4" id="plan-section" style="display: none;">
+            <div class="card-header">
+                <h3>2. Sélection du plan</h3>
+            </div>
+            <div class="card-body">
+                <label for="planSelect">Plan</label>
+                <select class="form-control" id="planSelect" name="plan">
+                    <option value="">-- Sélectionner un plan --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Étape 3: Sélection de l'évaluation -->
+        <div class="card mb-4" id="evaluation-section" style="display: none;">
+            <div class="card-header">
+                <h3>3. Sélection de l'évaluation</h3>
+            </div>
+            <div class="card-body">
+                <label for="evaluationSelect">Évaluation</label>
+                <select class="form-control" id="evaluationSelect" name="evaluation">
+                    <option value="">-- Sélectionner une évaluation --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Configuration de la grille -->
+        <div id="grid-content">
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    window.toggleAIButton = function(sfId) {
+    const checkbox = document.getElementById(`sf_${sfId}`);
+    const aiButton = document.getElementById(`ai_button_${sfId}`);
+    if (aiButton) {
+        aiButton.style.display = checkbox.checked ? 'block' : 'none';
+    }
+}
+function getCSRFToken() {
+    const csrfTokenElement = document.querySelector('input[name="csrf_token"]');
+    if (csrfTokenElement) {
+        return csrfTokenElement.value;
+    }
+    
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    if (metaTag) {
+        return metaTag.getAttribute('content');
+    }
+    
+    console.error('CSRF token not found');
+    return '';
+}
+
+function generateGridFromData(button) {
+    const savoirFaire = button.dataset.savoirFaire;
+    const capacite = button.dataset.capacite;
+    const sfId = button.dataset.sfId;
+    
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération en cours...';
+
+    const csrfToken = getCSRFToken();
+    
+    fetch("/evaluation/generate_six_level_grid", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken
+        },
+        body: JSON.stringify({ 
+            "savoir_faire": savoirFaire, 
+            "capacite": capacite 
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(errorText => {
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Mettre à jour les champs de texte pour chaque niveau
+        for (let i = 1; i <= 6; i++) {
+            const textarea = document.querySelector(`textarea[name="level${i}_${sfId}"]`);
+            if (textarea) {
+                textarea.value = data[`level${i}_description`] || '';
+                // Déclencher l'événement change pour activer le bouton de sauvegarde
+                textarea.dispatchEvent(new Event('change'));
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(`Erreur lors de la génération automatique: ${error.message}`);
+    })
+    .finally(() => {
+        // Restaurer le bouton
+        button.disabled = false;
+        button.innerHTML = originalText;
+    });
+}
+document.addEventListener('DOMContentLoaded', function() {
+    const courseSelect = document.getElementById('courseSelect');
+    const planSelect = document.getElementById('planSelect');
+    const evaluationSelect = document.getElementById('evaluationSelect');
+    const planSection = document.getElementById('plan-section');
+    const evaluationSection = document.getElementById('evaluation-section');
+    const gridContent = document.getElementById('grid-content');
+    const csrfToken = document.querySelector('[name=csrf_token]').value;
+
+    // Fonction de sauvegarde de la grille
+    window.saveGrid = async function() {
+        const form = document.getElementById('evaluationForm');
+        if (!form) {
+            flashMessageSystem.error('Formulaire non trouvé');
+            return;
+        }
+
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch('/evaluation/save_grid', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                // Cacher le bouton de sauvegarde
+                const floatingButton = document.getElementById('floating-save-button');
+                if (floatingButton) {
+                    floatingButton.style.display = 'none';
+                }
+                
+                // Afficher le message de succès via le système de flash
+                flashMessageSystem.success('La grille a été sauvegardée avec succès');
+            } else {
+                throw new Error(result.message || 'Erreur lors de la sauvegarde');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            flashMessageSystem.error('Erreur lors de la sauvegarde : ' + error.message);
+        }
+    };
+
+    // Fonction pour initialiser le bouton de sauvegarde
+    function initializeSaveButton() {
+        const floatingButton = document.getElementById('floating-save-button');
+        if (floatingButton) {
+            const saveButton = floatingButton.querySelector('button');
+            if (saveButton) {
+                saveButton.removeEventListener('click', saveGrid);
+                saveButton.addEventListener('click', saveGrid);
+            }
+            floatingButton.style.display = 'none';
+        }
+    }
+
+    // Fonction pour initialiser les détecteurs de changements
+    function initializeChangeDetectors() {
+        const changeDetectors = document.querySelectorAll('.change-detector');
+        
+        changeDetectors.forEach(element => {
+            function showSaveButton() {
+                const floatingButton = document.getElementById('floating-save-button');
+                if (floatingButton) {
+                    floatingButton.style.display = 'block';
+                }
+            }
+
+            // Supprime les anciens événements pour éviter les doublons
+            element.removeEventListener('change', showSaveButton);
+            element.removeEventListener('input', showSaveButton);
+            
+            // Ajoute les nouveaux événements
+            element.addEventListener('change', showSaveButton);
+            
+            if (element.tagName === 'TEXTAREA') {
+                element.addEventListener('input', showSaveButton);
+            }
+        });
+    }
+
+    // Fonction pour initialiser les toggles de description
+    function initializeToggles() {
+        const toggles = document.querySelectorAll('.toggle-descriptions');
+        toggles.forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const targetId = this.getAttribute('data-target');
+                const descriptionBlock = document.getElementById(targetId);
+                if (descriptionBlock) {
+                    descriptionBlock.style.display = this.checked ? 'block' : 'none';
+                }
+            });
+        });
+    }
+
+    // Fonction pour faire une requête AJAX
+    async function fetchData(url, formData) {
+        formData.append('csrf_token', csrfToken);
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        return response;
+    }
+
+    // Gestion du changement de cours
+    courseSelect.addEventListener('change', async function() {
+        const formData = new FormData();
+        formData.append('course_id', this.value);
+        
+        try {
+            const response = await fetchData('/evaluation/get_plans', formData);
+            const data = await response.json();
+            
+            planSelect.innerHTML = '<option value="">-- Sélectionner un plan --</option>';
+            data.plans.forEach(plan => {
+                planSelect.add(new Option(plan.name, plan.id));
+            });
+            
+            planSection.style.display = this.value ? 'block' : 'none';
+            evaluationSection.style.display = 'none';
+            gridContent.innerHTML = '';
+            
+        } catch (error) {
+            console.error('Erreur:', error);
+            flashMessageSystem.error('Erreur lors du chargement des plans');
+        }
+    });
+
+    // Gestion du changement de plan
+    planSelect.addEventListener('change', async function() {
+        const formData = new FormData();
+        formData.append('plan_id', this.value);
+        
+        try {
+            const response = await fetchData('/evaluation/get_evaluations', formData);
+            const data = await response.json();
+            
+            evaluationSelect.innerHTML = '<option value="">-- Sélectionner une évaluation --</option>';
+            data.evaluations.forEach(eval => {
+                evaluationSelect.add(new Option(eval.title, eval.id));
+            });
+            
+            evaluationSection.style.display = this.value ? 'block' : 'none';
+            gridContent.innerHTML = '';
+            
+        } catch (error) {
+            console.error('Erreur:', error);
+            flashMessageSystem.error('Erreur lors du chargement des évaluations');
+        }
+    });
+
+    // Gestion du changement d'évaluation
+    evaluationSelect.addEventListener('change', async function() {
+        const formData = new FormData();
+        formData.append('evaluation_id', this.value);
+        
+        try {
+            const response = await fetchData('/evaluation/get_grid', formData);
+            const html = await response.text();
+            gridContent.innerHTML = html;
+            
+            // Réinitialiser tous les événements après le chargement de la grille
+            initializeChangeDetectors();
+            initializeToggles();
+            initializeSaveButton();
+            
+        } catch (error) {
+            console.error('Erreur:', error);
+            flashMessageSystem.error('Erreur lors du chargement de la grille');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -355,3 +355,265 @@ def generate_six_level_grid():
         return jsonify({'error': f'Erreur API OpenAI: {str(e)}'}), 500
     except Exception as e:
         return jsonify({'error': f'Erreur interne: {str(e)}'}), 500
+
+@evaluation_bp.route('/evaluation-wizard', methods=['GET', 'POST'])
+@admin_required
+def evaluation_wizard():
+    # Initialisation des formulaires
+    course_form = CourseSelectionForm()
+    plan_form = PlanSelectionForm()
+    evaluation_form = EvaluationSelectionForm()
+    
+    # Variables pour stocker les données
+    selected_course_id = None
+    selected_plan_id = None
+    selected_evaluation = None
+    grouped_cf = {}
+    
+    # Remplir les choix du formulaire de cours avec une option vide au début
+    courses = Cours.query.all()
+    course_form.course.choices = [('', '-- Sélectionner un cours --')] + [
+        (str(course.id), f"{course.code} - {course.nom}") 
+        for course in courses
+    ]
+    
+    # Définir le coerce pour permettre les valeurs vides
+    course_form.course.coerce = lambda x: int(x) if x else None
+
+    if request.method == 'POST':
+        selected_course_id = request.form.get('course')
+        selected_plan_id = request.form.get('plan')
+        
+        # Remplir les choix du plan si un cours est sélectionné
+        if selected_course_id:
+            plans = PlanDeCours.query.filter_by(cours_id=int(selected_course_id)).all()
+            plan_form.plan.choices = [(str(plan.id), f"Plan {plan.id}") for plan in plans]
+        
+        # Remplir les choix d'évaluation si un plan est sélectionné
+        if selected_plan_id:
+            evaluations = PlanDeCoursEvaluations.query.filter_by(
+                plan_de_cours_id=int(selected_plan_id)
+            ).all()
+            evaluation_form.evaluation.choices = [
+                (str(eval.id), eval.titre_evaluation) for eval in evaluations
+            ]
+                
+        # Gestion de la sélection de l'évaluation
+        if 'submit_evaluation' in request.form:
+            evaluation_id = request.form.get('evaluation')
+            if evaluation_id:
+                selected_evaluation = PlanDeCoursEvaluations.query.get_or_404(int(evaluation_id))
+                
+                # Récupérer les capacités et savoirs-faire
+                eval_capacites = (
+                    PlanDeCoursEvaluationsCapacites.query
+                    .join(PlanCadreCapacites)
+                    .join(PlanCadre)
+                    .filter(PlanCadre.cours_id == int(selected_course_id))
+                    .filter(PlanDeCoursEvaluationsCapacites.capacite_id.isnot(None))
+                    .options(
+                        db.joinedload(PlanDeCoursEvaluationsCapacites.capacite)
+                        .joinedload(PlanCadreCapacites.savoirs_faire)
+                    )
+                    .all()
+                )
+                
+                # Récupérer les savoirs-faire déjà sélectionnés
+                existing_sf = EvaluationSavoirFaire.query.filter_by(
+                    evaluation_id=int(evaluation_id)
+                ).all()
+                selected_sf_ids = {sf.savoir_faire_id for sf in existing_sf}
+                
+                # Grouper les capacités et leurs savoirs-faire
+                grouped_cf = defaultdict(dict)
+                for eval_cap in eval_capacites:
+                    if eval_cap.capacite and eval_cap.capacite.capacite:
+                        capacite_nom = eval_cap.capacite.capacite
+                        capacite_id = eval_cap.capacite.id
+                        for sf in eval_cap.capacite.savoirs_faire:
+                            if sf.id not in grouped_cf[capacite_nom]:
+                                existing_sf_data = next(
+                                    (ex_sf for ex_sf in existing_sf if ex_sf.savoir_faire_id == sf.id),
+                                    None
+                                )
+                                grouped_cf[capacite_nom][sf.id] = {
+                                    'texte': sf.texte,
+                                    'capacite_id': capacite_id,
+                                    'savoir_faire_id': sf.id,
+                                    'selected': sf.id in selected_sf_ids,
+                                    'level1': existing_sf_data.level1_description if existing_sf_data else '',
+                                    'level2': existing_sf_data.level2_description if existing_sf_data else '',
+                                    'level3': existing_sf_data.level3_description if existing_sf_data else '',
+                                    'level4': existing_sf_data.level4_description if existing_sf_data else '',
+                                    'level5': existing_sf_data.level5_description if existing_sf_data else '',
+                                    'level6': existing_sf_data.level6_description if existing_sf_data else ''
+                                }
+
+        # Gestion de la mise à jour de la grille
+        if 'update_grid' in request.form:
+            evaluation_id = request.form.get('evaluation_id')
+            
+            try:
+                if evaluation_id:
+                    # Suppression des anciennes associations
+                    EvaluationSavoirFaire.query.filter_by(
+                        evaluation_id=int(evaluation_id)
+                    ).delete()
+                    
+                    # Création des nouvelles associations avec descriptions
+                    for sf_id in request.form.getlist('savoirs_faire'):
+                        capacite_id = request.form.get(f'capacite_{sf_id}')
+                        if capacite_id:
+                            new_assoc = EvaluationSavoirFaire(
+                                evaluation_id=int(evaluation_id),
+                                savoir_faire_id=int(sf_id),
+                                capacite_id=int(capacite_id),
+                                selected=True,
+                                level1_description=request.form.get(f'level1_{sf_id}', ''),
+                                level2_description=request.form.get(f'level2_{sf_id}', ''),
+                                level3_description=request.form.get(f'level3_{sf_id}', ''),
+                                level4_description=request.form.get(f'level4_{sf_id}', ''),
+                                level5_description=request.form.get(f'level5_{sf_id}', ''),
+                                level6_description=request.form.get(f'level6_{sf_id}', '')
+                            )
+                            db.session.add(new_assoc)
+                    
+                    db.session.commit()
+                    flash('Grille mise à jour avec succès', 'success')
+                    
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Erreur: {str(e)}', 'danger')
+
+    return render_template(
+        'evaluation/wizard.html',
+        course_form=course_form,
+        plan_form=plan_form,
+        evaluation_form=evaluation_form,
+        selected_course_id=selected_course_id,
+        selected_plan_id=selected_plan_id,
+        selected_evaluation=selected_evaluation,
+        grouped_cf=grouped_cf
+    )
+@evaluation_bp.route('/get_plans', methods=['POST'])
+@admin_required
+def get_plans():
+    course_id = request.form.get('course_id')
+    if not course_id:
+        return jsonify({'plans': []})
+    
+    plans = PlanDeCours.query.filter_by(cours_id=int(course_id)).all()
+    return jsonify({
+        'plans': [{'id': str(plan.id), 'name': f"Plan {plan.id}"} for plan in plans]
+    })
+
+@evaluation_bp.route('/get_evaluations', methods=['POST'])
+@admin_required
+def get_evaluations():
+    plan_id = request.form.get('plan_id')
+    if not plan_id:
+        return jsonify({'evaluations': []})
+    
+    evaluations = PlanDeCoursEvaluations.query.filter_by(plan_de_cours_id=int(plan_id)).all()
+    return jsonify({
+        'evaluations': [{'id': str(eval.id), 'title': eval.titre_evaluation} 
+                       for eval in evaluations]
+    })
+
+@evaluation_bp.route('/get_grid', methods=['POST'])
+@admin_required
+def get_grid():
+    evaluation_id = request.form.get('evaluation_id')
+    if not evaluation_id:
+        return ""
+        
+    evaluation = PlanDeCoursEvaluations.query.get_or_404(int(evaluation_id))
+    
+    # Récupérer les capacités et savoirs-faire
+    eval_capacites = (
+        PlanDeCoursEvaluationsCapacites.query
+        .join(PlanCadreCapacites)
+        .join(PlanCadre)
+        .filter(PlanCadre.cours_id == evaluation.plan_de_cours.cours_id)
+        .filter(PlanDeCoursEvaluationsCapacites.capacite_id.isnot(None))
+        .options(
+            db.joinedload(PlanDeCoursEvaluationsCapacites.capacite)
+            .joinedload(PlanCadreCapacites.savoirs_faire)
+        )
+        .all()
+    )
+    
+    # Récupérer les savoirs-faire déjà sélectionnés
+    existing_sf = EvaluationSavoirFaire.query.filter_by(
+        evaluation_id=int(evaluation_id)
+    ).all()
+    selected_sf_ids = {sf.savoir_faire_id for sf in existing_sf}
+    
+    # Grouper les capacités et leurs savoirs-faire
+    grouped_cf = defaultdict(dict)
+    for eval_cap in eval_capacites:
+        if eval_cap.capacite and eval_cap.capacite.capacite:
+            capacite_nom = eval_cap.capacite.capacite
+            capacite_id = eval_cap.capacite.id
+            for sf in eval_cap.capacite.savoirs_faire:
+                if sf.id not in grouped_cf[capacite_nom]:
+                    existing_sf_data = next(
+                        (ex_sf for ex_sf in existing_sf if ex_sf.savoir_faire_id == sf.id),
+                        None
+                    )
+                    grouped_cf[capacite_nom][sf.id] = {
+                        'texte': sf.texte,
+                        'capacite_id': capacite_id,
+                        'savoir_faire_id': sf.id,
+                        'selected': sf.id in selected_sf_ids,
+                        'level1': existing_sf_data.level1_description if existing_sf_data else '',
+                        'level2': existing_sf_data.level2_description if existing_sf_data else '',
+                        'level3': existing_sf_data.level3_description if existing_sf_data else '',
+                        'level4': existing_sf_data.level4_description if existing_sf_data else '',
+                        'level5': existing_sf_data.level5_description if existing_sf_data else '',
+                        'level6': existing_sf_data.level6_description if existing_sf_data else ''
+                    }
+    
+    return render_template(
+        'evaluation/_grid_content.html',
+        selected_evaluation=evaluation,
+        grouped_cf=grouped_cf
+    )
+
+@evaluation_bp.route('/save_grid', methods=['POST'])
+@admin_required
+def save_grid():
+    try:
+        evaluation_id = request.form.get('evaluation_id')
+        if not evaluation_id:
+            return jsonify({'success': False, 'message': 'ID d\'évaluation manquant'}), 400
+
+        # Suppression des anciennes associations
+        EvaluationSavoirFaire.query.filter_by(
+            evaluation_id=int(evaluation_id)
+        ).delete()
+        
+        # Création des nouvelles associations avec descriptions
+        for sf_id in request.form.getlist('savoirs_faire'):
+            capacite_id = request.form.get(f'capacite_{sf_id}')
+            if capacite_id:
+                new_assoc = EvaluationSavoirFaire(
+                    evaluation_id=int(evaluation_id),
+                    savoir_faire_id=int(sf_id),
+                    capacite_id=int(capacite_id),
+                    selected=True,
+                    level1_description=request.form.get(f'level1_{sf_id}', ''),
+                    level2_description=request.form.get(f'level2_{sf_id}', ''),
+                    level3_description=request.form.get(f'level3_{sf_id}', ''),
+                    level4_description=request.form.get(f'level4_{sf_id}', ''),
+                    level5_description=request.form.get(f'level5_{sf_id}', ''),
+                    level6_description=request.form.get(f'level6_{sf_id}', '')
+                )
+                db.session.add(new_assoc)
+        
+        db.session.commit()
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
