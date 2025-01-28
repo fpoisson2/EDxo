@@ -582,8 +582,14 @@ def export_docx(cours_id, session):
     regles_piea = departement.piea if departement else []
 
     # 5. Charger le template Word avec le chemin absolu
-    template_path = os.path.join(os.path.dirname(current_app.root_path), 'static', 'docs', 'plan_de_cours_template.docx')
+    base_path = os.path.dirname(os.path.dirname(current_app.root_path))
+    template_path = os.path.join(base_path, 'src', 'static', 'docs', 'plan_de_cours_template.docx')
     
+    # Ajoutons du logging pour déboguer
+    current_app.logger.info(f"Base path: {base_path}")
+    current_app.logger.info(f"Template path: {template_path}")
+    current_app.logger.info(f"File exists: {os.path.exists(template_path)}")
+
     if not os.path.exists(template_path):
         current_app.logger.error(f"Template not found at: {template_path}")
         flash("Erreur: Le template de plan de cours est introuvable.", "error")
