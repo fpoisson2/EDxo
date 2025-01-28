@@ -414,7 +414,7 @@ def export_session_plans(programme_id, session):
             regles_piea = departement.piea if departement else []
             
             # Charger le template Word
-            template_path = os.path.join('static', 'docs', 'plan_de_cours_template.docx')
+            template_path = os.path.join(BASE_DIR, 'static', 'docs', 'plan_de_cours_template.docx')
             doc = DocxTemplate(template_path)
             
             # Préparer les données pour le tableau croisé
@@ -582,7 +582,7 @@ def export_docx(cours_id, session):
     regles_piea = departement.piea if departement else []
 
     # 5. Charger le template Word avec le chemin absolu
-    template_path = os.path.join(current_app.root_path, '..', 'static', 'docs', 'plan_de_cours_template.docx')
+    template_path = os.path.join(BASE_DIR, 'static', 'docs', 'plan_de_cours_template.docx')
     
     # Ajouter une vérification pour le debugging
     if not os.path.exists(template_path):
