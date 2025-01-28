@@ -21,6 +21,7 @@ from pathlib import Path
 # Définir le chemin de base de l'application
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+plan_de_cours_bp = Blueprint("plan_de_cours", __name__, template_folder="templates")
 
 
 def parse_markdown_nested(md_text):
@@ -79,8 +80,15 @@ def parse_markdown_nested(md_text):
     
     return nested_structure
 
+@plan_de_cours_bp.route("/api/cours/<int:cours_id>/plans")
+@login_required
+def get_cours_plans(cours_id):
+    plans = PlanDeCours.query.filter_by(cours_id=cours_id).all()
+    return jsonify([{
+        'id': plan.id,
+        'session': plan.session
+    } for plan in plans])
 
-plan_de_cours_bp = Blueprint("plan_de_cours", __name__, template_folder="templates")
 
 @plan_de_cours_bp.route(
     "/cours/<int:cours_id>/plan_de_cours/", methods=["GET", "POST"]
@@ -104,22 +112,109 @@ def view_plan_de_cours(cours_id, session=None):
         flash("Aucun PlanCadre associé à ce cours.", "warning")
         return redirect(url_for('programme.view_programme', programme_id=cours.programme_id))
 
+    # Vérifier s'il y a une demande de copie
+    copy_from_id = request.args.get('copy_from')
+    source_plan = None
+    if copy_from_id:
+        source_plan = PlanDeCours.query.get(copy_from_id)
+        if not source_plan:
+            flash("Plan de cours source introuvable.", "error")
+            return redirect(url_for('programme.view_programme', programme_id=cours.programme_id))
+
+
     # 3. Détermination du PlanDeCours à utiliser
     if session:
-        plan_de_cours = PlanDeCours.query.filter_by(cours_id=cours.id, session=session).first()
-        if not plan_de_cours:
-            plan_de_cours = PlanDeCours(cours_id=cours.id, session=session)
+        # Standardiser le format de la session (par exemple "2" -> "H25")
+        try:
+            # Si la session est un numéro (ex: "2")
+            session_num = int(session)
+            year = datetime.now().year % 100
+            # Pour les sessions paires (2,4,6), on utilise H, pour impaires (1,3,5) on utilise A
+            if session_num % 2 == 0:
+                formatted_session = f"H{year + 1}"  # Session d'hiver de l'année suivante
+            else:
+                formatted_session = f"A{year}"  # Session d'automne de l'année courante
+        except ValueError:
+            # Si c'est déjà au format "H25" ou "A24", on garde tel quel
+            formatted_session = session
+
+        # Chercher le plan avec la session formatée
+        plan_de_cours = PlanDeCours.query.filter_by(
+            cours_id=cours.id, 
+            session=formatted_session
+        ).first()
+        
+        if not plan_de_cours and source_plan:
+            # Créer un nouveau plan avec la session formatée
+            plan_de_cours = PlanDeCours(cours_id=cours.id, session=formatted_session)
+            
+            
+            # Copier les attributs simples
+            for attr in ['campus', 'presentation_du_cours', 'objectif_terminal_du_cours',
+                        'organisation_et_methodes', 'accomodement', 'evaluation_formative_apprentissages',
+                        'evaluation_expression_francais', 'seuil_reussite', 'materiel',
+                        'nom_enseignant', 'telephone_enseignant', 'courriel_enseignant', 'bureau_enseignant']:
+                setattr(plan_de_cours, attr, getattr(source_plan, attr))
+
+            # Copier les calendriers
+            for cal in source_plan.calendriers:
+                new_cal = PlanDeCoursCalendrier(
+                    semaine=cal.semaine,
+                    sujet=cal.sujet,
+                    activites=cal.activites,
+                    travaux_hors_classe=cal.travaux_hors_classe,
+                    evaluations=cal.evaluations
+                )
+                plan_de_cours.calendriers.append(new_cal)
+
+            # Copier les médiagraphies
+            for med in source_plan.mediagraphies:
+                new_med = PlanDeCoursMediagraphie(
+                    reference_bibliographique=med.reference_bibliographique
+                )
+                plan_de_cours.mediagraphies.append(new_med)
+
+            # Copier les disponibilités
+            for disp in source_plan.disponibilites:
+                new_disp = PlanDeCoursDisponibiliteEnseignant(
+                    jour_semaine=disp.jour_semaine,
+                    plage_horaire=disp.plage_horaire,
+                    lieu=disp.lieu
+                )
+                plan_de_cours.disponibilites.append(new_disp)
+
+            # Copier les évaluations
+            for ev in source_plan.evaluations:
+                new_ev = PlanDeCoursEvaluations(
+                    titre_evaluation=ev.titre_evaluation,
+                    description=ev.description,
+                    semaine=ev.semaine
+                )
+                # Copier les capacités associées
+                for cap in ev.capacites:
+                    new_cap = PlanDeCoursEvaluationsCapacites(
+                        capacite_id=cap.capacite_id,
+                        ponderation=cap.ponderation
+                    )
+                    new_ev.capacites.append(new_cap)
+                plan_de_cours.evaluations.append(new_ev)
+
+            flash(f"Plan de cours copié et créé pour la session {session}.", "success")
             db.session.add(plan_de_cours)
             db.session.commit()
-            flash(f"Plan de Cours pour la session {session} créé.", "success")
+            
+        # Si le plan n'existe pas et qu'on n'a pas de source_plan, c'est une création simple
+        elif not plan_de_cours:
+            plan_de_cours = PlanDeCours(cours_id=cours.id, session=session)
+            flash(f"Nouveau plan de cours créé pour la session {session}.", "success")
+            db.session.add(plan_de_cours)
+            db.session.commit()
+        
     else:
         plan_de_cours = PlanDeCours.query.filter_by(cours_id=cours.id).order_by(PlanDeCours.id.desc()).first()
         if not plan_de_cours:
-            flash("Aucun Plan de Cours existant. Création d'un nouveau Plan de Cours.", "warning")
-            plan_de_cours = PlanDeCours(cours_id=cours.id, session="À définir")
-            db.session.add(plan_de_cours)
-            db.session.commit()
-            flash("Nouveau Plan de Cours créé. Veuillez le remplir.", "success")
+            flash("Aucun Plan de Cours existant.", "warning")
+            return redirect(url_for('programme.view_programme', programme_id=cours.programme_id))
 
     programme = cours.programme
     departement = programme.department

@@ -1,0 +1,101 @@
+{% extends "parametres.html" %}
+{% block parametres_content %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestion des plans de cours</h2>
+        <div>
+            <input type="text" id="searchInput" class="form-control" placeholder="Rechercher...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover" id="plansTable">
+            <thead>
+                <tr>
+                    <th>Programme</th>
+                    <th>Code du cours</th>
+                    <th>Nom du cours</th>
+                    <th>Session</th>
+                    <th>Enseignant</th>
+                    <th>Date de modification</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for plan in plans %}
+                <tr class="searchable-row">
+                    <td>{{ plan.cours.programme.nom }}</td>
+                    <td>{{ plan.cours.code }}</td>
+                    <td>{{ plan.cours.nom }}</td>
+                    <td>{{ plan.session }}</td>
+                    <td>{{ plan.nom_enseignant or 'Non défini' }}</td>
+                    <td>{{ plan.modified_at|default('N/A', true) }}</td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <a href="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=plan.cours.id, session=plan.session) }}" 
+                               class="btn btn-sm btn-info">
+                                <i class="bi bi-eye"></i> Voir
+                            </a>
+                            {% if current_user.role in ['admin', 'coordo'] %}
+                            <button type="button" 
+                                    class="btn btn-sm btn-danger" 
+                                    onclick="confirmDelete({{ plan.id }}, '{{ plan.cours.code }}', '{{ plan.session }}')">
+                                <i class="bi bi-trash"></i> Supprimer
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer le plan de cours <span id="planInfo"></span> ?</p>
+                <p class="text-danger">Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    {{ form.hidden_tag() }}  <!-- Intégration du jeton CSRF -->
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Fonction de recherche
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    const searchText = this.value.toLowerCase();
+    const rows = document.querySelectorAll('.searchable-row');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchText) ? '' : 'none';
+    });
+});
+
+// Fonction de confirmation de suppression
+function confirmDelete(planId, courseCode, session) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    document.getElementById('planInfo').textContent = `${courseCode} - ${session}`;
+    const deleteForm = document.getElementById('deleteForm');
+    deleteForm.action = `/settings/supprimer-plan-cours/${planId}`;
+    modal.show();
+}
+</script>
+
+{% endblock %}
