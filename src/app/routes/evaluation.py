@@ -43,6 +43,14 @@ import json
 from openai import OpenAI
 from openai import OpenAIError
 
+from pathlib import Path
+import os
+import io
+from collections import defaultdict
+from flask import send_file, current_app, flash, redirect, url_for
+from docxtpl import DocxTemplate
+
+
 
 class AISixLevelGridResponse(BaseModel):
     """
@@ -65,7 +73,21 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+@evaluation_bp.route('/get_courses', methods=['GET'])
+@admin_required
+def get_courses():
+    courses = Cours.query.all()
+    courses_data = [{
+        'id': str(course.id),
+        'code': course.code,
+        'nom': course.nom
+    } for course in courses]
+    return jsonify(courses_data)
+
 @evaluation_bp.route('/create', methods=['GET', 'POST'])
+
+
+
 @admin_required
 def create_evaluation_grid():
     # Étape 1 : Sélection du Cours
@@ -82,8 +104,8 @@ def create_evaluation_grid():
 @admin_required
 def select_plan(course_id):
     plan_form = PlanSelectionForm()
-    plans = PlanDeCours.query.filter_by(cours_id=course_id).all()
-    plan_form.plan.choices = [(plan.id, f"Plan {plan.id}") for plan in plans]
+    plans = PlanDeCours.query.filter_by(cours_id=course_id).order_by(PlanDeCours.session.desc()).all()
+    plan_form.plan.choices = [(plan.id, f"{plan.session}" if plan.session else f"Plan {plan.id}") for plan in plans]
     
     if 'submit_plan' in request.form and plan_form.validate_on_submit():
         selected_plan_id = plan_form.plan.data
@@ -91,8 +113,6 @@ def select_plan(course_id):
     
     return render_template('evaluation/select_plan.html', form=plan_form, course_id=course_id)
 
-    
-    return render_template('evaluation/select_plan.html', form=plan_form, course_id=course_id)
 
 @evaluation_bp.route('/select_evaluation/<int:plan_id>', methods=['GET', 'POST'])
 @admin_required
@@ -386,8 +406,11 @@ def evaluation_wizard():
         
         # Remplir les choix du plan si un cours est sélectionné
         if selected_course_id:
-            plans = PlanDeCours.query.filter_by(cours_id=int(selected_course_id)).all()
-            plan_form.plan.choices = [(str(plan.id), f"Plan {plan.id}") for plan in plans]
+            plans = PlanDeCours.query.filter_by(cours_id=int(selected_course_id)).order_by(PlanDeCours.session.desc()).all()
+            plan_form.plan.choices = [
+                (str(plan.id), f"{plan.session}" if plan.session else f"Plan {plan.id}")
+                for plan in plans
+            ]
         
         # Remplir les choix d'évaluation si un plan est sélectionné
         if selected_plan_id:
@@ -495,6 +518,7 @@ def evaluation_wizard():
         selected_evaluation=selected_evaluation,
         grouped_cf=grouped_cf
     )
+
 @evaluation_bp.route('/get_plans', methods=['POST'])
 @admin_required
 def get_plans():
@@ -502,9 +526,12 @@ def get_plans():
     if not course_id:
         return jsonify({'plans': []})
     
-    plans = PlanDeCours.query.filter_by(cours_id=int(course_id)).all()
+    plans = PlanDeCours.query.filter_by(cours_id=int(course_id)).order_by(PlanDeCours.session.desc()).all()
     return jsonify({
-        'plans': [{'id': str(plan.id), 'name': f"Plan {plan.id}"} for plan in plans]
+        'plans': [{
+            'id': plan.id,  # Pas besoin de convertir en str ici
+            'name': f"{plan.session}" if plan.session else f"Plan {plan.id}"
+        } for plan in plans]
     })
 
 @evaluation_bp.route('/get_evaluations', methods=['POST'])
@@ -617,3 +644,84 @@ def save_grid():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@evaluation_bp.route('/export_docx/<int:evaluation_id>', methods=['GET'])
+@admin_required
+def export_evaluation_docx(evaluation_id):
+    # 1. Récupérer l'évaluation
+    evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
+    
+    # 2. Récupérer les capacités et savoirs-faire associés
+    eval_capacites = (
+        PlanDeCoursEvaluationsCapacites.query
+        .join(PlanCadreCapacites)
+        .join(PlanCadre)
+        .filter(PlanCadre.cours_id == evaluation.plan_de_cours.cours_id)
+        .filter(PlanDeCoursEvaluationsCapacites.capacite_id.isnot(None))
+        .options(
+            db.joinedload(PlanDeCoursEvaluationsCapacites.capacite)
+            .joinedload(PlanCadreCapacites.savoirs_faire)
+        )
+        .all()
+    )
+    
+    # 3. Récupérer les savoirs-faire avec leurs descriptions de niveaux
+    eval_savoirs_faire = EvaluationSavoirFaire.query.filter_by(
+        evaluation_id=evaluation_id
+    ).all()
+    
+    # 4. Organiser les données pour le template
+    grouped_cf = defaultdict(dict)
+    for eval_cap in eval_capacites:
+        if eval_cap.capacite and eval_cap.capacite.capacite:
+            capacite_nom = eval_cap.capacite.capacite
+            for sf in eval_cap.capacite.savoirs_faire:
+                existing_sf_data = next(
+                    (esf for esf in eval_savoirs_faire if esf.savoir_faire_id == sf.id),
+                    None
+                )
+                if existing_sf_data:
+                    grouped_cf[capacite_nom][sf.id] = {
+                        'texte': sf.texte,
+                        'level1': existing_sf_data.level1_description,
+                        'level2': existing_sf_data.level2_description,
+                        'level3': existing_sf_data.level3_description,
+                        'level4': existing_sf_data.level4_description,
+                        'level5': existing_sf_data.level5_description,
+                        'level6': existing_sf_data.level6_description
+                    }
+    
+    # 5. Charger le template Word
+    base_path = Path(__file__).parent.parent.parent
+    template_path = os.path.join(base_path, 'static', 'docs', 'evaluation_grid_template.docx')
+    
+    if not os.path.exists(template_path):
+        current_app.logger.error(f"Template not found at: {template_path}")
+        flash("Erreur: Le template de la grille d'évaluation est introuvable.", "error")
+        return redirect(url_for('evaluation.view_evaluation', evaluation_id=evaluation_id))
+
+    doc = DocxTemplate(template_path)
+    
+    # 6. Préparer le contexte pour le template
+    context = {
+        'evaluation': evaluation,
+        'capacites_savoirs_faire': grouped_cf,
+        'cours': evaluation.plan_de_cours.cours,
+        'plan_de_cours': evaluation.plan_de_cours
+    }
+    
+    # 7. Rendre le document
+    doc.render(context)
+    
+    # 8. Préparer le document pour le téléchargement
+    byte_io = io.BytesIO()
+    doc.save(byte_io)
+    byte_io.seek(0)
+    
+    # 9. Envoyer le fichier
+    filename = f"Grille_evaluation_{evaluation.plan_de_cours.session}.docx"
+    return send_file(
+        byte_io,
+        download_name=filename,
+        as_attachment=True
+    )
