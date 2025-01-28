@@ -501,7 +501,7 @@ def generate_docx_with_template(plan_id):
     """
     Génère un fichier DOCX à partir d'un modèle et des informations d'un PlanCadre, via SQLAlchemy.
     """
-    base_path = Path(__file__).parent.parent.parent.parent
+    base_path = Path(__file__).parent.parent
     template_path = os.path.join(base_path, 'static', 'docs', 'plan_cadre_template.docx')
 
     # Ajoutons du logging pour déboguer
