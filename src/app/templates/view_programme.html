@@ -108,9 +108,11 @@
                       Plan-Cadre
                     </a>
                     <!-- Nouveau bouton Plan-de-cours -->
-                    <a href="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=c.id) }}" class="btn btn-sm btn-secondary w-100 fs-6">
+                    <button class="btn btn-sm btn-secondary w-100 fs-6" 
+                            onclick="openPlanCoursModal('{{ c.id }}', '{{ c.code }}', '{{ c.nom }}')"
+                            type="button">
                       Plan de cours
-                    </a>
+                    </button>
                   </div>
 
                 </div>
@@ -178,4 +180,152 @@
     margin-right: 0.5rem;
   }
 </style>
+<div class="modal fade" id="planCoursModal" tabindex="-1" aria-labelledby="planCoursModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="planCoursModalLabel">Gestion du plan de cours</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="modalCoursId">
+        
+        <div class="mb-3">
+          <label class="form-label">Action désirée</label>
+          <select class="form-select" id="actionSelect" onchange="updateFormFields()">
+            <option value="">Choisir une action</option>
+            <option value="create">Créer un nouveau plan de cours</option>
+            <option value="modify" class="existing-plans-option">Modifier un plan existant</option>
+            <option value="copy" class="existing-plans-option">Créer à partir d'un plan existant</option>
+          </select>
+        </div>
+
+        <div class="mb-3 d-none" id="existingPlanSection">
+          <label class="form-label">Plan de cours existant</label>
+          <select class="form-select" id="existingPlanSelect">
+          </select>
+        </div>
+
+        <div class="mb-3 d-none" id="sessionSection">
+          <label class="form-label">Session</label>
+          <select class="form-select" id="sessionSelect">
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" onclick="handlePlanCoursAction()">Confirmer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let planCoursModal;
+let currentPlans = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    planCoursModal = new bootstrap.Modal(document.getElementById('planCoursModal'));
+});
+
+async function openPlanCoursModal(coursId, coursCode, coursNom) {
+    document.getElementById('modalCoursId').value = coursId;
+    document.getElementById('planCoursModalLabel').textContent = `Gestion des plan de cours - ${coursCode} ${coursNom}`;
+    
+    // Réinitialiser le formulaire
+    document.getElementById('actionSelect').value = '';
+    document.getElementById('existingPlanSection').classList.add('d-none');
+    document.getElementById('sessionSection').classList.add('d-none');
+    
+    // Récupérer les plans existants
+    try {
+        const response = await fetch(`/api/cours/${coursId}/plans`);
+        currentPlans = await response.json();
+        
+        // Mettre à jour l'interface selon l'existence de plans
+        const existingPlansOptions = document.querySelectorAll('.existing-plans-option');
+        existingPlansOptions.forEach(option => {
+            option.style.display = currentPlans.length > 0 ? '' : 'none';
+        });
+        
+        // Préparer le select des plans existants
+        const existingPlanSelect = document.getElementById('existingPlanSelect');
+        existingPlanSelect.innerHTML = currentPlans.map(plan => 
+            `<option value="${plan.id}">Session ${plan.session}</option>`
+        ).join('');
+        
+        // Préparer le select des sessions disponibles
+        updateAvailableSessions();
+        
+    } catch (error) {
+        console.error('Erreur lors de la récupération des plans:', error);
+    }
+    
+    planCoursModal.show();
+}
+
+function updateFormFields() {
+    const action = document.getElementById('actionSelect').value;
+    const existingPlanSection = document.getElementById('existingPlanSection');
+    const sessionSection = document.getElementById('sessionSection');
+    
+    existingPlanSection.classList.add('d-none');
+    sessionSection.classList.add('d-none');
+    
+    if (action === 'modify') {
+        existingPlanSection.classList.remove('d-none');
+    } else if (action === 'create') {
+        sessionSection.classList.remove('d-none');
+    } else if (action === 'copy') {
+        existingPlanSection.classList.remove('d-none');
+        sessionSection.classList.remove('d-none');
+    }
+}
+
+function updateAvailableSessions() {
+    const currentYear = new Date().getFullYear() % 100;
+    const nextYear = (currentYear + 1) % 100;
+    
+    const possibleSessions = [
+        `A${currentYear}`,
+        `H${nextYear}`,
+        `E${nextYear}`
+    ];
+    
+    // Filtrer les sessions déjà utilisées
+    const availableSessions = possibleSessions.filter(session => 
+        !currentPlans.some(plan => plan.session === session)
+    );
+    
+    const sessionSelect = document.getElementById('sessionSelect');
+    sessionSelect.innerHTML = availableSessions.map(session => 
+        `<option value="${session}">${session}</option>`
+    ).join('');
+}
+
+function handlePlanCoursAction() {
+    const coursId = document.getElementById('modalCoursId').value;
+    const action = document.getElementById('actionSelect').value;
+    const existingPlanId = document.getElementById('existingPlanSelect').value;
+    const session = document.getElementById('sessionSelect').value;
+    
+    let url = '';
+    
+    if (action === 'modify') {
+        // Récupérer la session du plan existant depuis currentPlans
+        const selectedPlan = currentPlans.find(plan => plan.id === parseInt(existingPlanId));
+        if (selectedPlan) {
+            url = `/cours/${coursId}/plan_de_cours/${selectedPlan.session}`;
+        }
+    } else if (action === 'create') {
+        url = `/cours/${coursId}/plan_de_cours/${session}`;
+    } else if (action === 'copy') {
+        url = `/cours/${coursId}/plan_de_cours/${session}?copy_from=${existingPlanId}`;
+    }
+    
+    if (url) {
+        window.location.href = url;
+    }
+}
+</script>
 {% endblock %}

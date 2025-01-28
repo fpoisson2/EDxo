@@ -24,7 +24,9 @@ from flask_wtf.file import FileField, FileAllowed, FileRequired
 
 from app.models import Cours, PlanDeCours, PlanDeCoursEvaluations, PlanCadreCapacites
 
-
+class DeletePlanForm(FlaskForm):
+    pass  # Aucun champ nécessaire, le jeton CSRF est géré automatiquement
+    
 class SavoirFaireEntryForm(FlaskForm):
     evaluation_id = HiddenField('ID de l\'Évaluation')
     savoir_faire_id = HiddenField('ID du Savoir-Faire')
