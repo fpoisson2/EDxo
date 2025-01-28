@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
+from flask import current_app, Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
 from app.models import (
     db, Cours, PlanCadre, PlanCadreCapacites, PlanCadreSavoirEtre,
     PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
