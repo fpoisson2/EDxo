@@ -6,7 +6,7 @@
       Sélectionnez un programme
     </button>
     <ul class="dropdown-menu" aria-labelledby="programmeDropdown">
-      {% for programme in programmes %}
+      {% for programme in current_user.programmes %}
         <li>
           <a class="dropdown-item" href="{{ url_for('programme.view_programme', programme_id=programme.id) }}">
             {{ programme.nom }}
