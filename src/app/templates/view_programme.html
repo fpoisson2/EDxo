@@ -418,16 +418,9 @@ function selectPlan(planId, session) {
     }
     
     if (selectedAction === 'modify') {
-        document.getElementById('flowVisualization').classList.remove('d-none');
-        document.getElementById('sourcePlan').innerHTML = `
-            <h6>Session ${session}</h6>
-            <small class="text-muted">Plan existant</small>
-        `;
-        document.getElementById('targetPlan').innerHTML = `
-            <h6>Session ${session}</h6>
-            <small class="text-muted">Modification</small>
-        `;
-        document.getElementById('confirmButton').classList.remove('d-none');
+            // Redirection immédiate vers le plan de cours
+            const coursId = document.getElementById('modalCoursId').value;
+            window.location.href = `/cours/${coursId}/plan_de_cours/${session}`;
     } else if (selectedAction === 'copy') {
         document.getElementById('step3').classList.remove('d-none');
         document.getElementById('flowVisualization').classList.remove('d-none');

@@ -892,16 +892,30 @@ def edit_cours(cours_id):
     corequis_existants = CoursCorequis.query.filter_by(cours_id=cours_id).all()
 
     # Récupérer tous les éléments de compétence (avec code) pour le form
-    elements_competence = ElementCompetence.query.join(Competence).order_by(Competence.code, ElementCompetence.nom).all()
+    elements_competence_query = ElementCompetence.query.join(Competence).order_by(Competence.code, ElementCompetence.nom).all()
+    
+    # Convert ElementCompetence objects to JSON-serializable dictionaries
+    elements_competence = [
+        {
+            'id': ec.id,
+            'nom': ec.nom,
+            'competence_code': ec.competence.code,
+            'competence_nom': ec.competence.nom
+        }
+        for ec in elements_competence_query
+    ]
+    
     ec_assoc = ElementCompetenceParCours.query.filter_by(cours_id=cours_id).all()
 
+    # Rest of your existing code...
     programmes = Programme.query.all()
     fils_conducteurs = FilConducteur.query.all()
 
     form = CoursForm()
     form.programme.choices = [(p.id, p.nom) for p in programmes]
 
-    ec_choices = [(ec.id, f"{ec.competence.code} - {ec.nom}") for ec in elements_competence]
+    # Use the query result for form choices, not the serialized version
+    ec_choices = [(ec.id, f"{ec.competence.code} - {ec.nom}") for ec in elements_competence_query]
     form.corequis.choices = cours_choices
     form.fil_conducteur.choices = [(fc.id, fc.description) for fc in fils_conducteurs]
 
@@ -939,6 +953,7 @@ def edit_cours(cours_id):
             subform.element_competence.choices = ec_choices
         for p_subform in form.prealables:
             p_subform.cours_prealable_id.choices = cours_choices
+
 
     if form.validate_on_submit():
         cours.programme_id = form.programme.data

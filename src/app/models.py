@@ -456,7 +456,7 @@ class PlanDeCours(db.Model):
     __tablename__ = "PlanDeCours"
     id = db.Column(db.Integer, primary_key=True)
     cours_id = db.Column(db.Integer, db.ForeignKey("Cours.id"), nullable=False)
-    department_id = db.Column(db.Integer, nullable=True)  # Comme dans le schéma étendu
+    department_id = db.Column(db.Integer, nullable=True)
     session = db.Column(db.Text, nullable=False)
     campus = db.Column(db.Text, nullable=True)
     nom_enseignant = db.Column(db.Text, nullable=True)
@@ -482,6 +482,7 @@ class PlanDeCours(db.Model):
 
     def __repr__(self):
         return f"<PlanDeCours id={self.id} session={self.session} pour Cours id={self.cours_id}>"
+
 
 class PlanDeCoursCalendrier(db.Model):
     __tablename__ = "PlanDeCoursCalendrier"
@@ -549,6 +550,7 @@ class PlanDeCoursEvaluations(db.Model):
 
     plan_de_cours = db.relationship("PlanDeCours", back_populates="evaluations")
     capacites = db.relationship("PlanDeCoursEvaluationsCapacites", back_populates="evaluation", cascade="all, delete-orphan")
+    savoir_faire = db.relationship("EvaluationSavoirFaire", back_populates="evaluation", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<PlanDeCoursEvaluations id={self.id}>"
