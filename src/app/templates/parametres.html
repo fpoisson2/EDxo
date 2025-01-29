@@ -13,12 +13,20 @@
           </a>
           {% if current_user.is_authenticated and current_user.role == "admin" %}
           <a href="{{ url_for('settings.edit_global_generation_settings') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
-            Génération de plan-cadre
+            Paramètres IA - Plan-cadre
             <i class="bi bi-gear"></i>
+          </a>
+          <a href="{{ url_for('settings.prompt_settings') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
+            Paramètres IA - Grille d'évaluation
+            <i class="bi bi-clipboard-check"></i>
           </a>
           <a href="{{ url_for('main.manage_users') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
             Gestion des utilisateurs
             <i class="bi bi-people"></i>
+          </a>
+          <a href="{{ url_for('settings.gestion_plans_cours') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
+              Gestion des plans de cours
+              <i class="bi bi-journal-text"></i>
           </a>
           <a href="{{ url_for('main.gestion_departements') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
             Gestion des départements

@@ -1,11 +1,14 @@
-from flask import Blueprint, request, render_template, flash, redirect, url_for
+from flask import Blueprint, request, render_template, flash, redirect, url_for, current_app
 from flask_login import login_required, current_user
 from config.constants import SECTIONS  # Importer la liste des sections
 from utils.decorator import role_required, roles_required
-from app.forms import GlobalGenerationSettingsForm
+from app.forms import GlobalGenerationSettingsForm,  DeletePlanForm 
+from app.routes.evaluation import AISixLevelGridResponse
+from flask_wtf.csrf import CSRFProtect
+import json
 
 # Importez bien sûr db, User et GlobalGenerationSettings depuis vos modèles
-from app.models import db, User, GlobalGenerationSettings
+from app.models import db, User, GlobalGenerationSettings, GrillePromptSettings, PlanDeCours, Cours, Programme
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 
@@ -13,6 +16,85 @@ settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 @login_required  # Cette route nécessite que l'utilisateur soit connecté
 def parametres():
     return render_template('parametres.html')
+
+@settings_bp.route("/gestion-plans-cours", methods=["GET"])
+@roles_required('admin', 'coordo')
+def gestion_plans_cours():
+    form = DeletePlanForm()
+    # Récupérer tous les plans de cours, avec leurs relations
+    plans = (PlanDeCours.query
+            .join(Cours)
+            .join(Programme)
+            .options(
+                db.joinedload(PlanDeCours.cours),
+                db.joinedload(PlanDeCours.cours).joinedload(Cours.programme)
+            )
+            .order_by(Programme.nom, Cours.code, PlanDeCours.session)
+            .all())
+    
+    return render_template(
+        "settings/gestion_plans_cours.html",
+        plans=plans,
+        active_page="gestion_plans_cours",
+        form=form
+    )
+
+@settings_bp.route("/supprimer-plan-cours/<int:plan_id>", methods=["POST"])
+@roles_required('admin', 'coordo')
+def supprimer_plan_cours(plan_id):
+    form = DeletePlanForm()
+    print(f"Route de suppression appelée avec plan_id: {plan_id}")  # Debug
+    # Afficher toutes les routes enregistrées
+    print("Routes disponibles:")
+    for rule in current_app.url_map.iter_rules():
+        print(f"{rule.endpoint}: {rule}")
+    if current_user.role not in ['admin', 'coordo']:
+        flash("Vous n'avez pas les droits pour supprimer un plan de cours.", "error")
+        return redirect(url_for('settings.gestion_plans_cours'))
+
+    plan = db.session.get(PlanDeCours, plan_id)
+    if not plan:
+        flash("Plan de cours introuvable.", "error")
+        return redirect(url_for('settings.gestion_plans_cours'))
+
+    try:
+        cours = plan.cours
+        session = plan.session
+        db.session.delete(plan)
+        db.session.commit()
+        flash(f"Le plan de cours {cours.code} - {session} a été supprimé avec succès.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erreur lors de la suppression du plan de cours : {str(e)}", "error")
+
+    return redirect(url_for('settings.gestion_plans_cours'))
+
+@settings_bp.route('/prompt-settings', methods=['GET', 'POST'])
+@roles_required('admin', 'coordo')
+def prompt_settings():
+    settings = GrillePromptSettings.get_current()
+    schema_json = json.dumps(AISixLevelGridResponse.get_schema_with_descriptions(), indent=4, ensure_ascii=False)
+    
+    if request.method == 'POST':
+        try:
+            settings.prompt_template = request.form.get('prompt_template')
+            settings.level1_description = request.form.get('level1_description')
+            settings.level2_description = request.form.get('level2_description')
+            settings.level3_description = request.form.get('level3_description')
+            settings.level4_description = request.form.get('level4_description')
+            settings.level5_description = request.form.get('level5_description')
+            settings.level6_description = request.form.get('level6_description')
+            
+            db.session.commit()
+            flash('Paramètres mis à jour avec succès', 'success')
+            return redirect(url_for('settings.prompt_settings'))
+        except Exception as e:
+            flash(f'Erreur lors de la mise à jour : {str(e)}', 'error')
+            db.session.rollback()
+    
+    return render_template('settings/prompt_settings.html', 
+                         settings=settings,
+                         schema_json=schema_json)
 
 @settings_bp.route('/generation', methods=['GET', 'POST'])
 @roles_required('admin', 'coordo')
