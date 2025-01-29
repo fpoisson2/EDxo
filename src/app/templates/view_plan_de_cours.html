@@ -202,68 +202,77 @@
                         {{ form.hidden_tag() }}
                         <!-- Informations Principales -->
                         <h4>Informations Principales</h4>
-                        <div class="mb-3">
+
+                        <div class="mb-3 position-relative">
                             {{ form.campus.label(class="form-label fw-bold") }}
                             {{ form.campus(class="form-control") }}
                         </div>
-                        <div class="mb-3">
+
+                        <!-- Remplacer ce bloc dans le formulaire -->
+                        <div class="mb-3 position-relative">
                             {{ form.session.label(class="form-label fw-bold") }}
-                            {{ form.session(class="form-control") }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.presentation_du_cours.label(class="form-label fw-bold") }}
-                            {{ form.presentation_du_cours(
-                                class="form-control auto-resize border-0",
-                                oninput="autoResize(this)",
-                                style="overflow:hidden; resize:none;") }}
+                            <div class="form-control" style="background-color: #e9ecef;">{{ form.session.data }}</div>
+                            {{ form.session(type="hidden") }}
                         </div>
 
-                        <div class="mb-3">
-                            {{ form.objectif_terminal_du_cours.label(class="form-label fw-bold") }}
-                            {{ form.objectif_terminal_du_cours(
-                                class="form-control auto-resize border-0",
-                                oninput="autoResize(this)", 
-                                style="overflow:hidden; resize:none;") }}
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="presentation_du_cours" class="form-label fw-bold">Présentation du cours</label>
+                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="presentation_du_cours" title="Générer automatiquement">
+                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                </button>
+                            </div>
+                            {{ form.presentation_du_cours(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="presentation_du_cours") }}
                         </div>
 
-                        <div class="mb-3">
-                            {{ form.organisation_et_methodes.label(class="form-label fw-bold") }}
-                            {{ form.organisation_et_methodes(
-                                class="form-control auto-resize border-0",
-                                oninput="autoResize(this)",
-                                style="overflow:hidden; resize:none;") }}
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="objectif_terminal_du_cours" class="form-label fw-bold">{{ form.objectif_terminal_du_cours.label.text }}</label>
+                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="objectif_terminal_du_cours" title="Générer automatiquement">
+                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                </button>
+                            </div>
+                            {{ form.objectif_terminal_du_cours(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="objectif_terminal_du_cours") }}
                         </div>
 
-                        <div class="mb-3">
-                            {{ form.accomodement.label(class="form-label fw-bold") }}
-                            {{ form.accomodement(
-                                class="form-control auto-resize border-0",
-                                oninput="autoResize(this)",
-                                style="overflow:hidden; resize:none;") }}
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="organisation_et_methodes" class="form-label fw-bold">{{ form.organisation_et_methodes.label.text }}</label>
+                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="organisation_et_methodes" title="Générer automatiquement">
+                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                </button>
+                            </div>
+                            {{ form.organisation_et_methodes(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="organisation_et_methodes") }}
                         </div>
 
-                        <div class="mb-3">
-                            {{ form.evaluation_formative_apprentissages.label(class="form-label fw-bold") }}
-                            {{ form.evaluation_formative_apprentissages(
-                                class="form-control auto-resize border-0",
-                                oninput="autoResize(this)",
-                                style="overflow:hidden; resize:none;") }}
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="accomodement" class="form-label fw-bold">{{ form.accomodement.label.text }}</label>
+                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="accomodement" title="Générer automatiquement">
+                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                </button>
+                            </div>
+                            {{ form.accomodement(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="accomodement") }}
                         </div>
 
-                        <div class="mb-3">
-                            {{ form.evaluation_expression_francais.label(class="form-label fw-bold") }}
-                            {{ form.evaluation_expression_francais(
-                                class="form-control auto-resize border-0",
-                                oninput="autoResize(this)",
-                                style="overflow:hidden; resize:none;") }}
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="evaluation_formative_apprentissages" class="form-label fw-bold">{{ form.evaluation_formative_apprentissages.label.text }}</label>
+                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="evaluation_formative_apprentissages" title="Générer automatiquement">
+                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                </button>
+                            </div>
+                            {{ form.evaluation_formative_apprentissages(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="evaluation_formative_apprentissages") }}
                         </div>
 
-                        <div class="mb-3">
-                            {{ form.seuil_reussite.label(class="form-label fw-bold") }}
-                            {{ form.seuil_reussite(
-                                class="form-control auto-resize border-0",
-                                oninput="autoResize(this)",
-                                style="overflow:hidden; resize:none;") }}
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="evaluation_expression_francais" class="form-label fw-bold">{{ form.evaluation_expression_francais.label.text }}</label>
+                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="evaluation_expression_francais" title="Générer automatiquement">
+                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                </button>
+                            </div>
+                            {{ form.evaluation_expression_francais(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="evaluation_expression_francais") }}
                         </div>
 
                         <div class="mb-3">
@@ -759,16 +768,203 @@ textarea.toast-ui-target:not(.toast-initialized) {
     border-color: #86b7fe !important;
     box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
 }
+.generate-button {
+    position: relative;
+}
+
+.generate-button.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.loading-dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.loading-dots span {
+    width: 8px;
+    height: 8px;
+    background-color: #0d6efd;
+    border-radius: 50%;
+    animation: bounce 0.5s alternate infinite;
+}
+
+.loading-dots span:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.loading-dots span:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+@keyframes bounce {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(-8px);
+    }
+}
+
+.loading-text {
+    margin-left: 12px;
+    color: #0d6efd;
+    font-size: 14px;
+}
 </style>
 
 <script>
-
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOMContentLoaded event triggered");
-    console.log("ToastUI Editor:", window.toastui);
+    // Fonction pour afficher les toasts
+    function showToast(toastId) {
+        const toastElement = document.getElementById(toastId);
+        if (toastElement) {
+            const toast = new bootstrap.Toast(toastElement);
+            toast.show();
+        }
+    }
 
+    // Ajout des styles pour l'indicateur de chargement
+    const style = document.createElement('style');
+    style.textContent = `
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .loading-dots {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background-color: #0d6efd;
+            border-radius: 50%;
+            animation: bounce 0.5s alternate infinite;
+        }
+        .loading-dots span:nth-child(2) { animation-delay: 0.1s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.2s; }
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-8px); }
+        }
+        .loading-text {
+            margin-left: 12px;
+            color: #0d6efd;
+            font-size: 14px;
+        }
+        .generate-button.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+    `;
+    document.head.appendChild(style);
 
+    // Gestion des clics sur les boutons de génération
+    document.querySelectorAll('.generate-button').forEach(button => {
+        button.addEventListener('click', async function() {
+            const fieldName = this.getAttribute('data-field');
+            const fieldElement = document.getElementById(fieldName);
+            if (!fieldElement) {
+                console.error(`Champ ${fieldName} non trouvé.`);
+                showToast('generateErrorToast');
+                return;
+            }
 
+            // Créer et ajouter l'overlay de chargement
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'loading-overlay';
+            loadingOverlay.innerHTML = `
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <div class="loading-text">Génération en cours...</div>
+                </div>
+            `;
+            
+            // Ajouter l'overlay et configurer le conteneur parent
+            fieldElement.parentElement.style.position = 'relative';
+            fieldElement.parentElement.appendChild(loadingOverlay);
+            
+            // Désactiver le bouton pendant la génération
+            this.classList.add('loading');
+            this.disabled = true;
+
+            try {
+                const payload = {
+                    field_name: fieldName,
+                    current_value: fieldElement.value || '',
+                    cours_id: {{ cours.id }},
+                    session: "{{ plan_de_cours.session }}"
+                };
+
+                const response = await fetch("{{ url_for('plan_de_cours.generate_content') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': "{{ csrf_token() }}"
+                    },
+                    body: JSON.stringify(payload),
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erreur inconnue lors de la génération.');
+                }
+
+                const data = await response.json();
+
+                if (data.champ_description) {
+                    fieldElement.value = data.champ_description;
+                    if (fieldElement.toastEditor) {
+                        fieldElement.toastEditor.setMarkdown(data.champ_description);
+                    }
+                    showToast('generateSuccessToast');
+                } else {
+                    throw new Error('Contenu généré non reçu.');
+                }
+            } catch (error) {
+                console.error('Erreur lors de la génération automatique:', error);
+                showToast('generateErrorToast');
+            } finally {
+                // Nettoyer : supprimer l'overlay et réactiver le bouton
+                const overlay = fieldElement.parentElement.querySelector('.loading-overlay');
+                if (overlay) {
+                    overlay.remove();
+                }
+                this.classList.remove('loading');
+                this.disabled = false;
+            }
+        });
+    });
+});
+document.addEventListener('DOMContentLoaded', function() {
     const toastFields = [
         'presentation_du_cours',
         'objectif_terminal_du_cours', 
@@ -782,7 +978,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     toastFields.forEach(fieldId => {
         const textarea = document.getElementById(fieldId);
-        console.log(`Vérification de ${fieldId}:`, textarea);
 
         if (textarea) {
             const container = document.createElement('div');
@@ -824,8 +1019,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.showFloatingButtons();
                 }
             });
-
-            console.log(`Éditeur instancié pour ${fieldId}`);
         } else {
             console.warn(`Le champ ${fieldId} n'existe pas !`);
         }
@@ -835,7 +1028,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return new Promise((resolve) => {
             function checkToastUI() {
                 if (window.toastui && window.toastui.Editor && toastui.Editor.plugin) {
-                    console.log("ToastUI chargé !");
                     resolve();
                 } else {
                     setTimeout(checkToastUI, 100);
@@ -1300,6 +1492,25 @@ document.addEventListener('click', function(e) {
         <div class="d-flex">
             <div class="toast-body">
                 Une erreur est survenue lors de la sauvegarde.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+    <!-- Toast pour la génération automatique réussie -->
+    <div id="generateSuccessToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                Le contenu a été généré avec succès!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+
+    <!-- Toast pour la génération automatique en échec -->
+    <div id="generateErrorToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                Une erreur est survenue lors de la génération du contenu.
             </div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>

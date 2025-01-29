@@ -16,6 +16,10 @@
             Paramètres IA - Plan-cadre
             <i class="bi bi-gear"></i>
           </a>
+          <a href="{{ url_for('settings.plan_de_cours_prompt_settings') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
+              Paramètres IA - Plans de cours
+              <i class="bi bi-file-earmark-text"></i>
+          </a>
           <a href="{{ url_for('settings.prompt_settings') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
             Paramètres IA - Grille d'évaluation
             <i class="bi bi-clipboard-check"></i>
@@ -69,4 +73,6 @@
       </div>
     </div>
   </div>
+{% block extra_js %}{% endblock %}
 {% endblock %}
+

@@ -84,6 +84,12 @@ def view_programme(programme_id):
         flash('Programme non trouvé.', 'danger')
         return redirect(url_for('main.index'))
 
+    # Vérifier si l'utilisateur a accès à ce programme
+    if programme not in current_user.programmes:
+        flash('Vous n\'avez pas accès à ce programme.', 'danger')
+        return redirect(url_for('main.index'))
+
+
     # Récupérer les compétences associées
     competences = Competence.query.filter_by(programme_id=programme_id).all()
 
@@ -146,7 +152,7 @@ def view_programme(programme_id):
     delete_forms_cours = {c.id: DeleteForm(prefix=f"cours-{c.id}") for c in cours}
 
     # Récupérer tous les programmes (pour le sélecteur éventuel)
-    programmes = Programme.query.all()
+    programmes = current_user.programmes
 
     return render_template('view_programme.html',
                            programme=programme,
