@@ -25,6 +25,7 @@ from utils.scheduler_instance import scheduler, start_scheduler, shutdown_schedu
 import logging
 from utils.db_tracking import init_change_tracking
 from config.version import __version__ 
+from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -44,6 +45,8 @@ def create_app():
      
     login_manager.init_app(app)
     
+    base_path = Path(__file__).parent  # Ajustez selon votre structure de projet
+    app.config['UPLOAD_FOLDER'] = os.path.join(base_path, 'static', 'docs')
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['WTF_CSRF_ENABLED'] = True
     app.config['CKEDITOR_PKG_TYPE'] = 'standard'

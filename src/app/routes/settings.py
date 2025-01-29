@@ -2,11 +2,16 @@ from flask import Blueprint, request, render_template, flash, redirect, url_for,
 from flask_login import login_required, current_user
 from config.constants import SECTIONS  # Importer la liste des sections
 from utils.decorator import role_required, roles_required
-from app.forms import GlobalGenerationSettingsForm,  DeletePlanForm 
+from app.forms import GlobalGenerationSettingsForm,  DeletePlanForm, UploadForm
 from app.routes.evaluation import AISixLevelGridResponse
 from flask_wtf.csrf import CSRFProtect
 from flask_wtf.csrf import generate_csrf
 import json
+from pathlib import Path
+from flask import send_from_directory, current_app
+import os
+from werkzeug.utils import secure_filename
+
 
 csrf = CSRFProtect()
 
@@ -15,6 +20,55 @@ csrf = CSRFProtect()
 from app.models import db, User, GlobalGenerationSettings, GrillePromptSettings, PlanDeCours, Cours, Programme, PlanDeCoursPromptSettings
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
+
+# Liste des canevas existants
+CANEVAS_LIST = ['plan_cadre_template.docx', 'plan_de_cours_template.docx', 'evaluation_grid_template.docx']
+
+@settings_bp.route('/gestion_canevas')
+def gestion_canevas():
+    form = UploadForm()
+    return render_template('/settings/gestion_canevas.html', canevas_list=CANEVAS_LIST, upload_form=form)
+
+@settings_bp.route('/upload_canevas/<filename>', methods=['POST'])
+def upload_canevas(filename):
+    if 'file' not in request.files:
+        flash('Aucun fichier sélectionné.', 'danger')
+        return redirect(url_for('settings.gestion_canevas'))
+
+    file = request.files['file']
+    if file.filename == '':
+        flash('Aucun fichier sélectionné.', 'danger')
+        return redirect(url_for('settings.gestion_canevas'))
+
+    if file:
+        upload_folder = current_app.config['UPLOAD_FOLDER']
+        existing_file_path = os.path.join(upload_folder, filename)
+
+        # Vérifier si le fichier existe avant de le supprimer
+        if os.path.exists(existing_file_path):
+            os.remove(existing_file_path)
+
+        # Sauvegarder le nouveau fichier avec le même nom que l'original
+        file.save(os.path.join(upload_folder, filename))
+
+        flash('Le canevas a été remplacé avec succès!', 'success')
+        return redirect(url_for('settings.gestion_canevas'))
+
+    flash('Une erreur s\'est produite lors du remplacement du canevas.', 'danger')
+    return redirect(url_for('settings.gestion_canevas'))
+
+@settings_bp.route('/download_canevas/<filename>')
+def download_canevas(filename):
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    file_path = os.path.join(upload_folder, filename)
+
+    if not os.path.exists(file_path):
+        current_app.logger.error(f"Fichier introuvable : {file_path}")
+        flash('Le fichier demandé est introuvable.', 'danger')
+        return redirect(url_for('settings.gestion_canevas'))
+
+    return send_from_directory(upload_folder, filename, as_attachment=True)
+
 
 @settings_bp.route('/plan-de-cours/prompts', methods=['GET'])
 @login_required

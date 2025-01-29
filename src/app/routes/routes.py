@@ -64,7 +64,8 @@ from app.forms import (
     DepartmentPIEAForm,
     EditUserForm,
     ProgrammeMinisterielForm,
-    CreditManagementForm
+    CreditManagementForm,
+    CegepForm
 )
 from app.models import (
     db, 
@@ -87,6 +88,49 @@ from app.models import (
 )
 
 main = Blueprint('main', __name__)
+
+@main.route('/gestion_cegeps', methods=['GET', 'POST'])
+def gestion_cegeps():
+    form = CegepForm()
+    
+    if form.validate_on_submit():
+        # Ajouter un nouveau cégep
+        nouveau_cegep = ListeCegep(
+            nom=form.nom.data,
+            type=form.type.data,
+            region=form.region.data
+        )
+        db.session.add(nouveau_cegep)
+        db.session.commit()
+        flash('Cégep ajouté avec succès!', 'success')
+        return redirect(url_for('main.gestion_cegeps'))
+    
+    # Récupérer tous les cégeps pour affichage
+    cegeps = ListeCegep.query.all()
+    return render_template('gestion_cegeps.html', form=form, cegeps=cegeps)
+
+@main.route('/supprimer_cegep/<int:id>', methods=['POST'])
+def supprimer_cegep(id):
+    cegep = ListeCegep.query.get_or_404(id)
+    db.session.delete(cegep)
+    db.session.commit()
+    flash('Cégep supprimé avec succès!', 'success')
+    return redirect(url_for('main.gestion_cegeps'))
+
+@main.route('/modifier_cegep/<int:id>', methods=['GET', 'POST'])
+def modifier_cegep(id):
+    cegep = ListeCegep.query.get_or_404(id)
+    form = CegepForm(obj=cegep)
+    
+    if form.validate_on_submit():
+        cegep.nom = form.nom.data
+        cegep.type = form.type.data
+        cegep.region = form.region.data
+        db.session.commit()
+        flash('Cégep modifié avec succès!', 'success')
+        return redirect(url_for('main.gestion_cegeps'))
+    
+    return render_template('modifier_cegep.html', form=form, cegep=cegep)
 
 # Define the markdown filter
 @main.app_template_filter('markdown')
