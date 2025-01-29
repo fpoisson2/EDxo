@@ -722,7 +722,7 @@
         display: inline-block;
     }
 /* Hide textarea until Toast UI loads */
-textarea:not(.toast-initialized) {
+textarea.toast-ui-target:not(.toast-initialized) {
     opacity: 0;
     height: 0;
     padding: 0 !important;
