@@ -6,23 +6,29 @@
     <form method="POST">
       {{ form.hidden_tag() }}
       
-      <!-- Champs du Cours -->
-      <div class="form-group">
-        <label for="{{ form.programme.id }}">{{ form.programme.label }}</label>
-        {{ form.programme(class="form-control") }}
-        {% for error in form.programme.errors %}
-          <span class="text-danger">{{ error }}</span>
-        {% endfor %}
+      <!-- Basic Course Fields -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="{{ form.programme.id }}">{{ form.programme.label }}</label>
+            {{ form.programme(class="form-control") }}
+            {% for error in form.programme.errors %}
+              <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="{{ form.code.id }}">{{ form.code.label }}</label>
+            {{ form.code(class="form-control") }}
+            {% for error in form.code.errors %}
+              <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+          </div>
+        </div>
       </div>
-      
-      <div class="form-group">
-        <label for="{{ form.code.id }}">{{ form.code.label }}</label>
-        {{ form.code(class="form-control") }}
-        {% for error in form.code.errors %}
-          <span class="text-danger">{{ error }}</span>
-        {% endfor %}
-      </div>
-      
+
       <div class="form-group">
         <label for="{{ form.nom.id }}">{{ form.nom.label }}</label>
         {{ form.nom(class="form-control") }}
@@ -30,134 +36,167 @@
           <span class="text-danger">{{ error }}</span>
         {% endfor %}
       </div>
-      
-      
-      <div class="form-group">
-        <label for="{{ form.session.id }}">{{ form.session.label }}</label>
-        {{ form.session(class="form-control") }}
-        {% for error in form.session.errors %}
-          <span class="text-danger">{{ error }}</span>
-        {% endfor %}
-      </div>
-      
-      <div class="form-group">
-        <label for="{{ form.heures_theorie.id }}">{{ form.heures_theorie.label }}</label>
-        {{ form.heures_theorie(class="form-control") }}
-        {% for error in form.heures_theorie.errors %}
-          <span class="text-danger">{{ error }}</span>
-        {% endfor %}
-      </div>
-      
-      <div class="form-group">
-        <label for="{{ form.heures_laboratoire.id }}">{{ form.heures_laboratoire.label }}</label>
-        {{ form.heures_laboratoire(class="form-control") }}
-        {% for error in form.heures_laboratoire.errors %}
-          <span class="text-danger">{{ error }}</span>
-        {% endfor %}
-      </div>
-      
-      <div class="form-group">
-        <label for="{{ form.heures_travail_maison.id }}">{{ form.heures_travail_maison.label }}</label>
-        {{ form.heures_travail_maison(class="form-control") }}
-        {% for error in form.heures_travail_maison.errors %}
-          <span class="text-danger">{{ error }}</span>
-        {% endfor %}
-      </div>
-      
-      <!-- Section Éléments de Compétence -->
-      <div class="form-group">
-        <h3>Éléments de Compétence</h3>
-        
-        <div id="elements_competence">
-{% for subform in form.elements_competence %}
-  <div class="element-competence mb-3 border p-3">
-    <div class="form-row">
-      <div class="col-md-6">
-        <label for="{{ subform.element_competence.id }}">{{ subform.element_competence.label }}</label>
-        {{ subform.element_competence(class="form-control") }}
-        {% for error in subform.element_competence.errors %}
-          <span class="text-danger">{{ error }}</span>
-        {% endfor %}
-      </div>
-      <div class="col-md-5">
-        <label for="{{ subform.status.id }}">{{ subform.status.label }}</label>
-        {{ subform.status(class="form-control") }}
-        {% for error in subform.status.errors %}
-          <span class="text-danger">{{ error }}</span>
-        {% endfor %}
-      </div>
-      <div class="col-md-1 d-flex align-items-end">
-        <button type="button" class="btn btn-danger btn-sm remove-element">
-          <i class="fas fa-trash"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-{% endfor %}
+
+      <div class="row">
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="{{ form.session.id }}">{{ form.session.label }}</label>
+            {{ form.session(class="form-control") }}
+            {% for error in form.session.errors %}
+              <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+          </div>
         </div>
         
-        <!-- Bouton pour ajouter un élément de compétence supplémentaire -->
-        <button type="button" class="btn btn-secondary" id="add-element-competence">Ajouter un Élément de Compétence</button>
-      </div>
-
-      <!-- Section Cours Préalables -->
-      <h3>Cours Préalables</h3>
-      <div id="prealables_container">
-        {% for p_subform in form.prealables %}
-          {% set p_index = loop.index0 %}
-          <div class="form-row mb-2 prealable-row">
-            <div class="col-md-5">
-              <label for="{{ p_subform.cours_prealable_id.id }}">{{ p_subform.cours_prealable_id.label }}</label>
-              {{ p_subform.cours_prealable_id(class="form-control") }}
-              {% for error in p_subform.cours_prealable_id.errors %}
-                <span class="text-danger">{{ error }}</span>
-              {% endfor %}
-            </div>
-            <div class="col-md-5">
-              <label for="{{ p_subform.note_necessaire.id }}">{{ p_subform.note_necessaire.label }}</label>
-              {{ p_subform.note_necessaire(class="form-control") }}
-              {% for error in p_subform.note_necessaire.errors %}
-                <span class="text-danger">{{ error }}</span>
-              {% endfor %}
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-              <button type="button" class="btn btn-danger remove-prealable">Retirer</button>
-            </div>
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="{{ form.heures_theorie.id }}">{{ form.heures_theorie.label }}</label>
+            {{ form.heures_theorie(class="form-control") }}
+            {% for error in form.heures_theorie.errors %}
+              <span class="text-danger">{{ error }}</span>
+            {% endfor %}
           </div>
-        {% endfor %}
-      </div>
-      <button type="button" class="btn btn-secondary" id="add-prealable">Ajouter un Préalable</button>
-
-      <div class="form-group mt-3">
-        <label for="{{ form.corequis.id }}">{{ form.corequis.label }}</label>
-        {{ form.corequis(class="form-control", multiple=True) }}
-        {% for error in form.corequis.errors %}
-          <span class="text-danger">{{ error }}</span>
-        {% endfor %}
-      </div>
-
-      <div class="form-group">
-        <label for="{{ form.fil_conducteur.id }}">{{ form.fil_conducteur.label }}</label>
-        {{ form.fil_conducteur(class="form-control") }}
-        {% for error in form.fil_conducteur.errors %}
-          <span class="text-danger">{{ error }}</span>
-        {% endfor %}
+        </div>
+        
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="{{ form.heures_laboratoire.id }}">{{ form.heures_laboratoire.label }}</label>
+            {{ form.heures_laboratoire(class="form-control") }}
+            {% for error in form.heures_laboratoire.errors %}
+              <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="form-group">
+            <label for="{{ form.heures_travail_maison.id }}">{{ form.heures_travail_maison.label }}</label>
+            {{ form.heures_travail_maison(class="form-control") }}
+            {% for error in form.heures_travail_maison.errors %}
+              <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+          </div>
+        </div>
       </div>
       
-      <!-- Bouton de Soumission -->
-      <button type="submit" class="btn btn-primary">Mettre à Jour</button>
+      <!-- Competency Elements Section -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="mb-0">Éléments de Compétence</h3>
+        </div>
+        <div class="card-body">
+          <div id="elements_competence">
+            {% for subform in form.elements_competence %}
+              <div class="element-competence mb-3 border p-3">
+                <div class="form-row">
+                  <div class="col-md-6">
+                    <label for="{{ subform.element_competence.id }}">{{ subform.element_competence.label }}</label>
+                    {{ subform.element_competence(class="form-control") }}
+                    {% for error in subform.element_competence.errors %}
+                      <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-5">
+                    <label for="{{ subform.status.id }}">{{ subform.status.label }}</label>
+                    {{ subform.status(class="form-control") }}
+                    {% for error in subform.status.errors %}
+                      <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-danger btn-sm remove-element">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <button type="button" class="btn btn-secondary" id="add-element-competence">
+            <i class="fas fa-plus"></i> Ajouter un Élément de Compétence
+          </button>
+        </div>
+      </div>
+
+      <!-- Prerequisites Section -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="mb-0">Cours Préalables</h3>
+        </div>
+        <div class="card-body">
+          <div id="prealables_container">
+            {% for p_subform in form.prealables %}
+              <div class="prealable-row mb-2">
+                <div class="form-row">
+                  <div class="col-md-5">
+                    <label for="{{ p_subform.cours_prealable_id.id }}">{{ p_subform.cours_prealable_id.label }}</label>
+                    {{ p_subform.cours_prealable_id(class="form-control") }}
+                    {% for error in p_subform.cours_prealable_id.errors %}
+                      <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-5">
+                    <label for="{{ p_subform.note_necessaire.id }}">{{ p_subform.note_necessaire.label }}</label>
+                    {{ p_subform.note_necessaire(class="form-control") }}
+                    {% for error in p_subform.note_necessaire.errors %}
+                      <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-danger remove-prealable">
+                      <i class="fas fa-trash"></i> Retirer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <button type="button" class="btn btn-secondary" id="add-prealable">
+            <i class="fas fa-plus"></i> Ajouter un Préalable
+          </button>
+        </div>
+      </div>
+
+      <!-- Co-requisites and Learning Path -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h3 class="mb-0">Corequis et Fil Conducteur</h3>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label for="{{ form.corequis.id }}">{{ form.corequis.label }}</label>
+            {{ form.corequis(class="form-control", multiple=True) }}
+            {% for error in form.corequis.errors %}
+              <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+          </div>
+
+          <div class="form-group">
+            <label for="{{ form.fil_conducteur.id }}">{{ form.fil_conducteur.label }}</label>
+            {{ form.fil_conducteur(class="form-control") }}
+            {% for error in form.fil_conducteur.errors %}
+              <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Submit Button -->
+      <div class="mt-4 mb-5">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <i class="fas fa-save"></i> Mettre à Jour
+        </button>
+      </div>
     </form>
   </div>
   
-  <!-- JavaScript pour ajouter dynamiquement des éléments de compétence -->
-<!-- Code JavaScript modifié -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     var container = document.getElementById('elements_competence');
     var addButton = document.getElementById('add-element-competence');
     var index = {{ form.elements_competence|length }};
     
-    var elements_competence = {{ elements_competence | tojson }};
+    var elements_competence = {{ elements_competence | tojson | safe }};
     
     var statuts = [
       'Non traité',
@@ -168,13 +207,13 @@
     ];
     
     // Gestion de la suppression des éléments de compétence
-container.addEventListener('click', function(e) {
-  if (e.target.classList.contains('remove-element') || e.target.closest('.remove-element')) {
-    const elementDiv = e.target.closest('.element-competence');
-    elementDiv.remove();
-    reindexElements();
-  }
-});
+    container.addEventListener('click', function(e) {
+      if (e.target.classList.contains('remove-element') || e.target.closest('.remove-element')) {
+        const elementDiv = e.target.closest('.element-competence');
+        elementDiv.remove();
+        reindexElements();
+      }
+    });
 
     function reindexElements() {
       const elements = container.querySelectorAll('.element-competence');
@@ -201,7 +240,7 @@ container.addEventListener('click', function(e) {
       newElement.classList.add('element-competence', 'mb-3', 'border', 'p-3');
       
       var options = elements_competence.map(function(ec) {
-        return `<option value="${ec.id}">${ec.nom}</option>`;
+        return `<option value="${ec.id}">${ec.competence_code} - ${ec.nom}</option>`;
       }).join('');
       
       var statutOptions = statuts.map(function(status) {
@@ -241,7 +280,7 @@ container.addEventListener('click', function(e) {
     const prealablesContainer = document.getElementById('prealables_container');
     const addPrealableButton = document.getElementById('add-prealable');
     let p_index = {{ form.prealables|length }};
-    const coursChoices = {{ cours_choices|tojson }};
+    const coursChoices = {{ cours_choices|tojson | safe }};
 
     function reindexPrealables() {
       const rows = prealablesContainer.querySelectorAll('.prealable-row');
@@ -300,6 +339,5 @@ container.addEventListener('click', function(e) {
       }
     });
   });
-</script>
-  
+  </script>
 {% endblock %}
