@@ -41,84 +41,86 @@
         </tr>
       </thead>
       <tbody>
-{% for session, cours_list in cours_par_session.items() %}
-<tr>
-  <td>
-    <div class="d-flex flex-column align-items-start">
-      <span class="mb-2">{{ session }}</span>
-      <a href="{{ url_for('plan_de_cours.export_session_plans', programme_id=programme.id, session=session) }}" 
-         class="btn btn-sm btn-outline-primary" 
-         title="Exporter tous les plans de cours de la session {{ session }}">
-        <i class="fas fa-file-export"></i> Exporter tous les plans de cours
-      </a>
-    </div>
-  </td>
-  <td>
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6">
-      {% for c in cours_list %}
-              <div class="col mb-3">
-<div class="card h-100 d-flex flex-column">
-<a href="{{ url_for('cours.view_cours', cours_id=c.id) }}"
-   class="text-decoration-none d-flex align-items-center justify-content-center card-header"
-   style="
-       background-color: {{ c.fil_conducteur.couleur if c.fil_conducteur else '#f2f2f2' }};
-       color: {{ 'white' if c.fil_conducteur else 'black' }};
-       min-height: 3rem; 
-       text-align: center; 
-       word-wrap: break-word; 
-       white-space: break-spaces; 
-       overflow: hidden;
-   ">
-   <span><strong>{{ c.code }}</strong> - {{ c.nom }}</span>
-</a>
-
-                  <div class="card-body p-2 flex-grow-1">
-                    <p><strong>Heures :</strong> {{ c.heures_theorie }} - {{ c.heures_laboratoire }} - {{ c.heures_travail_maison }}</p>
-                    <p><strong>Compétences :</strong>
-                      {% if competencies_codes[c.id] %}
-                        {% for code in competencies_codes[c.id] %}
-                          <a href="{{ url_for('programme.view_competence_by_code', competence_code=code) }}" class="badge bg-primary text-white">{{ code }}</a>
-                        {% endfor %}
-                      {% else %}
-                        <em>Aucune</em>
-                      {% endif %}
-                    </p>
-                    <p><strong>Prérequis :</strong>
-                      {% if prerequisites[c.id] %}
-                        {% for prereq, note in prerequisites[c.id] %}
-                          {{ prereq }} ({{ note }}%)
-                        {% endfor %}
-                      {% else %}
-                        <em>Aucun</em>
-                      {% endif %}
-                    </p>
-                    <p><strong>Co-requis :</strong>
-                      {% if corequisites[c.id] %}
-                        {{ corequisites[c.id]|join(', ') }}
-                      {% else %}
-                        <em>Aucun</em>
-                      {% endif %}
-                    </p>
-                  </div>
-
-                  <!-- Boutons Plan-Cadre et Plan-de-cours -->
-                  <div class="card-footer mt-auto text-center">
-                    <!-- Bouton Plan-Cadre existant -->
-                    <a href="{{ url_for('cours.view_or_add_plan_cadre', cours_id=c.id) }}" class="btn btn-sm btn-info w-100 fs-6 mb-2">
-                      Plan-Cadre
-                    </a>
-                    <!-- Nouveau bouton Plan-de-cours -->
-                    <a href="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=c.id) }}" class="btn btn-sm btn-secondary w-100 fs-6">
-                      Plan de cours
-                    </a>
-                  </div>
-
-                </div>
+        {% for session, cours_list in cours_par_session.items() %}
+          <tr>
+            <td>
+              <div class="d-flex flex-column align-items-start">
+                <span class="mb-2">{{ session }}</span>
+                <a href="{{ url_for('plan_de_cours.export_session_plans', programme_id=programme.id, session=session) }}" 
+                   class="btn btn-sm btn-outline-primary" 
+                   title="Exporter tous les plans de cours de la session {{ session }}">
+                  <i class="fas fa-file-export"></i> Exporter tous les plans de cours
+                </a>
               </div>
-              {% endfor %}
-            </div>
-          </td>
-        </tr>
+            </td>
+            <td>
+              <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6">
+                {% for c in cours_list %}
+                  <div class="col mb-3">
+                    <div class="card h-100 d-flex flex-column">
+                      <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}"
+                         class="text-decoration-none d-flex align-items-center justify-content-center card-header"
+                         style="
+                             background-color: {{ c.fil_conducteur.couleur if c.fil_conducteur else '#f2f2f2' }};
+                             color: {{ 'white' if c.fil_conducteur else 'black' }};
+                             min-height: 3rem; 
+                             text-align: center; 
+                             word-wrap: break-word; 
+                             white-space: break-spaces; 
+                             overflow: hidden;
+                         ">
+                         <span><strong>{{ c.code }}</strong> - {{ c.nom }}</span>
+                      </a>
+
+                      <div class="card-body p-2 flex-grow-1">
+                        <p><strong>Heures :</strong> {{ c.heures_theorie }} - {{ c.heures_laboratoire }} - {{ c.heures_travail_maison }}</p>
+                        <p><strong>Compétences :</strong>
+                          {% if competencies_codes[c.id] %}
+                            {% for code in competencies_codes[c.id] %}
+                              <a href="{{ url_for('programme.view_competence_by_code', competence_code=code) }}" class="badge bg-primary text-white">{{ code }}</a>
+                            {% endfor %}
+                          {% else %}
+                            <em>Aucune</em>
+                          {% endif %}
+                        </p>
+                        <p><strong>Prérequis :</strong>
+                          {% if prerequisites[c.id] %}
+                            {% for prereq, note in prerequisites[c.id] %}
+                              {{ prereq }} ({{ note }}%)
+                            {% endfor %}
+                          {% else %}
+                            <em>Aucun</em>
+                          {% endif %}
+                        </p>
+                        <p><strong>Co-requis :</strong>
+                          {% if corequisites[c.id] %}
+                            {{ corequisites[c.id]|join(', ') }}
+                          {% else %}
+                            <em>Aucun</em>
+                          {% endif %}
+                        </p>
+                      </div>
+
+                      <!-- Boutons Plan-Cadre et Plan-de-cours -->
+                      <div class="card-footer mt-auto text-center">
+                        <!-- Bouton Plan-Cadre existant -->
+                        <a href="{{ url_for('cours.view_or_add_plan_cadre', cours_id=c.id) }}" class="btn btn-sm btn-info w-100 fs-6 mb-2">
+                          Plan-Cadre
+                        </a>
+                        <!-- Nouveau bouton Plan-de-cours -->
+                        <button class="btn btn-sm btn-secondary w-100 fs-6" 
+                                onclick="openPlanCoursModal('{{ c.id }}', '{{ c.code }}', '{{ c.nom }}')"
+                                type="button">
+                          Plan de cours
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </td>
+          </tr>
         {% endfor %}
       </tbody>
     </table>
@@ -178,4 +180,336 @@
     margin-right: 0.5rem;
   }
 </style>
+
+<!-- Modal Gestion du Plan de Cours -->
+<div class="modal fade" id="planCoursModal" tabindex="-1" aria-labelledby="planCoursModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="planCoursModalLabel">Gestion du plan de cours</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="modalCoursId">
+        
+        <!-- Étape 1 : Choix de l'action -->
+        <div class="mb-4" id="step1">
+          <h6 class="mb-3">Choisissez une action :</h6>
+          <div class="row g-3">
+            <div class="col-md-4" id="action-create">
+              <div class="card h-100 text-center p-3 action-card" data-action="create">
+                <i class="fas fa-plus-circle fa-3x mb-3 text-primary"></i>
+                <h6>Créer un nouveau plan de cours</h6>
+              </div>
+            </div>
+            <div class="col-md-4" id="action-modify">
+              <div class="card h-100 text-center p-3 action-card" data-action="modify">
+                <i class="fas fa-edit fa-3x mb-3 text-warning"></i>
+                <h6>Modifier un plan existant</h6>
+              </div>
+            </div>
+            <div class="col-md-4" id="action-copy">
+              <div class="card h-100 text-center p-3 action-card" data-action="copy">
+                <i class="fas fa-copy fa-3x mb-3 text-success"></i>
+                <h6>Créer à partir d'un plan existant</h6>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Étape 2 : Sélection du plan existant (si nécessaire) -->
+        <div class="mb-4 d-none" id="step2">
+          <h6 class="mb-3">Sélectionnez un plan de cours existant :</h6>
+          <div class="row g-3" id="existingPlansContainer">
+            <!-- Les plans existants seront injectés ici -->
+          </div>
+        </div>
+
+        <!-- Étape 3 : Sélection de la session (si nécessaire) -->
+        <div class="mb-4 d-none" id="step3">
+          <h6 class="mb-3">Sélectionnez une session :</h6>
+          <div class="row g-3" id="sessionsContainer">
+            <!-- Les sessions disponibles seront injectées ici -->
+          </div>
+        </div>
+
+        <!-- Visualisation du flux -->
+        <div class="mb-4 d-none" id="flowVisualization">
+          <div class="d-flex align-items-center justify-content-center">
+            <div id="sourcePlan" class="text-center p-3 bg-light rounded"></div>
+            <div class="mx-3"><i class="fas fa-arrow-right fa-2x"></i></div>
+            <div id="targetPlan" class="text-center p-3 bg-light rounded"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary d-none" id="confirmButton" onclick="handlePlanCoursAction()">Confirmer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .action-card {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  .action-card.selected {
+    border: 2px solid #0d6efd;
+  }
+  #flowVisualization {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+  }
+  .plan-card, .session-card {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .plan-card:hover, .session-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  .plan-card.selected, .session-card.selected {
+    border: 2px solid #0d6efd;
+  }
+</style>
+
+<script>
+let planCoursModal;
+let currentPlans = [];
+let selectedAction = '';
+let selectedPlanId = '';
+let selectedSession = '';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialisation du modal Bootstrap
+    planCoursModal = new bootstrap.Modal(document.getElementById('planCoursModal'));
+    
+    // Gestion des clics sur les cartes d'action
+    document.querySelectorAll('.action-card').forEach(card => {
+        card.addEventListener('click', function() {
+            selectedAction = this.dataset.action;
+            document.querySelectorAll('.action-card').forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            showNextStep();
+        });
+    });
+    
+    // Utilisation de l'écouteur d'événements avec la délégation pour les éléments dynamiques
+    document.getElementById('existingPlansContainer').addEventListener('click', function(event) {
+        const planCard = event.target.closest('.plan-card');
+        if (planCard) {
+            const planId = planCard.dataset.planId;
+            const session = planCard.dataset.session;
+            selectPlan(planId, session);
+        }
+    });
+
+    document.getElementById('sessionsContainer').addEventListener('click', function(event) {
+        const sessionCard = event.target.closest('.session-card');
+        if (sessionCard) {
+            const session = sessionCard.dataset.session;
+            selectSession(session);
+        }
+    });
+});
+
+async function openPlanCoursModal(coursId, coursCode, coursNom) {
+    document.getElementById('modalCoursId').value = coursId;
+    document.getElementById('planCoursModalLabel').textContent = `Gestion des plans de cours - ${coursCode} ${coursNom}`;
+    
+    // Réinitialiser le modal
+    resetModal();
+    
+    // Récupérer les plans existants
+    try {
+        const response = await fetch(`/api/cours/${coursId}/plans`);
+        if (!response.ok) {
+            throw new Error('Erreur lors de la récupération des plans de cours.');
+        }
+        currentPlans = await response.json();
+        
+        // Afficher ou masquer les options en fonction des plans existants
+        if (currentPlans.length === 0) {
+            // Masquer 'Modifier' et 'Créer à partir d\'un plan existant'
+            document.getElementById('action-modify').style.display = 'none';
+            document.getElementById('action-copy').style.display = 'none';
+        } else {
+            // Afficher toutes les options
+            document.getElementById('action-modify').style.display = 'block';
+            document.getElementById('action-copy').style.display = 'block';
+        }
+        
+    } catch (error) {
+        console.error('Erreur lors de la récupération des plans:', error);
+        alert('Impossible de récupérer les plans de cours existants.');
+    }
+    
+    planCoursModal.show();
+}
+
+function resetModal() {
+    selectedAction = '';
+    selectedPlanId = '';
+    selectedSession = '';
+    
+    document.getElementById('step1').classList.remove('d-none');
+    document.getElementById('step2').classList.add('d-none');
+    document.getElementById('step3').classList.add('d-none');
+    document.getElementById('flowVisualization').classList.add('d-none');
+    document.getElementById('confirmButton').classList.add('d-none');
+    
+    // Supprimer la sélection des cartes d'action
+    document.querySelectorAll('.action-card').forEach(c => c.classList.remove('selected'));
+}
+
+function showNextStep() {
+    if (selectedAction === '') {
+        document.getElementById('step1').classList.remove('d-none');
+        document.getElementById('step2').classList.add('d-none');
+        document.getElementById('step3').classList.add('d-none');
+        document.getElementById('flowVisualization').classList.add('d-none');
+        document.getElementById('confirmButton').classList.add('d-none');
+    } else if (selectedAction === 'modify' || selectedAction === 'copy') {
+        document.getElementById('step1').classList.add('d-none');
+        document.getElementById('step2').classList.remove('d-none');
+        document.getElementById('step3').classList.add('d-none');
+        document.getElementById('flowVisualization').classList.add('d-none');
+        document.getElementById('confirmButton').classList.add('d-none');
+        
+        // Afficher les plans existants
+        const container = document.getElementById('existingPlansContainer');
+        if (currentPlans.length === 0) {
+            container.innerHTML = '<p class="text-muted">Aucun plan de cours existant.</p>';
+        } else {
+            container.innerHTML = currentPlans.map(plan => `
+                <div class="col-md-4">
+                  <div class="card h-100 text-center p-3 plan-card" data-plan-id="${plan.id}" data-session="${plan.session}">
+                    <h6>Session ${plan.session}</h6>
+                    <small class="text-muted">Créé le ${new Date(plan.created_at).toLocaleDateString()}</small>
+                  </div>
+                </div>
+            `).join('');
+        }
+    } else if (selectedAction === 'create') {
+        document.getElementById('step1').classList.add('d-none');
+        document.getElementById('step2').classList.add('d-none');
+        document.getElementById('step3').classList.remove('d-none');
+        document.getElementById('flowVisualization').classList.add('d-none');
+        document.getElementById('confirmButton').classList.remove('d-none');
+        
+        // Afficher les sessions disponibles
+        updateAvailableSessions();
+    }
+}
+
+function selectPlan(planId, session) {
+    selectedPlanId = planId;
+    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+    const selectedCard = document.querySelector(`.plan-card[data-plan-id="${planId}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+    }
+    
+    if (selectedAction === 'modify') {
+        document.getElementById('flowVisualization').classList.remove('d-none');
+        document.getElementById('sourcePlan').innerHTML = `
+            <h6>Session ${session}</h6>
+            <small class="text-muted">Plan existant</small>
+        `;
+        document.getElementById('targetPlan').innerHTML = `
+            <h6>Session ${session}</h6>
+            <small class="text-muted">Modification</small>
+        `;
+        document.getElementById('confirmButton').classList.remove('d-none');
+    } else if (selectedAction === 'copy') {
+        document.getElementById('step3').classList.remove('d-none');
+        document.getElementById('flowVisualization').classList.remove('d-none');
+        document.getElementById('sourcePlan').innerHTML = `
+            <h6>Session ${session}</h6>
+            <small class="text-muted">Plan source</small>
+        `;
+        updateAvailableSessions(true); // Indique une action de copie
+    }
+}
+
+function selectSession(session) {
+    selectedSession = session;
+    document.querySelectorAll('.session-card').forEach(c => c.classList.remove('selected'));
+    const selectedCard = document.querySelector(`.session-card[data-session="${session}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
+    }
+    
+    document.getElementById('targetPlan').innerHTML = `
+        <h6>Session ${session}</h6>
+        <small class="text-muted">Nouveau plan</small>
+    `;
+    document.getElementById('confirmButton').classList.remove('d-none');
+}
+
+function updateAvailableSessions(isCopy = false) {
+    const currentYear = new Date().getFullYear() % 100;
+    const nextYear = (currentYear + 1) % 100;
+    
+    const possibleSessions = [
+        `A${currentYear}`,
+        `H${nextYear}`,
+        `E${nextYear}`
+    ];
+    
+    // Filtrer les sessions déjà utilisées
+    const usedSessions = currentPlans.map(plan => plan.session);
+    const availableSessions = possibleSessions.filter(session => 
+        !usedSessions.includes(session)
+    );
+    
+    const container = document.getElementById('sessionsContainer');
+    if (availableSessions.length === 0) {
+        container.innerHTML = '<p class="text-muted">Aucune session disponible.</p>';
+    } else {
+        container.innerHTML = availableSessions.map(session => `
+            <div class="col-md-4">
+              <div class="card h-100 text-center p-3 session-card" data-session="${session}">
+                <h6>Session ${session}</h6>
+              </div>
+            </div>
+        `).join('');
+    }
+}
+
+function handlePlanCoursAction() {
+    const coursId = document.getElementById('modalCoursId').value;
+    let url = '';
+    
+    if (selectedAction === 'modify') {
+        const selectedPlan = currentPlans.find(plan => plan.id === parseInt(selectedPlanId));
+        if (selectedPlan) {
+            url = `/cours/${coursId}/plan_de_cours/${selectedPlan.session}`;
+        }
+    } else if (selectedAction === 'create') {
+        if (!selectedSession) {
+            alert('Veuillez sélectionner une session.');
+            return;
+        }
+        url = `/cours/${coursId}/plan_de_cours/${selectedSession}`;
+    } else if (selectedAction === 'copy') {
+        if (!selectedSession) {
+            alert('Veuillez sélectionner une session.');
+            return;
+        }
+        url = `/cours/${coursId}/plan_de_cours/${selectedSession}?copy_from=${selectedPlanId}`;
+    }
+    
+    if (url) {
+        window.location.href = url;
+    }
+}
+</script>
 {% endblock %}

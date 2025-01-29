@@ -13,20 +13,32 @@
                 <h3>1. Sélection du cours</h3>
             </div>
             <div class="card-body">
-                {{ course_form.course.label }}
-                {{ course_form.course(class="form-control", id="courseSelect") }}
+                <div class="search-container">
+                    <div class="form-group">
+                        <label for="courseSearch">Rechercher un cours</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="courseSearch" 
+                               placeholder="Entrez le code ou le nom du cours..." 
+                               autocomplete="off">
+                        <input type="hidden" id="courseSelect" name="course" value="">
+                    </div>
+                    <div id="searchResults" class="search-results" style="display: none;">
+                    </div>
+                </div>
             </div>
         </div>
+
 
         <!-- Étape 2: Sélection du plan -->
         <div class="card mb-4" id="plan-section" style="display: none;">
             <div class="card-header">
-                <h3>2. Sélection du plan</h3>
+                <h3>2. Sélection du plan de cours</h3>
             </div>
             <div class="card-body">
-                <label for="planSelect">Plan</label>
+                <label for="planSelect">Session</label>
                 <select class="form-control" id="planSelect" name="plan">
-                    <option value="">-- Sélectionner un plan --</option>
+                    <option value="">-- Sélectionner un plan de cours--</option>
                 </select>
             </div>
         </div>
@@ -37,10 +49,27 @@
                 <h3>3. Sélection de l'évaluation</h3>
             </div>
             <div class="card-body">
-                <label for="evaluationSelect">Évaluation</label>
-                <select class="form-control" id="evaluationSelect" name="evaluation">
-                    <option value="">-- Sélectionner une évaluation --</option>
-                </select>
+                <div class="form-group">
+                    <label for="evaluationSelect">Évaluation</label>
+                    <select class="form-control" id="evaluationSelect" name="evaluation">
+                        <option value="">-- Sélectionner une évaluation --</option>
+                    </select>
+                </div>
+                
+                <!-- Ajout du champ description -->
+                <div class="form-group mt-3" id="description-section" style="display: none;">
+                    <label for="evaluationDescription">Description de l'évaluation</label>
+                    <textarea 
+                        class="form-control change-detector" 
+                        id="evaluationDescription" 
+                        name="evaluation_description" 
+                        rows="4"
+                        placeholder="Entrez une description détaillée de l'évaluation..."
+                    ></textarea>
+                    <small class="form-text text-muted">
+                        Cette description sera utilisée pour la génération automatique des niveaux de compétence.
+                    </small>
+                </div>
             </div>
         </div>
 
@@ -54,13 +83,16 @@
 {% block scripts %}
 {{ super() }}
 <script>
-    window.toggleAIButton = function(sfId) {
+// Fonction pour basculer l'affichage du bouton AI
+window.toggleAIButton = function(sfId) {
     const checkbox = document.getElementById(`sf_${sfId}`);
     const aiButton = document.getElementById(`ai_button_${sfId}`);
     if (aiButton) {
         aiButton.style.display = checkbox.checked ? 'block' : 'none';
     }
 }
+
+// Fonction pour obtenir le token CSRF
 function getCSRFToken() {
     const csrfTokenElement = document.querySelector('input[name="csrf_token"]');
     if (csrfTokenElement) {
@@ -72,61 +104,91 @@ function getCSRFToken() {
         return metaTag.getAttribute('content');
     }
     
-    console.error('CSRF token not found');
+    console.error('Token CSRF non trouvé');
     return '';
 }
 
+// Fonction pour générer la grille à partir des données
 function generateGridFromData(button) {
     const savoirFaire = button.dataset.savoirFaire;
     const capacite = button.dataset.capacite;
     const sfId = button.dataset.sfId;
+    const evaluationId = document.getElementById('evaluationSelect').value;
+    
+    console.log('Génération de la grille pour:', { savoirFaire, capacite, sfId, evaluationId });
     
     const originalText = button.innerHTML;
     button.disabled = true;
     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération en cours...';
-
-    const csrfToken = getCSRFToken();
     
-    fetch("/evaluation/generate_six_level_grid", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken
-        },
-        body: JSON.stringify({ 
-            "savoir_faire": savoirFaire, 
-            "capacite": capacite 
+    try {
+        const csrfToken = getCSRFToken();
+        if (!csrfToken) {
+            throw new Error('Token CSRF manquant');
+        }
+        
+        fetch("/evaluation/generate_six_level_grid", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-Token": csrfToken
+            },
+            body: JSON.stringify({ 
+                "savoir_faire": savoirFaire, 
+                "capacite": capacite,
+                "savoir_faire_id": sfId,
+                "evaluation_id": evaluationId
+            }),
+            credentials: 'same-origin'
         })
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.text().then(errorText => {
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Mettre à jour les champs de texte pour chaque niveau
-        for (let i = 1; i <= 6; i++) {
-            const textarea = document.querySelector(`textarea[name="level${i}_${sfId}"]`);
-            if (textarea) {
-                textarea.value = data[`level${i}_description`] || '';
-                // Déclencher l'événement change pour activer le bouton de sauvegarde
-                textarea.dispatchEvent(new Event('change'));
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(errorText => {
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                });
             }
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert(`Erreur lors de la génération automatique: ${error.message}`);
-    })
-    .finally(() => {
-        // Restaurer le bouton
+            const contentType = response.headers.get("Content-Type");
+            if (contentType && contentType.includes("application/json")) {
+                return response.json();
+            } else {
+                throw new Error("Réponse non JSON reçue");
+            }
+        })
+        .then(data => {
+            console.log('Données de la grille reçues:', data);
+            for (let i = 1; i <= 6; i++) {
+                const textarea = document.querySelector(`textarea[name="level${i}_${sfId}"]`);
+                if (textarea) {
+                    textarea.value = data[`level${i}_description`] || '';
+                    textarea.dispatchEvent(new Event('change'));
+                } else {
+                    console.warn(`Textarea pour level${i}_${sfId} non trouvée`);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la génération automatique:', error);
+            alert(`Erreur lors de la génération automatique: ${error.message}`);
+        })
+        .finally(() => {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        });
+    } catch (error) {
+        console.error('Erreur CSRF ou autre:', error);
         button.disabled = false;
         button.innerHTML = originalText;
-    });
+        alert(`Erreur: ${error.message}`);
+    }
 }
+
+// Fonction pour initialiser tous les détecteurs et toggles
+function initializeAll() {
+    initializeChangeDetectors();
+    initializeToggles();
+    initializeSaveButton();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const courseSelect = document.getElementById('courseSelect');
     const planSelect = document.getElementById('planSelect');
@@ -134,9 +196,148 @@ document.addEventListener('DOMContentLoaded', function() {
     const planSection = document.getElementById('plan-section');
     const evaluationSection = document.getElementById('evaluation-section');
     const gridContent = document.getElementById('grid-content');
-    const csrfToken = document.querySelector('[name=csrf_token]').value;
+    const descriptionSection = document.getElementById('description-section');
+    const csrfToken = getCSRFToken();
 
-    // Fonction de sauvegarde de la grille
+    // Fonction de débit (debounce)
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+        // Fonction de sauvegarde de la description avec debounce
+const saveDescription = debounce(async (evaluationId, description) => {
+    if (!evaluationId) {
+        console.error('saveDescription: evaluationId est manquant');
+        flashMessageSystem.error('Erreur: ID d\'évaluation manquant.');
+        return;
+    }
+    if (!description) {
+        console.warn('saveDescription: description est vide');
+    }
+    console.log('Sauvegarde automatique de la description pour l\'évaluation ID:', evaluationId);
+    try {
+        const formData = new FormData();
+        formData.append('evaluation_id', evaluationId);
+        formData.append('description', description);
+
+        const response = await fetch('/evaluation/save_grid', {
+            method: 'POST',
+            body: formData,
+            headers: { 
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': csrfToken // Inclure le token CSRF si nécessaire
+            },
+            credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Erreur lors de la sauvegarde');
+        }
+
+        console.log('Description sauvegardée avec succès');
+
+        // Masquer le bouton de sauvegarde flottant après une sauvegarde réussie
+        const floatingButton = document.getElementById('floating-save-button');
+        if (floatingButton) {
+            floatingButton.style.display = 'none';
+        }
+
+    } catch (error) {
+        console.error('Erreur lors de la sauvegarde de la description:', error);
+        flashMessageSystem.error('Erreur lors de la sauvegarde automatique de la description.');
+    }
+}, 1000); // 1 seconde de délai 
+
+
+    // Gestionnaire d'événements 'change' pour evaluationSelect
+    evaluationSelect.addEventListener('change', async function () {
+        const evaluationId = evaluationSelect.value;
+        console.log('Évaluation ID sélectionné:', evaluationId);
+        if (evaluationId) {
+            try {
+                // Charger la description
+                console.log(`Fetching description pour l'évaluation ID: ${evaluationId}`);
+                const descResponse = await fetch(`/evaluation/get_description/${evaluationId}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+
+                if (!descResponse.ok) {
+                    const errorText = await descResponse.text();
+                    throw new Error(`HTTP error! status: ${descResponse.status}, message: ${errorText}`);
+                }
+
+                const descData = await descResponse.json();
+                console.log('Données de description reçues:', descData);
+                if (descData.description !== undefined) {
+                    const descriptionInput = document.getElementById('evaluationDescription');
+                    descriptionInput.value = descData.description || '';
+                    descriptionSection.style.display = 'block';
+
+                    // Ajouter l'événement input pour la sauvegarde automatique
+                    descriptionInput.removeEventListener('input', descriptionInput._debouncedHandler);
+                    descriptionInput._debouncedHandler = (e) => saveDescription(evaluationId, e.target.value);
+                    descriptionInput.addEventListener('input', descriptionInput._debouncedHandler);
+                } else {
+                    throw new Error('Description non disponible');
+                }
+
+                // Charger la grille
+                const formData = new FormData();
+                formData.append('evaluation_id', evaluationId);
+
+                console.log('Fetching grille pour l\'évaluation ID:', evaluationId);
+                const gridResponse = await fetch('/evaluation/get_grid', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-Token': csrfToken // Inclure le token CSRF si nécessaire
+                    },
+                    credentials: 'same-origin'
+                });
+
+                if (!gridResponse.ok) {
+                    const errorText = await gridResponse.text();
+                    throw new Error(`HTTP error! status: ${gridResponse.status}, message: ${errorText}`);
+                }
+
+                const html = await gridResponse.text();
+                console.log('HTML de la grille reçue:', html);
+                gridContent.innerHTML = html;
+
+                // Réinitialiser tous les événements après le chargement
+                initializeChangeDetectors();
+                initializeToggles();
+                initializeSaveButton();
+
+            } catch (error) {
+                console.error('Erreur lors du chargement de la grille:', error);
+                flashMessageSystem.error('Erreur lors du chargement de la grille');
+                gridContent.innerHTML = '';
+            }
+        } else {
+            // Réinitialiser si aucune évaluation n'est sélectionnée
+            descriptionSection.style.display = 'none';
+            document.getElementById('evaluationDescription').value = '';
+            gridContent.innerHTML = '';
+        }
+    });
+
+    // Fonction de sauvegarde de la grille (Manuelle)
     window.saveGrid = async function() {
         const form = document.getElementById('evaluationForm');
         if (!form) {
@@ -145,32 +346,40 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const formData = new FormData(form);
+        const description = document.getElementById('evaluationDescription').value;
+        formData.append('evaluation_description', description);
         
         try {
+            console.log('Envoi de la sauvegarde de la grille');
             const response = await fetch('/evaluation/save_grid', {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': csrfToken // Inclure le token CSRF si nécessaire
+                },
+                credentials: 'same-origin'
             });
 
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+
             const result = await response.json();
+            console.log('Résultat de la sauvegarde:', result);
             
             if (result.success) {
-                // Cacher le bouton de sauvegarde
                 const floatingButton = document.getElementById('floating-save-button');
                 if (floatingButton) {
                     floatingButton.style.display = 'none';
                 }
-                
-                // Afficher le message de succès via le système de flash
                 flashMessageSystem.success('La grille a été sauvegardée avec succès');
             } else {
                 throw new Error(result.message || 'Erreur lors de la sauvegarde');
             }
         } catch (error) {
-            console.error('Erreur:', error);
+            console.error('Erreur lors de la sauvegarde:', error);
             flashMessageSystem.error('Erreur lors de la sauvegarde : ' + error.message);
         }
     };
@@ -181,8 +390,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (floatingButton) {
             const saveButton = floatingButton.querySelector('button');
             if (saveButton) {
-                saveButton.removeEventListener('click', saveGrid);
-                saveButton.addEventListener('click', saveGrid);
+                saveButton.removeEventListener('click', window.saveGrid);
+                saveButton.addEventListener('click', window.saveGrid);
             }
             floatingButton.style.display = 'none';
         }
@@ -208,6 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
             element.addEventListener('change', showSaveButton);
             
             if (element.tagName === 'TEXTAREA') {
+                element.removeEventListener('input', showSaveButton);
                 element.addEventListener('input', showSaveButton);
             }
         });
@@ -217,96 +427,330 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializeToggles() {
         const toggles = document.querySelectorAll('.toggle-descriptions');
         toggles.forEach(toggle => {
-            toggle.addEventListener('change', function() {
+            function toggleHandler() {
                 const targetId = this.getAttribute('data-target');
                 const descriptionBlock = document.getElementById(targetId);
                 if (descriptionBlock) {
                     descriptionBlock.style.display = this.checked ? 'block' : 'none';
                 }
-            });
+            }
+
+            toggle.removeEventListener('change', toggleHandler);
+            toggle.addEventListener('change', toggleHandler);
         });
     }
 
-    // Fonction pour faire une requête AJAX
+    // Fonction pour faire une requête AJAX avec CSRF
     async function fetchData(url, formData) {
         formData.append('csrf_token', csrfToken);
         const response = await fetch(url, {
             method: 'POST',
             body: formData,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': csrfToken // Inclure le token CSRF si nécessaire
+            },
+            credentials: 'same-origin'
         });
         return response;
     }
 
     // Gestion du changement de cours
     courseSelect.addEventListener('change', async function() {
+        const courseId = this.value;
+        console.log('Cours ID sélectionné:', courseId);
         const formData = new FormData();
-        formData.append('course_id', this.value);
+        formData.append('course_id', courseId);
         
         try {
+            console.log(`Fetching plans pour le cours ID: ${courseId}`);
             const response = await fetchData('/evaluation/get_plans', formData);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
             const data = await response.json();
-            
+            console.log('Plans reçus:', data);
+
             planSelect.innerHTML = '<option value="">-- Sélectionner un plan --</option>';
             data.plans.forEach(plan => {
                 planSelect.add(new Option(plan.name, plan.id));
             });
             
-            planSection.style.display = this.value ? 'block' : 'none';
+            // Sélectionner automatiquement le dernier plan
+            if (data.plans.length > 0) {
+                const lastPlan = data.plans[data.plans.length - 1];
+                planSelect.value = lastPlan.id;
+                // Déclencher l'événement change pour charger les évaluations
+                planSelect.dispatchEvent(new Event('change'));
+            }
+            
+            planSection.style.display = courseId ? 'block' : 'none';
             evaluationSection.style.display = 'none';
             gridContent.innerHTML = '';
             
         } catch (error) {
-            console.error('Erreur:', error);
+            console.error('Erreur lors du chargement des plans:', error);
             flashMessageSystem.error('Erreur lors du chargement des plans');
         }
     });
 
     // Gestion du changement de plan
     planSelect.addEventListener('change', async function() {
+        const planId = this.value;
+        console.log('Plan ID sélectionné:', planId);
         const formData = new FormData();
-        formData.append('plan_id', this.value);
+        formData.append('plan_id', planId);
         
         try {
+            console.log(`Fetching évaluations pour le plan ID: ${planId}`);
             const response = await fetchData('/evaluation/get_evaluations', formData);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
             const data = await response.json();
-            
+            console.log('Évaluations reçues:', data);
+
             evaluationSelect.innerHTML = '<option value="">-- Sélectionner une évaluation --</option>';
-            data.evaluations.forEach(eval => {
-                evaluationSelect.add(new Option(eval.title, eval.id));
+            data.evaluations.forEach(evalItem => {
+                evaluationSelect.add(new Option(evalItem.title, evalItem.id));
             });
             
-            evaluationSection.style.display = this.value ? 'block' : 'none';
+            evaluationSection.style.display = planId ? 'block' : 'none';
             gridContent.innerHTML = '';
             
         } catch (error) {
-            console.error('Erreur:', error);
+            console.error('Erreur lors du chargement des évaluations:', error);
             flashMessageSystem.error('Erreur lors du chargement des évaluations');
         }
     });
 
-    // Gestion du changement d'évaluation
-    evaluationSelect.addEventListener('change', async function() {
-        const formData = new FormData();
-        formData.append('evaluation_id', this.value);
-        
+    // Fonction pour initialiser tous les détecteurs et toggles
+    initializeAll();
+});
+
+// Gestion de la recherche de cours
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('courseSearch');
+    const searchResults = document.getElementById('searchResults');
+    const courseSelect = document.getElementById('courseSelect');
+    let courses = [];
+
+    // Fonction pour échapper les caractères spéciaux dans une regex
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Fonction pour mettre en surbrillance les termes de recherche
+    function highlightText(text, searchTerm) {
+        if (!searchTerm) return text;
+        const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi');
+        return text.replace(regex, '<span class="highlight">$1</span>');
+    }
+
+    // Fonction pour filtrer et afficher les résultats
+    function filterCourses(searchTerm) {
+        if (!searchTerm) {
+            searchResults.style.display = 'none';
+            return;
+        }
+
+        const searchTermLower = searchTerm.toLowerCase();
+        const filteredCourses = courses.filter(course => 
+            course.code.toLowerCase().includes(searchTermLower) ||
+            course.nom.toLowerCase().includes(searchTermLower)
+        );
+
+        if (filteredCourses.length > 0) {
+            searchResults.innerHTML = filteredCourses
+                .map(course => `
+                    <div class="search-result-item" data-id="${course.id}">
+                        <strong>${highlightText(course.code, searchTerm)}</strong> - 
+                        ${highlightText(course.nom, searchTerm)}
+                    </div>
+                `)
+                .join('');
+            searchResults.style.display = 'block';
+        } else {
+            searchResults.innerHTML = '<div class="search-result-item">Aucun résultat trouvé</div>';
+            searchResults.style.display = 'block';
+        }
+    }
+
+    // Charger la liste des cours depuis l'API
+    async function loadCourses() {
         try {
-            const response = await fetchData('/evaluation/get_grid', formData);
-            const html = await response.text();
-            gridContent.innerHTML = html;
-            
-            // Réinitialiser tous les événements après le chargement de la grille
-            initializeChangeDetectors();
-            initializeToggles();
-            initializeSaveButton();
-            
+            console.log('Fetching liste des cours');
+            const response = await fetch('/evaluation/get_courses', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+            const data = await response.json();
+            console.log('Cours reçus:', data);
+            courses = data;
         } catch (error) {
-            console.error('Erreur:', error);
-            flashMessageSystem.error('Erreur lors du chargement de la grille');
+            console.error('Erreur lors du chargement des cours:', error);
+            flashMessageSystem.error('Erreur lors du chargement des cours');
+        }
+    }
+
+    // Initialiser la liste des cours
+    loadCourses();
+
+    // Gérer la saisie dans le champ de recherche
+    searchInput.addEventListener('input', function(e) {
+        filterCourses(e.target.value);
+    });
+
+    // Gérer la sélection d'un cours
+    searchResults.addEventListener('click', function(e) {
+        const resultItem = e.target.closest('.search-result-item');
+        if (resultItem) {
+            const courseId = resultItem.dataset.id;
+            const course = courses.find(c => c.id === courseId);
+            if (course) {
+                searchInput.value = `${course.code} - ${course.nom}`;
+                courseSelect.value = courseId;
+                searchResults.style.display = 'none';
+                
+                // Déclencher l'événement change sur courseSelect
+                courseSelect.dispatchEvent(new Event('change'));
+            }
+        }
+    });
+
+    // Fermer les résultats quand on clique en dehors
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    // Gestion de la navigation au clavier
+    searchInput.addEventListener('keydown', function(e) {
+        // Ne faire rien si les résultats ne sont pas affichés, sauf pour la touche Down
+        if (searchResults.style.display === 'none' && e.key !== 'ArrowDown') {
+            return;
+        }
+
+        const items = searchResults.querySelectorAll('.search-result-item');
+        if (!items.length && e.key !== 'ArrowDown') {
+            return;
+        }
+
+        const currentIndex = Array.from(items).findIndex(item => item.classList.contains('selected'));
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                if (searchResults.style.display === 'none') {
+                    // Afficher les résultats filtrés
+                    filterCourses(searchInput.value);
+                    // Sélectionner le premier élément si des résultats existent
+                    const firstItem = searchResults.querySelector('.search-result-item');
+                    if (firstItem) {
+                        firstItem.classList.add('selected');
+                    }
+                } else if (items.length > 0) {
+                    // Passer à l'élément suivant
+                    const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % items.length;
+                    items.forEach(item => item.classList.remove('selected'));
+                    items[nextIndex].classList.add('selected');
+                    items[nextIndex].scrollIntoView({ block: 'nearest' });
+                }
+                break;
+
+            case 'ArrowUp':
+                e.preventDefault();
+                if (items.length > 0) {
+                    // Passer à l'élément précédent
+                    const prevIndex = currentIndex <= 0 ? items.length - 1 : currentIndex - 1;
+                    items.forEach(item => item.classList.remove('selected'));
+                    items[prevIndex].classList.add('selected');
+                    items[prevIndex].scrollIntoView({ block: 'nearest' });
+                }
+                break;
+
+            case 'Enter':
+                e.preventDefault();
+                const selectedItem = searchResults.querySelector('.search-result-item.selected');
+                if (selectedItem) {
+                    // Simuler un clic sur l'élément sélectionné
+                    selectedItem.click();
+                }
+                break;
+
+            case 'Escape':
+                e.preventDefault();
+                // Cacher les résultats et enlever la sélection
+                searchResults.style.display = 'none';
+                searchInput.blur();
+                break;
         }
     });
 });
 </script>
+
+<style>
+.search-container {
+    position: relative;
+}
+
+.search-results {
+    position: absolute;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.search-result-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.search-result-item:hover {
+    background-color: #f8f9fa;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.highlight {
+    background-color: #fff3cd;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+.search-result-item.selected {
+    background-color: #e9ecef;
+}
+
+/* Style pour le bouton de sauvegarde flottant */
+#floating-save-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1001;
+    display: none;
+}
+
+#floating-save-button button {
+    padding: 10px 20px;
+    font-size: 16px;
+}
+</style>
 {% endblock %}

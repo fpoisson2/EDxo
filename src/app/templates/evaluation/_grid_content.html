@@ -1,8 +1,15 @@
 {% if selected_evaluation %}
 <div class="card mb-4" id="grid-section">
-    <div class="card-header">
-        <h3>Configuration de la grille</h3>
-        <h4 class="text-muted">{{ selected_evaluation.titre_evaluation }}</h4>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h3>Configuration de la grille</h3>
+            <h4 class="text-muted">{{ selected_evaluation.titre_evaluation }}</h4>
+        </div>
+        <a href="{{ url_for('evaluation.export_evaluation_docx', evaluation_id=selected_evaluation.id) }}" 
+           class="btn btn-outline-secondary">
+            <i class="fas fa-file-word me-2"></i>
+            Exporter en Word
+        </a>
     </div>
     <div class="card-body">
         <input type="hidden" name="evaluation_id" value="{{ selected_evaluation.id }}">
@@ -43,15 +50,32 @@
 
                 <div id="desc_{{ sf_id }}" class="descriptions ml-4" 
                      {% if not sf_data.selected %}style="display: none;"{% endif %}>
-                    {% for level in range(1, 7) %}
-                    <div class="form-group">
-                        <label>Niveau {{ level }}</label>
-                        <textarea name="level{{ level }}_{{ sf_id }}"
-                                  class="form-control change-detector"
-                                  rows="2">{{ sf_data['level' ~ level] }}</textarea>
+                    <div class="levels-container">
+                        {% set level_descriptions = [
+                            "Aucun travail réalisé: 0%",
+                            "20%",
+                            "40%",
+                            "Seuil de réussite: 60%",
+                            "80%",
+                            "Cible: 100%"
+                        ] %}
+                        {% for level in range(1, 7) %}
+                        <div class="form-group level-item">
+                            <label for="level{{ level }}_{{ sf_id }}">
+                                Niveau {{ level }} 
+                                {% if level_descriptions[level - 1] %}
+                                    ({{ level_descriptions[level - 1] }})
+                                {% endif %}
+                            </label>
+                            <textarea name="level{{ level }}_{{ sf_id }}"
+                                      class="form-control change-detector"
+                                      rows="2"
+                                      id="level{{ level }}_{{ sf_id }}">{{ sf_data['level' ~ level] }}</textarea>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 </div>
+                
             </div>
             {% endfor %}
         </div>
