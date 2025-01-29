@@ -10,6 +10,7 @@ from flask import (
     jsonify
 )
 from flask_login import login_required, current_user
+from sqlalchemy import text
 from functools import wraps
 from app.models import (
     db, 
@@ -20,7 +21,10 @@ from app.models import (
     PlanCadre, 
     Competence,
     PlanDeCoursEvaluationsCapacites,
-    EvaluationSavoirFaire
+    EvaluationSavoirFaire,
+    PlanCadreCapaciteSavoirsFaire,
+    GrillePromptSettings,
+    User
 )
 from app.forms import (
     CourseSelectionForm, 
@@ -36,24 +40,80 @@ from utils.decorator import roles_required
 
 from collections import defaultdict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 import json
 
 from openai import OpenAI
 from openai import OpenAIError
 
+from pathlib import Path
+import os
+import io
+from collections import defaultdict
+from flask import send_file, current_app, flash, redirect, url_for
+from docxtpl import DocxTemplate
+
+MODEL_PRICING = {
+    "gpt-4o": {"input": 2.50 / 1_000_000, "output": 10.00 / 1_000_000},
+    "gpt-4o-mini": {"input": 0.150 / 1_000_000, "output": 0.600 / 1_000_000},
+    "o1-preview": {"input": 15.00 / 1_000_000, "output": 60.00 / 1_000_000},
+    "o1-mini": {"input": 3.00 / 1_000_000, "output": 12.00 / 1_000_000},
+}
+
+def calculate_call_cost(usage_prompt, usage_completion, model):
+    """
+    Calcule le coût d'un appel API en fonction du nombre de tokens et du modèle.
+    """
+    if model not in MODEL_PRICING:
+        raise ValueError(f"Modèle {model} non trouvé dans la grille tarifaire")
+
+    pricing = MODEL_PRICING[model]
+
+    cost_input = usage_prompt * pricing["input"]
+    cost_output = usage_completion * pricing["output"]
+    return cost_input + cost_output
 
 class AISixLevelGridResponse(BaseModel):
     """
     Représente la réponse structurée d'OpenAI pour une grille à six niveaux.
     """
-    level1_description: Optional[str] = None
-    level2_description: Optional[str] = None
-    level3_description: Optional[str] = None
-    level4_description: Optional[str] = None
-    level5_description: Optional[str] = None
-    level6_description: Optional[str] = None
+    level1_description: Optional[str] = Field(
+        None,
+        description="Niveau 1 - Aucun travail réalisé"
+    )
+    level2_description: Optional[str] = Field(
+        None,
+        description="Niveau 2 - Performance très insuffisante"
+    )
+    level3_description: Optional[str] = Field(
+        None,
+        description="Niveau 3 - Performance insuffisante"
+    )
+    level4_description: Optional[str] = Field(
+        None,
+        description="Niveau 4 - Seuil de réussite minimal"
+    )
+    level5_description: Optional[str] = Field(
+        None,
+        description="Niveau 5 - Performance supérieure"
+    )
+    level6_description: Optional[str] = Field(
+        None,
+        description="Niveau 6 - Cible visée atteinte"
+    )
+
+    @classmethod
+    def get_schema_with_descriptions(cls):
+        """
+        Met à jour le schéma avec les descriptions de la base de données
+        """
+        settings = GrillePromptSettings.get_current()
+        schema = cls.model_json_schema()
+        for i in range(1, 7):
+            field_name = f'level{i}_description'
+            schema['properties'][field_name]['description'] = getattr(settings, field_name)
+        return schema
 
 evaluation_bp = Blueprint('evaluation', __name__, url_prefix='/evaluation')
 
@@ -65,8 +125,39 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+@evaluation_bp.route('/get_description/<int:evaluation_id>', methods=['GET'])
+@login_required
+def get_description(evaluation_id):
+    try:
+        evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
+        return jsonify({
+            'success': True,
+            'description': evaluation.description or ''
+        })
+    except Exception as e:
+        current_app.logger.error(f'Erreur lors de la récupération de la description: {str(e)}')
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@evaluation_bp.route('/get_courses', methods=['GET'])
+@login_required
+def get_courses():
+    courses = Cours.query.all()
+    courses_data = [{
+        'id': str(course.id),
+        'code': course.code,
+        'nom': course.nom
+    } for course in courses]
+    return jsonify(courses_data)
+
 @evaluation_bp.route('/create', methods=['GET', 'POST'])
-@admin_required
+
+
+
+@login_required
 def create_evaluation_grid():
     # Étape 1 : Sélection du Cours
     course_form = CourseSelectionForm()
@@ -79,11 +170,11 @@ def create_evaluation_grid():
     return render_template('evaluation/select_course.html', form=course_form)
 
 @evaluation_bp.route('/select_plan/<int:course_id>', methods=['GET', 'POST'])
-@admin_required
+@login_required
 def select_plan(course_id):
     plan_form = PlanSelectionForm()
-    plans = PlanDeCours.query.filter_by(cours_id=course_id).all()
-    plan_form.plan.choices = [(plan.id, f"Plan {plan.id}") for plan in plans]
+    plans = PlanDeCours.query.filter_by(cours_id=course_id).order_by(PlanDeCours.session.desc()).all()
+    plan_form.plan.choices = [(plan.id, f"{plan.session}" if plan.session else f"Plan {plan.id}") for plan in plans]
     
     if 'submit_plan' in request.form and plan_form.validate_on_submit():
         selected_plan_id = plan_form.plan.data
@@ -91,11 +182,9 @@ def select_plan(course_id):
     
     return render_template('evaluation/select_plan.html', form=plan_form, course_id=course_id)
 
-    
-    return render_template('evaluation/select_plan.html', form=plan_form, course_id=course_id)
 
 @evaluation_bp.route('/select_evaluation/<int:plan_id>', methods=['GET', 'POST'])
-@admin_required
+@login_required
 def select_evaluation(plan_id):
     plan = PlanDeCours.query.get_or_404(plan_id)
     evaluations = PlanDeCoursEvaluations.query.filter_by(plan_de_cours_id=plan_id).all()
@@ -107,18 +196,35 @@ def select_evaluation(plan_id):
     form = EvaluationSelectionForm()
     form.evaluation.choices = [(eval.id, eval.titre_evaluation) for eval in evaluations]
     
+    # Ajout du champ description
+    selected_evaluation = None
+    if request.method == 'GET' and request.args.get('evaluation_id'):
+        selected_evaluation = PlanDeCoursEvaluations.query.get(request.args.get('evaluation_id'))
+    
     if form.validate_on_submit():
         selected_evaluation_id = form.evaluation.data
+        description = request.form.get('description', '')
+        
+        # Mise à jour de la description
+        evaluation = PlanDeCoursEvaluations.query.get(selected_evaluation_id)
+        if evaluation:
+            evaluation.description = description
+            db.session.commit()
+            flash('Description mise à jour avec succès.', 'success')
+            
         return redirect(url_for('evaluation.configure_grid', evaluation_id=selected_evaluation_id))
     
-    return render_template('evaluation/select_evaluation.html', form=form, plan=plan)
-
-# routes/evaluation.py (modification de la route configure_grid)
+    return render_template(
+        'evaluation/select_evaluation.html', 
+        form=form, 
+        plan=plan, 
+        selected_evaluation=selected_evaluation
+    )
 
 from collections import defaultdict
 
 @evaluation_bp.route('/configure_grid/<int:evaluation_id>', methods=['GET', 'POST'])
-@admin_required
+@login_required
 def configure_grid(evaluation_id):
     evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
     plan = evaluation.plan_de_cours
@@ -231,7 +337,7 @@ def configure_grid(evaluation_id):
 
 
 @evaluation_bp.route('/configure_six_level_grid/<int:evaluation_id>', methods=['GET', 'POST'])
-@admin_required
+@login_required
 def configure_six_level_grid(evaluation_id):
     evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
     form = SixLevelGridForm()
@@ -310,7 +416,7 @@ def configure_six_level_grid(evaluation_id):
     )
 
 @evaluation_bp.route('/generate_six_level_grid', methods=['POST'])
-@admin_required
+@login_required
 def generate_six_level_grid():
     """
     Génère automatiquement la grille à six niveaux en appelant OpenAI avec un format structuré.
@@ -318,34 +424,96 @@ def generate_six_level_grid():
     data = request.get_json()
     savoir_faire = data.get('savoir_faire', '')
     capacite = data.get('capacite', '')
+    savoir_faire_id = data.get('savoir_faire_id')
+    evaluation_id = data.get('evaluation_id')  # Ajout de l'evaluation_id
+    settings = GrillePromptSettings.get_current()
+
+    # Récupérer l'évaluation et sa description
+    evaluation_description = ""
+    if evaluation_id:
+        try:
+            evaluation = PlanDeCoursEvaluations.query.get(evaluation_id)
+            if evaluation:
+                evaluation_description = evaluation.description or ""
+        except Exception as e:
+            print(f"Erreur lors de la récupération de l'évaluation: {str(e)}")
+
 
     if not savoir_faire or not capacite:
         return jsonify({'error': 'Savoir-faire et capacité requis'}), 400
 
-    schema_json = json.dumps(AISixLevelGridResponse.model_json_schema(), indent=4, ensure_ascii=False)
+    # Vérifier que l'ID est valide
+    if savoir_faire_id:
+        try:
+            savoir_faire_id = int(savoir_faire_id)
+            sf_info = PlanCadreCapaciteSavoirsFaire.query.get(savoir_faire_id)
+            cible = sf_info.cible if sf_info and sf_info.cible else "Réalisation complète et autonome de la tâche"
+            seuil = sf_info.seuil_reussite if sf_info and sf_info.seuil_reussite else "Réalisation minimale acceptable de la tâche"
+        except (ValueError, TypeError):
+            cible = "Réalisation complète et autonome de la tâche"
+            seuil = "Réalisation minimale acceptable de la tâche"
+    else:
+        cible = "Réalisation complète et autonome de la tâche"
+        seuil = "Réalisation minimale acceptable de la tâche"
 
-    prompt = (
-        f"Tu es un expert en évaluation pédagogique. "
-        f"Crée une grille d'évaluation à six niveaux pour le savoir-faire '{savoir_faire}' associé à la capacité '{capacite}'. "
-        f"Chaque niveau doit être progressif et bien défini.\n\n"
-        f"Retourne un JSON strictement conforme à ce schéma :\n{schema_json}"
+    schema_json = json.dumps(AISixLevelGridResponse.get_schema_with_descriptions(), indent=4, ensure_ascii=False)
+    
+
+    prompt = settings.prompt_template.format(
+        savoir_faire=savoir_faire,
+        capacite=capacite, 
+        seuil=seuil,
+        cible=cible,
+        description_eval=evaluation_description,
+        schema=schema_json  # Ajout du schéma
     )
+
+    # Vérification des crédits de l'utilisateur
+    user = db.session.get(User, current_user.id)
+    if user.credits is None:
+        user.credits = 0.0
+    if user.credits <= 0:
+        return jsonify({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}), 403
+
+    # Vérification de l'utilisateur
+    user = db.session.get(User, current_user.id)
+    if not user or not user.openai_key:
+        return jsonify({'error': 'Clé OpenAI non configurée'}), 400
+
+    ai_model = "gpt-4o"
+
+    user_credits = user.credits
+    user_id = current_user.id
 
     try:
         client = OpenAI(api_key=current_user.openai_key)
 
         response = client.beta.chat.completions.parse(
-            model="gpt-4o",
+            model=ai_model,
             messages=[{"role": "user", "content": prompt}],
             response_format=AISixLevelGridResponse,
         )
+        total_prompt_tokens = 0
+        total_completion_tokens = 0
+
+        # Récupérer la consommation (tokens) du premier appel
+        if hasattr(response, 'usage'):
+            total_prompt_tokens += response.usage.prompt_tokens
+            total_completion_tokens += response.usage.completion_tokens
+
+        usage_prompt = response.usage.prompt_tokens if hasattr(response, 'usage') else 0
+        usage_completion = response.usage.completion_tokens if hasattr(response, 'usage') else 0
+        cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
+
+        new_credits = user_credits - cost
+
+        db.session.execute(
+            text("UPDATE User SET credits = :credits WHERE id = :uid"),
+            {"credits": new_credits, "uid": user_id}
+        )
+        db.session.commit()
 
         structured_data = response.choices[0].message.parsed
-
-        print(type(structured_data))
-
-
-        print(structured_data)
 
 
         return jsonify(structured_data.model_dump())  # Convertir en dict JSON
@@ -357,7 +525,7 @@ def generate_six_level_grid():
         return jsonify({'error': f'Erreur interne: {str(e)}'}), 500
 
 @evaluation_bp.route('/evaluation-wizard', methods=['GET', 'POST'])
-@admin_required
+@login_required
 def evaluation_wizard():
     # Initialisation des formulaires
     course_form = CourseSelectionForm()
@@ -386,8 +554,11 @@ def evaluation_wizard():
         
         # Remplir les choix du plan si un cours est sélectionné
         if selected_course_id:
-            plans = PlanDeCours.query.filter_by(cours_id=int(selected_course_id)).all()
-            plan_form.plan.choices = [(str(plan.id), f"Plan {plan.id}") for plan in plans]
+            plans = PlanDeCours.query.filter_by(cours_id=int(selected_course_id)).order_by(PlanDeCours.session.desc()).all()
+            plan_form.plan.choices = [
+                (str(plan.id), f"{plan.session}" if plan.session else f"Plan {plan.id}")
+                for plan in plans
+            ]
         
         # Remplir les choix d'évaluation si un plan est sélectionné
         if selected_plan_id:
@@ -495,20 +666,24 @@ def evaluation_wizard():
         selected_evaluation=selected_evaluation,
         grouped_cf=grouped_cf
     )
+
 @evaluation_bp.route('/get_plans', methods=['POST'])
-@admin_required
+@login_required
 def get_plans():
     course_id = request.form.get('course_id')
     if not course_id:
         return jsonify({'plans': []})
     
-    plans = PlanDeCours.query.filter_by(cours_id=int(course_id)).all()
+    plans = PlanDeCours.query.filter_by(cours_id=int(course_id)).order_by(PlanDeCours.session.desc()).all()
     return jsonify({
-        'plans': [{'id': str(plan.id), 'name': f"Plan {plan.id}"} for plan in plans]
+        'plans': [{
+            'id': plan.id,  # Pas besoin de convertir en str ici
+            'name': f"{plan.session}" if plan.session else f"Plan {plan.id}"
+        } for plan in plans]
     })
 
 @evaluation_bp.route('/get_evaluations', methods=['POST'])
-@admin_required
+@login_required
 def get_evaluations():
     plan_id = request.form.get('plan_id')
     if not plan_id:
@@ -521,7 +696,7 @@ def get_evaluations():
     })
 
 @evaluation_bp.route('/get_grid', methods=['POST'])
-@admin_required
+@login_required
 def get_grid():
     evaluation_id = request.form.get('evaluation_id')
     if not evaluation_id:
@@ -581,39 +756,150 @@ def get_grid():
     )
 
 @evaluation_bp.route('/save_grid', methods=['POST'])
-@admin_required
+@login_required
 def save_grid():
     try:
-        evaluation_id = request.form.get('evaluation_id')
+        # Récupérer evaluation_id et description depuis les deux possibilités
+        evaluation_id = request.form.get('evaluation_id') or request.form.get('evaluation')
+        description = request.form.get('description') or request.form.get('evaluation_description')
+        
         if not evaluation_id:
-            return jsonify({'success': False, 'message': 'ID d\'évaluation manquant'}), 400
-
-        # Suppression des anciennes associations
-        EvaluationSavoirFaire.query.filter_by(
-            evaluation_id=int(evaluation_id)
-        ).delete()
+            raise ValueError("ID d'évaluation manquant.")
         
-        # Création des nouvelles associations avec descriptions
-        for sf_id in request.form.getlist('savoirs_faire'):
-            capacite_id = request.form.get(f'capacite_{sf_id}')
-            if capacite_id:
-                new_assoc = EvaluationSavoirFaire(
-                    evaluation_id=int(evaluation_id),
-                    savoir_faire_id=int(sf_id),
-                    capacite_id=int(capacite_id),
-                    selected=True,
-                    level1_description=request.form.get(f'level1_{sf_id}', ''),
-                    level2_description=request.form.get(f'level2_{sf_id}', ''),
-                    level3_description=request.form.get(f'level3_{sf_id}', ''),
-                    level4_description=request.form.get(f'level4_{sf_id}', ''),
-                    level5_description=request.form.get(f'level5_{sf_id}', ''),
-                    level6_description=request.form.get(f'level6_{sf_id}', '')
-                )
-                db.session.add(new_assoc)
+        try:
+            evaluation_id = int(evaluation_id)
+        except ValueError:
+            raise ValueError("ID d'évaluation invalide.")
         
+        evaluation = PlanDeCoursEvaluations.query.get(evaluation_id)
+        if not evaluation:
+            raise ValueError("Évaluation non trouvée.")
+        
+        # Mettre à jour la description
+        evaluation.description = description
         db.session.commit()
+
+        # Vérifier si 'savoirs_faire' est présent dans la requête
+        savoirs_faire = request.form.getlist('savoirs_faire')
+        if savoirs_faire:
+            # Suppression des anciennes associations
+            EvaluationSavoirFaire.query.filter_by(
+                evaluation_id=evaluation_id
+            ).delete()
+            
+            # Création des nouvelles associations avec descriptions
+            for sf_id in savoirs_faire:
+                capacite_id = request.form.get(f'capacite_{sf_id}')
+                if capacite_id:
+                    try:
+                        sf_id = int(sf_id)
+                        capacite_id = int(capacite_id)
+                    except ValueError:
+                        raise ValueError("ID de savoir-faire ou de capacité invalide.")
+                    
+                    new_assoc = EvaluationSavoirFaire(
+                        evaluation_id=evaluation_id,
+                        savoir_faire_id=sf_id,
+                        capacite_id=capacite_id,
+                        selected=True,
+                        level1_description=request.form.get(f'level1_{sf_id}', ''),
+                        level2_description=request.form.get(f'level2_{sf_id}', ''),
+                        level3_description=request.form.get(f'level3_{sf_id}', ''),
+                        level4_description=request.form.get(f'level4_{sf_id}', ''),
+                        level5_description=request.form.get(f'level5_{sf_id}', ''),
+                        level6_description=request.form.get(f'level6_{sf_id}', '')
+                    )
+                    db.session.add(new_assoc)
+            
+            db.session.commit()
+        else:
+            # Si 'savoirs_faire' n'est pas présent, ne faire que la mise à jour de la description
+            pass
+        
         return jsonify({'success': True})
         
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f'Erreur lors de la sauvegarde de la grille: {str(e)}')
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@evaluation_bp.route('/export_docx/<int:evaluation_id>', methods=['GET'])
+@login_required
+def export_evaluation_docx(evaluation_id):
+    # 1. Récupérer l'évaluation
+    evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
+    
+    # 2. Récupérer les capacités et savoirs-faire associés
+    eval_capacites = (
+        PlanDeCoursEvaluationsCapacites.query
+        .join(PlanCadreCapacites)
+        .join(PlanCadre)
+        .filter(PlanCadre.cours_id == evaluation.plan_de_cours.cours_id)
+        .filter(PlanDeCoursEvaluationsCapacites.capacite_id.isnot(None))
+        .options(
+            db.joinedload(PlanDeCoursEvaluationsCapacites.capacite)
+            .joinedload(PlanCadreCapacites.savoirs_faire)
+        )
+        .all()
+    )
+    
+    # 3. Récupérer les savoirs-faire avec leurs descriptions de niveaux
+    eval_savoirs_faire = EvaluationSavoirFaire.query.filter_by(
+        evaluation_id=evaluation_id
+    ).all()
+    
+    # 4. Organiser les données pour le template
+    grouped_cf = defaultdict(dict)
+    for eval_cap in eval_capacites:
+        if eval_cap.capacite and eval_cap.capacite.capacite:
+            capacite_nom = eval_cap.capacite.capacite
+            for sf in eval_cap.capacite.savoirs_faire:
+                existing_sf_data = next(
+                    (esf for esf in eval_savoirs_faire if esf.savoir_faire_id == sf.id),
+                    None
+                )
+                if existing_sf_data:
+                    grouped_cf[capacite_nom][sf.id] = {
+                        'texte': sf.texte,
+                        'level1': existing_sf_data.level1_description,
+                        'level2': existing_sf_data.level2_description,
+                        'level3': existing_sf_data.level3_description,
+                        'level4': existing_sf_data.level4_description,
+                        'level5': existing_sf_data.level5_description,
+                        'level6': existing_sf_data.level6_description
+                    }
+    
+    # 5. Charger le template Word
+    base_path = Path(__file__).parent.parent.parent
+    template_path = os.path.join(base_path, 'static', 'docs', 'evaluation_grid_template.docx')
+    
+    if not os.path.exists(template_path):
+        current_app.logger.error(f"Template not found at: {template_path}")
+        flash("Erreur: Le template de la grille d'évaluation est introuvable.", "error")
+        return redirect(url_for('evaluation.view_evaluation', evaluation_id=evaluation_id))
+
+    doc = DocxTemplate(template_path)
+    
+    # 6. Préparer le contexte pour le template
+    context = {
+        'evaluation': evaluation,
+        'capacites_savoirs_faire': grouped_cf,
+        'cours': evaluation.plan_de_cours.cours,
+        'plan_de_cours': evaluation.plan_de_cours
+    }
+    
+    # 7. Rendre le document
+    doc.render(context)
+    
+    # 8. Préparer le document pour le téléchargement
+    byte_io = io.BytesIO()
+    doc.save(byte_io)
+    byte_io.seek(0)
+    
+    # 9. Envoyer le fichier
+    filename = f"Grille_evaluation_{evaluation.plan_de_cours.session}.docx"
+    return send_file(
+        byte_io,
+        download_name=filename,
+        as_attachment=True
+    )

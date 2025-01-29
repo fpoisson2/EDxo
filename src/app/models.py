@@ -13,6 +13,46 @@ user_programme = db.Table('User_Programme',
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
+
+class GrillePromptSettings(db.Model):
+    """Paramètres pour la génération de grilles d'évaluation"""
+    __tablename__ = 'grille_prompt_settings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    prompt_template = db.Column(db.Text, nullable=False)
+    level1_description = db.Column(db.Text, nullable=False)
+    level2_description = db.Column(db.Text, nullable=False)
+    level3_description = db.Column(db.Text, nullable=False)
+    level4_description = db.Column(db.Text, nullable=False)
+    level5_description = db.Column(db.Text, nullable=False)
+    level6_description = db.Column(db.Text, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    @classmethod
+    def get_current(cls):
+        """Récupère les paramètres actuels ou crée une entrée par défaut"""
+        settings = cls.query.first()
+        if not settings:
+            settings = cls(
+                prompt_template=(
+                    "Tu es un expert en évaluation pédagogique. "
+                    "Crée une grille d'évaluation à six niveaux pour le savoir-faire '{savoir_faire}' "
+                    "associé à la capacité '{capacite}'.\n\n"
+                    "Pour le niveau 4 (seuil de réussite minimum) : {seuil}\n"
+                    "Pour le niveau 6 (cible visée) : {cible}\n\n"
+                    "Utilise des verbes d'action et assure une progression claire entre les niveaux."
+                ),
+                level1_description="Niveau 1 - Aucun travail réalisé : Description des comportements observables démontrant l'absence complète de réalisation",
+                level2_description="Niveau 2 - Performance très insuffisante : Description des comportements observables démontrant une performance largement sous le seuil minimal attendu",
+                level3_description="Niveau 3 - Performance insuffisante : Description des comportements observables démontrant une performance sous le seuil minimal mais en progression par rapport au niveau 2",
+                level4_description="Niveau 4 - Seuil de réussite minimal : Description des comportements observables démontrant l'atteinte du seuil minimal de réussite acceptable",
+                level5_description="Niveau 5 - Performance supérieure : Description des comportements observables démontrant une performance dépassant le seuil minimal mais n'atteignant pas encore la cible visée",
+                level6_description="Niveau 6 - Cible visée atteinte : Description des comportements observables démontrant l'atteinte complète des objectifs avec autonomie"
+            )
+            db.session.add(settings)
+            db.session.commit()
+        return settings
+
 class EvaluationSavoirFaire(db.Model):
     __tablename__ = 'evaluation_savoirfaire'
     
