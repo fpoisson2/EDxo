@@ -13,6 +13,8 @@ user_programme = db.Table('User_Programme',
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
+
+
 class PlanDeCoursPromptSettings(db.Model):
     """Modèle pour stocker les configurations de prompts pour chaque champ du plan de cours."""
     id = db.Column(db.Integer, primary_key=True)

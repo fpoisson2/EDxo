@@ -1,0 +1,30 @@
+{% extends "parametres.html" %}
+
+{% block parametres_content %}
+<div class="container my-5">
+    <h1 class="mb-4">Modifier un Cégep</h1>
+    
+    <div class="card mb-5">
+        <div class="card-body">
+            <h2 class="h4 mb-3">Modifier {{ cegep.nom }}</h2>
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.nom.label(class="form-label") }}
+                    {{ form.nom(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.type.label(class="form-label") }}
+                    {{ form.type(class="form-select") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.region.label(class="form-label") }}
+                    {{ form.region(class="form-control") }}
+                </div>
+                <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+                <a href="{{ url_for('main.gestion_cegeps') }}" class="btn btn-secondary">Annuler</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
