@@ -633,8 +633,9 @@
 <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.css" />
 
 <!-- Toast UI Editor Scripts with defer -->
-<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js" defer></script>
-<script src="https://uicdn.toast.com/editor-plugin-autoheight/latest/toastui-editor-plugin-autoheight.js" defer></script>
+<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+<script src="https://uicdn.toast.com/editor-plugin-autoheight/latest/toastui-editor-plugin-autoheight.js"></script>
+
 <style>
 .calendar-item {
     cursor: move;
@@ -761,70 +762,140 @@ textarea.toast-ui-target:not(.toast-initialized) {
 </style>
 
 <script>
-function initToastEditor(textarea) {
-    const container = document.createElement('div');
-    textarea.parentNode.insertBefore(container, textarea);
-    textarea.style.display = 'none';
 
-    const editor = new toastui.Editor({
-        el: container,
-        initialEditType: 'wysiwyg',
-        initialValue: textarea.value || '',
-        toolbarItems: [
-            ['bold', 'italic'],
-            ['ul', 'indent', 'outdent']
-        ],
-        usageStatistics: false,
-        hideModeSwitch: true,
-        autofocus: false,
-        height: 'auto',
-        minHeight: '100px',
-        toolbarVisibleWithoutEditor: false,
-        customKeyMap: {
-            Tab: (editor, ev) => {
-                ev.preventDefault();
-                editor.exec('indent');
-            },
-            'Shift-Tab': (editor, ev) => {
-                ev.preventDefault();
-                editor.exec('outdent');
-            }
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOMContentLoaded event triggered");
+    console.log("ToastUI Editor:", window.toastui);
+
+
+
+    const toastFields = [
+        'presentation_du_cours',
+        'objectif_terminal_du_cours', 
+        'organisation_et_methodes',
+        'accomodement',
+        'evaluation_formative_apprentissages',
+        'evaluation_expression_francais',
+        'seuil_reussite',
+        'materiel'
+    ];
+
+    toastFields.forEach(fieldId => {
+        const textarea = document.getElementById(fieldId);
+        console.log(`Vérification de ${fieldId}:`, textarea);
+
+        if (textarea) {
+            const container = document.createElement('div');
+            textarea.parentNode.insertBefore(container, textarea);
+            textarea.style.display = 'none';
+
+            const editor = new toastui.Editor({
+                el: container,
+                initialEditType: 'wysiwyg',
+                initialValue: textarea.value || '',
+                toolbarItems: [
+                    ['bold', 'italic'],
+                    ['ul', 'indent', 'outdent']
+                ],
+                usageStatistics: false,
+                hideModeSwitch: true,
+                autofocus: false,
+                height: 'auto',
+                minHeight: '100px',
+                toolbarVisibleWithoutEditor: false,
+                customKeyMap: {
+                    Tab: (editor, ev) => {
+                        ev.preventDefault();
+                        editor.exec('indent');
+                    },
+                    'Shift-Tab': (editor, ev) => {
+                        ev.preventDefault();
+                        editor.exec('outdent');
+                    }
+                }
+            });
+
+            textarea.classList.add('toast-initialized');
+            textarea.toastEditor = editor;
+
+            editor.on('change', () => {
+                textarea.value = editor.getMarkdown();
+                if (typeof window.showFloatingButtons === 'function') {
+                    window.showFloatingButtons();
+                }
+            });
+
+            console.log(`Éditeur instancié pour ${fieldId}`);
+        } else {
+            console.warn(`Le champ ${fieldId} n'existe pas !`);
         }
     });
 
-    editor.on('change', () => {
-        textarea.value = editor.getMarkdown();
-        window.showFloatingButtons();  // Afficher les boutons de sauvegarde
-    });
-
-    textarea.classList.add('toast-initialized');
-    
-    const editorEl = container.querySelector('.toastui-editor');
-    if (editorEl) {
-        const observer = new ResizeObserver(() => {
-            editor.setHeight('auto');
+    function waitForToastUI() {
+        return new Promise((resolve) => {
+            function checkToastUI() {
+                if (window.toastui && window.toastui.Editor && toastui.Editor.plugin) {
+                    console.log("ToastUI chargé !");
+                    resolve();
+                } else {
+                    setTimeout(checkToastUI, 100);
+                }
+            }
+            checkToastUI();
         });
-        observer.observe(editorEl);
     }
 
-    const toolbar = container.querySelector('.toastui-editor-toolbar');
-    if (toolbar) {
-        toolbar.style.display = 'none';
-    }
 
-    container.addEventListener('focusin', () => {
-        if (toolbar) toolbar.style.display = 'block';
-    });
+    // Initialiser les éditeurs Toast UI
+    async function initToastEditors() {
+        await waitForToastUI();
 
-    container.addEventListener('focusout', (e) => {
-        if (!container.contains(e.relatedTarget) && toolbar) {
-            const selection = window.getSelection();
-            if (!selection.toString()) {
-                toolbar.style.display = 'none';
+        toastFields.forEach(fieldId => {
+            const textarea = document.getElementById(fieldId);
+            if (textarea) {
+                try {
+                    const container = document.createElement('div');
+                    textarea.parentNode.insertBefore(container, textarea);
+                    textarea.style.display = 'none';
+
+                    const editor = new toastui.Editor({
+                        el: container,
+                        initialEditType: 'wysiwyg',
+                        initialValue: textarea.value || '',
+                        height: 'auto',
+                        minHeight: '200px',
+                        toolbarItems: [
+                            ['heading', 'bold', 'italic', 'strike'],
+                            ['ul', 'ol', 'indent', 'outdent'],
+                            ['table', 'link']
+                        ],
+                        plugins: [toastui.Editor.plugin.autoHeight],
+                        usageStatistics: false,
+                        hideModeSwitch: true
+                    });
+
+                    // Gestionnaire de changement
+                    editor.on('change', () => {
+                        textarea.value = editor.getMarkdown();
+                        if (typeof window.showFloatingButtons === 'function') {
+                            window.showFloatingButtons();
+                        }
+                    });
+
+                    // Marquer comme initialisé
+                    textarea.classList.add('toast-initialized');
+                    textarea.toastEditor = editor;
+
+                } catch (error) {
+                    console.error(`Erreur lors de l'initialisation de l'éditeur pour ${fieldId}:`, error);
+                }
             }
-        }
-    });
-}
+        });
+    }
+
+    // Lancer l'initialisation
+    initToastEditors();
+});
 
 document.addEventListener('DOMContentLoaded', function() {
     const planDeCoursForm = document.getElementById('planDeCoursForm');
@@ -837,25 +908,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let disponibiliteIndex = document.querySelectorAll('.disponibilite-item').length;
     let evaluationIndex = document.querySelectorAll('.evaluation-item').length;
     let draggedItem = null;
-
-    // Initialiser Toast UI Editor pour les champs spécifiques
-    const toastFields = [
-        'presentation_du_cours',
-        'objectif_terminal_du_cours',
-        'organisation_et_methodes',
-        'accomodement',
-        'evaluation_formative_apprentissages',
-        'evaluation_expression_francais',
-        'seuil_reussite',
-        'materiel'
-    ];
-
-    toastFields.forEach(fieldId => {
-        const textarea = document.getElementById(fieldId);
-        if (textarea && !textarea.classList.contains('toast-initialized')) {
-            initToastEditor(textarea);
-        }
-    });
 
     // Fonction globale pour afficher/cacher les boutons flottants
     window.showFloatingButtons = function() {
