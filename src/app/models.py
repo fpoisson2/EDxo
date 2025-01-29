@@ -13,6 +13,18 @@ user_programme = db.Table('User_Programme',
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
+class PlanDeCoursPromptSettings(db.Model):
+    """Modèle pour stocker les configurations de prompts pour chaque champ du plan de cours."""
+    id = db.Column(db.Integer, primary_key=True)
+    field_name = db.Column(db.String(100), nullable=False, unique=True)
+    prompt_template = db.Column(db.Text, nullable=False)
+    context_variables = db.Column(db.JSON, default=list)  # Liste des variables contextuelles requises
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<PlanDeCoursPromptSettings {self.field_name}>'
+        
 
 class GrillePromptSettings(db.Model):
     """Paramètres pour la génération de grilles d'évaluation"""

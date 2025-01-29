@@ -64,7 +64,6 @@ def create_app():
                 result = db.session.execute(text(
                     "SELECT name FROM sqlite_master WHERE type='table' AND name='backup_config';"
                 )).fetchone()
-
                 if result:  # La table existe
                     config = BackupConfig.query.first()
                     if config and config.enabled:
@@ -74,12 +73,14 @@ def create_app():
                             logger.error(f"Erreur lors de la planification des sauvegardes: {e}")
                 else:
                     logger.warning("⚠️ Table 'backup_config' introuvable, la planification des sauvegardes est ignorée.")
-
+                    
+                from app.init.prompt_settings import init_plan_de_cours_prompts
+                init_plan_de_cours_prompts()
+                
                 # Effectuer un checkpoint WAL
                 db.session.execute(text("PRAGMA wal_checkpoint(TRUNCATE);"))
                 db.session.commit()
                 logger.info("✅ WAL checkpointed successfully.")
-
             except SQLAlchemyError as e:
                 logger.error(f"❌ Erreur lors du checkpoint WAL : {e}")
             except Exception as e:
