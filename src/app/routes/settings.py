@@ -1,16 +1,79 @@
-from flask import Blueprint, request, render_template, flash, redirect, url_for, current_app
+from flask import Blueprint, request, render_template, flash, redirect, url_for, current_app, jsonify
 from flask_login import login_required, current_user
 from config.constants import SECTIONS  # Importer la liste des sections
 from utils.decorator import role_required, roles_required
 from app.forms import GlobalGenerationSettingsForm,  DeletePlanForm 
 from app.routes.evaluation import AISixLevelGridResponse
 from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import generate_csrf
 import json
 
+csrf = CSRFProtect()
+
+
 # Importez bien sûr db, User et GlobalGenerationSettings depuis vos modèles
-from app.models import db, User, GlobalGenerationSettings, GrillePromptSettings, PlanDeCours, Cours, Programme
+from app.models import db, User, GlobalGenerationSettings, GrillePromptSettings, PlanDeCours, Cours, Programme, PlanDeCoursPromptSettings
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
+
+@settings_bp.route('/plan-de-cours/prompts', methods=['GET'])
+@login_required
+def plan_de_cours_prompt_settings():
+    """Page de gestion des configurations de prompts pour les plans de cours."""
+    prompts = PlanDeCoursPromptSettings.query.all()
+    # Utiliser generate_csrf() au lieu de _get_token()
+    return render_template(
+        'settings/plan_de_cours_prompts.html',
+        prompts=prompts
+    )
+
+@settings_bp.route('/plan-de-cours/prompts/<int:prompt_id>', methods=['PUT', 'POST'])
+@login_required
+def update_plan_de_cours_prompt(prompt_id):
+    """Met à jour une configuration de prompt pour plan de cours."""
+    try:
+        prompt = PlanDeCoursPromptSettings.query.get_or_404(prompt_id)
+        
+        if not request.is_json:
+            return jsonify({'error': 'Content-Type must be application/json'}), 400
+            
+        data = request.get_json()
+        
+        # Validation des données
+        if not isinstance(data.get('prompt_template'), str):
+            return jsonify({'error': 'prompt_template must be a string'}), 400
+            
+        if not isinstance(data.get('context_variables'), list):
+            return jsonify({'error': 'context_variables must be a list'}), 400
+        
+        prompt.prompt_template = data['prompt_template']
+        prompt.context_variables = data['context_variables']
+        
+        db.session.commit()
+        return jsonify({'message': 'Configuration mise à jour avec succès'})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
+
+
+@settings_bp.route('/plan-de-cours/prompts/test', methods=['POST'])
+@login_required
+def test_plan_de_cours_prompt():
+    """Teste un prompt de plan de cours avec des données exemple."""
+    data = request.get_json()
+    template = data.get('template')
+    test_context = data.get('context', {})
+    
+    try:
+        result = template.format(**test_context)
+        return jsonify({'result': result})
+    except KeyError as e:
+        return jsonify({'error': f'Variable manquante: {str(e)}'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
 
 @settings_bp.route('/parametres')
 @login_required  # Cette route nécessite que l'utilisateur soit connecté
