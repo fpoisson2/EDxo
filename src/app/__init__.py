@@ -108,24 +108,19 @@ def create_app():
 
     @app.before_request
     def before_request():
-        # List of endpoints that don't require authentication
         PUBLIC_ENDPOINTS = {'static', 'main.login', 'main.logout', 'main.get_credit_balance'}
-        
-        # Skip auth check for public endpoints
-        if request.endpoint in PUBLIC_ENDPOINTS or 'static' in request.path:
-            return
 
-        # Check authentication
+        if request.endpoint in PUBLIC_ENDPOINTS or 'static' in request.path:
+            return  # Allow access without authentication
+
         if not current_user.is_authenticated:
-            if request.endpoint != 'main.login':
-                return redirect(url_for('main.login'))
-            return
+            return redirect(url_for('main.login'))
 
         try:
             # Database check
             db.session.execute(text("SELECT 1"))
             db.session.commit()
-            
+
             # Session management
             session.permanent = True
             now = datetime.now(timezone.utc)
@@ -138,7 +133,6 @@ def create_app():
                     if elapsed > app.config['PERMANENT_SESSION_LIFETIME']:
                         logout_user()
                         session.clear()
-                        flash('Votre session a expiré. Veuillez vous reconnecter.', 'info')
                         return redirect(url_for('main.login'))
                 except (ValueError, TypeError):
                     session['last_activity'] = now.isoformat()
@@ -151,6 +145,7 @@ def create_app():
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
             return "Server Error", 500
+
 
     @app.after_request
     def after_request(response):
