@@ -16,7 +16,8 @@ from app.routes.plan_cadre import plan_cadre_bp
 from flask_wtf import CSRFProtect
 from datetime import timedelta, datetime, timezone
 from app.routes.plan_de_cours import plan_de_cours_bp
-from app.models import db, Cours, BackupConfig
+from app.models import Cours, BackupConfig
+from extensions import db
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
 from flask_migrate import Migrate
