@@ -484,6 +484,10 @@ class PlanDeCours(db.Model):
     seuil_reussite = db.Column(db.Text, nullable=True)
     place_et_role_du_cours = db.Column(db.Text, nullable=True)
     materiel = db.Column(db.Text, nullable=True, server_default="''")
+    compatibility_percentage = db.Column(db.Float, nullable=True)
+    recommendation_ameliore = db.Column(db.Text, nullable=True)
+    recommendation_plan_cadre = db.Column(db.Text, nullable=True)
+    modified_at = db.Column(db.DateTime, nullable=True)
 
     # Relations
     cours = db.relationship("Cours", back_populates="plans_de_cours")
