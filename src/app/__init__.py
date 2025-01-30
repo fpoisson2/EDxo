@@ -68,7 +68,7 @@ def create_app():
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
     app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     csrf = CSRFProtect(app)
 
     @app.context_processor
@@ -107,41 +107,37 @@ def create_app():
 
     @app.before_request
     def before_request():
-        # Skip for static files and key endpoints
-        if request.endpoint and (
-            'static' in request.endpoint or 
-            request.endpoint == 'main.login' or 
-            request.endpoint == 'main.logout' or
-            request.endpoint == 'main.get_credit_balance'
-        ):
+        # List of endpoints that don't require authentication
+        PUBLIC_ENDPOINTS = {'static', 'main.login', 'main.logout', 'main.get_credit_balance'}
+        
+        # Skip auth check for public endpoints
+        if request.endpoint in PUBLIC_ENDPOINTS or 'static' in request.path:
+            return
+
+        # Check authentication
+        if not current_user.is_authenticated:
+            if request.endpoint != 'main.login':
+                return redirect(url_for('main.login'))
             return
 
         try:
-            # Check database connection
+            # Database check
             db.session.execute(text("SELECT 1"))
             db.session.commit()
             
-            # Force permanent session for Gunicorn
-            if not session.get('permanent'):
-                session.permanent = True
-
-            # Handle unauthenticated users
-            if not current_user.is_authenticated:
-                if request.blueprint != 'main' or (request.endpoint and request.endpoint != 'main.login'):
-                    return redirect(url_for('main.login'))
-                return
-
-            # Session timeout handling
+            # Session management
+            session.permanent = True
             now = datetime.now(timezone.utc)
-            last_activity_str = session.get('last_activity')
             
+            last_activity_str = session.get('last_activity')
             if last_activity_str:
                 try:
                     last_activity = datetime.fromisoformat(last_activity_str)
                     elapsed = now - last_activity
                     if elapsed > app.config['PERMANENT_SESSION_LIFETIME']:
                         logout_user()
-                        session.clear()  # Clear the entire session
+                        session.clear()
+                        flash('Votre session a expiré. Veuillez vous reconnecter.', 'info')
                         return redirect(url_for('main.login'))
                 except (ValueError, TypeError):
                     session['last_activity'] = now.isoformat()
