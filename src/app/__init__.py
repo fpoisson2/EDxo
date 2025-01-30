@@ -67,7 +67,7 @@ def create_app():
     app.config['WTF_CSRF_ENABLED'] = True
     app.config['CKEDITOR_PKG_TYPE'] = 'standard'
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
-    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_SECURE'] = False
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     csrf = CSRFProtect(app)
