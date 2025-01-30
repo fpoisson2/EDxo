@@ -23,6 +23,36 @@ from flask_ckeditor import CKEditorField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
 from app.models import Cours, PlanDeCours, PlanDeCoursEvaluations, PlanCadreCapacites
+# Liste des régions disponibles
+REGIONS = [
+    ('Abitibi-Témiscamingue', 'Abitibi-Témiscamingue'),
+    ('Bas-Saint-Laurent', 'Bas-Saint-Laurent'),
+    ('Capitale-Nationale', 'Capitale-Nationale'),
+    ('Centre-du-Québec', 'Centre-du-Québec'),
+    ('Chaudière-Appalaches', 'Chaudière-Appalaches'),
+    ('Côte-Nord', 'Côte-Nord'),
+    ('Estrie', 'Estrie'),
+    ('Gaspésie–Îles-de-la-Madeleine', 'Gaspésie–Îles-de-la-Madeleine'),
+    ('Lanaudière', 'Lanaudière'),
+    ('Laurentides', 'Laurentides'),
+    ('Laval', 'Laval'),
+    ('Mauricie', 'Mauricie'),
+    ('Montérégie', 'Montérégie'),
+    ('Montréal', 'Montréal'),
+    ('Outaouais', 'Outaouais'),
+    ('Saguenay–Lac-Saint-Jean', 'Saguenay–Lac-Saint-Jean'),
+    ('À distance', 'À distance')
+]
+
+class UploadForm(FlaskForm):
+    file = FileField('Fichier', validators=[DataRequired()])
+    submit = SubmitField('Téléverser')
+
+class CegepForm(FlaskForm):
+    nom = StringField('Nom du cégep', validators=[DataRequired()])
+    type = SelectField('Type', choices=[('Public', 'Public'), ('Privé', 'Privé'), ('À distance', 'À distance')], validators=[DataRequired()])
+    region = SelectField('Région', choices=REGIONS, validators=[DataRequired()])
+    submit = SubmitField('Ajouter')
 
 class DeletePlanForm(FlaskForm):
     pass  # Aucun champ nécessaire, le jeton CSRF est géré automatiquement

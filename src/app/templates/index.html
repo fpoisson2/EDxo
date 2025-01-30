@@ -1,26 +1,40 @@
+<!-- votre_template.html -->
 {% extends 'base.html' %}
 
 {% block content %}
-  <div class="dropdown mb-4">
-    <button class="btn btn-primary dropdown-toggle" type="button" id="programmeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-      Sélectionnez un programme
-    </button>
-    <ul class="dropdown-menu" aria-labelledby="programmeDropdown">
-      {% for programme in programmes %}
-        <li>
-          <a class="dropdown-item" href="{{ url_for('programme.view_programme', programme_id=programme.id) }}">
-            {{ programme.nom }}
-          </a>
-        </li>
-      {% else %}
-        <li><span class="dropdown-item-text">Aucun programme trouvé.</span></li>
-      {% endfor %}
-    </ul>
-  </div>
+  {% if current_user.programmes|length > 1 %}
+    <!-- Dropdown de Sélection de Programme -->
+    <div class="dropdown mb-4">
+      <button class="btn btn-primary dropdown-toggle" type="button" id="programmeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        Sélectionnez un programme
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="programmeDropdown">
+        {% for programme in current_user.programmes %}
+          <li>
+            <a class="dropdown-item" href="{{ url_for('programme.view_programme', programme_id=programme.id) }}">
+              {{ programme.nom }}
+            </a>
+          </li>
+        {% else %}
+          <li><span class="dropdown-item-text">Aucun programme trouvé.</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
 
   <!-- Bloc Spécifique aux Sous-Templates -->
   {% block programmes_specific %}
-    <!-- Contenu spécifique des sous-templates sera injecté ici -->
+    <!-- Votre contenu spécifique ici -->
+    <div class="container mt-5">
+      <!-- En-tête du Programme -->
+      <div class="d-flex justify-content-between align-items-start">
+        <h2>{{ programme.nom }}</h2>
+        {% if current_user.programmes|length > 1 %}
+          <a href="{{ url_for('selection_programme') }}" class="btn btn-secondary">Changer de programme</a>
+        {% endif %}
+      </div>
+      <!-- Reste de votre contenu... -->
+    </div>
   {% endblock %}
 
 {% endblock %}

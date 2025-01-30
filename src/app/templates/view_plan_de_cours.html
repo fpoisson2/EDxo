@@ -202,45 +202,85 @@
                         {{ form.hidden_tag() }}
                         <!-- Informations Principales -->
                         <h4>Informations Principales</h4>
-                        <div class="mb-3">
+
+                        <div class="mb-3 position-relative">
                             {{ form.campus.label(class="form-label fw-bold") }}
                             {{ form.campus(class="form-control") }}
                         </div>
-                        <div class="mb-3">
+
+                        <!-- Remplacer ce bloc dans le formulaire -->
+                        <div class="mb-3 position-relative">
                             {{ form.session.label(class="form-label fw-bold") }}
-                            {{ form.session(class="form-control") }}
+                            <div class="form-control" style="background-color: #e9ecef;">{{ form.session.data }}</div>
+                            {{ form.session(type="hidden") }}
                         </div>
-                        <div class="mb-3">
-                            {{ form.presentation_du_cours.label(class="form-label fw-bold") }}
-                            {{ form.presentation_du_cours(class="form-control", rows="3") }}
+
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="presentation_du_cours" class="form-label fw-bold">Présentation du cours</label>
+                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="presentation_du_cours" title="Générer automatiquement">
+                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                </button>
+                            </div>
+                            {{ form.presentation_du_cours(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="presentation_du_cours") }}
                         </div>
-                        <div class="mb-3">
-                            {{ form.objectif_terminal_du_cours.label(class="form-label fw-bold") }}
-                            {{ form.objectif_terminal_du_cours(class="form-control", rows="3") }}
+
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="objectif_terminal_du_cours" class="form-label fw-bold">{{ form.objectif_terminal_du_cours.label.text }}</label>
+                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="objectif_terminal_du_cours" title="Générer automatiquement">
+                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                </button>
+                            </div>
+                            {{ form.objectif_terminal_du_cours(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="objectif_terminal_du_cours") }}
                         </div>
-                        <div class="mb-3">
-                            {{ form.organisation_et_methodes.label(class="form-label fw-bold") }}
-                            {{ form.organisation_et_methodes(class="form-control", rows="3") }}
+
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="organisation_et_methodes" class="form-label fw-bold">{{ form.organisation_et_methodes.label.text }}</label>
+                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="organisation_et_methodes" title="Générer automatiquement">
+                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                </button>
+                            </div>
+                            {{ form.organisation_et_methodes(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="organisation_et_methodes") }}
                         </div>
-                        <div class="mb-3">
-                            {{ form.accomodement.label(class="form-label fw-bold") }}
-                            {{ form.accomodement(class="form-control", rows="3") }}
+
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="accomodement" class="form-label fw-bold">{{ form.accomodement.label.text }}</label>
+                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="accomodement" title="Générer automatiquement">
+                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                </button>
+                            </div>
+                            {{ form.accomodement(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="accomodement") }}
                         </div>
-                        <div class="mb-3">
-                            {{ form.evaluation_formative_apprentissages.label(class="form-label fw-bold") }}
-                            {{ form.evaluation_formative_apprentissages(class="form-control", rows="3") }}
+
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="evaluation_formative_apprentissages" class="form-label fw-bold">{{ form.evaluation_formative_apprentissages.label.text }}</label>
+                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="evaluation_formative_apprentissages" title="Générer automatiquement">
+                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                </button>
+                            </div>
+                            {{ form.evaluation_formative_apprentissages(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="evaluation_formative_apprentissages") }}
                         </div>
-                        <div class="mb-3">
-                            {{ form.evaluation_expression_francais.label(class="form-label fw-bold") }}
-                            {{ form.evaluation_expression_francais(class="form-control", rows="3") }}
+
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="evaluation_expression_francais" class="form-label fw-bold">{{ form.evaluation_expression_francais.label.text }}</label>
+                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="evaluation_expression_francais" title="Générer automatiquement">
+                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                </button>
+                            </div>
+                            {{ form.evaluation_expression_francais(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="evaluation_expression_francais") }}
                         </div>
-                        <div class="mb-3">
-                            {{ form.seuil_reussite.label(class="form-label fw-bold") }}
-                            {{ form.seuil_reussite(class="form-control", rows="3") }}
-                        </div>
+
                         <div class="mb-3">
                             {{ form.materiel.label(class="form-label fw-bold") }}
-                            {{ form.materiel(class="form-control") }}
+                            {{ form.materiel(
+                                class="form-control auto-resize border-0",
+                                oninput="autoResize(this)",
+                                style="overflow:hidden; resize:none;") }}
                         </div>
 
                         <hr>
@@ -272,9 +312,14 @@
                         <div class="mb-3">
                             <h4>Calendrier des activités</h4>
                             <div id="calendrier-container" class="mb-3" {% if not form.calendriers %}style="display: none;"{% endif %}>
-                                {% for subform in form.calendriers %}
-                                    <div class="calendar-item border p-2 mb-2 {% if loop.index0 is even %}bg-light{% else %}bg-secondary text-white{% endif %}">
+                                 {% for subform in form.calendriers %}
+                                    <div class="calendar-item border p-2 mb-2 {% if loop.index0 is even %}bg-light{% else %}bg-secondary text-white{% endif %}" draggable="true">
                                         <div class="row align-items-end">
+                                            <div class="col-auto pe-0">
+                                                <div class="drag-handle" style="cursor: move; padding: 8px;">
+                                                    <i class="bi bi-grip-vertical"></i>
+                                                </div>
+                                            </div>
                                             <div class="col">
                                                 {{ subform.semaine.label(class="form-label") }}
                                                 {{ subform.semaine(class="form-control") }}
@@ -380,6 +425,7 @@
                             <div id="evaluations-container" class="mb-3" {% if not form.evaluations %}style="display: none;"{% endif %}>
                                 {% for evaluation_subform in form.evaluations %}
                                     <div class="card mb-3 evaluation-item {% if loop.index0 is even %}bg-light{% else %}bg-secondary text-white{% endif %}" data-eval-index="{{ loop.index0 }}">
+                                        <input type="hidden" name="evaluations-{{ loop.index0 }}-id" value="{{ evaluation_subform.id.data if evaluation_subform.id else '' }}">
                                         <div class="card-header d-flex justify-content-between align-items-center">
                                             <strong>Évaluation {{ loop.index }}</strong>
                                             <button type="button" class="btn btn-danger btn-sm remove-evaluation" title="Supprimer l'évaluation">
@@ -406,6 +452,7 @@
                                                 <div class="capacites-container">
                                                     {% for cap_subform in evaluation_subform.capacites %}
                                                         <div class="capacite-item card bg-light mb-2 p-2">
+                                                            <input type="hidden" name="evaluations-{{ loop.index0 }}-capacites-{{ loop.index0 }}-id" value="{{ cap_subform.id.data if cap_subform.id else '' }}">
                                                             <div class="row align-items-end">
                                                                 <div class="col">
                                                                     {{ cap_subform.capacite_id.label(class="form-label") }}
@@ -455,39 +502,44 @@
                     </form>
 
                     <!-- Modèles cachés pour clonage -->
-                    <div id="templates" style="display: none;">
-                        <!-- Template Calendrier -->
-                        <div id="calendrier-template" class="calendar-item border p-2 mb-2">
-                            <div class="row align-items-end">
-                                <div class="col">
-                                    <label class="form-label" for="calendriers-__index__-semaine">Semaine</label>
-                                    <input type="text" name="calendriers-__index__-semaine" class="form-control" id="calendriers-__index__-semaine" />
-                                </div>
-                                <div class="col">
-                                    <label class="form-label" for="calendriers-__index__-sujet">Sujet</label>
-                                    <input type="text" name="calendriers-__index__-sujet" class="form-control" id="calendriers-__index__-sujet" />
-                                </div>
-                                <div class="col">
-                                    <label class="form-label" for="calendriers-__index__-activites">Activités</label>
-                                    <input type="text" name="calendriers-__index__-activites" class="form-control" id="calendriers-__index__-activites" />
-                                </div>
-                                <div class="col">
-                                    <label class="form-label" for="calendriers-__index__-travaux_hors_classe">Travaux hors classe</label>
-                                    <input type="text" name="calendriers-__index__-travaux_hors_classe" class="form-control" id="calendriers-__index__-travaux_hors_classe" />
-                                </div>
-                                <div class="col">
-                                    <label class="form-label" for="calendriers-__index__-evaluations">Évaluations</label>
-                                    <input type="text" name="calendriers-__index__-evaluations" class="form-control" id="calendriers-__index__-evaluations" />
-                                </div>
-                                <div class="col-auto">
-                                    <button type="button" class="btn btn-danger btn-sm remove-calendar">
-                                        <i class="bi bi-dash-circle"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+<div id="calendrier-template" class="calendar-item border p-2 mb-2" draggable="true" style="display: none;">
+    <div class="row align-items-end">
+        <div class="col-auto pe-0">
+            <div class="drag-handle" style="cursor: move; padding: 8px;">
+                <i class="bi bi-grip-vertical"></i>
+            </div>
+        </div>
+        <div class="col">
+            <label class="form-label" for="calendriers-__index__-semaine">Semaine</label>
+            <input type="text" name="calendriers-__index__-semaine" class="form-control" id="calendriers-__index__-semaine" />
+        </div>
+        <div class="col">
+            <label class="form-label" for="calendriers-__index__-sujet">Sujet</label>
+            <input type="text" name="calendriers-__index__-sujet" class="form-control" id="calendriers-__index__-sujet" />
+        </div>
+        <div class="col">
+            <label class="form-label" for="calendriers-__index__-activites">Activités</label>
+            <input type="text" name="calendriers-__index__-activites" class="form-control" id="calendriers-__index__-activites" />
+        </div>
+        <div class="col">
+            <label class="form-label" for="calendriers-__index__-travaux_hors_classe">Travaux hors classe</label>
+            <input type="text" name="calendriers-__index__-travaux_hors_classe" class="form-control" id="calendriers-__index__-travaux_hors_classe" />
+        </div>
+        <div class="col">
+            <label class="form-label" for="calendriers-__index__-evaluations">Évaluations</label>
+            <input type="text" name="calendriers-__index__-evaluations" class="form-control" id="calendriers-__index__-evaluations" />
+        </div>
+        <div class="col-auto">
+            <button type="button" class="btn btn-danger btn-sm remove-calendar">
+                <i class="bi bi-dash-circle"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+
                         <!-- Template Médiagraphie -->
-                        <div id="mediagraphie-template" class="mediagraphie-item mb-2">
+                        <div id="mediagraphie-template" class="mediagraphie-item mb-2" style="display: none;">
                             <div class="row align-items-end">
                                 <div class="col">
                                     <label class="form-label" for="mediagraphies-__index__-reference_bibliographique">Référence bibliographique</label>
@@ -501,7 +553,7 @@
                             </div>
                         </div>
                         <!-- Template Disponibilité -->
-                        <div id="disponibilite-template" class="disponibilite-item mb-2">
+                        <div id="disponibilite-template" class="disponibilite-item mb-2" style="display: none;">
                             <div class="row align-items-end">
                                 <div class="col">
                                     <label class="form-label" for="disponibilites-__index__-jour_semaine">Jour</label>
@@ -523,7 +575,8 @@
                             </div>
                         </div>
                         <!-- Template Évaluation -->
-                        <div id="evaluation-template" class="evaluation-item border p-2 mb-2">
+                        <div id="evaluation-template" class="evaluation-item border p-2 mb-2" style="display: none;">
+                            <input type="hidden" name="evaluations-__index__-id" id="evaluations-__index__-id" value="">
                             <button type="button" class="btn btn-danger btn-sm float-end remove-evaluation">
                                 <i class="bi bi-dash-circle"></i>
                             </button>
@@ -551,7 +604,9 @@
                             </div>
                         </div>
                         <!-- Template Capacité Évaluée -->
-                        <div id="evaluation-capacite-template" class="capacite-item mb-2 border p-2">
+                        <div id="evaluation-capacite-template" class="capacite-item mb-2 border p-2" style="display: none;">
+                                <input type="hidden" name="evaluations-__eval_index__-capacites-__cap_index__-id" 
+           id="evaluations-__eval_index__-capacites-__cap_index__-id" value="">
                             <div class="row align-items-end">
                                 <div class="col">
                                     <label class="form-label" for="evaluations-__eval_index__-capacites-__cap_index__-capacite_id">Capacité</label>
@@ -583,7 +638,48 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Toast UI Editor CSS -->
+<link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.css" />
+
+<!-- Toast UI Editor Scripts with defer -->
+<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+<script src="https://uicdn.toast.com/editor-plugin-autoheight/latest/toastui-editor-plugin-autoheight.js"></script>
+
 <style>
+.calendar-item {
+    cursor: move;
+    transition: all 0.3s ease;
+    background-color: white;
+}
+
+.calendar-item.dragging {
+    opacity: 0.5;
+    border: 2px dashed #666 !important;
+    background-color: #f8f9fa;
+}
+
+.calendar-item.drag-over {
+    border: 2px solid #0d6efd !important;
+    transform: translateY(5px);
+}
+
+.drag-handle {
+    color: #666;
+    transition: color 0.2s;
+    cursor: grab;
+}
+
+.drag-handle:hover {
+    color: #0d6efd;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+    .calendar-item {
+        transition: all 0.2s ease;
+    }
     .evaluation-item {
         transition: all 0.3s ease;
     }
@@ -635,66 +731,702 @@
     #floatingSaveBtn.loading .spinner-border {
         display: inline-block;
     }
+/* Hide textarea until Toast UI loads */
+textarea.toast-ui-target:not(.toast-initialized) {
+    opacity: 0;
+    height: 0;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+}
+
+/* Make the text in the editable area bigger */
+.toastui-editor-contents {
+    font-size: 1.1rem !important;
+    line-height: 1.5 !important;
+}
+
+/* Toolbar button icon sizes */
+.toastui-editor-defaultUI .toastui-editor-toolbar-icons {
+    font-size: 1.25rem !important;
+}
+
+.toastui-editor-toolbar {
+    transition: display 0.2s ease;
+}
+
+/* Regular input and textarea styles to match Toast UI */
+.form-control {
+    border: 1px solid #dee2e6 !important;
+    border-radius: 0.375rem !important;
+    padding: 0.5rem !important;
+    margin-bottom: 1rem !important;
+}
+
+/* Focus styles */
+.form-control:focus {
+    border-color: #86b7fe !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+.generate-button {
+    position: relative;
+}
+
+.generate-button.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.loading-dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.loading-dots span {
+    width: 8px;
+    height: 8px;
+    background-color: #0d6efd;
+    border-radius: 50%;
+    animation: bounce 0.5s alternate infinite;
+}
+
+.loading-dots span:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.loading-dots span:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+@keyframes bounce {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(-8px);
+    }
+}
+
+.loading-text {
+    margin-left: 12px;
+    color: #0d6efd;
+    font-size: 14px;
+}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Fonction pour afficher les toasts
+    function showToast(toastId) {
+        const toastElement = document.getElementById(toastId);
+        if (toastElement) {
+            const toast = new bootstrap.Toast(toastElement);
+            toast.show();
+        }
+    }
+
+    // Ajout des styles pour l'indicateur de chargement
+    const style = document.createElement('style');
+    style.textContent = `
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .loading-dots {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background-color: #0d6efd;
+            border-radius: 50%;
+            animation: bounce 0.5s alternate infinite;
+        }
+        .loading-dots span:nth-child(2) { animation-delay: 0.1s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.2s; }
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-8px); }
+        }
+        .loading-text {
+            margin-left: 12px;
+            color: #0d6efd;
+            font-size: 14px;
+        }
+        .generate-button.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Gestion des clics sur les boutons de génération
+    document.querySelectorAll('.generate-button').forEach(button => {
+        button.addEventListener('click', async function() {
+            const fieldName = this.getAttribute('data-field');
+            const fieldElement = document.getElementById(fieldName);
+            if (!fieldElement) {
+                console.error(`Champ ${fieldName} non trouvé.`);
+                showToast('generateErrorToast');
+                return;
+            }
+
+            // Créer et ajouter l'overlay de chargement
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.className = 'loading-overlay';
+            loadingOverlay.innerHTML = `
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <div class="loading-text">Génération en cours...</div>
+                </div>
+            `;
+            
+            // Ajouter l'overlay et configurer le conteneur parent
+            fieldElement.parentElement.style.position = 'relative';
+            fieldElement.parentElement.appendChild(loadingOverlay);
+            
+            // Désactiver le bouton pendant la génération
+            this.classList.add('loading');
+            this.disabled = true;
+
+            try {
+                const payload = {
+                    field_name: fieldName,
+                    current_value: fieldElement.value || '',
+                    cours_id: {{ cours.id }},
+                    session: "{{ plan_de_cours.session }}"
+                };
+
+                const response = await fetch("{{ url_for('plan_de_cours.generate_content') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': "{{ csrf_token() }}"
+                    },
+                    body: JSON.stringify(payload),
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erreur inconnue lors de la génération.');
+                }
+
+                const data = await response.json();
+
+                if (data.champ_description) {
+                    fieldElement.value = data.champ_description;
+                    if (fieldElement.toastEditor) {
+                        fieldElement.toastEditor.setMarkdown(data.champ_description);
+                    }
+                    showToast('generateSuccessToast');
+                } else {
+                    throw new Error('Contenu généré non reçu.');
+                }
+            } catch (error) {
+                console.error('Erreur lors de la génération automatique:', error);
+                showToast('generateErrorToast');
+            } finally {
+                // Nettoyer : supprimer l'overlay et réactiver le bouton
+                const overlay = fieldElement.parentElement.querySelector('.loading-overlay');
+                if (overlay) {
+                    overlay.remove();
+                }
+                this.classList.remove('loading');
+                this.disabled = false;
+            }
+        });
+    });
+});
+document.addEventListener('DOMContentLoaded', function() {
+    const toastFields = [
+        'presentation_du_cours',
+        'objectif_terminal_du_cours', 
+        'organisation_et_methodes',
+        'accomodement',
+        'evaluation_formative_apprentissages',
+        'evaluation_expression_francais',
+        'seuil_reussite',
+        'materiel'
+    ];
+
+    toastFields.forEach(fieldId => {
+        const textarea = document.getElementById(fieldId);
+
+        if (textarea) {
+            const container = document.createElement('div');
+            textarea.parentNode.insertBefore(container, textarea);
+            textarea.style.display = 'none';
+
+            const editor = new toastui.Editor({
+                el: container,
+                initialEditType: 'wysiwyg',
+                initialValue: textarea.value || '',
+                toolbarItems: [
+                    ['bold', 'italic'],
+                    ['ul', 'indent', 'outdent']
+                ],
+                usageStatistics: false,
+                hideModeSwitch: true,
+                autofocus: false,
+                height: 'auto',
+                minHeight: '100px',
+                toolbarVisibleWithoutEditor: false,
+                customKeyMap: {
+                    Tab: (editor, ev) => {
+                        ev.preventDefault();
+                        editor.exec('indent');
+                    },
+                    'Shift-Tab': (editor, ev) => {
+                        ev.preventDefault();
+                        editor.exec('outdent');
+                    }
+                }
+            });
+
+            textarea.classList.add('toast-initialized');
+            textarea.toastEditor = editor;
+
+            editor.on('change', () => {
+                textarea.value = editor.getMarkdown();
+                if (typeof window.showFloatingButtons === 'function') {
+                    window.showFloatingButtons();
+                }
+            });
+        } else {
+            console.warn(`Le champ ${fieldId} n'existe pas !`);
+        }
+    });
+
+    function waitForToastUI() {
+        return new Promise((resolve) => {
+            function checkToastUI() {
+                if (window.toastui && window.toastui.Editor && toastui.Editor.plugin) {
+                    resolve();
+                } else {
+                    setTimeout(checkToastUI, 100);
+                }
+            }
+            checkToastUI();
+        });
+    }
+
+
+    // Initialiser les éditeurs Toast UI
+    async function initToastEditors() {
+        await waitForToastUI();
+
+        toastFields.forEach(fieldId => {
+            const textarea = document.getElementById(fieldId);
+            if (textarea) {
+                try {
+                    const container = document.createElement('div');
+                    textarea.parentNode.insertBefore(container, textarea);
+                    textarea.style.display = 'none';
+
+                    const editor = new toastui.Editor({
+                        el: container,
+                        initialEditType: 'wysiwyg',
+                        initialValue: textarea.value || '',
+                        height: 'auto',
+                        minHeight: '200px',
+                        toolbarItems: [
+                            ['heading', 'bold', 'italic', 'strike'],
+                            ['ul', 'ol', 'indent', 'outdent'],
+                            ['table', 'link']
+                        ],
+                        plugins: [toastui.Editor.plugin.autoHeight],
+                        usageStatistics: false,
+                        hideModeSwitch: true
+                    });
+
+                    // Gestionnaire de changement
+                    editor.on('change', () => {
+                        textarea.value = editor.getMarkdown();
+                        if (typeof window.showFloatingButtons === 'function') {
+                            window.showFloatingButtons();
+                        }
+                    });
+
+                    // Marquer comme initialisé
+                    textarea.classList.add('toast-initialized');
+                    textarea.toastEditor = editor;
+
+                } catch (error) {
+                    console.error(`Erreur lors de l'initialisation de l'éditeur pour ${fieldId}:`, error);
+                }
+            }
+        });
+    }
+
+    // Lancer l'initialisation
+    initToastEditors();
+});
+
+document.addEventListener('DOMContentLoaded', function() {
     const planDeCoursForm = document.getElementById('planDeCoursForm');
     const floatingSaveBtn = document.getElementById('floatingSaveBtn');
     const floatingCancelBtn = document.getElementById('floatingCancelBtn');
+    const calendrierContainer = document.getElementById('calendrier-container');
 
     let calendrierIndex = document.querySelectorAll('.calendar-item').length;
     let mediagraphieIndex = document.querySelectorAll('.mediagraphie-item').length;
     let disponibiliteIndex = document.querySelectorAll('.disponibilite-item').length;
     let evaluationIndex = document.querySelectorAll('.evaluation-item').length;
+    let draggedItem = null;
 
-    function showFloatingButtons() {
+    // Fonction globale pour afficher/cacher les boutons flottants
+    window.showFloatingButtons = function() {
         if (floatingSaveBtn && floatingCancelBtn) {
             floatingSaveBtn.classList.remove('d-none');
             floatingCancelBtn.classList.remove('d-none');
         }
+    };
+
+    // Fonction pour réindexer les éléments du calendrier
+    function reindexCalendrier() {
+        const items = calendrierContainer.querySelectorAll('.calendar-item');
+        items.forEach((item, index) => {
+            item.querySelectorAll('[name]').forEach(input => {
+                input.name = input.name.replace(/calendriers-\d+-/, `calendriers-${index}-`);
+                input.id = input.id.replace(/calendriers-\d+-/, `calendriers-${index}-`);
+            });
+            item.querySelectorAll('label').forEach(label => {
+                const forAttr = label.getAttribute('for');
+                if (forAttr) {
+                    label.setAttribute('for', forAttr.replace(/calendriers-\d+-/, `calendriers-${index}-`));
+                }
+            });
+        });
+        window.showFloatingButtons();
     }
 
-    if (planDeCoursForm) {
-        planDeCoursForm.addEventListener('input', showFloatingButtons);
-        planDeCoursForm.addEventListener('change', showFloatingButtons);
+    // Fonction de réindexation des évaluations
+    function reindexEvaluations() {
+        const evaluations = document.querySelectorAll('.evaluation-item');
+        evaluations.forEach((evaluation, evalIndex) => {
+            // Preserve the evaluation ID if it exists
+            const evaluationId = evaluation.getAttribute('data-evaluation-id');
+            if (evaluationId) {
+                const idInput = evaluation.querySelector(`input[name^="evaluations-"][name$="-id"]`);
+                if (idInput) {
+                    idInput.value = evaluationId;
+                }
+            }
+            
+            evaluation.setAttribute('data-eval-index', evalIndex);
+            
+            evaluation.querySelectorAll('[name]').forEach(field => {
+                if (field.type === 'hidden' && field.name.includes('id')) {
+                    return;
+                }
+                
+                const newName = field.name.replace(/evaluations-\d+-/, `evaluations-${evalIndex}-`);
+                field.name = newName;
+                field.id = newName;
+            });
+
+            // Reindex the capacities
+            const capacites = evaluation.querySelectorAll('.capacite-item');
+            capacites.forEach((capacite, capIndex) => {
+                capacite.querySelectorAll('[name]').forEach(field => {
+                    if (field.type === 'hidden' && field.name.includes('id')) {
+                        return;
+                    }
+                    
+                    const newName = field.name.replace(
+                        /evaluations-\d+-capacites-\d+-/,
+                        `evaluations-${evalIndex}-capacites-${capIndex}-`
+                    );
+                    field.name = newName;
+                    field.id = newName;
+                });
+            });
+        });
     }
 
+
+    // Initialisation du drag & drop pour le calendrier
+    function initDragAndDrop() {
+        document.querySelectorAll('.calendar-item').forEach(item => {
+            item.setAttribute('draggable', 'true');
+            
+            item.addEventListener('dragstart', function(e) {
+                draggedItem = this;
+                setTimeout(() => this.classList.add('dragging'), 0);
+            });
+
+            item.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+                document.querySelectorAll('.calendar-item').forEach(item => {
+                    item.classList.remove('drag-over');
+                });
+            });
+
+            item.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                if (this !== draggedItem) {
+                    this.classList.add('drag-over');
+                }
+            });
+
+            item.addEventListener('dragleave', function() {
+                this.classList.remove('drag-over');
+            });
+
+            item.addEventListener('drop', function(e) {
+                e.preventDefault();
+                if (this !== draggedItem) {
+                    const allItems = [...document.querySelectorAll('.calendar-item')];
+                    const draggedIndex = allItems.indexOf(draggedItem);
+                    const droppedIndex = allItems.indexOf(this);
+
+                    if (draggedIndex < droppedIndex) {
+                        this.parentNode.insertBefore(draggedItem, this.nextSibling);
+                    } else {
+                        this.parentNode.insertBefore(draggedItem, this);
+                    }
+
+                    reindexCalendrier();
+                }
+                this.classList.remove('drag-over');
+            });
+
+            // Empêcher le drag & drop sur les champs de formulaire
+            item.querySelectorAll('input, select, textarea').forEach(field => {
+                field.addEventListener('mousedown', e => e.stopPropagation());
+            });
+        });
+    }
+
+    // Initialiser le drag & drop au chargement
+    initDragAndDrop();
+
+    // Gestion du bouton d'ajout de calendrier
+    document.getElementById('add-calendrier')?.addEventListener('click', function() {
+        const container = document.getElementById('calendrier-container');
+        container.style.display = 'block';
+        const newItem = document.createElement('div');
+        newItem.className = 'calendar-item border p-2 mb-2';
+        newItem.innerHTML = document.getElementById('calendrier-template').innerHTML
+            .replace(/__index__/g, calendrierIndex++);
+        container.appendChild(newItem);
+        initDragAndDrop();
+        window.showFloatingButtons();
+    });
+
+    // Gestion du bouton d'ajout de médiagraphie
+    document.getElementById('add-mediagraphie')?.addEventListener('click', function() {
+        const container = document.getElementById('mediagraphie-container');
+        container.style.display = 'block';
+        const newItem = document.createElement('div');
+        newItem.className = 'mediagraphie-item mb-2';
+        newItem.innerHTML = document.getElementById('mediagraphie-template').innerHTML
+            .replace(/__index__/g, mediagraphieIndex++);
+        container.appendChild(newItem);
+        window.showFloatingButtons();
+    });
+
+    // Gestion du bouton d'ajout de disponibilité
+    document.getElementById('add-disponibilite')?.addEventListener('click', function() {
+        const container = document.getElementById('disponibilites-container');
+        container.style.display = 'block';
+        const newItem = document.createElement('div');
+        newItem.className = 'disponibilite-item mb-2';
+        newItem.innerHTML = document.getElementById('disponibilite-template').innerHTML
+            .replace(/__index__/g, disponibiliteIndex++);
+        container.appendChild(newItem);
+        window.showFloatingButtons();
+    });
+
+// Modification de la fonction d'ajout d'évaluation
+    document.getElementById('add-evaluation')?.addEventListener('click', function() {
+        const container = document.getElementById('evaluations-container');
+        container.style.display = 'block';
+        
+        const newItem = document.createElement('div');
+        const evalIndex = document.querySelectorAll('.evaluation-item').length;
+        
+        newItem.className = 'evaluation-item border p-2 mb-2';
+        newItem.setAttribute('data-eval-index', evalIndex);
+        // Don't set data-evaluation-id for new items
+        
+        let template = document.getElementById('evaluation-template').innerHTML;
+        template = template.replace(/__index__/g, evalIndex);
+        newItem.innerHTML = template;
+        
+        // Ensure the hidden ID field is empty for new evaluations
+        const idInput = newItem.querySelector(`input[name="evaluations-${evalIndex}-id"]`);
+        if (idInput) {
+            idInput.value = '';
+        }
+        
+        container.appendChild(newItem);
+        reindexEvaluations();
+        window.showFloatingButtons();
+    });
+
+    // Gestion des boutons de suppression
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('.remove-calendar, .remove-mediagraphie, .remove-disponibilite, .remove-evaluation, .remove-capacite');
+        if (button) {
+            const parentDiv = button.closest('.calendar-item, .mediagraphie-item, .disponibilite-item, .evaluation-item, .capacite-item');
+            if (parentDiv) {
+                parentDiv.remove();
+                if (parentDiv.classList.contains('evaluation-item')) {
+                    reindexEvaluations();
+                }
+                if (parentDiv.classList.contains('calendar-item')) {
+                    reindexCalendrier();
+                }
+                const container = parentDiv.parentElement;
+                if (container && container.children.length === 0) {
+                    container.style.display = 'none';
+                }
+                window.showFloatingButtons();
+            }
+        }
+    });
+
+// Modification de la fonction d'ajout de capacité
+document.addEventListener('click', function(e) {
+    const button = e.target.closest('.add-capacite');
+    if (button) {
+        const evaluationItem = button.closest('.evaluation-item');
+        if (!evaluationItem) return;
+        
+        const evalIndex = evaluationItem.getAttribute('data-eval-index');
+        const capacitesContainer = evaluationItem.querySelector('.capacites-container');
+        if (!capacitesContainer) return;
+        
+        const capIndex = capacitesContainer.querySelectorAll('.capacite-item').length;
+        const newCap = document.createElement('div');
+        newCap.className = 'capacite-item mb-2 border p-2';
+        
+        // Utiliser le template avec les index corrects
+        let template = document.getElementById('evaluation-capacite-template').innerHTML;
+        template = template
+            .replace(/__eval_index__/g, evalIndex)
+            .replace(/__cap_index__/g, capIndex);
+        newCap.innerHTML = template;
+        
+        // Copier les options du select caché
+        const hiddenSelect = document.getElementById('capacites-hidden');
+        const newSelect = newCap.querySelector('select');
+        if (hiddenSelect && newSelect) {
+            newSelect.innerHTML = hiddenSelect.innerHTML;
+        }
+        
+        capacitesContainer.appendChild(newCap);
+        window.showFloatingButtons();
+    }
+});
+
+    // Gestion de la sauvegarde
     if (floatingSaveBtn && planDeCoursForm) {
         floatingSaveBtn.addEventListener('click', async function(e) {
             e.preventDefault();
-            floatingSaveBtn.classList.add('loading');
-            floatingSaveBtn.disabled = true;
+            this.classList.add('loading');
+            this.disabled = true;
+
             try {
+                // Add this ID preservation code before creating FormData
+                document.querySelectorAll('.evaluation-item').forEach(evaluationItem => {
+                    if (evaluationItem.hasAttribute('data-evaluation-id')) {
+                        const evaluationId = evaluationItem.getAttribute('data-evaluation-id');
+                        const index = evaluationItem.getAttribute('data-eval-index');
+                        const idInput = evaluationItem.querySelector(`input[name="evaluations-${index}-id"]`);
+                        if (idInput) {
+                            idInput.value = evaluationId;
+                        }
+                    }
+                });
+
+                // Rest of your existing form submission code...
                 const formData = new FormData(planDeCoursForm);
-                const url = planDeCoursForm.getAttribute('action');
-                const response = await fetch(url, {
+                
+                // Obtention du token CSRF depuis le formulaire
+                const csrfToken = planDeCoursForm.querySelector('input[name="csrf_token"]')?.value;
+                if (csrfToken) {
+                    formData.append('csrf_token', csrfToken);
+                }
+
+                // Envoi de la requête
+                const response = await fetch(planDeCoursForm.action, {
                     method: 'POST',
                     body: formData,
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    },
+                    credentials: 'same-origin'  // Important pour les cookies de session
                 });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+                }
+
                 const result = await response.json();
+                
                 if (result.success) {
-                    floatingSaveBtn.classList.add('d-none');
+                    this.classList.add('d-none');
                     floatingCancelBtn.classList.add('d-none');
+                    
+                    // Afficher le toast de succès
                     const toast = new bootstrap.Toast(document.getElementById('saveSuccessToast'));
                     toast.show();
+
+                    // Mettre à jour les indices après la sauvegarde
+                    calendrierIndex = document.querySelectorAll('.calendar-item').length;
+                    mediagraphieIndex = document.querySelectorAll('.mediagraphie-item').length;
+                    disponibiliteIndex = document.querySelectorAll('.disponibilite-item').length;
+                    evaluationIndex = document.querySelectorAll('.evaluation-item').length;
                 } else {
                     throw new Error(result.message || 'Erreur lors de la sauvegarde');
                 }
             } catch (error) {
                 console.error('Erreur:', error);
+                // Afficher le message d'erreur dans le toast
                 const errorToast = new bootstrap.Toast(document.getElementById('saveErrorToast'));
+                const errorToastBody = document.querySelector('#saveErrorToast .toast-body');
+                if (errorToastBody) {
+                    errorToastBody.textContent = `Une erreur est survenue lors de la sauvegarde: ${error.message}`;
+                }
                 errorToast.show();
             } finally {
-                floatingSaveBtn.classList.remove('loading');
-                floatingSaveBtn.disabled = false;
+                this.classList.remove('loading');
+                this.disabled = false;
             }
         });
     }
 
+    // Gestion du bouton d'annulation
     if (floatingCancelBtn) {
         floatingCancelBtn.addEventListener('click', async function() {
             if (confirm('Êtes-vous sûr de vouloir annuler les modifications ?')) {
@@ -704,6 +1436,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const html = await response.text();
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
+                    
                     ['calendrier-container', 'mediagraphie-container', 'disponibilites-container', 'evaluations-container'].forEach(containerId => {
                         const container = document.getElementById(containerId);
                         const newContent = doc.getElementById(containerId);
@@ -712,11 +1445,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             container.style.display = newContent.children.length > 0 ? 'block' : 'none';
                         }
                     });
+                    
                     planDeCoursForm?.reset();
                     calendrierIndex = document.querySelectorAll('.calendar-item').length;
                     mediagraphieIndex = document.querySelectorAll('.mediagraphie-item').length;
                     disponibiliteIndex = document.querySelectorAll('.disponibilite-item').length;
                     evaluationIndex = document.querySelectorAll('.evaluation-item').length;
+                    
+                    initDragAndDrop();
                     floatingSaveBtn?.classList.add('d-none');
                     floatingCancelBtn?.classList.add('d-none');
                 } catch (error) {
@@ -727,123 +1463,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function reindexEvaluations() {
-        const evaluations = document.querySelectorAll('.evaluation-item');
-        evaluations.forEach((evaluation, evalIndex) => {
-            evaluation.setAttribute('data-eval-index', evalIndex);
-            evaluation.querySelectorAll('[name]').forEach(field => {
-                field.name = field.name.replace(/evaluations-\d+-/, `evaluations-${evalIndex}-`);
-                field.id = field.id.replace(/evaluations-\d+-/, `evaluations-${evalIndex}-`);
-            });
-            const capacites = evaluation.querySelectorAll('.capacite-item');
-            capacites.forEach((capacite, capIndex) => {
-                capacite.querySelectorAll('[name]').forEach(field => {
-                    field.name = field.name.replace(/evaluations-\d+-capacites-\d+-/, `evaluations-${evalIndex}-capacites-${capIndex}-`);
-                    field.id = field.id.replace(/evaluations-\d+-capacites-\d+-/, `evaluations-${evalIndex}-capacites-${capIndex}-`);
-                });
-            });
-        });
+    // Écouter les modifications du formulaire
+    if (planDeCoursForm) {
+        planDeCoursForm.addEventListener('input', window.showFloatingButtons);
+        planDeCoursForm.addEventListener('change', window.showFloatingButtons);
     }
 
-    document.addEventListener('click', function(e) {
-        const button = e.target.closest('.remove-calendar, .remove-mediagraphie, .remove-disponibilite, .remove-evaluation, .remove-capacite');
-        if (button) {
-            const parentDiv = button.closest('.calendar-item, .mediagraphie-item, .disponibilite-item, .evaluation-item, .capacite-item');
-            if (parentDiv) {
-                parentDiv.remove();
-                if (parentDiv.classList.contains('evaluation-item')) {
-                    reindexEvaluations();
-                }
-                if (parentDiv.classList.contains('capacite-item')) {
-                    const evaluationItem = parentDiv.closest('.evaluation-item');
-                    if (evaluationItem) {
-                        const evalIndex = evaluationItem.getAttribute('data-eval-index');
-                        const capacites = evaluationItem.querySelectorAll('.capacite-item');
-                        capacites.forEach((capacite, capIndex) => {
-                            capacite.querySelectorAll('[name]').forEach(field => {
-                                field.name = field.name.replace(/evaluations-\d+-capacites-\d+-/, `evaluations-${evalIndex}-capacites-${capIndex}-`);
-                                field.id = field.id.replace(/evaluations-\d+-capacites-\d+-/, `evaluations-${evalIndex}-capacites-${capIndex}-`);
-                            });
-                        });
-                    }
-                }
-                const container = parentDiv.parentElement;
-                if (container && container.children.length === 0) {
-                    container.style.display = 'none';
-                }
-                showFloatingButtons();
-            }
-        }
-    });
-
-    document.getElementById('add-calendrier')?.addEventListener('click', function() {
-        const container = document.getElementById('calendrier-container');
-        container.style.display = 'block';
-        const newItem = document.createElement('div');
-        newItem.className = 'calendar-item border p-2 mb-2';
-        newItem.innerHTML = document.getElementById('calendrier-template').innerHTML.replace(/__index__/g, calendrierIndex++);
-        container.appendChild(newItem);
-        showFloatingButtons();
-    });
-
-    document.getElementById('add-mediagraphie')?.addEventListener('click', function() {
-        const container = document.getElementById('mediagraphie-container');
-        container.style.display = 'block';
-        const newItem = document.createElement('div');
-        newItem.className = 'mediagraphie-item mb-2';
-        newItem.innerHTML = document.getElementById('mediagraphie-template').innerHTML.replace(/__index__/g, mediagraphieIndex++);
-        container.appendChild(newItem);
-        showFloatingButtons();
-    });
-
-    document.getElementById('add-disponibilite')?.addEventListener('click', function() {
-        const container = document.getElementById('disponibilites-container');
-        container.style.display = 'block';
-        const newItem = document.createElement('div');
-        newItem.className = 'disponibilite-item row g-2 mb-2';
-        newItem.innerHTML = document.getElementById('disponibilite-template').innerHTML.replace(/__index__/g, disponibiliteIndex++);
-        container.appendChild(newItem);
-        showFloatingButtons();
-    });
-
-    document.getElementById('add-evaluation')?.addEventListener('click', function() {
-        const container = document.getElementById('evaluations-container');
-        container.style.display = 'block';
-        const newItem = document.createElement('div');
-        newItem.className = 'evaluation-item border p-2 mb-2';
-        newItem.innerHTML = document.getElementById('evaluation-template').innerHTML.replace(/__index__/g, evaluationIndex++);
-        container.appendChild(newItem);
-        reindexEvaluations();
-        showFloatingButtons();
-    });
-
-    document.addEventListener('click', function(e) {
-        const button = e.target.closest('.add-capacite');
-        if (button) {
-            const evaluationItem = button.closest('.evaluation-item');
-            if (!evaluationItem) return;
-            let evalIndex = evaluationItem.getAttribute('data-eval-index');
-            if (evalIndex === null) {
-                evalIndex = evaluationIndex++;
-                evaluationItem.setAttribute('data-eval-index', evalIndex);
-                reindexEvaluations();
-            }
-            const capacitesContainer = evaluationItem.querySelector('.capacites-container');
-            if (!capacitesContainer) return;
-            let capIndex = capacitesContainer.querySelectorAll('.capacite-item').length;
-            const newCap = document.createElement('div');
-            newCap.className = 'capacite-item mb-2 border p-2';
-            newCap.innerHTML = document.getElementById('evaluation-capacite-template').innerHTML.replace(/__eval_index__/g, evalIndex).replace(/__cap_index__/g, capIndex);
-            const hiddenSelect = document.getElementById('capacites-hidden');
-            const newSelect = newCap.querySelector('select');
-            if (hiddenSelect && newSelect) {
-                newSelect.innerHTML = hiddenSelect.innerHTML;
-            }
-            capacitesContainer.appendChild(newCap);
-            showFloatingButtons();
-        }
-    });
-
+    // Initialiser l'état des conteneurs
     ['calendrier-container', 'mediagraphie-container', 'disponibilites-container', 'evaluations-container'].forEach(function(id) {
         const container = document.getElementById(id);
         if (container && container.children.length === 0) {
@@ -866,6 +1492,25 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="d-flex">
             <div class="toast-body">
                 Une erreur est survenue lors de la sauvegarde.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+    <!-- Toast pour la génération automatique réussie -->
+    <div id="generateSuccessToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                Le contenu a été généré avec succès!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+
+    <!-- Toast pour la génération automatique en échec -->
+    <div id="generateErrorToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                Une erreur est survenue lors de la génération du contenu.
             </div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
