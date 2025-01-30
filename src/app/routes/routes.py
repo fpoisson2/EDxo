@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 import os
 import markdown
 from jinja2 import Template
+from sqlalchemy import func  # Add this at the top with your other imports
 import bleach
 from docxtpl import DocxTemplate
 from io import BytesIO 
