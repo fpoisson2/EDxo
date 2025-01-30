@@ -73,6 +73,9 @@ from app.models import (
 from app.routes.plan_de_cours import plan_de_cours_bp
 
 
+import logging
+logger = logging.getLogger(__name__)
+
 programme_bp = Blueprint('programme', __name__, url_prefix='/programme')
 
 @programme_bp.route('/<int:programme_id>')
