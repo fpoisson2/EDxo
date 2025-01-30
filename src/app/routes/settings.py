@@ -132,7 +132,7 @@ def plan_de_cours_prompt_settings():
         prompts=prompts
     )
 
-@settings_bp.route('/plan-de-cours/prompts/<int:prompt_id>', methods=['PUT', 'POST'])
+@settings_bp.route('/plan-de-cours/prompts/<int:prompt_id>', methods=['POST'])
 @roles_required('admin')
 @login_required 
 def update_plan_de_cours_prompt(prompt_id):
@@ -148,12 +148,8 @@ def update_plan_de_cours_prompt(prompt_id):
         # Validation des données
         if not isinstance(data.get('prompt_template'), str):
             return jsonify({'error': 'prompt_template must be a string'}), 400
-            
-        if not isinstance(data.get('context_variables'), list):
-            return jsonify({'error': 'context_variables must be a list'}), 400
         
         prompt.prompt_template = data['prompt_template']
-        prompt.context_variables = data['context_variables']
         
         db.session.commit()
         return jsonify({'message': 'Configuration mise à jour avec succès'})
