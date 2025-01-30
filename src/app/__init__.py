@@ -107,7 +107,7 @@ def create_app():
 
     @app.before_request
     def before_request():
-        # Skip for static files and some endpoints
+        # Skip for static files and key endpoints
         if request.endpoint and (
             'static' in request.endpoint or 
             request.endpoint == 'main.login' or 
@@ -121,36 +121,39 @@ def create_app():
             db.session.execute(text("SELECT 1"))
             db.session.commit()
             
+            # Force permanent session for Gunicorn
+            if not session.get('permanent'):
+                session.permanent = True
+
             # Handle unauthenticated users
             if not current_user.is_authenticated:
-                if request.endpoint != 'login':
-                    return redirect(url_for('main.login', next=request.url))
+                if request.blueprint != 'main' or (request.endpoint and request.endpoint != 'main.login'):
+                    return redirect(url_for('main.login'))
                 return
 
-            # Session handling for authenticated users
-            session.permanent = True
+            # Session timeout handling
             now = datetime.now(timezone.utc)
-            
             last_activity_str = session.get('last_activity')
+            
             if last_activity_str:
                 try:
                     last_activity = datetime.fromisoformat(last_activity_str)
                     elapsed = now - last_activity
                     if elapsed > app.config['PERMANENT_SESSION_LIFETIME']:
                         logout_user()
-                        flash('Session expirée. Veuillez vous reconnecter.', 'info')
+                        session.clear()  # Clear the entire session
                         return redirect(url_for('main.login'))
-                except ValueError:
+                except (ValueError, TypeError):
                     session['last_activity'] = now.isoformat()
-
+            
             session['last_activity'] = now.isoformat()
-
+            
         except SQLAlchemyError as e:
             logger.error(f"Database connection failed: {e}")
-            abort(500)
+            return "Database Error", 500
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
-            abort(500)
+            return "Server Error", 500
 
     @app.after_request
     def after_request(response):
