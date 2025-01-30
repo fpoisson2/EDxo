@@ -1,6 +1,8 @@
 from app import create_app
 
-app = create_app()
+# Create the Flask application instance
+application = create_app()
+app = application  # Gunicorn looks for 'application' by default, but we also provide 'app'
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8001, debug=True)
+if __name__ == "__main__":
+    application.run()
