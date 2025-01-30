@@ -114,37 +114,39 @@ def create_app():
             return  # Allow access without authentication
 
         if not current_user.is_authenticated:
+            logger.info(f"🔄 Redirecting {request.path} to login")  # Debugging log
             return redirect(url_for('main.login'))
 
         try:
-            # Database check
             db.session.execute(text("SELECT 1"))
             db.session.commit()
-
-            # Session management
+            
+            # Session expiry check
             session.permanent = True
             now = datetime.now(timezone.utc)
-            
             last_activity_str = session.get('last_activity')
+
             if last_activity_str:
                 try:
                     last_activity = datetime.fromisoformat(last_activity_str)
                     elapsed = now - last_activity
                     if elapsed > app.config['PERMANENT_SESSION_LIFETIME']:
+                        logger.info("🔄 Session expired. Logging out user.")
                         logout_user()
                         session.clear()
                         return redirect(url_for('main.login'))
                 except (ValueError, TypeError):
                     session['last_activity'] = now.isoformat()
-            
+
             session['last_activity'] = now.isoformat()
             
         except SQLAlchemyError as e:
-            logger.error(f"Database connection failed: {e}")
+            logger.error(f"❌ Database error: {e}")
             return "Database Error", 500
         except Exception as e:
-            logger.error(f"Unexpected error: {e}")
+            logger.error(f"❌ Unexpected error: {e}")
             return "Server Error", 500
+
 
 
     @app.after_request
