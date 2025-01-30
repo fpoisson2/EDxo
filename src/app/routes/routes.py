@@ -294,7 +294,6 @@ def login():
         if user_row and check_password_hash(user_row.password, password):
             login_user(user_row, remember=True)
             session.permanent = True
-            flash('Connexion réussie !', 'success')
             next_page = request.args.get('next')
             if not next_page or not next_page.startswith('/'):
                 next_page = url_for('main.index')
