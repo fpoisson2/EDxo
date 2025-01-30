@@ -109,16 +109,20 @@ def create_app():
 
     @app.before_request
     def before_request():
+        # Define public endpoints that don't require authentication
         PUBLIC_ENDPOINTS = {'static', 'main.login', 'main.logout', 'main.get_credit_balance'}
+        
+        # Skip authentication for login page and static files
+        if request.endpoint in PUBLIC_ENDPOINTS or request.path.startswith('/static/'):
+            return
 
-        if request.endpoint in PUBLIC_ENDPOINTS or 'static' in request.path:
-            return  # Allow access to public pages
-
+        # Important: Skip authentication check if already redirecting to login
+        if request.endpoint == 'main.login':
+            return
+            
         if not current_user.is_authenticated:
             logger.warning(f"🔄 User NOT authenticated! Redirecting {request.path} to /login")
             return redirect(url_for('main.login', next=request.path))
-
-        logger.info(f"✅ User is authenticated. Access granted to {request.path}")
 
         try:
             db.session.execute(text("SELECT 1"))
