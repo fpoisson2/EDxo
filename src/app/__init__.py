@@ -108,17 +108,16 @@ def create_app():
 
     @app.before_request
     def before_request():
-        logger.info(f"🔍 Checking auth for {request.path}, user authenticated: {current_user.is_authenticated}")
-
         PUBLIC_ENDPOINTS = {'static', 'main.login', 'main.logout', 'main.get_credit_balance'}
-        
+
         if request.endpoint in PUBLIC_ENDPOINTS or 'static' in request.path:
-            return  # Allow access to these pages
+            return  # Allow access to public pages
 
         if not current_user.is_authenticated:
-            logger.info(f"🔄 Redirecting to /login from {request.path}")
-            return redirect(url_for('main.login'))
+            logger.warning(f"🔄 User NOT authenticated! Redirecting {request.path} to /login")
+            return redirect(url_for('main.login', next=request.path))
 
+        logger.info(f"✅ User is authenticated. Access granted to {request.path}")
 
         try:
             db.session.execute(text("SELECT 1"))

@@ -294,8 +294,9 @@ def login():
             session.permanent = True
             flash('Connexion réussie !', 'success')
             next_page = request.args.get('next')
-            if not next_page or url_parse(next_page).netloc != '':
+            if not next_page or not next_page.startswith('/'):
                 next_page = url_for('main.index')
+
             return redirect(next_page)
         else:
             flash('Nom d\'utilisateur ou mot de passe incorrect.', 'danger')
