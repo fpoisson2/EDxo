@@ -34,6 +34,7 @@ from app.routes.evaluation import evaluation_bp
 from app.routes.plan_cadre import plan_cadre_bp
 from app.routes.plan_de_cours import plan_de_cours_bp
 from app.routes import routes
+from app.routes.gestion_programme import gestion_programme_bp
 
 # Import models
 from app.models import BackupConfig
@@ -132,6 +133,7 @@ def create_app(testing=False):
     app.register_blueprint(chat)
     app.register_blueprint(system_bp)
     app.register_blueprint(evaluation_bp)
+    app.register_blueprint(gestion_programme_bp)
 
     # Register helpers and handlers
     @app.context_processor
