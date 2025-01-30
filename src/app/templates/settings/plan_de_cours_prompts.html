@@ -156,7 +156,6 @@ function showToast(type, message) {
         return;
     }
 
-    // Update message for error toast
     if (type === 'error') {
         const messageElement = document.getElementById('errorToastMessage');
         if (messageElement) {
@@ -169,19 +168,13 @@ function showToast(type, message) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Save prompt handler
     document.querySelectorAll('.save-prompt').forEach(button => {
         button.addEventListener('click', async function() {
-            console.log('Button clicked');
-            
             const row = this.closest('tr');
             const promptId = row.dataset.promptId;
-            console.log('promptId:', promptId);
             const csrfToken = row.dataset.csrfToken;
             const template = row.querySelector('.prompt-template').value;
-            const variables = row.querySelector('.context-variables').value
-                .split(',')
-                .map(v => v.trim())
-                .filter(v => v);
 
             try {
                 const response = await fetch(`/settings/plan-de-cours/prompts/${promptId}`, {
@@ -190,26 +183,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         'Content-Type': 'application/json',
                         'X-CSRF-Token': csrfToken
                     },
-                    credentials: 'same-origin',
                     body: JSON.stringify({
                         prompt_template: template,
-                        context_variables: variables
+                        context_variables: [] // Send empty array since we're not using it
                     })
                 });
 
-                const data = await response.json();
-                if (response.ok) {
-                    showToast('success', 'Configuration sauvegardée');
-                } else {
-                    throw new Error(data.error || 'Erreur lors de la sauvegarde');
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || `Erreur HTTP: ${response.status}`);
                 }
+
+                showToast('success', 'Configuration sauvegardée avec succès');
             } catch (error) {
                 console.error('Erreur:', error);
-                showToast('error', 'Erreur lors de la sauvegarde: ' + error.message);
+                showToast('error', `Erreur lors de la sauvegarde: ${error.message}`);
             }
         });
     });
 
+    // Test prompt handler
     let currentTemplate = '';
     
     document.querySelectorAll('.test-prompt').forEach(button => {
@@ -231,7 +224,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/json',
                     'X-CSRF-Token': document.querySelector('tr[data-csrf-token]').dataset.csrfToken
                 },
-                credentials: 'same-origin',
                 body: JSON.stringify({
                     template: currentTemplate,
                     context: context
