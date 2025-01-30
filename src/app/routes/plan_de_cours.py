@@ -221,7 +221,6 @@ def generate_content():
 
     try:
         client = OpenAI(api_key=current_user.openai_key)
-        print(f"Prompt utilisé : {prompt}")  # Pour le débogage
         
         response = client.beta.chat.completions.parse(
             model=ai_model,
@@ -242,7 +241,6 @@ def generate_content():
         db.session.commit()
 
         structured_data = response.choices[0].message.parsed
-        print(f"Réponse structurée : {structured_data}")  # For debugging
         
         return jsonify(structured_data.model_dump())
     
