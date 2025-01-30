@@ -107,21 +107,26 @@ def create_app():
 
     @app.before_request
     def before_request():
-        # Avoid checking session on static files
-        if request.endpoint and 'static' in request.endpoint:
+        # Skip for static files and some endpoints
+        if request.endpoint and (
+            'static' in request.endpoint or 
+            request.endpoint == 'main.login' or 
+            request.endpoint == 'main.logout' or
+            request.endpoint == 'main.get_credit_balance'
+        ):
             return
 
         try:
-            # Database check
+            # Check database connection
             db.session.execute(text("SELECT 1"))
             db.session.commit()
             
+            # Handle unauthenticated users
             if not current_user.is_authenticated:
-                # Don't redirect if already going to login page
-                if request.endpoint and request.endpoint != 'main.login':
-                    return redirect(url_for('main.login'))
+                if request.endpoint != 'login':
+                    return redirect(url_for('main.login', next=request.url))
                 return
-                
+
             # Session handling for authenticated users
             session.permanent = True
             now = datetime.now(timezone.utc)
@@ -133,19 +138,19 @@ def create_app():
                     elapsed = now - last_activity
                     if elapsed > app.config['PERMANENT_SESSION_LIFETIME']:
                         logout_user()
+                        flash('Session expirée. Veuillez vous reconnecter.', 'info')
                         return redirect(url_for('main.login'))
                 except ValueError:
-                    logout_user()
-                    return redirect(url_for('main.login'))
-                    
+                    session['last_activity'] = now.isoformat()
+
             session['last_activity'] = now.isoformat()
-            
+
         except SQLAlchemyError as e:
             logger.error(f"Database connection failed: {e}")
-            return "Database Error", 500
+            abort(500)
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
-            return "Server Error", 500
+            abort(500)
 
     @app.after_request
     def after_request(response):
