@@ -279,12 +279,12 @@ def get_cegep_details():
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
+    # Skip if already logged in
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))  # Redirige si déjà connecté
+        return redirect(url_for('main.index'))
 
     form = LoginForm()
     if form.validate_on_submit():
-        from sqlalchemy import func
         username = form.username.data.lower()
         password = form.password.data
 
@@ -293,6 +293,9 @@ def login():
             login_user(user_row)
             flash('Connexion réussie !', 'success')
             next_page = request.args.get('next')
+            # Validate the next URL to prevent open redirect vulnerabilities
+            if next_page and url_for('main.login') in next_page:
+                next_page = url_for('main.index')
             return redirect(next_page or url_for('main.index'))
         else:
             flash('Nom d\'utilisateur ou mot de passe incorrect.', 'danger')
