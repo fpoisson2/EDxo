@@ -59,6 +59,7 @@ def create_app():
     login_manager.init_app(app)
     
     base_path = Path(__file__).parent.parent  # Ajustez selon votre structure de projet
+    app.config['PREFERRED_URL_SCHEME'] = 'https'  # if you're using HTTPS
     app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_PATH}?timeout=30"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['DB_PATH'] = DB_PATH
