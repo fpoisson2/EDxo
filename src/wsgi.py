@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 # Import after logging setup
 from app import create_app
 from utils.scheduler_instance import start_scheduler, schedule_backup
-from app.models import db
+from extensions import db
 
 # Create the application instance
 app = create_app()
