@@ -167,32 +167,38 @@ def management():
         current_time_utc=now_utc.strftime('%Y-%m-%d %H:%M:%S UTC'),
         changes=changes
     )
-
 @system_bp.route('/system/download-db')
 @roles_required('admin')
 def download_db():
     if not check_db_status():
         flash("La base de données n'est pas dans un état cohérent pour le téléchargement.", "error")
         return redirect(url_for('system.management'))
-
-    # Chemin vers la base de données
-    db_path = os.path.abspath('programme.db')
+    
+    # Construction du chemin vers la base de données
+    current_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))  # Remonte à /src
+    db_path = os.path.join(current_dir, 'database', 'programme.db')
     
     # Vérifiez que le fichier existe
     if not os.path.exists(db_path):
+        flash("Le fichier de base de données est introuvable.", "error")
         abort(404)
-        
+    
     # Créez un nom de fichier avec la date
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = f'programme_backup_{timestamp}.db'
     
-    return send_file(
-        db_path,
-        as_attachment=True,
-        download_name=filename,
-        mimetype='application/x-sqlite3'
-    )
-
+    try:
+        return send_file(
+            db_path,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/x-sqlite3'
+        )
+    except Exception as e:
+        current_app.logger.error(f"Erreur lors du téléchargement de la BD: {str(e)}")
+        flash("Une erreur est survenue lors du téléchargement de la base de données.", "error")
+        return redirect(url_for('system.management'))
+        
 @system_bp.route('/get_changes')
 def get_changes():
     page = request.args.get('page', 1, type=int)
