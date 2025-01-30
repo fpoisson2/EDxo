@@ -730,7 +730,11 @@ class ChatHistory(db.Model):
     __tablename__ = 'chat_history'
     
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('User.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('User.id', ondelete='CASCADE', name='fk_chathistory_user_id'),
+        nullable=False
+    )
     role = db.Column(db.String(50), nullable=False)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, server_default=db.text('CURRENT_TIMESTAMP'))
