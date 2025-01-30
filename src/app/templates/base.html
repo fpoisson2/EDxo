@@ -146,26 +146,94 @@
         color: #000;
       }
       /* Responsive Adjustments */
-      @media (max-width: 768px) {
-        .user-info {
-          width: 100%;
-          justify-content: flex-start;
-          margin-top: 0.3rem;
-          gap: 0.5rem; /* Ajuste l'espacement */
-          font-size: 0.85rem; /* Ajuste la taille de la police */
-        }
-        .navbar-nav .nav-link {
-          margin-right: 0.5rem;
-          font-size: 0.85rem; /* Réduit la taille de la police */
-        }
-        .credit-display {
-          padding: 0.1rem 0.3rem; /* Réduit le padding */
-          font-size: 0.8rem; /* Réduit la taille de la police */
-        }
-        .credit-display i {
-          font-size: 0.9rem; /* Ajuste la taille de l'icône */
-        }
-      }
+@media (max-width: 768px) {
+  /* Style général du menu mobile */
+  .navbar-collapse {
+    padding-top: 0.5rem;
+  }
+
+  /* Réorganisation des éléments de navigation */
+  .navbar-nav {
+    border-top: 1px solid #e0e0e0;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+  }
+
+  .navbar-nav .nav-item {
+    margin-bottom: 0.5rem;
+  }
+
+  .navbar-nav .nav-link {
+    padding: 0.5rem 0;
+    font-size: 1rem;
+    color: #333;
+    border-radius: 4px;
+  }
+
+  /* Groupe des informations utilisateur */
+  .user-info {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Style du crédit */
+  .credit-display {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0.5rem 0;
+    background: none;
+    color: #333;
+    font-size: 1rem;
+  }
+
+  /* Style des liens du menu utilisateur */
+  .user-info .dropdown-menu {
+    display: block;
+    position: static;
+    float: none;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+    background: none;
+  }
+
+  .user-info .dropdown-header {
+    font-size: 1.1rem;
+    color: #333;
+    padding: 0.5rem 0;
+  }
+
+  .user-info .dropdown-item {
+    padding: 0.5rem 0;
+    color: #555;
+    font-size: 1rem;
+  }
+
+  .user-info .dropdown-item i {
+    width: 1.5rem;
+    color: #666;
+  }
+
+  /* Cacher l'icône de toggle du dropdown */
+  .user-info .dropdown-toggle {
+    display: none;
+  }
+
+  /* Espacement des éléments */
+  .nav-item:not(:last-child),
+  .dropdown-item:not(:last-child) {
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  /* Effet hover sur les liens */
+  .navbar-nav .nav-link:hover,
+  .user-info .dropdown-item:hover {
+    background-color: #f8f9fa;
+  }
+}
       /* Flash Messages Styling */
       .flash-message {
         opacity: 0;
@@ -335,6 +403,34 @@
 
     <!-- Credit Balance Update Module -->
     <script>
+document.addEventListener('DOMContentLoaded', function() {
+  function initializeMobileMenu() {
+    if (window.innerWidth <= 768) {
+      const navbarCollapse = document.querySelector('.navbar-collapse');
+      const dropdownMenu = document.querySelector('.user-info .dropdown-menu');
+      
+      // Gestionnaire pour l'ouverture du menu
+      navbarCollapse.addEventListener('show.bs.collapse', function() {
+        setTimeout(() => {
+          dropdownMenu.classList.add('show');
+        }, 0);
+      });
+      
+      // Gestionnaire pour la fermeture du menu
+      navbarCollapse.addEventListener('hide.bs.collapse', function() {
+        dropdownMenu.classList.remove('show');
+      });
+      
+      // État initial
+      if (navbarCollapse.classList.contains('show')) {
+        dropdownMenu.classList.add('show');
+      }
+    }
+  }
+
+  initializeMobileMenu();
+  window.addEventListener('resize', initializeMobileMenu);
+});
       // Credit balance update module
       class CreditBalanceManager {
         constructor(options = {}) {
