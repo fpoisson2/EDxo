@@ -1,10 +1,10 @@
-from flask import Flask
-from flask_login import current_user
+from flask import Flask, session, jsonify, redirect, url_for  # Add session and other needed imports
+from flask_login import current_user, logout_user  # Add logout_user
 from flask_ckeditor import CKEditor
 from flask_wtf import CSRFProtect
 from flask_migrate import Migrate
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone  # Add timezone
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -37,12 +37,16 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 def create_app():
-    app = Flask(__name__, template_folder="templates")
-
+    base_path = os.path.dirname(os.path.dirname(__file__))  # Gets the src directory
+    app = Flask(__name__, 
+                template_folder="templates",
+                static_folder=os.path.join(base_path, "static"))  # Points to src/static
+                
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    DB_DIR = os.path.join(BASE_DIR, "database")  # Define the database directory
-    DB_PATH = os.path.join(DB_DIR, "programme.db")  # Define the database file path
-
+    DB_DIR = os.path.join(BASE_DIR, "database")  
+    DB_PATH = os.path.join(DB_DIR, "programme.db")  
+    
+    print(f"🔍 Debug: Static folder -> {app.static_folder}")  # Debug line
     # Vérifier si on est en mode test
     if os.environ.get('TESTING'):
         return app  # Retourner l'app sans configurer le backup
@@ -53,7 +57,7 @@ def create_app():
      
     login_manager.init_app(app)
     
-    base_path = Path(__file__).parent  # Ajustez selon votre structure de projet
+    base_path = Path(__file__).parent.parent  # Ajustez selon votre structure de projet
     app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_PATH}?timeout=30"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['DB_PATH'] = DB_PATH

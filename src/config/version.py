@@ -1,2 +1,2 @@
 # version.py
-__version__ = "2025.01.41"
+__version__ = "2025.01.42"
