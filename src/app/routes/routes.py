@@ -87,6 +87,8 @@ from app.models import (
     Cours, 
     ListeCegep
 )
+import logging
+logger = logging.getLogger(__name__)
 
 main = Blueprint('main', __name__)
 
@@ -278,30 +280,30 @@ def get_cegep_details():
         'programmes': [{'id': p.id, 'nom': p.nom} for p in programmes]
     })
 
-@main.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
-
-    form = LoginForm()
-    if form.validate_on_submit():
-        username = form.username.data.lower()
-        password = form.password.data
-
-        user_row = User.query.filter(func.lower(User.username) == username).first()
-        if user_row and check_password_hash(user_row.password, password):
-            login_user(user_row, remember=True)
-            session.permanent = True
-            flash('Connexion réussie !', 'success')
-            next_page = request.args.get('next')
-            if not next_page or not next_page.startswith('/'):
-                next_page = url_for('main.index')
-
-            return redirect(next_page)
-        else:
-            flash('Nom d\'utilisateur ou mot de passe incorrect.', 'danger')
-
-    return render_template('login.html', form=form)
+@main.route('/')
+@login_required
+def index():
+    # Récupérer l'utilisateur connecté
+    user = current_user
+    
+    # Vérifier si l'utilisateur est associé à un programme
+    if user.programmes:
+        default_programme_id = user.programmes[0].id
+        return redirect(url_for('programme.view_programme', programme_id=default_programme_id))
+    
+    # Si l'utilisateur n'a pas de programme, vérifier les programmes disponibles
+    programmes = Programme.query.all()
+    if programmes:
+        # There are available programmes, redirect to the first one
+        return redirect(url_for('programme.view_programme', programme_id=programmes[0].id))
+    elif user.role == 'admin':
+        # No programmes available and user is admin
+        flash("Aucun programme disponible. Veuillez en ajouter un.", "warning")
+        return redirect(url_for('main.add_programme'))
+    else:
+        # No programmes available and user is not admin
+        flash("Vous n'avez accès à aucun programme. Veuillez contacter un administrateur.", "warning")
+        return render_template('no_access.html')
 
 @main.route('/logout')
 @login_required
@@ -517,22 +519,25 @@ def change_password():
 def index():
     # Récupérer l'utilisateur connecté
     user = current_user
-
+    
+    # Debug logging
+    logger.debug(f"User logged in: {user.username}")
+    logger.debug(f"User programmes: {[p.id for p in user.programmes]}")
+    
     # Vérifier si l'utilisateur est associé à un programme
     if user.programmes:
         default_programme_id = user.programmes[0].id
-    else:
-        # Récupérer tous les programmes disponibles
-        programmes = Programme.query.all()
-
-        if programmes:
-            # Sélectionner le premier programme disponible
-            default_programme_id = programmes[0].id
-        else:
-            flash("Aucun programme disponible. Veuillez en ajouter un.", "warning")
-            return redirect(url_for('main.add_programme'))
-
-    return redirect(url_for('programme.view_programme', programme_id=default_programme_id))
+        logger.debug(f"Using user's first programme: {default_programme_id}")
+        return redirect(url_for('programme.view_programme', programme_id=default_programme_id))
+    
+    # If user has no programmes and is admin, redirect to add programme
+    if user.role == 'admin':
+        flash("Aucun programme disponible. Veuillez en ajouter un.", "warning")
+        return redirect(url_for('main.add_programme'))
+    
+    # If user has no programmes and is not admin
+    flash("Vous n'avez accès à aucun programme. Veuillez contacter un administrateur.", "warning")
+    return render_template('no_access.html')  # Create this template
 
 
 @main.route('/add_programme', methods=('GET', 'POST'))
