@@ -73,16 +73,29 @@ from app.models import (
 from app.routes.plan_de_cours import plan_de_cours_bp
 
 
+import logging
+logger = logging.getLogger(__name__)
+
 programme_bp = Blueprint('programme', __name__, url_prefix='/programme')
 
 @programme_bp.route('/<int:programme_id>')
 @login_required
 def view_programme(programme_id):
+    # Debug logging
+    logger.debug(f"Accessing programme {programme_id}")
+    logger.debug(f"User programmes: {[p.id for p in current_user.programmes]}")
+    
     # Récupérer le programme
     programme = Programme.query.get(programme_id)
     if not programme:
         flash('Programme non trouvé.', 'danger')
         return redirect(url_for('main.index'))
+
+    # Vérifier si l'utilisateur a accès à ce programme
+    if programme not in current_user.programmes and current_user.role != 'admin':
+        flash("Vous n'avez pas accès à ce programme.", 'danger')
+        return render_template('no_access.html')
+
 
     # Récupérer les compétences associées
     competences = Competence.query.filter_by(programme_id=programme_id).all()
@@ -146,7 +159,7 @@ def view_programme(programme_id):
     delete_forms_cours = {c.id: DeleteForm(prefix=f"cours-{c.id}") for c in cours}
 
     # Récupérer tous les programmes (pour le sélecteur éventuel)
-    programmes = Programme.query.all()
+    programmes = current_user.programmes
 
     return render_template('view_programme.html',
                            programme=programme,

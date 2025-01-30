@@ -107,12 +107,18 @@
                         <a href="{{ url_for('cours.view_or_add_plan_cadre', cours_id=c.id) }}" class="btn btn-sm btn-info w-100 fs-6 mb-2">
                           Plan-Cadre
                         </a>
-                        <!-- Nouveau bouton Plan-de-cours -->
-                        <button class="btn btn-sm btn-secondary w-100 fs-6" 
-                                onclick="openPlanCoursModal('{{ c.id }}', '{{ c.code }}', '{{ c.nom }}')"
+
+                        <button class="btn btn-sm btn-secondary w-100 fs-6 plan-cours-btn" 
+                                data-id="{{ c.id }}" 
+                                data-code="{{ c.code }}" 
+                                data-nom="{{ c.nom|e }}"
                                 type="button">
                           Plan de cours
                         </button>
+
+
+
+
                       </div>
 
                     </div>
@@ -126,8 +132,10 @@
     </table>
   </div>
 
-  <!-- Ajouter un Nouveau Cours -->
+{% if current_user.role in ['admin', 'coordo'] %}
   <a href="{{ url_for('main.add_cours') }}" class="btn btn-primary mb-4">Ajouter un Cours</a>
+{% endif %}
+
 </div>
 
 <!-- Styles personnalisés -->
@@ -291,6 +299,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialisation du modal Bootstrap
     planCoursModal = new bootstrap.Modal(document.getElementById('planCoursModal'));
     
+    // Gestion des clics sur les boutons Plan de cours
+    document.querySelectorAll('.plan-cours-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const coursId = this.dataset.id;
+            const coursCode = this.dataset.code;
+            const coursNom = this.dataset.nom; // Utilisation directe sans JSON.parse
+
+            openPlanCoursModal(coursId, coursCode, coursNom);
+        });
+    });
+    
     // Gestion des clics sur les cartes d'action
     document.querySelectorAll('.action-card').forEach(card => {
         card.addEventListener('click', function() {
@@ -418,16 +437,9 @@ function selectPlan(planId, session) {
     }
     
     if (selectedAction === 'modify') {
-        document.getElementById('flowVisualization').classList.remove('d-none');
-        document.getElementById('sourcePlan').innerHTML = `
-            <h6>Session ${session}</h6>
-            <small class="text-muted">Plan existant</small>
-        `;
-        document.getElementById('targetPlan').innerHTML = `
-            <h6>Session ${session}</h6>
-            <small class="text-muted">Modification</small>
-        `;
-        document.getElementById('confirmButton').classList.remove('d-none');
+            // Redirection immédiate vers le plan de cours
+            const coursId = document.getElementById('modalCoursId').value;
+            window.location.href = `/cours/${coursId}/plan_de_cours/${session}`;
     } else if (selectedAction === 'copy') {
         document.getElementById('step3').classList.remove('d-none');
         document.getElementById('flowVisualization').classList.remove('d-none');
@@ -512,4 +524,5 @@ function handlePlanCoursAction() {
     }
 }
 </script>
+
 {% endblock %}

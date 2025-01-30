@@ -1,72 +1,205 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="container my-5">
-    <div class="row">
-      <!-- Barre latérale des paramètres -->
-      <div class="col-md-2">
-        <h2 class="mb-4">Paramètres</h2>
-        <div class="list-group">
-          <a href="{{ url_for('main.change_password') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
-            Modifier son mot de passe
-            <i class="bi bi-gear"></i>
-          </a>
-          {% if current_user.is_authenticated and current_user.role == "admin" %}
-          <a href="{{ url_for('settings.edit_global_generation_settings') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
-            Paramètres IA - Plan-cadre
-            <i class="bi bi-gear"></i>
-          </a>
-          <a href="{{ url_for('settings.prompt_settings') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
-            Paramètres IA - Grille d'évaluation
-            <i class="bi bi-clipboard-check"></i>
-          </a>
-          <a href="{{ url_for('main.manage_users') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
-            Gestion des utilisateurs
-            <i class="bi bi-people"></i>
-          </a>
-          <a href="{{ url_for('settings.gestion_plans_cours') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
-              Gestion des plans de cours
-              <i class="bi bi-journal-text"></i>
-          </a>
-          <a href="{{ url_for('main.gestion_departements') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
-            Gestion des départements
-            <i class="bi bi-building"></i>
-          </a>
-          <a href="{{ url_for('main.gestion_programmes_ministeriels') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
-            Gestion des programmes ministériels
-            <i class="bi bi-journal-text"></i>
-          </a>
-          <a href="{{ url_for('main.gestion_programmes_cegep') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
-            Programmes par Cégep
-            <i class="bi bi-building-check"></i>
-          </a>
-          <a href="{{ url_for('main.add_competence') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
-            Ajouter une compétence ministériel
-            <i class="bi bi-plus-circle"></i>
-          </a>
-          <!-- Nouveau lien pour ajouter un élément de compétence -->
-          <a href="{{ url_for('main.add_element_competence') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
-            Ajouter un élément de compétence
-            <i class="bi bi-plus-circle-dotted"></i>
-          </a>
-            <a href="{{ url_for('system.management') }}" class="list-group-item list-group-item-action list-group-item-secondary mb-2 d-flex justify-content-between align-items-center">
-              Gestion Système
-              <i class="bi bi-gear-fill"></i>
-            </a>
-          {% endif %}
-        </div>
-      </div>
+<div class="container-fluid py-4">
+  <div class="row g-4">
+    <!-- Sidebar -->
+    <div class="col-12 col-lg-3 col-xl-2">
+      <div class="settings-sidebar sticky-top" style="top: 1rem;">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-gear-fill me-2"></i>Paramètres
+            </h5>
+          </div>
+          
+          <div class="card-body p-0">
+            <div class="accordion" id="settingsAccordion">
+              <!-- Section Utilisateur -->
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#userSettings">
+                    <i class="bi bi-person me-2"></i>Paramètres Utilisateur
+                  </button>
+                </h2>
+                <div id="userSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
+                  <div class="accordion-body p-0">
+                    <div class="list-group list-group-flush">
+                      <a href="{{ url_for('main.change_password') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                        <i class="bi bi-key me-2"></i>
+                        <span>Modifier le mot de passe</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-      <!-- Contenu dynamique des paramètres -->
-      <div class="col-md-10">
-        <div class="card">
-          <div class="card-body">
-            {% block parametres_content %}
-            <!-- Contenu dynamique des paramètres -->
-            {% endblock %}
+              {% if current_user.is_authenticated and current_user.role == "admin" %}
+              <!-- Section IA -->
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#iaSettings">
+                    <i class="bi bi-robot me-2"></i>Paramètres IA
+                  </button>
+                </h2>
+                <div id="iaSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
+                  <div class="accordion-body p-0">
+                    <div class="list-group list-group-flush">
+                      <a href="{{ url_for('settings.edit_global_generation_settings') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-gear me-2"></i>Plan-cadre
+                      </a>
+                      <a href="{{ url_for('settings.plan_de_cours_prompt_settings') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-file-earmark-text me-2"></i>Plans de cours
+                      </a>
+                      <a href="{{ url_for('settings.prompt_settings') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-clipboard-check me-2"></i>Grille d'évaluation
+                      </a>
+                      <a href="{{ url_for('settings.configure_analyse_prompt') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.configure_analyse_prompt' %}active{% endif %}">
+                          <i class="bi bi-chat-text me-2"></i>Analyse des plans de cours
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section Gestion Académique -->
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#academicSettings">
+                    <i class="bi bi-mortarboard me-2"></i>Gestion Académique
+                  </button>
+                </h2>
+                <div id="academicSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
+                  <div class="accordion-body p-0">
+                    <div class="list-group list-group-flush">
+                      <a href="{{ url_for('settings.gestion_canevas') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-file-earmark-word me-2"></i>Canevas (docx)
+                      </a>
+                      <a href="{{ url_for('settings.gestion_plans_cours') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-journal-text me-2"></i>Plans de cours
+                      </a>
+                      <a href="{{ url_for('main.gestion_departements') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-building me-2"></i>Départements
+                      </a>
+                      <a href="{{ url_for('main.gestion_cegeps') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-building me-2"></i>Cégeps
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section Programmes et Compétences -->
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#programSettings">
+                    <i class="bi bi-journal-album me-2"></i>Programmes & Compétences
+                  </button>
+                </h2>
+                <div id="programSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
+                  <div class="accordion-body p-0">
+                    <div class="list-group list-group-flush">
+                      <a href="{{ url_for('main.gestion_programmes_ministeriels') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-journal-text me-2"></i>Programmes ministériels
+                      </a>
+                      <a href="{{ url_for('main.gestion_programmes_cegep') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-building-check me-2"></i>Programmes par Cégep
+                      </a>
+                      <a href="{{ url_for('main.add_competence') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-plus-circle me-2"></i>Ajouter compétence
+                      </a>
+                      <a href="{{ url_for('main.add_element_competence') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-plus-circle-dotted me-2"></i>Ajouter élément
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section Administration -->
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#adminSettings">
+                    <i class="bi bi-shield-lock me-2"></i>Administration
+                  </button>
+                </h2>
+                <div id="adminSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
+                  <div class="accordion-body p-0">
+                    <div class="list-group list-group-flush">
+                      <a href="{{ url_for('main.manage_users') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-people me-2"></i>Gestion utilisateurs
+                      </a>
+                      <a href="{{ url_for('system.management') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-gear-fill me-2"></i>Gestion Système
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Main Content -->
+    <div class="col-12 col-lg-9 col-xl-10">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          {% block parametres_content %}
+          <!-- Contenu dynamique des paramètres -->
+          {% endblock %}
+        </div>
+      </div>
+    </div>
   </div>
+</div>
+
+<style>
+.settings-sidebar {
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: var(--bs-primary);
+  color: white;
+}
+
+.accordion-button:focus {
+  box-shadow: none;
+  border-color: rgba(0,0,0,.125);
+}
+
+.list-group-item:hover {
+  background-color: var(--bs-light);
+}
+
+@media (max-width: 991.98px) {
+  .settings-sidebar {
+    max-height: none;
+    margin-bottom: 1rem;
+  }
+}
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Activer l'accordéon correspondant à la page active
+  const currentPath = window.location.pathname;
+  const links = document.querySelectorAll('.list-group-item');
+  
+  links.forEach(link => {
+    if (link.getAttribute('href') === currentPath) {
+      const accordionItem = link.closest('.accordion-collapse');
+      if (accordionItem) {
+        accordionItem.classList.add('show');
+      }
+    }
+  });
+});
+</script>
+{% endblock %}
 {% endblock %}

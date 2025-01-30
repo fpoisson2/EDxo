@@ -1,8 +1,8 @@
 from flask import current_app, Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
 from app.models import (
-    db, Cours, PlanCadre, PlanCadreCapacites, PlanCadreSavoirEtre,
+    db, Cours, PlanCadre, PlanCadreCapacites, PlanCadreSavoirEtre, User,
     PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
-    PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, Programme
+    PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, Programme, PlanDeCoursPromptSettings
 )
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from app.forms import PlanDeCoursForm
@@ -17,6 +17,11 @@ import zipfile
 from datetime import datetime
 from utils.utils import get_initials, get_programme_id_for_cours, is_teacher_in_programme
 from pathlib import Path
+from openai import OpenAI
+from openai import OpenAIError
+from pydantic import BaseModel, Field
+from typing import Optional
+import json
 
 # Définir le chemin de base de l'application
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -88,6 +93,161 @@ def get_cours_plans(cours_id):
         'id': plan.id,
         'session': plan.session
     } for plan in plans])
+
+MODEL_PRICING = {
+    "gpt-4o": {"input": 2.50 / 1_000_000, "output": 10.00 / 1_000_000},
+    "gpt-4o-mini": {"input": 0.150 / 1_000_000, "output": 0.600 / 1_000_000},
+    "o1-preview": {"input": 15.00 / 1_000_000, "output": 60.00 / 1_000_000},
+    "o1-mini": {"input": 3.00 / 1_000_000, "output": 12.00 / 1_000_000},
+}
+
+def calculate_call_cost(usage_prompt, usage_completion, model):
+    """
+    Calcule le coût d'un appel API en fonction du nombre de tokens et du modèle.
+    """
+    if model not in MODEL_PRICING:
+        raise ValueError(f"Modèle {model} non trouvé dans la grille tarifaire")
+
+    pricing = MODEL_PRICING[model]
+
+    cost_input = usage_prompt * pricing["input"]
+    cost_output = usage_completion * pricing["output"]
+    return cost_input + cost_output
+
+class AIPlandeCoursResponse(BaseModel):
+    """
+    Représente la réponse structurée d'OpenAI pour un champ du plan de cours
+    """
+    champ_description: Optional[str] = Field(
+        None,
+        description="Niveau 1 - Aucun travail réalisé"
+    )
+
+@plan_de_cours_bp.route('/generate_content', methods=['POST'])
+@login_required
+def generate_content():
+    """
+    Génère automatiquement le contenu pour un champ spécifique en utilisant
+    la configuration stockée en base de données et les données du plan cadre.
+    """
+    data = request.get_json()
+    field_name = data.get('field_name')
+    current_value = data.get('current_value', '')
+    cours_id = data.get('cours_id')
+    session = data.get('session')
+
+    if not field_name:
+        return jsonify({'error': 'Nom du champ requis.'}), 400
+
+    # Récupérer la configuration du prompt depuis la BD
+    prompt_settings = PlanDeCoursPromptSettings.query.filter_by(
+        field_name=field_name
+    ).first()
+    
+    if not prompt_settings:
+        return jsonify({
+            'error': 'Pas de configuration de prompt trouvée pour ce champ.'
+        }), 400
+
+    # Récupérer le cours
+    cours = Cours.query.get(cours_id)
+    if not cours:
+        return jsonify({'error': 'Cours non trouvé.'}), 404
+
+    # Récupérer le plan cadre associé
+    plan_cadre = cours.plan_cadre
+    if not plan_cadre:
+        return jsonify({'error': 'Plan cadre non trouvé pour ce cours.'}), 404
+
+    # Construction du contexte enrichi avec les données du plan cadre
+    context = {
+        'current_value': current_value,
+        'cours_id': cours_id,
+        'session': session,
+        # Informations de base du cours
+        'cours_nom': cours.nom,
+        'cours_code': cours.code,
+        # Champs du plan cadre
+        'place_intro': plan_cadre.place_intro,
+        'objectif_terminal': plan_cadre.objectif_terminal,
+        'structure_intro': plan_cadre.structure_intro,
+        'structure_activites_theoriques': plan_cadre.structure_activites_theoriques,
+        'structure_activites_pratiques': plan_cadre.structure_activites_pratiques,
+        'structure_activites_prevues': plan_cadre.structure_activites_prevues,
+        'eval_evaluation_sommative': plan_cadre.eval_evaluation_sommative,
+        'eval_nature_evaluations_sommatives': plan_cadre.eval_nature_evaluations_sommatives,
+        'eval_evaluation_de_la_langue': plan_cadre.eval_evaluation_de_la_langue,
+        'eval_evaluation_sommatives_apprentissages': plan_cadre.eval_evaluation_sommatives_apprentissages,
+    }
+
+    # Ajouter les relations many-to-many de manière formatée
+    context.update({
+        'capacites': [cap.capacite for cap in plan_cadre.capacites],
+        'savoirs_etre': [sav.texte for sav in plan_cadre.savoirs_etre],
+        'objets_cibles': [obj.texte for obj in plan_cadre.objets_cibles],
+        'cours_relies': [cours.texte for cours in plan_cadre.cours_relies],
+        'cours_prealables': [cours.texte for cours in plan_cadre.cours_prealables],
+        'cours_corequis': [cours.texte for cours in plan_cadre.cours_corequis],
+        'competences_certifiees': [comp.texte for comp in plan_cadre.competences_certifiees],
+        'competences_developpees': [comp.texte for comp in plan_cadre.competences_developpees],
+    })
+
+    # Formatter le prompt avec le contexte enrichi
+    prompt = prompt_settings.prompt_template
+    try:
+        prompt = prompt.format(**context)
+    except KeyError as e:
+        print(f"Clé manquante dans le contexte : {e}")
+        return jsonify({'error': f'Variable manquante dans le contexte: {str(e)}'}), 400
+
+    ai_model = "gpt-4o"
+
+
+    user = db.session.query(User).with_for_update().get(current_user.id)
+    if not user:
+        return jsonify({'error': 'Utilisateur non trouvé'}), 404
+        
+    if not user.openai_key:
+        return jsonify({'error': 'Clé OpenAI non configurée'}), 400
+
+    # Initialize credits if needed and persist
+    if user.credits is None:
+        user.credits = 0.0
+        db.session.commit()
+
+    if user.credits <= 0:
+        return jsonify({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}), 403
+
+
+    try:
+        client = OpenAI(api_key=current_user.openai_key)
+        
+        response = client.beta.chat.completions.parse(
+            model=ai_model,
+            messages=[{"role": "user", "content": prompt}],
+            response_format=AIPlandeCoursResponse,
+        )
+        # Calculate usage and cost
+        usage_prompt = response.usage.prompt_tokens if hasattr(response, 'usage') else 0
+        usage_completion = response.usage.completion_tokens if hasattr(response, 'usage') else 0
+        cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
+
+        # Check if user has enough credits for the operation
+        if user.credits < cost:
+            return jsonify({'error': 'Crédits insuffisants pour cette opération.'}), 403
+
+        # Update credits within the same transaction
+        user.credits -= cost
+        db.session.commit()
+
+        structured_data = response.choices[0].message.parsed
+        
+        return jsonify(structured_data.model_dump())
+    
+    except OpenAIError as e:
+        return jsonify({'error': f'Erreur API OpenAI: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': f'Erreur interne: {str(e)}'}), 500
 
 
 @plan_de_cours_bp.route(

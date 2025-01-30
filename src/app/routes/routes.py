@@ -1,5 +1,5 @@
 # app.py
-from flask import Blueprint, Flask, render_template, redirect, url_for, request, flash, send_file, jsonify
+from flask import Blueprint, Flask, render_template, redirect, url_for, request, flash, send_file, jsonify, session
 from flask_ckeditor import CKEditor
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import json
@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 import os
 import markdown
 from jinja2 import Template
+from sqlalchemy import func  # Add this at the top with your other imports
 import bleach
 from docxtpl import DocxTemplate
 from io import BytesIO 
@@ -64,7 +65,8 @@ from app.forms import (
     DepartmentPIEAForm,
     EditUserForm,
     ProgrammeMinisterielForm,
-    CreditManagementForm
+    CreditManagementForm,
+    CegepForm
 )
 from app.models import (
     db, 
@@ -85,8 +87,53 @@ from app.models import (
     Cours, 
     ListeCegep
 )
+import logging
+logger = logging.getLogger(__name__)
 
 main = Blueprint('main', __name__)
+
+@main.route('/gestion_cegeps', methods=['GET', 'POST'])
+def gestion_cegeps():
+    form = CegepForm()
+    
+    if form.validate_on_submit():
+        # Ajouter un nouveau cégep
+        nouveau_cegep = ListeCegep(
+            nom=form.nom.data,
+            type=form.type.data,
+            region=form.region.data
+        )
+        db.session.add(nouveau_cegep)
+        db.session.commit()
+        flash('Cégep ajouté avec succès!', 'success')
+        return redirect(url_for('main.gestion_cegeps'))
+    
+    # Récupérer tous les cégeps pour affichage
+    cegeps = ListeCegep.query.all()
+    return render_template('gestion_cegeps.html', form=form, cegeps=cegeps)
+
+@main.route('/supprimer_cegep/<int:id>', methods=['POST'])
+def supprimer_cegep(id):
+    cegep = ListeCegep.query.get_or_404(id)
+    db.session.delete(cegep)
+    db.session.commit()
+    flash('Cégep supprimé avec succès!', 'success')
+    return redirect(url_for('main.gestion_cegeps'))
+
+@main.route('/modifier_cegep/<int:id>', methods=['GET', 'POST'])
+def modifier_cegep(id):
+    cegep = ListeCegep.query.get_or_404(id)
+    form = CegepForm(obj=cegep)
+    
+    if form.validate_on_submit():
+        cegep.nom = form.nom.data
+        cegep.type = form.type.data
+        cegep.region = form.region.data
+        db.session.commit()
+        flash('Cégep modifié avec succès!', 'success')
+        return redirect(url_for('main.gestion_cegeps'))
+    
+    return render_template('modifier_cegep.html', form=form, cegep=cegep)
 
 # Define the markdown filter
 @main.app_template_filter('markdown')
@@ -236,20 +283,22 @@ def get_cegep_details():
 @main.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))  # Redirige si déjà connecté
+        return redirect(url_for('main.index'))
 
     form = LoginForm()
     if form.validate_on_submit():
-        from sqlalchemy import func
         username = form.username.data.lower()
         password = form.password.data
 
         user_row = User.query.filter(func.lower(User.username) == username).first()
         if user_row and check_password_hash(user_row.password, password):
-            login_user(user_row)
-            flash('Connexion réussie !', 'success')
+            login_user(user_row, remember=True)
+            session.permanent = True
             next_page = request.args.get('next')
-            return redirect(next_page or url_for('main.index'))
+            if not next_page or not next_page.startswith('/'):
+                next_page = url_for('main.index')
+
+            return redirect(next_page)
         else:
             flash('Nom d\'utilisateur ou mot de passe incorrect.', 'danger')
 
@@ -469,22 +518,25 @@ def change_password():
 def index():
     # Récupérer l'utilisateur connecté
     user = current_user
-
+    
     # Vérifier si l'utilisateur est associé à un programme
     if user.programmes:
         default_programme_id = user.programmes[0].id
+        return redirect(url_for('programme.view_programme', programme_id=default_programme_id))
+    
+    # Si l'utilisateur n'a pas de programme, vérifier les programmes disponibles
+    programmes = Programme.query.all()
+    if programmes:
+        # There are available programmes, redirect to the first one
+        return redirect(url_for('programme.view_programme', programme_id=programmes[0].id))
+    elif user.role == 'admin':
+        # No programmes available and user is admin
+        flash("Aucun programme disponible. Veuillez en ajouter un.", "warning")
+        return redirect(url_for('main.add_programme'))
     else:
-        # Récupérer tous les programmes disponibles
-        programmes = Programme.query.all()
-
-        if programmes:
-            # Sélectionner le premier programme disponible
-            default_programme_id = programmes[0].id
-        else:
-            flash("Aucun programme disponible. Veuillez en ajouter un.", "warning")
-            return redirect(url_for('main.add_programme'))
-
-    return redirect(url_for('programme.view_programme', programme_id=default_programme_id))
+        # No programmes available and user is not admin
+        flash("Vous n'avez accès à aucun programme. Veuillez contacter un administrateur.", "warning")
+        return render_template('no_access.html')
 
 
 @main.route('/add_programme', methods=('GET', 'POST'))
@@ -892,16 +944,30 @@ def edit_cours(cours_id):
     corequis_existants = CoursCorequis.query.filter_by(cours_id=cours_id).all()
 
     # Récupérer tous les éléments de compétence (avec code) pour le form
-    elements_competence = ElementCompetence.query.join(Competence).order_by(Competence.code, ElementCompetence.nom).all()
+    elements_competence_query = ElementCompetence.query.join(Competence).order_by(Competence.code, ElementCompetence.nom).all()
+    
+    # Convert ElementCompetence objects to JSON-serializable dictionaries
+    elements_competence = [
+        {
+            'id': ec.id,
+            'nom': ec.nom,
+            'competence_code': ec.competence.code,
+            'competence_nom': ec.competence.nom
+        }
+        for ec in elements_competence_query
+    ]
+    
     ec_assoc = ElementCompetenceParCours.query.filter_by(cours_id=cours_id).all()
 
+    # Rest of your existing code...
     programmes = Programme.query.all()
     fils_conducteurs = FilConducteur.query.all()
 
     form = CoursForm()
     form.programme.choices = [(p.id, p.nom) for p in programmes]
 
-    ec_choices = [(ec.id, f"{ec.competence.code} - {ec.nom}") for ec in elements_competence]
+    # Use the query result for form choices, not the serialized version
+    ec_choices = [(ec.id, f"{ec.competence.code} - {ec.nom}") for ec in elements_competence_query]
     form.corequis.choices = cours_choices
     form.fil_conducteur.choices = [(fc.id, fc.description) for fc in fils_conducteurs]
 
@@ -939,6 +1005,7 @@ def edit_cours(cours_id):
             subform.element_competence.choices = ec_choices
         for p_subform in form.prealables:
             p_subform.cours_prealable_id.choices = cours_choices
+
 
     if form.validate_on_submit():
         cours.programme_id = form.programme.data

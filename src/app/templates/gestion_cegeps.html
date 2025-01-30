@@ -1,0 +1,66 @@
+{% extends "parametres.html" %}
+
+{% block parametres_content %}
+<div class="container my-5">
+    <h1 class="mb-4">Gestion des Cégeps</h1>
+    
+    <!-- Formulaire d'ajout d'un nouveau cégep -->
+    <div class="card mb-5 shadow-sm">
+        <div class="card-body">
+            <h2 class="h4 mb-3">Ajouter un nouveau cégep</h2>
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.nom.label(class="form-label") }}
+                    {{ form.nom(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.type.label(class="form-label") }}
+                    {{ form.type(class="form-select") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.region.label(class="form-label") }}
+                    {{ form.region(class="form-control") }}
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Ajouter le cégep
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Liste des cégeps -->
+    <h2 class="mb-4">Liste des Cégeps</h2>
+    {% if cegeps %}
+    <div class="row">
+        {% for cegep in cegeps %}
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ cegep.nom }}</h5>
+                    <p class="card-text">
+                        <strong>Type :</strong> {{ cegep.type }}<br>
+                        <strong>Région :</strong> {{ cegep.region }}
+                    </p>
+                    <div class="d-flex justify-content-end">
+                        <a href="{{ url_for('main.modifier_cegep', id=cegep.id) }}" class="btn btn-sm btn-warning me-2">
+                            <i class="bi bi-pencil"></i> Modifier
+                        </a>
+                        <form method="POST" action="{{ url_for('main.supprimer_cegep', id=cegep.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce cégep?');">
+                                <i class="bi bi-trash"></i> Supprimer
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info shadow-sm">
+        <i class="bi bi-info-circle"></i> Aucun cégep n'a encore été ajouté.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

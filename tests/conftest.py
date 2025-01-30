@@ -1,52 +1,42 @@
+# tests/conftest.py
+
 import pytest
 import sys, os
 from pathlib import Path
-from flask_wtf.csrf import CSRFProtect  # Add this import
+from flask_wtf.csrf import CSRFProtect
+from src.extensions import db, csrf  # Import centralized extensions
+
 sys.path.append(str(Path(__file__).parent.parent / 'src'))
 os.environ['TESTING'] = 'True'
-from main import create_app, db
-from app.routes.cours import cours_bp
-from app.routes.routes import main as main_bp
-from app.routes.plan_de_cours import plan_de_cours_bp
-from app.routes.programme import programme_bp
-from utils.auth import login_manager  # Importer login_manager
+from src.app import create_app
+from src.app.routes.cours import cours_bp
+from src.app.routes.routes import main as main_bp
+from src.app.routes.plan_de_cours import plan_de_cours_bp
+from src.app.routes.programme import programme_bp
+from src.utils.auth import login_manager  # Importer login_manager
 from flask_login import current_user
-from app.models import User, Programme, Department
-
-class TestConfig:
-    TESTING = True
-    
-    SERVER_NAME = 'localhost.localdomain'
-    APPLICATION_ROOT = '/'
-    PREFERRED_URL_SCHEME = 'http'
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    WTF_CSRF_ENABLED = False
-    SECRET_KEY = 'test_key'
+from src.app.models import User, Programme, Department
 
 @pytest.fixture(scope='function')
 def test_app():
-    """Créer une application Flask pour les tests."""
-    app = create_app()
-    app.config.from_object(TestConfig)
-    login_manager.init_app(app)
-    csrf = CSRFProtect(app)
-    csrf.init_app(app)  # Initialisation CSRF
+    """Create a Flask application for testing."""
+    app = create_app(testing=True)
+    
+    with app.app_context():
+        db.create_all()
 
-    app.register_blueprint(cours_bp)
-    app.register_blueprint(main_bp)
-    app.register_blueprint(plan_de_cours_bp)
-    app.register_blueprint(programme_bp)
+    ctx = app.app_context()
+    ctx.push()
+
+    yield app
 
     with app.app_context():
-        db.init_app(app)
-        db.create_all()  # 🔴 Assure que toutes les tables sont créées avant les tests
-
-    return app
-
+        db.session.remove()
+        db.drop_all()
 
 @pytest.fixture(scope='function')
 def test_db(test_app):
+    """Provide a database for the tests."""
     with test_app.app_context():
         db.create_all()
         yield db
@@ -55,6 +45,7 @@ def test_db(test_app):
 
 @pytest.fixture(scope='function')
 def client(test_app):
+    """Provide a test client for the tests."""
     return test_app.test_client()
 
 @pytest.fixture
@@ -68,7 +59,7 @@ def login_user_helper(client, test_db):
 
 @pytest.fixture
 def user_with_programme(test_app, test_db):
-    """Créer un utilisateur avec un programme associé."""
+    """Create a user with an associated programme."""
     with test_app.app_context():
         department = Department(nom="Département Informatique")
         test_db.session.add(department)
@@ -82,30 +73,29 @@ def user_with_programme(test_app, test_db):
         test_db.session.add(user)
         test_db.session.commit()
 
-        # Associer l'utilisateur au programme
+        # Associate the user with the programme
         user.programmes.append(programme)
         test_db.session.commit()
 
-        # Rafraîchir l'utilisateur pour éviter DetachedInstanceError
+        # Refresh the user to avoid DetachedInstanceError
         test_db.session.refresh(user)  
-        return user  # Maintenant, il reste attaché à la session active
+        return user  # Now, it's attached to the active session
 
 @pytest.fixture
 def user_without_programme(test_app, test_db):
-    """Créer un utilisateur sans programme associé."""
+    """Create a user without an associated programme."""
     with test_app.app_context():
         user = User(username="testuser2", password="hashedpassword")
         test_db.session.add(user)
         test_db.session.commit()
 
-        # Rafraîchir l'utilisateur pour éviter DetachedInstanceError
+        # Refresh the user to avoid DetachedInstanceError
         test_db.session.refresh(user)
         return user
 
-
 @pytest.fixture
 def login_user(client, user_with_programme, test_db):
-    """Simuler l'authentification de l'utilisateur avec programme."""
+    """Simulate logging in a user with a programme."""
     with test_db.session.no_autoflush:
         user_with_programme = test_db.session.merge(user_with_programme)
 
@@ -116,7 +106,7 @@ def login_user(client, user_with_programme, test_db):
 
 @pytest.fixture
 def login_user_without_programme(client, user_without_programme):
-    """Simuler l'authentification de l'utilisateur sans programme."""
+    """Simulate logging in a user without a programme."""
     with client.session_transaction() as sess:
-        sess['_user_id'] = str(user_without_programme.id)  # Flask-Login stocke l'ID utilisateur dans la session
+        sess['_user_id'] = str(user_without_programme.id)  # Flask-Login stores the user ID in the session
     return user_without_programme
