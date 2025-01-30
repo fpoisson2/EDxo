@@ -97,6 +97,21 @@ def create_app(testing=False):
 
     # Initialize extensions
     login_manager.init_app(app)
+
+    from app.models import User  # Import your User model
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        try:
+            return User.query.get(int(user_id))
+        except:
+            return None
+
+    # Optional but recommended: Set the login view
+    login_manager.login_view = 'main.login'
+    login_manager.login_message_category = 'info'
+
+    
     db.init_app(app)
     ckeditor.init_app(app)
     csrf.init_app(app)

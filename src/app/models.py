@@ -5,13 +5,11 @@ from sqlalchemy import UniqueConstraint
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
 
-user_programme = db.Table(
-    'User_Programme',
+# Association table for User-Programme many-to-many relationship
+user_programme = db.Table('User_Programme',
     db.Column('user_id', db.Integer, db.ForeignKey('User.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True),
-    extend_existing=True  # Allow table redefinition
+    db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
-
 
 
 
@@ -129,11 +127,6 @@ class BackupConfig(db.Model):
 # ------------------------------------------------------------------------------
 class User(UserMixin, db.Model):
     __tablename__ = "User"
-    __table_args__ = (
-        UniqueConstraint('email', name='uq_user_email'),
-        {'extend_existing': True}  # Allow table redefinition
-    )
-    
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.Text, nullable=False)
     password = db.Column(db.Text, nullable=False)
@@ -144,13 +137,15 @@ class User(UserMixin, db.Model):
     credits = db.Column(db.Float, nullable=False, default=0.0)
     email = db.Column(db.String(120), nullable=True)
 
-    programmes = db.relationship(
-        'Programme', 
-        secondary=user_programme,
-        backref=db.backref('users', lazy='dynamic'),
-        passive_deletes=True  # Enable cascade deletes
+
+    __table_args__ = (
+        UniqueConstraint('email', name='uq_user_email'),  # ✅ Explicit constraint name
     )
 
+    # Relations
+    programmes = db.relationship('Programme', 
+                               secondary=user_programme,
+                               backref=db.backref('users', lazy='dynamic'))
 
 
 # ------------------------------------------------------------------------------
@@ -591,12 +586,11 @@ class PlanDeCoursEvaluationsCapacites(db.Model):
 
 class Department(db.Model):
     __tablename__ = "Department"
-    __table_args__ = {'extend_existing': True}  # Allow table redefinition
-    
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.Text, nullable=False)
     cegep_id = db.Column(db.Integer, db.ForeignKey("ListeCegep.id"), nullable=True)
 
+    # Relations
     regles = db.relationship("DepartmentRegles", back_populates="department", cascade="all, delete-orphan")
     piea = db.relationship("DepartmentPIEA", back_populates="department", cascade="all, delete-orphan")
     programmes = db.relationship("Programme", back_populates="department")
@@ -641,8 +635,6 @@ class ListeProgrammeMinisteriel(db.Model):
         
 class Programme(db.Model):
     __tablename__ = "Programme"
-    __table_args__ = {'extend_existing': True}  # Allow table redefinition
-    
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.Text, nullable=False)
     department_id = db.Column(db.Integer, db.ForeignKey("Department.id"), nullable=False)
@@ -650,10 +642,10 @@ class Programme(db.Model):
     cegep_id = db.Column(db.Integer, db.ForeignKey("ListeCegep.id"), nullable=True)
     variante = db.Column(db.Text, nullable=True)
 
+    # Relations
     cours = db.relationship("Cours", back_populates="programme")
     department = db.relationship("Department", back_populates="programmes")
     liste_programme_ministeriel = db.relationship("ListeProgrammeMinisteriel", back_populates="programmes")
-
 
     def __repr__(self):
         return f"<Programme {self.nom}>"
