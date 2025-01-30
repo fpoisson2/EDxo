@@ -78,6 +78,10 @@ programme_bp = Blueprint('programme', __name__, url_prefix='/programme')
 @programme_bp.route('/<int:programme_id>')
 @login_required
 def view_programme(programme_id):
+    # Debug logging
+    logger.debug(f"Accessing programme {programme_id}")
+    logger.debug(f"User programmes: {[p.id for p in current_user.programmes]}")
+    
     # Récupérer le programme
     programme = Programme.query.get(programme_id)
     if not programme:
@@ -86,8 +90,8 @@ def view_programme(programme_id):
 
     # Vérifier si l'utilisateur a accès à ce programme
     if programme not in current_user.programmes:
-        flash('Vous n\'avez pas accès à ce programme.', 'danger')
-        return redirect(url_for('main.index'))
+        flash("Vous n'avez pas accès à ce programme.", 'danger')
+        return render_template('no_access.html')  # Instead of redirecting to index
 
 
     # Récupérer les compétences associées
