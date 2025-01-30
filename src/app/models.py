@@ -11,6 +11,14 @@ user_programme = db.Table('User_Programme',
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
+# Dans models.py
+class AnalysePlanCoursPrompt(db.Model):
+    __tablename__ = 'analyse_plan_cours_prompt'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    prompt_template = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
 
 class PlanDeCoursPromptSettings(db.Model):
@@ -286,6 +294,137 @@ class PlanCadre(db.Model):
     def __repr__(self):
         return f"<PlanCadre id={self.id} pour Cours id={self.cours_id}>"
 
+    def to_dict(self):
+        """
+        Convert PlanCadre model instance to a dictionary for JSON serialization.
+        Includes all fields and handles nested relationships comprehensively.
+        """
+        return {
+            'id': self.id,
+            'cours_id': self.cours_id,
+            'place_intro': self.place_intro,
+            'objectif_terminal': self.objectif_terminal,
+            'structure_intro': self.structure_intro,
+            'structure_activites_theoriques': self.structure_activites_theoriques,
+            'structure_activites_pratiques': self.structure_activites_pratiques,
+            'structure_activites_prevues': self.structure_activites_prevues,
+            'eval_evaluation_sommative': self.eval_evaluation_sommative,
+            'eval_nature_evaluations_sommatives': self.eval_nature_evaluations_sommatives,
+            'eval_evaluation_de_la_langue': self.eval_evaluation_de_la_langue,
+            'eval_evaluation_sommatives_apprentissages': self.eval_evaluation_sommatives_apprentissages,
+            'additional_info': self.additional_info,
+            'ai_model': self.ai_model,
+            
+            # Cours information
+            'cours_info': {
+                'id': self.cours.id if self.cours else None,
+                'code': self.cours.code if self.cours else None,
+                'nom': self.cours.nom if self.cours else None,
+                'programme_id': self.cours.programme_id if self.cours else None,
+            } if hasattr(self, 'cours') else None,
+            
+            # Capacités
+            'capacites': [
+                {
+                    'id': capacite.id,
+                    'capacite': capacite.capacite,
+                    'description_capacite': capacite.description_capacite,
+                    'ponderation_min': capacite.ponderation_min,
+                    'ponderation_max': capacite.ponderation_max,
+                    
+                    # Savoirs Nécessaires
+                    'savoirs_necessaires': [
+                        {'id': sn.id, 'texte': sn.texte} 
+                        for sn in capacite.savoirs_necessaires
+                    ],
+                    
+                    # Savoirs Faire
+                    'savoirs_faire': [
+                        {
+                            'id': sf.id, 
+                            'texte': sf.texte,
+                            'cible': sf.cible,
+                            'seuil_reussite': sf.seuil_reussite
+                        } 
+                        for sf in capacite.savoirs_faire
+                    ],
+                    
+                    # Moyens Evaluation
+                    'moyens_evaluation': [
+                        {'id': me.id, 'texte': me.texte} 
+                        for me in capacite.moyens_evaluation
+                    ]
+                } 
+                for capacite in self.capacites
+            ],
+            
+            # Savoirs Être
+            'savoirs_etre': [
+                {'id': se.id, 'texte': se.texte} 
+                for se in self.savoirs_etre
+            ],
+            
+            # Objets Cibles
+            'objets_cibles': [
+                {
+                    'id': oc.id, 
+                    'texte': oc.texte,
+                    'description': oc.description
+                } 
+                for oc in self.objets_cibles
+            ],
+            
+            # Cours Reliés
+            'cours_relies': [
+                {
+                    'id': cr.id, 
+                    'texte': cr.texte,
+                    'description': cr.description
+                } 
+                for cr in self.cours_relies
+            ],
+            
+            # Cours Préalables
+            'cours_prealables': [
+                {
+                    'id': cp.id, 
+                    'texte': cp.texte,
+                    'description': cp.description
+                } 
+                for cp in self.cours_prealables
+            ],
+            
+            # Cours Corequis
+            'cours_corequis': [
+                {
+                    'id': cc.id, 
+                    'texte': cc.texte,
+                    'description': cc.description
+                } 
+                for cc in self.cours_corequis
+            ],
+            
+            # Compétences Certifiées
+            'competences_certifiees': [
+                {
+                    'id': cc.id, 
+                    'texte': cc.texte,
+                    'description': cc.description
+                } 
+                for cc in self.competences_certifiees
+            ],
+            
+            # Compétences Développées
+            'competences_developpees': [
+                {
+                    'id': cd.id, 
+                    'texte': cd.texte,
+                    'description': cd.description
+                } 
+                for cd in self.competences_developpees
+            ]
+        }
+
     @classmethod
     def get_by_cours_info(cls, nom=None, code=None):
         """Récupère un plan-cadre à partir du nom ou du code du cours."""
@@ -498,6 +637,78 @@ class PlanDeCours(db.Model):
 
     def __repr__(self):
         return f"<PlanDeCours id={self.id} session={self.session} pour Cours id={self.cours_id}>"
+
+    def to_dict(self):
+        """
+        Convert PlanDeCours model instance to a dictionary for JSON serialization.
+        Includes the most relevant fields and handles nested relationships.
+        """
+        return {
+            'id': self.id,
+            'cours_id': self.cours_id,
+            'session': self.session,
+            'campus': self.campus,
+            'nom_enseignant': self.nom_enseignant,
+            'telephone_enseignant': self.telephone_enseignant,
+            'courriel_enseignant': self.courriel_enseignant,
+            'bureau_enseignant': self.bureau_enseignant,
+            'presentation_du_cours': self.presentation_du_cours,
+            'objectif_terminal_du_cours': self.objectif_terminal_du_cours,
+            'organisation_et_methodes': self.organisation_et_methodes,
+            'accomodement': self.accomodement,
+            'evaluation_formative_apprentissages': self.evaluation_formative_apprentissages,
+            'evaluation_expression_francais': self.evaluation_expression_francais,
+            'seuil_reussite': self.seuil_reussite,
+            'place_et_role_du_cours': self.place_et_role_du_cours,
+            'materiel': self.materiel,
+            'compatibility_percentage': self.compatibility_percentage,
+            'recommendation_ameliore': self.recommendation_ameliore,
+            'recommendation_plan_cadre': self.recommendation_plan_cadre,
+            'modified_at': self.modified_at.isoformat() if self.modified_at else None,
+            
+            # Optional: Include related course information if needed
+            'cours_info': {
+                'code': self.cours.code if self.cours else None,
+                'nom': self.cours.nom if self.cours else None,
+                'programme_id': self.cours.programme_id if self.cours else None,
+            } if hasattr(self, 'cours') else None,
+            
+            # Optional: Include calendar details
+            'calendriers': [
+                {
+                    'semaine': cal.semaine,
+                    'sujet': cal.sujet,
+                    'activites': cal.activites,
+                    'travaux_hors_classe': cal.travaux_hors_classe,
+                    'evaluations': cal.evaluations
+                } for cal in self.calendriers
+            ] if self.calendriers else [],
+            
+            # Optional: Include mediagraphie
+            'mediagraphies': [
+                {
+                    'reference_bibliographique': media.reference_bibliographique
+                } for media in self.mediagraphies
+            ] if self.mediagraphies else [],
+            
+            # Optional: Include disponibilites
+            'disponibilites': [
+                {
+                    'jour_semaine': dispo.jour_semaine,
+                    'plage_horaire': dispo.plage_horaire,
+                    'lieu': dispo.lieu
+                } for dispo in self.disponibilites
+            ] if self.disponibilites else [],
+            
+            # Optional: Include evaluations
+            'evaluations': [
+                {
+                    'titre_evaluation': eval.titre_evaluation,
+                    'description': eval.description,
+                    'semaine': eval.semaine
+                } for eval in self.evaluations
+            ] if self.evaluations else []
+        }
 
 
 class PlanDeCoursCalendrier(db.Model):

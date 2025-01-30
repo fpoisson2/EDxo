@@ -17,19 +17,67 @@ csrf = CSRFProtect()
 
 
 # Importez bien sûr db, User et GlobalGenerationSettings depuis vos modèles
-from app.models import db, User, GlobalGenerationSettings, GrillePromptSettings, PlanDeCours, Cours, Programme, PlanDeCoursPromptSettings
+from app.models import db, User, GlobalGenerationSettings, GrillePromptSettings, PlanDeCours, Cours, Programme, PlanDeCoursPromptSettings, AnalysePlanCoursPrompt
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 
 # Liste des canevas existants
 CANEVAS_LIST = ['plan_cadre_template.docx', 'plan_de_cours_template.docx', 'evaluation_grid_template.docx']
 
+@settings_bp.route('/analyse_prompt', methods=['GET', 'POST'])
+@roles_required('admin')
+@login_required 
+def configure_analyse_prompt():
+    if current_user.role != 'admin':
+        flash('Accès non autorisé', 'error')
+        return redirect(url_for('main.index'))
+
+    prompt = AnalysePlanCoursPrompt.query.first()
+    if not prompt:
+        default_template = """Tu es un assistant IA expert en évaluation de plans de cours dans l'enseignement supérieur. Ta mission principale est d'analyser la cohérence entre le calendrier du cours et les savoir-faire/compétences définis dans le plan-cadre.
+
+FOCUS PRINCIPAL - ALIGNEMENT CALENDRIER ET SAVOIR-FAIRE (60 points) :
+1. Analyse détaillée du calendrier (30 points)
+   - Chaque semaine du calendrier doit être analysée en lien avec les savoir-faire
+   - Évaluer si le temps alloué est suffisant pour chaque savoir-faire
+   - Vérifier la progression logique des apprentissages
+
+[... le reste de votre prompt actuel ...]
+
+Voici les données du plan de cours (ID: {plan_cours_id}):
+{plan_cours_json}
+
+Voici les données du plan-cadre (ID: {plan_cadre_id}):
+{plan_cadre_json}
+
+Voici le schéma JSON auquel ta réponse doit strictement adhérer :
+{schema_json}"""
+        prompt = AnalysePlanCoursPrompt(prompt_template=default_template)
+        db.session.add(prompt)
+        db.session.commit()
+
+    if request.method == 'POST':
+        prompt.prompt_template = request.form.get('prompt_template')
+        try:
+            db.session.commit()
+            flash('Prompt sauvegardé avec succès', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash('Erreur lors de la sauvegarde', 'error')
+            logging.error(f"Erreur sauvegarde prompt: {e}")
+
+    return render_template('settings/analyse_plan_cours_prompt.html', prompt=prompt)
+
 @settings_bp.route('/gestion_canevas')
+@roles_required('admin')
+@login_required 
 def gestion_canevas():
     form = UploadForm()
     return render_template('/settings/gestion_canevas.html', canevas_list=CANEVAS_LIST, upload_form=form)
 
 @settings_bp.route('/upload_canevas/<filename>', methods=['POST'])
+@roles_required('admin')
+@login_required 
 def upload_canevas(filename):
     if 'file' not in request.files:
         flash('Aucun fichier sélectionné.', 'danger')
@@ -58,6 +106,8 @@ def upload_canevas(filename):
     return redirect(url_for('settings.gestion_canevas'))
 
 @settings_bp.route('/download_canevas/<filename>')
+@roles_required('admin')
+@login_required 
 def download_canevas(filename):
     upload_folder = current_app.config['UPLOAD_FOLDER']
     file_path = os.path.join(upload_folder, filename)
@@ -71,7 +121,8 @@ def download_canevas(filename):
 
 
 @settings_bp.route('/plan-de-cours/prompts', methods=['GET'])
-@login_required
+@roles_required('admin')
+@login_required 
 def plan_de_cours_prompt_settings():
     """Page de gestion des configurations de prompts pour les plans de cours."""
     prompts = PlanDeCoursPromptSettings.query.all()
@@ -82,7 +133,8 @@ def plan_de_cours_prompt_settings():
     )
 
 @settings_bp.route('/plan-de-cours/prompts/<int:prompt_id>', methods=['PUT', 'POST'])
-@login_required
+@roles_required('admin')
+@login_required 
 def update_plan_de_cours_prompt(prompt_id):
     """Met à jour une configuration de prompt pour plan de cours."""
     try:
@@ -112,7 +164,8 @@ def update_plan_de_cours_prompt(prompt_id):
 
 
 @settings_bp.route('/plan-de-cours/prompts/test', methods=['POST'])
-@login_required
+@roles_required('admin')
+@login_required 
 def test_plan_de_cours_prompt():
     """Teste un prompt de plan de cours avec des données exemple."""
     data = request.get_json()
