@@ -102,23 +102,29 @@ def send_backup_email(app, recipient_email, db_path):
     from email import encoders
 
     logger.info(f"Starting scheduled backup to {recipient_email}")
-
+    
+    # Définition des chemins corrects
+    CONFIG_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config')
+    TOKEN_PATH = os.path.join(CONFIG_DIR, 'token.json')
+    CREDENTIALS_PATH = os.path.join(CONFIG_DIR, 'credentials.json')
+    
     SCOPES = ['https://www.googleapis.com/auth/gmail.send']
     creds = None
 
-    # Vérification du token
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    # Vérification du token avec le nouveau chemin
+    if os.path.exists(TOKEN_PATH):
+        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
+    
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-            # ✅ Utilisation de run_local_server avec open_browser=False
+            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
             creds = flow.run_local_server(port=0, open_browser=False)
-
-        # Sauvegarde du token
-        with open('token.json', 'w') as token:
+        
+        # Sauvegarde du token dans le bon répertoire
+        os.makedirs(CONFIG_DIR, exist_ok=True)  # Crée le répertoire si nécessaire
+        with open(TOKEN_PATH, 'w') as token:
             token.write(creds.to_json())
 
     service = build('gmail', 'v1', credentials=creds)
@@ -136,7 +142,6 @@ def send_backup_email(app, recipient_email, db_path):
     # Lecture du fichier .db et ajout en pièce jointe
     with open(db_path, 'rb') as f:
         file_data = f.read()
-
     attachment = MIMEBase('application', 'octet-stream')
     attachment.set_payload(file_data)
     encoders.encode_base64(attachment)
@@ -152,9 +157,10 @@ def send_backup_email(app, recipient_email, db_path):
             userId='me',
             body={'raw': raw}
         ).execute()
-        print("Message envoyé. ID:", sent_message['id'])
+        logger.info(f"Message envoyé. ID: {sent_message['id']}")
     except Exception as e:
-        print("Erreur:", e)
+        logger.error(f"Erreur lors de l'envoi de l'email: {str(e)}")
+        raise
 
 
 def get_initials(nom_complet):
