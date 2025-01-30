@@ -107,35 +107,45 @@ def create_app():
 
     @app.before_request
     def before_request():
+        # Avoid checking session on static files
+        if request.endpoint and 'static' in request.endpoint:
+            return
+
         try:
+            # Database check
             db.session.execute(text("SELECT 1"))
             db.session.commit()
             
+            if not current_user.is_authenticated:
+                # Don't redirect if already going to login page
+                if request.endpoint and request.endpoint != 'main.login':
+                    return redirect(url_for('main.login'))
+                return
+                
+            # Session handling for authenticated users
             session.permanent = True
             now = datetime.now(timezone.utc)
+            
+            last_activity_str = session.get('last_activity')
+            if last_activity_str:
+                try:
+                    last_activity = datetime.fromisoformat(last_activity_str)
+                    elapsed = now - last_activity
+                    if elapsed > app.config['PERMANENT_SESSION_LIFETIME']:
+                        logout_user()
+                        return redirect(url_for('main.login'))
+                except ValueError:
+                    logout_user()
+                    return redirect(url_for('main.login'))
+                    
             session['last_activity'] = now.isoformat()
+            
         except SQLAlchemyError as e:
             logger.error(f"Database connection failed: {e}")
+            return "Database Error", 500
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
-
-        session.permanent = True
-        now = datetime.now(timezone.utc)
-        
-        last_activity_str = session.get('last_activity')
-        if last_activity_str:
-            try:
-                last_activity = datetime.fromisoformat(last_activity_str)
-            except ValueError:
-                logout_user()
-                return redirect(url_for('login'))
-
-            elapsed = now - last_activity
-            if elapsed > app.config['PERMANENT_SESSION_LIFETIME']:
-                logout_user()
-                return redirect(url_for('login'))
-
-        session['last_activity'] = now.isoformat()
+            return "Server Error", 500
 
     @app.after_request
     def after_request(response):
