@@ -28,6 +28,8 @@ from app.routes.plan_de_cours import plan_de_cours_bp
 from app.routes import routes
 from sqlalchemy import text  # Add this import
 import atexit
+from sqlalchemy.exc import SQLAlchemyError
+from app.models import BackupConfig
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
