@@ -129,16 +129,19 @@
         color: #38a169;
         font-size: 1rem; /* Ajuste la taille de l'icône */
       }
-      /* Dropdown Toggle as Badge with Icon */
-      .dropdown-toggle.badge {
+      /* Dropdown Toggle as Simple Icon */
+      .dropdown-toggle.user-icon {
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 0.3rem; /* Réduit l'espacement */
-        font-size: 0.9rem; /* Réduit la taille de la police */
+        font-size: 1.5rem; /* Taille de l'icône */
+        color: #555;
       }
-      .dropdown-toggle.badge i {
-        font-size: 1rem; /* Ajuste la taille de l'icône */
+      /* Masquer la flèche de dropdown */
+      .dropdown-toggle.user-icon::after {
+        display: none;
+      }
+      /* Hover effect for user icon */
+      .dropdown-toggle.user-icon:hover {
+        color: #000;
       }
       /* Responsive Adjustments */
       @media (max-width: 768px) {
@@ -158,12 +161,6 @@
           font-size: 0.8rem; /* Réduit la taille de la police */
         }
         .credit-display i {
-          font-size: 0.9rem; /* Ajuste la taille de l'icône */
-        }
-        .dropdown-toggle.badge {
-          font-size: 0.8rem; /* Réduit la taille de la police */
-        }
-        .dropdown-toggle.badge i {
           font-size: 0.9rem; /* Ajuste la taille de l'icône */
         }
       }
@@ -250,23 +247,31 @@
               <div class="dropdown">
                 <a
                   href="#"
-                  class="badge bg-primary dropdown-toggle d-flex align-items-center"
+                  class="dropdown-toggle user-icon"
                   id="userDropdown"
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
                 >
                   <i class="bi bi-person-circle"></i>
-                  {{ current_user.username }}
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                  <!-- Affichage du nom d'utilisateur en tant qu'en-tête -->
+                  <li class="dropdown-header text-center">
+                    {{ current_user.username }}
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="{{ url_for('main.change_password') }}">
+                      <i class="bi bi-lock me-2"></i> Mon profil
+                    </a>
+                  </li>
                   <li>
                     <a class="dropdown-item" href="{{ url_for('settings.parametres') }}">
                       <i class="bi bi-gear me-2"></i> Paramètres
                     </a>
                   </li>
-                  <li>
+                  <!-- <li>
                     <hr class="dropdown-divider">
-                  </li>
+                  </li> -->
                   <li>
                     <a class="dropdown-item" href="{{ url_for('main.logout') }}">
                       <i class="bi bi-box-arrow-right me-2"></i> Se déconnecter
