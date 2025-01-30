@@ -1,4 +1,4 @@
-from flask import Flask, session, jsonify, redirect, url_for  # Add session and other needed imports
+from flask import Flask, session, jsonify, redirect, url_for, request  # Add session and other needed imports
 from flask_login import current_user, logout_user  # Add logout_user
 from flask_ckeditor import CKEditor
 from flask_wtf import CSRFProtect
@@ -30,7 +30,6 @@ from sqlalchemy import text  # Add this import
 import atexit
 from sqlalchemy.exc import SQLAlchemyError
 from app.models import BackupConfig
-import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
