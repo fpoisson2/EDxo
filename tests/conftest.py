@@ -4,7 +4,8 @@ from pathlib import Path
 from flask_wtf.csrf import CSRFProtect  # Add this import
 sys.path.append(str(Path(__file__).parent.parent / 'src'))
 os.environ['TESTING'] = 'True'
-from main import create_app, db
+from extensions import db
+from app import create_app
 from app.routes.cours import cours_bp
 from app.routes.routes import main as main_bp
 from app.routes.plan_de_cours import plan_de_cours_bp
