@@ -562,7 +562,12 @@ class PlanDeCoursEvaluations(db.Model):
 
     plan_de_cours = db.relationship("PlanDeCours", back_populates="evaluations")
     capacites = db.relationship("PlanDeCoursEvaluationsCapacites", back_populates="evaluation", cascade="all, delete-orphan")
-    savoir_faire = db.relationship("EvaluationSavoirFaire", back_populates="evaluation", cascade="all, delete-orphan")
+    savoir_faire = db.relationship(
+        "EvaluationSavoirFaire",
+        back_populates="evaluation",
+        cascade="all, delete-orphan",
+        overlaps="savoir_faire_associations"
+    )
 
     def __repr__(self):
         return f"<PlanDeCoursEvaluations id={self.id}>"
