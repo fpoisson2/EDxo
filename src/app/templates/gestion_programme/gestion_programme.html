@@ -1,0 +1,338 @@
+<!-- gestion_programme/gestion_programme.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestion de programme</h2>
+        <div>
+            <input type="text" id="searchInput" class="form-control" placeholder="Rechercher...">
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover" id="plansTable">
+            <thead>
+                <tr>
+                    <th>Programme</th>
+                    <th>Code du cours</th>
+                    <th>Nom du cours</th>
+                    <th>Session</th>
+                    <th>Enseignant</th>
+                    <th>Date de modification</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for plan in plans %}
+                <tr class="searchable-row">
+                    <td>{{ plan.cours.programme.nom }}</td>
+                    <td>{{ plan.cours.code }}</td>
+                    <td>{{ plan.cours.nom }}</td>
+                    <td>{{ plan.session }}</td>
+                    <td>{{ plan.nom_enseignant or 'Non défini' }}</td>
+                    <td>{{ plan.modified_at.strftime('%d/%m/%Y') if plan.modified_at else 'N/A' }}</td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <a href="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=plan.cours.id, session=plan.session) }}" 
+                               class="btn btn-sm btn-info" title="Voir le plan de cours">
+                                <i class="bi bi-eye"></i> Voir
+                            </a>
+                            {% if current_user.role in ['admin', 'coordo'] %}
+                            <button type="button" 
+                                    class="btn btn-sm btn-primary verify-button" 
+                                    data-plan-id="{{ plan.id }}"
+                                    title="Vérifier le plan de cours">
+                                <i class="bi bi-check2-circle"></i> Vérifier plan de cours
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de vérification de plan de cours -->
+<div class="modal fade" id="verifyModal" tabindex="-1" aria-labelledby="verifyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Vérification du Plan de Cours</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Section des données de vérification existantes -->
+                <p><strong>Pourcentage de compatibilité avec le plan-cadre :</strong> <span id="compatibilityPercentage">N/A</span>%</p>
+                <hr>
+                <h6>Recommandation pour améliorer le plan de cours :</h6>
+                <p id="recommendationAmeliore">N/A</p>
+                <hr>
+                <h6>Recommandation pour le plan-cadre :</h6>
+                <p id="recommendationPlanCadre">N/A</p>
+                <!-- Indicateur de chargement pour la récupération des données existantes -->
+                <div id="loadingIndicatorGet" class="d-none d-flex align-items-center mt-3">
+                    <div class="spinner-border text-primary me-2" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <span>Chargement des données...</span>
+                </div>
+                <!-- Indicateur de chargement pour la vérification -->
+                <div id="loadingIndicatorVerify" class="d-none d-flex align-items-center mt-3">
+                    <div class="spinner-border text-primary me-2" role="status">
+                        <span class="visually-hidden">Vérification en cours...</span>
+                    </div>
+                    <span>Vérification en cours...</span>
+                </div>
+                <!-- Message d'erreur -->
+                <div id="errorMessage" class="alert alert-danger mt-3 d-none">
+                    <!-- Le message d'erreur sera inséré ici -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <!-- Bouton pour lancer la vérification -->
+                <button type="button" class="btn btn-primary" id="launchVerificationBtn">Lancer la vérification</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Inclure le jeton CSRF si nécessaire -->
+<script>
+    const csrfToken = "{{ csrf_token() }}";
+</script>
+
+<script>
+    // Attendre que le DOM soit complètement chargé
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // Références aux éléments du DOM
+        const verifyModalElement = document.getElementById('verifyModal');
+        const verifyModal = new bootstrap.Modal(verifyModalElement);
+        const compatibilityPercentage = document.getElementById('compatibilityPercentage');
+        const recommendationAmeliore = document.getElementById('recommendationAmeliore');
+        const recommendationPlanCadre = document.getElementById('recommendationPlanCadre');
+        const loadingIndicatorGet = document.getElementById('loadingIndicatorGet');
+        const loadingIndicatorVerify = document.getElementById('loadingIndicatorVerify');
+        const errorMessage = document.getElementById('errorMessage');
+        const launchVerificationBtn = document.getElementById('launchVerificationBtn');
+
+        // Attacher des écouteurs d'événements à tous les boutons de vérification
+        const verifyButtons = document.querySelectorAll('.verify-button');
+        verifyButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const planId = this.getAttribute('data-plan-id');
+                console.log(`Bouton de vérification cliqué pour le plan ID: ${planId}`);
+                verifyPlan(planId);
+            });
+        });
+
+        /**
+         * Ouvre le modal de vérification et récupère les données existantes via une requête AJAX.
+         *
+         * @param {int} planId - ID du plan de cours.
+         */
+        async function verifyPlan(planId) {
+            console.log(`Démarrage de la vérification pour le plan ID: ${planId}`);
+
+            // Réinitialiser les champs de vérification et les messages d'erreur
+            compatibilityPercentage.textContent = 'N/A';
+            recommendationAmeliore.textContent = 'N/A';
+            recommendationPlanCadre.textContent = 'N/A';
+            errorMessage.classList.add('d-none');
+            errorMessage.textContent = '';
+
+            // Afficher le modal en premier
+            verifyModal.show();
+            console.log('Modal affiché');
+
+            // Afficher l'indicateur de chargement pour la récupération des données existantes
+            loadingIndicatorGet.classList.remove('d-none');
+            loadingIndicatorGet.classList.add('d-flex');
+            console.log('Spinner de chargement des données affiché');
+
+            // Générer l'URL pour récupérer les données existantes
+            const getVerifierPlanUrl = `/gestion-programme/get_verifier_plan_cours/${encodeURIComponent(planId)}`;
+            console.log(`URL pour obtenir les données de vérification: ${getVerifierPlanUrl}`);
+
+            try {
+                const response = await fetch(getVerifierPlanUrl);
+                console.log('Réponse reçue:', response);
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error("Vous n'avez pas les droits nécessaires pour vérifier ce plan de cours.");
+                    } else if (response.status === 404) {
+                        throw new Error('Plan de cours non trouvé.');
+                    } else {
+                        throw new Error('Erreur lors de la récupération des données de vérification.');
+                    }
+                }
+
+                const data = await response.json();
+                console.log('Données de vérification récupérées:', data);
+
+                // Mettre à jour les champs avec les données existantes
+                compatibilityPercentage.textContent = data.compatibility_percentage;
+                recommendationAmeliore.textContent = data.recommendation_ameliore;
+                recommendationPlanCadre.textContent = data.recommendation_plan_cadre;
+
+                // Masquer l'indicateur de chargement
+                loadingIndicatorGet.classList.add('d-none');
+                loadingIndicatorGet.classList.remove('d-flex');
+                console.log('Spinner de chargement des données masqué');
+
+                // Stocker l'ID du plan dans le bouton de vérification
+                launchVerificationBtn.setAttribute('data-plan-id', planId);
+
+            } catch (error) {
+                console.error('Erreur lors de la récupération des données de vérification:', error);
+                // Masquer l'indicateur de chargement
+                loadingIndicatorGet.classList.add('d-none');
+                loadingIndicatorGet.classList.remove('d-flex');
+                console.log('Spinner de chargement des données masqué en cas d\'erreur');
+
+                // Afficher le message d'erreur dans le modal
+                errorMessage.textContent = error.message;
+                errorMessage.classList.remove('d-none');
+                errorMessage.classList.add('d-block');
+            }
+        }
+
+        /**
+         * Lance la vérification du plan de cours et met à jour les données dans le modal.
+         */
+        launchVerificationBtn.addEventListener('click', async function () {
+            const btn = this;  // Référence explicite au bouton
+            const planId = btn.getAttribute('data-plan-id');
+
+            console.log(`Lancement de la vérification pour le plan ID: ${planId}`);
+
+            // Réinitialiser les messages d'erreur
+            errorMessage.classList.add('d-none');
+            errorMessage.textContent = '';
+
+            // Vérifier si planId est défini
+            if (!planId) {
+                alert('Erreur : ID du plan de cours non défini.');
+                return;
+            }
+
+            // Afficher l'indicateur de chargement pour la vérification
+            //loadingIndicatorVerify.classList.remove('d-none');
+            //loadingIndicatorVerify.classList.add('d-flex');
+            console.log('Spinner de vérification affiché');
+
+            // Désactiver le bouton pour éviter les clics multiples
+            btn.disabled = true;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Vérification en cours...';
+
+            // Générer l'URL pour lancer la vérification
+            const updateVerifierPlanUrl = `/gestion-programme/update_verifier_plan_cours/${encodeURIComponent(planId)}`;
+            console.log(`URL pour mettre à jour les données de vérification: ${updateVerifierPlanUrl}`);
+
+            try {
+                const response = await fetch(updateVerifierPlanUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken  // Inclure le jeton CSRF si nécessaire
+                    },
+                    body: JSON.stringify({})  // Envoyer des données si nécessaire
+                });
+
+                console.log('Réponse de la mise à jour:', response);
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error("Vous n'avez pas les droits nécessaires pour vérifier ce plan de cours.");
+                    } else if (response.status === 404) {
+                        throw new Error('Plan de cours non trouvé.');
+                    } else {
+                        let errorText = 'Erreur lors de la mise à jour des données de vérification.';
+                        try {
+                            const data = await response.json();
+                            errorText = data.error || errorText;
+                        } catch (jsonError) {
+                            // Si la réponse n'est pas un JSON valide
+                        }
+                        throw new Error(errorText);
+                    }
+                }
+
+                const data = await response.json();
+                console.log('Données de vérification mises à jour:', data);
+
+                // Mettre à jour les champs avec les nouvelles données
+                compatibilityPercentage.textContent = data.compatibility_percentage;
+                recommendationAmeliore.textContent = data.recommendation_ameliore;
+                recommendationPlanCadre.textContent = data.recommendation_plan_cadre;
+
+                // Masquer l'indicateur de chargement
+                loadingIndicatorVerify.classList.add('d-none');
+                loadingIndicatorVerify.classList.remove('d-flex');
+                console.log('Spinner de vérification masqué après mise à jour');
+
+                // Réinitialiser le bouton
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour des données de vérification:', error);
+                // Masquer l'indicateur de chargement
+                loadingIndicatorVerify.classList.add('d-none');
+                loadingIndicatorVerify.classList.remove('d-flex');
+                console.log('Spinner de vérification masqué en cas d\'erreur lors de la mise à jour');
+
+                // Afficher le message d'erreur dans le modal
+                errorMessage.textContent = error.message;
+                errorMessage.classList.remove('d-none');
+                errorMessage.classList.add('d-block');
+
+                // Réinitialiser le bouton en cas d'erreur
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        });
+
+        /**
+         * Fonction de recherche
+         */
+        document.getElementById('searchInput').addEventListener('keyup', function () {
+            const searchText = this.value.toLowerCase();
+            const rows = document.querySelectorAll('.searchable-row');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchText) ? '' : 'none';
+            });
+        });
+
+        /**
+         * Réinitialiser le modal lorsqu'il est fermé
+         */
+        verifyModalElement.addEventListener('hidden.bs.modal', function () {
+            console.log('Modal fermé, réinitialisation des éléments');
+            // Réinitialiser les champs de vérification et les messages d'erreur
+            compatibilityPercentage.textContent = 'N/A';
+            recommendationAmeliore.textContent = 'N/A';
+            recommendationPlanCadre.textContent = 'N/A';
+            errorMessage.classList.add('d-none');
+            errorMessage.textContent = '';
+            loadingIndicatorGet.classList.add('d-none');
+            loadingIndicatorGet.classList.remove('d-flex');
+            loadingIndicatorVerify.classList.add('d-none');
+            loadingIndicatorVerify.classList.remove('d-flex');
+            launchVerificationBtn.disabled = false;
+            launchVerificationBtn.innerHTML = 'Lancer la vérification';
+            launchVerificationBtn.removeAttribute('data-plan-id');
+        });
+
+    });
+</script>
+
+{% endblock %}
