@@ -3,9 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from sqlalchemy import UniqueConstraint
 from werkzeug.security import generate_password_hash, check_password_hash
-
-db = SQLAlchemy()
-
+from extensions import db
 
 # Association table for User-Programme many-to-many relationship
 user_programme = db.Table('User_Programme',
