@@ -92,9 +92,9 @@ def view_programme(programme_id):
         return redirect(url_for('main.index'))
 
     # Vérifier si l'utilisateur a accès à ce programme
-    if programme not in current_user.programmes:
+    if programme not in current_user.programmes and current_user.role != 'admin':
         flash("Vous n'avez pas accès à ce programme.", 'danger')
-        return render_template('no_access.html')  # Instead of redirecting to index
+        return render_template('no_access.html')
 
 
     # Récupérer les compétences associées
