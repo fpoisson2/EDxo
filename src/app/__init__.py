@@ -30,6 +30,7 @@ from sqlalchemy import text  # Add this import
 import atexit
 from sqlalchemy.exc import SQLAlchemyError
 from app.models import BackupConfig
+import requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
