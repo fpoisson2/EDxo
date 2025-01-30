@@ -1,6 +1,8 @@
 {
   "name": "EDxo: Agent IA pédagogique",
   "short_name": "EDxo",
+  "description": "Une application IA pédagogique pour la gestion des cours et évaluations.",
+  "start_url": "/",
   "icons": [
     {
       "src": "/static/assets/web-app-manifest-192x192.png",
