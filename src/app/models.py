@@ -744,6 +744,10 @@ class ChatHistory(db.Model):
                                            lazy=True,
                                            cascade='all, delete-orphan'))
 
+    @classmethod
+    def get_recent_history(cls, user_id, limit=10):
+        return cls.query.filter_by(user_id=user_id).order_by(cls.timestamp.desc()).limit(limit).all()
+
 
 class PlanDeCoursMediagraphie(db.Model):
     __tablename__ = "PlanDeCoursMediagraphie"
