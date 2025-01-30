@@ -108,14 +108,17 @@ def create_app():
 
     @app.before_request
     def before_request():
-        PUBLIC_ENDPOINTS = {'static', 'main.login', 'main.logout', 'main.get_credit_balance'}
+        logger.info(f"🔍 Checking auth for {request.path}, user authenticated: {current_user.is_authenticated}")
 
+        PUBLIC_ENDPOINTS = {'static', 'main.login', 'main.logout', 'main.get_credit_balance'}
+        
         if request.endpoint in PUBLIC_ENDPOINTS or 'static' in request.path:
-            return  # Allow access without authentication
+            return  # Allow access to these pages
 
         if not current_user.is_authenticated:
-            logger.info(f"🔄 Redirecting {request.path} to login")  # Debugging log
+            logger.info(f"🔄 Redirecting to /login from {request.path}")
             return redirect(url_for('main.login'))
+
 
         try:
             db.session.execute(text("SELECT 1"))
