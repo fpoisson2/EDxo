@@ -280,7 +280,6 @@ def get_cegep_details():
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
-    # Skip if already logged in
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
 
@@ -291,13 +290,13 @@ def login():
 
         user_row = User.query.filter(func.lower(User.username) == username).first()
         if user_row and check_password_hash(user_row.password, password):
-            login_user(user_row)
+            login_user(user_row, remember=True)
+            session.permanent = True
             flash('Connexion réussie !', 'success')
             next_page = request.args.get('next')
-            # Validate the next URL to prevent open redirect vulnerabilities
-            if next_page and url_for('main.login') in next_page:
+            if not next_page or url_parse(next_page).netloc != '':
                 next_page = url_for('main.index')
-            return redirect(next_page or url_for('main.index'))
+            return redirect(next_page)
         else:
             flash('Nom d\'utilisateur ou mot de passe incorrect.', 'danger')
 
