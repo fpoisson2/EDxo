@@ -132,8 +132,10 @@
     </table>
   </div>
 
-  <!-- Ajouter un Nouveau Cours -->
+{% if current_user.role in ['admin', 'coordo'] %}
   <a href="{{ url_for('main.add_cours') }}" class="btn btn-primary mb-4">Ajouter un Cours</a>
+{% endif %}
+
 </div>
 
 <!-- Styles personnalisés -->
