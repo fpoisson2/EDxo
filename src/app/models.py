@@ -730,17 +730,16 @@ class ChatHistory(db.Model):
     __tablename__ = 'chat_history'
     
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id', ondelete='CASCADE'), nullable=False)
     role = db.Column(db.String(50), nullable=False)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, server_default=db.text('CURRENT_TIMESTAMP'))
-
-    # Relation avec User
-    user = db.relationship('User', backref=db.backref('chat_histories', lazy=True))
-
-    @classmethod
-    def get_recent_history(cls, user_id, limit=10):
-        return cls.query.filter_by(user_id=user_id).order_by(cls.timestamp.desc()).limit(limit).all()
+    
+    # Modifiez la relation pour inclure cascade
+    user = db.relationship('User', 
+                          backref=db.backref('chat_histories', 
+                                           lazy=True,
+                                           cascade='all, delete-orphan'))
 
 
 class PlanDeCoursMediagraphie(db.Model):
