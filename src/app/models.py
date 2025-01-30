@@ -730,12 +730,14 @@ class ChatHistory(db.Model):
     __tablename__ = 'chat_history'
     
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('User.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id', 
+                                                 ondelete='CASCADE',
+                                                 name='fk_chat_history_user'), 
+                       nullable=False)
     role = db.Column(db.String(50), nullable=False)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, server_default=db.text('CURRENT_TIMESTAMP'))
     
-    # Modifiez la relation pour inclure cascade
     user = db.relationship('User', 
                           backref=db.backref('chat_histories', 
                                            lazy=True,
