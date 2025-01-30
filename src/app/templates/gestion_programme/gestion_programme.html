@@ -21,6 +21,7 @@
                     <th>Nom du cours</th>
                     <th>Session</th>
                     <th>Enseignant</th>
+                    <th>Note (%)</th>
                     <th>Date de modification</th>
                     <th>Actions</th>
                 </tr>
@@ -33,6 +34,13 @@
                     <td>{{ plan.cours.nom }}</td>
                     <td>{{ plan.session }}</td>
                     <td>{{ plan.nom_enseignant or 'Non défini' }}</td>
+                    <td class="compatibility-cell" data-plan-id="{{ plan.id }}">
+                        {% if plan.compatibility_percentage is not none %}
+                            {{ "%.1f"|format(plan.compatibility_percentage) }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                     <td>{{ plan.modified_at.strftime('%d/%m/%Y') if plan.modified_at else 'N/A' }}</td>
                     <td>
                         <div class="btn-group" role="group">
@@ -66,35 +74,44 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
-                <!-- Section des données de vérification existantes -->
-                <p><strong>Pourcentage de compatibilité avec le plan-cadre :</strong> <span id="compatibilityPercentage">N/A</span>%</p>
-                <hr>
-                <h6>Recommandation pour améliorer le plan de cours :</h6>
-                <p id="recommendationAmeliore">N/A</p>
-                <hr>
-                <h6>Recommandation pour le plan-cadre :</h6>
-                <p id="recommendationPlanCadre">N/A</p>
-                <!-- Indicateur de chargement pour la récupération des données existantes -->
+                <div class="verification-results">
+                    <!-- Section des données de vérification existantes -->
+                    <div class="mb-4">
+                        <h6>Pourcentage de compatibilité avec le plan-cadre :</h6>
+                        <div class="alert alert-info">
+                            <span id="compatibilityPercentage">N/A</span>%
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6>Recommandation pour améliorer le plan de cours :</h6>
+                        <div class="bg-light p-3 rounded markdown-content" id="recommendationAmeliore">N/A</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6>Recommandation pour le plan-cadre :</h6>
+                        <div class="bg-light p-3 rounded markdown-content" id="recommendationPlanCadre">N/A</div>
+                    </div>
+                </div>
+
+                <!-- Indicateurs de chargement et messages d'erreur -->
                 <div id="loadingIndicatorGet" class="d-none d-flex align-items-center mt-3">
                     <div class="spinner-border text-primary me-2" role="status">
                         <span class="visually-hidden">Chargement...</span>
                     </div>
                     <span>Chargement des données...</span>
                 </div>
-                <!-- Indicateur de chargement pour la vérification -->
                 <div id="loadingIndicatorVerify" class="d-none d-flex align-items-center mt-3">
                     <div class="spinner-border text-primary me-2" role="status">
                         <span class="visually-hidden">Vérification en cours...</span>
                     </div>
                     <span>Vérification en cours...</span>
                 </div>
-                <!-- Message d'erreur -->
                 <div id="errorMessage" class="alert alert-danger mt-3 d-none">
                     <!-- Le message d'erreur sera inséré ici -->
                 </div>
             </div>
             <div class="modal-footer">
-                <!-- Bouton pour lancer la vérification -->
                 <button type="button" class="btn btn-primary" id="launchVerificationBtn">Lancer la vérification</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
             </div>
@@ -103,6 +120,32 @@
 </div>
 
 <!-- Inclure le jeton CSRF si nécessaire -->
+
+
+<style>
+    .markdown-content {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        line-height: 1.6;
+    }
+    .markdown-content h1, 
+    .markdown-content h2, 
+    .markdown-content h3, 
+    .markdown-content h4 {
+        margin-top: 1.5em;
+        margin-bottom: 0.75em;
+    }
+    .markdown-content ul, 
+    .markdown-content ol {
+        padding-left: 2em;
+    }
+    .markdown-content p {
+        margin-bottom: 1em;
+    }
+    .markdown-content strong {
+        font-weight: 600;
+    }
+</style>
+
 <script>
     const csrfToken = "{{ csrf_token() }}";
 </script>
@@ -157,7 +200,7 @@
             console.log('Spinner de chargement des données affiché');
 
             // Générer l'URL pour récupérer les données existantes
-            const getVerifierPlanUrl = `/gestion-programme/get_verifier_plan_cours/${encodeURIComponent(planId)}`;
+            const getVerifierPlanUrl = `/gestion_programme/get_verifier_plan_cours/${encodeURIComponent(planId)}`;
             console.log(`URL pour obtenir les données de vérification: ${getVerifierPlanUrl}`);
 
             try {
@@ -173,13 +216,20 @@
                     }
                 }
 
+                // Dans la fonction qui met à jour les données
                 const data = await response.json();
-                console.log('Données de vérification récupérées:', data);
+                console.log('Données de vérification mises à jour:', data);
 
-                // Mettre à jour les champs avec les données existantes
+                // Mettre à jour les champs avec les nouvelles données
                 compatibilityPercentage.textContent = data.compatibility_percentage;
-                recommendationAmeliore.textContent = data.recommendation_ameliore;
-                recommendationPlanCadre.textContent = data.recommendation_plan_cadre;
+
+                // Convertir le markdown en HTML
+                const recommendationAmelioreHtml = marked.parse(data.recommendation_ameliore || 'N/A');
+                const recommendationPlanCadreHtml = marked.parse(data.recommendation_plan_cadre || 'N/A');
+
+                // Mettre à jour les contenus avec le HTML généré
+                recommendationAmeliore.innerHTML = recommendationAmelioreHtml;
+                recommendationPlanCadre.innerHTML = recommendationPlanCadreHtml;
 
                 // Masquer l'indicateur de chargement
                 loadingIndicatorGet.classList.add('d-none');
@@ -222,9 +272,6 @@
                 return;
             }
 
-            // Afficher l'indicateur de chargement pour la vérification
-            //loadingIndicatorVerify.classList.remove('d-none');
-            //loadingIndicatorVerify.classList.add('d-flex');
             console.log('Spinner de vérification affiché');
 
             // Désactiver le bouton pour éviter les clics multiples
@@ -233,7 +280,8 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Vérification en cours...';
 
             // Générer l'URL pour lancer la vérification
-            const updateVerifierPlanUrl = `/gestion-programme/update_verifier_plan_cours/${encodeURIComponent(planId)}`;
+            const updateVerifierPlanUrl = `/gestion_programme/update_verifier_plan_cours/${encodeURIComponent(planId)}`;
+
             console.log(`URL pour mettre à jour les données de vérification: ${updateVerifierPlanUrl}`);
 
             try {
@@ -266,11 +314,10 @@
 
                 const data = await response.json();
                 console.log('Données de vérification mises à jour:', data);
-
-                // Mettre à jour les champs avec les nouvelles données
+                // Lors de la récupération initiale des données
                 compatibilityPercentage.textContent = data.compatibility_percentage;
-                recommendationAmeliore.textContent = data.recommendation_ameliore;
-                recommendationPlanCadre.textContent = data.recommendation_plan_cadre;
+                recommendationAmeliore.innerHTML = marked.parse(data.recommendation_ameliore || 'N/A');
+                recommendationPlanCadre.innerHTML = marked.parse(data.recommendation_plan_cadre || 'N/A');
 
                 // Masquer l'indicateur de chargement
                 loadingIndicatorVerify.classList.add('d-none');
