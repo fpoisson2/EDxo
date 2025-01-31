@@ -25,7 +25,7 @@ from flask_wtf.file import FileField, FileAllowed, FileRequired
 import re
 from wtforms import widgets
 
-from app.models import Cours, PlanDeCours, PlanDeCoursEvaluations, PlanCadreCapacites
+from app.models import Cours, PlanDeCours, PlanDeCoursEvaluations, PlanCadreCapacites, User
 # Liste des régions disponibles
 REGIONS = [
     ('Abitibi-Témiscamingue', 'Abitibi-Témiscamingue'),
