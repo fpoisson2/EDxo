@@ -150,9 +150,10 @@ MODEL_PRICING = {
     "gpt-4o": {"input": 2.50 / 1_000_000, "output": 10.00 / 1_000_000},
     "gpt-4o-mini": {"input": 0.150 / 1_000_000, "output": 0.600 / 1_000_000},
     "o1-preview": {"input": 15.00 / 1_000_000, "output": 60.00 / 1_000_000},
-    "o1-mini": {"input": 1.10 / 1_000_000, "output": 1.1 / 1_000_000},
+    "o1": {"input": 15.00 / 1_000_000, "output": 60.00 / 1_000_000},
+    "o1-mini": {"input": 1.10 / 1_000_000, "output": 4.40 / 1_000_000},
     "o3-mini": {"input": 1.10 / 1_000_000, "output": 4.40 / 1_000_000},
-}
+}price
 
 def calculate_call_cost(usage_prompt, usage_completion, model):
     """
