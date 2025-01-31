@@ -138,23 +138,27 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.Text, nullable=False)
     password = db.Column(db.Text, nullable=False)
+    # Nouveaux champs
+    image = db.Column(db.Text, nullable=True)
+    nom = db.Column(db.Text, nullable=True)
+    prenom = db.Column(db.Text, nullable=True)
+    is_first_connexion = db.Column(db.Boolean, nullable=False, server_default='1')  # '1' pour TRUE en SQLite
+    # Champs existants
     role = db.Column(db.Text, nullable=False, server_default="invite")
     openai_key = db.Column(db.Text, nullable=True)
     cegep_id = db.Column(db.Integer, db.ForeignKey("ListeCegep.id"), nullable=True)
     department_id = db.Column(db.Integer, db.ForeignKey("Department.id"), nullable=True)
     credits = db.Column(db.Float, nullable=False, default=0.0)
     email = db.Column(db.String(120), nullable=True)
-
-
+    
     __table_args__ = (
-        UniqueConstraint('email', name='uq_user_email'),  # ✅ Explicit constraint name
+        UniqueConstraint('email', name='uq_user_email'),
     )
 
     # Relations
     programmes = db.relationship('Programme', 
                                secondary=user_programme,
                                backref=db.backref('users', lazy='dynamic'))
-
 
 # ------------------------------------------------------------------------------
 # Modèles liés aux compétences et éléments de compétences
