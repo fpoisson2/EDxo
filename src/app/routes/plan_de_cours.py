@@ -555,6 +555,9 @@ def view_plan_de_cours(cours_id, session=None):
                                 )
                                 new_ev.capacites.append(cap_link)
 
+                plan_de_cours.modified_at = datetime.utcnow()
+                plan_de_cours.modified_by_id = current_user.id
+
                 # 5.4. Commit des Changements
                 db.session.commit()
                 

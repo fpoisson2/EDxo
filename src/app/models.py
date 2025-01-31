@@ -277,6 +277,10 @@ class PlanCadre(db.Model):
     eval_evaluation_sommatives_apprentissages = db.Column(db.Text, nullable=True)
     additional_info = db.Column(db.Text, nullable=True)
     ai_model = db.Column(db.Text, nullable=True, server_default="gpt-4o")
+    modified_by_id = db.Column(db.Integer, 
+                             db.ForeignKey("User.id", name="fk_plan_cadre_modified_by"),
+                             nullable=True)
+    modified_at = db.Column(db.DateTime, nullable=True)
 
     # Relations
     cours = db.relationship("Cours", back_populates="plan_cadre")
@@ -626,7 +630,13 @@ class PlanDeCours(db.Model):
     compatibility_percentage = db.Column(db.Float, nullable=True)
     recommendation_ameliore = db.Column(db.Text, nullable=True)
     recommendation_plan_cadre = db.Column(db.Text, nullable=True)
+    modified_by_id = db.Column(db.Integer, 
+                             db.ForeignKey("User.id", name="fk_plan_de_cours_modified_by"),
+                             nullable=True)
     modified_at = db.Column(db.DateTime, nullable=True)
+
+    modified_by = db.relationship("User", foreign_keys=[modified_by_id])
+
 
     # Relations
     cours = db.relationship("Cours", back_populates="plans_de_cours")
@@ -664,7 +674,11 @@ class PlanDeCours(db.Model):
             'compatibility_percentage': self.compatibility_percentage,
             'recommendation_ameliore': self.recommendation_ameliore,
             'recommendation_plan_cadre': self.recommendation_plan_cadre,
-            'modified_at': self.modified_at.isoformat() if self.modified_at else None,
+            "modified_by": {
+                "id": self.modified_by.id,
+                "username": self.modified_by.username
+            } if self.modified_by else None,
+            "modified_at": self.modified_at.isoformat() if self.modified_at else None,
             
             # Optional: Include related course information if needed
             'cours_info': {
