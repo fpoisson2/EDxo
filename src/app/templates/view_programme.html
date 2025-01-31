@@ -16,7 +16,11 @@
       <p><strong>Total d'unités :</strong> {{ "%.2f"|format(total_unites) }}</p>
     </div>
     <div class="small text-muted text-end" style="max-width: 40%; margin-top: 0; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-      <h5 style="flex-basis: 100%;">Fils Conducteurs <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-sm btn-primary">Ajouter</a></h5>
+      <h5 style="flex-basis: 100%;">Fils Conducteurs 
+        {% if current_user.role in ['admin', 'coordo'] %}
+          <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-sm btn-primary">Ajouter</a>
+        {% endif %}
+      </h5>
       <ul class="list-inline mb-0">
         {% for fil in fil_conducteurs %}
           <li class="list-inline-item" style="background-color: {{ fil.couleur }}; color: {{ 'white' if fil.couleur else 'black' }}; padding: 0.2rem 0.5rem; border-radius: 0.2rem;">

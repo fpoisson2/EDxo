@@ -105,9 +105,14 @@
         color: #555;
         font-weight: 500;
         font-size: 0.95rem; /* Légèrement réduit la taille de la police */
+        display: flex;
+        align-items: center;
       }
       .navbar-nav .nav-link:hover {
         color: #000;
+      }
+      .navbar-nav .nav-link .bi {
+        margin-right: 0.5rem;
       }
       .user-info {
         display: flex;
@@ -131,109 +136,118 @@
         color: #38a169;
         font-size: 1rem; /* Ajuste la taille de l'icône */
       }
-      /* Dropdown Toggle as Simple Icon */
-      .dropdown-toggle.user-icon {
+      /* Dropdown Toggle as Avatar Image */
+      .dropdown-toggle.user-avatar {
         cursor: pointer;
-        font-size: 1.5rem; /* Taille de l'icône */
-        color: #555;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .dropdown-toggle.user-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
       /* Masquer la flèche de dropdown */
-      .dropdown-toggle.user-icon::after {
+      .dropdown-toggle.user-avatar::after {
         display: none;
       }
-      /* Hover effect for user icon */
-      .dropdown-toggle.user-icon:hover {
-        color: #000;
+      /* Hover effect for user avatar */
+      .dropdown-toggle.user-avatar:hover {
+        opacity: 0.8;
       }
       /* Responsive Adjustments */
-@media (max-width: 768px) {
-  /* Style général du menu mobile */
-  .navbar-collapse {
-    padding-top: 0.5rem;
-  }
+      @media (max-width: 768px) {
+        /* Style général du menu mobile */
+        .navbar-collapse {
+          padding: 0;
+        }
 
-  /* Réorganisation des éléments de navigation */
-  .navbar-nav {
-    border-top: 1px solid #e0e0e0;
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
-  }
+        /* Réorganisation des éléments de navigation */
+        .navbar-nav {
+          border-top: 1px solid #e0e0e0;
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          flex-direction: column; /* Assure une disposition verticale */
+        }
 
-  .navbar-nav .nav-item {
-    margin-bottom: 0.5rem;
-  }
+        .navbar-nav .nav-item {
+          margin: 0;
+          width: 100%;
+        }
 
-  .navbar-nav .nav-link {
-    padding: 0.5rem 0;
-    font-size: 1rem;
-    color: #333;
-    border-radius: 4px;
-  }
+        .navbar-nav .nav-link {
+          padding: 0.75rem 1rem;
+          font-size: 1rem;
+          color: #333;
+          border-bottom: 1px solid #e0e0e0;
+        }
 
-  /* Groupe des informations utilisateur */
-  .user-info {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #e0e0e0;
-    margin-bottom: 0.5rem;
-  }
+        /* Groupe des informations utilisateur */
+        .user-info {
+          padding: 0;
+          margin: 0;
+          width: 100%;
+          justify-content: space-between;
+        }
 
-  /* Style du crédit */
-  .credit-display {
-    width: 100%;
-    justify-content: flex-start;
-    padding: 0.5rem 0;
-    background: none;
-    color: #333;
-    font-size: 1rem;
-  }
+        /* Style du crédit */
+        .credit-display {
+          width: auto; /* Ajuste pour permettre l'alignement horizontal */
+          justify-content: flex-start;
+          padding: 0.5rem 0;
+          background: none;
+          color: #333;
+          font-size: 1rem;
+        }
 
-  /* Style des liens du menu utilisateur */
-  .user-info .dropdown-menu {
-    display: block;
-    position: static;
-    float: none;
-    width: 100%;
-    padding: 0;
-    margin: 0;
-    border: none;
-    box-shadow: none;
-    background: none;
-  }
+        /* Style des liens du menu utilisateur */
+        .user-info .dropdown-menu {
+          display: block;
+          position: static;
+          float: none;
+          width: 100%;
+          padding: 0;
+          margin: 0;
+          border: none;
+          box-shadow: none;
+          background: none;
+        }
 
-  .user-info .dropdown-header {
-    font-size: 1.1rem;
-    color: #333;
-    padding: 0.5rem 0;
-  }
+        /* Conteneur Flex dans le menu utilisateur */
+        .dropdown-menu .flex-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+        }
 
-  .user-info .dropdown-item {
-    padding: 0.5rem 0;
-    color: #555;
-    font-size: 1rem;
-  }
+        .dropdown-menu .credit-display {
+          margin-left: auto;
+        }
 
-  .user-info .dropdown-item i {
-    width: 1.5rem;
-    color: #666;
-  }
+        /* Cacher l'icône de toggle du dropdown */
+        .user-info .dropdown-toggle {
+          display: none;
+        }
 
-  /* Cacher l'icône de toggle du dropdown */
-  .user-info .dropdown-toggle {
-    display: none;
-  }
+        /* Espacement des éléments */
+        .nav-item:not(:last-child),
+        .dropdown-item:not(:last-child) {
+          border-bottom: 1px solid #f0f0f0;
+        }
 
-  /* Espacement des éléments */
-  .nav-item:not(:last-child),
-  .dropdown-item:not(:last-child) {
-    border-bottom: 1px solid #f0f0f0;
-  }
-
-  /* Effet hover sur les liens */
-  .navbar-nav .nav-link:hover,
-  .user-info .dropdown-item:hover {
-    background-color: #f8f9fa;
-  }
-}
+        /* Effet hover sur les liens */
+        .navbar-nav .nav-link:hover,
+        .user-info .dropdown-item:hover {
+          background-color: #f8f9fa;
+        }
+      }
       /* Flash Messages Styling */
       .flash-message {
         opacity: 0;
@@ -301,41 +315,54 @@
             <!-- Navigation Links -->
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
               <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('evaluation.evaluation_wizard') }}">Créateur de grille d'évaluation</a>
+                <a class="nav-link" href="{{ url_for('evaluation.evaluation_wizard') }}">
+                  <i class="bi bi-pencil-square me-2"></i> Créateur de grille d'évaluation
+                </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('chat.index') }}">Chat</a>
+                <a class="nav-link" href="{{ url_for('chat.index') }}">
+                  <i class="bi bi-chat-dots me-2"></i> Chat
+                </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('gestion_programme.gestion_programme') }}">Gestion de programme</a>
+                <a class="nav-link" href="{{ url_for('gestion_programme.gestion_programme') }}">
+                  <i class="bi bi-gear me-2"></i> Gestion de programme
+                </a>
               </li>
             </ul>
 
             <!-- User Info and Dropdown -->
             <div class="user-info ms-3">
               <!-- Credit Display avec ID ajouté -->
-              <div id="credit-display" class="credit-display">
+              <div id="credit-display" class="credit-display d-none d-md-flex">
                 <i class="bi bi-coin"></i> ${{ "%.2f"|format(current_user.credit|default(0)) }}
               </div>
               <!-- User Dropdown -->
               <div class="dropdown">
                 <a
                   href="#"
-                  class="dropdown-toggle user-icon"
+                  class="dropdown-toggle user-avatar"
                   id="userDropdown"
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
                 >
-                  <i class="bi bi-person-circle"></i>
+                  {% if current_user.image %}
+                    <img src="{{ current_user.image }}" alt="Avatar de {{ current_user.prenom }}">
+                  {% else %}
+                    <i class="bi bi-person-circle"></i>
+                  {% endif %}
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                  <!-- Affichage du nom d'utilisateur en tant qu'en-tête -->
-                  <li class="dropdown-header text-center">
-                    {{ current_user.username }}
+                <ul class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="userDropdown">
+                  <!-- Conteneur Flex pour le Header -->
+                  <li class="flex-header">
+                    <span>Bonjour {{ current_user.prenom }}</span>
+                    <div id="credit-display-mobile" class="credit-display d-md-none">
+                      <i class="bi bi-coin"></i> ${{ "%.2f"|format(current_user.credit|default(0)) }}
+                    </div>
                   </li>
                   <li>
-                    <a class="dropdown-item" href="{{ url_for('main.change_password') }}">
-                      <i class="bi bi-lock me-2"></i> Mon profil
+                    <a class="dropdown-item" href="{{ url_for('settings.edit_profile') }}">
+                      <i class="bi bi-pencil-square me-2"></i> Éditer mon profil
                     </a>
                   </li>
                   <li>
@@ -343,9 +370,6 @@
                       <i class="bi bi-gear me-2"></i> Paramètres
                     </a>
                   </li>
-                  <!-- <li>
-                    <hr class="dropdown-divider">
-                  </li> -->
                   <li>
                     <a class="dropdown-item" href="{{ url_for('main.logout') }}">
                       <i class="bi bi-box-arrow-right me-2"></i> Se déconnecter
@@ -403,34 +427,34 @@
 
     <!-- Credit Balance Update Module -->
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-  function initializeMobileMenu() {
-    if (window.innerWidth <= 768) {
-      const navbarCollapse = document.querySelector('.navbar-collapse');
-      const dropdownMenu = document.querySelector('.user-info .dropdown-menu');
-      
-      // Gestionnaire pour l'ouverture du menu
-      navbarCollapse.addEventListener('show.bs.collapse', function() {
-        setTimeout(() => {
-          dropdownMenu.classList.add('show');
-        }, 0);
-      });
-      
-      // Gestionnaire pour la fermeture du menu
-      navbarCollapse.addEventListener('hide.bs.collapse', function() {
-        dropdownMenu.classList.remove('show');
-      });
-      
-      // État initial
-      if (navbarCollapse.classList.contains('show')) {
-        dropdownMenu.classList.add('show');
-      }
-    }
-  }
+      document.addEventListener('DOMContentLoaded', function() {
+        function initializeMobileMenu() {
+          if (window.innerWidth <= 768) {
+            const navbarCollapse = document.querySelector('.navbar-collapse');
+            const dropdownMenu = document.querySelector('.user-info .dropdown-menu');
+            
+            // Gestionnaire pour l'ouverture du menu
+            navbarCollapse.addEventListener('show.bs.collapse', function() {
+              setTimeout(() => {
+                dropdownMenu.classList.add('show');
+              }, 0);
+            });
+            
+            // Gestionnaire pour la fermeture du menu
+            navbarCollapse.addEventListener('hide.bs.collapse', function() {
+              dropdownMenu.classList.remove('show');
+            });
+            
+            // État initial
+            if (navbarCollapse.classList.contains('show')) {
+              dropdownMenu.classList.add('show');
+            }
+          }
+        }
 
-  initializeMobileMenu();
-  window.addEventListener('resize', initializeMobileMenu);
-});
+        initializeMobileMenu();
+        window.addEventListener('resize', initializeMobileMenu);
+      });
       // Credit balance update module
       class CreditBalanceManager {
         constructor(options = {}) {
@@ -441,22 +465,22 @@ document.addEventListener('DOMContentLoaded', function() {
           this.updateTimer = null;
           this.lastUpdate = null;
         }
-
+      
         async initialize() {
           this.displayElement = document.getElementById(this.displayElementId);
           if (!this.displayElement) {
             console.warn('Credit display element not found');
             return false;
           }
-
+      
           // Initial update
           await this.updateCredit();
-
+      
           // Start periodic updates
           this.startPeriodicUpdates();
           return true;
         }
-
+      
         async updateCredit() {
           try {
             const response = await fetch(this.updateUrl, {
@@ -466,13 +490,13 @@ document.addEventListener('DOMContentLoaded', function() {
               },
               credentials: 'same-origin', // Include cookies for authentication
             });
-
+      
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
             }
-
+      
             const data = await response.json();
-
+      
             if (data.success && data.credit !== undefined) {
               this.displayElement.innerHTML = `<i class="bi bi-coin me-1"></i>$${data.credit}`;
               this.lastUpdate = new Date();
@@ -487,17 +511,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
           }
         }
-
+      
         startPeriodicUpdates() {
           if (this.updateTimer) {
             clearInterval(this.updateTimer);
           }
-
+      
           this.updateTimer = setInterval(() => {
             this.updateCredit();
           }, this.updateInterval);
         }
-
+      
         stopUpdates() {
           if (this.updateTimer) {
             clearInterval(this.updateTimer);
@@ -505,7 +529,7 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
       }
-
+      
       // Initialize the credit manager when the DOM is loaded
       document.addEventListener('DOMContentLoaded', function () {
         const creditManager = new CreditBalanceManager({
@@ -513,7 +537,7 @@ document.addEventListener('DOMContentLoaded', function() {
           updateInterval: 30000, // 30 seconds
           updateUrl: '/get_credit_balance',
         });
-
+      
         creditManager.initialize().then((success) => {
           if (!success) {
             console.warn('Failed to initialize credit balance manager');
@@ -526,7 +550,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <script>
       const flashMessageSystem = {
         container: null,
-
+    
         init() {
           this.container = document.getElementById('flash-messages');
           if (!this.container) {
@@ -540,10 +564,10 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.appendChild(this.container);
           }
         },
-
+    
         show(message, type = 'success', duration = 3000) {
           if (!this.container) this.init();
-
+    
           // Créer l'élément de message avec les classes Bootstrap
           const messageElement = document.createElement('div');
           messageElement.className = `flash-message alert alert-${type} alert-dismissible fade`;
@@ -552,34 +576,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             `;
-
+    
           // Ajouter au conteneur
           this.container.appendChild(messageElement);
-
+    
           // Forcer un reflow pour permettre l'animation
           messageElement.offsetHeight;
-
+    
           // Afficher avec animation
           messageElement.classList.add('show');
-
+    
           // Gérer le bouton de fermeture
           const closeButton = messageElement.querySelector('.btn-close');
           closeButton.addEventListener('click', () => this.hide(messageElement));
-
+    
           // Auto-suppression après la durée spécifiée
           if (duration > 0) {
             setTimeout(() => this.hide(messageElement), duration);
           }
-
+    
           return messageElement;
         },
-
+    
         hide(messageElement) {
           if (!messageElement) return;
-
+    
           messageElement.classList.add('hide');
           messageElement.classList.remove('show');
-
+    
           // Suppression après l'animation
           setTimeout(() => {
             if (messageElement.parentElement) {
@@ -587,24 +611,24 @@ document.addEventListener('DOMContentLoaded', function() {
             }
           }, 300);
         },
-
+    
         success(message, duration = 3000) {
           return this.show(message, 'success', duration);
         },
-
+    
         error(message, duration = 5000) {
           return this.show(message, 'danger', duration);
         },
-
+    
         warning(message, duration = 4000) {
           return this.show(message, 'warning', duration);
         },
-
+    
         info(message, duration = 3000) {
           return this.show(message, 'info', duration);
         },
       };
-
+    
       // Initialiser le système de messages flash
       document.addEventListener('DOMContentLoaded', function () {
         flashMessageSystem.init();
