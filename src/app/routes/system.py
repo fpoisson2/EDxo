@@ -15,7 +15,7 @@ from flask_login import login_required, current_user
 from datetime import datetime
 import os
 from functools import wraps
-from utils.decorator import role_required, roles_required
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 from app.models import db, BackupConfig, DBChange, User
 from sqlalchemy import text 
 from sqlalchemy.orm import joinedload
@@ -46,6 +46,7 @@ system_bp = Blueprint('system', __name__)
 
 @system_bp.route('/save_backup_config', methods=['POST'])
 @roles_required('admin')
+@ensure_profile_completed
 def save_backup_config():
     form = BackupConfigForm()
     if form.validate_on_submit():
@@ -73,6 +74,7 @@ def save_backup_config():
 
 @system_bp.route('/manual_backup', methods=['POST'])
 @roles_required('admin')
+@ensure_profile_completed
 def manual_backup():
     config = BackupConfig.query.first()
     if not config or not config.email:
@@ -101,6 +103,7 @@ def check_db_status():
 
 @system_bp.route('/get_current_time')
 @roles_required('admin')
+@ensure_profile_completed
 def get_current_time():
     user_timezone = 'Europe/Paris'  # Remplacez par la méthode de récupération dynamique si nécessaire
     now_utc = datetime.now(pytz.UTC)
@@ -113,6 +116,7 @@ def get_current_time():
 
 @system_bp.route('/management')
 @roles_required('admin')
+@ensure_profile_completed
 def management():
     form = BackupConfigForm()
     config = BackupConfig.query.first()
@@ -169,6 +173,7 @@ def management():
     )
 @system_bp.route('/system/download-db')
 @roles_required('admin')
+@ensure_profile_completed
 def download_db():
     if not check_db_status():
         flash("La base de données n'est pas dans un état cohérent pour le téléchargement.", "error")
@@ -200,6 +205,8 @@ def download_db():
         return redirect(url_for('system.management'))
         
 @system_bp.route('/get_changes')
+@ensure_profile_completed
+@roles_required('admin')
 def get_changes():
     page = request.args.get('page', 1, type=int)
     size = request.args.get('size', 20, type=int)

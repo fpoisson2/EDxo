@@ -17,7 +17,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import atexit
 
 # Import centralized extensions
-from extensions import db, login_manager, ckeditor, csrf
+from extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
 from utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 from utils.db_tracking import init_change_tracking
 
@@ -35,6 +35,8 @@ from app.routes.plan_cadre import plan_cadre_bp
 from app.routes.plan_de_cours import plan_de_cours_bp
 from app.routes import routes
 from app.routes.gestion_programme import gestion_programme_bp
+
+from flask_bcrypt import Bcrypt
 
 # Import models
 from app.models import BackupConfig
@@ -98,6 +100,8 @@ def create_app(testing=False):
 
     # Initialize extensions
     login_manager.init_app(app)
+    bcrypt.init_app(app)
+    limiter.init_app(app)
 
     from app.models import User  # Import your User model
 

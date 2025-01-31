@@ -29,7 +29,7 @@ from utils.utils import (
     get_cegep_details_data,
     get_programmes_by_user
 )
-from utils.decorator import role_required, roles_required
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 import sqlite3  # Kept as is, though no longer used for direct queries
 from app.forms import (
     ProgrammeForm,
@@ -66,7 +66,10 @@ from app.forms import (
     EditUserForm,
     ProgrammeMinisterielForm,
     CreditManagementForm,
-    CegepForm
+    CegepForm,
+    ProfileEditForm,
+    WelcomeChangePasswordForm,
+    CombinedWelcomeForm
 )
 from app.models import (
     db, 
@@ -88,6 +91,11 @@ from app.models import (
     ListeCegep
 )
 import logging
+from datetime import datetime
+
+from extensions import limiter, bcrypt
+
+
 logger = logging.getLogger(__name__)
 
 main = Blueprint('main', __name__)
@@ -292,8 +300,14 @@ def login():
 
         user_row = User.query.filter(func.lower(User.username) == username).first()
         if user_row and check_password_hash(user_row.password, password):
+            user_row.last_login = datetime.utcnow()
+            db.session.commit()
             login_user(user_row, remember=True)
             session.permanent = True
+
+            if user_row.is_first_connexion:
+                return redirect(url_for('main.welcome'))
+
             next_page = request.args.get('next')
             if not next_page or not next_page.startswith('/'):
                 next_page = url_for('main.index')
@@ -304,6 +318,118 @@ def login():
 
     return render_template('login.html', form=form)
 
+def get_avatar_url(image_identifier):
+    # Nouvelle logique pour générer l'URL de l'avatar
+    return image_identifier
+
+@main.route('/welcome', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
+@login_required
+def welcome():
+    if not current_user.is_first_connexion:
+        return redirect(url_for('main.index'))
+
+    form = CombinedWelcomeForm()
+
+    # Remplir les choix des sélecteurs
+    seed = current_user.email or str(current_user.id)
+    dicebear_styles = ["pixel-art", "bottts", "adventurer", "lorelei", "identicon"]
+    avatar_choices = [
+        (f"https://api.dicebear.com/7.x/{style}/svg?seed={seed}&backgroundColor=b6e3f4", style.capitalize()) 
+        for style in dicebear_styles
+    ]
+    form.image.choices = avatar_choices
+    form.cegep.choices = [(cegep.id, cegep.nom) for cegep in ListeCegep.query.order_by(ListeCegep.nom).all()]
+    form.department.choices = [(dept.id, dept.nom) for dept in Department.query.order_by(Department.nom).all()]
+    form.programmes.choices = [(prog.id, prog.nom) for prog in Programme.query.order_by(Programme.nom).all()]
+
+    current_section = 0  # Par défaut, première section
+
+    if form.validate_on_submit():
+        # Premièrement, vérifier la correspondance des mots de passe
+        if form.new_password.data or form.confirm_password.data:
+            if form.new_password.data != form.confirm_password.data:
+                form.confirm_password.errors.append('Les nouveaux mots de passe ne correspondent pas.')
+                current_section = 5  # 6ème section, index 5
+                #flash('Les nouveaux mots de passe ne correspondent pas.', 'danger')
+                avatar_url = current_user.image or avatar_choices[0][0]
+                return render_template('welcome.html', form=form, avatar_url=avatar_url, current_section=current_section)
+        
+        # Toutes les validations sont passées, procéder à la mise à jour des données
+        try:
+            # Traitement du formulaire de profil
+            current_user.prenom = form.prenom.data
+            current_user.nom = form.nom.data
+            current_user.email = form.email.data
+            current_user.image = form.image.data
+            current_user.cegep_id = form.cegep.data
+            current_user.department_id = form.department.data
+            current_user.programmes = Programme.query.filter(Programme.id.in_(form.programmes.data)).all()
+
+            # Traitement du formulaire de changement de mot de passe
+            if form.new_password.data and form.confirm_password.data:
+                current_user.password = generate_password_hash(form.new_password.data, method='scrypt')
+
+            # Désactiver la première connexion
+            current_user.is_first_connexion = False
+
+            db.session.commit()
+            #flash('Profil et mot de passe mis à jour avec succès.', 'success')
+            logger.info(f"Utilisateur {current_user.email} a complété la première connexion depuis {request.remote_addr}.")
+            return redirect(url_for('main.index'))
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Erreur lors de la mise à jour du profil pour l'utilisateur {current_user.email}: {e}")
+            #flash('Une erreur est survenue. Veuillez réessayer plus tard.', 'danger')
+            # Déterminer la section actuelle en fonction des erreurs du formulaire
+            if form.prenom.errors or form.nom.errors:
+                current_section = 0
+            elif form.email.errors:
+                current_section = 1
+            elif form.image.errors:
+                current_section = 2
+            elif form.cegep.errors or form.department.errors:
+                current_section = 3
+            elif form.programmes.errors:
+                current_section = 4
+            elif form.new_password.errors or form.confirm_password.errors:
+                current_section = 5
+            avatar_url = current_user.image or avatar_choices[0][0]
+            return render_template('welcome.html', form=form, avatar_url=avatar_url, current_section=current_section)
+    else:
+        if request.method == 'POST':
+            #flash('Veuillez corriger les erreurs dans le formulaire.', 'danger')
+            # Déterminer la section actuelle en fonction des erreurs du formulaire
+            if form.prenom.errors or form.nom.errors:
+                current_section = 0
+            elif form.email.errors:
+                current_section = 1
+            elif form.image.errors:
+                current_section = 2
+            elif form.cegep.errors or form.department.errors:
+                current_section = 3
+            elif form.programmes.errors:
+                current_section = 4
+            elif form.new_password.errors or form.confirm_password.errors:
+                current_section = 5
+
+    if request.method == 'GET':
+        # Pré-remplir les formulaires avec les données actuelles de l'utilisateur
+        form.prenom.data = current_user.prenom
+        form.nom.data = current_user.nom
+        form.email.data = current_user.email
+        form.image.data = current_user.image
+        form.cegep.data = current_user.cegep_id
+        form.department.data = current_user.department_id
+        form.programmes.data = [programme.id for programme in current_user.programmes]
+
+    avatar_url = current_user.image or avatar_choices[0][0]
+
+    return render_template('welcome.html', form=form, avatar_url=avatar_url, current_section=current_section)
+
+
+
+
 @main.route('/logout')
 @login_required
 def logout():
@@ -313,6 +439,7 @@ def logout():
 
 @main.route('/manage_users', methods=['GET', 'POST'])
 @role_required('admin')
+@ensure_profile_completed
 def manage_users():
     if current_user.role != 'admin':
         flash('Accès interdit.', 'danger')
@@ -400,6 +527,7 @@ def manage_users():
 
 @main.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
 @role_required('admin')
+@ensure_profile_completed
 def edit_user(user_id):
     user = User.query.get(user_id)
     if not user:
@@ -475,6 +603,7 @@ def edit_user(user_id):
 
 @main.route('/get_departments_and_programmes/<int:cegep_id>')
 @login_required
+@ensure_profile_completed
 def get_departments_and_programmes(cegep_id):
     if cegep_id == 0:
         return jsonify({
@@ -490,6 +619,7 @@ def get_departments_and_programmes(cegep_id):
 
 @main.route('/change_password', methods=['GET', 'POST'])
 @login_required
+@ensure_profile_completed
 def change_password():
     form = ChangePasswordForm()
     if form.validate_on_submit():
@@ -515,6 +645,7 @@ def change_password():
 
 @main.route('/')
 @login_required
+@ensure_profile_completed
 def index():
     # Récupérer l'utilisateur connecté
     user = current_user
@@ -541,6 +672,7 @@ def index():
 
 @main.route('/add_programme', methods=('GET', 'POST'))
 @role_required('admin')
+@ensure_profile_completed
 def add_programme():
     form = ProgrammeForm()
     if form.validate_on_submit():
@@ -558,6 +690,7 @@ def add_programme():
 
 @main.route('/add_competence', methods=['GET', 'POST'])
 @role_required('admin')
+@ensure_profile_completed
 def add_competence():
     form = CompetenceForm()
     programmes = Programme.query.all()
@@ -609,6 +742,7 @@ def add_competence():
 
 @main.route('/add_element_competence', methods=('GET', 'POST'))
 @role_required('admin')
+@ensure_profile_completed
 def add_element_competence():
     form = ElementCompetenceForm()
     competences = Competence.query.all()
@@ -645,6 +779,7 @@ def add_element_competence():
 
 @main.route('/add_fil_conducteur', methods=('GET', 'POST'))
 @role_required('admin')
+@ensure_profile_completed
 def add_fil_conducteur():
     form = FilConducteurForm()
     programmes = Programme.query.all()
@@ -673,6 +808,7 @@ def add_fil_conducteur():
 
 @main.route('/add_cours', methods=('GET', 'POST'))
 @role_required('admin')
+@ensure_profile_completed
 def add_cours():
     form = CoursForm()
     programmes = Programme.query.all()
@@ -733,6 +869,7 @@ def add_cours():
 
 @main.route('/add_cours_prealable', methods=('GET', 'POST'))
 @role_required('admin')
+@ensure_profile_completed
 def add_cours_prealable():
     form = CoursPrealableForm()
     cours_all = Cours.query.all()
@@ -762,6 +899,7 @@ def add_cours_prealable():
 
 @main.route('/add_cours_corequis', methods=('GET', 'POST'))
 @role_required('admin')
+@ensure_profile_completed
 def add_cours_corequis():
     form = CoursCorequisForm()
     cours_all = Cours.query.all()
@@ -789,6 +927,7 @@ def add_cours_corequis():
 
 @main.route('/add_competence_par_cours', methods=('GET', 'POST'))
 @role_required('admin')
+@ensure_profile_completed
 def add_competence_par_cours():
     form = CompetenceParCoursForm()
     cours_all = Cours.query.all()
@@ -820,6 +959,7 @@ def add_competence_par_cours():
 
 @main.route('/add_element_competence_par_cours', methods=('GET', 'POST'))
 @role_required('admin')
+@ensure_profile_completed
 def add_element_competence_par_cours():
     form = ElementCompetenceParCoursForm()
     cours_all = Cours.query.all()
@@ -879,6 +1019,7 @@ def add_element_competence_par_cours():
 
 @main.route('/element_competence/<int:element_id>/edit', methods=['GET', 'POST'])
 @role_required('admin')
+@ensure_profile_completed
 def edit_element_competence(element_id):
     element = ElementCompetence.query.get(element_id)
     if not element:
@@ -929,6 +1070,7 @@ def edit_element_competence(element_id):
 
 @main.route('/edit_cours/<int:cours_id>', methods=('GET', 'POST'))
 @role_required('admin')
+@ensure_profile_completed
 def edit_cours(cours_id):
     cours = Cours.query.get(cours_id)
     if not cours:
@@ -1067,6 +1209,7 @@ def edit_cours(cours_id):
 
 @main.route('/parametres/gestion_departements', methods=['GET', 'POST'])
 @roles_required('admin')
+@ensure_profile_completed
 def gestion_departements():
     print("Request method:", request.method)
     print("Form data:", request.form)
@@ -1163,6 +1306,7 @@ def gestion_departements():
 
 @main.route('/parametres/gestion_departements/supprimer/<int:departement_id>', methods=['POST'])
 @roles_required('admin')
+@ensure_profile_completed
 def supprimer_departement(departement_id):
     department = Department.query.get_or_404(departement_id)
     try:
@@ -1176,6 +1320,7 @@ def supprimer_departement(departement_id):
 
 @main.route('/parametres/gestion_departements/supprimer_regle/<int:regle_id>', methods=['POST'])
 @roles_required('admin')
+@ensure_profile_completed
 def supprimer_regle(regle_id):
     regle = DepartmentRegles.query.get_or_404(regle_id)
     try:
@@ -1189,6 +1334,7 @@ def supprimer_regle(regle_id):
 
 @main.route('/parametres/gestion_departements/supprimer_piea/<int:piea_id>', methods=['POST'])
 @roles_required('admin')
+@ensure_profile_completed
 def supprimer_piea(piea_id):
     piea = DepartmentPIEA.query.get_or_404(piea_id)
     try:
@@ -1202,6 +1348,7 @@ def supprimer_piea(piea_id):
 
 @main.route('/parametres/gestion_departements/edit_regle/<int:regle_id>', methods=['GET', 'POST'])
 @roles_required('admin')
+@ensure_profile_completed
 def edit_regle(regle_id):
     regle = DepartmentRegles.query.get_or_404(regle_id)
     form = DepartmentRegleForm()
@@ -1229,6 +1376,7 @@ def edit_regle(regle_id):
 
 @main.route('/parametres/gestion_departements/edit_piea/<int:piea_id>', methods=['GET', 'POST'])
 @roles_required('admin')
+@ensure_profile_completed
 def edit_piea(piea_id):
     piea = DepartmentPIEA.query.get_or_404(piea_id)
     form = DepartmentPIEAForm()
