@@ -1,6 +1,8 @@
-# Application Flask
+# EDxo - Assistant pédagogique
 
-Ceci est une application web Flask qui offre des fonctionnalités telles que l'authentification des utilisateurs, la gestion des sessions, l'intégration de CKEditor, et la planification des sauvegardes de base de données. L'application est structurée de manière modulaire grâce à l'utilisation des blueprints et de plusieurs extensions Flask.
+EDxo automatise la création des plans cadres, des plans de cours et des grilles d'évaluation en quelques minutes en utilisant l'IA. Libérez-vous des tâches répétitives et recentrez votre travail sur vos étudiants !
+
+Ceci est une application web Flask. L'application est structurée de manière modulaire grâce à l'utilisation des blueprints et de plusieurs extensions Flask.
 
 ## Table des matières
 
