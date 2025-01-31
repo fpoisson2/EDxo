@@ -1,8 +1,8 @@
 from flask import Blueprint, request, render_template, flash, redirect, url_for, current_app, jsonify
 from flask_login import login_required, current_user
 from config.constants import SECTIONS  # Importer la liste des sections
-from utils.decorator import role_required, roles_required
-from app.forms import GlobalGenerationSettingsForm,  DeletePlanForm, UploadForm, ProfileEditForm
+from utils.decorator import role_required, roles_required, ensure_profile_completed
+from app.forms import GlobalGenerationSettingsForm,  DeletePlanForm, UploadForm, ProfileEditForm, AnalysePromptForm
 from app.routes.evaluation import AISixLevelGridResponse
 from flask_wtf.csrf import CSRFProtect
 from flask_wtf.csrf import generate_csrf
@@ -26,6 +26,7 @@ CANEVAS_LIST = ['plan_cadre_template.docx', 'plan_de_cours_template.docx', 'eval
 
 @settings_bp.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
+@ensure_profile_completed
 def edit_profile():
     form = ProfileEditForm()
     
@@ -98,6 +99,7 @@ def edit_profile():
 
 @settings_bp.route('/get_departments/<int:cegep_id>', methods=['GET'])
 @login_required
+@ensure_profile_completed
 def get_departments(cegep_id):
     """Retourne la liste des départements en JSON pour un cégep donné."""
     departments = Department.query.filter_by(cegep_id=cegep_id).all()
@@ -106,6 +108,7 @@ def get_departments(cegep_id):
 
 @settings_bp.route('/get_programmes/<int:dept_id>', methods=['GET'])
 @login_required
+@ensure_profile_completed
 def get_programmes(dept_id):
     """Retourne la liste des programmes en JSON pour un département donné."""
     programmes = Programme.query.filter_by(department_id=dept_id).all()
@@ -115,6 +118,7 @@ def get_programmes(dept_id):
 @settings_bp.route('/analyse_prompt', methods=['GET', 'POST'])
 @roles_required('admin')
 @login_required 
+@ensure_profile_completed
 def configure_analyse_prompt():
     if current_user.role != 'admin':
         flash('Accès non autorisé', 'error')
@@ -124,41 +128,30 @@ def configure_analyse_prompt():
     if not prompt:
         default_template = """Tu es un assistant IA expert en évaluation de plans de cours dans l'enseignement supérieur. Ta mission principale est d'analyser la cohérence entre le calendrier du cours et les savoir-faire/compétences définis dans le plan-cadre.
 
-FOCUS PRINCIPAL - ALIGNEMENT CALENDRIER ET SAVOIR-FAIRE (60 points) :
-1. Analyse détaillée du calendrier (30 points)
-   - Chaque semaine du calendrier doit être analysée en lien avec les savoir-faire
-   - Évaluer si le temps alloué est suffisant pour chaque savoir-faire
-   - Vérifier la progression logique des apprentissages
-
-[... le reste de votre prompt actuel ...]
-
-Voici les données du plan de cours (ID: {plan_cours_id}):
-{plan_cours_json}
-
-Voici les données du plan-cadre (ID: {plan_cadre_id}):
-{plan_cadre_json}
-
-Voici le schéma JSON auquel ta réponse doit strictement adhérer :
-{schema_json}"""
+[... votre prompt par défaut ...]"""
         prompt = AnalysePlanCoursPrompt(prompt_template=default_template)
         db.session.add(prompt)
         db.session.commit()
 
-    if request.method == 'POST':
-        prompt.prompt_template = request.form.get('prompt_template')
+    form = AnalysePromptForm(obj=prompt)
+
+    if form.validate_on_submit():
+        form.populate_obj(prompt)
         try:
             db.session.commit()
-            flash('Prompt sauvegardé avec succès', 'success')
+            flash('Prompt et modèle d\'IA sauvegardés avec succès', 'success')
+            return redirect(url_for('settings.configure_analyse_prompt'))
         except Exception as e:
             db.session.rollback()
             flash('Erreur lors de la sauvegarde', 'error')
-            logging.error(f"Erreur sauvegarde prompt: {e}")
+            current_app.logger.error(f"Erreur sauvegarde prompt: {e}")
 
-    return render_template('settings/analyse_plan_cours_prompt.html', prompt=prompt)
+    return render_template('settings/analyse_plan_cours_prompt.html', form=form)
 
 @settings_bp.route('/gestion_canevas')
 @roles_required('admin')
-@login_required 
+@login_required
+@ensure_profile_completed
 def gestion_canevas():
     form = UploadForm()
     return render_template('/settings/gestion_canevas.html', canevas_list=CANEVAS_LIST, upload_form=form)
@@ -166,6 +159,7 @@ def gestion_canevas():
 @settings_bp.route('/upload_canevas/<filename>', methods=['POST'])
 @roles_required('admin')
 @login_required 
+@ensure_profile_completed
 def upload_canevas(filename):
     if 'file' not in request.files:
         flash('Aucun fichier sélectionné.', 'danger')
@@ -196,6 +190,7 @@ def upload_canevas(filename):
 @settings_bp.route('/download_canevas/<filename>')
 @roles_required('admin')
 @login_required 
+@ensure_profile_completed
 def download_canevas(filename):
     upload_folder = current_app.config['UPLOAD_FOLDER']
     file_path = os.path.join(upload_folder, filename)
@@ -211,6 +206,7 @@ def download_canevas(filename):
 @settings_bp.route('/plan-de-cours/prompts', methods=['GET'])
 @roles_required('admin')
 @login_required 
+@ensure_profile_completed
 def plan_de_cours_prompt_settings():
     """Page de gestion des configurations de prompts pour les plans de cours."""
     prompts = PlanDeCoursPromptSettings.query.all()
@@ -223,6 +219,7 @@ def plan_de_cours_prompt_settings():
 @settings_bp.route('/plan-de-cours/prompts/<int:prompt_id>', methods=['POST'])
 @roles_required('admin')
 @login_required 
+@ensure_profile_completed
 def update_plan_de_cours_prompt(prompt_id):
     """Met à jour une configuration de prompt pour plan de cours."""
     try:
@@ -250,6 +247,7 @@ def update_plan_de_cours_prompt(prompt_id):
 @settings_bp.route('/plan-de-cours/prompts/test', methods=['POST'])
 @roles_required('admin')
 @login_required 
+@ensure_profile_completed
 def test_plan_de_cours_prompt():
     """Teste un prompt de plan de cours avec des données exemple."""
     data = request.get_json()
@@ -268,11 +266,13 @@ def test_plan_de_cours_prompt():
 
 @settings_bp.route('/parametres')
 @login_required  # Cette route nécessite que l'utilisateur soit connecté
+@ensure_profile_completed
 def parametres():
     return render_template('parametres.html')
 
 @settings_bp.route("/gestion-plans-cours", methods=["GET"])
 @roles_required('admin', 'coordo')
+@ensure_profile_completed
 def gestion_plans_cours():
     form = DeletePlanForm()
     # Récupérer tous les plans de cours, avec leurs relations
@@ -295,6 +295,7 @@ def gestion_plans_cours():
 
 @settings_bp.route("/supprimer-plan-cours/<int:plan_id>", methods=["POST"])
 @roles_required('admin', 'coordo')
+@ensure_profile_completed
 def supprimer_plan_cours(plan_id):
     form = DeletePlanForm()
     print(f"Route de suppression appelée avec plan_id: {plan_id}")  # Debug
@@ -325,6 +326,7 @@ def supprimer_plan_cours(plan_id):
 
 @settings_bp.route('/prompt-settings', methods=['GET', 'POST'])
 @roles_required('admin', 'coordo')
+@ensure_profile_completed
 def prompt_settings():
     settings = GrillePromptSettings.get_current()
     schema_json = json.dumps(AISixLevelGridResponse.get_schema_with_descriptions(), indent=4, ensure_ascii=False)
@@ -352,6 +354,7 @@ def prompt_settings():
 
 @settings_bp.route('/generation', methods=['GET', 'POST'])
 @roles_required('admin', 'coordo')
+@ensure_profile_completed
 def edit_global_generation_settings():
     form = GlobalGenerationSettingsForm()
 

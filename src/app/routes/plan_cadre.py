@@ -26,7 +26,7 @@ from app.forms import (
     GlobalGenerationSettingsForm,
     GenerationSettingForm
 )
-from utils.decorator import roles_required, role_required
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 import json
 import logging
 import traceback
@@ -150,7 +150,8 @@ MODEL_PRICING = {
     "gpt-4o": {"input": 2.50 / 1_000_000, "output": 10.00 / 1_000_000},
     "gpt-4o-mini": {"input": 0.150 / 1_000_000, "output": 0.600 / 1_000_000},
     "o1-preview": {"input": 15.00 / 1_000_000, "output": 60.00 / 1_000_000},
-    "o1-mini": {"input": 3.00 / 1_000_000, "output": 12.00 / 1_000_000},
+    "o1-mini": {"input": 1.10 / 1_000_000, "output": 1.1 / 1_000_000},
+    "o3-mini": {"input": 1.10 / 1_000_000, "output": 4.40 / 1_000_000},
 }
 
 def calculate_call_cost(usage_prompt, usage_completion, model):
@@ -168,6 +169,7 @@ def calculate_call_cost(usage_prompt, usage_completion, model):
 
 @plan_cadre_bp.route('/<int:plan_id>/generate_content', methods=['POST'])
 @roles_required('admin', 'coordo')
+@ensure_profile_completed
 def generate_plan_cadre_content(plan_id):
     """
     Gère la génération du contenu d’un plan-cadre via GPT.
@@ -687,6 +689,7 @@ def generate_plan_cadre_content(plan_id):
 ###############################################################################
 @plan_cadre_bp.route('/<int:plan_id>/export', methods=['GET'])
 @login_required
+@ensure_profile_completed
 def export_plan_cadre(plan_id):
     plan_cadre = PlanCadre.query.get(plan_id)
     if not plan_cadre:
@@ -714,6 +717,7 @@ def export_plan_cadre(plan_id):
 ###############################################################################
 @plan_cadre_bp.route('/<int:plan_id>/edit', methods=['GET', 'POST'])
 @roles_required('admin', 'coordo')
+@ensure_profile_completed
 def edit_plan_cadre(plan_id):
     plan_cadre = PlanCadre.query.get(plan_id)
     if not plan_cadre:
@@ -879,6 +883,7 @@ def edit_plan_cadre(plan_id):
 ###############################################################################
 @plan_cadre_bp.route('/<int:plan_id>/delete', methods=['POST'])
 @role_required('admin')
+@ensure_profile_completed
 def delete_plan_cadre(plan_id):
     form = DeleteForm()
     if form.validate_on_submit():
@@ -907,6 +912,7 @@ def delete_plan_cadre(plan_id):
 ###############################################################################
 @plan_cadre_bp.route('/<int:plan_id>/add_capacite', methods=['GET', 'POST'])
 @role_required('admin')
+@ensure_profile_completed
 def add_capacite(plan_id):
     form = CapaciteForm()
     plan_cadre = PlanCadre.query.get(plan_id)
@@ -960,6 +966,7 @@ def add_capacite(plan_id):
 ###############################################################################
 @plan_cadre_bp.route('/<int:plan_id>/capacite/<int:capacite_id>/delete', methods=['POST'])
 @role_required('admin')
+@ensure_profile_completed
 def delete_capacite(plan_id, capacite_id):
     form = DeleteForm(prefix=f"capacite-{capacite_id}")
     if form.validate_on_submit():
