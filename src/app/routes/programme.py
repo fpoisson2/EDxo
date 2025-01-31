@@ -33,7 +33,7 @@ import logging
 from collections import defaultdict
 from openai import OpenAI
 from openai import OpenAIError
-from utils.decorator import role_required, roles_required
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import os
@@ -81,6 +81,7 @@ programme_bp = Blueprint('programme', __name__, url_prefix='/programme')
 
 @programme_bp.route('/<int:programme_id>')
 @login_required
+@ensure_profile_completed
 def view_programme(programme_id):
     # Debug logging
     logger.debug(f"Accessing programme {programme_id}")
@@ -211,6 +212,7 @@ def view_programme(programme_id):
 
 @programme_bp.route('/competence/<int:competence_id>/edit', methods=['GET', 'POST'])
 @role_required('admin')
+@ensure_profile_completed
 def edit_competence(competence_id):
     form = CompetenceForm()
     # Récupérer la compétence
@@ -252,6 +254,7 @@ def edit_competence(competence_id):
 
 @programme_bp.route('/competence/<int:competence_id>/delete', methods=['POST'])
 @role_required('admin')
+@ensure_profile_completed
 def delete_competence(competence_id):
     # Formulaire de suppression
     delete_form = DeleteForm(prefix=f"competence-{competence_id}")
@@ -278,6 +281,7 @@ def delete_competence(competence_id):
 
 @programme_bp.route('/competence/code/<string:competence_code>')
 @role_required('admin')
+@ensure_profile_completed
 def view_competence_by_code(competence_code):
     # Récupérer la compétence par son code
     competence = Competence.query.filter_by(code=competence_code).first()
@@ -292,6 +296,7 @@ def view_competence_by_code(competence_code):
 
 @programme_bp.route('/competence/<int:competence_id>')
 @login_required
+@ensure_profile_completed
 def view_competence(competence_id):
     # Récupération de la compétence + programme lié
     competence = Competence.query.get(competence_id)

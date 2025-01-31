@@ -4,6 +4,7 @@ from openai import OpenAI
 from app.forms import ChatForm
 from app.models import User, PlanCadre, PlanDeCours, Cours, db, ChatHistory
 import json
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 import tiktoken
 
 chat = Blueprint('chat', __name__)
@@ -278,6 +279,7 @@ def handle_list_all_plan_cadre():
 # -------------------------------------------------------------------------
 @chat.route('/chat')
 @login_required
+@ensure_profile_completed
 def index():
     print("[DEBUG] Accessing chat index route.")
     form = ChatForm()
@@ -289,6 +291,7 @@ def index():
 
 @chat.route('/chat/send', methods=['POST'])
 @login_required
+@ensure_profile_completed
 def send_message():
     print("\n" + "="*50)
     print("[DEBUG] DÉBUT DE LA REQUÊTE /chat/send")

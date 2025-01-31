@@ -8,6 +8,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from app.forms import PlanDeCoursForm
 import os
 from docxtpl import DocxTemplate
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 import io
 from flask import send_file
 import markdown
@@ -87,6 +88,7 @@ def parse_markdown_nested(md_text):
 
 @plan_de_cours_bp.route("/api/cours/<int:cours_id>/plans")
 @login_required
+@ensure_profile_completed
 def get_cours_plans(cours_id):
     plans = PlanDeCours.query.filter_by(cours_id=cours_id).all()
     return jsonify([{
@@ -125,6 +127,7 @@ class AIPlandeCoursResponse(BaseModel):
 
 @plan_de_cours_bp.route('/generate_content', methods=['POST'])
 @login_required
+@ensure_profile_completed
 def generate_content():
     """
     Génère automatiquement le contenu pour un champ spécifique en utilisant
@@ -257,6 +260,7 @@ def generate_content():
     "/cours/<int:cours_id>/plan_de_cours/<string:session>/", methods=["GET", "POST"]
 )
 @login_required
+@ensure_profile_completed
 def view_plan_de_cours(cours_id, session=None):
     # 1. Récupération du Cours
     cours = db.session.get(Cours, cours_id)
@@ -606,6 +610,7 @@ def view_plan_de_cours(cours_id, session=None):
     methods=["GET"]
 )
 @login_required
+@ensure_profile_completed
 def export_session_plans(programme_id, session):
     """
     Exporte tous les plans de cours d'une session donnée dans un fichier ZIP
@@ -822,6 +827,7 @@ def export_session_plans(programme_id, session):
     methods=["GET"]
 )
 @login_required
+@ensure_profile_completed
 def export_docx(cours_id, session):
     # 1. Récupérer le Cours
     cours = Cours.query.get_or_404(cours_id)

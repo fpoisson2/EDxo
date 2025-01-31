@@ -11,12 +11,17 @@ user_programme = db.Table('User_Programme',
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
-# Dans models.py
+
 class AnalysePlanCoursPrompt(db.Model):
     __tablename__ = 'analyse_plan_cours_prompt'
     
     id = db.Column(db.Integer, primary_key=True)
     prompt_template = db.Column(db.Text, nullable=False)
+    ai_model = db.Column(
+        db.String(50), 
+        nullable=False, 
+        server_default='gpt-4o'  # Utiliser server_default au lieu de default
+    )
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
@@ -150,6 +155,7 @@ class User(UserMixin, db.Model):
     department_id = db.Column(db.Integer, db.ForeignKey("Department.id"), nullable=True)
     credits = db.Column(db.Float, nullable=False, default=0.0)
     email = db.Column(db.String(120), nullable=True)
+    last_login = db.Column(db.DateTime, nullable=True)
     
     __table_args__ = (
         UniqueConstraint('email', name='uq_user_email'),

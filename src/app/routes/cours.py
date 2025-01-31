@@ -32,7 +32,7 @@ import json
 import logging
 from collections import defaultdict
 from dotenv import load_dotenv
-from utils.decorator import role_required, roles_required
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 from bs4 import BeautifulSoup
 import os
 import markdown
@@ -186,6 +186,8 @@ def get_elements_competence(cours_id):
 # --------------------------------------------------------------------------
 @cours_bp.route('/<int:cours_id>/plan_cadre/add', methods=['GET', 'POST'])
 @login_required
+@ensure_profile_completed
+@ensure_profile_completed
 def add_plan_cadre(cours_id):
     try:
         # Créer un plan-cadre avec des valeurs par défaut
@@ -224,6 +226,8 @@ def add_plan_cadre(cours_id):
 # --------------------------------------------------------------------------
 @cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>', methods=['GET', 'POST'])
 @login_required
+@ensure_profile_completed
+@ensure_profile_completed
 def view_plan_cadre(cours_id, plan_id):
     """
     Affiche ou met à jour un plan-cadre pour un cours donné.
@@ -673,6 +677,7 @@ def view_plan_cadre(cours_id, plan_id):
 # --------------------------------------------------------------------------
 @cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>/update_intro', methods=['POST'])
 @login_required
+@ensure_profile_completed
 def update_intro(cours_id, plan_id):
     try:
         # Validate CSRF token
@@ -706,6 +711,7 @@ def update_intro(cours_id, plan_id):
 # --------------------------------------------------------------------------
 @cours_bp.route('/<int:cours_id>/plan_cadre', methods=['GET'])
 @login_required
+@ensure_profile_completed
 def view_or_add_plan_cadre(cours_id):
     """
     Vérifie si un plan-cadre existe pour le cours. Si oui, redirige dessus.
@@ -745,6 +751,7 @@ def view_or_add_plan_cadre(cours_id):
 # --------------------------------------------------------------------------
 @cours_bp.route('/<int:cours_id>')
 @login_required
+@ensure_profile_completed
 def view_cours(cours_id):
     cours = Cours.query.filter_by(id=cours_id).first()
     if not cours:
@@ -840,6 +847,7 @@ def view_cours(cours_id):
 # --------------------------------------------------------------------------
 @cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>/capacite/<int:capacite_id>/edit', methods=['GET', 'POST'])
 @role_required('admin')
+@ensure_profile_completed
 def edit_capacite(cours_id, plan_id, capacite_id):
     form = CapaciteItemForm()
 
@@ -952,6 +960,7 @@ def edit_capacite(cours_id, plan_id, capacite_id):
 # --------------------------------------------------------------------------
 @cours_bp.route('/<int:cours_id>/delete', methods=['POST'])
 @role_required('admin')
+@ensure_profile_completed
 def delete_cours(cours_id):
     form = DeleteForm(prefix=f"cours-{cours_id}")
     if form.validate_on_submit():

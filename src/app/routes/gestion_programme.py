@@ -10,6 +10,7 @@ import time
 from flask import Flask, Blueprint, jsonify, redirect, url_for, flash, jsonify, Blueprint, request, render_template
 from flask_login import login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 from sqlalchemy import text
 from pydantic import BaseModel, ValidationError
 
@@ -73,7 +74,8 @@ MODEL_PRICING = {
     "gpt-4o": {"input": 2.50 / 1_000_000, "output": 10.00 / 1_000_000},
     "gpt-4o-mini": {"input": 0.150 / 1_000_000, "output": 0.600 / 1_000_000},
     "o1-preview": {"input": 15.00 / 1_000_000, "output": 60.00 / 1_000_000},
-    "o1-mini": {"input": 3.00 / 1_000_000, "output": 12.00 / 1_000_000},
+    "o1-mini": {"input": 1.10 / 1_000_000, "output": 1.1 / 1_000_000},
+    "o3-mini": {"input": 1.10 / 1_000_000, "output": 4.40 / 1_000_000},
 }
 
 def calculate_call_cost(usage_prompt, usage_completion, model):
@@ -98,6 +100,8 @@ gestion_programme_bp = Blueprint('gestion_programme', __name__, url_prefix='/ges
 # Route existante pour afficher la gestion des plans de cours
 @gestion_programme_bp.route('/', methods=['GET'])
 @login_required
+@ensure_profile_completed
+@ensure_profile_completed
 def gestion_programme():
     plans = PlanDeCours.query.join(Cours).all()
     return render_template('gestion_programme/gestion_programme.html', plans=plans)
@@ -105,6 +109,8 @@ def gestion_programme():
 # Route GET pour récupérer les données de vérification existantes
 @gestion_programme_bp.route('/get_verifier_plan_cours/<int:plan_id>', methods=['GET'])
 @login_required
+@ensure_profile_completed
+@ensure_profile_completed
 def get_verifier_plan_cours(plan_id):
     plan = PlanDeCours.query.get_or_404(plan_id)
 
@@ -126,6 +132,8 @@ def get_verifier_plan_cours(plan_id):
 
 @gestion_programme_bp.route('/update_verifier_plan_cours/<int:plan_id>', methods=['POST'])
 @login_required
+@ensure_profile_completed
+@ensure_profile_completed
 def update_verifier_plan_cours(plan_id):
     """
     Route qui illustre l'approche en deux appels :
@@ -170,9 +178,6 @@ def update_verifier_plan_cours(plan_id):
         "instruction": instruction
     }
 
-
-    print(structured_request)
-
     # Construction du client identique au plan-cadre
     client = OpenAI(api_key=openai_key)
 
@@ -182,7 +187,7 @@ def update_verifier_plan_cours(plan_id):
     # ----------------------------------------------------------
     # 1) Premier appel : model = "o1-preview" (ou un autre O1)
     # ----------------------------------------------------------
-    ai_model = "o1-preview"  # exemple, peut être "o1-mini" selon vos besoins
+    ai_model = prompt_template.ai_model  # exemple, peut être "o1-mini" selon vos besoins
 
     try:
         o1_response = client.beta.chat.completions.parse(

@@ -18,6 +18,7 @@
                             <th>Nom d'utilisateur</th>
                             <th>Rôle</th>
                             <th>Crédits</th>
+                            <th>Dernière connexion(UTC)</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -42,6 +43,7 @@
                                 </span>
                             </td>
                             <td>{{ user['credits']|round(2) }}</td>
+                            <td>{{ user.last_login.strftime('%d/%m/%Y %H:%M') if user.last_login else 'Jamais' }}</td>
                             <td>
                                 <a href="{{ url_for('main.edit_user', user_id=user['id']) }}" class="btn btn-sm btn-outline-secondary">
                                     <i class="bi bi-pencil"></i> Modifier
