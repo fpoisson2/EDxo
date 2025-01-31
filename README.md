@@ -19,12 +19,11 @@ Ceci est une application web Flask. L'application est structurée de manière mo
 ## 1. Fonctionnalités
 
 - **Authentification des utilisateurs** : Gestion des sessions utilisateurs avec Flask-Login.
-- **Édition de texte enrichi** : Intégration de CKEditor pour l'édition de contenu.
 - **Sécurité** : Protection CSRF avec Flask-WTF et gestion sécurisée des sessions.
 - **Base de données** : Utilisation de SQLAlchemy avec SQLite (mode WAL) et gestion des migrations avec Flask-Migrate.
 - **Planification des sauvegardes** : Planification automatique des sauvegardes de la base de données grâce à APScheduler.
 - **Gestion des sessions** : Expiration automatique des sessions en fonction de l'activité.
-- **Outils supplémentaires** : Bcrypt pour le hachage des mots de passe, limitation du débit avec Flask-Limiter, et bien d'autres.
+- **Outils supplémentaires** : limitation du débit avec Flask-Limiter, et bien d'autres.
 
 ## 2. Prérequis
 
