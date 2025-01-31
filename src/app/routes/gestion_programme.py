@@ -187,7 +187,7 @@ def update_verifier_plan_cours(plan_id):
     # ----------------------------------------------------------
     # 1) Premier appel : model = "o1-preview" (ou un autre O1)
     # ----------------------------------------------------------
-    ai_model = prompt_template.ai_model  # exemple, peut être "o1-mini" selon vos besoins
+    ai_model = o3-mini
 
     try:
         o1_response = client.beta.chat.completions.parse(
