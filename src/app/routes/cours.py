@@ -52,6 +52,7 @@ from utils.utils import (
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from flask_wtf.csrf import validate_csrf, CSRFError
 import traceback
+from datetime import datetime
 
 from utils.utils import get_programme_id_for_cours, is_coordo_for_programme
 
@@ -632,6 +633,9 @@ def view_plan_cadre(cours_id, plan_id):
                         cap_to_del = PlanCadreCapacites.query.get(cid)
                         if cap_to_del:
                             db.session.delete(cap_to_del)
+
+                plan.modified_at = datetime.utcnow()
+                plan.modified_by_id = current_user.id
 
                 db.session.commit()
                 success_message = "Plan-cadre et capacités mis à jour avec succès."
