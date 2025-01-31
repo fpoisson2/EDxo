@@ -2,7 +2,7 @@ from flask import Blueprint, request, render_template, flash, redirect, url_for,
 from flask_login import login_required, current_user
 from config.constants import SECTIONS  # Importer la liste des sections
 from utils.decorator import role_required, roles_required
-from app.forms import GlobalGenerationSettingsForm,  DeletePlanForm, UploadForm
+from app.forms import GlobalGenerationSettingsForm,  DeletePlanForm, UploadForm, ProfileEditForm
 from app.routes.evaluation import AISixLevelGridResponse
 from flask_wtf.csrf import CSRFProtect
 from flask_wtf.csrf import generate_csrf
@@ -17,12 +17,100 @@ csrf = CSRFProtect()
 
 
 # Importez bien sûr db, User et GlobalGenerationSettings depuis vos modèles
-from app.models import db, User, GlobalGenerationSettings, GrillePromptSettings, PlanDeCours, Cours, Programme, PlanDeCoursPromptSettings, AnalysePlanCoursPrompt
+from app.models import db, User, GlobalGenerationSettings, GrillePromptSettings, PlanDeCours, Cours, Programme, PlanDeCoursPromptSettings, AnalysePlanCoursPrompt, ListeCegep, Department
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 
 # Liste des canevas existants
 CANEVAS_LIST = ['plan_cadre_template.docx', 'plan_de_cours_template.docx', 'evaluation_grid_template.docx']
+
+@settings_bp.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    form = ProfileEditForm()
+    
+    # Charger les données
+    all_cegeps = ListeCegep.query.all()
+    all_departments = Department.query.all()
+    all_programmes = Programme.query.all()
+    
+    form.cegep.choices = [(c.id, c.nom) for c in all_cegeps]
+    form.department.choices = [(d.id, d.nom) for d in all_departments]
+    
+    # Définir les choix pour les programmes
+    form.programmes.choices = [(p.id, p.nom) for p in all_programmes]
+    
+    # Configuration de l'avatar
+    seed = current_user.email or str(current_user.id)
+    dicebear_styles = ["pixel-art", "bottts", "adventurer", "lorelei", "identicon"]
+    avatar_choices = [(f"https://api.dicebear.com/7.x/{style}/svg?seed={seed}&backgroundColor=b6e3f4", 
+                      style.capitalize()) for style in dicebear_styles]
+    form.image.choices = avatar_choices
+    avatar_url = current_user.image or avatar_choices[0][0]
+
+    if request.method == 'POST':
+        # Débogage
+        print("Form data:", request.form)
+        print("Form errors:", form.errors)
+        
+        if form.validate_on_submit():
+            try:
+                # Mettre à jour les données de l'utilisateur
+                current_user.nom = form.nom.data
+                current_user.prenom = form.prenom.data
+                current_user.email = form.email.data
+                current_user.image = form.image.data
+                current_user.cegep_id = form.cegep.data
+                current_user.department_id = form.department.data
+                
+                # Gérer les programmes
+                selected_ids = form.programmes.data
+                current_user.programmes = [
+                    Programme.query.get(int(pid)) 
+                    for pid in selected_ids 
+                    if Programme.query.get(int(pid))
+                ]
+                
+                db.session.commit()
+                flash('Profil mis à jour avec succès', 'success')
+                return redirect(url_for('settings.edit_profile'))
+                
+            except Exception as e:
+                db.session.rollback()
+                print("Database error:", str(e))
+                flash('Erreur lors de la mise à jour', 'danger')
+    else:
+        # Remplir le formulaire avec les données actuelles
+        form.nom.data = current_user.nom
+        form.prenom.data = current_user.prenom
+        form.email.data = current_user.email
+        form.cegep.data = current_user.cegep_id
+        form.department.data = current_user.department_id
+        form.image.data = avatar_url
+        form.programmes.data = [p.id for p in current_user.programmes]
+    
+    return render_template('settings/edit_profile.html',
+                           form=form,
+                           avatar_url=avatar_url,
+                           programmes=all_programmes)
+
+
+
+@settings_bp.route('/get_departments/<int:cegep_id>', methods=['GET'])
+@login_required
+def get_departments(cegep_id):
+    """Retourne la liste des départements en JSON pour un cégep donné."""
+    departments = Department.query.filter_by(cegep_id=cegep_id).all()
+    data = [[d.id, d.nom] for d in departments]
+    return jsonify(data)
+
+@settings_bp.route('/get_programmes/<int:dept_id>', methods=['GET'])
+@login_required
+def get_programmes(dept_id):
+    """Retourne la liste des programmes en JSON pour un département donné."""
+    programmes = Programme.query.filter_by(department_id=dept_id).all()
+    data = [[p.id, p.nom] for p in programmes]
+    return jsonify(data)
 
 @settings_bp.route('/analyse_prompt', methods=['GET', 'POST'])
 @roles_required('admin')

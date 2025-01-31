@@ -44,6 +44,21 @@ REGIONS = [
     ('À distance', 'À distance')
 ]
 
+class ProfileEditForm(FlaskForm):
+    nom = StringField('Nom', validators=[DataRequired()])
+    prenom = StringField('Prénom', validators=[DataRequired()])
+    email = StringField('Courriel', validators=[DataRequired(), Email()])
+
+    # Champ avatar : on va proposer plusieurs styles DiceBear
+    image = SelectField('Avatar', choices=[])
+    cegep = SelectField('Cégep', coerce=int)
+    department = SelectField('Département', coerce=int)
+
+    # Programmes multiples
+    programmes = SelectMultipleField('Programmes', coerce=int, choices=[])
+
+    submit = SubmitField('Enregistrer')
+    
 class UploadForm(FlaskForm):
     file = FileField('Fichier', validators=[DataRequired()])
     submit = SubmitField('Téléverser')
