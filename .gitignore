@@ -6,3 +6,4 @@ app_errors.log
 *.db-wal
 *.db-shm
 token.json
+.env
