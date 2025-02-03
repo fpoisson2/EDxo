@@ -7,3 +7,5 @@ app_errors.log
 *.db-shm
 token.json
 .env
+credentials.json
+src/config/credentials.json
