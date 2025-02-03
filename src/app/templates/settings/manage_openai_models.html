@@ -43,9 +43,11 @@
             <td>{{ model.output_price }}</td>
             <td>
               <!-- Formulaire de suppression pour chaque modèle -->
-              <form method="post" action="{{ url_for('settings.delete_openai_model', model_id=model.id) }}" onsubmit="return confirm('Voulez-vous vraiment supprimer ce modèle ?');">
-                <button type="submit">Supprimer</button>
-              </form>
+            <form method="post" action="{{ url_for('settings.delete_openai_model', model_id=model.id) }}" onsubmit="return confirm('Voulez-vous vraiment supprimer ce modèle ?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit">Supprimer</button>
+            </form>
+
             </td>
           </tr>
         {% endfor %}
