@@ -46,7 +46,7 @@ cd edxo
 Pour créer un environnement virtuel, utilisez la commande suivante :
 
 ```
-python -m venv venv
+python3 -m venv venv
 ```
 Pour activer l'environnement virtuel, procédez comme suit :
 
@@ -96,8 +96,9 @@ Pour lancer l'application en mode développement :
 export FLASK_APP=src/app/__init__.py
 export FLASK_ENV=development
 flask run
-Cela lancera le serveur de développement avec le débogage activé.
 ```
+Cela lancera le serveur de développement avec le débogage activé.
+
 
 ### 5.2 Mode Production
 
@@ -105,8 +106,9 @@ Pour la production, il est recommandé d'utiliser un serveur WSGI tel que Gunico
 
 ```
 gunicorn -w 4 "src.app.__init__:create_app()"
-Cette commande exécute l'application avec 4 processus de travail. Assurez-vous que vos variables d'environnement et configurations sont correctement définies pour la production.
 ```
+Cette commande exécute l'application avec 4 processus de travail. Assurez-vous que vos variables d'environnement et configurations sont correctement définies pour la production.
+
 
 ## 6. Tests
 Une configuration spécifique pour les tests est disponible dans le code de l'application. Pour exécuter les tests :
