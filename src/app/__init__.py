@@ -146,7 +146,7 @@ def create_app(testing=False):
         
     @app.before_request
     def before_request():
-        # Define public endpoints that don't require authentication
+        # Définir les endpoints publics qui ne nécessitent pas d'authentification
         PUBLIC_ENDPOINTS = {
             'static', 
             'main.login', 
@@ -154,27 +154,22 @@ def create_app(testing=False):
             'main.get_credit_balance'
         }
         
-        # Skip authentication for login page and static files
         if request.endpoint in PUBLIC_ENDPOINTS or request.path.startswith('/static/'):
             return
 
-        # Important: Skip authentication check if already redirecting to login
-        if request.endpoint == 'main.login':
-            return
-            
         if not current_user.is_authenticated:
             logger.warning(f"🔄 User NOT authenticated! Redirecting {request.path} to /login")
             return redirect(url_for('main.login', next=request.path))
 
         try:
+            # Vérifier la connexion à la BDD
             db.session.execute(text("SELECT 1"))
             db.session.commit()
-            
-            # Session expiry check
+
+            # Gestion de l'expiration de la session
             session.permanent = True
             now = datetime.now(timezone.utc)
             last_activity_str = session.get('last_activity')
-
             if last_activity_str:
                 try:
                     last_activity = datetime.fromisoformat(last_activity_str)
@@ -186,9 +181,17 @@ def create_app(testing=False):
                         return redirect(url_for('main.login'))
                 except (ValueError, TypeError):
                     session['last_activity'] = now.isoformat()
-
             session['last_activity'] = now.isoformat()
-            
+
+            # ────────────────────────────────────────────────────────────────
+            # Mise à jour de 'last_login' pour refléter la dernière activité de l'utilisateur
+            # Ici, nous mettons à jour le champ au moins une fois par minute pour éviter trop d'écritures.
+            if (not current_user.last_login or 
+                (datetime.utcnow() - current_user.last_login).total_seconds() > 60):
+                current_user.last_login = datetime.utcnow()
+                db.session.commit()
+            # ────────────────────────────────────────────────────────────────
+
         except SQLAlchemyError as e:
             logger.error(f"❌ Database error: {e}")
             return "Database Error", 500
