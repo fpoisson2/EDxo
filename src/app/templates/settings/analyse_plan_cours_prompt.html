@@ -1,11 +1,10 @@
-<!-- app/templates/settings/analyse_plan_cours_prompt.html -->
 {% extends "parametres.html" %}
 {% block parametres_content %}
 <div class="container">
     <h2 class="mb-4">Configuration du prompt d'analyse des plans de cours</h2>
     
     <form method="POST" class="needs-validation" novalidate>
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        {{ form.csrf_token }}
         
         <div class="card mb-4">
             <div class="card-header">
@@ -13,23 +12,35 @@
             </div>
             <div class="card-body">
                 <div class="form-group">
-                    <textarea 
-                        id="prompt_template"
-                        name="prompt_template" 
-                        rows="20" 
-                        class="form-control font-monospace"
-                    >{{ prompt.prompt_template if prompt else '' }}</textarea>
+                    {{ form.prompt_template.label }}
+                    {{ form.prompt_template }}
                     <div class="form-text text-muted mt-2">
                         Variables disponibles : {plan_cours_id}, {plan_cours_json}, {plan_cadre_id}, {plan_cadre_json}, {schema_json}
                     </div>
+                    {% for error in form.prompt_template.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="mb-0">Sélection du modèle d'IA</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    {{ form.ai_model.label }}
+                    {{ form.ai_model }}
+                    {% for error in form.ai_model.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
 
         <div class="d-flex justify-content-end">
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-save me-2"></i>Sauvegarder
-            </button>
+            {{ form.submit }}
         </div>
     </form>
 </div>

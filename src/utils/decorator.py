@@ -39,3 +39,12 @@ def roles_required(*required_roles, default_redirect='main.index'):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+def ensure_profile_completed(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.is_authenticated and current_user.is_first_connexion:
+            flash('Veuillez compléter votre profil avant de continuer.', 'warning')
+            return redirect(url_for('main.welcome'))
+        return f(*args, **kwargs)
+    return decorated_function

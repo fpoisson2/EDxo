@@ -7,7 +7,9 @@ from flask import (
     url_for, 
     flash, 
     request,
-    jsonify
+    jsonify,
+    send_file, 
+    current_app
 )
 from flask_login import login_required, current_user
 from sqlalchemy import text
@@ -36,7 +38,7 @@ from app.forms import (
     SixLevelGridForm,
     SavoirFaireEntryForm
 )
-from utils.decorator import roles_required
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 
 from collections import defaultdict
 
@@ -51,28 +53,9 @@ from pathlib import Path
 import os
 import io
 from collections import defaultdict
-from flask import send_file, current_app, flash, redirect, url_for
 from docxtpl import DocxTemplate
 
-MODEL_PRICING = {
-    "gpt-4o": {"input": 2.50 / 1_000_000, "output": 10.00 / 1_000_000},
-    "gpt-4o-mini": {"input": 0.150 / 1_000_000, "output": 0.600 / 1_000_000},
-    "o1-preview": {"input": 15.00 / 1_000_000, "output": 60.00 / 1_000_000},
-    "o1-mini": {"input": 3.00 / 1_000_000, "output": 12.00 / 1_000_000},
-}
-
-def calculate_call_cost(usage_prompt, usage_completion, model):
-    """
-    Calcule le coût d'un appel API en fonction du nombre de tokens et du modèle.
-    """
-    if model not in MODEL_PRICING:
-        raise ValueError(f"Modèle {model} non trouvé dans la grille tarifaire")
-
-    pricing = MODEL_PRICING[model]
-
-    cost_input = usage_prompt * pricing["input"]
-    cost_output = usage_completion * pricing["output"]
-    return cost_input + cost_output
+from utils.openai_pricing import calculate_call_cost
 
 class AISixLevelGridResponse(BaseModel):
     """
@@ -127,6 +110,7 @@ def admin_required(f):
 
 @evaluation_bp.route('/get_description/<int:evaluation_id>', methods=['GET'])
 @login_required
+@ensure_profile_completed
 def get_description(evaluation_id):
     try:
         evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
@@ -144,6 +128,7 @@ def get_description(evaluation_id):
 
 @evaluation_bp.route('/get_courses', methods=['GET'])
 @login_required
+@ensure_profile_completed
 def get_courses():
     courses = Cours.query.all()
     courses_data = [{
@@ -158,6 +143,7 @@ def get_courses():
 
 
 @login_required
+@ensure_profile_completed
 def create_evaluation_grid():
     # Étape 1 : Sélection du Cours
     course_form = CourseSelectionForm()
@@ -171,6 +157,7 @@ def create_evaluation_grid():
 
 @evaluation_bp.route('/select_plan/<int:course_id>', methods=['GET', 'POST'])
 @login_required
+@ensure_profile_completed
 def select_plan(course_id):
     plan_form = PlanSelectionForm()
     plans = PlanDeCours.query.filter_by(cours_id=course_id).order_by(PlanDeCours.session.desc()).all()
@@ -185,6 +172,7 @@ def select_plan(course_id):
 
 @evaluation_bp.route('/select_evaluation/<int:plan_id>', methods=['GET', 'POST'])
 @login_required
+@ensure_profile_completed
 def select_evaluation(plan_id):
     plan = PlanDeCours.query.get_or_404(plan_id)
     evaluations = PlanDeCoursEvaluations.query.filter_by(plan_de_cours_id=plan_id).all()
@@ -225,6 +213,7 @@ from collections import defaultdict
 
 @evaluation_bp.route('/configure_grid/<int:evaluation_id>', methods=['GET', 'POST'])
 @login_required
+@ensure_profile_completed
 def configure_grid(evaluation_id):
     evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
     plan = evaluation.plan_de_cours
@@ -338,6 +327,7 @@ def configure_grid(evaluation_id):
 
 @evaluation_bp.route('/configure_six_level_grid/<int:evaluation_id>', methods=['GET', 'POST'])
 @login_required
+@ensure_profile_completed
 def configure_six_level_grid(evaluation_id):
     evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
     form = SixLevelGridForm()
@@ -417,6 +407,7 @@ def configure_six_level_grid(evaluation_id):
 
 @evaluation_bp.route('/generate_six_level_grid', methods=['POST'])
 @login_required
+@ensure_profile_completed
 def generate_six_level_grid():
     """
     Génère automatiquement la grille à six niveaux en appelant OpenAI avec un format structuré.
@@ -438,7 +429,6 @@ def generate_six_level_grid():
         except Exception as e:
             print(f"Erreur lors de la récupération de l'évaluation: {str(e)}")
 
-
     if not savoir_faire or not capacite:
         return jsonify({'error': 'Savoir-faire et capacité requis'}), 400
 
@@ -458,7 +448,6 @@ def generate_six_level_grid():
 
     schema_json = json.dumps(AISixLevelGridResponse.get_schema_with_descriptions(), indent=4, ensure_ascii=False)
     
-
     prompt = settings.prompt_template.format(
         savoir_faire=savoir_faire,
         capacite=capacite, 
@@ -475,8 +464,6 @@ def generate_six_level_grid():
     if user.credits <= 0:
         return jsonify({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}), 403
 
-    # Vérification de l'utilisateur
-    user = db.session.get(User, current_user.id)
     if not user or not user.openai_key:
         return jsonify({'error': 'Clé OpenAI non configurée'}), 400
 
@@ -515,9 +502,7 @@ def generate_six_level_grid():
 
         structured_data = response.choices[0].message.parsed
 
-
         return jsonify(structured_data.model_dump())  # Convertir en dict JSON
-
 
     except OpenAIError as e:
         return jsonify({'error': f'Erreur API OpenAI: {str(e)}'}), 500
@@ -526,6 +511,7 @@ def generate_six_level_grid():
 
 @evaluation_bp.route('/evaluation-wizard', methods=['GET', 'POST'])
 @login_required
+@ensure_profile_completed
 def evaluation_wizard():
     # Initialisation des formulaires
     course_form = CourseSelectionForm()
@@ -669,6 +655,7 @@ def evaluation_wizard():
 
 @evaluation_bp.route('/get_plans', methods=['POST'])
 @login_required
+@ensure_profile_completed
 def get_plans():
     course_id = request.form.get('course_id')
     if not course_id:
@@ -684,6 +671,7 @@ def get_plans():
 
 @evaluation_bp.route('/get_evaluations', methods=['POST'])
 @login_required
+@ensure_profile_completed
 def get_evaluations():
     plan_id = request.form.get('plan_id')
     if not plan_id:
@@ -697,6 +685,7 @@ def get_evaluations():
 
 @evaluation_bp.route('/get_grid', methods=['POST'])
 @login_required
+@ensure_profile_completed
 def get_grid():
     evaluation_id = request.form.get('evaluation_id')
     if not evaluation_id:
@@ -757,6 +746,7 @@ def get_grid():
 
 @evaluation_bp.route('/save_grid', methods=['POST'])
 @login_required
+@ensure_profile_completed
 def save_grid():
     try:
         # Récupérer evaluation_id et description depuis les deux possibilités
@@ -825,6 +815,7 @@ def save_grid():
 
 @evaluation_bp.route('/export_docx/<int:evaluation_id>', methods=['GET'])
 @login_required
+@ensure_profile_completed
 def export_evaluation_docx(evaluation_id):
     # 1. Récupérer l'évaluation
     evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)

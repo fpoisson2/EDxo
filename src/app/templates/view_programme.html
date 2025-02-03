@@ -16,7 +16,11 @@
       <p><strong>Total d'unités :</strong> {{ "%.2f"|format(total_unites) }}</p>
     </div>
     <div class="small text-muted text-end" style="max-width: 40%; margin-top: 0; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-      <h5 style="flex-basis: 100%;">Fils Conducteurs <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-sm btn-primary">Ajouter</a></h5>
+      <h5 style="flex-basis: 100%;">Fils Conducteurs 
+        {% if current_user.role in ['admin', 'coordo'] %}
+          <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-sm btn-primary">Ajouter</a>
+        {% endif %}
+      </h5>
       <ul class="list-inline mb-0">
         {% for fil in fil_conducteurs %}
           <li class="list-inline-item" style="background-color: {{ fil.couleur }}; color: {{ 'white' if fil.couleur else 'black' }}; padding: 0.2rem 0.5rem; border-radius: 0.2rem;">
@@ -140,6 +144,11 @@
 
 <!-- Styles personnalisés -->
 <style>
+  .plan-card small {
+      display: block;
+      margin-top: 0.5rem;
+      line-height: 1.4;
+  }
   .card-link {
     display: block;
     height: 100%;
@@ -289,6 +298,7 @@
 </style>
 
 <script>
+const allCoursPlans = {{ cours_plans_mapping|tojson }};
 let planCoursModal;
 let currentPlans = [];
 let selectedAction = '';
@@ -348,11 +358,7 @@ async function openPlanCoursModal(coursId, coursCode, coursNom) {
     
     // Récupérer les plans existants
     try {
-        const response = await fetch(`/api/cours/${coursId}/plans`);
-        if (!response.ok) {
-            throw new Error('Erreur lors de la récupération des plans de cours.');
-        }
-        currentPlans = await response.json();
+        currentPlans = allCoursPlans[coursId] || [];
         
         // Afficher ou masquer les options en fonction des plans existants
         if (currentPlans.length === 0) {
@@ -407,14 +413,33 @@ function showNextStep() {
         if (currentPlans.length === 0) {
             container.innerHTML = '<p class="text-muted">Aucun plan de cours existant.</p>';
         } else {
-            container.innerHTML = currentPlans.map(plan => `
-                <div class="col-md-4">
-                  <div class="card h-100 text-center p-3 plan-card" data-plan-id="${plan.id}" data-session="${plan.session}">
-                    <h6>Session ${plan.session}</h6>
-                    <small class="text-muted">Créé le ${new Date(plan.created_at).toLocaleDateString()}</small>
+          container.innerHTML = currentPlans.map(plan => {
+              const modifiedDate = plan.session; // La session est déjà formatée
+              const modifiedTimestamp = plan.modified_at
+                  // Choisissez le format qui vous convient (toLocaleString(), toLocaleDateString(), etc.)
+                  ? new Date(plan.modified_at).toLocaleDateString('fr-CA', { 
+                        year: 'numeric', month: '2-digit', day: '2-digit'
+                    })
+                  : 'Non modifié';
+
+              // On accède à plan.modified_by.username (pas plan.modified_by directement)
+              const modifiedBy = (plan.modified_by && plan.modified_by.username)
+                  ? `par ${plan.modified_by.username}`
+                  : '';
+
+              
+              return `
+                  <div class="col-md-4">
+                      <div class="card h-100 text-center p-3 plan-card" data-plan-id="${plan.id}" data-session="${plan.session}">
+                          <h6>Session ${plan.session}</h6>
+                          <small class="text-muted">
+                              Dernière modification:<br>
+                              ${modifiedTimestamp} ${modifiedBy}
+                          </small>
+                      </div>
                   </div>
-                </div>
-            `).join('');
+              `;
+          }).join('');
         }
     } else if (selectedAction === 'create') {
         document.getElementById('step1').classList.add('d-none');

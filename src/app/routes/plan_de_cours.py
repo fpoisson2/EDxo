@@ -8,6 +8,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from app.forms import PlanDeCoursForm
 import os
 from docxtpl import DocxTemplate
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 import io
 from flask import send_file
 import markdown
@@ -22,6 +23,8 @@ from openai import OpenAIError
 from pydantic import BaseModel, Field
 from typing import Optional
 import json
+
+from utils.openai_pricing import calculate_call_cost
 
 # Définir le chemin de base de l'application
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -87,32 +90,13 @@ def parse_markdown_nested(md_text):
 
 @plan_de_cours_bp.route("/api/cours/<int:cours_id>/plans")
 @login_required
+@ensure_profile_completed
 def get_cours_plans(cours_id):
     plans = PlanDeCours.query.filter_by(cours_id=cours_id).all()
     return jsonify([{
         'id': plan.id,
         'session': plan.session
     } for plan in plans])
-
-MODEL_PRICING = {
-    "gpt-4o": {"input": 2.50 / 1_000_000, "output": 10.00 / 1_000_000},
-    "gpt-4o-mini": {"input": 0.150 / 1_000_000, "output": 0.600 / 1_000_000},
-    "o1-preview": {"input": 15.00 / 1_000_000, "output": 60.00 / 1_000_000},
-    "o1-mini": {"input": 3.00 / 1_000_000, "output": 12.00 / 1_000_000},
-}
-
-def calculate_call_cost(usage_prompt, usage_completion, model):
-    """
-    Calcule le coût d'un appel API en fonction du nombre de tokens et du modèle.
-    """
-    if model not in MODEL_PRICING:
-        raise ValueError(f"Modèle {model} non trouvé dans la grille tarifaire")
-
-    pricing = MODEL_PRICING[model]
-
-    cost_input = usage_prompt * pricing["input"]
-    cost_output = usage_completion * pricing["output"]
-    return cost_input + cost_output
 
 class AIPlandeCoursResponse(BaseModel):
     """
@@ -125,6 +109,7 @@ class AIPlandeCoursResponse(BaseModel):
 
 @plan_de_cours_bp.route('/generate_content', methods=['POST'])
 @login_required
+@ensure_profile_completed
 def generate_content():
     """
     Génère automatiquement le contenu pour un champ spécifique en utilisant
@@ -257,6 +242,7 @@ def generate_content():
     "/cours/<int:cours_id>/plan_de_cours/<string:session>/", methods=["GET", "POST"]
 )
 @login_required
+@ensure_profile_completed
 def view_plan_de_cours(cours_id, session=None):
     # 1. Récupération du Cours
     cours = db.session.get(Cours, cours_id)
@@ -555,6 +541,9 @@ def view_plan_de_cours(cours_id, session=None):
                                 )
                                 new_ev.capacites.append(cap_link)
 
+                plan_de_cours.modified_at = datetime.utcnow()
+                plan_de_cours.modified_by_id = current_user.id
+
                 # 5.4. Commit des Changements
                 db.session.commit()
                 
@@ -603,6 +592,7 @@ def view_plan_de_cours(cours_id, session=None):
     methods=["GET"]
 )
 @login_required
+@ensure_profile_completed
 def export_session_plans(programme_id, session):
     """
     Exporte tous les plans de cours d'une session donnée dans un fichier ZIP
@@ -819,6 +809,7 @@ def export_session_plans(programme_id, session):
     methods=["GET"]
 )
 @login_required
+@ensure_profile_completed
 def export_docx(cours_id, session):
     # 1. Récupérer le Cours
     cours = Cours.query.get_or_404(cours_id)

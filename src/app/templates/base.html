@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="fr">
   <head>
-    <!-- Meta Tags -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -11,7 +10,7 @@
       content="Gestion pédagogique efficace avec EDxo. Gérez vos cours, évaluations et interactions utilisateurs en toute simplicité."
     />
 
-    <!-- Open Graph Meta Tags for Social Media -->
+    <!-- Open Graph / Twitter Meta Tags -->
     <meta property="og:title" content="EDxo - Gestion pédagogique" />
     <meta
       property="og:description"
@@ -20,8 +19,6 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.edxo.com" />
     <meta property="og:image" content="/static/assets/og-image.png" />
-
-    <!-- Twitter Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="EDxo - Gestion pédagogique" />
     <meta
@@ -30,20 +27,18 @@
     />
     <meta name="twitter:image" content="/static/assets/twitter-image.png" />
 
-    <!-- Favicon and Manifest -->
+    <!-- Favicon et Manifest -->
     <link rel="icon" type="image/png" href="/static/assets/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/static/assets/favicon.svg" />
     <link rel="shortcut icon" href="/static/assets/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/static/assets/apple-touch-icon.png" />
     <link rel="manifest" href="/static/assets/site.webmanifest" />
 
-    <!-- Preconnect to Essential Resources -->
+    <!-- Preconnect et Preload -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-    <!-- Preload Critical Fonts -->
     <link
       rel="preload"
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
@@ -57,7 +52,6 @@
       />
     </noscript>
 
-    <!-- Title -->
     <title>EDxo - Gestion pédagogique</title>
 
     <!-- Bootstrap CSS -->
@@ -66,15 +60,13 @@
       rel="stylesheet"
     />
 
-    <!-- Bootstrap Icons CSS -->
+    <!-- Bootstrap Icons -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
     />
 
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-    <!-- Font Awesome CSS -->
+    <!-- Font Awesome -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
@@ -82,21 +74,20 @@
       referrerpolicy="no-referrer"
     />
 
-    <!-- Custom Styles -->
     {% block head %}
     <style>
       body {
         font-family: 'Roboto', sans-serif;
       }
-      /* Logo Styling */
+      /* Logo */
       .logo-container img {
-        max-width: 80px; /* Réduit davantage la taille du logo */
+        max-width: 80px;
         height: auto;
       }
-      /* Header Styling */
+      /* Header */
       .header-container {
-        background-color: #f0f0f0; /* Fond gris de la bannière */
-        padding: 0.5rem 0; /* Réduit le padding pour diminuer la hauteur */
+        background-color: #f0f0f0;
+        padding: 0.5rem 0;
         border-bottom: 1px solid #e0e0e0;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       }
@@ -104,137 +95,118 @@
         margin-right: 1rem;
         color: #555;
         font-weight: 500;
-        font-size: 0.95rem; /* Légèrement réduit la taille de la police */
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
       }
       .navbar-nav .nav-link:hover {
         color: #000;
       }
+      .navbar-nav .nav-link .bi {
+        margin-right: 0.5rem;
+      }
       .user-info {
         display: flex;
         align-items: center;
-        gap: 0.8rem; /* Réduit l'espacement */
+        gap: 0.8rem;
         color: #555;
-        font-size: 0.95rem; /* Ajuste la taille de la police */
+        font-size: 0.95rem;
       }
       .credit-display {
         display: flex;
         align-items: center;
-        gap: 0.3rem; /* Réduit l'espacement */
+        gap: 0.3rem;
         font-weight: 600;
         background-color: #e9f7ef;
         color: #2f855a;
-        padding: 0.2rem 0.4rem; /* Réduit le padding */
+        padding: 0.2rem 0.4rem;
         border-radius: 10px;
-        font-size: 0.85rem; /* Réduit la taille de la police */
+        font-size: 0.85rem;
       }
       .credit-display i {
         color: #38a169;
-        font-size: 1rem; /* Ajuste la taille de l'icône */
+        font-size: 1rem;
       }
-      /* Dropdown Toggle as Simple Icon */
-      .dropdown-toggle.user-icon {
+      .dropdown-toggle.user-avatar {
         cursor: pointer;
-        font-size: 1.5rem; /* Taille de l'icône */
-        color: #555;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
-      /* Masquer la flèche de dropdown */
-      .dropdown-toggle.user-icon::after {
+      .dropdown-toggle.user-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .dropdown-toggle.user-avatar::after {
         display: none;
       }
-      /* Hover effect for user icon */
-      .dropdown-toggle.user-icon:hover {
-        color: #000;
+      .dropdown-toggle.user-avatar:hover {
+        opacity: 0.8;
       }
-      /* Responsive Adjustments */
-@media (max-width: 768px) {
-  /* Style général du menu mobile */
-  .navbar-collapse {
-    padding-top: 0.5rem;
-  }
-
-  /* Réorganisation des éléments de navigation */
-  .navbar-nav {
-    border-top: 1px solid #e0e0e0;
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
-  }
-
-  .navbar-nav .nav-item {
-    margin-bottom: 0.5rem;
-  }
-
-  .navbar-nav .nav-link {
-    padding: 0.5rem 0;
-    font-size: 1rem;
-    color: #333;
-    border-radius: 4px;
-  }
-
-  /* Groupe des informations utilisateur */
-  .user-info {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #e0e0e0;
-    margin-bottom: 0.5rem;
-  }
-
-  /* Style du crédit */
-  .credit-display {
-    width: 100%;
-    justify-content: flex-start;
-    padding: 0.5rem 0;
-    background: none;
-    color: #333;
-    font-size: 1rem;
-  }
-
-  /* Style des liens du menu utilisateur */
-  .user-info .dropdown-menu {
-    display: block;
-    position: static;
-    float: none;
-    width: 100%;
-    padding: 0;
-    margin: 0;
-    border: none;
-    box-shadow: none;
-    background: none;
-  }
-
-  .user-info .dropdown-header {
-    font-size: 1.1rem;
-    color: #333;
-    padding: 0.5rem 0;
-  }
-
-  .user-info .dropdown-item {
-    padding: 0.5rem 0;
-    color: #555;
-    font-size: 1rem;
-  }
-
-  .user-info .dropdown-item i {
-    width: 1.5rem;
-    color: #666;
-  }
-
-  /* Cacher l'icône de toggle du dropdown */
-  .user-info .dropdown-toggle {
-    display: none;
-  }
-
-  /* Espacement des éléments */
-  .nav-item:not(:last-child),
-  .dropdown-item:not(:last-child) {
-    border-bottom: 1px solid #f0f0f0;
-  }
-
-  /* Effet hover sur les liens */
-  .navbar-nav .nav-link:hover,
-  .user-info .dropdown-item:hover {
-    background-color: #f8f9fa;
-  }
-}
-      /* Flash Messages Styling */
+      /* Responsive */
+      @media (max-width: 768px) {
+        .navbar-collapse {
+          padding: 0;
+        }
+        .navbar-nav {
+          border-top: 1px solid #e0e0e0;
+          width: 100%;
+          flex-direction: column;
+        }
+        .navbar-nav .nav-item {
+          width: 100%;
+        }
+        .navbar-nav .nav-link {
+          padding: 0.75rem 1rem;
+          font-size: 1rem;
+          color: #333;
+          border-bottom: 1px solid #e0e0e0;
+        }
+        .user-info {
+          width: 100%;
+          justify-content: space-between;
+        }
+        .credit-display {
+          padding: 0.5rem 0;
+          background: none;
+          color: #333;
+          font-size: 1rem;
+        }
+        .user-info .dropdown-menu {
+          display: block;
+          position: static;
+          float: none;
+          width: 100%;
+          padding: 0;
+          margin: 0;
+          border: none;
+          box-shadow: none;
+          background: none;
+        }
+        .dropdown-menu .flex-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+        }
+        .user-info .dropdown-toggle {
+          display: none;
+        }
+        .nav-item:not(:last-child),
+        .dropdown-item:not(:last-child) {
+          border-bottom: 1px solid #f0f0f0;
+        }
+        .navbar-nav .nav-link:hover,
+        .user-info .dropdown-item:hover {
+          background-color: #f8f9fa;
+        }
+      }
+      /* Flash Messages */
       .flash-message {
         opacity: 0;
         transform: translateY(-100%);
@@ -274,7 +246,6 @@
     <header class="header-container">
       <div class="container">
         <nav class="navbar navbar-expand-lg navbar-light">
-          <!-- Logo -->
           <a class="navbar-brand logo-container" href="{{ url_for('main.index') }}">
             <img
               src="{{ url_for('static', filename='assets/EDxologo.png') }}"
@@ -283,7 +254,6 @@
               loading="lazy"
             />
           </a>
-          <!-- Toggle button for mobile view -->
           <button
             class="navbar-toggler"
             type="button"
@@ -295,47 +265,56 @@
           >
             <span class="navbar-toggler-icon"></span>
           </button>
-          <!-- Navbar Links and User Info -->
           <div class="collapse navbar-collapse" id="navbarSupportedContent">
             {% if current_user.is_authenticated %}
-            <!-- Navigation Links -->
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
               <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('evaluation.evaluation_wizard') }}">Créateur de grille d'évaluation</a>
+                <a class="nav-link" href="{{ url_for('evaluation.evaluation_wizard') }}">
+                  <i class="bi bi-pencil-square me-2"></i> Créateur de grille d'évaluation
+                </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('chat.index') }}">Chat</a>
+                <a class="nav-link" href="{{ url_for('chat.index') }}">
+                  <i class="bi bi-chat-dots me-2"></i> Chat
+                </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('gestion_programme.gestion_programme') }}">Gestion de programme</a>
+                <a class="nav-link" href="{{ url_for('gestion_programme.gestion_programme') }}">
+                  <i class="bi bi-gear me-2"></i> Gestion de programme
+                </a>
               </li>
             </ul>
-
-            <!-- User Info and Dropdown -->
             <div class="user-info ms-3">
-              <!-- Credit Display avec ID ajouté -->
-              <div id="credit-display" class="credit-display">
+              <!-- Affichage du crédit pour grand écran -->
+              <div id="credit-display" class="credit-display d-none d-md-flex">
                 <i class="bi bi-coin"></i> ${{ "%.2f"|format(current_user.credit|default(0)) }}
               </div>
-              <!-- User Dropdown -->
+              <!-- Dropdown utilisateur -->
               <div class="dropdown">
                 <a
                   href="#"
-                  class="dropdown-toggle user-icon"
+                  class="dropdown-toggle user-avatar"
                   id="userDropdown"
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
                 >
-                  <i class="bi bi-person-circle"></i>
+                  {% if current_user.image %}
+                    <img src="{{ current_user.image }}" alt="Avatar de {{ current_user.prenom }}">
+                  {% else %}
+                    <i class="bi bi-person-circle"></i>
+                  {% endif %}
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                  <!-- Affichage du nom d'utilisateur en tant qu'en-tête -->
-                  <li class="dropdown-header text-center">
-                    {{ current_user.username }}
+                <ul class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="userDropdown">
+                  <li class="flex-header">
+                    <span>Bonjour {{ current_user.prenom }}</span>
+                    <!-- Affichage du crédit pour petit écran -->
+                    <div id="credit-display-mobile" class="credit-display d-md-none">
+                      <i class="bi bi-coin"></i> ${{ "%.2f"|format(current_user.credit|default(0)) }}
+                    </div>
                   </li>
                   <li>
-                    <a class="dropdown-item" href="{{ url_for('main.change_password') }}">
-                      <i class="bi bi-lock me-2"></i> Mon profil
+                    <a class="dropdown-item" href="{{ url_for('settings.edit_profile') }}">
+                      <i class="bi bi-pencil-square me-2"></i> Éditer mon profil
                     </a>
                   </li>
                   <li>
@@ -343,9 +322,6 @@
                       <i class="bi bi-gear me-2"></i> Paramètres
                     </a>
                   </li>
-                  <!-- <li>
-                    <hr class="dropdown-divider">
-                  </li> -->
                   <li>
                     <a class="dropdown-item" href="{{ url_for('main.logout') }}">
                       <i class="bi bi-box-arrow-right me-2"></i> Se déconnecter
@@ -366,26 +342,18 @@
       </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- Contenu principal -->
     <main class="container mt-4">
-      <!-- Flask Flash Messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for category, message in messages %}
             <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
               {{ message }}
-              <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="alert"
-                aria-label="Close"
-              ></button>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
           {% endfor %}
         {% endif %}
       {% endwith %}
-
-      <!-- Main Content Block -->
       {% block content %}
       <!-- Votre contenu ici -->
       {% endblock %}
@@ -396,108 +364,68 @@
       <p>Version: {{ version }}</p>
     </footer>
 
-    <!-- Bootstrap JS Bundle with Popper -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
-    ></script>
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    <!-- Credit Balance Update Module -->
+    <!-- Mise à jour du crédit -->
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-  function initializeMobileMenu() {
-    if (window.innerWidth <= 768) {
-      const navbarCollapse = document.querySelector('.navbar-collapse');
-      const dropdownMenu = document.querySelector('.user-info .dropdown-menu');
-      
-      // Gestionnaire pour l'ouverture du menu
-      navbarCollapse.addEventListener('show.bs.collapse', function() {
-        setTimeout(() => {
-          dropdownMenu.classList.add('show');
-        }, 0);
-      });
-      
-      // Gestionnaire pour la fermeture du menu
-      navbarCollapse.addEventListener('hide.bs.collapse', function() {
-        dropdownMenu.classList.remove('show');
-      });
-      
-      // État initial
-      if (navbarCollapse.classList.contains('show')) {
-        dropdownMenu.classList.add('show');
-      }
-    }
-  }
-
-  initializeMobileMenu();
-  window.addEventListener('resize', initializeMobileMenu);
-});
-      // Credit balance update module
       class CreditBalanceManager {
         constructor(options = {}) {
-          this.displayElementId = options.displayElementId || 'credit-display';
-          this.updateInterval = options.updateInterval || 30000; // 30 seconds default
+          this.desktopElementId = options.desktopElementId || 'credit-display';
+          this.mobileElementId = options.mobileElementId || 'credit-display-mobile';
+          this.updateInterval = options.updateInterval || 30000; // 30 secondes par défaut
           this.updateUrl = options.updateUrl || '/get_credit_balance';
-          this.displayElement = null;
+          this.desktopElement = null;
+          this.mobileElement = null;
           this.updateTimer = null;
-          this.lastUpdate = null;
         }
-
+      
         async initialize() {
-          this.displayElement = document.getElementById(this.displayElementId);
-          if (!this.displayElement) {
-            console.warn('Credit display element not found');
+          this.desktopElement = document.getElementById(this.desktopElementId);
+          this.mobileElement = document.getElementById(this.mobileElementId);
+          if (!this.desktopElement && !this.mobileElement) {
+            console.warn('Aucun élément de crédit trouvé.');
             return false;
           }
-
-          // Initial update
           await this.updateCredit();
-
-          // Start periodic updates
           this.startPeriodicUpdates();
           return true;
         }
-
+      
         async updateCredit() {
           try {
             const response = await fetch(this.updateUrl, {
               method: 'GET',
-              headers: {
-                'Accept': 'application/json',
-              },
-              credentials: 'same-origin', // Include cookies for authentication
+              headers: { 'Accept': 'application/json' },
+              credentials: 'same-origin'
             });
-
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
-
             if (data.success && data.credit !== undefined) {
-              this.displayElement.innerHTML = `<i class="bi bi-coin me-1"></i>$${data.credit}`;
-              this.lastUpdate = new Date();
+              const creditHtml = `<i class="bi bi-coin me-1"></i>$${data.credit}`;
+              if(this.desktopElement) {
+                this.desktopElement.innerHTML = creditHtml;
+              }
+              if(this.mobileElement) {
+                this.mobileElement.innerHTML = creditHtml;
+              }
               return true;
             } else {
-              console.warn('Invalid credit data received:', data);
+              console.warn('Données de crédit invalides reçues:', data);
               return false;
             }
           } catch (error) {
-            console.error('Error updating credit balance:', error);
-            // Ne pas mettre à jour l'UI en cas d'erreur pour préserver la dernière valeur connue
+            console.error('Erreur lors de la mise à jour du crédit:', error);
             return false;
           }
         }
-
+      
         startPeriodicUpdates() {
-          if (this.updateTimer) {
-            clearInterval(this.updateTimer);
-          }
-
-          this.updateTimer = setInterval(() => {
-            this.updateCredit();
-          }, this.updateInterval);
+          if (this.updateTimer) clearInterval(this.updateTimer);
+          this.updateTimer = setInterval(() => this.updateCredit(), this.updateInterval);
         }
-
+      
         stopUpdates() {
           if (this.updateTimer) {
             clearInterval(this.updateTimer);
@@ -505,115 +433,81 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
       }
-
-      // Initialize the credit manager when the DOM is loaded
+      
       document.addEventListener('DOMContentLoaded', function () {
         const creditManager = new CreditBalanceManager({
-          displayElementId: 'credit-display',
-          updateInterval: 30000, // 30 seconds
-          updateUrl: '/get_credit_balance',
+          desktopElementId: 'credit-display',
+          mobileElementId: 'credit-display-mobile',
+          updateInterval: 30000,
+          updateUrl: '/get_credit_balance'
         });
-
-        creditManager.initialize().then((success) => {
-          if (!success) {
-            console.warn('Failed to initialize credit balance manager');
-          }
+        creditManager.initialize().then(success => {
+          if (!success) console.warn('Échec de l\'initialisation du gestionnaire de crédit.');
         });
       });
     </script>
 
-    <!-- Flash Message System -->
+    <!-- Système de flash messages -->
     <script>
       const flashMessageSystem = {
         container: null,
-
         init() {
           this.container = document.getElementById('flash-messages');
           if (!this.container) {
             this.container = document.createElement('div');
             this.container.id = 'flash-messages';
-            this.container.className =
-              'position-fixed top-0 start-50 translate-middle-x p-3';
+            this.container.className = 'position-fixed top-0 start-50 translate-middle-x p-3';
             this.container.style.zIndex = '1060';
             this.container.style.width = 'auto';
             this.container.style.maxWidth = '90vw';
             document.body.appendChild(this.container);
           }
         },
-
         show(message, type = 'success', duration = 3000) {
           if (!this.container) this.init();
-
-          // Créer l'élément de message avec les classes Bootstrap
           const messageElement = document.createElement('div');
           messageElement.className = `flash-message alert alert-${type} alert-dismissible fade`;
           messageElement.setAttribute('role', 'alert');
           messageElement.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            `;
-
-          // Ajouter au conteneur
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          `;
           this.container.appendChild(messageElement);
-
-          // Forcer un reflow pour permettre l'animation
-          messageElement.offsetHeight;
-
-          // Afficher avec animation
+          messageElement.offsetHeight; // forcer le reflow
           messageElement.classList.add('show');
-
-          // Gérer le bouton de fermeture
           const closeButton = messageElement.querySelector('.btn-close');
           closeButton.addEventListener('click', () => this.hide(messageElement));
-
-          // Auto-suppression après la durée spécifiée
-          if (duration > 0) {
-            setTimeout(() => this.hide(messageElement), duration);
-          }
-
+          if (duration > 0) setTimeout(() => this.hide(messageElement), duration);
           return messageElement;
         },
-
         hide(messageElement) {
           if (!messageElement) return;
-
           messageElement.classList.add('hide');
           messageElement.classList.remove('show');
-
-          // Suppression après l'animation
           setTimeout(() => {
             if (messageElement.parentElement) {
               messageElement.parentElement.removeChild(messageElement);
             }
           }, 300);
         },
-
         success(message, duration = 3000) {
           return this.show(message, 'success', duration);
         },
-
         error(message, duration = 5000) {
           return this.show(message, 'danger', duration);
         },
-
         warning(message, duration = 4000) {
           return this.show(message, 'warning', duration);
         },
-
         info(message, duration = 3000) {
           return this.show(message, 'info', duration);
         },
       };
-
-      // Initialiser le système de messages flash
-      document.addEventListener('DOMContentLoaded', function () {
-        flashMessageSystem.init();
-      });
+      document.addEventListener('DOMContentLoaded', () => flashMessageSystem.init());
     </script>
 
-    <!-- Additional Scripts Block -->
     {% block scripts %}
-    <!-- Scripts additionnels peuvent être placés ici si nécessaire -->
+    <!-- Scripts additionnels éventuels -->
     {% endblock %}
   </body>
 </html>

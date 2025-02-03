@@ -4,7 +4,11 @@ from openai import OpenAI
 from app.forms import ChatForm
 from app.models import User, PlanCadre, PlanDeCours, Cours, db, ChatHistory
 import json
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 import tiktoken
+
+# Importez votre fonction pour récupérer la tarification depuis la BD
+from utils.openai_pricing import calculate_call_cost
 
 chat = Blueprint('chat', __name__)
 
@@ -32,11 +36,6 @@ def estimate_tokens_for_text(text, model="gpt-4o"):
 # Fonctions pour get_plan_de_cours
 # -------------------------------------------------------------------------
 def get_plan_de_cours_function():
-    """
-    Définition de la fonction pour OpenAI : get_plan_de_cours.
-    Permet de récupérer un plan de cours basé sur le code de cours 
-    et, optionnellement, la session.
-    """
     return {
         "name": "get_plan_de_cours",
         "description": (
@@ -63,11 +62,6 @@ def get_plan_de_cours_function():
     }
 
 def handle_get_plan_de_cours(params):
-    """
-    Gère l'appel à la fonction get_plan_de_cours.
-    Retourne un dictionnaire contenant toutes les infos du plan de cours 
-    (to_dict()) ou None si aucun plan n'est trouvé.
-    """
     print(f"[DEBUG] handle_get_plan_de_cours() - Paramètres reçus : {params}")
     code = params.get("code", "").strip()
     session_str = params.get("session", "").strip()
@@ -94,7 +88,6 @@ def handle_get_plan_de_cours(params):
 # Fonctions pour get_plan_cadre
 # -------------------------------------------------------------------------
 def get_plan_cadre_function():
-    """Définition de la fonction pour OpenAI"""
     return {
         "name": "get_plan_cadre",
         "description": (
@@ -119,7 +112,6 @@ def get_plan_cadre_function():
     }
 
 def handle_get_plan_cadre(params):
-    """Gère l'appel à la fonction get_plan_cadre"""
     print(f"[DEBUG] handle_get_plan_cadre() - Paramètres reçus : {params}")
     nom = params.get('nom', "")
     code = params.get('code', "")
@@ -201,11 +193,6 @@ def handle_get_plan_cadre(params):
 # NOUVELLES FONCTIONS : list_all_plan_de_cours & list_all_plan_cadre
 # -------------------------------------------------------------------------
 def list_all_plan_de_cours_function():
-    """
-    Renvoie la définition de la fonction pour OpenAI : list_all_plan_de_cours.
-    Cette fonction ne prend aucun paramètre et retourne la liste
-    de tous les plans de cours disponibles dans la base.
-    """
     return {
         "name": "list_all_plan_de_cours",
         "description": (
@@ -220,10 +207,6 @@ def list_all_plan_de_cours_function():
     }
 
 def handle_list_all_plan_de_cours():
-    """
-    Récupère tous les plans de cours dans la base de données 
-    et les retourne sous forme de liste de dictionnaires.
-    """
     print("[DEBUG] handle_list_all_plan_de_cours() - Récupération de tous les plans de cours.")
     plans = PlanDeCours.query.all()
     result = []
@@ -237,11 +220,6 @@ def handle_list_all_plan_de_cours():
     return result
 
 def list_all_plan_cadre_function():
-    """
-    Renvoie la définition de la fonction pour OpenAI : list_all_plan_cadre.
-    Cette fonction ne prend aucun paramètre et retourne la liste
-    de tous les plans-cadres disponibles.
-    """
     return {
         "name": "list_all_plan_cadre",
         "description": (
@@ -256,10 +234,6 @@ def list_all_plan_cadre_function():
     }
 
 def handle_list_all_plan_cadre():
-    """
-    Récupère tous les plans-cadres dans la base de données 
-    et les retourne sous forme de liste de dictionnaires.
-    """
     print("[DEBUG] handle_list_all_plan_cadre() - Récupération de tous les plans-cadres.")
     plans = PlanCadre.query.all()
     result = []
@@ -278,6 +252,7 @@ def handle_list_all_plan_cadre():
 # -------------------------------------------------------------------------
 @chat.route('/chat')
 @login_required
+@ensure_profile_completed
 def index():
     print("[DEBUG] Accessing chat index route.")
     form = ChatForm()
@@ -289,58 +264,90 @@ def index():
 
 @chat.route('/chat/send', methods=['POST'])
 @login_required
+@ensure_profile_completed
 def send_message():
-    print("\n" + "="*50)
+    # --- Partie 1 : Vérifications (aucun yield ici) ---
+    # On peut utiliser directement current_app ici puisque nous sommes dans le contexte de la requête
+    app_obj = current_app  # pas besoin de _get_current_object() ici
+
+    print("\n" + "=" * 50)
     print("[DEBUG] DÉBUT DE LA REQUÊTE /chat/send")
-    print("="*50)
+    print("=" * 50)
     
-    # Récupération de l'historique depuis la base de données
-    recent_messages = ChatHistory.get_recent_history(current_user.id)
+    # Récupération de l'utilisateur via Flask-Login
+    try:
+        user = current_user._get_current_object()
+    except Exception as e:
+        print("[DEBUG] Erreur lors de la récupération de current_user:", str(e))
+        user = None
+
+    if user is None:
+        print("[DEBUG] Erreur: current_user est None")
+        return app_obj.response_class(
+            response=json.dumps({'error': 'Utilisateur non authentifié'}),
+            status=401,
+            mimetype='application/json'
+        )
+
+    # Récupération de l'historique depuis la DB
+    recent_messages = ChatHistory.get_recent_history(user.id)
     current_history = [
         {"role": msg.role, "content": msg.content}
         for msg in reversed(recent_messages)
     ]
-    
     print("[DEBUG] Historique actuel (depuis DB):")
     for i, msg in enumerate(current_history, start=1):
         print(f"  {i}. {msg['role']} -> {msg['content'][:80]}...")
-    
+
     data = request.get_json()
     if not data or 'message' not in data:
         print("[DEBUG] Erreur: 'message' est manquant dans la requête.")
-        return jsonify({'error': 'Message manquant'}), 400
-        
-    # Vérification des crédits de l'utilisateur
-    user = db.session.get(User, current_user.id)
+        return app_obj.response_class(
+            response=json.dumps({'error': 'Message manquant'}),
+            status=400,
+            mimetype='application/json'
+        )
+
+    # Vérification des crédits
     if user.credits is None:
         user.credits = 0.0
     if user.credits <= 0:
         print("[DEBUG] Erreur: Crédits insuffisants.")
-        return jsonify({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}), 403
-        
+        return app_obj.response_class(
+            response=json.dumps({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}),
+            status=403,
+            mimetype='application/json'
+        )
+
     message = data.get('message')
     print(f"[DEBUG] MESSAGE REÇU du front-end: {message}")
-    
+
     # Vérification de la clé API OpenAI
-    if not user or not user.openai_key:
+    if not user.openai_key:
         print("[DEBUG] Erreur: Clé OpenAI non configurée pour l'utilisateur.")
-        return jsonify({'error': 'Clé OpenAI non configurée'}), 400
-        
+        return app_obj.response_class(
+            response=json.dumps({'error': 'Clé OpenAI non configurée'}),
+            status=400,
+            mimetype='application/json'
+        )
+
     client = OpenAI(api_key=user.openai_key)
-    
+
+    # --- Partie 2 : Création du générateur de streaming ---
     def generate_stream():
         try:
+            # On peut dès le début émettre un message "processing"
+            yield f"data: {json.dumps({'type': 'processing', 'content': 'En attente d\'une réponse...'})}\n\n"
+
+            # Construction des messages pour GPT
             messages = [
-                {
-                    "role": "system",
-                    "content": "Vous êtes EDxo, un assistant spécialisé dans les informations pédagogiques."
-                }
+                {"role": "system", "content": "Vous êtes EDxo, un assistant spécialisé dans les informations pédagogiques."}
             ]
             messages.extend(current_history)
             messages.append({"role": "user", "content": message})
             
             # Sauvegarde du message utilisateur dans la DB
-            new_message = ChatHistory(user_id=current_user.id, role="user", content=message)
+            new_message = ChatHistory(user_id=user.id, role="user", content=message)
             db.session.add(new_message)
             db.session.commit()
 
@@ -348,12 +355,12 @@ def send_message():
             prompt_text = "\n".join([msg["content"] for msg in messages])
             prompt_tokens = estimate_tokens_for_text(prompt_text, model)
 
-            # On fournit nos fonctions à GPT
+            # Définition des fonctions disponibles pour GPT
             functions = [
                 get_plan_cadre_function(),
                 get_plan_de_cours_function(),
-                list_all_plan_de_cours_function(),   # <-- Nouvelle fonction
-                list_all_plan_cadre_function()       # <-- Nouvelle fonction
+                list_all_plan_de_cours_function(),
+                list_all_plan_cadre_function()
             ]
             
             print("[DEBUG] Envoi de la requête initiale à OpenAI avec fonctions disponibles.")
@@ -366,10 +373,9 @@ def send_message():
             
             output_chunks = []
             collected_content = ""
-            
             function_call_data = None
             function_args = ""
-            
+
             # Parcours du flux de la réponse initiale
             for chunk in initial_response:
                 if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
@@ -381,27 +387,21 @@ def send_message():
                     fc = chunk.choices[0].delta.function_call
                     if function_call_data is None and hasattr(fc, 'name'):
                         function_call_data = fc.name
+                        yield f"data: {json.dumps({'type': 'function_call', 'content': 'Appel de fonction en cours...'})}\n\n"
                     if hasattr(fc, 'arguments'):
                         function_args += fc.arguments
 
             full_output = "".join(output_chunks)
             completion_tokens = estimate_tokens_for_text(full_output, model)
+            total_cost_initial = calculate_call_cost(prompt_tokens, completion_tokens, model)
+            print(f"[DEBUG] Coût estimé - prompt: {prompt_tokens:.6f}, output: {completion_tokens:.6f}, total: {total_cost_initial:.6f}")
 
-            cost_input_initial = (prompt_tokens / 1_000_000) * 2.5  # Estimation
-            cost_output_initial = (completion_tokens / 1_000_000) * 10
-            total_cost_initial = cost_input_initial + cost_output_initial
-            
-            print(f"[DEBUG] Coût estimé - prompt: {cost_input_initial:.6f}, "
-                  f"output: {cost_output_initial:.6f}, total: {total_cost_initial:.6f}")
-            
             total_cost_follow_up = 0
-            
-            # Vérification si une fonction a été appelée
+
+            # Si une fonction a été appelée, on traite le résultat
             if function_call_data:
                 print(f"[DEBUG] Une fonction a été appelée: {function_call_data}")
                 try:
-                    # Certaines fonctions n'ont pas d'arguments (list_all_*)
-                    # donc on fait un `json.loads` prudent
                     args = {}
                     if function_args.strip():
                         args = json.loads(function_args)
@@ -419,7 +419,6 @@ def send_message():
                         result = None
                     
                     if result:
-                        # On prépare un second appel "follow_up" pour que GPT traite la réponse
                         print(f"[DEBUG] Résultat de {function_call_data} obtenu, on relance GPT.")
                         follow_up_messages = messages.copy()
                         follow_up_messages.extend([
@@ -447,8 +446,7 @@ def send_message():
                         follow_up_content = ""
 
                         for chunk in follow_up_response:
-                            if (hasattr(chunk.choices[0].delta, 'content')
-                                and chunk.choices[0].delta.content):
+                            if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
                                 content = chunk.choices[0].delta.content
                                 follow_up_chunks.append(content)
                                 follow_up_content += content
@@ -459,20 +457,13 @@ def send_message():
 
                         full_follow_up_output = "".join(follow_up_chunks)
                         completion_tokens_follow_up = estimate_tokens_for_text(full_follow_up_output, model)
-                        cost_input_follow_up = round((prompt_tokens / 1_000_000) * 2.5, 6)
-                        cost_output_follow_up = round((completion_tokens_follow_up / 1_000_000) * 10, 6)
-                        total_cost_follow_up = round(cost_input_follow_up + cost_output_follow_up, 6)
+                        total_cost_follow_up = calculate_call_cost(prompt_tokens, completion_tokens_follow_up, model)
 
-                        # On sauvegarde la réponse finale du bot
+                        # Sauvegarde de la réponse finale du bot
                         if follow_up_content:
-                            assistant_message = ChatHistory(
-                                user_id=current_user.id,
-                                role="assistant",
-                                content=follow_up_content
-                            )
+                            assistant_message = ChatHistory(user_id=user.id, role="assistant", content=follow_up_content)
                             db.session.add(assistant_message)
                             db.session.commit()
-                    
                     else:
                         print(f"[DEBUG] La fonction {function_call_data} n'a rien retourné.")
                         no_result_msg = "Aucun résultat correspondant."
@@ -488,12 +479,12 @@ def send_message():
             
             # Mise à jour des crédits de l'utilisateur
             try:
-                user = db.session.get(User, current_user.id)
-                if user.credits is None:
-                    user.credits = 0.0
-                user.credits = round(user.credits - total_cost_global, 6)
+                updated_user = db.session.get(User, user.id)
+                if updated_user.credits is None:
+                    updated_user.credits = 0.0
+                updated_user.credits = round(updated_user.credits - total_cost_global, 6)
                 db.session.commit()
-                print(f"[DEBUG] Crédit utilisateur mis à jour. Nouveau solde: {user.credits}")
+                print(f"[DEBUG] Crédit utilisateur mis à jour. Nouveau solde: {updated_user.credits}")
             except Exception as e:
                 print(f"[DEBUG] ❌ Erreur lors de la mise à jour du crédit: {str(e)}")
             
@@ -505,6 +496,7 @@ def send_message():
             yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
             yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
 
+    # --- Partie 3 : Retour de la réponse SSE ---
     print("[DEBUG] Retour d'une Response SSE (Server-Sent Events).")
     return Response(
         stream_with_context(generate_stream()),
@@ -515,3 +507,4 @@ def send_message():
             'X-Accel-Buffering': 'no'
         }
     )
+
