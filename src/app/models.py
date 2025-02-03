@@ -11,12 +11,26 @@ user_programme = db.Table('User_Programme',
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
-# Dans models.py
+class OpenAIModel(db.Model):
+    __tablename__ = 'openai_models'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), unique=True, nullable=False)
+    input_price = db.Column(db.Float, nullable=False)   # Coût par token en input
+    output_price = db.Column(db.Float, nullable=False)  # Coût par token en output
+
+    def __repr__(self):
+        return f"<OpenAIModel {self.name}>"
+
 class AnalysePlanCoursPrompt(db.Model):
     __tablename__ = 'analyse_plan_cours_prompt'
     
     id = db.Column(db.Integer, primary_key=True)
     prompt_template = db.Column(db.Text, nullable=False)
+    ai_model = db.Column(
+        db.String(50), 
+        nullable=False, 
+        server_default='gpt-4o'  # Utiliser server_default au lieu de default
+    )
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
@@ -138,23 +152,28 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.Text, nullable=False)
     password = db.Column(db.Text, nullable=False)
+    # Nouveaux champs
+    image = db.Column(db.Text, nullable=True)
+    nom = db.Column(db.Text, nullable=True)
+    prenom = db.Column(db.Text, nullable=True)
+    is_first_connexion = db.Column(db.Boolean, nullable=False, server_default='1')  # '1' pour TRUE en SQLite
+    # Champs existants
     role = db.Column(db.Text, nullable=False, server_default="invite")
     openai_key = db.Column(db.Text, nullable=True)
     cegep_id = db.Column(db.Integer, db.ForeignKey("ListeCegep.id"), nullable=True)
     department_id = db.Column(db.Integer, db.ForeignKey("Department.id"), nullable=True)
     credits = db.Column(db.Float, nullable=False, default=0.0)
     email = db.Column(db.String(120), nullable=True)
-
-
+    last_login = db.Column(db.DateTime, nullable=True)
+    
     __table_args__ = (
-        UniqueConstraint('email', name='uq_user_email'),  # ✅ Explicit constraint name
+        UniqueConstraint('email', name='uq_user_email'),
     )
 
     # Relations
     programmes = db.relationship('Programme', 
                                secondary=user_programme,
                                backref=db.backref('users', lazy='dynamic'))
-
 
 # ------------------------------------------------------------------------------
 # Modèles liés aux compétences et éléments de compétences
@@ -277,6 +296,10 @@ class PlanCadre(db.Model):
     eval_evaluation_sommatives_apprentissages = db.Column(db.Text, nullable=True)
     additional_info = db.Column(db.Text, nullable=True)
     ai_model = db.Column(db.Text, nullable=True, server_default="gpt-4o")
+    modified_by_id = db.Column(db.Integer, 
+                             db.ForeignKey("User.id", name="fk_plan_cadre_modified_by"),
+                             nullable=True)
+    modified_at = db.Column(db.DateTime, nullable=True)
 
     # Relations
     cours = db.relationship("Cours", back_populates="plan_cadre")
@@ -626,7 +649,13 @@ class PlanDeCours(db.Model):
     compatibility_percentage = db.Column(db.Float, nullable=True)
     recommendation_ameliore = db.Column(db.Text, nullable=True)
     recommendation_plan_cadre = db.Column(db.Text, nullable=True)
+    modified_by_id = db.Column(db.Integer, 
+                             db.ForeignKey("User.id", name="fk_plan_de_cours_modified_by"),
+                             nullable=True)
     modified_at = db.Column(db.DateTime, nullable=True)
+
+    modified_by = db.relationship("User", foreign_keys=[modified_by_id])
+
 
     # Relations
     cours = db.relationship("Cours", back_populates="plans_de_cours")
@@ -664,7 +693,11 @@ class PlanDeCours(db.Model):
             'compatibility_percentage': self.compatibility_percentage,
             'recommendation_ameliore': self.recommendation_ameliore,
             'recommendation_plan_cadre': self.recommendation_plan_cadre,
-            'modified_at': self.modified_at.isoformat() if self.modified_at else None,
+            "modified_by": {
+                "id": self.modified_by.id,
+                "username": self.modified_by.username
+            } if self.modified_by else None,
+            "modified_at": self.modified_at.isoformat() if self.modified_at else None,
             
             # Optional: Include related course information if needed
             'cours_info': {

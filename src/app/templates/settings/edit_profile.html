@@ -1,0 +1,138 @@
+{% extends "parametres.html" %}
+{% block parametres_content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Éditer mon profil</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Formulaire principal -->
+                    <form method="POST" class="needs-validation" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        <!-- Nom et prénom -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.prenom.label(class="form-label") }}
+                                {{ form.prenom(class="form-control") }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.nom.label(class="form-label") }}
+                                {{ form.nom(class="form-control") }}
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control") }}
+                        </div>
+
+                        <!-- Avatar (DiceBear) -->
+                        <div class="mb-3">
+                            {{ form.image.label(class="form-label") }}
+                            <!-- Sélecteur pour choisir l’avatar -->
+                            {{ form.image(class="form-select", id="avatar-select") }}
+
+                            <!-- Aperçu de l’avatar sélectionné -->
+                            <div class="text-center mt-3">
+                                <img id="avatar-preview"
+                                     src="{{ avatar_url }}"
+                                     class="img-thumbnail"
+                                     style="width: 150px; height: 150px;">
+                            </div>
+                        </div>
+
+                        <!-- Choix du CÉGEP -->
+                        <div class="mb-3">
+                            {{ form.cegep.label(class="form-label") }}
+                            {{ form.cegep(class="form-select", id="cegep") }}
+                        </div>
+
+                        <!-- Choix du département -->
+                        <div class="mb-3">
+                            {{ form.department.label(class="form-label") }}
+                            {{ form.department(class="form-select", id="department") }}
+                        </div>
+
+                        <!-- Programmes: cases à cocher -->
+                        <div class="mb-3">
+                            <label for="programme-checkboxes" class="form-label">Programmes</label>
+                            <div id="programme-checkboxes">
+                                {% for value, label in form.programmes.choices %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox"
+                                           id="prog_{{ value }}" name="programmes"
+                                           value="{{ value }}"
+                                           {% if value in form.programmes.data %}checked{% endif %}>
+                                    <label class="form-check-label" for="prog_{{ value }}">
+                                        {{ label }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+
+                        <!-- Boutons de soumission et de retour -->
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                {{ form.submit_profile(class="btn btn-success w-100") }}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script pour mise à jour dynamique CÉGEP -> Département -> Programmes + preview avatar -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const avatarSelect = document.getElementById('avatar-select');
+    const avatarPreview = document.getElementById('avatar-preview');
+    const programmes = document.querySelectorAll('input[name="programmes"]');
+    const cegepSelect = document.getElementById('cegep');
+    const departmentSelect = document.getElementById('department');
+
+    // Avatar preview update
+    avatarSelect.addEventListener('change', function() {
+        avatarPreview.src = this.value;
+    });
+
+    // Maintain programme selections regardless of department changes
+    function updateProgrammeVisibility() {
+        const selectedDeptId = departmentSelect.value;
+        programmes.forEach(prog => {
+            const progContainer = prog.closest('.form-check');
+            progContainer.style.display = 'block';
+        });
+    }
+
+    // Update visibility when department changes
+    departmentSelect.addEventListener('change', updateProgrammeVisibility);
+    
+    // Initialize visibility
+    updateProgrammeVisibility();
+
+    // Random avatar button
+    const randomizeAvatar = () => {
+        const options = avatarSelect.options;
+        const randomIndex = Math.floor(Math.random() * options.length);
+        avatarSelect.selectedIndex = randomIndex;
+        avatarPreview.src = options[randomIndex].value;
+    };
+
+    // Create and add random avatar button
+    const randomButton = document.createElement('button');
+    randomButton.type = 'button';
+    randomButton.className = 'btn btn-secondary mt-2';
+    randomButton.textContent = 'Avatar aléatoire';
+    randomButton.onclick = randomizeAvatar;
+    avatarSelect.parentNode.insertBefore(randomButton, avatarSelect.nextSibling);
+});
+</script>
+{% endblock %}

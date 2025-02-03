@@ -33,7 +33,7 @@ import logging
 from collections import defaultdict
 from openai import OpenAI
 from openai import OpenAIError
-from utils.decorator import role_required, roles_required
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import os
@@ -67,6 +67,7 @@ from app.models import (
     ElementCompetence,
     ElementCompetenceCriteria,
     ElementCompetenceParCours,
+    PlanDeCours
 )
 
 # Example of another blueprint import (unused here, just as in your snippet)
@@ -80,6 +81,7 @@ programme_bp = Blueprint('programme', __name__, url_prefix='/programme')
 
 @programme_bp.route('/<int:programme_id>')
 @login_required
+@ensure_profile_completed
 def view_programme(programme_id):
     # Debug logging
     logger.debug(f"Accessing programme {programme_id}")
@@ -106,37 +108,60 @@ def view_programme(programme_id):
     # Récupérer les cours associés au programme + infos fil conducteur
     # (Dans ce modèle, FilConducteur n'est pas forcément relié par relationship, 
     # on utilise donc l’id fil_conducteur_id directement)
-    cours = (Cours.query
+    cours_liste = (Cours.query
              .filter_by(programme_id=programme_id)
              .order_by(Cours.session.asc())
              .all())
 
     # Regrouper les cours par session
     cours_par_session = defaultdict(list)
-    for c in cours:
-        cours_par_session[c.session].append(c)
+    
+    # Pour chaque cours, récupérer les informations du dernier plan
+    for cours in cours_liste:
+        # Récupérer le dernier plan de cours
+        dernier_plan = PlanDeCours.query\
+            .filter_by(cours_id=cours.id)\
+            .order_by(PlanDeCours.modified_at.desc())\
+            .first()
+        
+        if dernier_plan:
+            # Récupérer le username de l'utilisateur si modified_by_id existe
+            modified_username = None
+            if dernier_plan.modified_by_id:
+                user = User.query.get(dernier_plan.modified_by_id)
+                modified_username = user.username if user else None
+
+            cours.dernier_plan = {
+                'session': dernier_plan.session,
+                'modified_at': dernier_plan.modified_at,
+                'modified_by': modified_username
+            }
+        else:
+            cours.dernier_plan = None
+            
+        cours_par_session[cours.session].append(cours)
 
     # Récupérer préalables et co-requis pour chaque cours
     prerequisites = {}
     corequisites = {}
-    for c in cours:
+    for cours in cours_liste:  # Utiliser cours_liste au lieu de cours
         # Pré-requis
         preq = (db.session.query(Cours.nom, Cours.code, CoursPrealable.note_necessaire)
                 .join(CoursPrealable, Cours.id == CoursPrealable.cours_prealable_id)
-                .filter(CoursPrealable.cours_id == c.id)
+                .filter(CoursPrealable.cours_id == cours.id)
                 .all())
-        prerequisites[c.id] = [(f"{p.code} - {p.nom}", p.note_necessaire) for p in preq]
+        prerequisites[cours.id] = [(f"{p.code} - {p.nom}", p.note_necessaire) for p in preq]
 
         # Co-requis
         coreq = (db.session.query(Cours.nom, Cours.code)
                  .join(CoursCorequis, Cours.id == CoursCorequis.cours_corequis_id)
-                 .filter(CoursCorequis.cours_id == c.id)
+                 .filter(CoursCorequis.cours_id == cours.id)
                  .all())
-        corequisites[c.id] = [f"{cc.code} - {cc.nom}" for cc in coreq]
+        corequisites[cours.id] = [f"{cc.code} - {cc.nom}" for cc in coreq]
 
     # Récupérer les codes des compétences (développées ou atteintes) par cours
     competencies_codes = {}
-    for c in cours:
+    for c in cours_liste    :
         # Un SELECT DISTINCT sur c.code AS competence_code depuis la table Competence 
         # via ElementCompetence -> ElementCompetenceParCours
         comps = (db.session.query(Competence.code.label('competence_code'))
@@ -149,17 +174,22 @@ def view_programme(programme_id):
         competencies_codes[c.id] = [comp.competence_code for comp in comps]
 
     # Calcul des totaux
-    total_heures_theorie = sum(c.heures_theorie for c in cours)
-    total_heures_laboratoire = sum(c.heures_laboratoire for c in cours)
-    total_heures_travail_maison = sum(c.heures_travail_maison for c in cours)
-    total_unites = sum(c.nombre_unites for c in cours)
+    total_heures_theorie = sum(c.heures_theorie for c in cours_liste)
+    total_heures_laboratoire = sum(c.heures_laboratoire for c in cours_liste)
+    total_heures_travail_maison = sum(c.heures_travail_maison for c in cours_liste)
+    total_unites = sum(c.nombre_unites for c in cours_liste)
 
     # Créer des dictionnaires de formulaires de suppression
     delete_forms_competences = {comp.id: DeleteForm(prefix=f"competence-{comp.id}") for comp in competences}
-    delete_forms_cours = {c.id: DeleteForm(prefix=f"cours-{c.id}") for c in cours}
+    delete_forms_cours = {c.id: DeleteForm(prefix=f"cours-{c.id}") for c in cours_liste}
 
     # Récupérer tous les programmes (pour le sélecteur éventuel)
     programmes = current_user.programmes
+
+    cours_plans_mapping = {}
+    for cours in cours_liste:
+        plans = PlanDeCours.query.filter_by(cours_id=cours.id).all()
+        cours_plans_mapping[cours.id] = [p.to_dict() for p in plans]
 
     return render_template('view_programme.html',
                            programme=programme,
@@ -175,12 +205,14 @@ def view_programme(programme_id):
                            total_heures_theorie=total_heures_theorie,
                            total_heures_laboratoire=total_heures_laboratoire,
                            total_heures_travail_maison=total_heures_travail_maison,
-                           total_unites=total_unites
+                           total_unites=total_unites,
+                           cours_plans_mapping=cours_plans_mapping
                            )
 
 
 @programme_bp.route('/competence/<int:competence_id>/edit', methods=['GET', 'POST'])
 @role_required('admin')
+@ensure_profile_completed
 def edit_competence(competence_id):
     form = CompetenceForm()
     # Récupérer la compétence
@@ -222,6 +254,7 @@ def edit_competence(competence_id):
 
 @programme_bp.route('/competence/<int:competence_id>/delete', methods=['POST'])
 @role_required('admin')
+@ensure_profile_completed
 def delete_competence(competence_id):
     # Formulaire de suppression
     delete_form = DeleteForm(prefix=f"competence-{competence_id}")
@@ -248,6 +281,7 @@ def delete_competence(competence_id):
 
 @programme_bp.route('/competence/code/<string:competence_code>')
 @role_required('admin')
+@ensure_profile_completed
 def view_competence_by_code(competence_code):
     # Récupérer la compétence par son code
     competence = Competence.query.filter_by(code=competence_code).first()
@@ -262,6 +296,7 @@ def view_competence_by_code(competence_code):
 
 @programme_bp.route('/competence/<int:competence_id>')
 @login_required
+@ensure_profile_completed
 def view_competence(competence_id):
     # Récupération de la compétence + programme lié
     competence = Competence.query.get(competence_id)

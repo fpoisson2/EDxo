@@ -14,15 +14,21 @@ from wtforms import (
     BooleanField,
     PasswordField,
     HiddenField,
-    TimeField
+    TimeField,
+    DecimalField
 )
+from flask_login import current_user
 from wtforms import ValidationError, ColorField, SubmitField
 from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional, Length, EqualTo, Email
 from wtforms.widgets import ListWidget, CheckboxInput
 from flask_ckeditor import CKEditorField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
+import re
+from wtforms import widgets
 
-from app.models import Cours, PlanDeCours, PlanDeCoursEvaluations, PlanCadreCapacites
+from utils.openai_pricing import get_all_models
+
+from app.models import Cours, PlanDeCours, PlanDeCoursEvaluations, PlanCadreCapacites, User
 # Liste des régions disponibles
 REGIONS = [
     ('Abitibi-Témiscamingue', 'Abitibi-Témiscamingue'),
@@ -44,6 +50,36 @@ REGIONS = [
     ('À distance', 'À distance')
 ]
 
+class OpenAIModelForm(FlaskForm):
+    name = StringField("Nom du modèle", validators=[DataRequired()])
+    input_price = DecimalField("Prix en input (par token)", validators=[DataRequired(), NumberRange(min=0)])
+    output_price = DecimalField("Prix en output (par token)", validators=[DataRequired(), NumberRange(min=0)])
+    submit = SubmitField("Ajouter")
+
+class MultiCheckboxField(SelectMultipleField):
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
+
+class ProfileEditForm(FlaskForm):
+    prenom = StringField('Prénom', validators=[DataRequired(), Length(max=50)])
+    nom = StringField('Nom', validators=[DataRequired(), Length(max=50)])
+    email = StringField('Email', validators=[
+        DataRequired(),
+        Email(message='Adresse email invalide.'),
+        Length(max=120)
+    ])
+    image = SelectField('Avatar', choices=[], validators=[DataRequired()])
+    cegep = SelectField('Cégep', choices=[], validators=[DataRequired()])
+    department = SelectField('Département', choices=[], validators=[DataRequired()])
+    programmes = MultiCheckboxField('Programmes', choices=[], coerce=int, validators=[DataRequired()])
+    submit_profile = SubmitField('Mettre à jour le profil')
+
+    def validate_email(self, email):
+        if email.data != current_user.email:
+            user = User.query.filter_by(email=email.data).first()
+            if user:
+                raise ValidationError('Cette adresse email est déjà utilisée.')
+    
 class UploadForm(FlaskForm):
     file = FileField('Fichier', validators=[DataRequired()])
     submit = SubmitField('Téléverser')
@@ -215,20 +251,42 @@ class PlanDeCoursForm(FlaskForm):
     # Bouton de soumission (si besoin)
     submit = SubmitField("Enregistrer")
 
+class AnalysePromptForm(FlaskForm):
+    prompt_template = TextAreaField(
+        'Template du prompt',
+        validators=[DataRequired()],
+        render_kw={"rows": 20, "class": "form-control font-monospace"}
+    )
+    ai_model = SelectField(
+        'Modèle d\'IA',
+        validators=[DataRequired()],
+        default='gpt-4o',
+        render_kw={"class": "form-control"}
+    )
+    submit = SubmitField('Sauvegarder', render_kw={"class": "btn btn-primary"})
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Récupérer la liste des modèles depuis la base de données
+        models = get_all_models()
+        # Construire la liste des choix sous forme de tuple (valeur, libellé)
+        # Vous pouvez adapter le libellé en fonction de vos besoins (ex: ajouter le tarif)
+        self.ai_model.choices = [(model.name, model.name) for model in models]
+
+
 class GenerateContentForm(FlaskForm):
     additional_info = TextAreaField('Informations complémentaires', validators=[DataRequired()])
     ai_model = SelectField(
         'Modèle d\'IA',
-        choices=[
-            ('gpt-4o', 'gpt-4o (défaut)'),
-            ('gpt-4o-mini', 'gpt-4o-mini'),
-            ('o1-preview', 'o1-preview'),
-            ('o1-mini', 'o1-mini')
-        ],
-        default='gpt-4o',
-        validators=[DataRequired()]
+        validators=[DataRequired()],
+        default='gpt-4o'
     )
     submit = SubmitField('Générer le plan-cadre')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        models = get_all_models()
+        self.ai_model.choices = [(model.name, model.name) for model in models]
 
 class LoginForm(FlaskForm):
     username = StringField('Nom d\'utilisateur', 
@@ -401,6 +459,29 @@ class ChangePasswordForm(FlaskForm):
         EqualTo('new_password', message='Les mots de passe doivent correspondre.')
     ])
     submit = SubmitField('Changer de mot de passe')
+
+def password_complexity_check(form, field):
+    password = field.data
+    if (len(password) < 8 or
+        not re.search(r"[A-Z]", password) or
+        not re.search(r"[a-z]", password) or
+        not re.search(r"[0-9]", password) or
+        not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password)):
+        raise ValidationError('Le mot de passe doit contenir au moins 8 caractères, incluant une majuscule, une minuscule, un chiffre et un caractère spécial.')
+
+class WelcomeChangePasswordForm(FlaskForm):
+    new_password = PasswordField('Nouveau mot de passe', validators=[
+        DataRequired(),
+        password_complexity_check
+    ])
+    confirm_password = PasswordField('Confirmer le nouveau mot de passe', validators=[
+        DataRequired(),
+        EqualTo('new_password', message='Les mots de passe doivent correspondre.')
+    ])
+    submit_password = SubmitField('Changer de mot de passe')
+
+class CombinedWelcomeForm(ProfileEditForm, WelcomeChangePasswordForm):
+    pass
 
 class GlobalGenerationSettingsForm(FlaskForm):
     sections = FieldList(FormField(GenerationSettingForm), min_entries=21, max_entries=21)

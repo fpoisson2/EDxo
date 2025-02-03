@@ -25,6 +25,10 @@
                 <div id="userSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
                   <div class="accordion-body p-0">
                     <div class="list-group list-group-flush">
+                      <a href="{{ url_for('settings.edit_profile') }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                          <i class="bi bi-person-gear me-2"></i>
+                          <span>Éditer mon profil</span>
+                      </a>
                       <a href="{{ url_for('main.change_password') }}" class="list-group-item list-group-item-action d-flex align-items-center">
                         <i class="bi bi-key me-2"></i>
                         <span>Modifier le mot de passe</span>
@@ -55,12 +59,17 @@
                         <i class="bi bi-clipboard-check me-2"></i>Grille d'évaluation
                       </a>
                       <a href="{{ url_for('settings.configure_analyse_prompt') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.configure_analyse_prompt' %}active{% endif %}">
-                          <i class="bi bi-chat-text me-2"></i>Analyse des plans de cours
+                        <i class="bi bi-chat-text me-2"></i>Analyse des plans de cours
+                      </a>
+                      <!-- Nouveau lien pour la gestion des modèles OpenAI -->
+                      <a href="{{ url_for('settings.manage_openai_models') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.manage_openai_models' %}active{% endif %}">
+                        <i class="bi bi-cpu me-2"></i>Modèles OpenAI
                       </a>
                     </div>
                   </div>
                 </div>
               </div>
+
 
               <!-- Section Gestion Académique -->
               <div class="accordion-item">

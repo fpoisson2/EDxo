@@ -1,297 +1,257 @@
 {% extends "base.html" %}
 
 {% block head %}
-{{ super() }}
-<!-- Include marked.js for Markdown rendering -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
-<!-- Include highlight.js for code syntax highlighting -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-
-<style>
-/* Reset styles */
-body {
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* Main container adjustments */
-main.container {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    margin-top: 0 !important;
-    height: calc(100vh - 60px); /* Adjust based on your header height */
-    max-width: none !important;
-}
-
-/* Chat layout */
-.chat-container {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 60px); /* Adjust based on your header height */
-    background-color: #ffffff;
-}
-
-.chat-header {
-    background-color: #ffffff;
-    border-bottom: 1px solid #e0e0e0;
-    padding: 1rem;
-    z-index: 10;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.chat-header h5 {
-    font-weight: 600;
-    color: #333;
-}
-
-.chat-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem;
-    margin-bottom: 76px; /* Height of footer */
-    background-color: #fafafa;
-}
-
-.messages-content {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-/* Message styles */
-.chat-message {
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    border-radius: 0.75rem;
-    max-width: 85%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    opacity: 0;
-    transform: translateY(10px);
-    animation: fadeInUp 0.3s ease forwards;
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-}
-
-.user-message {
-    background-color: #007bff;
-    color: #ffffff;
-    margin-left: auto;
-    border-color: #007bff;
-}
-
-.ai-message {
-    background-color: #ffffff;
-    color: #333;
-    margin-right: auto;
-    border-color: #e0e0e0;
-}
-
-.system-message {
-    background-color: #fff3cd;
-    color: #856404;
-    margin: 8px auto;
-    text-align: center;
-    width: 100%;
-    border-color: #ffeeba;
-}
-
-.error-message {
-    background-color: #f8d7da;
-    color: #721c24;
-    border-color: #f5c6cb;
-}
-
-.message-content {
-    margin-top: 4px;
-    line-height: 1.6;
-}
-
-.message-sender {
-    font-weight: 600;
-    margin-bottom: 4px;
-    color: inherit;
-}
-
-/* Footer styles */
-.chat-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: #ffffff;
-    border-top: 1px solid #e0e0e0;
-    padding: 1rem;
-    z-index: 1000;
-    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
-}
-
-#chat-form {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    gap: 0.5rem;
-}
-
-#message-input {
-    min-height: 40px;
-    max-height: 120px;
-    resize: none;
-    border-radius: 0.75rem;
-    border: 1px solid #e0e0e0;
-    padding: 0.75rem;
-    font-size: 1rem;
-    flex: 1;
-}
-
-#message-input:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-.btn-primary {
-    background-color: #007bff;
-    border: none;
-    border-radius: 0.75rem;
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #ffffff;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.btn-primary:hover {
-    background-color: #0056b3;
-}
-
-/* Processing status */
-.processing-status, 
-.function-call-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px;
-    margin-top: 8px;
-    background: #f0f0f0;
-    border-radius: 4px;
-    font-style: italic;
-    color: #666;
-}
-
-.spinner {
-    display: inline-block;
-    animation: spin 1s linear infinite;
-}
-
-/* Code highlighting */
-.message-content pre {
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    padding: 1rem;
-    overflow-x: auto;
-    border: 1px solid #e0e0e0;
-}
-
-.message-content code {
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
-    color: #333;
-}
-
-/* Animations */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
+  {{ super() }}
+  <!-- Marked.js pour le rendu Markdown -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <!-- Highlight.js pour la coloration syntaxique -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <style>
+    /* Styles généraux */
+    body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    main.container {
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      margin-top: 0 !important;
+      height: calc(100vh - 60px);
+      max-width: none !important;
     }
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
+    /* Conteneur du chat */
     .chat-container {
-        height: calc(100vh - 56px); /* Adjust for mobile header */
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 60px);
+      background-color: #ffffff;
     }
-    
+    .chat-header {
+      background-color: #ffffff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 1rem;
+      z-index: 10;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    .chat-header h5 {
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      margin-bottom: 76px;
+      background-color: #fafafa;
+    }
+    .messages-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    /* Styles des messages */
     .chat-message {
-        max-width: 90%;
+      padding: 1rem;
+      padding-bottom: 1rem; /* Par exemple, augmenter cet espace */
+      margin-bottom: 0.75rem;
+      border-radius: 0.75rem;
+      max-width: 85%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      position: relative;
+      word-wrap: break-word;
     }
-    
-    .chat-footer {
-        padding: 0.75rem;
+    .user-message {
+      background-color: #007bff;
+      color: #ffffff;
+      margin-left: auto;
+      border-color: #007bff;
     }
-    
-    #chat-form {
-        padding: 0 0.5rem;
+    .ai-message {
+      background-color: #ffffff;
+      color: #333;
+      margin-right: auto;
+      border-color: #e0e0e0;
     }
+    .system-message {
+      background-color: #fff3cd;
+      color: #856404;
+      margin: 8px auto;
+      text-align: center;
+      width: 100%;
+      border-color: #ffeeba;
+    }
+    .error-message {
+      background-color: #f8d7da;
+      color: #721c24;
+      border-color: #f5c6cb;
+    }
+    .message-sender {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .message-content {
+      margin-top: 4px;
+      line-height: 1.6;
+    }
+    /* Bulle de status pour les appels de fonction */
+.status-bubble {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 0.5rem 1rem;
+  background-color: rgba(240, 240, 240, 0.95);
+  border-radius: 20px;
+  font-style: italic;
+  color: #666;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  white-space: normal;
+  margin-top: 1rem;
 }
-</style>
+
+
+    .spinner {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    /* Styles du footer */
+    .chat-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: #ffffff;
+      border-top: 1px solid #e0e0e0;
+      padding: 1rem;
+      z-index: 1000;
+      box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+    }
+    #chat-form {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      gap: 0.5rem;
+    }
+    #message-input {
+      min-height: 40px;
+      max-height: 120px;
+      resize: none;
+      border-radius: 0.75rem;
+      border: 1px solid #e0e0e0;
+      padding: 0.75rem;
+      font-size: 1rem;
+      flex: 1;
+    }
+    #message-input:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border: none;
+      border-radius: 0.75rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #ffffff;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .btn-primary:hover {
+      background-color: #0056b3;
+    }
+    /* Mise en forme du code */
+    .message-content pre {
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      padding: 1rem;
+      overflow-x: auto;
+      border: 1px solid #e0e0e0;
+    }
+    .message-content code {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+      color: #333;
+    }
+    @media (max-width: 768px) {
+      .chat-container {
+        height: calc(100vh - 56px);
+      }
+      .chat-message {
+        max-width: 90%;
+      }
+      .chat-footer {
+        padding: 0.75rem;
+      }
+      #chat-form {
+        padding: 0 0.5rem;
+      }
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
-<div class="chat-container">
+  <div class="chat-container">
     <div class="chat-header">
-        <h5 class="mb-0">Chat</h5>
+      <h5 class="mb-0">Chat</h5>
     </div>
     <div id="chat-messages" class="chat-body">
-        <div class="messages-content">
-            <!-- Messages will appear here -->
-        </div>
+      <div class="messages-content">
+        <!-- Les messages s'afficheront ici -->
+      </div>
     </div>
     <footer class="chat-footer">
-        <form id="chat-form" class="d-flex gap-2">
-            {{ form.csrf_token }}
-            {{ form.message(class="form-control", placeholder="Tapez votre message...", id="message-input") }}
-            {{ form.submit(class="btn btn-primary") }}
-        </form>
+      <form id="chat-form" class="d-flex gap-2">
+        {{ form.csrf_token }}
+        {{ form.message(class="form-control", placeholder="Tapez votre message...", id="message-input") }}
+        {{ form.submit(class="btn btn-primary") }}
+      </form>
     </footer>
-</div>
+  </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Markdown configuration
-marked.setOptions({
+  // Configuration de Marked pour le rendu Markdown
+  marked.setOptions({
     breaks: true,
     gfm: true,
     headerIds: false,
     highlight: function(code, lang) {
-        if (lang && hljs.getLanguage(lang)) {
-            try {
-                return hljs.highlight(code, { language: lang }).value;
-            } catch (err) {}
-        }
-        return hljs.highlightAuto(code).value;
+      if (lang && hljs.getLanguage(lang)) {
+        try {
+          return hljs.highlight(code, { language: lang }).value;
+        } catch (err) { }
+      }
+      return hljs.highlightAuto(code).value;
     }
-});
+  });
 
-// Chat scroll handling
-function scrollChat(smooth = false) {
+  // Fonction de scroll pour amener le chat en bas
+  function scrollChat(smooth = false) {
     const chatBody = document.getElementById('chat-messages');
     chatBody.scrollTo({
-        top: chatBody.scrollHeight,
-        behavior: smooth ? 'smooth' : 'auto'
+      top: chatBody.scrollHeight,
+      behavior: smooth ? 'smooth' : 'auto'
     });
-}
+  }
 
-// Add message to chat
-function addMessage(sender, message, type = 'user', isError = false) {
+  // Ajoute un message au chat et retourne le conteneur du message
+  function addMessage(sender, message, type = 'user', isError = false) {
     const messagesContainer = document.querySelector('.messages-content');
     const messageDiv = document.createElement('div');
-    
     messageDiv.className = `chat-message ${type}-message`;
     if (isError) messageDiv.classList.add('error-message');
 
@@ -301,162 +261,144 @@ function addMessage(sender, message, type = 'user', isError = false) {
 
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
+    // Pour les messages utilisateur, texte brut ; pour EDxo, rendu Markdown
     contentDiv.innerHTML = type === 'user' ? message : marked.parse(message);
 
     messageDiv.appendChild(senderDiv);
     messageDiv.appendChild(contentDiv);
+
     messagesContainer.appendChild(messageDiv);
-
-    // Highlight code blocks
-    messageDiv.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightElement(block);
-    });
-
     scrollChat(true);
     return messageDiv;
-}
+  }
 
-// Message input handling
-const messageInput = document.getElementById('message-input');
-messageInput.addEventListener('input', function() {
-    this.style.height = '40px';
-    this.style.height = (this.scrollHeight) + 'px';
-});
-
-// Form submission handling
-document.getElementById('chat-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const form = e.target;
-    const formData = new FormData(form);
-    const message = formData.get('message').trim();
-    
-    if (!message) return;
-    
-    // Add user message
-    addMessage('Vous', message, 'user');
-    form.reset();
-    messageInput.style.height = '40px';
-    
-    try {
-        const response = await fetch('{{ url_for("chat.send_message") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': '{{ form.csrf_token.current_token }}'
-            },
-            body: JSON.stringify({
-                message: message,
-                csrf_token: '{{ form.csrf_token.current_token }}'
-            })
-        });
-        
-        const contentType = response.headers.get('content-type');
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            if (errorData.error) {
-                addMessage('Système', errorData.error, 'system', true);
-                return;
-            }
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        if (contentType && contentType.includes('text/event-stream')) {
-            const reader = response.body.getReader();
-            const aiMessage = addMessage('EDxo', '', 'ai');
-            await handleStreamResponse(reader, aiMessage);
-        } else {
-            const data = await response.json();
-            if (data.error) {
-                addMessage('Système', data.error, 'system', true);
-            } else {
-                addMessage('EDxo', data.content, 'ai');
-            }
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        addMessage('Système', `Une erreur est survenue: ${error.message}`, 'system', true);
-    }
-});
-
-// Stream response handling
-async function handleStreamResponse(reader, messageElement) {
+  /**
+   * Fonction de gestion du flux SSE.
+   * Dès la création du message EDxo, la bulle affiche "En attente d'une réponse…".
+   * Lorsqu'un chunk est reçu, on met à jour le contenu ou on ajuste la bulle en cas d'appel de fonction.
+   */
+  async function handleStreamResponse(reader, messageElement) {
     const decoder = new TextDecoder();
     let accumulatedContent = '';
     const contentDiv = messageElement.querySelector('.message-content');
-    
-    try {
-        let buffer = '';
-        let isProcessing = false;
-        
-        while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            
-            const chunk = decoder.decode(value, { stream: true });
-            buffer += chunk;
-            
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop() || '';
-            
-            for (const line of lines) {
-                if (line.trim() && line.startsWith('data: ')) {
-                    try {
-                        const data = JSON.parse(line.slice(6));
-                        
-                        switch (data.type) {
-                            case 'content':
-                                isProcessing = false;
-                                accumulatedContent += data.content;
-                                contentDiv.innerHTML = marked.parse(accumulatedContent);
-                                break;
-                                
-                            case 'processing':
-                            case 'function_call':
-                                isProcessing = true;
-                                contentDiv.innerHTML = marked.parse(accumulatedContent) + 
-                                    `<div class="processing-status">
-                                        <span class="spinner">⟳</span> 
-                                        ${data.content}
-                                    </div>`;
-                                break;
-                                
-                            case 'done':
-                                isProcessing = false;
-                                contentDiv.innerHTML = marked.parse(accumulatedContent);
-                                break;
-                        }
-                        
-                        contentDiv.querySelectorAll('pre code').forEach((block) => {
-                            hljs.highlightElement(block);
-                        });
-                        
-                        scrollChat(true);
-                    } catch (e) {
-                        console.error('JSON parsing error:', e);
-                    }
-                }
-            }
-        }
-        
-        if (!isProcessing) {
-            contentDiv.innerHTML = marked.parse(accumulatedContent);
-            contentDiv.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightElement(block);
-            });
-        }
-    } catch (error) {
-        console.error('Stream error:', error);
-        contentDiv.innerHTML = marked.parse(
-            accumulatedContent + '\n\n**Erreur de lecture du flux:** ' + error.message
-        );
-    }
-}
 
-// Initial scroll on page load
-document.addEventListener('DOMContentLoaded', () => {
+    // Création de la bulle de status avec un message d'attente par défaut
+    let statusBubble = document.createElement('div');
+    statusBubble.className = 'status-bubble';
+    statusBubble.innerHTML = `<span class="spinner">⟳</span> En attente d'une réponse…`;
+    // Affichage initial
+    statusBubble.style.display = 'block';
+    messageElement.appendChild(statusBubble);
+
+    try {
+      let buffer = '';
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (line.trim() && line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              console.log('SSE data reçue:', data);
+              if (data.type === 'content') {
+                accumulatedContent += data.content;
+                contentDiv.innerHTML = marked.parse(accumulatedContent);
+                // Masquer la bulle dès que du contenu est affiché
+                statusBubble.style.display = 'none';
+              } else if (data.type === 'processing' || data.type === 'function_call') {
+                // Mise à jour du message dans la bulle
+                statusBubble.innerHTML = `<span class="spinner">⟳</span> ${data.content || 'Appel de fonction en cours...'}`;
+                statusBubble.style.display = 'block';
+              } else if (data.type === 'done') {
+                statusBubble.style.display = 'none';
+              }
+              document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+              });
+              scrollChat(true);
+            } catch (e) {
+              console.error('Erreur de parsing JSON:', e);
+            }
+          }
+        }
+      }
+      contentDiv.innerHTML = marked.parse(accumulatedContent);
+      document.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+      });
+    } catch (error) {
+      console.error('Erreur lors du flux:', error);
+      contentDiv.innerHTML = marked.parse(
+        accumulatedContent + '\n\n**Erreur de lecture du flux:** ' + error.message
+      );
+    }
+  }
+
+  // Ajustement de la hauteur du textarea en fonction du contenu
+  const messageInput = document.getElementById('message-input');
+  messageInput.addEventListener('input', function() {
+    this.style.height = '40px';
+    this.style.height = (this.scrollHeight) + 'px';
+  });
+
+  // Gestion de l'envoi de message via le formulaire
+  document.getElementById('chat-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const message = formData.get('message').trim();
+    if (!message) return;
+    // Ajout du message de l'utilisateur
+    addMessage('Vous', message, 'user');
+    form.reset();
+    messageInput.style.height = '40px';
+    try {
+      const response = await fetch('{{ url_for("chat.send_message") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': '{{ form.csrf_token.current_token }}'
+        },
+        body: JSON.stringify({
+          message: message,
+          csrf_token: '{{ form.csrf_token.current_token }}'
+        })
+      });
+      const contentType = response.headers.get('content-type');
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.error) {
+          addMessage('Système', errorData.error, 'system', true);
+          return;
+        }
+        throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+      }
+      if (contentType && contentType.includes('text/event-stream')) {
+        const reader = response.body.getReader();
+        // Création du message EDxo vide
+        const aiMessage = addMessage('EDxo', '', 'ai');
+        await handleStreamResponse(reader, aiMessage);
+      } else {
+        const data = await response.json();
+        if (data.error) {
+          addMessage('Système', data.error, 'system', true);
+        } else {
+          addMessage('EDxo', data.content, 'ai');
+        }
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      addMessage('Système', `Une erreur est survenue: ${error.message}`, 'system', true);
+    }
+  });
+
+  // Scroll initial lors du chargement de la page
+  document.addEventListener('DOMContentLoaded', () => {
     scrollChat();
-});
+  });
 </script>
 {% endblock %}

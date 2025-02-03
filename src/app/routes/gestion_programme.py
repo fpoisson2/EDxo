@@ -7,9 +7,10 @@ from typing import Optional
 from datetime import datetime
 import time 
 
-from flask import Flask, Blueprint, jsonify, redirect, url_for, flash, jsonify, Blueprint, request, render_template
+from flask import Flask, Blueprint, jsonify, redirect, url_for, flash, request, render_template
 from flask_login import login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 from sqlalchemy import text
 from pydantic import BaseModel, ValidationError
 
@@ -67,37 +68,19 @@ class PlanDeCoursAIResponse(BaseModel):
     recommendation_plan_cadre: Optional[str] = None
 
 # ---------------------------------------------------------------------------
-# Configuration des tarifs des modèles OpenAI (identique au plan-cadre)
+# Import de la nouvelle fonction de tarification
 # ---------------------------------------------------------------------------
-MODEL_PRICING = {
-    "gpt-4o": {"input": 2.50 / 1_000_000, "output": 10.00 / 1_000_000},
-    "gpt-4o-mini": {"input": 0.150 / 1_000_000, "output": 0.600 / 1_000_000},
-    "o1-preview": {"input": 15.00 / 1_000_000, "output": 60.00 / 1_000_000},
-    "o1-mini": {"input": 3.00 / 1_000_000, "output": 12.00 / 1_000_000},
-}
-
-def calculate_call_cost(usage_prompt, usage_completion, model):
-    """
-    Calcule le coût d'un appel API en fonction du nombre de tokens et du modèle.
-    """
-    if model not in MODEL_PRICING:
-        raise ValueError(f"Modèle {model} non trouvé dans la grille tarifaire")
-
-    pricing = MODEL_PRICING[model]
-
-    cost_input = usage_prompt * pricing["input"]
-    cost_output = usage_completion * pricing["output"]
-    return cost_input + cost_output
+from utils.openai_pricing import calculate_call_cost
 
 # ---------------------------------------------------------------------------
 # Blueprint et route de vérification
 # ---------------------------------------------------------------------------
 gestion_programme_bp = Blueprint('gestion_programme', __name__, url_prefix='/gestion_programme')
 
-
 # Route existante pour afficher la gestion des plans de cours
 @gestion_programme_bp.route('/', methods=['GET'])
 @login_required
+@ensure_profile_completed
 def gestion_programme():
     plans = PlanDeCours.query.join(Cours).all()
     return render_template('gestion_programme/gestion_programme.html', plans=plans)
@@ -105,6 +88,7 @@ def gestion_programme():
 # Route GET pour récupérer les données de vérification existantes
 @gestion_programme_bp.route('/get_verifier_plan_cours/<int:plan_id>', methods=['GET'])
 @login_required
+@ensure_profile_completed
 def get_verifier_plan_cours(plan_id):
     plan = PlanDeCours.query.get_or_404(plan_id)
 
@@ -123,13 +107,13 @@ def get_verifier_plan_cours(plan_id):
         'recommendation_plan_cadre': recommendation_plan_cadre
     })
 
-
 @gestion_programme_bp.route('/update_verifier_plan_cours/<int:plan_id>', methods=['POST'])
 @login_required
+@ensure_profile_completed
 def update_verifier_plan_cours(plan_id):
     """
     Route qui illustre l'approche en deux appels :
-      - Premier appel (o1-preview ou tout autre O1)
+      - Premier appel (o1-preview ou tout autre modèle O1)
       - Deuxième appel (gpt-4o)
     en suivant exactement la structure de plan-cadre.
     """
@@ -170,9 +154,6 @@ def update_verifier_plan_cours(plan_id):
         "instruction": instruction
     }
 
-
-    print(structured_request)
-
     # Construction du client identique au plan-cadre
     client = OpenAI(api_key=openai_key)
 
@@ -180,9 +161,9 @@ def update_verifier_plan_cours(plan_id):
     total_completion_tokens = 0
 
     # ----------------------------------------------------------
-    # 1) Premier appel : model = "o1-preview" (ou un autre O1)
+    # 1) Premier appel : model = "o3-mini" (ou autre modèle O1)
     # ----------------------------------------------------------
-    ai_model = "o1-preview"  # exemple, peut être "o1-mini" selon vos besoins
+    ai_model = "o3-mini"  # Correction : chaîne de caractères
 
     try:
         o1_response = client.beta.chat.completions.parse(
@@ -193,7 +174,7 @@ def update_verifier_plan_cours(plan_id):
         logging.error(f"OpenAI error (premier appel): {e}")
         return jsonify({'error': f"Erreur API OpenAI premier appel: {str(e)}"}), 500
 
-    # Récup tokens 1er appel
+    # Récupérer les tokens du premier appel
     if hasattr(o1_response, 'usage'):
         total_prompt_tokens += o1_response.usage.prompt_tokens
         total_completion_tokens += o1_response.usage.completion_tokens
@@ -223,13 +204,13 @@ def update_verifier_plan_cours(plan_id):
         logging.error(f"OpenAI error (second appel): {e}")
         return jsonify({'error': f"Erreur API OpenAI second appel: {str(e)}"}), 500
 
-    # Récup tokens 2e appel
+    # Récupérer les tokens du deuxième appel
     if hasattr(completion, 'usage'):
         total_prompt_tokens += completion.usage.prompt_tokens
         total_completion_tokens += completion.usage.completion_tokens
 
     # ----------------------------------------------------------
-    # Calculer le coût total (identique à plan-cadre)
+    # Calculer le coût total
     # ----------------------------------------------------------
     usage_1_prompt = o1_response.usage.prompt_tokens if hasattr(o1_response, 'usage') else 0
     usage_1_completion = o1_response.usage.completion_tokens if hasattr(o1_response, 'usage') else 0
@@ -259,25 +240,19 @@ def update_verifier_plan_cours(plan_id):
     # ----------------------------------------------------------
     # 3) Parser et mettre à jour le plan de cours avec la réponse finale
     # ----------------------------------------------------------
-    # Récupérer le contenu "brut" du second appel
     second_response_content = completion.choices[0].message.content if completion.choices else ""
-
     print(second_response_content)
 
-    # Puisque nous avons response_format=PlanDeCoursAIResponse, parse .parsed
-    # (selon l'exemple plan-cadre) OU on parse "manuellement" si on veut.
     if hasattr(completion.choices[0].message, 'parsed'):
-        # parse automatique
         ai_response = completion.choices[0].message.parsed
     else:
-        # parse manuel
         try:
             ai_response = PlanDeCoursAIResponse.parse_raw(second_response_content)
         except ValidationError as e:
             logging.error(f"Validation Pydantic error: {e}")
             return jsonify({'error': "Erreur de structuration des données par l'IA."}), 500
 
-    # Mettre à jour
+    # Mise à jour du plan avec les données de l'IA
     plan.compatibility_percentage = ai_response.compatibility_percentage
     plan.recommendation_ameliore = ai_response.recommendation_ameliore
     plan.recommendation_plan_cadre = ai_response.recommendation_plan_cadre
