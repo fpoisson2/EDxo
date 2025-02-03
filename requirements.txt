@@ -21,3 +21,4 @@ google-auth-oauthlib
 pytz
 flask_limiter
 flask-bcrypt
+pytest

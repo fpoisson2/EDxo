@@ -151,7 +151,8 @@ def create_app(testing=False):
             'static', 
             'main.login', 
             'main.logout', 
-            'main.get_credit_balance'
+            'main.get_credit_balance',
+            'version'
         }
         
         if request.endpoint in PUBLIC_ENDPOINTS or request.path.startswith('/static/'):
