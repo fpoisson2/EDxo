@@ -7,7 +7,9 @@ from flask import (
     url_for, 
     flash, 
     request,
-    jsonify
+    jsonify,
+    send_file, 
+    current_app
 )
 from flask_login import login_required, current_user
 from sqlalchemy import text
@@ -51,30 +53,9 @@ from pathlib import Path
 import os
 import io
 from collections import defaultdict
-from flask import send_file, current_app, flash, redirect, url_for
 from docxtpl import DocxTemplate
 
-MODEL_PRICING = {
-    "gpt-4o": {"input": 2.50 / 1_000_000, "output": 10.00 / 1_000_000},
-    "gpt-4o-mini": {"input": 0.150 / 1_000_000, "output": 0.600 / 1_000_000},
-    "o1-preview": {"input": 15.00 / 1_000_000, "output": 60.00 / 1_000_000},
-    "o1": {"input": 15.00 / 1_000_000, "output": 60.00 / 1_000_000},
-    "o1-mini": {"input": 1.10 / 1_000_000, "output": 4.40 / 1_000_000},
-    "o3-mini": {"input": 1.10 / 1_000_000, "output": 4.40 / 1_000_000},
-}price
-
-def calculate_call_cost(usage_prompt, usage_completion, model):
-    """
-    Calcule le coût d'un appel API en fonction du nombre de tokens et du modèle.
-    """
-    if model not in MODEL_PRICING:
-        raise ValueError(f"Modèle {model} non trouvé dans la grille tarifaire")
-
-    pricing = MODEL_PRICING[model]
-
-    cost_input = usage_prompt * pricing["input"]
-    cost_output = usage_completion * pricing["output"]
-    return cost_input + cost_output
+from utils.openai_pricing import calculate_call_cost
 
 class AISixLevelGridResponse(BaseModel):
     """
@@ -448,7 +429,6 @@ def generate_six_level_grid():
         except Exception as e:
             print(f"Erreur lors de la récupération de l'évaluation: {str(e)}")
 
-
     if not savoir_faire or not capacite:
         return jsonify({'error': 'Savoir-faire et capacité requis'}), 400
 
@@ -468,7 +448,6 @@ def generate_six_level_grid():
 
     schema_json = json.dumps(AISixLevelGridResponse.get_schema_with_descriptions(), indent=4, ensure_ascii=False)
     
-
     prompt = settings.prompt_template.format(
         savoir_faire=savoir_faire,
         capacite=capacite, 
@@ -485,8 +464,6 @@ def generate_six_level_grid():
     if user.credits <= 0:
         return jsonify({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}), 403
 
-    # Vérification de l'utilisateur
-    user = db.session.get(User, current_user.id)
     if not user or not user.openai_key:
         return jsonify({'error': 'Clé OpenAI non configurée'}), 400
 
@@ -525,9 +502,7 @@ def generate_six_level_grid():
 
         structured_data = response.choices[0].message.parsed
 
-
         return jsonify(structured_data.model_dump())  # Convertir en dict JSON
-
 
     except OpenAIError as e:
         return jsonify({'error': f'Erreur API OpenAI: {str(e)}'}), 500

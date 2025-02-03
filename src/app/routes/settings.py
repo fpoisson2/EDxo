@@ -2,7 +2,7 @@ from flask import Blueprint, request, render_template, flash, redirect, url_for,
 from flask_login import login_required, current_user
 from config.constants import SECTIONS  # Importer la liste des sections
 from utils.decorator import role_required, roles_required, ensure_profile_completed
-from app.forms import GlobalGenerationSettingsForm,  DeletePlanForm, UploadForm, ProfileEditForm, AnalysePromptForm
+from app.forms import GlobalGenerationSettingsForm,  DeletePlanForm, UploadForm, ProfileEditForm, AnalysePromptForm, OpenAIModelForm
 from app.routes.evaluation import AISixLevelGridResponse
 from flask_wtf.csrf import CSRFProtect
 from flask_wtf.csrf import generate_csrf
@@ -17,12 +17,53 @@ csrf = CSRFProtect()
 
 
 # Importez bien sûr db, User et GlobalGenerationSettings depuis vos modèles
-from app.models import db, User, GlobalGenerationSettings, GrillePromptSettings, PlanDeCours, Cours, Programme, PlanDeCoursPromptSettings, AnalysePlanCoursPrompt, ListeCegep, Department
+from app.models import db, User, GlobalGenerationSettings, GrillePromptSettings, PlanDeCours, Cours, Programme, PlanDeCoursPromptSettings, AnalysePlanCoursPrompt, ListeCegep, Department, OpenAIModel
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 
 # Liste des canevas existants
 CANEVAS_LIST = ['plan_cadre_template.docx', 'plan_de_cours_template.docx', 'evaluation_grid_template.docx']
+
+
+@settings_bp.route('/openai_models', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def manage_openai_models():
+    """Page de gestion des modèles OpenAI."""
+    form = OpenAIModelForm()
+    models = OpenAIModel.query.all()
+    
+    if form.validate_on_submit():
+        # Vérifier si le modèle existe déjà
+        existing = OpenAIModel.query.filter_by(name=form.name.data.strip()).first()
+        if existing:
+            flash("Ce modèle existe déjà.", "warning")
+        else:
+            new_model = OpenAIModel(
+                name=form.name.data.strip(),
+                input_price=float(form.input_price.data),
+                output_price=float(form.output_price.data)
+            )
+            db.session.add(new_model)
+            db.session.commit()
+            flash("Modèle ajouté avec succès.", "success")
+        return redirect(url_for('settings.manage_openai_models'))
+
+    return render_template('settings/manage_openai_models.html', models=models, form=form)
+
+@settings_bp.route('/openai_models/delete/<int:model_id>', methods=['POST'])
+@login_required
+@role_required('admin')
+def delete_openai_model(model_id):
+    """Supprime un modèle OpenAI."""
+    model = OpenAIModel.query.get(model_id)
+    if model:
+        db.session.delete(model)
+        db.session.commit()
+        flash("Modèle supprimé avec succès.", "success")
+    else:
+        flash("Modèle introuvable.", "danger")
+    return redirect(url_for('settings.manage_openai_models'))
 
 @settings_bp.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
