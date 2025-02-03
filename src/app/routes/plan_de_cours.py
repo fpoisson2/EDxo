@@ -24,6 +24,8 @@ from pydantic import BaseModel, Field
 from typing import Optional
 import json
 
+from utils.openai_pricing import calculate_call_cost
+
 # Définir le chemin de base de l'application
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -95,28 +97,6 @@ def get_cours_plans(cours_id):
         'id': plan.id,
         'session': plan.session
     } for plan in plans])
-
-MODEL_PRICING = {
-    "gpt-4o": {"input": 2.50 / 1_000_000, "output": 10.00 / 1_000_000},
-    "gpt-4o-mini": {"input": 0.150 / 1_000_000, "output": 0.600 / 1_000_000},
-    "o1-preview": {"input": 15.00 / 1_000_000, "output": 60.00 / 1_000_000},
-    "o1": {"input": 15.00 / 1_000_000, "output": 60.00 / 1_000_000},
-    "o1-mini": {"input": 1.10 / 1_000_000, "output": 4.40 / 1_000_000},
-    "o3-mini": {"input": 1.10 / 1_000_000, "output": 4.40 / 1_000_000},
-}price
-
-def calculate_call_cost(usage_prompt, usage_completion, model):
-    """
-    Calcule le coût d'un appel API en fonction du nombre de tokens et du modèle.
-    """
-    if model not in MODEL_PRICING:
-        raise ValueError(f"Modèle {model} non trouvé dans la grille tarifaire")
-
-    pricing = MODEL_PRICING[model]
-
-    cost_input = usage_prompt * pricing["input"]
-    cost_output = usage_completion * pricing["output"]
-    return cost_input + cost_output
 
 class AIPlandeCoursResponse(BaseModel):
     """

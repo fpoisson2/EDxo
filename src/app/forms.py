@@ -14,7 +14,8 @@ from wtforms import (
     BooleanField,
     PasswordField,
     HiddenField,
-    TimeField
+    TimeField,
+    DecimalField
 )
 from flask_login import current_user
 from wtforms import ValidationError, ColorField, SubmitField
@@ -24,6 +25,8 @@ from flask_ckeditor import CKEditorField
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 import re
 from wtforms import widgets
+
+from utils.openai_pricing import get_all_models
 
 from app.models import Cours, PlanDeCours, PlanDeCoursEvaluations, PlanCadreCapacites, User
 # Liste des régions disponibles
@@ -47,6 +50,11 @@ REGIONS = [
     ('À distance', 'À distance')
 ]
 
+class OpenAIModelForm(FlaskForm):
+    name = StringField("Nom du modèle", validators=[DataRequired()])
+    input_price = DecimalField("Prix en input (par token)", validators=[DataRequired(), NumberRange(min=0)])
+    output_price = DecimalField("Prix en output (par token)", validators=[DataRequired(), NumberRange(min=0)])
+    submit = SubmitField("Ajouter")
 
 class MultiCheckboxField(SelectMultipleField):
     widget = widgets.ListWidget(prefix_label=False)
@@ -244,39 +252,41 @@ class PlanDeCoursForm(FlaskForm):
     submit = SubmitField("Enregistrer")
 
 class AnalysePromptForm(FlaskForm):
-    prompt_template = TextAreaField('Template du prompt', validators=[DataRequired()], render_kw={"rows": 20, "class": "form-control font-monospace"})
+    prompt_template = TextAreaField(
+        'Template du prompt',
+        validators=[DataRequired()],
+        render_kw={"rows": 20, "class": "form-control font-monospace"}
+    )
     ai_model = SelectField(
         'Modèle d\'IA',
-        choices=[
-            ('gpt-4o', 'gpt-4o (défaut)'),
-            ('gpt-4o-mini', 'gpt-4o-mini'),
-            ('o1-preview', 'o1-preview'),
-            ('o1', 'o1'),
-            ('o1-mini', 'o1-mini'),
-            ('o3-mini', 'o3-mini')
-        ],
         validators=[DataRequired()],
         default='gpt-4o',
         render_kw={"class": "form-control"}
     )
     submit = SubmitField('Sauvegarder', render_kw={"class": "btn btn-primary"})
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Récupérer la liste des modèles depuis la base de données
+        models = get_all_models()
+        # Construire la liste des choix sous forme de tuple (valeur, libellé)
+        # Vous pouvez adapter le libellé en fonction de vos besoins (ex: ajouter le tarif)
+        self.ai_model.choices = [(model.name, model.name) for model in models]
+
+
 class GenerateContentForm(FlaskForm):
     additional_info = TextAreaField('Informations complémentaires', validators=[DataRequired()])
     ai_model = SelectField(
         'Modèle d\'IA',
-        choices=[
-            ('gpt-4o', 'gpt-4o (défaut)'),
-            ('gpt-4o-mini', 'gpt-4o-mini'),
-            ('o1-preview', 'o1-preview'),
-            ('o1', 'o1'),
-            ('o1-mini', 'o1-mini'),
-            ('o3-mini', 'o3-mini')
-        ],
-        default='gpt-4o',
-        validators=[DataRequired()]
+        validators=[DataRequired()],
+        default='gpt-4o'
     )
     submit = SubmitField('Générer le plan-cadre')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        models = get_all_models()
+        self.ai_model.choices = [(model.name, model.name) for model in models]
 
 class LoginForm(FlaskForm):
     username = StringField('Nom d\'utilisateur', 

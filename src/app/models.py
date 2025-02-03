@@ -11,6 +11,15 @@ user_programme = db.Table('User_Programme',
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
+class OpenAIModel(db.Model):
+    __tablename__ = 'openai_models'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), unique=True, nullable=False)
+    input_price = db.Column(db.Float, nullable=False)   # Coût par token en input
+    output_price = db.Column(db.Float, nullable=False)  # Coût par token en output
+
+    def __repr__(self):
+        return f"<OpenAIModel {self.name}>"
 
 class AnalysePlanCoursPrompt(db.Model):
     __tablename__ = 'analyse_plan_cours_prompt'
