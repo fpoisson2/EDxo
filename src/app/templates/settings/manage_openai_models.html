@@ -1,0 +1,57 @@
+{% extends "parametres.html" %}
+{% block parametres_content %}
+  <h1>Gestion des modèles OpenAI</h1>
+
+  <!-- Formulaire d'ajout -->
+  <h2>Ajouter un modèle</h2>
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div>
+      {{ form.name.label }}<br>
+      {{ form.name(size=32) }}
+    </div>
+    <div>
+      {{ form.input_price.label }}<br>
+      {{ form.input_price(step="0.000001") }}
+    </div>
+    <div>
+      {{ form.output_price.label }}<br>
+      {{ form.output_price(step="0.000001") }}
+    </div>
+    <div>
+      {{ form.submit() }}
+    </div>
+  </form>
+
+  <!-- Liste des modèles existants -->
+  <h2>Modèles existants</h2>
+  {% if models %}
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Nom du modèle</th>
+          <th>Prix Input (par token)</th>
+          <th>Prix Output (par token)</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for model in models %}
+          <tr>
+            <td>{{ model.name }}</td>
+            <td>{{ model.input_price }}</td>
+            <td>{{ model.output_price }}</td>
+            <td>
+              <!-- Formulaire de suppression pour chaque modèle -->
+              <form method="post" action="{{ url_for('settings.delete_openai_model', model_id=model.id) }}" onsubmit="return confirm('Voulez-vous vraiment supprimer ce modèle ?');">
+                <button type="submit">Supprimer</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>Aucun modèle enregistré.</p>
+  {% endif %}
+{% endblock %}
