@@ -1,7 +1,8 @@
-# tests/conftest.py
 import os
 import pytest
 import sys
+
+# Ensure that the application's source code is importable.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from src.app import create_app, db
 
@@ -9,6 +10,7 @@ from src.app import create_app, db
 def app():
     """
     Create and configure an instance of the application for testing.
+    The database is created before tests and dropped after.
     """
     app = create_app(testing=True)
     
