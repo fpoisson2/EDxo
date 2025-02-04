@@ -186,7 +186,7 @@ def generate_plan_cadre_content(plan_id):
 
     if not form.validate_on_submit():
         flash('Erreur de validation du formulaire.', 'danger')
-        return redirect(url_for('cours.view_plan_cadre', plan_id=plan_id))
+        return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
 
     try:
         additional_info = form.additional_info.data
@@ -389,7 +389,7 @@ def generate_plan_cadre_content(plan_id):
 
         if not ai_fields and not ai_savoir_etre and not ai_capacites_prompt and not ai_fields_with_description:
             flash('Aucune génération IA requise (tous champs sont en mode non-AI).', 'success')
-            return redirect(url_for('cours.view_plan_cadre', plan_id=plan_id))
+            return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
 
         schema_json = json.dumps(PlanCadreAIResponse.schema(), indent=4, ensure_ascii=False)
 
@@ -426,7 +426,7 @@ def generate_plan_cadre_content(plan_id):
         except Exception as e:
             logging.error(f"OpenAI error (premier appel): {e}")
             flash(f"Erreur API OpenAI: {str(e)}", 'danger')
-            return redirect(url_for('cours.view_plan_cadre', plan_id=plan_id))
+            return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
 
         if hasattr(o1_response, 'usage'):
             total_prompt_tokens += o1_response.usage.prompt_tokens
@@ -451,7 +451,7 @@ def generate_plan_cadre_content(plan_id):
         except Exception as e:
             logging.error(f"OpenAI error (second appel): {e}")
             flash(f"Erreur API OpenAI: {str(e)}", 'danger')
-            return redirect(url_for('cours.view_plan_cadre', plan_id=plan_id))
+            return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
 
         if hasattr(completion, 'usage'):
             total_prompt_tokens += completion.usage.prompt_tokens
