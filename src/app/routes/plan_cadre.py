@@ -1,5 +1,5 @@
 # plan_de_cours.py
-from flask import Blueprint, render_template, redirect, url_for, request, flash, send_file, jsonify
+from flask import Blueprint, render_template, redirect, url_for, request, flash, send_file, jsonify, session
 from flask_login import login_required, current_user
 from app.forms import (
     ProgrammeForm,
@@ -31,8 +31,7 @@ import json
 import logging
 import traceback
 
-from pydantic import BaseModel
-from typing import List, Optional
+
 
 from bs4 import BeautifulSoup
 import markdown
@@ -40,6 +39,7 @@ import markdown
 from docxtpl import DocxTemplate
 from io import BytesIO
 from werkzeug.security import generate_password_hash, check_password_hash
+
 
 # Import SQLAlchemy DB and models
 from app.models import (
@@ -81,57 +81,6 @@ from utils.utils import (
     # Note: remove if no longer needed: get_db_connection
 )
 
-from utils.openai_pricing import calculate_call_cost
-
-###############################################################################
-# Schemas Pydantic pour IA
-###############################################################################
-class AIField(BaseModel):
-    """Represents older PlanCadre fields (e.g. place_intro, objectif_terminal)."""
-    field_name: Optional[str] = None
-    content: Optional[str] = None
-
-class AIContentDetail(BaseModel):
-    texte: Optional[str] = None
-    description: Optional[str] = None
-
-class AIFieldWithDescription(BaseModel):
-    field_name: Optional[str] = None
-    content: Optional[List[AIContentDetail]] = None  # for structured lists
-
-class AISavoirFaire(BaseModel):
-    texte: Optional[str] = None
-    cible: Optional[str] = None
-    seuil_reussite: Optional[str] = None
-
-class AICapacite(BaseModel):
-    """
-    A single 'capacité' with optional sub-lists for:
-      - savoirs_necessaires
-      - savoirs_faire
-      - moyens_evaluation
-    """
-    capacite: Optional[str] = None
-    description_capacite: Optional[str] = None
-    ponderation_min: Optional[int] = None
-    ponderation_max: Optional[int] = None
-
-    savoirs_necessaires: Optional[List[str]] = None
-    savoirs_faire: Optional[List[AISavoirFaire]] = None
-    moyens_evaluation: Optional[List[str]] = None
-
-class PlanCadreAIResponse(BaseModel):
-    """
-    The GPT response:
-      - fields: (list of AIField)
-      - fields_with_description: (list of AIFieldWithDescription)
-      - savoir_etre: (list of strings)
-      - capacites: (list of AICapacite)
-    """
-    fields: Optional[List[AIField]] = None
-    fields_with_description: Optional[List[AIFieldWithDescription]] = None
-    savoir_etre: Optional[List[str]] = None
-    capacites: Optional[List[AICapacite]] = None
 
 ###############################################################################
 # Configuration Logging
@@ -152,449 +101,25 @@ plan_cadre_bp = Blueprint('plan_cadre', __name__, url_prefix='/plan_cadre')
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def generate_plan_cadre_content(plan_id):
-    """
-    Gère la génération du contenu d’un plan-cadre via GPT.
-    Récupère toutes les sections (IDs 43 à 63) depuis GlobalGenerationSettings, 
-    applique ou non l’IA selon 'use_ai', et insère dans les tables adéquates.
-    Permet aussi de calculer le coût des appels OpenAI et de le déduire du crédit 
-    utilisateur.
-    """
-    form = GenerateContentForm()
-    
-    # Récupérer le plan-cadre via SQLAlchemy
+    from app.tasks import generate_plan_cadre_content_task
+
+    # Retrieve the plan so that we can use its attributes later
     plan = PlanCadre.query.get(plan_id)
     if not plan:
         flash('Plan Cadre non trouvé.', 'danger')
-        return redirect(url_for('cours.view_plan_cadre', cours_id=0, plan_id=plan_id))
+        return redirect(url_for('main.index'))
 
-    user_id = current_user.id
-    user = db.session.query(User.openai_key, User.credits).filter_by(id=user_id).first()
-    if not user:
-        flash('Utilisateur introuvable.', 'danger')
-        return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
-
-    openai_key = user.openai_key
-    user_credits = user.credits
-
-    if not openai_key:
-        flash('Aucune clé OpenAI configurée dans votre profil.', 'danger')
-        return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
-
-    if user_credits <= 0:
-        flash('Vous n’avez plus de crédits pour effectuer un appel OpenAI.', 'danger')
-        return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
-
+    form = GenerateContentForm()
     if not form.validate_on_submit():
         flash('Erreur de validation du formulaire.', 'danger')
         return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
+    
+    # Enqueue the Celery task
+    task = generate_plan_cadre_content_task.delay(plan_id, form.data, current_user.id)
+    session['task_id'] = task.id
+    flash('La génération est en cours. Vous serez notifié une fois terminée.', 'info')
+    return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
 
-    try:
-        additional_info = form.additional_info.data
-        ai_model = form.ai_model.data  # ex : "gpt-4o", "gpt-4o-mini", "o1-preview", "o1-mini", etc.
-
-        # Sauvegarder les données supplémentaires dans la base de données
-        plan.additional_info = additional_info
-        plan.ai_model = ai_model
-        db.session.commit()
-
-        # ----------------------------------------------------------
-        # 1) Préparation des data & des settings
-        # ----------------------------------------------------------
-        cours_nom = plan.cours.nom if plan.cours else "Non défini"
-        cours_session = plan.cours.session if (plan.cours and plan.cours.session) else "Non défini"
-
-        parametres_generation = (
-            db.session.query(GlobalGenerationSettings.section,
-                             GlobalGenerationSettings.use_ai,
-                             GlobalGenerationSettings.text_content)
-            .all()
-        )
-
-        parametres_dict = {
-            row.section: {
-                'use_ai': row.use_ai,
-                'text_content': row.text_content
-            }
-            for row in parametres_generation
-        }
-
-        plan_cadre_data = get_plan_cadre_data(plan.cours_id)
-
-        field_to_plan_cadre_column = {
-            'Intro et place du cours': 'place_intro',
-            'Objectif terminal': 'objectif_terminal',
-            'Introduction Structure du Cours': 'structure_intro',
-            'Activités Théoriques': 'structure_activites_theoriques',
-            'Activités Pratiques': 'structure_activites_pratiques',
-            'Activités Prévues': 'structure_activites_prevues',
-            'Évaluation Sommative des Apprentissages': 'eval_evaluation_sommative',
-            'Nature des Évaluations Sommatives': 'eval_nature_evaluations_sommatives',
-            'Évaluation de la Langue': 'eval_evaluation_de_la_langue',
-            'Évaluation formative des apprentissages': 'eval_evaluation_sommatives_apprentissages',
-        }
-
-        field_to_table_insert = {
-            'Description des compétences développées': 'PlanCadreCompetencesDeveloppees',
-            'Description des Compétences certifiées': 'PlanCadreCompetencesCertifiees',
-            'Description des cours corequis': 'PlanCadreCoursCorequis',
-            'Objets cibles': 'PlanCadreObjetsCibles',
-            'Description des cours reliés': 'PlanCadreCoursRelies',
-            'Description des cours préalables': 'PlanCadreCoursPrealables',
-        }
-
-        ai_fields = []
-        ai_fields_with_description = []
-        non_ai_updates_plan_cadre = []
-        non_ai_inserts_other_table = []
-        ai_savoir_etre = None
-        ai_capacites_prompt = []
-
-        def replace_jinja(text_):
-            return replace_tags_jinja2(text_, plan_cadre_data)
-
-        for section_name, conf_data in parametres_dict.items():
-            raw_text = str(conf_data.get('text_content', "") or "")
-            replaced_text = replace_jinja(raw_text)
-            is_ai = (conf_data.get('use_ai', 0) == 1)
-
-            if section_name in field_to_plan_cadre_column:
-                col_name = field_to_plan_cadre_column[section_name]
-                if is_ai:
-                    ai_fields.append({"field_name": section_name, "prompt": replaced_text})
-                else:
-                    non_ai_updates_plan_cadre.append((col_name, replaced_text))
-
-            elif section_name in field_to_table_insert:
-                table_name = field_to_table_insert[section_name]
-
-                if section_name == "Objets cibles" and is_ai:
-                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
-
-                if section_name == "Description des compétences développées" and is_ai:
-                    competences = (
-                        db.session.query(Competence.code, Competence.nom)
-                        .join(ElementCompetence, ElementCompetence.competence_id == Competence.id)
-                        .join(ElementCompetenceParCours, ElementCompetenceParCours.element_competence_id == ElementCompetence.id)
-                        .filter(
-                            ElementCompetenceParCours.cours_id == plan.cours_id,
-                            ElementCompetenceParCours.status == 'Développé significativement'
-                        )
-                        .distinct()
-                        .all()
-                    )
-                    competences_text = ""
-                    if competences:
-                        competences_text = "\nListe des compétences développées pour ce cours:\n"
-                        for comp in competences:
-                            competences_text += f"- {comp.code}: {comp.nom}\n"
-                    else:
-                        competences_text = "\n(Aucune compétence de type 'developpee' trouvée)\n"
-                    replaced_text += f"\n\n{competences_text}"
-                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
-
-                if section_name == "Description des Compétences certifiées" and is_ai:
-                    competences = (
-                        db.session.query(Competence.code, Competence.nom)
-                        .join(ElementCompetence, ElementCompetence.competence_id == Competence.id)
-                        .join(ElementCompetenceParCours, ElementCompetenceParCours.element_competence_id == ElementCompetence.id)
-                        .filter(
-                            ElementCompetenceParCours.cours_id == plan.cours_id,
-                            ElementCompetenceParCours.status == 'Atteint'
-                        )
-                        .distinct()
-                        .all()
-                    )
-                    competences_text = ""
-                    if competences:
-                        competences_text = "\nListe des compétences certifiées pour ce cours:\n"
-                        for comp in competences:
-                            competences_text += f"- {comp.code}: {comp.nom}\n"
-                    else:
-                        competences_text = "\n(Aucune compétence 'certifiée' trouvée)\n"
-                    replaced_text += f"\n\n{competences_text}"
-                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
-
-                if section_name == "Description des cours corequis" and is_ai:
-                    corequis_data = (
-                        db.session.query(CoursCorequis.id, Cours.code, Cours.nom)
-                        .join(Cours, CoursCorequis.cours_corequis_id == Cours.id)
-                        .filter(CoursCorequis.cours_id == plan.cours_id)
-                        .all()
-                    )
-                    cours_text = ""
-                    if corequis_data:
-                        cours_text = "\nListe des cours corequis:\n"
-                        for c in corequis_data:
-                            cours_text += f"- {c.code}: {c.nom}\n"
-                    else:
-                        cours_text = "\n(Aucun cours corequis)\n"
-                    replaced_text += f"\n\n{cours_text}"
-                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
-
-                if section_name == "Description des cours préalables" and is_ai:
-                    prealables_data = (
-                        db.session.query(CoursPrealable.id, Cours.code, Cours.nom, CoursPrealable.note_necessaire)
-                        .join(Cours, CoursPrealable.cours_id == Cours.id)
-                        .filter(CoursPrealable.cours_prealable_id == plan.cours_id)
-                        .all()
-                    )
-                    cours_text = ""
-                    if prealables_data:
-                        cours_text = "\nCe cours est un prérequis pour:\n"
-                        for c in prealables_data:
-                            note = f" (note requise: {c.note_necessaire}%)" if c.note_necessaire else ""
-                            cours_text += f"- {c.code}: {c.nom}{note}\n"
-                    else:
-                        cours_text = "\n(Ce cours n'est prérequis pour aucun autre cours)\n"
-                    replaced_text += f"\n\n{cours_text}"
-                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
-
-                if not is_ai:
-                    non_ai_inserts_other_table.append((table_name, replaced_text))
-
-            else:
-                target_sections = [
-                    'Capacité et pondération',
-                    "Savoirs nécessaires d'une capacité",
-                    "Savoirs faire d'une capacité",
-                    "Moyen d'évaluation d'une capacité"
-                ]
-                if section_name == 'Savoir-être':
-                    if is_ai:
-                        ai_savoir_etre = replaced_text
-                    else:
-                        lines = [l.strip() for l in replaced_text.split("\n") if l.strip()]
-                        for line in lines:
-                            se_obj = PlanCadreSavoirEtre(plan_cadre_id=plan.id, texte=line)
-                            db.session.add(se_obj)
-                elif section_name in target_sections:
-                    if is_ai:
-                        section_formatted = f"### {section_name}\n{replaced_text}"
-                        ai_capacites_prompt.append(section_formatted)
-                    else:
-                        pass
-                else:
-                    pass
-
-        for col_name, val in non_ai_updates_plan_cadre:
-            setattr(plan, col_name, val)
-
-        for table_name, val in non_ai_inserts_other_table:
-            db.session.execute(
-                text(f"INSERT INTO {table_name} (plan_cadre_id, texte) VALUES (:pcid, :val)"),
-                {"pcid": plan.id, "val": val}
-            )
-
-        db.session.commit()
-
-        if not ai_fields and not ai_savoir_etre and not ai_capacites_prompt and not ai_fields_with_description:
-            flash('Aucune génération IA requise (tous champs sont en mode non-AI).', 'success')
-            return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
-
-        schema_json = json.dumps(PlanCadreAIResponse.schema(), indent=4, ensure_ascii=False)
-
-        role_message = (
-            f"Tu es un rédacteur de contenu pour un plan-cadre de cours '{cours_nom}', "
-            f"session {cours_session}. Retourne un JSON valide correspondant à PlanCadreAIResponse."
-        )
-
-        structured_request = {
-            "instruction": (
-                f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', "
-                f"session {cours_session}. Informations supplémentaires: {additional_info}\n\n"
-                "Voici le schéma JSON auquel ta réponse doit strictement adhérer :\n\n"
-                f"{schema_json}\n\n"
-                "Utilise un langage neutre (par exemple, 'étudiant' => 'personne étudiante').\n\n"
-                "Voici différents prompts:\n"
-                f"- fields: {ai_fields}\n\n"
-                f"- fields_with_description: {ai_fields_with_description}\n\n"
-                f"- savoir_etre: {ai_savoir_etre}\n\n"
-                f"- capacites: {ai_capacites_prompt}\n\n"
-            )
-        }
-
-        client = OpenAI(api_key=openai_key)
-
-        total_prompt_tokens = 0
-        total_completion_tokens = 0
-
-        try:
-            o1_response = client.beta.chat.completions.parse(
-                model=ai_model,
-                messages=[{"role": "user", "content": json.dumps(structured_request)}]
-            )
-        except Exception as e:
-            logging.error(f"OpenAI error (premier appel): {e}")
-            flash(f"Erreur API OpenAI: {str(e)}", 'danger')
-            return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
-
-        if hasattr(o1_response, 'usage'):
-            total_prompt_tokens += o1_response.usage.prompt_tokens
-            total_completion_tokens += o1_response.usage.completion_tokens
-
-        o1_response_content = o1_response.choices[0].message.content if o1_response.choices else ""
-
-        try:
-            completion = client.beta.chat.completions.parse(
-                model="gpt-4o",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": (
-                            f"Connaissant les données suivantes, formatte-les selon "
-                            f"le response_format demandé: {o1_response_content}"
-                        )
-                    }
-                ],
-                response_format=PlanCadreAIResponse,
-            )
-        except Exception as e:
-            logging.error(f"OpenAI error (second appel): {e}")
-            flash(f"Erreur API OpenAI: {str(e)}", 'danger')
-            return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
-
-        if hasattr(completion, 'usage'):
-            total_prompt_tokens += completion.usage.prompt_tokens
-            total_completion_tokens += completion.usage.completion_tokens
-
-        try:
-            usage_1_prompt = o1_response.usage.prompt_tokens if hasattr(o1_response, 'usage') else 0
-            usage_1_completion = o1_response.usage.completion_tokens if hasattr(o1_response, 'usage') else 0
-            cost_first_call = calculate_call_cost(usage_1_prompt, usage_1_completion, ai_model)
-
-            usage_2_prompt = completion.usage.prompt_tokens if hasattr(completion, 'usage') else 0
-            usage_2_completion = completion.usage.completion_tokens if hasattr(completion, 'usage') else 0
-            cost_second_call = calculate_call_cost(usage_2_prompt, usage_2_completion, "gpt-4o")
-
-            total_cost = cost_first_call + cost_second_call
-
-            print(f"Premier appel ({ai_model}): {cost_first_call:.6f}$ "
-                  f"({usage_1_prompt} prompt, {usage_1_completion} completion)")
-            print(f"Second appel (gpt-4o): {cost_second_call:.6f}$ "
-                  f"({usage_2_prompt} prompt, {usage_2_completion} completion)")
-            print(f"Coût total: {total_cost:.6f}$")
-
-            new_credits = user_credits - total_cost
-            if new_credits < 0:
-                raise ValueError("Crédits insuffisants pour effectuer l'opération")
-
-            db.session.execute(
-                text("UPDATE User SET credits = :credits WHERE id = :uid"),
-                {"credits": new_credits, "uid": user_id}
-            )
-            db.session.commit()
-
-        except ValueError as ve:
-            flash(str(ve), 'danger')
-            return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
-
-        parsed_data: PlanCadreAIResponse = completion.choices[0].message.parsed
-
-        def clean_text(val):
-            return val.strip().strip('"').strip("'") if val else ""
-
-        for fobj in (parsed_data.fields or []):
-            fname = fobj.field_name
-            fcontent = clean_text(fobj.content)
-            if fname in field_to_plan_cadre_column:
-                col = field_to_plan_cadre_column[fname]
-                setattr(plan, col, fcontent)
-
-        table_mapping = {
-            "Description des compétences développées": "PlanCadreCompetencesDeveloppees",
-            "Description des Compétences certifiées": "PlanCadreCompetencesCertifiees",
-            "Description des cours corequis": "PlanCadreCoursCorequis",
-            "Description des cours préalables": "PlanCadreCoursPrealables",
-            "Objets cibles": "PlanCadreObjetsCibles"
-        }
-
-        for fobj in (parsed_data.fields_with_description or []):
-            fname = fobj.field_name
-            if not fname:
-                continue
-
-            table_name = table_mapping.get(fname)
-            if not table_name:
-                continue
-
-            elements_to_insert = []
-            if isinstance(fobj.content, list):
-                for item in fobj.content:
-                    texte_comp = clean_text(item.texte) if item.texte else ""
-                    desc_comp = clean_text(item.description) if item.description else ""
-                    if texte_comp or desc_comp:
-                        elements_to_insert.append((texte_comp, desc_comp))
-            elif isinstance(fobj.content, str):
-                elements_to_insert.append((clean_text(fobj.content), ""))
-
-            for (texte_comp, desc_comp) in elements_to_insert:
-                if not texte_comp and not desc_comp:
-                    continue
-                db.session.execute(
-                    text(f"""
-                        INSERT OR REPLACE INTO {table_name} (plan_cadre_id, texte, description)
-                        VALUES (:pid, :txt, :desc)
-                    """),
-                    {
-                        "pid": plan.id,
-                        "txt": texte_comp,
-                        "desc": desc_comp
-                    }
-                )
-
-        if parsed_data.savoir_etre:
-            for se_item in parsed_data.savoir_etre:
-                se_obj = PlanCadreSavoirEtre(
-                    plan_cadre_id=plan.id,
-                    texte=clean_text(se_item)
-                )
-                db.session.add(se_obj)
-
-        if parsed_data.capacites:
-            for cap in parsed_data.capacites:
-                new_cap = PlanCadreCapacites(
-                    plan_cadre_id=plan.id,
-                    capacite=clean_text(cap.capacite),
-                    description_capacite=clean_text(cap.description_capacite),
-                    ponderation_min=int(cap.ponderation_min) if cap.ponderation_min else 0,
-                    ponderation_max=int(cap.ponderation_max) if cap.ponderation_max else 0
-                )
-                db.session.add(new_cap)
-                db.session.flush()
-                if cap.savoirs_necessaires:
-                    for sn in cap.savoirs_necessaires:
-                        sn_obj = PlanCadreCapaciteSavoirsNecessaires(
-                            capacite_id=new_cap.id,
-                            texte=clean_text(sn)
-                        )
-                        db.session.add(sn_obj)
-                if cap.savoirs_faire:
-                    for sf in cap.savoirs_faire:
-                        sf_obj = PlanCadreCapaciteSavoirsFaire(
-                            capacite_id=new_cap.id,
-                            texte=clean_text(sf.texte),
-                            cible=clean_text(sf.cible),
-                            seuil_reussite=clean_text(sf.seuil_reussite)
-                        )
-                        db.session.add(sf_obj)
-                if cap.moyens_evaluation:
-                    for me in cap.moyens_evaluation:
-                        me_obj = PlanCadreCapaciteMoyensEvaluation(
-                            capacite_id=new_cap.id,
-                            texte=clean_text(me)
-                        )
-                        db.session.add(me_obj)
-
-        db.session.commit()
-
-        flash(f'Contenu généré automatiquement avec succès! Coût total: {round(total_cost, 4)} crédits.', 'success')
-        return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
-
-    except Exception as e:
-        db.session.rollback()
-        logging.error(f"Unexpected error: {e}")
-        flash(f'Erreur lors de la génération du contenu: {e}', 'danger')
-        return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
 
 
 

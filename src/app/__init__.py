@@ -95,7 +95,9 @@ def create_app(testing=False):
             SESSION_COOKIE_SECURE=True,
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Lax',
-            SESSION_TYPE='filesystem'
+            SESSION_TYPE='filesystem',
+            CELERY_BROKER_URL='redis://localhost:6379/0',
+            CELERY_RESULT_BACKEND='redis://localhost:6379/0'
         )
 
     # Initialize extensions

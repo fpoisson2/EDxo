@@ -100,6 +100,24 @@ logger = logging.getLogger(__name__)
 
 main = Blueprint('main', __name__)
 
+@main.route('/task_status/<task_id>', methods=['GET'])
+def task_status(task_id):
+    # Import celery locally to avoid circular imports.
+    from celery_app import celery
+    from celery.result import AsyncResult
+
+    res = AsyncResult(task_id, app=celery)
+    return jsonify({
+        'state': res.state,
+        'result': res.result
+    })
+
+
+@main.route('/clear_task_id', methods=['POST'])
+def clear_task_id():
+    session.pop('task_id', None)
+    return jsonify(success=True)
+
 @main.route('/gestion_cegeps', methods=['GET', 'POST'])
 def gestion_cegeps():
     form = CegepForm()
