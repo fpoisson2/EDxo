@@ -395,76 +395,107 @@
         });
       });
     </script>
-
-{% if session.task_id %}
 <script>
-  // Retrieve the task_id from the session (passed to the template)
-  let taskId = "{{ session.task_id }}";
-  let pollingStopped = false; // Flag to stop polling
+// Global variables to manage task polling
+let currentTaskId = null;
+let isPolling = false; // Flag to ensure only one polling process runs
 
-  function clearTaskId() {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    fetch('/clear_task_id', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-CSRFToken': csrfToken
-      },
-      credentials: 'same-origin'
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log("Task ID cleared:", data);
-    })
-    .catch(error => {
-      console.error("Erreur lors de la suppression du task_id :", error);
-    });
+// Polling function that checks the task status recursively
+function checkTaskStatus() {
+  if (!currentTaskId) return;
+  
+  fetch('/task_status/' + currentTaskId, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+    credentials: 'same-origin'
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log("Task status:", data.state, data.result);
+    if (data.state === 'SUCCESS') {
+      // Build URL from the result data (assuming data.result has cours_id and plan_id)
+      let coursId = data.result.cours_id;
+      let planId = data.result.plan_id;
+      let planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
+      flashMessageSystem.success("Génération terminée. Cliquez <a href='" + planCadreUrl + "'>ici</a> pour voir le plan-cadre.");
+      stopPolling();
+      clearTaskId();
+    } else if (data.state === 'FAILURE') {
+      flashMessageSystem.error("La génération a échoué : " + (data.result?.message || "Une erreur est survenue."));
+      stopPolling();
+      clearTaskId();
+    } else {
+      // Task is still pending; schedule another check in 3 seconds
+      setTimeout(checkTaskStatus, 3000);
+    }
+  })
+  .catch(error => {
+    console.error('Erreur lors de la vérification du statut de la tâche:', error);
+    // In case of an error, try again after 5 seconds
+    setTimeout(checkTaskStatus, 5000);
+  });
+}
+
+// Function to start polling for a given task id
+function startTaskPolling(taskId) {
+  if (isPolling) {
+    // Prevent multiple polling processes from starting
+    return;
   }
+  currentTaskId = taskId;
+  isPolling = true;
+  // Immediately check status (and then recursively every 3 seconds if pending)
+  checkTaskStatus();
+}
 
-  function checkTaskStatus() {
-    if (pollingStopped) return;
-    fetch('/task_status/' + taskId, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      credentials: 'same-origin'
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log("Task status:", data.state);
-      if (data.state === 'SUCCESS') {
-        // Use the task result to build the URL.
-        // Expecting data.result to include cours_id and plan_id.
-        let coursId = data.result.cours_id;
-        let planId = data.result.plan_id;
-        // Build the URL to the plan-cadre page.
-        let planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
-        // Create the notification message with a clickable link.
-        let message = "Génération terminée. Cliquez <a href='" + planCadreUrl + "'>ici</a> pour voir le plan-cadre.";
-        flashMessageSystem.success(message);
-        pollingStopped = true;
-        clearTaskId();
-        setTimeout(() => { location.reload(); }, 5000);
-      } else if (data.state === 'FAILURE') {
-        flashMessageSystem.error("La génération a échoué : " + (data.result.message || "Une erreur est survenue."));
-        pollingStopped = true;
-        clearTaskId();
-        setTimeout(() => { location.reload(); }, 5000);
-      } else {
-        // The task is still processing – poll again in 3 seconds.
-        setTimeout(checkTaskStatus, 3000);
-      }
-    })
-    .catch(error => {
-      console.error('Erreur lors de la vérification du statut de la tâche:', error);
-      setTimeout(checkTaskStatus, 5000);
-    });
+// Function to stop polling
+function stopPolling() {
+  isPolling = false;
+  currentTaskId = null;
+}
+
+// Function to clear the task id from both the server and sessionStorage
+function clearTaskId() {
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+  fetch('/clear_task_id', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
+    credentials: 'same-origin'
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log("Task ID cleared:", data);
+    sessionStorage.removeItem('currentTaskId');
+  })
+  .catch(error => {
+    console.error("Erreur lors de la suppression du task_id :", error);
+  });
+}
+
+// Persistent interval to check for the existence of a task every 3 seconds
+setInterval(function() {
+  const storedTaskId = sessionStorage.getItem('currentTaskId');
+  console.log("Looking for task");
+  // If a task is stored and no polling is currently running, start polling
+  if (storedTaskId && !isPolling) {
+    startTaskPolling(storedTaskId);
   }
+}, 3000);
 
-  // Start polling after a short delay
-  setTimeout(checkTaskStatus, 3000);
+// Optionally, check once on page load as well
+document.addEventListener('DOMContentLoaded', function() {
+  const storedTaskId = sessionStorage.getItem('currentTaskId');
+  if (storedTaskId && !isPolling) {
+    startTaskPolling(storedTaskId);
+  }
+});
 </script>
-{% endif %}
+
+
 
 
 

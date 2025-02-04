@@ -103,22 +103,21 @@ plan_cadre_bp = Blueprint('plan_cadre', __name__, url_prefix='/plan_cadre')
 def generate_plan_cadre_content(plan_id):
     from app.tasks import generate_plan_cadre_content_task
 
-    # Retrieve the plan so that we can use its attributes later
     plan = PlanCadre.query.get(plan_id)
     if not plan:
-        flash('Plan Cadre non trouvé.', 'danger')
-        return redirect(url_for('main.index'))
+        return jsonify(success=False, message='Plan Cadre non trouvé.')
 
     form = GenerateContentForm()
     if not form.validate_on_submit():
-        flash('Erreur de validation du formulaire.', 'danger')
-        return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
+        return jsonify(success=False, message='Erreur de validation du formulaire.')
     
-    # Enqueue the Celery task
+    # Lancer la tâche Celery
     task = generate_plan_cadre_content_task.delay(plan_id, form.data, current_user.id)
-    session['task_id'] = task.id
-    flash('La génération est en cours. Vous serez notifié une fois terminée.', 'info')
-    return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
+    session['task_id'] = task.id  # Vous pouvez toujours mettre à jour la session si besoin
+
+    # Retourner le task id dans la réponse AJAX
+    return jsonify(success=True, message='La génération est en cours. Vous serez notifié une fois terminée.', task_id=task.id)
+
 
 
 

@@ -102,14 +102,17 @@ main = Blueprint('main', __name__)
 
 @main.route('/task_status/<task_id>', methods=['GET'])
 def task_status(task_id):
-    # Import celery locally to avoid circular imports.
     from celery_app import celery
     from celery.result import AsyncResult
 
     res = AsyncResult(task_id, app=celery)
+    current_state = res.state
+    current_result = res.result
+    logger.info("Task %s state: %s, result: %s", task_id, current_state, current_result)
+    
     return jsonify({
-        'state': res.state,
-        'result': res.result
+        'state': current_state,
+        'result': current_result
     })
 
 
