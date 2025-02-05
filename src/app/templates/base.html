@@ -77,6 +77,7 @@
       .navbar-nav .nav-link .bi {
         margin-right: 0.5rem;
       }
+      /* Section utilisateur (desktop) */
       .user-info {
         display: flex;
         align-items: center;
@@ -97,6 +98,7 @@
         color: #38a169;
         font-size: 1rem;
       }
+      /* Avatar en cercle */
       .dropdown-toggle.user-avatar {
         cursor: pointer;
         width: 32px;
@@ -128,7 +130,6 @@
       .notification-toggle:hover {
         color: #000;
       }
-      /* Suppression de la flèche par défaut */
       .notification-toggle::after {
         display: none;
       }
@@ -162,65 +163,71 @@
         transform: translateY(-100%);
       }
       /* Adaptations pour petit écran */
-      @media (max-width: 768px) {
-        #flash-messages {
-          width: 90vw;
-        }
-        .flash-message {
-          min-width: unset;
-          width: 100%;
-        }
-        .navbar-collapse {
-          padding: 0;
-        }
-        .navbar-nav {
-          border-top: 1px solid #e0e0e0;
-          width: 100%;
-          flex-direction: column;
-        }
-        .navbar-nav .nav-item {
-          width: 100%;
-        }
-        .navbar-nav .nav-link {
-          padding: 0.75rem 1rem;
-          font-size: 1rem;
-          color: #333;
-          border-bottom: 1px solid #e0e0e0;
-        }
-        .user-info {
-          width: 100%;
-          /* Réduction de l'espace entre notifications et infos utilisateur */
-          gap: 0.3rem;
-          justify-content: flex-start;
-          margin-left: 0;
-        }
-        .credit-display {
-          padding: 0.5rem 0;
-          background: none;
-          color: #333;
-          font-size: 1rem;
-        }
-        .user-info .dropdown-menu {
-          display: block;
-          position: static;
-          float: none;
-          width: 100%;
-          padding: 0;
-          margin: 0;
-          border: none;
-          box-shadow: none;
-          background: none;
-        }
-        .dropdown-menu .flex-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1rem;
-        }
-        /* Pour mobile, on conserve la présentation des menus déroulants telle qu'initialement */
-        .dropdown-toggle.user-avatar {
-          display: block;
-        }
+@media (max-width: 768px) {
+  /* Flash messages */
+  #flash-messages {
+    width: 90vw;
+  }
+  .flash-message {
+    min-width: unset;
+    width: 100%;
+  }
+
+  /* Navbar */
+  .navbar-collapse {
+    padding: 0;
+  }
+  .navbar-nav {
+    border-top: 1px solid #e0e0e0;
+    width: 100%;
+    flex-direction: column;
+  }
+  .navbar-nav .nav-item {
+    width: 100%;
+  }
+  .navbar-nav .nav-link {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    color: #333;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  /* Réagencement de la section utilisateur */
+  .user-info {
+    width: 100%;
+    /* Au lieu d’une disposition en colonne, on passe en ligne avec possibilité de retour à la ligne */
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid #e0e0e0;
+  }
+  /* Chaque élément de .user-info bénéficiera d’un léger espacement vertical */
+  .user-info > .dropdown,
+  .user-info > .credit-display,
+  .user-info > .dropdown-toggle.user-avatar {
+    margin: 0.25rem 0;
+  }
+
+  /* Adaptation du menu déroulant de l’utilisateur */
+  .user-info .dropdown-menu {
+    width: 100%;
+    position: static;
+    float: none;
+    padding: 0.5rem 1rem;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+    background: none;
+  }
+  /* On s’assure que l’avatar reste affiché */
+  .dropdown-toggle.user-avatar {
+    display: block;
+  }
+}
+
       }
     </style>
     {% endblock %}
