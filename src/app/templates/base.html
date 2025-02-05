@@ -164,16 +164,7 @@
       }
       /* Adaptations pour petit écran */
 @media (max-width: 768px) {
-  /* Flash messages */
-  #flash-messages {
-    width: 90vw;
-  }
-  .flash-message {
-    min-width: unset;
-    width: 100%;
-  }
-
-  /* Navbar */
+  /* Ajustement de la navbar principale */
   .navbar-collapse {
     padding: 0;
   }
@@ -181,6 +172,7 @@
     border-top: 1px solid #e0e0e0;
     width: 100%;
     flex-direction: column;
+    align-items: stretch;
   }
   .navbar-nav .nav-item {
     width: 100%;
@@ -190,29 +182,33 @@
     font-size: 1rem;
     color: #333;
     border-bottom: 1px solid #e0e0e0;
+    margin: 0;
+    text-align: left;
   }
 
-  /* Réagencement de la section utilisateur */
-  .user-info {
-    width: 100%;
-    /* Au lieu d’une disposition en colonne, on passe en ligne avec possibilité de retour à la ligne */
-    flex-direction: row;
-    flex-wrap: wrap;
+  /* Nouvelle zone pour la section utilisateur au sein de la navbar (après le menu) */
+  .mobile-user-info {
+    display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0.5rem 1rem;
-    margin-top: 0.5rem;
     border-top: 1px solid #e0e0e0;
+    background: #f8f9fa;
   }
-  /* Chaque élément de .user-info bénéficiera d’un léger espacement vertical */
-  .user-info > .dropdown,
-  .user-info > .credit-display,
-  .user-info > .dropdown-toggle.user-avatar {
-    margin: 0.25rem 0;
+  /* Adaptation des éléments internes */
+  .mobile-user-info .credit-display,
+  .mobile-user-info .dropdown,
+  .mobile-user-info .dropdown-toggle.user-avatar {
+    margin: 0;
   }
-
-  /* Adaptation du menu déroulant de l’utilisateur */
-  .user-info .dropdown-menu {
+  /* Pour que l’avatar et le crédit se positionnent côte à côte et ne débordent pas */
+  .mobile-user-info .user-details {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  /* Assurer que le menu déroulant s’adapte bien en mobile */
+  .mobile-user-info .dropdown-menu {
     width: 100%;
     position: static;
     float: none;
@@ -222,10 +218,25 @@
     box-shadow: none;
     background: none;
   }
-  /* On s’assure que l’avatar reste affiché */
-  .dropdown-toggle.user-avatar {
-    display: block;
+  .dropdown-menu {
+    position: static !important;
+    float: none !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    width: 100%;
+    box-shadow: none;
+    margin-top: 0.5rem;
+    padding: 0.5rem 1rem;
   }
+
+  /* Optionnel : si vous utilisez le positionnement avec .dropdown-menu-end,
+     vous pouvez forcer le texte à s'aligner à gauche pour plus de lisibilité */
+  .dropdown-menu.dropdown-menu-end {
+    text-align: left;
+  }
+}
+
 }
 
       }
