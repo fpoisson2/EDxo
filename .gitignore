@@ -9,3 +9,8 @@ token.json
 .env
 credentials.json
 src/config/credentials.json
+/src/scripts/json_output
+/src/scripts/pdfs
+/src/scripts/pdfs_extraits
+src/scripts/extraction.log
+/src/scripts/txt_output
