@@ -77,6 +77,7 @@
       .navbar-nav .nav-link .bi {
         margin-right: 0.5rem;
       }
+      /* Section utilisateur (desktop) */
       .user-info {
         display: flex;
         align-items: center;
@@ -97,6 +98,7 @@
         color: #38a169;
         font-size: 1rem;
       }
+      /* Avatar en cercle */
       .dropdown-toggle.user-avatar {
         cursor: pointer;
         width: 32px;
@@ -128,7 +130,6 @@
       .notification-toggle:hover {
         color: #000;
       }
-      /* Suppression de la flèche par défaut */
       .notification-toggle::after {
         display: none;
       }
@@ -161,69 +162,83 @@
         opacity: 0;
         transform: translateY(-100%);
       }
-      @media (max-width: 768px) {
-        #flash-messages {
-          width: 90vw;
-        }
-        .flash-message {
-          min-width: unset;
-          width: 100%;
-        }
-        .navbar-collapse {
-          padding: 0;
-        }
-        .navbar-nav {
-          border-top: 1px solid #e0e0e0;
-          width: 100%;
-          flex-direction: column;
-        }
-        .navbar-nav .nav-item {
-          width: 100%;
-        }
-        .navbar-nav .nav-link {
-          padding: 0.75rem 1rem;
-          font-size: 1rem;
-          color: #333;
-          border-bottom: 1px solid #e0e0e0;
-        }
-        .user-info {
-          width: 100%;
-          justify-content: space-between;
-        }
-        .credit-display {
-          padding: 0.5rem 0;
-          background: none;
-          color: #333;
-          font-size: 1rem;
-        }
-        .user-info .dropdown-menu {
-          display: block;
-          position: static;
-          float: none;
-          width: 100%;
-          padding: 0;
-          margin: 0;
-          border: none;
-          box-shadow: none;
-          background: none;
-        }
-        .dropdown-menu .flex-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1rem;
-        }
-        .dropdown-toggle.user-avatar {
-          display: none;
-        }
-        .nav-item:not(:last-child),
-        .dropdown-item:not(:last-child) {
-          border-bottom: 1px solid #f0f0f0;
-        }
-        .navbar-nav .nav-link:hover,
-        .dropdown-item:hover {
-          background-color: #f8f9fa;
-        }
+      /* Adaptations pour petit écran */
+@media (max-width: 768px) {
+  /* Ajustement de la navbar principale */
+  .navbar-collapse {
+    padding: 0;
+  }
+  .navbar-nav {
+    border-top: 1px solid #e0e0e0;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .navbar-nav .nav-item {
+    width: 100%;
+  }
+  .navbar-nav .nav-link {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    color: #333;
+    border-bottom: 1px solid #e0e0e0;
+    margin: 0;
+    text-align: left;
+  }
+
+  /* Nouvelle zone pour la section utilisateur au sein de la navbar (après le menu) */
+  .mobile-user-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid #e0e0e0;
+    background: #f8f9fa;
+  }
+  /* Adaptation des éléments internes */
+  .mobile-user-info .credit-display,
+  .mobile-user-info .dropdown,
+  .mobile-user-info .dropdown-toggle.user-avatar {
+    margin: 0;
+  }
+  /* Pour que l’avatar et le crédit se positionnent côte à côte et ne débordent pas */
+  .mobile-user-info .user-details {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  /* Assurer que le menu déroulant s’adapte bien en mobile */
+  .mobile-user-info .dropdown-menu {
+    width: 100%;
+    position: static;
+    float: none;
+    padding: 0.5rem 1rem;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+    background: none;
+  }
+  .dropdown-menu {
+    position: static !important;
+    float: none !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    width: 100%;
+    box-shadow: none;
+    margin-top: 0.5rem;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Optionnel : si vous utilisez le positionnement avec .dropdown-menu-end,
+     vous pouvez forcer le texte à s'aligner à gauche pour plus de lisibilité */
+  .dropdown-menu.dropdown-menu-end {
+    text-align: left;
+  }
+}
+
+}
+
       }
     </style>
     {% endblock %}
@@ -263,7 +278,7 @@
               </li>
             </ul>
             <div class="user-info ms-3 d-flex align-items-center">
-              <!-- Menu Notification (aucun bouton statique ici) -->
+              <!-- Menu Notification -->
               <div class="dropdown me-3">
                 <a class="notification-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                   <i class="bi bi-bell"></i>
@@ -455,11 +470,9 @@
             stopPolling();
             clearTaskId();
           } else if (data.state === 'PROGRESS') {
-            // Affiche le message envoyé par la tâche, par exemple :
             addNotification(data.message || "Génération en cours...", "in-progress");
             setTimeout(checkTaskStatus, 3000);
           } else {
-            // Autres états (ex. PENDING)
             addNotification("Génération en cours...", "in-progress");
             setTimeout(checkTaskStatus, 3000);
           }
@@ -469,13 +482,11 @@
           setTimeout(checkTaskStatus, 5000);
         });
       }
-
       
       function startTaskPolling(taskId) {
         if (isPolling) return;
         currentTaskId = taskId;
         isPolling = true;
-        // Dès le démarrage, ajouter (ou mettre à jour) la notification "in-progress"
         addNotification("Génération en cours...", "in-progress");
         checkTaskStatus();
       }
@@ -520,11 +531,9 @@
 
     <!-- Système de notifications avec persistance -->
     <script>
-      // Stockage des notifications dans le localStorage
       let notifications = [];
       const STORAGE_KEY = "edxo_notifications";
 
-      // Charge les notifications depuis le localStorage
       function loadNotifications() {
         const data = localStorage.getItem(STORAGE_KEY);
         if (data) {
@@ -537,12 +546,10 @@
         }
       }
 
-      // Sauvegarde les notifications dans le localStorage
       function saveNotifications() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
       }
 
-      // Met à jour l'affichage de la liste des notifications et du badge
       function updateNotificationUI() {
         const list = document.getElementById("notification-list");
         list.innerHTML = "";
@@ -569,12 +576,10 @@
               : iconHtml + notif.message;
             list.appendChild(li);
           });
-          // Ajout unique du bouton pour effacer les notifications
           const clearBtnLi = document.createElement("li");
           clearBtnLi.className = "dropdown-item text-center";
           clearBtnLi.innerHTML = '<button class="btn btn-sm btn-outline-secondary" id="clear-notifications-btn">Effacer les notifications</button>';
           list.appendChild(clearBtnLi);
-          // Ajout de l'écouteur sur le bouton d'effacement
           document.getElementById("clear-notifications-btn").addEventListener("click", () => {
             clearNotifications();
           });
@@ -582,7 +587,6 @@
         updateNotificationBadge();
       }
 
-      // Met à jour le badge en comptant toutes les notifications présentes (non lues)
       function updateNotificationBadge() {
         const badge = document.getElementById("notification-badge");
         if (notifications.length > 0) {
@@ -593,12 +597,10 @@
         }
       }
 
-      // Ajoute une nouvelle notification. Pour le type "in-progress", on vérifie si une notification de ce type existe déjà.
       function addNotification(message, type = "info", link = null) {
         if (type === "in-progress") {
           const existingIndex = notifications.findIndex(notif => notif.type === "in-progress");
           if (existingIndex !== -1) {
-            // Ne mettre à jour la notification que si le message a changé
             if (notifications[existingIndex].message !== message) {
               notifications[existingIndex].message = message;
               notifications[existingIndex].link = link;
@@ -606,10 +608,9 @@
               saveNotifications();
               updateNotificationUI();
             }
-            return; // On ne recrée pas une nouvelle notification si une in-progress existe déjà
+            return;
           }
         }
-        // Création d'une nouvelle notification pour les autres types ou si aucune notification "in-progress" n'existe
         const notif = {
           id: Date.now(),
           message: message,
@@ -622,21 +623,17 @@
         updateNotificationUI();
       }
 
-
-      // Efface toutes les notifications (et met à jour le badge)
       function clearNotifications() {
         notifications = [];
         saveNotifications();
         updateNotificationUI();
       }
 
-      // Lors de l'ouverture du menu de notifications, on considère qu'elles ont été lues (le badge est réinitialisé)
       document.addEventListener('DOMContentLoaded', () => {
         loadNotifications();
         updateNotificationUI();
         const notificationDropdown = document.getElementById('notificationDropdown');
         notificationDropdown.addEventListener('click', () => {
-          // On masque simplement le badge (les notifications persistent dans le localStorage)
           document.getElementById("notification-badge").style.display = "none";
         });
       });
