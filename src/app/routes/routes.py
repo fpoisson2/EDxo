@@ -107,13 +107,17 @@ def task_status(task_id):
 
     res = AsyncResult(task_id, app=celery)
     current_state = res.state
-    current_result = res.result
-    logger.info("Task %s state: %s, result: %s", task_id, current_state, current_result)
+    # Récupération du meta si présent, sinon message par défaut
+    meta = res.info if res.info else {}
+    current_message = meta.get('message', '')
+    logger.info("Task %s state: %s, meta: %s", task_id, current_state, meta)
     
     return jsonify({
         'state': current_state,
-        'result': current_result
+        'message': current_message,
+        'result': res.result if current_state == 'SUCCESS' else None
     })
+
 
 
 @main.route('/clear_task_id', methods=['POST'])

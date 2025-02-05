@@ -133,6 +133,12 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # ----------------------------------------------------------------
         cours_nom = plan.cours.nom if plan.cours else "Non défini"
         cours_session = plan.cours.session if (plan.cours and plan.cours.session) else "Non défini"
+
+        # Mise à jour de l'état pour notifier le client que la génération est en cours
+        self.update_state(
+            state='PROGRESS',
+            meta={'message': f"Génération automatique du plan-cadre du cours {cours_nom} en cours"}
+        )
         
         parametres_generation = db.session.query(
             GlobalGenerationSettings.section,
