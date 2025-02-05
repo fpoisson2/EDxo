@@ -100,6 +100,31 @@ logger = logging.getLogger(__name__)
 
 main = Blueprint('main', __name__)
 
+@main.route('/task_status/<task_id>', methods=['GET'])
+def task_status(task_id):
+    from celery_app import celery
+    from celery.result import AsyncResult
+
+    res = AsyncResult(task_id, app=celery)
+    current_state = res.state
+    # Récupération du meta si présent, sinon message par défaut
+    meta = res.info if res.info else {}
+    current_message = meta.get('message', '')
+    logger.info("Task %s state: %s, meta: %s", task_id, current_state, meta)
+    
+    return jsonify({
+        'state': current_state,
+        'message': current_message,
+        'result': res.result if current_state == 'SUCCESS' else None
+    })
+
+
+
+@main.route('/clear_task_id', methods=['POST'])
+def clear_task_id():
+    session.pop('task_id', None)
+    return jsonify(success=True)
+
 @main.route('/gestion_cegeps', methods=['GET', 'POST'])
 def gestion_cegeps():
     form = CegepForm()

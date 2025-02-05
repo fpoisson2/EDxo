@@ -2,6 +2,7 @@ from flask_login import current_user
 from sqlalchemy import event
 from datetime import datetime
 import sqlalchemy.exc
+from extensions import db
 
 def process_changes(mapper, target, operation):
     changes = {}
@@ -47,7 +48,8 @@ def process_changes(mapper, target, operation):
     return changes
 
 def track_changes(mapper, connection, target, operation):
-    from app.models import db, DBChange
+    from app.models import DBChange
+
     from flask_login import current_user
     
     try:
