@@ -190,7 +190,7 @@ def extract_competencies(text):
     # - [A-Za-z]         : une lettre majuscule ou minuscule
     # - .*?\.            : capture non-gourmande de tout caractère jusqu'au premier point rencontré
     # - \s*(?=\n|$)      : autoriser des espaces optionnels avant un saut de ligne ou la fin du texte
-    pattern = re.compile(r'([0-9][0-9A-Z]{3}\s{1,2}[A-Za-z].*?\.\s*(?=\n|$))')
+    pattern = re.compile(r"\d{4}[A-Z]? (.*?)\.\s*$", re.MULTILINE)  
     
     # Rechercher toutes les correspondances dans le texte
     competencies = pattern.findall(text)
