@@ -161,6 +161,7 @@
         opacity: 0;
         transform: translateY(-100%);
       }
+      /* Adaptations pour petit écran */
       @media (max-width: 768px) {
         #flash-messages {
           width: 90vw;
@@ -188,7 +189,10 @@
         }
         .user-info {
           width: 100%;
-          justify-content: space-between;
+          /* Réduction de l'espace entre notifications et infos utilisateur */
+          gap: 0.3rem;
+          justify-content: flex-start;
+          margin-left: 0;
         }
         .credit-display {
           padding: 0.5rem 0;
@@ -213,16 +217,9 @@
           align-items: center;
           margin-bottom: 1rem;
         }
+        /* Pour mobile, on conserve la présentation des menus déroulants telle qu'initialement */
         .dropdown-toggle.user-avatar {
-          display: none;
-        }
-        .nav-item:not(:last-child),
-        .dropdown-item:not(:last-child) {
-          border-bottom: 1px solid #f0f0f0;
-        }
-        .navbar-nav .nav-link:hover,
-        .dropdown-item:hover {
-          background-color: #f8f9fa;
+          display: block;
         }
       }
     </style>
@@ -263,7 +260,7 @@
               </li>
             </ul>
             <div class="user-info ms-3 d-flex align-items-center">
-              <!-- Menu Notification (aucun bouton statique ici) -->
+              <!-- Menu Notification -->
               <div class="dropdown me-3">
                 <a class="notification-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                   <i class="bi bi-bell"></i>
@@ -455,11 +452,9 @@
             stopPolling();
             clearTaskId();
           } else if (data.state === 'PROGRESS') {
-            // Affiche le message envoyé par la tâche, par exemple :
             addNotification(data.message || "Génération en cours...", "in-progress");
             setTimeout(checkTaskStatus, 3000);
           } else {
-            // Autres états (ex. PENDING)
             addNotification("Génération en cours...", "in-progress");
             setTimeout(checkTaskStatus, 3000);
           }
@@ -469,13 +464,11 @@
           setTimeout(checkTaskStatus, 5000);
         });
       }
-
       
       function startTaskPolling(taskId) {
         if (isPolling) return;
         currentTaskId = taskId;
         isPolling = true;
-        // Dès le démarrage, ajouter (ou mettre à jour) la notification "in-progress"
         addNotification("Génération en cours...", "in-progress");
         checkTaskStatus();
       }
@@ -520,11 +513,9 @@
 
     <!-- Système de notifications avec persistance -->
     <script>
-      // Stockage des notifications dans le localStorage
       let notifications = [];
       const STORAGE_KEY = "edxo_notifications";
 
-      // Charge les notifications depuis le localStorage
       function loadNotifications() {
         const data = localStorage.getItem(STORAGE_KEY);
         if (data) {
@@ -537,12 +528,10 @@
         }
       }
 
-      // Sauvegarde les notifications dans le localStorage
       function saveNotifications() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
       }
 
-      // Met à jour l'affichage de la liste des notifications et du badge
       function updateNotificationUI() {
         const list = document.getElementById("notification-list");
         list.innerHTML = "";
@@ -569,12 +558,10 @@
               : iconHtml + notif.message;
             list.appendChild(li);
           });
-          // Ajout unique du bouton pour effacer les notifications
           const clearBtnLi = document.createElement("li");
           clearBtnLi.className = "dropdown-item text-center";
           clearBtnLi.innerHTML = '<button class="btn btn-sm btn-outline-secondary" id="clear-notifications-btn">Effacer les notifications</button>';
           list.appendChild(clearBtnLi);
-          // Ajout de l'écouteur sur le bouton d'effacement
           document.getElementById("clear-notifications-btn").addEventListener("click", () => {
             clearNotifications();
           });
@@ -582,7 +569,6 @@
         updateNotificationBadge();
       }
 
-      // Met à jour le badge en comptant toutes les notifications présentes (non lues)
       function updateNotificationBadge() {
         const badge = document.getElementById("notification-badge");
         if (notifications.length > 0) {
@@ -593,12 +579,10 @@
         }
       }
 
-      // Ajoute une nouvelle notification. Pour le type "in-progress", on vérifie si une notification de ce type existe déjà.
       function addNotification(message, type = "info", link = null) {
         if (type === "in-progress") {
           const existingIndex = notifications.findIndex(notif => notif.type === "in-progress");
           if (existingIndex !== -1) {
-            // Ne mettre à jour la notification que si le message a changé
             if (notifications[existingIndex].message !== message) {
               notifications[existingIndex].message = message;
               notifications[existingIndex].link = link;
@@ -606,10 +590,9 @@
               saveNotifications();
               updateNotificationUI();
             }
-            return; // On ne recrée pas une nouvelle notification si une in-progress existe déjà
+            return;
           }
         }
-        // Création d'une nouvelle notification pour les autres types ou si aucune notification "in-progress" n'existe
         const notif = {
           id: Date.now(),
           message: message,
@@ -622,21 +605,17 @@
         updateNotificationUI();
       }
 
-
-      // Efface toutes les notifications (et met à jour le badge)
       function clearNotifications() {
         notifications = [];
         saveNotifications();
         updateNotificationUI();
       }
 
-      // Lors de l'ouverture du menu de notifications, on considère qu'elles ont été lues (le badge est réinitialisé)
       document.addEventListener('DOMContentLoaded', () => {
         loadNotifications();
         updateNotificationUI();
         const notificationDropdown = document.getElementById('notificationDropdown');
         notificationDropdown.addEventListener('click', () => {
-          // On masque simplement le badge (les notifications persistent dans le localStorage)
           document.getElementById("notification-badge").style.display = "none";
         });
       });
