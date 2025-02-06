@@ -505,7 +505,7 @@
                                                             </div>
                                                             <div id="moyens-evaluation-{{ loop.index0 }}" class="moyens-list">
                                                                 {% for moyen in capacite.moyens_evaluation %}
-                                                                    <div class="moyen-item d-flex align-items-center gap-2 mb-2">
+                                                                    <div class="moyen-item d-flex align-items-center gap-2 mb-1">
                                                                         {{ moyen(class="form-control auto-resize border-0",
                                                                                 oninput="autoResize(this)") }}
                                                                         <button type="button" class="btn btn-danger btn-sm remove-item"
@@ -713,8 +713,8 @@
     </div>
 
     <!-- Bouton d'Enregistrement Flottant -->
-    <button type="submit" 
-            form="planCadreForm" 
+    {# Utilisation d'un bouton type="button" pour éviter une double soumission #}
+    <button type="button" 
             id="floatingSaveBtn" 
             class="btn btn-primary btn-lg rounded-circle shadow-lg d-none"
             title="Enregistrer le Plan-cadre"
@@ -1009,7 +1009,8 @@ function addSavoirEtre() {
 
 function addCapacite() {
     const container = document.getElementById('capacites-container');
-    const index = container.querySelectorAll('.capacite-item').length;
+    // Ajout de +1 pour que l'index soit 1-based (compatible avec les IDs existants)
+    const index = container.querySelectorAll('.capacite-item').length + 1;
     
     const html = `
         <div class="capacite-item mb-3">
