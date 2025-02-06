@@ -1230,6 +1230,52 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialisation des éditeurs Toast UI en lazy load
     initAllToastEditors();
 
+    // Ajout des écouteurs sur les boutons d'ajout des éléments de listes
+    const addCompetenceBtn = document.getElementById('add-competence-developpee');
+    if (addCompetenceBtn) {
+        addCompetenceBtn.addEventListener('click', function() {
+            addItemWithDescription('competences-developpees-container', 'competences_developpees');
+        });
+    }
+    const addObjetCibleBtn = document.getElementById('add-objet-cible');
+    if (addObjetCibleBtn) {
+        addObjetCibleBtn.addEventListener('click', function() {
+            addItemWithDescription('objets-cibles-container', 'objets_cibles');
+        });
+    }
+    const addCompetenceCertifieeBtn = document.getElementById('add-competence-certifiee');
+    if (addCompetenceCertifieeBtn) {
+        addCompetenceCertifieeBtn.addEventListener('click', function() {
+            addItemWithDescription('competences-certifiees-container', 'competences_certifiees');
+        });
+    }
+    const addCoursCorequisBtn = document.getElementById('add-cours-corequis');
+    if (addCoursCorequisBtn) {
+        addCoursCorequisBtn.addEventListener('click', function() {
+            addItemWithDescription('cours-corequis-container', 'cours_corequis');
+        });
+    }
+    const addCoursPrealableBtn = document.getElementById('add-cours-prealable');
+    if (addCoursPrealableBtn) {
+        addCoursPrealableBtn.addEventListener('click', function() {
+            addItemWithDescription('cours-prealables-container', 'cours_prealables');
+        });
+    }
+    const addCoursRelieBtn = document.getElementById('add-cours-relie');
+    if (addCoursRelieBtn) {
+        addCoursRelieBtn.addEventListener('click', function() {
+            addItemWithDescription('cours-relies-container', 'cours_relies');
+        });
+    }
+    const addSavoirEtreBtn = document.getElementById('add-savoir-etre');
+    if (addSavoirEtreBtn) {
+        addSavoirEtreBtn.addEventListener('click', addSavoirEtre);
+    }
+    const addCapaciteBtn = document.getElementById('add-capacite');
+    if (addCapaciteBtn) {
+        addCapaciteBtn.addEventListener('click', addCapacite);
+    }
+
     const planCadreForm = document.getElementById('planCadreForm');
     const floatingSaveBtn = document.getElementById('floatingSaveBtn');
     const floatingCancelBtn = document.getElementById('floatingCancelBtn');
