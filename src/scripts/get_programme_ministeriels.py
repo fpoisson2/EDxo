@@ -7,6 +7,8 @@ from urllib.parse import urljoin, urlparse
 from PyPDF2 import PdfReader
 import logging
 
+from openai import OpenAI
+
 # ------------------------
 # Configuration et dossiers
 # ------------------------
