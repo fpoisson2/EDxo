@@ -227,7 +227,6 @@ def add_plan_cadre(cours_id):
 @cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>', methods=['GET', 'POST'])
 @login_required
 @ensure_profile_completed
-@ensure_profile_completed
 def view_plan_cadre(cours_id, plan_id):
     """
     Affiche ou met à jour un plan-cadre pour un cours donné.
