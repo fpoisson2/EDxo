@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 from datetime import timedelta, datetime, timezone
 from dotenv import load_dotenv
+import atexit
 
 from flask import Flask, session, jsonify, redirect, url_for, request
 from flask_login import current_user, logout_user
@@ -14,7 +15,6 @@ from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-import atexit
 
 # Import centralized extensions
 from extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
@@ -64,11 +64,11 @@ class TestConfig:
 def create_app(testing=False):
     base_path = os.path.dirname(os.path.dirname(__file__))
     app = Flask(
-        __name__, 
+        __name__,
         template_folder="templates",
         static_folder=os.path.join(base_path, "static")
     )
-    
+
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
     # Configuration based on environment
@@ -76,11 +76,11 @@ def create_app(testing=False):
         app.config.from_object(TestConfig)
     else:
         BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-        DB_DIR = os.path.join(BASE_DIR, "database")  
-        DB_PATH = os.path.join(DB_DIR, "programme.db")  
-        
+        DB_DIR = os.path.join(BASE_DIR, "database")
+        DB_PATH = os.path.join(DB_DIR, "programme.db")
+
         print(f"🔍 Debug: Static folder -> {app.static_folder}")
-        
+
         base_path = Path(__file__).parent.parent
         app.config.update(
             PREFERRED_URL_SCHEME='https',
@@ -111,19 +111,18 @@ def create_app(testing=False):
     def load_user(user_id):
         try:
             return User.query.get(int(user_id))
-        except:
+        except Exception:
             return None
 
     # Optional but recommended: Set the login view
     login_manager.login_view = 'main.login'
     login_manager.login_message_category = 'info'
 
-    
     db.init_app(app)
     ckeditor.init_app(app)
     csrf.init_app(app)
     init_change_tracking(db)
-    
+
     if not testing:
         migrate = Migrate(app, db)
         worker_id = os.getenv('GUNICORN_WORKER_ID')
@@ -145,18 +144,18 @@ def create_app(testing=False):
     @app.context_processor
     def inject_version():
         return dict(version=__version__)
-        
+
     @app.before_request
     def before_request():
-        # Définir les endpoints publics qui ne nécessitent pas d'authentification
+        # Define endpoints that do not require authentication
         PUBLIC_ENDPOINTS = {
-            'static', 
-            'main.login', 
-            'main.logout', 
+            'static',
+            'main.login',
+            'main.logout',
             'main.get_credit_balance',
             'version'
         }
-        
+
         if request.endpoint in PUBLIC_ENDPOINTS or request.path.startswith('/static/'):
             return
 
@@ -165,11 +164,11 @@ def create_app(testing=False):
             return redirect(url_for('main.login', next=request.path))
 
         try:
-            # Vérifier la connexion à la BDD
+            # Verify database connection
             db.session.execute(text("SELECT 1"))
             db.session.commit()
 
-            # Gestion de l'expiration de la session
+            # Manage session expiration
             session.permanent = True
             now = datetime.now(timezone.utc)
             last_activity_str = session.get('last_activity')
@@ -186,14 +185,11 @@ def create_app(testing=False):
                     session['last_activity'] = now.isoformat()
             session['last_activity'] = now.isoformat()
 
-            # ────────────────────────────────────────────────────────────────
-            # Mise à jour de 'last_login' pour refléter la dernière activité de l'utilisateur
-            # Ici, nous mettons à jour le champ au moins une fois par minute pour éviter trop d'écritures.
-            if (not current_user.last_login or 
+            # Update 'last_login' at most once per minute
+            if (not current_user.last_login or
                 (datetime.utcnow() - current_user.last_login).total_seconds() > 60):
                 current_user.last_login = datetime.utcnow()
                 db.session.commit()
-            # ────────────────────────────────────────────────────────────────
 
         except SQLAlchemyError as e:
             logger.error(f"❌ Database error: {e}")
@@ -215,11 +211,11 @@ def create_app(testing=False):
     def checkpoint_wal():
         with app.app_context():
             try:
-                # Vérifier si la table backup_config existe avant d'y accéder
+                # Check if the backup_config table exists before accessing it
                 result = db.session.execute(text(
                     "SELECT name FROM sqlite_master WHERE type='table' AND name='backup_config';"
                 )).fetchone()
-                if result:  # La table existe
+                if result:  # Table exists
                     config = BackupConfig.query.first()
                     if config and config.enabled:
                         try:
@@ -228,11 +224,11 @@ def create_app(testing=False):
                             logger.error(f"Erreur lors de la planification des sauvegardes: {e}")
                 else:
                     logger.warning("⚠️ Table 'backup_config' introuvable, la planification des sauvegardes est ignorée.")
-                    
+
                 from app.init.prompt_settings import init_plan_de_cours_prompts
                 init_plan_de_cours_prompts()
-                
-                # Effectuer un checkpoint WAL
+
+                # Perform WAL checkpoint
                 db.session.execute(text("PRAGMA wal_checkpoint(TRUNCATE);"))
                 db.session.commit()
                 logger.info("✅ WAL checkpointed successfully.")
@@ -243,24 +239,32 @@ def create_app(testing=False):
 
     if not testing:
         # Production-only setup
-        with app.app_context():
-            # Set WAL journal mode
-            with db.engine.connect() as connection:
-                connection.execute(text('PRAGMA journal_mode=WAL;'))
-            
-            if not scheduler.running and is_primary_worker:
-                start_scheduler()
-                result = db.session.execute(text(
-                    "SELECT name FROM sqlite_master WHERE type='table' AND name='backup_config';"
-                )).fetchone()
-                
-                if result:
-                    schedule_backup(app)
-                else:
-                    logger.warning("⚠️ Table 'backup_config' introuvable, planification des sauvegardes est désactivée.")
+        # Only start the scheduler if NOT running in a Celery worker
+        if not os.environ.get("CELERY_WORKER"):
+            with app.app_context():
+                # Set WAL journal mode
+                with db.engine.connect() as connection:
+                    connection.execute(text('PRAGMA journal_mode=WAL;'))
 
-        # Register atexit handlers
-        atexit.register(shutdown_scheduler)
-        atexit.register(checkpoint_wal)
+                # Determine if this is the primary worker
+                worker_id = os.getenv('GUNICORN_WORKER_ID')
+                is_primary_worker = worker_id == '0' or worker_id is None
+
+                if not scheduler.running and is_primary_worker:
+                    start_scheduler()
+                    result = db.session.execute(text(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name='backup_config';"
+                    )).fetchone()
+
+                    if result:
+                        schedule_backup(app)
+                    else:
+                        logger.warning("⚠️ Table 'backup_config' introuvable, planification des sauvegardes est désactivée.")
+
+            # Register atexit handlers for graceful shutdown and checkpointing
+            atexit.register(shutdown_scheduler)
+            atexit.register(checkpoint_wal)
+        else:
+            logger.info("Celery worker detected; skipping scheduler startup and related atexit handlers.")
 
     return app
