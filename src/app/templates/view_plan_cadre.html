@@ -617,10 +617,44 @@
                             {{ plan_form.eval_evaluation_sommatives_apprentissages(class="form-control border-0 auto-resize use-toast",
                                                                                    oninput="autoResize(this)",
                                                                                    style="overflow:hidden; resize:none;") }}
+                        
+                        <!-- Savoir-être -->
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="fw-bold">Savoir-être</label>
+                                <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-savoir-etre" title="Ajouter">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </div>
+                            <div id="savoir-etre-container">
+                                {% for subform in plan_form.savoir_etre %}
+                                    <div class="savoir-etre-item mb-1">
+                                        <div class="d-flex align-items-start">
+                                            <div class="flex-fill me-2">
+                                                {{ subform.texte(
+                                                    class="form-control auto-resize border-0",
+                                                    oninput="autoResize(this)",
+                                                    style="overflow:hidden; resize:none;",
+                                                    placeholder="Savoir-être (en gras)"
+                                                ) }}
+                                            </div>
+                                            <button type="button"
+                                                    class="btn btn-danger btn-sm remove-item-btn ms-auto"
+                                                    style="border: none;"
+                                                    title="Supprimer">
+                                                <i class="bi bi-dash-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
                         </div>
                     </div>
                 </div>
             </div>
+
 
             <!-- PARTIE 6: Éléments de compétence associés -->
             <div class="accordion-item">
