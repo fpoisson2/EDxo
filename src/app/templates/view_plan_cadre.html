@@ -107,15 +107,15 @@
                      aria-labelledby="headingIntroduction"
                      data-bs-parent="#planCadreAccordion">
                     <div class="accordion-body">
-                        <!-- place_intro (champ éditable) -->
+                        <!-- Place et rôle du cours dans le programme (avec Toast UI Editor) -->
                         <div class="mb-2">
                             <label class="fw-bold"><strong>Place et rôle du cours dans le programme</strong></label>
-                            {{ plan_form.place_intro(class="form-control border-0 auto-resize",
+                            {{ plan_form.place_intro(class="form-control border-0 auto-resize use-toast",
                                                      oninput="autoResize(this)",
                                                      style="overflow:hidden; resize:none;") }}
                         </div>
 
-                        <!-- Compétences développées -->
+                        <!-- Compétences développées (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold">Compétences développées</h6>
@@ -153,7 +153,7 @@
                             </div>
                         </div>
 
-                        <!-- Objets cibles -->
+                        <!-- Objets cibles (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold">Objets cibles</h6>
@@ -191,7 +191,7 @@
                             </div>
                         </div>
 
-                        <!-- Compétences certifiées -->
+                        <!-- Compétences certifiées (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold">Compétences certifiées</h6>
@@ -229,7 +229,7 @@
                             </div>
                         </div>
 
-                        <!-- Cours corequis (texte libre) -->
+                        <!-- Cours corequis (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold">Cours corequis</h6>
@@ -267,7 +267,7 @@
                             </div>
                         </div>
 
-                        <!-- Cours préalables (texte libre) -->
+                        <!-- Cours préalables (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold">Cours préalables</h6>
@@ -305,7 +305,7 @@
                             </div>
                         </div>
 
-                        <!-- Cours reliés -->
+                        <!-- Cours reliés (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold">Cours reliés</h6>
@@ -362,7 +362,7 @@
                      aria-labelledby="headingResultatsVises"
                      data-bs-parent="#planCadreAccordion">
                     <div class="accordion-body">
-                        <!-- Objectif Terminal -->
+                        <!-- Objectif Terminal (sans Toast UI Editor) -->
                         <div class="mb-3">
                             <label class="fw-bold">Objectif terminal</label>
                             {{ plan_form.objectif_terminal(class="form-control border-0 auto-resize",
@@ -408,10 +408,10 @@
                                                                                style="overflow:hidden; resize:none;") }}
                                                         </div>
                                                         
-                                                        <!-- Description -->
+                                                        <!-- Description des capacités (avec Toast UI Editor) -->
                                                         <div class="mb-3">
                                                             <label class="fw-bold">Description</label>
-                                                            {{ capacite.description_capacite(class="form-control auto-resize border-0",
+                                                            {{ capacite.description_capacite(class="form-control auto-resize border-0 use-toast",
                                                                                           oninput="autoResize(this)",
                                                                                           style="overflow:hidden; resize:none;") }}
                                                         </div>
@@ -473,13 +473,19 @@
                                                                                         <label class="fw-bold text-dark px-2 rounded" style="background-color: #28a745;">
                                                                                             Cible
                                                                                         </label>
-                                                                                        {{ savoir.cible(class="form-control border-0 mt-1", placeholder="Cible") }}
+                                                                                        {{ savoir.cible(class="form-control auto-resize border-0 mt-1",
+                                                                                                         oninput="autoResize(this)",
+                                                                                                         style="overflow:hidden; resize:none;",
+                                                                                                         placeholder="Cible") }}
                                                                                     </div>
                                                                                     <div class="col-6 mb-2">
                                                                                         <label class="fw-bold text-dark px-2 rounded" style="background-color: #ffc107;">
                                                                                             Seuil de réussite
                                                                                         </label>
-                                                                                        {{ savoir.seuil_reussite(class="form-control border-0 mt-1", placeholder="Seuil de réussite") }}
+                                                                                        {{ savoir.seuil_reussite(class="form-control auto-resize border-0 mt-1",
+                                                                                                                 oninput="autoResize(this)",
+                                                                                                                 style="overflow:hidden; resize:none;",
+                                                                                                                 placeholder="Seuil de réussite") }}
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
@@ -547,25 +553,25 @@
                     <div class="accordion-body">
                         <div class="mb-2">
                             <label class="fw-bold">Structure du cours</label>
-                            {{ plan_form.structure_intro(class="form-control border-0 auto-resize",
+                            {{ plan_form.structure_intro(class="form-control border-0 auto-resize use-toast",
                                                          oninput="autoResize(this)",
                                                          style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
                             <label class="fw-bold">Activités théoriques</label>
-                            {{ plan_form.structure_activites_theoriques(class="form-control border-0 auto-resize",
+                            {{ plan_form.structure_activites_theoriques(class="form-control border-0 auto-resize use-toast",
                                                                        oninput="autoResize(this)",
                                                                        style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
                             <label class="fw-bold">Activités pratiques</label>
-                            {{ plan_form.structure_activites_pratiques(class="form-control border-0 auto-resize",
+                            {{ plan_form.structure_activites_pratiques(class="form-control border-0 auto-resize use-toast",
                                                                       oninput="autoResize(this)",
                                                                       style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
                             <label class="fw-bold">Organisation du cours (activités prévues)</label>
-                            {{ plan_form.structure_activites_prevues(class="form-control border-0 auto-resize",
+                            {{ plan_form.structure_activites_prevues(class="form-control border-0 auto-resize use-toast",
                                                                      oninput="autoResize(this)",
                                                                      style="overflow:hidden; resize:none;") }}
                         </div>
@@ -590,61 +596,28 @@
                     <div class="accordion-body">
                         <div class="mb-2">
                             <label class="fw-bold">Évaluation sommative des apprentissages</label>
-                            {{ plan_form.eval_evaluation_sommative(class="form-control border-0 auto-resize",
+                            {{ plan_form.eval_evaluation_sommative(class="form-control border-0 auto-resize use-toast",
                                                                    oninput="autoResize(this)",
                                                                    style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
                             <label class="fw-bold">Nature des évaluations sommatives</label>
-                            {{ plan_form.eval_nature_evaluations_sommatives(class="form-control border-0 auto-resize",
+                            {{ plan_form.eval_nature_evaluations_sommatives(class="form-control border-0 auto-resize use-toast",
                                                                             oninput="autoResize(this)",
                                                                             style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
                             <label class="fw-bold">Évaluation de la langue</label>
-                            {{ plan_form.eval_evaluation_de_la_langue(class="form-control border-0 auto-resize",
+                            {{ plan_form.eval_evaluation_de_la_langue(class="form-control border-0 auto-resize use-toast",
                                                                       oninput="autoResize(this)",
                                                                       style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
                             <label class="fw-bold">Évaluation formative des apprentissages</label>
-                            {{ plan_form.eval_evaluation_sommatives_apprentissages(class="form-control border-0 auto-resize",
+                            {{ plan_form.eval_evaluation_sommatives_apprentissages(class="form-control border-0 auto-resize use-toast",
                                                                                    oninput="autoResize(this)",
                                                                                    style="overflow:hidden; resize:none;") }}
                         </div>
-
-                        <!-- Savoir-être -->
-                        <div class="mb-2">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="fw-bold">Savoir-être</label>
-                                <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-savoir-etre" title="Ajouter">
-                                    <i class="bi bi-plus-circle"></i>
-                                </button>
-                            </div>
-                            <div id="savoir-etre-container">
-                                {% for subform in plan_form.savoir_etre %}
-                                    <div class="savoir-etre-item mb-1">
-                                        <div class="d-flex align-items-start">
-                                            <div class="flex-fill me-2">
-                                                {{ subform.texte(
-                                                    class="form-control auto-resize border-0",
-                                                    oninput="autoResize(this)",
-                                                    style="overflow:hidden; resize:none;",
-                                                    placeholder="Savoir-être (en gras)"
-                                                ) }}
-                                            </div>
-                                            <button type="button"
-                                                    class="btn btn-danger btn-sm remove-item-btn ms-auto"
-                                                    style="border: none;"
-                                                    title="Supprimer">
-                                                <i class="bi bi-dash-circle"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             </div>
@@ -855,7 +828,12 @@ h6 {
 </style>
 
 <script>
-// --- Lazy Load Toast UI Editors ---
+// --- Fonctions pour le Toast UI Editor ---
+// Vérifie si un élément est visible (utile pour les zones dans des accordéons masqués)
+function isVisible(el) {
+    return !!( el.offsetWidth || el.offsetHeight || el.getClientRects().length );
+}
+
 function initToastEditor(textarea) {
     const container = document.createElement('div');
     textarea.parentNode.insertBefore(container, textarea);
@@ -921,19 +899,25 @@ function initToastEditor(textarea) {
 }
 
 function initToastEditorWhenVisible(textarea) {
+    // Si l'élément est déjà visible, l'initialiser immédiatement.
+    if (isVisible(textarea)) {
+         initToastEditor(textarea);
+         return;
+    }
+    // Sinon, utiliser un IntersectionObserver pour attendre qu'il devienne visible.
     const observer = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                initToastEditor(textarea);
-                observer.unobserve(textarea);
-            }
-        });
+         entries.forEach(entry => {
+             if (entry.isIntersecting) {
+                 initToastEditor(textarea);
+                 observer.unobserve(textarea);
+             }
+         });
     }, { rootMargin: '100px' });
     observer.observe(textarea);
 }
 
 function initAllToastEditors() {
-    document.querySelectorAll('textarea').forEach(function(tx) {
+    document.querySelectorAll('textarea.use-toast').forEach(function(tx) {
         if (!tx.classList.contains('toast-initialized')) {
             initToastEditorWhenVisible(tx);
         }
@@ -975,7 +959,12 @@ function addItemWithDescription(containerId, fieldPrefix) {
         </div>
     `;
     container.insertAdjacentHTML('beforeend', html);
-    initAllToastEditors();
+    
+    const newTextArea = document.getElementById(`${fieldPrefix}-${index}-texte_description`);
+    if (newTextArea && !newTextArea.classList.contains('toast-initialized')) {
+        // Pour ces listes dynamiques, on ne souhaite PAS activer Toast UI Editor.
+    }
+    
     showFloatingButtons();
 }
 
@@ -1003,61 +992,63 @@ function addSavoirEtre() {
         </div>
     `;
     container.insertAdjacentHTML('beforeend', html);
-    initAllToastEditors();
     showFloatingButtons();
 }
 
 function addCapacite() {
     const container = document.getElementById('capacites-container');
-    // Ajout de +1 pour que l'index soit 1-based (compatible avec les IDs existants)
     const index = container.querySelectorAll('.capacite-item').length + 1;
     
     const html = `
-        <div class="capacite-item mb-3">
+        <div class="capacite-item mb-4">
             <div class="accordion" id="capaciteAccordion${index}">
                 <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button"
+                    <h2 class="accordion-header d-flex justify-content-between align-items-center">
+                        <button class="accordion-button collapsed flex-grow-1" type="button"
                                 data-bs-toggle="collapse"
                                 data-bs-target="#collapseCapacite${index}"
                                 aria-expanded="false">
                             Nouvelle capacité
                         </button>
+                        <button type="button" class="btn btn-danger btn-sm remove-capacite ms-2"
+                                onclick="removeCapacite(this)" title="Supprimer cette capacité">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </h2>
                     <div id="collapseCapacite${index}" class="accordion-collapse collapse"
                          data-bs-parent="#capaciteAccordion${index}">
                         <div class="accordion-body">
-                            <div class="mb-1">
-                                <label class="fw-bold">Capacité</label>
+                            <div class="mb-3">
+                                <label class="fw-bold">Énoncé de la capacité</label>
                                 <input type="text" name="capacites-${index}-capacite" 
                                        class="form-control fw-bold auto-resize border-0"
                                        oninput="autoResize(this)"
                                        style="overflow:hidden; resize:none;"
                                        placeholder="Capacité">
                             </div>
-                            <div class="mb-1">
+                            <div class="mb-3">
                                 <label class="fw-bold">Description</label>
                                 <textarea name="capacites-${index}-description_capacite" 
-                                         class="form-control auto-resize border-0"
-                                         oninput="autoResize(this)"
-                                         style="overflow:hidden; resize:none;"
-                                         placeholder="Description"></textarea>
+                                          class="form-control auto-resize border-0 use-toast"
+                                          oninput="autoResize(this)"
+                                          style="overflow:hidden; resize:none;"
+                                          placeholder="Description"></textarea>
                             </div>
-                            <div class="row mb-1">
-                                <div class="col">
-                                    <label class="fw-bold">Pondération minimale</label>
+                            <div class="mb-3">
+                                <label class="fw-bold">Pondération</label>
+                                <div class="d-flex align-items-center">
+                                    <span class="me-1">(</span>
                                     <input type="number" name="capacites-${index}-ponderation_min"
-                                           class="form-control border-0" value="0">
-                                </div>
-                                <div class="col">
-                                    <label class="fw-bold">Pondération maximale</label>
+                                           class="form-control border-0 me-2" style="width: 80px;" value="0">
+                                    <span class="me-2">-</span>
                                     <input type="number" name="capacites-${index}-ponderation_max"
-                                           class="form-control border-0" value="100">
+                                           class="form-control border-0 me-2" style="width: 80px;" value="100">
+                                    <span>%)</span>
                                 </div>
                             </div>
                             
-                            <div class="mb-2">
-                                <div class="d-flex justify-content-between align-items-center">
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
                                     <label class="fw-bold">Savoirs nécessaires</label>
                                     <button type="button" class="btn btn-success btn-sm add-savoir"
                                             onclick="addSavoir(${index}, 'necessaire')">
@@ -1067,8 +1058,8 @@ function addCapacite() {
                                 <div id="savoirs-necessaires-${index}" class="savoirs-list"></div>
                             </div>
 
-                            <div class="mb-2">
-                                <div class="d-flex justify-content-between align-items-center">
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
                                     <label class="fw-bold">Savoirs faire</label>
                                     <button type="button" class="btn btn-success btn-sm add-savoir-faire"
                                             onclick="addSavoirFaire(${index})">
@@ -1078,8 +1069,8 @@ function addCapacite() {
                                 <div id="savoirs-faire-${index}" class="savoirs-faire-list"></div>
                             </div>
 
-                            <div class="mb-2">
-                                <div class="d-flex justify-content-between align-items-center">
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
                                     <label class="fw-bold">Moyens d'évaluation</label>
                                     <button type="button" class="btn btn-success btn-sm add-moyen"
                                             onclick="addMoyen(${index})">
@@ -1088,11 +1079,6 @@ function addCapacite() {
                                 </div>
                                 <div id="moyens-evaluation-${index}" class="moyens-list"></div>
                             </div>
-
-                            <button type="button" class="btn btn-danger btn-sm remove-capacite"
-                                    onclick="removeCapacite(this)">
-                                <i class="bi bi-trash"></i> Supprimer cette capacité
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -1101,7 +1087,14 @@ function addCapacite() {
     `;
     
     container.insertAdjacentHTML('beforeend', html);
-    initAllToastEditors();
+    let newCapaciteItem = container.lastElementChild;
+    if (newCapaciteItem) {
+        newCapaciteItem.querySelectorAll('textarea.use-toast').forEach(function(tx) {
+            if (!tx.classList.contains('toast-initialized')) {
+                initToastEditorWhenVisible(tx);
+            }
+        });
+    }
     showFloatingButtons();
 }
 
@@ -1132,26 +1125,41 @@ function addSavoirFaire(capaciteIndex) {
     const index = container.querySelectorAll('.savoir-faire-item').length;
     
     const html = `
-        <div class="savoir-faire-item mb-2">
-            <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-texte"
-                   class="form-control fw-bold mb-1 auto-resize border-0"
-                   placeholder="Savoir faire">
-            <div class="row">
-                <div class="col">
-                    <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-cible"
-                           class="form-control border-0"
-                           placeholder="Cible">
+        <div class="savoir-faire-item mb-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1 me-2">
+                    <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-texte"
+                           class="form-control fw-bold mb-2 auto-resize border-0"
+                           placeholder="Savoir faire">
+                    <div class="row mb-2">
+                        <div class="col-6 mb-2">
+                            <label class="fw-bold text-dark px-2 rounded" style="background-color: #28a745;">
+                                Cible
+                            </label>
+                            <textarea name="capacites-${capaciteIndex}-savoirs_faire-${index}-cible"
+                                      class="form-control auto-resize border-0 mt-1"
+                                      oninput="autoResize(this)"
+                                      style="overflow:hidden; resize:none;"
+                                      placeholder="Cible"></textarea>
+                        </div>
+                        <div class="col-6 mb-2">
+                            <label class="fw-bold text-dark px-2 rounded" style="background-color: #ffc107;">
+                                Seuil de réussite
+                            </label>
+                            <textarea name="capacites-${capaciteIndex}-savoirs_faire-${index}-seuil_reussite"
+                                      class="form-control auto-resize border-0 mt-1"
+                                      oninput="autoResize(this)"
+                                      style="overflow:hidden; resize:none;"
+                                      placeholder="Seuil de réussite"></textarea>
+                        </div>
+                    </div>
                 </div>
-                <div class="col">
-                    <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-seuil_reussite"
-                           class="form-control border-0"
-                           placeholder="Seuil de réussite">
-                </div>
+                <button type="button" class="btn btn-danger btn-sm remove-item"
+                        onclick="removeItem(this)">
+                    <i class="bi bi-dash-circle"></i>
+                </button>
             </div>
-            <button type="button" class="btn btn-danger btn-sm remove-item mt-1"
-                    onclick="removeItem(this)">
-                <i class="bi bi-dash-circle"></i>
-            </button>
+            <hr>
         </div>
     `;
     
@@ -1228,7 +1236,7 @@ function showFlashMessage(message, type) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialisation des éditeurs Toast UI en lazy load
+    // Initialisation des éditeurs Toast UI pour les textarea ciblés (ceux avec la classe use-toast)
     initAllToastEditors();
 
     // Ajout des écouteurs sur les boutons d'ajout des éléments de listes
@@ -1262,7 +1270,7 @@ document.addEventListener('DOMContentLoaded', function() {
             addItemWithDescription('cours-prealables-container', 'cours_prealables');
         });
     }
-    const addCoursRelieBtn = document.getElementById('add-cours-relie');
+    const addCoursRelieBtn = document.getElementById('add-cours-relies');
     if (addCoursRelieBtn) {
         addCoursRelieBtn.addEventListener('click', function() {
             addItemWithDescription('cours-relies-container', 'cours_relies');

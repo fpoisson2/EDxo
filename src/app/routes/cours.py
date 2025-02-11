@@ -564,7 +564,7 @@ def view_plan_cadre(cours_id, plan_id):
                         # Moyens d'évaluation
                         me_keys = [
                             mk for mk in request.form.keys()
-                            if mk.startswith(f'{prefix}-moyens_evaluation-') and mk.endswith('-texte')
+                            if mk.startswith(f'{prefix}-moyens_evaluation-')
                         ]
                         for mk in me_keys:
                             val = request.form.get(mk, "").strip()
