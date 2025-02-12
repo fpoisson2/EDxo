@@ -660,6 +660,21 @@ def generate_docx_with_template(plan_id):
 
                 competence_info_atteint[c.id]["elements"].append(element_competence)
 
+    # Fusionner les compétences développées et atteintes dans un dictionnaire unique
+    competences_fusionnees = {}
+
+    # Parcourir les compétences développées
+    for comp in competence_info_developes.values():
+        competences_fusionnees[comp["id"]] = comp
+
+    # Parcourir les compétences atteintes et les fusionner si nécessaire
+    for comp in competence_info_atteint.values():
+        if comp["id"] in competences_fusionnees:
+            # Fusionner les éléments en les ajoutant à ceux déjà présents
+            competences_fusionnees[comp["id"]]["elements"].extend(comp["elements"])
+        else:
+            competences_fusionnees[comp["id"]] = comp
+
     objets_cibles = db.session.query(PlanCadreObjetsCibles).filter_by(plan_cadre_id=plan_id).all()
     cours_relies = db.session.query(PlanCadreCoursRelies).filter_by(plan_cadre_id=plan_id).all()
 
@@ -747,8 +762,7 @@ def generate_docx_with_template(plan_id):
         'cours_relies': [{'texte': cr.texte, 'description': cr.description} for cr in cours_relies],
         'capacites': capacites_detail,
         'savoir_etre': [{'texte': se.texte} for se in savoir_etre_db],
-        'competences_info_developes': list(competence_info_developes.values()),
-        'competences_info_atteint': list(competence_info_atteint.values()),
+        'competences_info': list(competences_fusionnees.values()),
         'cours_corequis': [{'texte': cco.texte, 'description': cco.description} for cco in cours_corequis_db],
         'competences_certifiees': [{'texte': ccx.texte, 'description': ccx.description} for ccx in competences_certifiees_db],
         'cours_developpant_une_meme_competence': [
