@@ -338,7 +338,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         structured_request = {
             "instruction": (
                 f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', "
-                f"session {cours_session}. Informations supplémentaires: {additional_info}\n\n"
+                f"session {cours_session}. Informations importantes à considérer avant tout: {additional_info}\n\n"
                 "Voici le schéma JSON auquel ta réponse doit strictement adhérer :\n\n"
                 f"{schema_json}\n\n"
                 "Utilise un langage neutre (par exemple, 'étudiant' => 'personne étudiante').\n\n"
