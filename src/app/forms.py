@@ -192,6 +192,7 @@ class MultiCheckboxField(SelectMultipleField):
 class EditUserForm(FlaskForm):
     user_id = HiddenField('ID')
     username = StringField("Nom d'utilisateur", validators=[DataRequired()])
+    email = StringField("Courriel", validators=[DataRequired(), Email()])
     password = PasswordField("Nouveau mot de passe", validators=[Optional()])
     role = SelectField("Rôle", choices=[('admin', 'Admin'), ('professeur', 'Professeur'), ('cp', 'CP'), ('coordo', 'Coordo'), ('invite', 'Invite')], validators=[DataRequired()])
     cegep_id = SelectField("Cégep", coerce=int, validators=[Optional()])
