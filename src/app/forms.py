@@ -51,19 +51,15 @@ REGIONS = [
 ]
 
 class ForgotPasswordForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    submit = SubmitField('Envoyer le lien de réinitialisation')
+    email = StringField('Adresse email', validators=[DataRequired(), Email()])
+    recaptcha_token = HiddenField('Recaptcha Token')
+    submit = SubmitField("Envoyer l'email de réinitialisation")
 
 class ResetPasswordForm(FlaskForm):
-    password = PasswordField(
-        'Nouveau mot de passe', 
-        validators=[DataRequired(), Length(min=8)]
-    )
-    confirm_password = PasswordField(
-        'Confirmer le nouveau mot de passe', 
-        validators=[DataRequired(), EqualTo('password', message='Les mots de passe doivent correspondre.')]
-    )
-    submit = SubmitField('Réinitialiser le mot de passe')
+    password = PasswordField('Nouveau mot de passe', validators=[DataRequired(), Length(min=8)])
+    confirm_password = PasswordField('Confirmez le nouveau mot de passe', validators=[DataRequired(), EqualTo('password')])
+    recaptcha_token = HiddenField('Recaptcha Token')
+    submit = SubmitField("Réinitialiser le mot de passe")
     
 class MailgunConfigForm(FlaskForm):
     mailgun_domain = StringField('Mailgun Domain', validators=[DataRequired()])
@@ -311,11 +307,12 @@ class GenerateContentForm(FlaskForm):
 
 class LoginForm(FlaskForm):
     username = StringField('Nom d\'utilisateur', 
-                         validators=[DataRequired(), Length(min=3, max=25)],
-                         render_kw={"autocomplete": "username"})
+                           validators=[DataRequired(), Length(min=3, max=25)],
+                           render_kw={"autocomplete": "username"})
     password = PasswordField('Mot de passe', 
-                          validators=[DataRequired(), Length(min=8)],
-                          render_kw={"autocomplete": "current-password"})
+                             validators=[DataRequired(), Length(min=8)],
+                             render_kw={"autocomplete": "current-password"})
+    recaptcha_token = HiddenField('Recaptcha Token')  # Champ pour le token reCAPTCHA
     submit = SubmitField('Se connecter')
     
 class PlanCadreCompetenceCertifieeForm(Form):

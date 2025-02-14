@@ -84,18 +84,32 @@ def test_create_admin_without_direct_import(app):
         assert retrieved_user.role == "admin", "User role should be admin."
         assert retrieved_user.credits == 100.0, "User credits should be 100.0."
 
-def test_login_with_admin(client, app):
+def fake_requests_post(url, data, **kwargs):
     """
-    Creates an admin user (if not already present) with a hashed password,
-    then attempts to log in with that user. After a successful login,
-    Flask-Login should store the user ID in the session.
+    Simule l'appel à l'API reCAPTCHA en renvoyant un résultat valide.
     """
+    class FakeResponse:
+        status_code = 200
+        def json(self):
+            return {'success': True, 'score': 1.0}
+    return FakeResponse()
+
+
+def test_login_with_admin(client, app, monkeypatch):
+    """
+    Crée un utilisateur admin (s'il n'existe pas) avec un mot de passe hashé,
+    puis tente de se connecter avec cet utilisateur. Après une connexion réussie,
+    Flask-Login doit stocker l'ID utilisateur dans la session.
+    """
+    # Patch la fonction requests.post pour simuler la vérification reCAPTCHA
+    monkeypatch.setattr("requests.post", fake_requests_post)
+
     with app.app_context():
-        from src.app import db  # Access the db instance from your app
+        from src.app import db  # Accès à l'instance de la base de données
         User = get_model_by_name("User", db)
         assert User is not None, "User model not found in registry."
 
-        # Ensure the admin user exists.
+        # Assure que l'utilisateur admin existe.
         admin = User.query.filter_by(username="admin").first()
         if admin is None:
             hashed_password = generate_password_hash("adminpass")
@@ -108,20 +122,21 @@ def test_login_with_admin(client, app):
             db.session.add(admin)
             db.session.commit()
         
-        # Store the admin's id in a local variable for later assertions.
+        # Stocke l'id de l'admin pour les assertions ultérieures.
         admin_id = admin.id
 
-    # Perform the login POST request.
+    # Prépare les données de login en ajoutant le token reCAPTCHA fictif.
     login_data = {
         "username": "admin",
         "password": "adminpass",
-        "submit": "Se connecter"  # Include if your form uses it.
+        "recaptcha_token": "dummy_token",  # Valeur factice pour le test
+        "submit": "Se connecter"  # Inclure si votre formulaire l'utilise.
     }
     response = client.post('/login', data=login_data, follow_redirects=True)
     assert response.status_code == 200, "Login should eventually return HTTP 200 after redirection."
 
-    # Check that the session now contains the user id (Flask-Login typically stores it as _user_id).
+    # Vérifie que la session contient bien l'ID de l'utilisateur (Flask-Login stocke généralement dans _user_id)
     with client.session_transaction() as session:
         assert "_user_id" in session, "User not logged in; session missing '_user_id'."
-        # The user id is typically stored as a string. Verify that it matches the admin's id.
+        # L'ID est stocké en tant que chaîne. Vérifiez qu'il correspond à celui de l'admin.
         assert session["_user_id"] == str(admin_id), "Logged in user id does not match admin's id."

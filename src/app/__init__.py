@@ -59,6 +59,8 @@ class TestConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = False
     SECRET_KEY = 'test_key'
+    RECAPTCHA_PUBLIC_KEY = 'test_public'
+    RECAPTCHA_SECRET_KEY = 'test_secret'
     # Add other testing-specific configurations here
 
 def create_app(testing=False):
@@ -89,6 +91,8 @@ def create_app(testing=False):
             DB_PATH=DB_PATH,
             UPLOAD_FOLDER=os.path.join(base_path, 'static', 'docs'),
             SECRET_KEY=os.getenv('SECRET_KEY'),
+            RECAPTCHA_SITE_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY'),
+            RECAPTCHA_SECRET_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY'),
             WTF_CSRF_ENABLED=True,
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),
