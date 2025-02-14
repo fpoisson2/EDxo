@@ -2,6 +2,8 @@ import os
 from datetime import datetime
 from io import BytesIO
 
+import requests
+
 from jinja2 import Template
 from bs4 import BeautifulSoup
 from docxtpl import DocxTemplate
@@ -17,9 +19,9 @@ from googleapiclient.discovery import build
 
 from utils.scheduler_instance import scheduler, start_scheduler
 
-from app.models import User, Cours, Programme
+from app.models import User, Cours, Programme, MailgunConfig
 
-from flask import current_app
+from flask import current_app, url_for
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -48,6 +50,36 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 DATABASE = 'programme.db'
+
+
+def send_reset_email(user_email, token):
+    # Construire l'URL de réinitialisation
+    reset_url = url_for('main.reset_password', token=token, _external=True)
+    subject = "Réinitialisation de votre mot de passe"
+    text = f"""Bonjour,
+
+    Pour réinitialiser votre mot de passe, veuillez cliquer sur le lien suivant :
+    {reset_url}
+
+    Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer ce message.
+    """
+    # Récupérer la configuration Mailgun depuis la BD
+    mailgun_config = MailgunConfig.query.first()
+    if not mailgun_config:
+        current_app.logger.error("La configuration Mailgun est manquante!")
+        return
+
+    url = f"https://api.mailgun.net/v3/{mailgun_config.mailgun_domain}/messages"
+    auth = ("api", mailgun_config.mailgun_api_key)
+    data = {
+        "from": "EDxo <no-reply@edxo.ca>",
+        "to": user_email,
+        "subject": subject,
+        "text": text,
+    }
+    response = requests.post(url, auth=auth, data=data)
+    if response.status_code != 200:
+        current_app.logger.error(f"Erreur lors de l'envoi de l'email: {response.text}")
 
 def is_teacher_in_programme(user_id, programme_id):
     """
@@ -85,83 +117,6 @@ def is_coordo_for_programme(user_id, programme_id):
     """Check if user is coordinator for given programme."""
     user = db.session.get(User, user_id)
     return programme_id in [p.id for p in user.programmes]
-
-def send_backup_email(app, recipient_email, db_path):
-    """
-    Envoie un email (via l'API Gmail) contenant la base de données en pièce jointe.
-    """
-    import os
-    import base64
-    from google.oauth2.credentials import Credentials
-    from google.auth.transport.requests import Request
-    from google_auth_oauthlib.flow import InstalledAppFlow
-    from googleapiclient.discovery import build
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.base import MIMEBase
-    from email.mime.text import MIMEText
-    from email import encoders
-
-    logger.info(f"Starting scheduled backup to {recipient_email}")
-    
-    # Définition des chemins corrects
-    CONFIG_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config')
-    TOKEN_PATH = os.path.join(CONFIG_DIR, 'token.json')
-    CREDENTIALS_PATH = os.path.join(CONFIG_DIR, 'credentials.json')
-    
-    SCOPES = ['https://www.googleapis.com/auth/gmail.send']
-    creds = None
-
-    # Vérification du token avec le nouveau chemin
-    if os.path.exists(TOKEN_PATH):
-        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
-    
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
-            creds = flow.run_local_server(port=0, open_browser=False)
-        
-        # Sauvegarde du token dans le bon répertoire
-        os.makedirs(CONFIG_DIR, exist_ok=True)  # Crée le répertoire si nécessaire
-        with open(TOKEN_PATH, 'w') as token:
-            token.write(creds.to_json())
-
-    service = build('gmail', 'v1', credentials=creds)
-
-    # Créer le message
-    message = MIMEMultipart()
-    message['to'] = recipient_email
-    message['from'] = recipient_email
-    message['subject'] = "BD EDxo"
-
-    # Corps du message (texte)
-    text_part = MIMEText('Bonjour, voici la dernière version de la BD de EDxo', 'plain')
-    message.attach(text_part)
-
-    # Lecture du fichier .db et ajout en pièce jointe
-    with open(db_path, 'rb') as f:
-        file_data = f.read()
-    attachment = MIMEBase('application', 'octet-stream')
-    attachment.set_payload(file_data)
-    encoders.encode_base64(attachment)
-    attachment.add_header('Content-Disposition', 'attachment', filename='backup.db')
-    message.attach(attachment)
-
-    # Encoder le message en base64
-    raw = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
-
-    # Envoi via l'API Gmail
-    try:
-        sent_message = service.users().messages().send(
-            userId='me',
-            body={'raw': raw}
-        ).execute()
-        logger.info(f"Message envoyé. ID: {sent_message['id']}")
-    except Exception as e:
-        logger.error(f"Erreur lors de l'envoi de l'email: {str(e)}")
-        raise
-
 
 def get_initials(nom_complet):
     """

@@ -16,10 +16,10 @@ from datetime import datetime
 import os
 from functools import wraps
 from utils.decorator import role_required, roles_required, ensure_profile_completed
-from app.models import db, BackupConfig, DBChange, User
+from app.models import db, BackupConfig, DBChange, User, MailgunConfig
 from sqlalchemy import text 
 from sqlalchemy.orm import joinedload
-from app.forms import BackupConfigForm
+from app.forms import BackupConfigForm, MailgunConfigForm
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, TimeField, BooleanField
 from wtforms.validators import DataRequired, Email
@@ -31,7 +31,7 @@ from email import encoders
 from datetime import datetime
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
-from utils.utils import send_backup_email
+from utils.backup_utils import send_backup_email
 from utils.scheduler_instance import scheduler, schedule_backup
 import pytz
 import subprocess
@@ -43,6 +43,33 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 system_bp = Blueprint('system', __name__)
+
+
+@system_bp.route('/settings/email', methods=['GET', 'POST'])
+@login_required
+def email_settings():
+    form = MailgunConfigForm()
+    # Récupérer la configuration Mailgun depuis la BD (ou la créer si elle n'existe pas)
+    mailgun_config = MailgunConfig.query.first()
+    if not mailgun_config:
+        mailgun_config = MailgunConfig(mailgun_domain="", mailgun_api_key="")
+        db.session.add(mailgun_config)
+        db.session.commit()
+    
+    # Si le formulaire est soumis et validé
+    if form.validate_on_submit():
+        mailgun_config.mailgun_domain = form.mailgun_domain.data
+        mailgun_config.mailgun_api_key = form.mailgun_api_key.data
+        db.session.commit()
+        flash("Paramètres Mailgun mis à jour.", "success")
+        return redirect(url_for('system.email_settings'))
+    else:
+        # Pré-remplir le formulaire avec les valeurs existantes
+        form.mailgun_domain.data = mailgun_config.mailgun_domain
+        form.mailgun_api_key.data = mailgun_config.mailgun_api_key
+
+    return render_template('settings/email_settings.html', form=form)
+
 
 @system_bp.route('/save_backup_config', methods=['POST'])
 @roles_required('admin')

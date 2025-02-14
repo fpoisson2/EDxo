@@ -4,12 +4,23 @@ from datetime import datetime
 from sqlalchemy import UniqueConstraint
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
+from itsdangerous import URLSafeTimedSerializer
+from flask import current_app
 
 # Association table for User-Programme many-to-many relationship
 user_programme = db.Table('User_Programme',
     db.Column('user_id', db.Integer, db.ForeignKey('User.id', ondelete='CASCADE'), primary_key=True),
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
+
+class MailgunConfig(db.Model):
+    __tablename__ = 'mailgun_config'
+    id = db.Column(db.Integer, primary_key=True)
+    mailgun_domain = db.Column(db.String(255), nullable=False)
+    mailgun_api_key = db.Column(db.String(255), nullable=False)
+
+    def __repr__(self):
+        return f"<MailgunConfig domain={self.mailgun_domain}>"
 
 class OpenAIModel(db.Model):
     __tablename__ = 'openai_models'
@@ -165,6 +176,34 @@ class User(UserMixin, db.Model):
     credits = db.Column(db.Float, nullable=False, default=0.0)
     email = db.Column(db.String(120), nullable=True)
     last_login = db.Column(db.DateTime, nullable=True)
+
+    reset_version = db.Column(db.Integer, default=0)  # Champ pour invalider les anciens tokens
+
+    # Méthode pour générer le token de réinitialisation
+    def get_reset_token(self, expires_sec=1800):
+        from itsdangerous import URLSafeTimedSerializer
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        token_data = {
+            'user_id': self.id,
+            'reset_version': self.reset_version
+        }
+        return s.dumps(token_data, salt='password-reset-salt')
+
+    @staticmethod
+    def verify_reset_token(token, expires_sec=1800):
+        from itsdangerous import URLSafeTimedSerializer
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token, salt='password-reset-salt', max_age=expires_sec)
+            user_id = data.get('user_id')
+            token_reset_version = data.get('reset_version')
+        except Exception:
+            return None
+        user = User.query.get(user_id)
+        # Vérifier que la version du token correspond à celle de l'utilisateur
+        if user and user.reset_version == token_reset_version:
+            return user
+        return None
     
     __table_args__ = (
         UniqueConstraint('email', name='uq_user_email'),

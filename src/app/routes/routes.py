@@ -27,7 +27,8 @@ from utils.utils import (
     get_all_departments, 
     get_all_programmes, 
     get_cegep_details_data,
-    get_programmes_by_user
+    get_programmes_by_user,
+    send_reset_email 
 )
 from utils.decorator import role_required, roles_required, ensure_profile_completed
 import sqlite3  # Kept as is, though no longer used for direct queries
@@ -69,7 +70,10 @@ from app.forms import (
     CegepForm,
     ProfileEditForm,
     WelcomeChangePasswordForm,
-    CombinedWelcomeForm
+    CombinedWelcomeForm,
+    ForgotPasswordForm,
+    ResetPasswordForm
+
 )
 from app.models import (
     db, 
@@ -99,6 +103,41 @@ from extensions import limiter, bcrypt
 logger = logging.getLogger(__name__)
 
 main = Blueprint('main', __name__)
+
+@main.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            token = user.get_reset_token()
+            send_reset_email(user.email, token)
+        # On affiche toujours un message pour ne pas révéler si l'email existe ou non
+        flash("Si un compte existe avec cette adresse, un email de réinitialisation a été envoyé.", "info")
+        return redirect(url_for('main.login'))
+    return render_template('forgot_password.html', form=form)
+
+
+@main.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('main.index'))
+    user = User.verify_reset_token(token)
+    if not user:
+        flash("Le lien est invalide ou a expiré.", "warning")
+        return redirect(url_for('main.forgot_password'))
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.password = generate_password_hash(form.password.data, method='scrypt')
+        # Invalider le token en incrémentant reset_version
+        user.reset_version = (user.reset_version or 0) + 1
+        db.session.commit()
+        flash("Votre mot de passe a été mis à jour. Vous pouvez vous connecter.", "success")
+        return redirect(url_for('main.login'))
+    return render_template('reset_password.html', form=form)
+
 
 @main.route('/task_status/<task_id>', methods=['GET'])
 def task_status(task_id):
