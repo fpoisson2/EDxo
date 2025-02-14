@@ -610,6 +610,7 @@ def edit_user(user_id):
         # Pré-remplir les champs
         form.user_id.data = user.id
         form.username.data = user.username
+        form.email.data = user.email  # Ajout du courriel
         form.role.data = user.role
         form.cegep_id.data = user.cegep_id if user.cegep_id else 0
         form.department_id.data = user.department_id if user.department_id else 0
@@ -639,6 +640,7 @@ def edit_user(user_id):
     if form.validate_on_submit():
         try:
             user.username = form.username.data
+            user.email = form.email.data  # Mise à jour du courriel
             # Si un nouveau mot de passe est fourni
             if form.password.data:
                 user.password = generate_password_hash(form.password.data, method='scrypt')
@@ -664,6 +666,7 @@ def edit_user(user_id):
             flash(f'Erreur lors de la mise à jour : {e}', 'danger')
 
     return render_template('edit_user.html', form=form, user=user)
+
 
 @main.route('/get_departments_and_programmes/<int:cegep_id>')
 @login_required
