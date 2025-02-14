@@ -50,6 +50,26 @@ REGIONS = [
     ('À distance', 'À distance')
 ]
 
+class ForgotPasswordForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    submit = SubmitField('Envoyer le lien de réinitialisation')
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField(
+        'Nouveau mot de passe', 
+        validators=[DataRequired(), Length(min=8)]
+    )
+    confirm_password = PasswordField(
+        'Confirmer le nouveau mot de passe', 
+        validators=[DataRequired(), EqualTo('password', message='Les mots de passe doivent correspondre.')]
+    )
+    submit = SubmitField('Réinitialiser le mot de passe')
+    
+class MailgunConfigForm(FlaskForm):
+    mailgun_domain = StringField('Mailgun Domain', validators=[DataRequired()])
+    mailgun_api_key = StringField('Mailgun API Key', validators=[DataRequired()])
+    submit = SubmitField('Enregistrer')
+
 class OpenAIModelForm(FlaskForm):
     name = StringField("Nom du modèle", validators=[DataRequired()])
     input_price = DecimalField("Prix en input (par token)", validators=[DataRequired(), NumberRange(min=0)])

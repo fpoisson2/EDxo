@@ -1,0 +1,17 @@
+{% extends "parametres.html" %}
+{% block parametres_content %}
+  <h2>Paramètres Courriel (Mailgun)</h2>
+<form method="POST">
+  {{ form.hidden_tag() }}
+  <!-- Vos autres champs -->
+  <div class="form-group">
+    <label for="mailgun_domain">Mailgun Domain</label>
+    {{ form.mailgun_domain(class="form-control") }}
+  </div>
+  <div class="form-group">
+    <label for="mailgun_api_key">Mailgun API Key</label>
+    {{ form.mailgun_api_key(class="form-control") }}
+  </div>
+  <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+</form>
+{% endblock %}
