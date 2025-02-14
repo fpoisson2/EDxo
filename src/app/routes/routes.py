@@ -1,5 +1,5 @@
 # app.py
-from flask import Blueprint, Flask, render_template, redirect, url_for, request, flash, send_file, jsonify, session
+from flask import Blueprint, Flask, render_template, redirect, url_for, request, flash, send_file, jsonify, session, current_app
 from flask_ckeditor import CKEditor
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import json
@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 import os
 import markdown
+import requests
 from jinja2 import Template
 from sqlalchemy import func  # Add this at the top with your other imports
 import bleach
@@ -110,14 +111,32 @@ def forgot_password():
         return redirect(url_for('main.index'))
     form = ForgotPasswordForm()
     if form.validate_on_submit():
+        # Vérification du token reCAPTCHA v3
+        recaptcha_token = form.recaptcha_token.data.strip() if form.recaptcha_token.data else None
+        if not recaptcha_token:
+            flash("Le token reCAPTCHA est manquant. Veuillez réessayer.", "danger")
+            return redirect(url_for('main.forgot_password'))
+        verify_url = "https://www.google.com/recaptcha/api/siteverify"
+        payload = {
+            'secret': current_app.config['RECAPTCHA_SECRET_KEY'],
+            'response': recaptcha_token,
+            'remoteip': request.remote_addr
+        }
+        response = requests.post(verify_url, data=payload)
+        result = response.json()
+        if not result.get('success', False) or result.get('score', 0) < 0.5:
+            flash("La vérification reCAPTCHA a échoué. Veuillez réessayer.", "danger")
+            return redirect(url_for('main.forgot_password'))
+
         user = User.query.filter_by(email=form.email.data).first()
         if user:
             token = user.get_reset_token()
             send_reset_email(user.email, token)
-        # On affiche toujours un message pour ne pas révéler si l'email existe ou non
+        # On affiche toujours le message pour ne pas révéler si l'email existe ou non
         flash("Si un compte existe avec cette adresse, un email de réinitialisation a été envoyé.", "info")
         return redirect(url_for('main.login'))
     return render_template('forgot_password.html', form=form)
+
 
 
 @main.route('/reset-password/<token>', methods=['GET', 'POST'])
@@ -130,6 +149,23 @@ def reset_password(token):
         return redirect(url_for('main.forgot_password'))
     form = ResetPasswordForm()
     if form.validate_on_submit():
+        # Vérification du token reCAPTCHA v3
+        recaptcha_token = form.recaptcha_token.data.strip() if form.recaptcha_token.data else None
+        if not recaptcha_token:
+            flash("Le token reCAPTCHA est manquant. Veuillez réessayer.", "danger")
+            return redirect(url_for('main.reset_password', token=token))
+        verify_url = "https://www.google.com/recaptcha/api/siteverify"
+        payload = {
+            'secret': current_app.config['RECAPTCHA_SECRET_KEY'],
+            'response': recaptcha_token,
+            'remoteip': request.remote_addr
+        }
+        response = requests.post(verify_url, data=payload)
+        result = response.json()
+        if not result.get('success', False) or result.get('score', 0) < 0.5:
+            flash("La vérification reCAPTCHA a échoué. Veuillez réessayer.", "danger")
+            return redirect(url_for('main.reset_password', token=token))
+
         user.password = generate_password_hash(form.password.data, method='scrypt')
         # Invalider le token en incrémentant reset_version
         user.reset_version = (user.reset_version or 0) + 1
@@ -137,6 +173,7 @@ def reset_password(token):
         flash("Votre mot de passe a été mis à jour. Vous pouvez vous connecter.", "success")
         return redirect(url_for('main.login'))
     return render_template('reset_password.html', form=form)
+
 
 
 @main.route('/task_status/<task_id>', methods=['GET'])
@@ -359,6 +396,27 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
+        # Vérification du token reCAPTCHA v3
+        recaptcha_token = form.recaptcha_token.data.strip() if form.recaptcha_token.data else None
+        if not recaptcha_token:
+            flash("Le token reCAPTCHA est manquant. Veuillez réessayer.", "danger")
+            return redirect(url_for('main.login'))
+
+        verify_url = "https://www.google.com/recaptcha/api/siteverify"
+        payload = {
+            'secret': current_app.config['RECAPTCHA_SECRET_KEY'],
+            'response': recaptcha_token,
+            'remoteip': request.remote_addr
+        }
+        response = requests.post(verify_url, data=payload)
+        result = response.json()
+
+        # Seuil à ajuster selon vos besoins (ex. 0.5)
+        if not result.get('success', False) or result.get('score', 0) < 0.5:
+            flash("La vérification reCAPTCHA a échoué. Veuillez réessayer.", "danger")
+            return redirect(url_for('main.login'))
+
+        # Authentification de l'utilisateur
         username = form.username.data.lower()
         password = form.password.data
 
@@ -378,9 +436,10 @@ def login():
 
             return redirect(next_page)
         else:
-            flash('Nom d\'utilisateur ou mot de passe incorrect.', 'danger')
+            flash("Nom d'utilisateur ou mot de passe incorrect.", "danger")
 
     return render_template('login.html', form=form)
+
 
 def get_avatar_url(image_identifier):
     # Nouvelle logique pour générer l'URL de l'avatar

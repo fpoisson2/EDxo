@@ -1,37 +1,57 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">Se connecter</h3>
-                </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('main.login') }}" novalidate>
-                        {{ form.hidden_tag() }}
-                        <div class="mb-3">
-                            {{ form.username.label(class="form-label") }}
-                            {{ form.username(class="form-control", placeholder="Entrez votre nom d'utilisateur", autocomplete="username") }}
-                            {% for error in form.username.errors %}
-                                <div class="text-danger">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.password.label(class="form-label") }}
-                            {{ form.password(class="form-control", placeholder="Entrez votre mot de passe", autocomplete="current-password") }}
-                            {% for error in form.password.errors %}
-                                <div class="text-danger">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        {{ form.submit(class="btn btn-primary w-100") }}
-                    </form>
-                    <div class="mt-3 text-center">
-                        <a href="{{ url_for('main.forgot_password') }}">Mot de passe oublié ?</a>
-                    </div>
-                </div>
-            </div>
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">Se connecter</h3>
         </div>
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('main.login') }}" novalidate>
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+              {{ form.username.label(class="form-label") }}
+              {{ form.username(class="form-control", placeholder="Entrez votre nom d'utilisateur", autocomplete="username") }}
+              {% for error in form.username.errors %}
+                <div class="text-danger">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="mb-3">
+              {{ form.password.label(class="form-label") }}
+              {{ form.password(class="form-control", placeholder="Entrez votre mot de passe", autocomplete="current-password") }}
+              {% for error in form.password.errors %}
+                <div class="text-danger">{{ error }}</div>
+              {% endfor %}
+            </div>
+            
+            <!-- Champ caché pour stocker le token reCAPTCHA -->
+            {{ form.recaptcha_token() }}
+
+            {{ form.submit(class="btn btn-primary w-100") }}
+          </form>
+          <div class="mt-3 text-center">
+            <a href="{{ url_for('main.forgot_password') }}">Mot de passe oublié ?</a>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
+
+<!-- Script reCAPTCHA v3 -->
+<script src="https://www.google.com/recaptcha/api.js?render={{ config['RECAPTCHA_SITE_KEY'] }}"></script>
+<script>
+  grecaptcha.ready(function() {
+    grecaptcha.execute('{{ config["RECAPTCHA_SITE_KEY"] }}', {action: 'login'}).then(function(token) {
+      console.log("Token reCAPTCHA généré:", token);
+      var recaptchaInput = document.getElementsByName("recaptcha_token")[0];
+      if (recaptchaInput) {
+        recaptchaInput.value = token;
+      } else {
+        console.error("Champ recaptcha_token introuvable");
+      }
+    });
+  });
+</script>
 {% endblock %}
