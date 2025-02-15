@@ -903,35 +903,31 @@ def add_element_competence():
 
     return render_template('add_element_competence.html', form=form)
 
+
 @main.route('/edit_fil_conducteur/<int:fil_id>', methods=['GET', 'POST'])
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_fil_conducteur(fil_id):
-    print("=== ROUTE ATTEINTE ===")  # DEBUG
     fil = FilConducteur.query.get_or_404(fil_id)
-    form = FilConducteurForm(obj=fil)
+    form = FilConducteurForm(obj=fil)  # initialise description/couleur
     
-    # Si vous avez un SelectField 'programme', redéfinissez ses choices
+    # Charger la liste de programmes
     programmes = Programme.query.all()
     form.programme.choices = [(p.id, p.nom) for p in programmes]
+    
+    # S’assurer que l’affichage initial a la bonne valeur de SelectField
+    if request.method == 'GET':
+        form.programme.data = fil.programme_id
 
     if form.validate_on_submit():
-        print("=== FORMULAIRE VALIDE ===")  # DEBUG
-
-        # Mettre à jour les champs de 'fil'
         fil.programme_id = form.programme.data
         fil.description = form.description.data
         fil.couleur = form.couleur.data or '#FFFFFF'
         
-        # La ligne indispensable !
         db.session.commit()
-
         return redirect(url_for('programme.view_programme', programme_id=fil.programme_id))
-    else:
-        print("=== ERREURS DE VALIDATION ===", form.errors)
-
+    
     return render_template('edit_fil_conducteur.html', form=form, fil=fil)
-
 
 @main.route('/add_fil_conducteur', methods=('GET', 'POST'))
 @role_required('admin')
