@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Modifier le Fil Conducteur</h2>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+      <label for="programme">Programme associé :</label>
+      <input type="text" class="form-control" id="programme" value="{{ fil.programme.nom }}" readonly>
+    </div>
+    <div class="form-group">
+      {{ form.description.label(class="form-label") }}
+      {{ form.description(class="form-control", rows="3") }}
+    </div>
+    <div class="form-group">
+      {{ form.couleur.label(class="form-label") }}
+      {{ form.couleur(class="form-control") }}  <!-- Sélecteur de couleur -->
+    </div>
+    <button type="submit" class="btn btn-success">Enregistrer les modifications</button>
+  </form>
+{% endblock %}
