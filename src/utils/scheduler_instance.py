@@ -21,7 +21,7 @@ def with_scheduler_lock(f):
     return wrapper
 
 def is_main_process():
-    # Force True if you want exactly one Gunicorn worker to do scheduling
+    # Return True to ensure only one worker schedules jobs.
     return True
 
 def start_scheduler():
@@ -54,8 +54,11 @@ def schedule_backup(app):
                 backup_time = datetime.strptime(config.backup_time, '%H:%M').time()
                 logger.info(f"Scheduled time: {backup_time}")
 
-                # Ensure we pass the real Flask app instance, not a proxy.
-                real_app = app._get_current_object()
+                # If 'app' has _get_current_object(), use it; otherwise use app directly.
+                if hasattr(app, "_get_current_object"):
+                    real_app = app._get_current_object()
+                else:
+                    real_app = app
 
                 job_args = {
                     'func': send_backup_email_with_context,
