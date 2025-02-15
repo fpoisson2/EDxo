@@ -2,11 +2,11 @@
 
 {% block content %}
   <h2>Modifier le Fil Conducteur</h2>
-  <form method="POST">
+  <form method="POST" action="{{ url_for('main.edit_fil_conducteur', fil_id=fil.id) }}">
     {{ form.hidden_tag() }}
     <div class="form-group">
-      <label for="programme">Programme associé :</label>
-      <input type="text" class="form-control" id="programme" value="{{ fil.programme.nom }}" readonly>
+        {{ form.programme.label(class="form-label") }}
+        {{ form.programme(class="form-control") }}
     </div>
     <div class="form-group">
       {{ form.description.label(class="form-label") }}
@@ -14,7 +14,7 @@
     </div>
     <div class="form-group">
       {{ form.couleur.label(class="form-label") }}
-      {{ form.couleur(class="form-control") }}  <!-- Sélecteur de couleur -->
+      {{ form.couleur(class="form-control") }}
     </div>
     <button type="submit" class="btn btn-success">Enregistrer les modifications</button>
   </form>

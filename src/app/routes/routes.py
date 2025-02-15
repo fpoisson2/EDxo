@@ -907,22 +907,28 @@ def add_element_competence():
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_fil_conducteur(fil_id):
+    print("=== ROUTE ATTEINTE ===")  # DEBUG
     fil = FilConducteur.query.get_or_404(fil_id)
-    form = FilConducteurForm(obj=fil)  # Préremplit le formulaire avec les données existantes
+    form = FilConducteurForm(obj=fil)
+    
+    # Si vous avez un SelectField 'programme', redéfinissez ses choices
     programmes = Programme.query.all()
     form.programme.choices = [(p.id, p.nom) for p in programmes]
 
     if form.validate_on_submit():
+        print("=== FORMULAIRE VALIDE ===")  # DEBUG
+
+        # Mettre à jour les champs de 'fil'
         fil.programme_id = form.programme.data
         fil.description = form.description.data
         fil.couleur = form.couleur.data or '#FFFFFF'
-        try:
-            db.session.commit()
-            flash('Fil conducteur mis à jour avec succès !')
-            return redirect(url_for('programme.view_programme', programme_id=fil.programme_id))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erreur lors de la mise à jour du fil conducteur : {e}', 'danger')
+        
+        # La ligne indispensable !
+        db.session.commit()
+
+        return redirect(url_for('programme.view_programme', programme_id=fil.programme_id))
+    else:
+        print("=== ERREURS DE VALIDATION ===", form.errors)
 
     return render_template('edit_fil_conducteur.html', form=form, fil=fil)
 
