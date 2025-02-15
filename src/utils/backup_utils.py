@@ -16,7 +16,7 @@ def get_scheduler_instance():
     )
 
 def send_backup_email_with_context(app, recipient_email, db_path):
-    # Here, 'app' is assumed to be the real Flask application instance.
+    # Use the provided app instance to push an application context.
     with app.app_context():
         send_backup_email(recipient_email, db_path)
 
@@ -29,7 +29,7 @@ def send_backup_email(recipient_email, db_path):
         file_data = f.read()
 
     from app.models import MailgunConfig
-    # Using current_app requires an active app context!
+    # current_app requires an active application context!
     mailgun_config = MailgunConfig.query.first()
     if not mailgun_config:
         logger.error("Mailgun configuration not found!")
