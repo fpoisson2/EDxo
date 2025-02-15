@@ -1,6 +1,6 @@
 import logging
 import requests
-
+from flask import current_app
 
 def get_scheduler_instance():
     import os
@@ -15,37 +15,42 @@ def get_scheduler_instance():
         }
     )
 
-def send_backup_email(app, recipient_email, db_path):
-    from app.models import MailgunConfig
+def send_backup_email_with_context(app, recipient_email, db_path):
+    # Here, 'app' is assumed to be the real Flask application instance.
+    with app.app_context():
+        send_backup_email(recipient_email, db_path)
+
+def send_backup_email(recipient_email, db_path):
     logger = logging.getLogger(__name__)
     logger.info(f"Starting backup email to {recipient_email}")
-    
-    # Lecture du fichier de sauvegarde
+
+    # Read the backup file
     with open(db_path, 'rb') as f:
         file_data = f.read()
-    
-    # Récupérer la configuration Mailgun depuis la BD
+
+    from app.models import MailgunConfig
+    # Using current_app requires an active app context!
     mailgun_config = MailgunConfig.query.first()
     if not mailgun_config:
         logger.error("Mailgun configuration not found!")
         return
-    
+
     url = f"https://api.mailgun.net/v3/{mailgun_config.mailgun_domain}/messages"
     auth = ("api", mailgun_config.mailgun_api_key)
-    
+
     files = {
         "attachment": ("backup.db", file_data)
     }
-    
+
     data = {
         "from": "EDxo <francis.poisson@edxo.ca>",
         "to": recipient_email,
         "subject": "BD EDxo",
         "text": "Bonjour, voici la dernière version de la BD de EDxo",
     }
-    
+
     response = requests.post(url, auth=auth, data=data, files=files)
-    
+
     if response.status_code == 200:
         logger.info("Email sent successfully!")
     else:

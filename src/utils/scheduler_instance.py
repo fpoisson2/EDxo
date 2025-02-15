@@ -5,14 +5,13 @@ from datetime import datetime
 import os
 from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 
-from utils.backup_utils import send_backup_email, get_scheduler_instance
+from utils.backup_utils import send_backup_email, get_scheduler_instance, send_backup_email_with_context
 
 scheduler_lock = threading.Lock()
 scheduler = get_scheduler_instance()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 def with_scheduler_lock(f):
     @wraps(f)
@@ -55,12 +54,15 @@ def schedule_backup(app):
                 backup_time = datetime.strptime(config.backup_time, '%H:%M').time()
                 logger.info(f"Scheduled time: {backup_time}")
 
+                # Ensure we pass the real Flask app instance, not a proxy.
+                real_app = app._get_current_object()
+
                 job_args = {
-                    'func': send_backup_email,
+                    'func': send_backup_email_with_context,
                     'trigger': 'cron',
                     'hour': backup_time.hour,
                     'minute': backup_time.minute,
-                    'args': [app, config.email, app.config['DB_PATH']],
+                    'args': [real_app, config.email, app.config['DB_PATH']],
                     'id': f"{config.frequency.lower()}_backup",
                     'replace_existing': True,
                     'name': f'Backup {config.frequency}'

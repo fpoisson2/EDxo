@@ -903,6 +903,30 @@ def add_element_competence():
 
     return render_template('add_element_competence.html', form=form)
 
+@main.route('/edit_fil_conducteur/<int:fil_id>', methods=['GET', 'POST'])
+@roles_required('admin', 'coordo')
+@ensure_profile_completed
+def edit_fil_conducteur(fil_id):
+    fil = FilConducteur.query.get_or_404(fil_id)
+    form = FilConducteurForm(obj=fil)  # Préremplit le formulaire avec les données existantes
+    programmes = Programme.query.all()
+    form.programme.choices = [(p.id, p.nom) for p in programmes]
+
+    if form.validate_on_submit():
+        fil.programme_id = form.programme.data
+        fil.description = form.description.data
+        fil.couleur = form.couleur.data or '#FFFFFF'
+        try:
+            db.session.commit()
+            flash('Fil conducteur mis à jour avec succès !')
+            return redirect(url_for('programme.view_programme', programme_id=fil.programme_id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur lors de la mise à jour du fil conducteur : {e}', 'danger')
+
+    return render_template('edit_fil_conducteur.html', form=form, fil=fil)
+
+
 @main.route('/add_fil_conducteur', methods=('GET', 'POST'))
 @role_required('admin')
 @ensure_profile_completed

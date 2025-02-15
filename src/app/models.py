@@ -265,15 +265,21 @@ class ElementCompetenceCriteria(db.Model):
 class FilConducteur(db.Model):
     __tablename__ = "FilConducteur"
     id = db.Column(db.Integer, primary_key=True)
-    programme_id = db.Column(db.Integer, nullable=False)
+    # Spécifiez un nom pour la contrainte de clé étrangère
+    programme_id = db.Column(db.Integer, db.ForeignKey("Programme.id", name="fk_filconducteur_programme"), nullable=False)
     description = db.Column(db.Text, nullable=False)
     couleur = db.Column(db.Text, nullable=True)
+
+    # Relation vers Programme
+    programme = db.relationship("Programme", back_populates="fil_conducteurs")
 
     # Relationship back to Cours
     cours_list = db.relationship("Cours", back_populates="fil_conducteur")
 
     def __repr__(self):
         return f"<FilConducteur {self.description[:20]}>"
+
+
 
 class CoursPrealable(db.Model):
     __tablename__ = "CoursPrealable"
@@ -941,6 +947,7 @@ class Programme(db.Model):
     variante = db.Column(db.Text, nullable=True)
 
     # Relations
+    fil_conducteurs = db.relationship("FilConducteur", back_populates="programme")
     cours = db.relationship("Cours", back_populates="programme")
     department = db.relationship("Department", back_populates="programmes")
     liste_programme_ministeriel = db.relationship("ListeProgrammeMinisteriel", back_populates="programmes")
