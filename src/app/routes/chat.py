@@ -52,7 +52,7 @@ def get_plan_de_cours_function():
                 "session": {
                     "type": "string",
                     "description": (
-                        "Session précise (ex: 'Hiver 2025', 'Automne 2024'). "
+                        "Session précise (ex: 'H25', 'A24'). "
                         "Si non spécifié, prendre la plus récente disponible."
                     )
                 }
@@ -188,6 +188,130 @@ def handle_get_plan_cadre(params):
         }
         return result
     return None
+
+
+def handle_get_multiple_plan_cadre(params):
+    """
+    Permet de récupérer plusieurs plans-cadres à partir d'une liste
+    de codes de cours. Retourne un tableau de dictionnaires complets
+    (similaire à handle_get_plan_cadre).
+    """
+    print(f"[DEBUG] handle_get_multiple_plan_cadre() - Paramètres reçus : {params}")
+    codes = params.get('codes', [])
+
+    results = []
+    for code in codes:
+        # Ex.: on recherche par code partiel, d'où le '%{code}%'
+        plan_cadre = (PlanCadre.query
+                                  .join(Cours)
+                                  .filter(Cours.code.ilike(f"%{code}%"))
+                                  .first())
+
+        if plan_cadre:
+            print(f"[DEBUG] handle_get_multiple_plan_cadre() - PlanCadre trouvé : ID={plan_cadre.id} pour code={code}")
+
+            # Construire la réponse détaillée, comme dans handle_get_plan_cadre
+            result = {
+                'id': plan_cadre.id,
+                'cours': {
+                    'id': plan_cadre.cours.id,
+                    'nom': plan_cadre.cours.nom,
+                    'code': plan_cadre.cours.code
+                },
+                'contenu': {
+                    'place_intro': plan_cadre.place_intro,
+                    'objectif_terminal': plan_cadre.objectif_terminal,
+                    'structure': {
+                        'introduction': plan_cadre.structure_intro,
+                        'activites_theoriques': plan_cadre.structure_activites_theoriques,
+                        'activites_pratiques': plan_cadre.structure_activites_pratiques,
+                        'activites_prevues': plan_cadre.structure_activites_prevues
+                    },
+                    'evaluation': {
+                        'sommative': plan_cadre.eval_evaluation_sommative,
+                        'nature_evaluations': plan_cadre.eval_nature_evaluations_sommatives,
+                        'evaluation_langue': plan_cadre.eval_evaluation_de_la_langue,
+                        'evaluation_apprentissages': plan_cadre.eval_evaluation_sommatives_apprentissages
+                    }
+                },
+                'relations': {
+                    'capacites': [{
+                        'id': c.id,
+                        'capacite': c.capacite,
+                        'description': c.description_capacite,
+                        'ponderation': {
+                            'min': c.ponderation_min,
+                            'max': c.ponderation_max
+                        },
+                        'savoirs_necessaires': [s.texte for s in c.savoirs_necessaires],
+                        'savoirs_faire': [{
+                            'texte': sf.texte,
+                            'cible': sf.cible,
+                            'seuil_reussite': sf.seuil_reussite
+                        } for sf in c.savoirs_faire],
+                        'moyens_evaluation': [m.texte for m in c.moyens_evaluation]
+                    } for c in plan_cadre.capacites],
+                    'savoirs_etre': [
+                        {'id': s.id, 'texte': s.texte} 
+                        for s in plan_cadre.savoirs_etre
+                    ],
+                    'objets_cibles': [
+                        {'id': o.id, 'texte': o.texte, 'description': o.description}
+                        for o in plan_cadre.objets_cibles
+                    ],
+                    'cours_relies': [
+                        {'id': c.id, 'texte': c.texte, 'description': c.description}
+                        for c in plan_cadre.cours_relies
+                    ],
+                    'cours_prealables': [
+                        {'id': c.id, 'texte': c.texte, 'description': c.description}
+                        for c in plan_cadre.cours_prealables
+                    ],
+                    'competences_certifiees': [
+                        {'id': c.id, 'texte': c.texte, 'description': c.description}
+                        for c in plan_cadre.competences_certifiees
+                    ],
+                    'competences_developpees': [
+                        {'id': c.id, 'texte': c.texte, 'description': c.description}
+                        for c in plan_cadre.competences_developpees
+                    ]
+                },
+                'additional_info': plan_cadre.additional_info,
+                'ai_model': plan_cadre.ai_model
+            }
+            results.append(result)
+        else:
+            print(f"[DEBUG] handle_get_multiple_plan_cadre() - Aucun plan-cadre trouvé pour code={code}")
+            results.append({
+                'code': code,
+                'error': 'Aucun plan-cadre trouvé pour ce code'
+            })
+
+    return results
+
+
+def get_multiple_plan_cadre_function():
+    return {
+        "name": "get_multiple_plan_cadre",
+        "description": (
+            "Récupère les plans-cadres pour plusieurs cours. "
+            "Renvoie un tableau des plans-cadres correspondant aux codes de cours fournis."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "codes": {
+                    "type": "array",
+                    "description": "Liste des codes de cours (ex: ['243-2J5','420'])",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": ["codes"]
+        },
+    }
+
 
 # -------------------------------------------------------------------------
 # NOUVELLES FONCTIONS : list_all_plan_de_cours & list_all_plan_cadre
@@ -360,7 +484,8 @@ def send_message():
                 get_plan_cadre_function(),
                 get_plan_de_cours_function(),
                 list_all_plan_de_cours_function(),
-                list_all_plan_cadre_function()
+                list_all_plan_cadre_function(),
+                get_multiple_plan_cadre_function()
             ]
             
             print("[DEBUG] Envoi de la requête initiale à OpenAI avec fonctions disponibles.")
@@ -414,6 +539,8 @@ def send_message():
                         result = handle_list_all_plan_de_cours()
                     elif function_call_data == "list_all_plan_cadre":
                         result = handle_list_all_plan_cadre()
+                    elif function_call_data == "get_multiple_plan_cadre":  # <--
+                        result = handle_get_multiple_plan_cadre(args)
                     else:
                         print(f"[DEBUG] Nom de fonction inattendu: {function_call_data}")
                         result = None
