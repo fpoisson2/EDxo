@@ -1,45 +1,45 @@
 # src/app/__init__.py
 
-import os
-import logging
-from pathlib import Path
-from datetime import timedelta, datetime, timezone
-from dotenv import load_dotenv
-import atexit
+# TODO: Ajouter un status au plan de cours (Brouillon, en révision, complété), Permettre l'édition seulement lorsqu'en brouillon pour le prof. Permettre l'édition lorsqu'il est en révision par le coordo.
+# TODO: Ajouter un status au plan-cadre (adopté avec date d'adoption, en travail), ne pas permettre l'édition lorsqu'adopté à moins de le remettre en mode en travail, seulement le coordo et l'admin devrait pouvoir faire ça.
+# TODO: Lorsque je surligne du texte dans le calendrier du plan de cours, ca déplace le bloque plutôt que de surligner le texte.
+# TODO: La CP peut créer un plan de cours et peu générer une grille D'évaluation ce qui ne devrait pas être le cas
+# TODO: Saisir plans de cours S1 (sauf 1J5=déja fait)
+# TODO: Faudrait pouvoir mettre 2 ou 3 enseignants sur un plan de cours
 
+import atexit
+import logging
+import os
+from datetime import timedelta, datetime, timezone
+from pathlib import Path
+
+from dotenv import load_dotenv
 from flask import Flask, session, jsonify, redirect, url_for, request
 from flask_login import current_user, logout_user
-from flask_ckeditor import CKEditor  # Remove this if using centralized CKEditor
-from flask_wtf import CSRFProtect
 from flask_migrate import Migrate
-from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-
-# Import centralized extensions
-from extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
-from utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
-from utils.db_tracking import init_change_tracking
-
-# Import version
-from config.version import __version__
-
-# Import blueprints
-from app.routes.cours import cours_bp
-from app.routes.chat import chat
-from app.routes.programme import programme_bp
-from app.routes.system import system_bp
-from app.routes.settings import settings_bp
-from app.routes.evaluation import evaluation_bp
-from app.routes.plan_cadre import plan_cadre_bp
-from app.routes.plan_de_cours import plan_de_cours_bp
-from app.routes import routes
-from app.routes.gestion_programme import gestion_programme_bp
-
-from flask_bcrypt import Bcrypt
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Import models
 from app.models import BackupConfig
+from app.routes import routes
+from app.routes.chat import chat
+# Import blueprints
+from app.routes.cours import cours_bp
+from app.routes.evaluation import evaluation_bp
+from app.routes.gestion_programme import gestion_programme_bp
+from app.routes.plan_cadre import plan_cadre_bp
+from app.routes.plan_de_cours import plan_de_cours_bp
+from app.routes.programme import programme_bp
+from app.routes.settings import settings_bp
+from app.routes.system import system_bp
+# Import version
+from config.version import __version__
+# Import centralized extensions
+from extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
+from utils.db_tracking import init_change_tracking
+from utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 
 # Initialize logger
 logging.basicConfig(level=logging.INFO)

@@ -1,5 +1,6 @@
-import sqlite3
 import json
+import sqlite3
+
 
 def get_plan_cadre(cours_id, db_path='votre_base_de_donnees.db'):
     """

@@ -1,30 +1,31 @@
-from flask import current_app, Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
-from app.models import (
-    db, Cours, PlanCadre, PlanCadreCapacites, PlanCadreSavoirEtre, User,
-    PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
-    PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, Programme, PlanDeCoursPromptSettings
-)
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from app.forms import PlanDeCoursForm
-import os
-from docxtpl import DocxTemplate
-from utils.decorator import role_required, roles_required, ensure_profile_completed
 import io
-from flask import send_file
-import markdown
-from sqlalchemy import func
-from bs4 import BeautifulSoup
+import os
 import zipfile
 from datetime import datetime
-from utils.utils import get_initials, get_programme_id_for_cours, is_teacher_in_programme
 from pathlib import Path
+from typing import Optional
+
+import markdown
+from bs4 import BeautifulSoup
+from docxtpl import DocxTemplate
+from flask import current_app, Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
+from flask import send_file
+from flask_login import login_required, current_user
 from openai import OpenAI
 from openai import OpenAIError
 from pydantic import BaseModel, Field
-from typing import Optional
-import json
+from sqlalchemy import func
 
+from app.forms import PlanDeCoursForm
+from app.models import (
+    db, Cours, PlanCadre, User,
+    PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
+    PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, Programme,
+    PlanDeCoursPromptSettings
+)
+from utils.decorator import ensure_profile_completed
 from utils.openai_pricing import calculate_call_cost
+from utils.utils import get_initials, get_programme_id_for_cours, is_teacher_in_programme
 
 # Définir le chemin de base de l'application
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

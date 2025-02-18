@@ -1,5 +1,7 @@
-import fitz
 import json
+
+import fitz
+
 
 def extract_pdf_content(pdf_path):
     # Charger le PDF

@@ -1,13 +1,10 @@
-import os
-import re
-import json
-import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
-from PyPDF2 import PdfReader
 import logging
+import os
+from urllib.parse import urljoin, urlparse
 
-from openai import OpenAI
+import requests
+from PyPDF2 import PdfReader
+from bs4 import BeautifulSoup
 
 # ------------------------
 # Configuration et dossiers

@@ -1,11 +1,14 @@
 # app/tasks.py
 
 import json
-import time
 import logging
+from typing import List, Optional
+
+# Import your OpenAI client (adjust this import according to your library)
+from openai import OpenAI
+from pydantic import BaseModel
 from sqlalchemy import text
-from celery_app import celery  # Your Celery instance (configured with your Flask app)
-from extensions import db    # Your SQLAlchemy instance
+
 # Import your models – adjust these imports as needed:
 from app.models import (
     PlanCadre, GlobalGenerationSettings, Competence, ElementCompetence,
@@ -14,16 +17,12 @@ from app.models import (
     PlanCadreCapaciteSavoirsNecessaires, PlanCadreCapaciteSavoirsFaire,
     PlanCadreCapaciteMoyensEvaluation, User
 )
+from celery_app import celery  # Your Celery instance (configured with your Flask app)
+from extensions import db  # Your SQLAlchemy instance
+from utils.openai_pricing import calculate_call_cost
 # Import any helper functions used in your logic
 from utils.utils import replace_tags_jinja2, get_plan_cadre_data
 
-# Import your OpenAI client (adjust this import according to your library)
-from openai import OpenAI
-
-from pydantic import BaseModel
-from typing import List, Optional
-
-from utils.openai_pricing import calculate_call_cost
 
 ###############################################################################
 # Schemas Pydantic pour IA

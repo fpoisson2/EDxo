@@ -1,105 +1,68 @@
 # app.py
-from flask import Blueprint, Flask, render_template, redirect, url_for, request, flash, send_file, jsonify, session, current_app
-from flask_ckeditor import CKEditor
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-import json
 import logging
-from collections import defaultdict
-from openai import OpenAI
-from openai import OpenAIError
-from dotenv import load_dotenv
-from bs4 import BeautifulSoup
-import os
+from datetime import datetime
+
+import bleach
 import markdown
 import requests
-from jinja2 import Template
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, session, current_app
+from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy import func  # Add this at the top with your other imports
-import bleach
-from docxtpl import DocxTemplate
-from io import BytesIO 
 from werkzeug.security import generate_password_hash, check_password_hash
-from utils.utils import (
-    parse_html_to_list, 
-    parse_html_to_nested_list, 
-    replace_tags_jinja2,
-    process_ai_prompt, 
-    generate_docx_with_template, 
-    get_all_cegeps, 
-    get_all_departments, 
-    get_all_programmes, 
-    get_cegep_details_data,
-    get_programmes_by_user,
-    send_reset_email 
-)
-from utils.decorator import role_required, roles_required, ensure_profile_completed
-import sqlite3  # Kept as is, though no longer used for direct queries
+
 from app.forms import (
     ProgrammeForm,
     CompetenceForm,
     ElementCompetenceForm,
     FilConducteurForm,
     CoursForm,
-    CoursPrealableForm,
     CoursCorequisForm,
     CompetenceParCoursForm,
     ElementCompetenceParCoursForm,
     DeleteForm,
-    MultiCheckboxField,
-    PlanCadreForm,
-    SavoirEtreForm,
-    CompetenceDeveloppeeForm,
-    ObjetCibleForm,
-    CoursRelieForm,
     CoursPrealableForm,
-    DuplicatePlanCadreForm,
-    ImportPlanCadreForm,
-    PlanCadreCompetenceCertifieeForm,
-    PlanCadreCoursCorequisForm,
-    GenerateContentForm,
-    GlobalGenerationSettingsForm, 
-    GenerationSettingForm,
     ChangePasswordForm,
     LoginForm,
-    CreateUserForm, 
+    CreateUserForm,
     DeleteUserForm,
-    DepartmentForm, 
-    DepartmentRegleForm, 
+    DepartmentForm,
+    DepartmentRegleForm,
     DepartmentPIEAForm,
     EditUserForm,
     ProgrammeMinisterielForm,
     CreditManagementForm,
     CegepForm,
-    ProfileEditForm,
-    WelcomeChangePasswordForm,
     CombinedWelcomeForm,
     ForgotPasswordForm,
     ResetPasswordForm
 
 )
 from app.models import (
-    db, 
-    User, 
-    Department, 
-    DepartmentRegles, 
-    DepartmentPIEA, 
-    ListeProgrammeMinisteriel, 
-    Programme, 
-    Competence, 
-    ElementCompetence, 
-    ElementCompetenceCriteria, 
-    FilConducteur, 
-    CoursPrealable, 
-    CoursCorequis, 
-    CompetenceParCours, 
-    ElementCompetenceParCours, 
-    Cours, 
+    db,
+    User,
+    Department,
+    DepartmentRegles,
+    DepartmentPIEA,
+    ListeProgrammeMinisteriel,
+    Programme,
+    Competence,
+    ElementCompetence,
+    ElementCompetenceCriteria,
+    FilConducteur,
+    CoursPrealable,
+    CoursCorequis,
+    CompetenceParCours,
+    ElementCompetenceParCours,
+    Cours,
     ListeCegep
 )
-import logging
-from datetime import datetime
-
-from extensions import limiter, bcrypt
-
+from extensions import limiter
+from utils.decorator import role_required, roles_required, ensure_profile_completed
+from utils.utils import (
+    get_all_cegeps,
+    get_cegep_details_data,
+    send_reset_email
+)
 
 logger = logging.getLogger(__name__)
 

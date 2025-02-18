@@ -1,10 +1,13 @@
 # forms.py
+import re
+
+from flask_login import current_user
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import (
     StringField,
     FormField,
     FloatField,
-    SubmitField,
     SelectField,
     SelectMultipleField,
     IntegerField,
@@ -17,18 +20,14 @@ from wtforms import (
     TimeField,
     DecimalField
 )
-from flask_login import current_user
 from wtforms import ValidationError, ColorField, SubmitField
+from wtforms import widgets
 from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional, Length, EqualTo, Email
 from wtforms.widgets import ListWidget, CheckboxInput
-from flask_ckeditor import CKEditorField
-from flask_wtf.file import FileField, FileAllowed, FileRequired
-import re
-from wtforms import widgets
 
+from app.models import User
 from utils.openai_pricing import get_all_models
 
-from app.models import Cours, PlanDeCours, PlanDeCoursEvaluations, PlanCadreCapacites, User
 # Liste des régions disponibles
 REGIONS = [
     ('Abitibi-Témiscamingue', 'Abitibi-Témiscamingue'),

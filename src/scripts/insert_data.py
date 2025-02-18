@@ -1,6 +1,7 @@
 # insert_data.py
-import sqlite3
 import json
+import sqlite3
+
 
 def array_to_html_list(items):
     """
