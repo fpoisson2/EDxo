@@ -669,7 +669,7 @@ def export_session_plans(programme_id, session):
             if not os.path.exists(template_path):
                 current_app.logger.error(f"Template not found at: {template_path}")
                 flash("Erreur: Le template de plan de cours est introuvable.", "error")
-                return redirect(url_for('plan_de_cours.view_plan_de_cours', cours_id=cours_id))
+                return redirect(url_for('plan_de_cours.view_plan_de_cours', cours_id=cours.id))
 
             doc = DocxTemplate(template_path)
             # Préparer les données pour le tableau croisé
@@ -969,7 +969,6 @@ def export_docx(cours_id, session):
         "calendriers": plan_de_cours.calendriers,
         "mediagraphies": plan_de_cours.mediagraphies,
         "disponibilites": plan_de_cours.disponibilites,
-        "evaluations": plan_de_cours.evaluations,
 
         # -- Evaluations Data for Pivot Table
         "all_caps": all_caps,

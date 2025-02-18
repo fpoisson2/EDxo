@@ -1,7 +1,7 @@
 # cours.py
 import logging
 import traceback
-from datetime import datetime
+from datetime import datetime, UTC
 
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
@@ -595,7 +595,7 @@ def view_plan_cadre(cours_id, plan_id):
                         if cap_to_del:
                             db.session.delete(cap_to_del)
 
-                plan.modified_at = datetime.utcnow()
+                plan.modified_at = datetime.now(UTC)
                 plan.modified_by_id = current_user.id
 
                 db.session.commit()

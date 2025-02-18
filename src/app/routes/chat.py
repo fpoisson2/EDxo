@@ -277,7 +277,7 @@ def send_message():
     
     # Récupération de l'utilisateur via Flask-Login
     try:
-        user = current_user._get_current_object()
+        user = current_user
     except Exception as e:
         print("[DEBUG] Erreur lors de la récupération de current_user:", str(e))
         user = None
@@ -453,7 +453,6 @@ def send_message():
                                 follow_up_content += content
                                 yield f"data: {json.dumps({'type': 'content', 'content': content})}\n\n"
                             elif hasattr(chunk.choices[0].delta, 'function_call'):
-                                fc = chunk.choices[0].delta.function_call
                                 yield f"data: {json.dumps({'type': 'function_call', 'content': 'Appel de fonction en cours...'})}\n\n"
 
                         full_follow_up_output = "".join(follow_up_chunks)
@@ -470,8 +469,8 @@ def send_message():
                         no_result_msg = "Aucun résultat correspondant."
                         yield f"data: {json.dumps({'type': 'content', 'content': no_result_msg})}\n\n"
 
-                except Exception as e:
-                    error_msg = f"[DEBUG] Erreur lors du traitement de la fonction: {str(e)}"
+                except Exception as err:
+                    error_msg = f"[DEBUG] Erreur lors du traitement de la fonction: {str(err)}"
                     print(error_msg)
                     yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
             
@@ -486,13 +485,13 @@ def send_message():
                 updated_user.credits = round(updated_user.credits - total_cost_global, 6)
                 db.session.commit()
                 print(f"[DEBUG] Crédit utilisateur mis à jour. Nouveau solde: {updated_user.credits}")
-            except Exception as e:
-                print(f"[DEBUG] ❌ Erreur lors de la mise à jour du crédit: {str(e)}")
+            except Exception as err:
+                print(f"[DEBUG] ❌ Erreur lors de la mise à jour du crédit: {str(err)}")
             
             yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
             
-        except Exception as e:
-            error_msg = f"[DEBUG] Exception globale dans generate_stream(): {str(e)}"
+        except Exception as err:
+            error_msg = f"[DEBUG] Exception globale dans generate_stream(): {str(err)}"
             print(error_msg)
             yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
             yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
