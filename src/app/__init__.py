@@ -291,7 +291,7 @@ def create_app(testing=False):
 
             # Check if an admin user exists; if not, create one.
             if not User.query.filter_by(role='admin').first():
-                hashed_password = generate_password_hash('admin1234', method='scrypt')
+                hashed_password = generate_password_hash('admin1234', method='scrypt') #add
                 admin_user = User(username='admin', password=hashed_password, role='admin')
                 db.session.add(admin_user)
                 db.session.commit()
