@@ -290,7 +290,7 @@ def create_app(testing=False):
                 from app.models import User  # Ensure User model is imported
                 # Check if an admin user exists
                 if not User.query.filter_by(role='admin').first():
-                    hashed_password = bcrypt.generate_password_hash('admin').decode('utf-8')
+                    hashed_password = bcrypt.generate_password_hash('admin1234').decode('utf-8')
                     admin_user = User(username='admin', password=hashed_password, role='admin')
                     db.session.add(admin_user)
                     db.session.commit()
