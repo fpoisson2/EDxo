@@ -41,6 +41,8 @@ from extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
 from utils.db_tracking import init_change_tracking
 from utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 
+from werkzeug.security import generate_password_hash
+
 # Initialize logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -289,7 +291,7 @@ def create_app(testing=False):
 
             # Check if an admin user exists; if not, create one.
             if not User.query.filter_by(role='admin').first():
-                hashed_password = bcrypt.generate_password_hash('admin1234').decode('utf-8')
+                hashed_password = generate_password_hash('admin1234', method='scrypt')
                 admin_user = User(username='admin', password=hashed_password, role='admin')
                 db.session.add(admin_user)
                 db.session.commit()
