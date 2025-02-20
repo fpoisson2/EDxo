@@ -106,8 +106,8 @@ def create_app(testing=False):
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Lax',
             SESSION_TYPE='filesystem',
-            CELERY_BROKER_URL='amqp://guest:guest@localhost//',
-            CELERY_RESULT_BACKEND='redis://localhost:6379/0'
+            CELERY_BROKER_URL='redis://redis:6379/0',
+
         )
 
     # Initialize extensions
