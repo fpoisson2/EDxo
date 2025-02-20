@@ -1,42 +1,29 @@
 # routes/system.py
+import logging
+import os
+from datetime import datetime
+
+import pytz
 from flask import (
-    Blueprint, 
-    send_file, 
-    current_app, 
-    abort, 
-    render_template, 
-    flash, 
-    redirect, 
+    Blueprint,
+    send_file,
+    current_app,
+    abort,
+    render_template,
+    flash,
+    redirect,
     url_for,
     jsonify,
     request
 )
-from flask_login import login_required, current_user
-from datetime import datetime
-import os
-from functools import wraps
-from utils.decorator import role_required, roles_required, ensure_profile_completed
-from app.models import db, BackupConfig, DBChange, User, MailgunConfig
-from sqlalchemy import text 
-from sqlalchemy.orm import joinedload
-from app.forms import BackupConfigForm, MailgunConfigForm
-from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, TimeField, BooleanField
-from wtforms.validators import DataRequired, Email
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email.mime.text import MIMEText
-from email import encoders
-from datetime import datetime
-import os
-from apscheduler.schedulers.background import BackgroundScheduler
-from utils.backup_utils import send_backup_email
-from utils.scheduler_instance import scheduler, schedule_backup
-import pytz
-import subprocess
+from flask_login import login_required
+from sqlalchemy import text
 
-import logging
+from app.forms import BackupConfigForm, MailgunConfigForm
+from app.models import db, BackupConfig, DBChange, User, MailgunConfig
+from utils.backup_utils import send_backup_email
+from utils.decorator import roles_required, ensure_profile_completed
+from utils.scheduler_instance import scheduler, schedule_backup
 
 # Configuration de base du logging
 logging.basicConfig(level=logging.INFO)

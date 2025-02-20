@@ -1,67 +1,24 @@
 # cours.py
-from flask import Blueprint, Flask, render_template, redirect, url_for, request, flash, send_file, jsonify
-from app.forms import (
-    ProgrammeForm,
-    CompetenceForm,
-    ElementCompetenceForm,
-    FilConducteurForm,
-    CoursForm,
-    CoursPrealableForm,
-    CoursCorequisForm,
-    CompetenceParCoursForm,
-    ElementCompetenceParCoursForm,
-    DeleteForm,
-    MultiCheckboxField,
-    PlanCadreForm,
-    SavoirEtreForm,
-    CompetenceDeveloppeeForm,
-    CapaciteItemForm,
-    ObjetCibleForm,
-    CoursRelieForm,
-    DuplicatePlanCadreForm,
-    ImportPlanCadreForm,
-    PlanCadreCompetenceCertifieeForm,
-    PlanCadreCoursCorequisForm,
-    GenerateContentForm,
-    GlobalGenerationSettingsForm, 
-    GenerationSettingForm
-)
-from flask_ckeditor import CKEditor
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-import json
 import logging
-from collections import defaultdict
-from dotenv import load_dotenv
-from utils.decorator import role_required, roles_required, ensure_profile_completed
-from bs4 import BeautifulSoup
-import os
-import markdown
-from jinja2 import Template
-import bleach
-from docxtpl import DocxTemplate
-from io import BytesIO
-from werkzeug.security import generate_password_hash, check_password_hash
-from utils.utils import (
-    parse_html_to_list,
-    parse_html_to_nested_list,
-    get_plan_cadre_data,
-    replace_tags_jinja2,
-    process_ai_prompt,
-    generate_docx_with_template
-)
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from flask_wtf.csrf import validate_csrf, CSRFError
 import traceback
-from datetime import datetime
+from datetime import datetime, UTC
 
-from utils.utils import get_programme_id_for_cours, is_coordo_for_programme
+from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
+from flask_login import login_required, current_user
+from flask_wtf.csrf import validate_csrf, CSRFError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
+from app.forms import (
+    DeleteForm,
+    PlanCadreForm,
+    CapaciteItemForm,
+    ImportPlanCadreForm,
+    GenerateContentForm
+)
 # Import all necessary models and the db session
 from app.models import (
     db,
-    User,
     Cours,
-    Programme,
     PlanCadre,
     PlanCadreCapacites,
     PlanCadreCapaciteSavoirsNecessaires,
@@ -81,7 +38,8 @@ from app.models import (
     ElementCompetence,
     ElementCompetenceParCours
 )
-
+from utils.decorator import role_required, ensure_profile_completed
+from utils.utils import get_programme_id_for_cours, is_coordo_for_programme
 
 cours_bp = Blueprint('cours', __name__, url_prefix='/cours')
 
@@ -637,7 +595,7 @@ def view_plan_cadre(cours_id, plan_id):
                         if cap_to_del:
                             db.session.delete(cap_to_del)
 
-                plan.modified_at = datetime.utcnow()
+                plan.modified_at = datetime.now(UTC)
                 plan.modified_by_id = current_user.id
 
                 db.session.commit()

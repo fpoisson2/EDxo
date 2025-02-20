@@ -1,61 +1,53 @@
 # routes/evaluation.py
 
+import io
+import json
+import os
+from functools import wraps
+from pathlib import Path
+from typing import Optional
+
+from docxtpl import DocxTemplate
 from flask import (
-    Blueprint, 
-    render_template, 
-    redirect, 
-    url_for, 
-    flash, 
+    Blueprint,
+    render_template,
+    redirect,
+    url_for,
+    flash,
     request,
     jsonify,
-    send_file, 
+    send_file,
     current_app
 )
 from flask_login import login_required, current_user
+from openai import OpenAI
+from openai import OpenAIError
+from pydantic import BaseModel, Field
 from sqlalchemy import text
-from functools import wraps
+
+from app.forms import (
+    CourseSelectionForm,
+    PlanSelectionForm,
+    EvaluationGridForm,
+    EvaluationSelectionForm,
+    SixLevelGridForm
+)
 from app.models import (
-    db, 
-    Cours, 
-    PlanDeCours, 
-    PlanDeCoursEvaluations, 
-    PlanCadreCapacites, 
-    PlanCadre, 
-    Competence,
+    db,
+    Cours,
+    PlanDeCours,
+    PlanDeCoursEvaluations,
+    PlanCadreCapacites,
+    PlanCadre,
     PlanDeCoursEvaluationsCapacites,
     EvaluationSavoirFaire,
     PlanCadreCapaciteSavoirsFaire,
     GrillePromptSettings,
     User
 )
-from app.forms import (
-    CourseSelectionForm, 
-    PlanSelectionForm, 
-    EvaluationGridForm, 
-    EvaluationForm,        
-    SavoirFaireCheckboxForm,
-    EvaluationSelectionForm,
-    SixLevelGridForm,
-    SavoirFaireEntryForm
-)
-from utils.decorator import role_required, roles_required, ensure_profile_completed
-
-from collections import defaultdict
-
-from pydantic import BaseModel, Field
-from typing import Optional
-import json
-
-from openai import OpenAI
-from openai import OpenAIError
-
-from pathlib import Path
-import os
-import io
-from collections import defaultdict
-from docxtpl import DocxTemplate
-
+from utils.decorator import roles_required, ensure_profile_completed
 from utils.openai_pricing import calculate_call_cost
+
 
 class AISixLevelGridResponse(BaseModel):
     """

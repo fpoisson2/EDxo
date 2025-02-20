@@ -1,7 +1,8 @@
 # populate_db.py
-import sqlite3
 import json
 import os
+import sqlite3
+
 
 def get_programme_id(conn, programme_name):
     cursor = conn.cursor()

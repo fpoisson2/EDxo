@@ -1,11 +1,10 @@
-from flask_login import UserMixin
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from sqlalchemy import UniqueConstraint
-from werkzeug.security import generate_password_hash, check_password_hash
-from extensions import db
-from itsdangerous import URLSafeTimedSerializer
+
 from flask import current_app
+from flask_login import UserMixin
+from sqlalchemy import UniqueConstraint
+
+from extensions import db
 
 # Association table for User-Programme many-to-many relationship
 user_programme = db.Table('User_Programme',

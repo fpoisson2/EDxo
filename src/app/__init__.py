@@ -1,5 +1,12 @@
 # src/app/__init__.py
 
+# TODO: Ajouter un status au plan de cours (Brouillon, en révision, complété), Permettre l'édition seulement lorsqu'en brouillon pour le prof. Permettre l'édition lorsqu'il est en révision par le coordo.
+# TODO: Ajouter un status au plan-cadre (adopté avec date d'adoption, en travail), ne pas permettre l'édition lorsqu'adopté à moins de le remettre en mode en travail, seulement le coordo et l'admin devrait pouvoir faire ça.
+# TODO: Lorsque je surligne du texte dans le calendrier du plan de cours, ca déplace le bloque plutôt que de surligner le texte.
+# TODO: La CP peut créer un plan de cours et peu générer une grille D'évaluation ce qui ne devrait pas être le cas
+# TODO: Saisir plans de cours S1 (sauf 1J5=déja fait)
+# TODO: Faudrait pouvoir mettre 2 ou 3 enseignants sur un plan de cours
+
 import atexit
 import logging
 import os

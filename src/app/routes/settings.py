@@ -1,17 +1,16 @@
-from flask import Blueprint, request, render_template, flash, redirect, url_for, current_app, jsonify
+import json
+import os
+
+from flask import Blueprint, request, render_template, flash, redirect, url_for, jsonify
+from flask import send_from_directory, current_app
 from flask_login import login_required, current_user
+from flask_wtf.csrf import CSRFProtect
+
+from app.forms import GlobalGenerationSettingsForm, DeletePlanForm, UploadForm, ProfileEditForm, AnalysePromptForm, \
+    OpenAIModelForm
+from app.routes.evaluation import AISixLevelGridResponse
 from config.constants import SECTIONS  # Importer la liste des sections
 from utils.decorator import role_required, roles_required, ensure_profile_completed
-from app.forms import GlobalGenerationSettingsForm,  DeletePlanForm, UploadForm, ProfileEditForm, AnalysePromptForm, OpenAIModelForm
-from app.routes.evaluation import AISixLevelGridResponse
-from flask_wtf.csrf import CSRFProtect
-from flask_wtf.csrf import generate_csrf
-import json
-from pathlib import Path
-from flask import send_from_directory, current_app
-import os
-from werkzeug.utils import secure_filename
-
 
 csrf = CSRFProtect()
 

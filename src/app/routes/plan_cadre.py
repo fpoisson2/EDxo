@@ -1,86 +1,33 @@
 # plan_de_cours.py
-from flask import Blueprint, render_template, redirect, url_for, request, flash, send_file, jsonify, session
-from flask_login import login_required, current_user
-from app.forms import (
-    ProgrammeForm,
-    CompetenceForm,
-    ElementCompetenceForm,
-    FilConducteurForm,
-    CoursForm,
-    CoursPrealableForm,
-    CoursCorequisForm,
-    CompetenceParCoursForm,
-    ElementCompetenceParCoursForm,
-    DeleteForm,
-    MultiCheckboxField,
-    PlanCadreForm,
-    SavoirEtreForm,
-    CompetenceDeveloppeeForm,
-    ObjetCibleForm,
-    CoursRelieForm,
-    DuplicatePlanCadreForm,
-    ImportPlanCadreForm,
-    PlanCadreCompetenceCertifieeForm,
-    PlanCadreCoursCorequisForm,
-    GenerateContentForm,
-    GlobalGenerationSettingsForm,
-    GenerationSettingForm
-)
-from utils.decorator import role_required, roles_required, ensure_profile_completed
-import json
 import logging
 import traceback
 
+from flask import Blueprint, render_template, redirect, url_for, request, flash, send_file, jsonify, session
+from flask_login import login_required, current_user
 
-
-from bs4 import BeautifulSoup
-import markdown
-
-from docxtpl import DocxTemplate
-from io import BytesIO
-from werkzeug.security import generate_password_hash, check_password_hash
-
-
+from app.forms import (
+    DeleteForm,
+    PlanCadreForm,
+    GenerateContentForm
+)
 # Import SQLAlchemy DB and models
 from app.models import (
     db,
-    User,
     PlanCadre,
     PlanCadreCapacites,
-    PlanCadreCapaciteSavoirsNecessaires,
-    PlanCadreCapaciteSavoirsFaire,
-    PlanCadreCapaciteMoyensEvaluation,
     PlanCadreSavoirEtre,
     PlanCadreObjetsCibles,
     PlanCadreCoursRelies,
     PlanCadreCoursPrealables,
     PlanCadreCoursCorequis,
     PlanCadreCompetencesCertifiees,
-    PlanCadreCompetencesDeveloppees,
-    Cours,
-    CoursPrealable,
-    CoursCorequis,
-    GlobalGenerationSettings,
-    Competence,
-    ElementCompetence,
-    ElementCompetenceParCours
+    PlanCadreCompetencesDeveloppees
 )
-
-from openai import OpenAI
-from openai import OpenAIError
-
-from sqlalchemy import text
-
+from utils.decorator import role_required, roles_required, ensure_profile_completed
 from utils.utils import (
-    parse_html_to_list,
-    parse_html_to_nested_list,
-    get_plan_cadre_data,
-    replace_tags_jinja2,
-    process_ai_prompt,
     generate_docx_with_template,
     # Note: remove if no longer needed: get_db_connection
 )
-
 
 ###############################################################################
 # Configuration Logging

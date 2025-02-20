@@ -1,6 +1,7 @@
 # initialize_global_settings.py
 
 import sqlite3
+
 from constants import SECTIONS
 
 DATABASE = 'programme.db'
