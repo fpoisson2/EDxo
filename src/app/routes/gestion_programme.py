@@ -1,49 +1,22 @@
 # gestion_programme.py
 
-import time
 import json
 import logging
 from typing import Optional
-from datetime import datetime
-import time 
 
-from flask import Flask, Blueprint, jsonify, redirect, url_for, flash, request, render_template
+from flask import Blueprint, jsonify, render_template
 from flask_login import login_required, current_user
-from flask_sqlalchemy import SQLAlchemy
-from utils.decorator import role_required, roles_required, ensure_profile_completed
-from sqlalchemy import text
+from openai import OpenAI
 from pydantic import BaseModel, ValidationError
 
 # Import SQLAlchemy DB and models
 from app.models import (
     db,
-    User,
-    PlanCadre,
-    PlanCadreCapacites,
-    PlanCadreCapaciteSavoirsNecessaires,
-    PlanCadreCapaciteSavoirsFaire,
-    PlanCadreCapaciteMoyensEvaluation,
-    PlanCadreSavoirEtre,
-    PlanCadreObjetsCibles,
-    PlanCadreCoursRelies,
-    PlanCadreCoursPrealables,
-    PlanCadreCoursCorequis,
-    PlanCadreCompetencesCertifiees,
-    PlanCadreCompetencesDeveloppees,
-    Cours,
-    CoursPrealable,
-    CoursCorequis,
-    GlobalGenerationSettings,
-    Competence,
-    ElementCompetence,
-    ElementCompetenceParCours,
     PlanDeCours,
     Cours,
     AnalysePlanCoursPrompt
 )
-
-from openai import OpenAI
-from openai import OpenAIError
+from utils.decorator import ensure_profile_completed
 
 # ---------------------------------------------------------------------------
 # Configuration Logging

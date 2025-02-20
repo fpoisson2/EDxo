@@ -1,6 +1,6 @@
 # update_db.py
 import sqlite3
-import sys
+
 
 def add_element_competence_id_column():
     conn = sqlite3.connect('programme.db')

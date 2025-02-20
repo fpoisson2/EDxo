@@ -1,8 +1,10 @@
 import json
 import re
-from app import app
-from models import db  # Importez votre objet db
+
 from models import Cours, CoursPrealable, CoursCorequis  # Importez vos modèles
+from models import db  # Importez votre objet db
+
+from app import app
 
 # La chaîne JSON fournie (vous pouvez aussi le charger depuis un fichier)
 json_data = r'''

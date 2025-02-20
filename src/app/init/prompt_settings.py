@@ -1,8 +1,10 @@
 # app/init/prompt_settings.py
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+
 from app import db, logger
 from app.models import PlanDeCoursPromptSettings
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import text
+
 
 def init_plan_de_cours_prompts():
     """Initialise les configurations de prompts par défaut pour les plans de cours."""

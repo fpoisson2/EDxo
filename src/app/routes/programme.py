@@ -1,59 +1,15 @@
 # programme.py
-from flask import Blueprint, Flask, render_template, redirect, url_for, request, flash, send_file, jsonify
-from app.forms import (
-    ProgrammeForm,
-    CompetenceForm,
-    ElementCompetenceForm,
-    FilConducteurForm,
-    CoursForm,
-    CoursPrealableForm,
-    CoursCorequisForm,
-    CompetenceParCoursForm,
-    ElementCompetenceParCoursForm,
-    DeleteForm,
-    MultiCheckboxField,
-    PlanCadreForm,
-    SavoirEtreForm,
-    CompetenceDeveloppeeForm,
-    ObjetCibleForm,
-    CoursRelieForm,
-    CoursPrealableForm,
-    DuplicatePlanCadreForm,
-    ImportPlanCadreForm,
-    PlanCadreCompetenceCertifieeForm,
-    PlanCadreCoursCorequisForm,
-    GenerateContentForm,
-    GlobalGenerationSettingsForm, 
-    GenerationSettingForm
-)
-from flask_ckeditor import CKEditor
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-import json
 import logging
 from collections import defaultdict
-from openai import OpenAI
-from openai import OpenAIError
-from utils.decorator import role_required, roles_required, ensure_profile_completed
-from dotenv import load_dotenv
-from bs4 import BeautifulSoup
-import os
-import markdown
-from jinja2 import Template
+
 import bleach
-from docxtpl import DocxTemplate
-from io import BytesIO 
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask_login import login_required, current_user
 
-# Utilities
-from utils.utils import (
-    parse_html_to_list,
-    parse_html_to_nested_list,
-    get_plan_cadre_data,
-    replace_tags_jinja2,
-    process_ai_prompt,
-    generate_docx_with_template
+from app.forms import (
+    CompetenceForm,
+    DeleteForm
 )
-
 # Import SQLAlchemy models
 from app.models import (
     db,
@@ -65,16 +21,13 @@ from app.models import (
     CoursPrealable,
     CoursCorequis,
     ElementCompetence,
-    ElementCompetenceCriteria,
     ElementCompetenceParCours,
     PlanDeCours
 )
+from utils.decorator import role_required, ensure_profile_completed
 
+# Utilities
 # Example of another blueprint import (unused here, just as in your snippet)
-from app.routes.plan_de_cours import plan_de_cours_bp
-
-
-import logging
 logger = logging.getLogger(__name__)
 
 programme_bp = Blueprint('programme', __name__, url_prefix='/programme')
