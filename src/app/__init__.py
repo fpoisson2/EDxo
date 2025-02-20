@@ -7,15 +7,15 @@ from datetime import timedelta, datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask, session, jsonify, redirect, url_for, request
-from flask_login import current_user, logout_user
+from flask import Flask, session, jsonify, redirect, url_for, request, current_app
+from flask_login import current_user, logout_user, UserMixin
 from flask_migrate import Migrate
-from sqlalchemy import text
+from sqlalchemy import text, UniqueConstraint
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-# Import models
-from app.models import BackupConfig
+# Import models and routes
+from app.models import BackupConfig, user_programme  # user_programme assumed defined in models
 from app.routes import routes
 from app.routes.chat import chat
 # Import blueprints
@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
+
 # Define TestConfig within the application code
 class TestConfig:
     """Testing configuration."""
@@ -55,6 +56,7 @@ class TestConfig:
     RECAPTCHA_PUBLIC_KEY = 'test_public'
     RECAPTCHA_SECRET_KEY = 'test_secret'
     # Add other testing-specific configurations here
+
 
 def create_app(testing=False):
     base_path = os.path.dirname(os.path.dirname(__file__))
@@ -72,6 +74,8 @@ def create_app(testing=False):
     else:
         BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         DB_DIR = os.path.join(BASE_DIR, "database")
+        if not os.path.exists(DB_DIR):
+            os.makedirs(DB_DIR)
         DB_PATH = os.path.join(DB_DIR, "programme.db")
 
         print(f"🔍 Debug: Static folder -> {app.static_folder}")
@@ -84,8 +88,8 @@ def create_app(testing=False):
             DB_PATH=DB_PATH,
             UPLOAD_FOLDER=os.path.join(base_path, 'static', 'docs'),
             SECRET_KEY=os.getenv('SECRET_KEY'),
-            RECAPTCHA_SITE_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY'),
-            RECAPTCHA_SECRET_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY'),
+            RECAPTCHA_SITE_KEY=os.getenv('RECAPTCHA_PUBLIC_KEY'),
+            RECAPTCHA_SECRET_KEY=os.getenv('RECAPTCHA_PRIVATE_KEY'),
             WTF_CSRF_ENABLED=True,
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),
@@ -125,7 +129,7 @@ def create_app(testing=False):
         worker_id = os.getenv('GUNICORN_WORKER_ID')
         is_primary_worker = worker_id == '0' or worker_id is None
 
-    # Register blueprints (both testing and production)
+    # Register blueprints
     app.register_blueprint(routes.main)
     app.register_blueprint(settings_bp)
     app.register_blueprint(cours_bp)
@@ -185,7 +189,7 @@ def create_app(testing=False):
 
             # Update 'last_login' at most once per minute
             if (not current_user.last_login or
-                (datetime.utcnow() - current_user.last_login).total_seconds() > 60):
+                    (datetime.utcnow() - current_user.last_login).total_seconds() > 60):
                 current_user.last_login = datetime.utcnow()
                 db.session.commit()
 
@@ -221,7 +225,8 @@ def create_app(testing=False):
                         except Exception as e:
                             logger.error(f"Erreur lors de la planification des sauvegardes: {e}")
                 else:
-                    logger.warning("⚠️ Table 'backup_config' introuvable, la planification des sauvegardes est ignorée.")
+                    logger.warning(
+                        "⚠️ Table 'backup_config' introuvable, la planification des sauvegardes est ignorée.")
 
                 from app.init.prompt_settings import init_plan_de_cours_prompts
                 init_plan_de_cours_prompts()
@@ -257,7 +262,8 @@ def create_app(testing=False):
                     if result:
                         schedule_backup(app)
                     else:
-                        logger.warning("⚠️ Table 'backup_config' introuvable, planification des sauvegardes est désactivée.")
+                        logger.warning(
+                            "⚠️ Table 'backup_config' introuvable, planification des sauvegardes est désactivée.")
 
             # Register atexit handlers for graceful shutdown and checkpointing
             atexit.register(shutdown_scheduler)
@@ -265,4 +271,82 @@ def create_app(testing=False):
         else:
             logger.info("Celery worker detected; skipping scheduler startup and related atexit handlers.")
 
+    # ---------------------------------------------------
+    # Database initialization: Create DB and admin user
+    # ---------------------------------------------------
+    if not testing:
+        with app.app_context():
+            db_path = app.config.get('DB_PATH')
+            if not os.path.exists(db_path):
+                logger.info("No database found at %s. Creating a new database...", db_path)
+                db.create_all()
+                from app.models import User  # Ensure User model is imported
+                # Check if an admin user exists
+                if not User.query.filter_by(role='admin').first():
+                    hashed_password = bcrypt.generate_password_hash('admin').decode('utf-8')
+                    admin_user = User(username='admin', password=hashed_password, role='admin')
+                    db.session.add(admin_user)
+                    db.session.commit()
+                    logger.info("Admin user created with username 'admin' and default password 'admin'.")
+                    logger.info("Please change the default password immediately after first login.")
+                else:
+                    logger.info("Admin user already exists.")
     return app
+
+
+# ------------------------------------------------------------------------------
+# Modèle User (mise à jour pour correspondre au schéma)
+# ------------------------------------------------------------------------------
+class User(UserMixin, db.Model):
+    __tablename__ = "User"
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.Text, nullable=False)
+    password = db.Column(db.Text, nullable=False)
+    # Nouveaux champs
+    image = db.Column(db.Text, nullable=True)
+    nom = db.Column(db.Text, nullable=True)
+    prenom = db.Column(db.Text, nullable=True)
+    is_first_connexion = db.Column(db.Boolean, nullable=False, server_default='1')  # '1' pour TRUE en SQLite
+    # Champs existants
+    role = db.Column(db.Text, nullable=False, server_default="invite")
+    openai_key = db.Column(db.Text, nullable=True)
+    cegep_id = db.Column(db.Integer, db.ForeignKey("ListeCegep.id"), nullable=True)
+    department_id = db.Column(db.Integer, db.ForeignKey("Department.id"), nullable=True)
+    credits = db.Column(db.Float, nullable=False, default=0.0)
+    email = db.Column(db.String(120), nullable=True)
+    last_login = db.Column(db.DateTime, nullable=True)
+    reset_version = db.Column(db.Integer, default=0)  # Champ pour invalider les anciens tokens
+
+    # Méthode pour générer le token de réinitialisation
+    def get_reset_token(self, expires_sec=1800):
+        from itsdangerous import URLSafeTimedSerializer
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        token_data = {
+            'user_id': self.id,
+            'reset_version': self.reset_version
+        }
+        return s.dumps(token_data, salt='password-reset-salt')
+
+    @staticmethod
+    def verify_reset_token(token, expires_sec=1800):
+        from itsdangerous import URLSafeTimedSerializer
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token, salt='password-reset-salt', max_age=expires_sec)
+            user_id = data.get('user_id')
+            token_reset_version = data.get('reset_version')
+        except Exception:
+            return None
+        user = User.query.get(user_id)
+        if user and user.reset_version == token_reset_version:
+            return user
+        return None
+
+    __table_args__ = (
+        UniqueConstraint('email', name='uq_user_email'),
+    )
+
+    # Relations
+    programmes = db.relationship('Programme',
+                                 secondary=user_programme,
+                                 backref=db.backref('users', lazy='dynamic'))
