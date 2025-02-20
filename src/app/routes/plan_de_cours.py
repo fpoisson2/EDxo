@@ -305,7 +305,7 @@ def view_plan_de_cours(cours_id, session=None):
 
             # Copier les calendriers
             for cal in source_plan.calendriers:
-                new_cal = PlanDeCoursCalendrier(
+                new_cal = PlanDeCours(
                     semaine=cal.semaine,
                     sujet=cal.sujet,
                     activites=cal.activites,
@@ -494,7 +494,7 @@ def view_plan_de_cours(cours_id, session=None):
                     # Calendriers
                     plan_de_cours.calendriers.clear()
                     for cal_f in form.calendriers.entries:
-                        new_cal = PlanDeCoursCalendrier(
+                        new_cal = PlanDeCours(
                             semaine=cal_f.data.get("semaine"),
                             sujet=cal_f.data.get("sujet"),
                             activites=cal_f.data.get("activites"),
