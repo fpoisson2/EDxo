@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  edxo:
+    build: .
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+  redis:
+    image: redis:alpine
+    ports:
+      - "6340:6340"
+  celery:
+    build: .
+    command: celery -A celery_app.celery worker --loglevel=info --hostname=worker2@%h
+    env_file:
+      - .env
+    depends_on:
+      - redis

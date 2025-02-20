@@ -14,15 +14,15 @@ from datetime import timedelta, datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask, session, jsonify, redirect, url_for, request
-from flask_login import current_user, logout_user
+from flask import Flask, session, jsonify, redirect, url_for, request, current_app
+from flask_login import current_user, logout_user, UserMixin
 from flask_migrate import Migrate
-from sqlalchemy import text
+from sqlalchemy import text, UniqueConstraint
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-# Import models
-from app.models import BackupConfig
+# Import models and routes
+from app import models
 from app.routes import routes
 from app.routes.chat import chat
 # Import blueprints
@@ -41,12 +41,15 @@ from extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
 from utils.db_tracking import init_change_tracking
 from utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 
+from werkzeug.security import generate_password_hash
+
 # Initialize logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
+
 
 # Define TestConfig within the application code
 class TestConfig:
@@ -62,6 +65,7 @@ class TestConfig:
     RECAPTCHA_PUBLIC_KEY = 'test_public'
     RECAPTCHA_SECRET_KEY = 'test_secret'
     # Add other testing-specific configurations here
+
 
 def create_app(testing=False):
     base_path = os.path.dirname(os.path.dirname(__file__))
@@ -79,6 +83,8 @@ def create_app(testing=False):
     else:
         BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         DB_DIR = os.path.join(BASE_DIR, "database")
+        if not os.path.exists(DB_DIR):
+            os.makedirs(DB_DIR)
         DB_PATH = os.path.join(DB_DIR, "programme.db")
 
         print(f"🔍 Debug: Static folder -> {app.static_folder}")
@@ -91,8 +97,8 @@ def create_app(testing=False):
             DB_PATH=DB_PATH,
             UPLOAD_FOLDER=os.path.join(base_path, 'static', 'docs'),
             SECRET_KEY=os.getenv('SECRET_KEY'),
-            RECAPTCHA_SITE_KEY = os.getenv('RECAPTCHA_PUBLIC_KEY'),
-            RECAPTCHA_SECRET_KEY = os.getenv('RECAPTCHA_PRIVATE_KEY'),
+            RECAPTCHA_SITE_KEY=os.getenv('RECAPTCHA_PUBLIC_KEY'),
+            RECAPTCHA_SECRET_KEY=os.getenv('RECAPTCHA_PRIVATE_KEY'),
             WTF_CSRF_ENABLED=True,
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),
@@ -100,8 +106,8 @@ def create_app(testing=False):
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Lax',
             SESSION_TYPE='filesystem',
-            CELERY_BROKER_URL='amqp://guest:guest@localhost//',
-            CELERY_RESULT_BACKEND='redis://localhost:6379/0'
+            CELERY_BROKER_URL='redis://redis:6379/0',
+
         )
 
     # Initialize extensions
@@ -132,7 +138,7 @@ def create_app(testing=False):
         worker_id = os.getenv('GUNICORN_WORKER_ID')
         is_primary_worker = worker_id == '0' or worker_id is None
 
-    # Register blueprints (both testing and production)
+    # Register blueprints
     app.register_blueprint(routes.main)
     app.register_blueprint(settings_bp)
     app.register_blueprint(cours_bp)
@@ -192,7 +198,7 @@ def create_app(testing=False):
 
             # Update 'last_login' at most once per minute
             if (not current_user.last_login or
-                (datetime.utcnow() - current_user.last_login).total_seconds() > 60):
+                    (datetime.utcnow() - current_user.last_login).total_seconds() > 60):
                 current_user.last_login = datetime.utcnow()
                 db.session.commit()
 
@@ -228,7 +234,8 @@ def create_app(testing=False):
                         except Exception as e:
                             logger.error(f"Erreur lors de la planification des sauvegardes: {e}")
                 else:
-                    logger.warning("⚠️ Table 'backup_config' introuvable, la planification des sauvegardes est ignorée.")
+                    logger.warning(
+                        "⚠️ Table 'backup_config' introuvable, la planification des sauvegardes est ignorée.")
 
                 from app.init.prompt_settings import init_plan_de_cours_prompts
                 init_plan_de_cours_prompts()
@@ -264,7 +271,8 @@ def create_app(testing=False):
                     if result:
                         schedule_backup(app)
                     else:
-                        logger.warning("⚠️ Table 'backup_config' introuvable, planification des sauvegardes est désactivée.")
+                        logger.warning(
+                            "⚠️ Table 'backup_config' introuvable, planification des sauvegardes est désactivée.")
 
             # Register atexit handlers for graceful shutdown and checkpointing
             atexit.register(shutdown_scheduler)
@@ -272,4 +280,23 @@ def create_app(testing=False):
         else:
             logger.info("Celery worker detected; skipping scheduler startup and related atexit handlers.")
 
+    # ---------------------------------------------------
+    # Database initialization: Create DB and admin user
+    # ---------------------------------------------------
+    if not testing:
+        with app.app_context():
+            # Always create missing tables; create_all() will do nothing if tables already exist.
+            db.create_all()
+            from app.models import User  # Ensure the User model is imported
+
+            # Check if an admin user exists; if not, create one.
+            if not User.query.filter_by(role='admin').first():
+                hashed_password = generate_password_hash('admin1234', method='scrypt') #add
+                admin_user = User(username='admin', password=hashed_password, role='admin')
+                db.session.add(admin_user)
+                db.session.commit()
+                logger.info("Admin user created with username 'admin' and default password 'admin'.")
+                logger.info("Please change the default password immediately after first login.")
+            else:
+                logger.info("Admin user already exists.")
     return app

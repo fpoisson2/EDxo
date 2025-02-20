@@ -136,14 +136,14 @@
       <div class="section" id="section-4">
         <div class="mb-3">
           {{ form.cegep.label(class="form-label") }}
-          {{ form.cegep(class="form-select", id="cegep", required=true, autocomplete="organization") }}
+          {{ form.cegep(class="form-select", id="cegep", autocomplete="organization") }}
           {% for error in form.cegep.errors %}
             <div class="text-danger">{{ error }}</div>
           {% endfor %}
         </div>
         <div class="mb-3">
           {{ form.department.label(class="form-label") }}
-          {{ form.department(class="form-select", id="department", required=true, autocomplete="organization") }}
+          {{ form.department(class="form-select", id="department", autocomplete="organization") }}
           {% for error in form.department.errors %}
             <div class="text-danger">{{ error }}</div>
           {% endfor %}

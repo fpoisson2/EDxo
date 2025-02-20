@@ -462,7 +462,7 @@ def send_message():
     def generate_stream():
         try:
             # On peut dès le début émettre un message "processing"
-            yield f"data: {json.dumps({'type': 'processing', 'content': 'En attente d\'une réponse...'})}\n\n"
+            yield f"data: {json.dumps({'type': 'processing', 'content': 'En attente de une réponse...'})}\n\n"
 
             # Construction des messages pour GPT
             messages = [
