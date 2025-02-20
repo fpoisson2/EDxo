@@ -283,19 +283,18 @@ def create_app(testing=False):
     # ---------------------------------------------------
     if not testing:
         with app.app_context():
-            db_path = app.config.get('DB_PATH')
-            if not os.path.exists(db_path):
-                logger.info("No database found at %s. Creating a new database...", db_path)
-                db.create_all()
-                from app.models import User  # Ensure User model is imported
-                # Check if an admin user exists
-                if not User.query.filter_by(role='admin').first():
-                    hashed_password = bcrypt.generate_password_hash('admin1234').decode('utf-8')
-                    admin_user = User(username='admin', password=hashed_password, role='admin')
-                    db.session.add(admin_user)
-                    db.session.commit()
-                    logger.info("Admin user created with username 'admin' and default password 'admin'.")
-                    logger.info("Please change the default password immediately after first login.")
-                else:
-                    logger.info("Admin user already exists.")
+            # Always create missing tables; create_all() will do nothing if tables already exist.
+            db.create_all()
+            from app.models import User  # Ensure the User model is imported
+
+            # Check if an admin user exists; if not, create one.
+            if not User.query.filter_by(role='admin').first():
+                hashed_password = bcrypt.generate_password_hash('admin1234').decode('utf-8')
+                admin_user = User(username='admin', password=hashed_password, role='admin')
+                db.session.add(admin_user)
+                db.session.commit()
+                logger.info("Admin user created with username 'admin' and default password 'admin'.")
+                logger.info("Please change the default password immediately after first login.")
+            else:
+                logger.info("Admin user already exists.")
     return app
