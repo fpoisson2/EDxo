@@ -22,7 +22,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Import models and routes
-from app.models import BackupConfig, user_programme  # user_programme assumed defined in models
+from app import models
 from app.routes import routes
 from app.routes.chat import chat
 # Import blueprints
