@@ -31,6 +31,7 @@ Avant de lancer l'application, assurez-vous d'avoir installé :
 
 - Python 3.7+
 - Virtualenv (recommandé)
+- **Redis** (pour Celery, voir [Installation de Redis](#installation-de-redis))
 
 ## 3. Installation
 
@@ -74,7 +75,11 @@ pip install -r requirements.txt
 L'application utilise python-dotenv pour charger les variables d'environnement depuis un fichier .env. Créez un fichier .env à la racine du projet avec au moins :
 
 ``` 
-SECRET_KEY=votre_cle_secrete
+SECRET_KEY='votre_cle_secrete'
+RECAPTCHA_PUBLIC_KEY='votre_cle_public recaptcha'
+RECAPTCHA_PRIVATE_KEY='votre_cle_secrete recaptcha'
+RECAPTCHA_THRESHOLD=0.5
+
 ```
 
 Vous pouvez définir d'autres variables spécifiques à votre environnement
@@ -135,8 +140,95 @@ Gunicorn : Comme indiqué ci-dessus, vous pouvez déployer l'application avec Gu
 Proxy Inverse : Il est recommandé de faire tourner l'application derrière un proxy inverse (par exemple, Nginx) pour la terminaison SSL et l'équilibrage de charge.
 
 Variables d'environnement : Assurez-vous toujours que les données sensibles comme SECRET_KEY soient gérées de manière sécurisée via les variables d'environnement.
+## 8. Configuration des services systemd
+Pour faciliter la gestion de l'application en production, utilisez systemd pour gérer les services.
 
-## 8. Structure du projet
+### 8.1 Service Flask avec Gunicorn
+Créez le fichier /etc/systemd/system/edxo.service avec le contenu suivant :
+
+```
+[Unit]
+Description=Gunicorn instance to serve Flask app
+After=network.target
+
+[Service]
+User='your_user_name'
+Group=www-data
+WorkingDirectory=/home/'your_user_name'/edxo
+Environment="PATH=/home/'your_user_name'/edxo/venv/bin"
+Environment="PYTHONPATH=/home/'your_user_name'edxo/src"
+ExecStart=/home/'your_user_name'/edxo/venv/bin/gunicorn -w 1 -b 0.0.0.0:8000 src.wsgi:app --timeout 500
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 8.2 Service Celery Worker
+Créez le fichier /etc/systemd/system/edxo-celery.service avec le contenu suivant :
+
+```
+[Unit]
+Description=Celery Worker for EDxo
+After=network.target
+
+[Service]
+User='your_user_name'
+Group=www-data
+WorkingDirectory=/home/'your_user_name'
+Environment="PATH=/home/'your_user_name'/edxo/venv/bin"
+Environment="PYTHONPATH=/home/'your_user_name'/edxo/src"
+Environment="CELERY_WORKER=1"
+ExecStart=/home/'your_user_name'/edxo/venv/bin/celery -A celery_app.celery worker --loglevel=info --hostname=worker2@%h
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+## 9. Installation de Redis
+Redis est requis pour le fonctionnement de Celery en tant que broker de messages.
+
+### 9.1 Installation sur Debian/Ubuntu
+```
+sudo apt update
+sudo apt install redis-server
+```
+
+### 9.2 Vérification et activation du service Redis
+Vérifiez que Redis fonctionne correctement :
+
+```
+sudo systemctl status redis
+```
+Pour activer Redis au démarrage du système :
+
+```
+sudo systemctl enable redis
+```
+
+### 10 Install de Gunicorn
+Gunicorn est requis pour faire fonctionner l'environnement de production:
+```
+sudo apt update
+sudo apt install gunicorn
+```
+
+### 8.3 Activation des services
+Rechargez la configuration systemd et activez/démarrez les services :
+
+```
+sudo systemctl daemon-reload
+
+sudo systemctl enable edxo.service
+sudo systemctl start edxo.service
+
+sudo systemctl enable edxo-celery.service
+sudo systemctl start edxo-celery.service
+```
+
+
+## 10. Structure du projet
 ```
 edxo/
 ├── src/
@@ -153,7 +245,7 @@ edxo/
 └── README.md                   # Ce fichier
 ```
 
-## 9. Licence
+## 11. Licence
 Ce projet est sous licence MIT.
 
 N'hésitez pas à contribuer en ouvrant des issues ou en soumettant des pull requests. Pour toute question, veuillez contacter francis.poisson2@gmail.com.

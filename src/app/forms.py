@@ -84,9 +84,9 @@ class ProfileEditForm(FlaskForm):
         Length(max=120)
     ])
     image = SelectField('Avatar', choices=[], validators=[DataRequired()])
-    cegep = SelectField('Cégep', choices=[], validators=[DataRequired()])
-    department = SelectField('Département', choices=[], validators=[DataRequired()])
-    programmes = MultiCheckboxField('Programmes', choices=[], coerce=int, validators=[DataRequired()])
+    cegep = SelectField('Cégep', choices=[''], validators=[Optional()])
+    department = SelectField('Département', choices=[''], validators=[Optional()])
+    programmes = MultiCheckboxField('Programmes', choices=[], coerce=int)
     submit_profile = SubmitField('Mettre à jour le profil')
 
     def validate_email(self, email):
