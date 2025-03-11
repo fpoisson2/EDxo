@@ -713,6 +713,9 @@ def generate_docx_with_template(plan_id):
         'competences_developpees': [
             {'texte': cd.texte, 'description': cd.description} for cd in competences_developpees
         ],
+        'competences_info': list(competences_fusionnees.values()),
+        'competences_info_developes': list(competence_info_developes.values()),
+        'competences_info_atteint': list(competence_info_atteint.values()),
         'objets_cibles': [{'texte': o.texte, 'description': o.description} for o in objets_cibles],
         'cours_relies': [{'texte': cr.texte, 'description': cr.description} for cr in cours_relies],
         'capacites': capacites_detail,
