@@ -6,7 +6,7 @@ from typing import List, Optional
 
 # Import your OpenAI client (adjust this import according to your library)
 from openai import OpenAI
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import text
 
 # Import your models – adjust these imports as needed:
@@ -27,53 +27,61 @@ from utils.utils import replace_tags_jinja2, get_plan_cadre_data
 ###############################################################################
 # Schemas Pydantic pour IA
 ###############################################################################
-class AIField(BaseModel):
-    """Represents older PlanCadre fields (e.g. place_intro, objectif_terminal)."""
+def _postprocess_openai_schema(schema: dict) -> None:
+    schema.pop('default', None)
+    schema['additionalProperties'] = False
+
+    props = schema.get("properties")
+    if props:
+        schema["required"] = list(props.keys())
+        for prop_schema in props.values():
+            _postprocess_openai_schema(prop_schema)
+
+    if "items" in schema:
+        items = schema["items"]
+        if isinstance(items, dict):
+            _postprocess_openai_schema(items)
+        elif isinstance(items, list):
+            for item in items:
+                _postprocess_openai_schema(item)
+
+class OpenAIFunctionModel(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+        json_schema_extra=lambda schema, _: _postprocess_openai_schema(schema)
+    )
+
+class AIField(OpenAIFunctionModel):
     field_name: Optional[str] = None
     content: Optional[str] = None
 
-class AIContentDetail(BaseModel):
+class AIContentDetail(OpenAIFunctionModel):
     texte: Optional[str] = None
     description: Optional[str] = None
 
-class AIFieldWithDescription(BaseModel):
+class AIFieldWithDescription(OpenAIFunctionModel):
     field_name: Optional[str] = None
-    content: Optional[List[AIContentDetail]] = None  # for structured lists
+    content: Optional[List[AIContentDetail]] = None
 
-class AISavoirFaire(BaseModel):
+class AISavoirFaire(OpenAIFunctionModel):
     texte: Optional[str] = None
     cible: Optional[str] = None
     seuil_reussite: Optional[str] = None
 
-class AICapacite(BaseModel):
-    """
-    A single 'capacité' with optional sub-lists for:
-      - savoirs_necessaires
-      - savoirs_faire
-      - moyens_evaluation
-    """
+class AICapacite(OpenAIFunctionModel):
     capacite: Optional[str] = None
     description_capacite: Optional[str] = None
     ponderation_min: Optional[int] = None
     ponderation_max: Optional[int] = None
-
     savoirs_necessaires: Optional[List[str]] = None
     savoirs_faire: Optional[List[AISavoirFaire]] = None
     moyens_evaluation: Optional[List[str]] = None
 
-class PlanCadreAIResponse(BaseModel):
-    """
-    The GPT response:
-      - fields: (list of AIField)
-      - fields_with_description: (list of AIFieldWithDescription)
-      - savoir_etre: (list of strings)
-      - capacites: (list of AICapacite)
-    """
+class PlanCadreAIResponse(OpenAIFunctionModel):
     fields: Optional[List[AIField]] = None
     fields_with_description: Optional[List[AIFieldWithDescription]] = None
     savoir_etre: Optional[List[str]] = None
     capacites: Optional[List[AICapacite]] = None
-
 
 @celery.task(bind=True)
 def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
@@ -345,6 +353,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             "Voici le schéma JSON auquel ta réponse doit strictement adhérer :\n\n"
             f"{schema_json}\n\n"
             "Utilise un langage neutre (par exemple, 'étudiant' => 'personne étudiante').\n\n"
+            "Si tu utilises des guillemets, utilise des guillemets français '«' et '»'\n\b"
             "Voici différents prompts :\n"
             f"- fields: {ai_fields}\n\n"
             f"- fields_with_description: {ai_fields_with_description}\n\n"
@@ -353,6 +362,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             "Retourne un JSON valide correspondant à PlanCadreAIResponse."
         )
 
+        print(combined_instruction)
         # Initialise le client OpenAI avec la clé de l'utilisateur
         client = OpenAI(api_key=openai_key)
         total_prompt_tokens = 0
@@ -361,10 +371,21 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         try:
             response = client.responses.create(
                 model=ai_model,
-                input=combined_instruction,
-                response_format=PlanCadreAIResponse,  # Format structuré attendu
+                input=[
+                    {"role": "system",
+                     "content": f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. Informations importantes: {additional_info}"},
+                    {"role": "user", "content": combined_instruction}
+                ],
+                text={
+                    "format": {
+                        "type": "json_schema",
+                        "name": "PlanCadreAIResponse",
+                        "schema": PlanCadreAIResponse.schema(),
+                        "strict": True
+                    }
+                },
                 store=True,
-                # Vous pouvez ajouter ici d'autres paramètres (temperature, top_p, etc.)
+                # Other parameters as needed (e.g., temperature, top_p, etc.)
             )
         except Exception as e:
             logging.error(f"OpenAI error: {e}")
@@ -396,7 +417,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # 3) Traitement de la réponse générée par l'IA
         # ----------------------------------------------------------------
         # On suppose que la réponse structurée est dans response.choices[0].message.parsed
-        parsed_data: PlanCadreAIResponse = response.choices[0].message.parsed
+        parsed_json = json.loads(response.output_text)
+        parsed_data = PlanCadreAIResponse(**parsed_json)
 
         def clean_text(val):
             return val.strip().strip('"').strip("'") if val else ""
@@ -501,6 +523,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             "plan_id": plan.id,
             "cours_id": plan.cours_id
         }
+        self.update_state(state='SUCCESS', meta=result)
         return result
 
     except Exception as e:

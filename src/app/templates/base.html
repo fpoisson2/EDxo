@@ -163,88 +163,75 @@
         transform: translateY(-100%);
       }
       /* Adaptations pour petit écran */
-@media (max-width: 768px) {
-  /* Ajustement de la navbar principale */
-  .navbar-collapse {
-    padding: 0;
-  }
-  .navbar-nav {
-    border-top: 1px solid #e0e0e0;
-    width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .navbar-nav .nav-item {
-    width: 100%;
-  }
-  .navbar-nav .nav-link {
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    color: #333;
-    border-bottom: 1px solid #e0e0e0;
-    margin: 0;
-    text-align: left;
-  }
-
-  /* Nouvelle zone pour la section utilisateur au sein de la navbar (après le menu) */
-  .mobile-user-info {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.5rem 1rem;
-    border-top: 1px solid #e0e0e0;
-    background: #f8f9fa;
-  }
-  /* Adaptation des éléments internes */
-  .mobile-user-info .credit-display,
-  .mobile-user-info .dropdown,
-  .mobile-user-info .dropdown-toggle.user-avatar {
-    margin: 0;
-  }
-  /* Pour que l’avatar et le crédit se positionnent côte à côte et ne débordent pas */
-  .mobile-user-info .user-details {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  /* Assurer que le menu déroulant s’adapte bien en mobile */
-  .mobile-user-info .dropdown-menu {
-    width: 100%;
-    position: static;
-    float: none;
-    padding: 0.5rem 1rem;
-    margin: 0;
-    border: none;
-    box-shadow: none;
-    background: none;
-  }
-  .dropdown-menu {
-    position: static !important;
-    float: none !important;
-    left: 0 !important;
-    right: 0 !important;
-    transform: none !important;
-    width: 100%;
-    box-shadow: none;
-    margin-top: 0.5rem;
-    padding: 0.5rem 1rem;
-  }
-
-  /* Optionnel : si vous utilisez le positionnement avec .dropdown-menu-end,
-     vous pouvez forcer le texte à s'aligner à gauche pour plus de lisibilité */
-  .dropdown-menu.dropdown-menu-end {
-    text-align: left;
-  }
-}
-
-}
-
+      @media (max-width: 768px) {
+        .navbar-collapse {
+          padding: 0;
+        }
+        .navbar-nav {
+          border-top: 1px solid #e0e0e0;
+          width: 100%;
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .navbar-nav .nav-item {
+          width: 100%;
+        }
+        .navbar-nav .nav-link {
+          padding: 0.75rem 1rem;
+          font-size: 1rem;
+          color: #333;
+          border-bottom: 1px solid #e0e0e0;
+          margin: 0;
+          text-align: left;
+        }
+        .mobile-user-info {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.5rem 1rem;
+          border-top: 1px solid #e0e0e0;
+          background: #f8f9fa;
+        }
+        .mobile-user-info .credit-display,
+        .mobile-user-info .dropdown,
+        .mobile-user-info .dropdown-toggle.user-avatar {
+          margin: 0;
+        }
+        .mobile-user-info .user-details {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .mobile-user-info .dropdown-menu {
+          width: 100%;
+          position: static;
+          float: none;
+          padding: 0.5rem 1rem;
+          margin: 0;
+          border: none;
+          box-shadow: none;
+          background: none;
+        }
+        .dropdown-menu {
+          position: static !important;
+          float: none !important;
+          left: 0 !important;
+          right: 0 !important;
+          transform: none !important;
+          width: 100%;
+          box-shadow: none;
+          margin-top: 0.5rem;
+          padding: 0.5rem 1rem;
+        }
+        .dropdown-menu.dropdown-menu-end {
+          text-align: left;
+        }
       }
     </style>
     {% endblock %}
   </head>
   <body>
-    <!-- Flash Messages Container (pour d'autres notifications) -->
+    <!-- Flash Messages Container -->
     <div id="flash-messages" class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1060; width: auto; max-width: 90vw;"></div>
 
     <!-- Header -->
@@ -254,7 +241,7 @@
           <a class="navbar-brand logo-container" href="{{ url_for('main.index') }}">
             <img src="{{ url_for('static', filename='assets/EDxologo.png') }}" alt="EDxo Logo" class="img-fluid" loading="lazy" />
           </a>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                   aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Basculer la navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
@@ -354,7 +341,12 @@
         {% endif %}
       {% endwith %}
       {% block content %}
-      <!-- Votre contenu ici -->
+      <!-- Par exemple, ici se trouve le formulaire pour générer le plan-cadre -->
+      <form id="generate-plan-cadre-form" action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="POST">
+        {{ form.hidden_tag() }}
+        <!-- Vos champs de formulaire ici -->
+        <button type="submit" class="btn btn-primary">Générer le plan-cadre</button>
+      </form>
       {% endblock %}
     </main>
 
@@ -379,7 +371,7 @@
           this.mobileElement = null;
           this.updateTimer = null;
         }
-      
+
         async initialize() {
           this.desktopElement = document.getElementById(this.desktopElementId);
           this.mobileElement = document.getElementById(this.mobileElementId);
@@ -391,7 +383,7 @@
           this.startPeriodicUpdates();
           return true;
         }
-      
+
         async updateCredit() {
           try {
             const response = await fetch(this.updateUrl, {
@@ -415,12 +407,12 @@
             return false;
           }
         }
-      
+
         startPeriodicUpdates() {
           if (this.updateTimer) clearInterval(this.updateTimer);
           this.updateTimer = setInterval(() => this.updateCredit(), this.updateInterval);
         }
-      
+
         stopUpdates() {
           if (this.updateTimer) {
             clearInterval(this.updateTimer);
@@ -428,7 +420,7 @@
           }
         }
       }
-      
+
       document.addEventListener('DOMContentLoaded', function () {
         const creditManager = new CreditBalanceManager({
           desktopElementId: 'credit-display',
@@ -446,10 +438,10 @@
     <script>
       let currentTaskId = null;
       let isPolling = false;
-      
+
       function checkTaskStatus() {
         if (!currentTaskId) return;
-        
+
         fetch('/task_status/' + currentTaskId, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
@@ -482,7 +474,7 @@
           setTimeout(checkTaskStatus, 5000);
         });
       }
-      
+
       function startTaskPolling(taskId) {
         if (isPolling) return;
         currentTaskId = taskId;
@@ -490,12 +482,12 @@
         addNotification("Génération en cours...", "in-progress");
         checkTaskStatus();
       }
-      
+
       function stopPolling() {
         isPolling = false;
         currentTaskId = null;
       }
-      
+
       function clearTaskId() {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         fetch('/clear_task_id', {
@@ -516,16 +508,50 @@
           console.error("Erreur lors de la suppression du task_id :", error);
         });
       }
-      
+
       setInterval(function() {
         const storedTaskId = sessionStorage.getItem('currentTaskId');
         console.log("Looking for task");
         if (storedTaskId && !isPolling) startTaskPolling(storedTaskId);
       }, 3000);
-      
+
       document.addEventListener('DOMContentLoaded', function() {
         const storedTaskId = sessionStorage.getItem('currentTaskId');
         if (storedTaskId && !isPolling) startTaskPolling(storedTaskId);
+      });
+    </script>
+
+    <!-- Gestion de la soumission du formulaire de génération -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const generateForm = document.getElementById('generate-plan-cadre-form');
+        if (generateForm) {
+          generateForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // empêcher la soumission classique
+            const formData = new FormData(generateForm);
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            fetch(generateForm.action, {
+              method: 'POST',
+              body: formData,
+              headers: {
+                'X-CSRFToken': csrfToken
+              },
+              credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success && data.task_id) {
+                // Stocker le task_id dans le sessionStorage côté client
+                sessionStorage.setItem('currentTaskId', data.task_id);
+                startTaskPolling(data.task_id);
+              } else {
+                console.error("Erreur de génération :", data.message);
+                addNotification("Erreur de génération : " + data.message, "error");
+              }
+            })
+            .catch(error => console.error(error));
+          });
+        }
       });
     </script>
 
