@@ -789,6 +789,19 @@
 <script src="https://uicdn.toast.com/editor-plugin-autoheight/latest/toastui-editor-plugin-autoheight.js" defer></script>
 
 <style>
+/* Uniformiser les polices */
+.toastui-editor-contents,
+.toastui-editor-contents *,
+.toastui-editor .ProseMirror {
+    font-family: inherit !important;
+    font-size: inherit !important;
+}
+
+/* S'assurer que la couleur du texte est cohérente */
+.toastui-editor-contents p {
+    color: #212529 !important;
+}
+
 /* Styles divers */
 .accordion-body > div:not(:last-child) {
     border-bottom: 1px solid #dee2e6;
