@@ -782,7 +782,16 @@ def add_programme():
 @ensure_profile_completed
 def add_competence():
     form = CompetenceForm()
-    programmes = Programme.query.all()
+    if current_user.role == 'admin':
+        # Admin: voir tous les programmes
+        programmes = Programme.query.all()
+    elif current_user.role == 'coordo':
+        # Coordo: voir seulement les programmes auxquels il a accès.
+        # Assure-toi que tu as une relation ou une méthode qui te fournit ça.
+        programmes = current_user.programmes  
+    else:
+        programmes = []
+
     form.programme.choices = [(p.id, p.nom) for p in programmes]
 
     if form.validate_on_submit():
@@ -829,12 +838,24 @@ def add_competence():
 
     return render_template('add_competence.html', form=form)
 
+
 @main.route('/add_element_competence', methods=('GET', 'POST'))
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def add_element_competence():
     form = ElementCompetenceForm()
-    competences = Competence.query.all()
+    
+    # Si c'est un admin, il voit toutes les compétences,
+    # sinon, on filtre selon les programmes auxquels le coordo a accès.
+    if current_user.role == 'admin':
+        competences = Competence.query.all()
+    elif current_user.role == 'coordo':
+        # On récupère les id des programmes auxquels le coordo a accès
+        allowed_programmes = [p.id for p in current_user.programmes]
+        competences = Competence.query.filter(Competence.programme_id.in_(allowed_programmes)).all()
+    else:
+        competences = []
+    
     form.competence.choices = [(c.id, f"{c.code} - {c.nom}") for c in competences]
 
     if form.validate_on_submit():
@@ -865,6 +886,7 @@ def add_element_competence():
             flash(f'Erreur lors de l\'ajout de l\'élément de compétence : {e}', 'danger')
 
     return render_template('add_element_competence.html', form=form)
+
 
 
 @main.route('/edit_fil_conducteur/<int:fil_id>', methods=['GET', 'POST'])
