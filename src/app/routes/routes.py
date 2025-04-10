@@ -782,7 +782,16 @@ def add_programme():
 @ensure_profile_completed
 def add_competence():
     form = CompetenceForm()
-    programmes = Programme.query.all()
+    if current_user.role == 'admin':
+        # Admin: voir tous les programmes
+        programmes = Programme.query.all()
+    elif current_user.role == 'coordo':
+        # Coordo: voir seulement les programmes auxquels il a accès.
+        # Assure-toi que tu as une relation ou une méthode qui te fournit ça.
+        programmes = current_user.programmes  
+    else:
+        programmes = []
+
     form.programme.choices = [(p.id, p.nom) for p in programmes]
 
     if form.validate_on_submit():
@@ -828,6 +837,7 @@ def add_competence():
             flash(f'Erreur lors de l\'ajout de la compétence : {e}', 'danger')
 
     return render_template('add_competence.html', form=form)
+
 
 @main.route('/add_element_competence', methods=('GET', 'POST'))
 @roles_required('admin', 'coordo')
