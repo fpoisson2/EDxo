@@ -844,7 +844,18 @@ def add_competence():
 @ensure_profile_completed
 def add_element_competence():
     form = ElementCompetenceForm()
-    competences = Competence.query.all()
+    
+    # Si c'est un admin, il voit toutes les compétences,
+    # sinon, on filtre selon les programmes auxquels le coordo a accès.
+    if current_user.role == 'admin':
+        competences = Competence.query.all()
+    elif current_user.role == 'coordo':
+        # On récupère les id des programmes auxquels le coordo a accès
+        allowed_programmes = [p.id for p in current_user.programmes]
+        competences = Competence.query.filter(Competence.programme_id.in_(allowed_programmes)).all()
+    else:
+        competences = []
+    
     form.competence.choices = [(c.id, f"{c.code} - {c.nom}") for c in competences]
 
     if form.validate_on_submit():
@@ -875,6 +886,7 @@ def add_element_competence():
             flash(f'Erreur lors de l\'ajout de l\'élément de compétence : {e}', 'danger')
 
     return render_template('add_element_competence.html', form=form)
+
 
 
 @main.route('/edit_fil_conducteur/<int:fil_id>', methods=['GET', 'POST'])
