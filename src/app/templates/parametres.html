@@ -98,6 +98,7 @@
                 </div>
               </div>
 
+              {% if current_user.is_authenticated and (current_user.role == "admin" or current_user.role == "coordo") %}
               <!-- Section Programmes et Compétences -->
               <div class="accordion-item">
                 <h2 class="accordion-header">
@@ -114,16 +115,20 @@
                       <a href="{{ url_for('main.gestion_programmes_cegep') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-building-check me-2"></i>Programmes par Cégep
                       </a>
+                      {% if current_user.role == "admin" or current_user.role == "coordo" %}
                       <a href="{{ url_for('main.add_competence') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-plus-circle me-2"></i>Ajouter compétence
                       </a>
                       <a href="{{ url_for('main.add_element_competence') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-plus-circle-dotted me-2"></i>Ajouter élément
                       </a>
+                      {% endif %}
                     </div>
                   </div>
                 </div>
               </div>
+              {% endif %}
+
 
               <!-- Section Administration -->
               <div class="accordion-item">
