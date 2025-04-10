@@ -110,12 +110,14 @@
                 <div id="programSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
                   <div class="accordion-body p-0">
                     <div class="list-group list-group-flush">
+                      {% if current_user.role == "admin" %}
                       <a href="{{ url_for('main.gestion_programmes_ministeriels') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-journal-text me-2"></i>Programmes ministériels
                       </a>
                       <a href="{{ url_for('main.gestion_programmes_cegep') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-building-check me-2"></i>Programmes par Cégep
                       </a>
+                      {% endif %}
                       <a href="{{ url_for('main.add_competence') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-plus-circle me-2"></i>Ajouter compétence
                       </a>
@@ -127,6 +129,7 @@
                 </div>
               </div>
               {% endif %}
+
 
               {% if current_user.is_authenticated and current_user.role == "admin" %}
               <!-- Section Administration -->
