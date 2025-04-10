@@ -5,6 +5,10 @@ import traceback
 from flask import Blueprint, render_template, redirect, url_for, request, flash, send_file, jsonify, session
 from flask_login import login_required, current_user
 
+from utils.openai_pricing import calculate_call_cost
+
+from openai import OpenAI
+
 from app.forms import (
     DeleteForm,
     PlanCadreForm,
@@ -43,6 +47,132 @@ logging.basicConfig(
 # Blueprint
 ###############################################################################
 plan_cadre_bp = Blueprint('plan_cadre', __name__, url_prefix='/plan_cadre')
+
+@plan_cadre_bp.route('/<int:plan_id>/ai_generate_field', methods=['GET'])
+@roles_required('admin', 'coordo')
+@ensure_profile_completed
+def ai_generate_field(plan_id):
+    """
+    SSE endpoint for AI generation of a single field in the plan-cadre.
+    Must be GET, because EventSource only does GET.
+    """
+    import logging
+    from flask import Response, stream_with_context, request, session
+    from sqlalchemy.sql import text as sa_text
+
+    plan = PlanCadre.query.get(plan_id)
+    if not plan:
+        def error_stream():
+            yield "event: error\ndata: Plan Cadre introuvable\n\n"
+        return Response(stream_with_context(error_stream()), mimetype='text/event-stream')
+
+    # Grab data from query params (not from request.form)
+    field_name = request.args.get('field_name', '')
+    prompt_text = request.args.get('prompt_text', '')
+    model_name = request.args.get('ai_model', 'gpt-4')
+    additional_info = request.args.get('additional_info', '')
+    cours_nom = plan.cours.nom if plan.cours else ""
+    cours_session = plan.cours.session if plan.cours else ""
+    existing_content = request.args.get('existing_content', '')
+
+    # -- Security / business logic checks --
+    if not field_name:
+        def error_stream2():
+            yield "event: error\ndata: Champ (field_name) manquant.\n\n"
+        return Response(stream_with_context(error_stream2()), mimetype='text/event-stream')
+
+    # Suppose you store user’s OpenAI key and credits in current_user
+    openai_key = current_user.openai_key
+    user_credits = current_user.credits or 0.0
+    user_id = current_user.id
+
+    # If the user doesn't have an API key or has insufficient credits, respond
+    if not openai_key:
+        def error_stream3():
+            yield "event: error\ndata: Vous n'avez pas de clé OpenAI configurée.\n\n"
+        return Response(stream_with_context(error_stream3()), mimetype='text/event-stream')
+
+    # Initialize your custom OpenAI client
+    client = OpenAI(api_key=openai_key)
+
+    # We'll build the combined “instruction” for the model
+    # Example: you can adapt this to your use-case
+    old_text = request.args.get('old_text', '')
+    combined_instruction = (
+        f"Voici le contenu existant du champ '{field_name}':\n\n"
+        f"{old_text}\n\n"
+        f"Consignes de l'utilisateur: {prompt_text}\n\n"
+        f"Améliore, clarifie ou complète ce texte en gardant son sens. Ne donne que le texte améliore"
+    )
+
+    try:
+        # Start the streaming call to OpenAI
+        response = client.responses.create(
+            model=model_name,
+            input=[
+                {
+                    "role": "system",
+                    "content": f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', "
+                               f"session {cours_session}. "
+                },
+                {
+                    "role": "user",
+                    "content": combined_instruction
+                }
+            ],
+            text={
+                "format": {
+                    "type": "text"
+                }
+            },
+            store=True,
+            stream=True,  # <--- Stream is important
+        )
+    except Exception as ex:
+        logging.error(f"OpenAI error: {ex}")
+        err_msg = str(ex)
+
+        def error_stream4():
+            # now we reference `err_msg` instead of `e`
+            yield f"event: error\ndata: Erreur API OpenAI: {err_msg}\n\n"
+
+        return Response(stream_with_context(error_stream4()), mimetype='text/event-stream')
+
+
+    # We define a generator function that yields SSE "data: ..." lines
+    def stream_content():
+        try:
+            for chunk in response:
+                # Debug print
+                print("DEBUG chunk =>", chunk)
+                
+                # 1) Partial text from "delta" events
+                if chunk.type == 'response.output_text.delta':
+                    partial_text = getattr(chunk, 'delta', '')
+                    if partial_text:
+                        yield f"event: message\ndata: {partial_text}\n\n"
+
+                # 2) Final text from "done" event
+                elif chunk.type == 'response.output_text.done':
+                    # Then you could yield "done" or let the loop continue
+                    yield "event: done\ndata: done\n\n"
+
+                # 3) Possibly handle "response.completed" or other events
+                elif chunk.type == 'response.completed':
+                    # Typically means we're fully done
+                    yield "event: done\ndata: done\n\n"
+
+            # If the loop ends naturally, also yield done
+            yield "event: done\ndata: done\n\n"
+
+        except Exception as ex_inner:
+            err_msg = str(ex_inner)
+            logging.error(f"Error streaming: {err_msg}")
+            yield f"event: error\ndata: Erreur: {err_msg}\n\n"
+
+    return Response(stream_with_context(stream_content()), mimetype='text/event-stream')
+
+
 
 @plan_cadre_bp.route('/<int:plan_id>/generate_content', methods=['POST'])
 @roles_required('admin', 'coordo')
