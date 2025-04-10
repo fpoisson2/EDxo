@@ -17,6 +17,13 @@
             {{ department_form.nom.label(class="form-label") }}
             {{ department_form.nom(class="form-control", placeholder="Nom du Département") }}
           </div>
+          <div class="mb-3">
+              {{ department_form.cegep_id.label(class="form-label") }}
+              {{ department_form.cegep_id(class="form-select") }}
+              {% for error in department_form.cegep_id.errors %}
+                  <div class="text-danger">{{ error }}</div>
+              {% endfor %}
+          </div>
           <button type="submit" name="ajouter_depart" class="btn btn-primary">{{ department_form.submit.label.text }}</button>
         </form>
       </div>

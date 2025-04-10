@@ -1334,10 +1334,17 @@ def gestion_departements():
     delete_rule_form = DeleteForm()
     delete_piea_form = DeleteForm()
 
+    cegeps = ListeCegep.query.order_by(ListeCegep.nom).all()
+    department_form.cegep_id.choices = [(c.id, c.nom) for c in cegeps]
+
     if request.method == 'POST':
         if 'ajouter_depart' in request.form:
             if department_form.validate_on_submit():
-                nouveau_dep = Department(nom=department_form.nom.data)
+                # Crée le département en liant le cegep choisi
+                nouveau_dep = Department(
+                    nom=department_form.nom.data, 
+                    cegep_id=department_form.cegep_id.data  # Associer le cégep sélectionné
+                )
                 try:
                     db.session.add(nouveau_dep)
                     db.session.commit()
@@ -1349,7 +1356,7 @@ def gestion_departements():
                     flash(f"Erreur lors de l'ajout du département : {e}", 'danger')
             else:
                 flash("Veuillez remplir tous les champs correctement pour le département.", 'danger')
-
+                
         if 'ajouter_regle' in request.form:
             department_id = request.form.get('department_id')
             print(f"Processing rule addition for department {department_id}")
