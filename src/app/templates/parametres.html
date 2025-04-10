@@ -28,8 +28,8 @@
                   <div class="accordion-body p-0">
                     <div class="list-group list-group-flush">
                       <a href="{{ url_for('settings.edit_profile') }}" class="list-group-item list-group-item-action d-flex align-items-center">
-                          <i class="bi bi-person-gear me-2"></i>
-                          <span>Éditer mon profil</span>
+                        <i class="bi bi-person-gear me-2"></i>
+                        <span>Éditer mon profil</span>
                       </a>
                       <a href="{{ url_for('main.change_password') }}" class="list-group-item list-group-item-action d-flex align-items-center">
                         <i class="bi bi-key me-2"></i>
@@ -63,7 +63,6 @@
                       <a href="{{ url_for('settings.configure_analyse_prompt') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.configure_analyse_prompt' %}active{% endif %}">
                         <i class="bi bi-chat-text me-2"></i>Analyse des plans de cours
                       </a>
-                      <!-- Nouveau lien pour la gestion des modèles OpenAI -->
                       <a href="{{ url_for('settings.manage_openai_models') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.manage_openai_models' %}active{% endif %}">
                         <i class="bi bi-cpu me-2"></i>Modèles OpenAI
                       </a>
@@ -71,7 +70,6 @@
                   </div>
                 </div>
               </div>
-
 
               <!-- Section Gestion Académique -->
               <div class="accordion-item">
@@ -99,6 +97,7 @@
                   </div>
                 </div>
               </div>
+              {% endif %}
 
               {% if current_user.is_authenticated and (current_user.role == "admin" or current_user.role == "coordo") %}
               <!-- Section Programmes et Compétences -->
@@ -117,21 +116,19 @@
                       <a href="{{ url_for('main.gestion_programmes_cegep') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-building-check me-2"></i>Programmes par Cégep
                       </a>
-                      {% if current_user.role == "admin" or current_user.role == "coordo" %}
                       <a href="{{ url_for('main.add_competence') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-plus-circle me-2"></i>Ajouter compétence
                       </a>
                       <a href="{{ url_for('main.add_element_competence') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-plus-circle-dotted me-2"></i>Ajouter élément
                       </a>
-                      {% endif %}
                     </div>
                   </div>
                 </div>
               </div>
               {% endif %}
 
-
+              {% if current_user.is_authenticated and current_user.role == "admin" %}
               <!-- Section Administration -->
               <div class="accordion-item">
                 <h2 class="accordion-header">
