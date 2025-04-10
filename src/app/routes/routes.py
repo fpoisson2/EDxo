@@ -778,7 +778,7 @@ def add_programme():
     return render_template('add_programme.html', form=form)
 
 @main.route('/add_competence', methods=['GET', 'POST'])
-@role_required('admin')
+@roles_required('admin', 'coordo')
 @ensure_profile_completed
 def add_competence():
     form = CompetenceForm()
@@ -830,7 +830,7 @@ def add_competence():
     return render_template('add_competence.html', form=form)
 
 @main.route('/add_element_competence', methods=('GET', 'POST'))
-@role_required('admin')
+@roles_required('admin', 'coordo')
 @ensure_profile_completed
 def add_element_competence():
     form = ElementCompetenceForm()
