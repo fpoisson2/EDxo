@@ -1334,10 +1334,16 @@ def gestion_departements():
     delete_rule_form = DeleteForm()
     delete_piea_form = DeleteForm()
 
+    cegeps = ListeCegep.query.order_by(ListeCegep.nom).all()
+    department_form.cegep_id.choices = [(c.id, c.nom) for c in cegeps]
+
     if request.method == 'POST':
         if 'ajouter_depart' in request.form:
             if department_form.validate_on_submit():
-                nouveau_dep = Department(nom=department_form.nom.data)
+                nouveau_dep = Department(
+                    nom=department_form.nom.data, 
+                    cegep_id=department_form.cegep_id.data
+                )
                 try:
                     db.session.add(nouveau_dep)
                     db.session.commit()
@@ -1349,11 +1355,30 @@ def gestion_departements():
                     flash(f"Erreur lors de l'ajout du département : {e}", 'danger')
             else:
                 flash("Veuillez remplir tous les champs correctement pour le département.", 'danger')
-
+        
+        elif 'modifier_depart' in request.form:
+            department_id = request.form.get('department_id')
+            if department_id:
+                department = Department.query.get(department_id)
+                if department:
+                    department.nom = request.form.get('nom')
+                    department.cegep_id = request.form.get('cegep_id')
+                    try:
+                        db.session.commit()
+                        flash("Département modifié avec succès.", 'success')
+                        return redirect(url_for('main.gestion_departements'))
+                    except Exception as e:
+                        print(f"Error updating department: {e}")
+                        db.session.rollback()
+                        flash(f"Erreur lors de la modification du département : {e}", 'danger')
+                else:
+                    flash("Département non trouvé.", 'danger')
+            else:
+                flash("ID du département manquant.", 'danger')
+        
         if 'ajouter_regle' in request.form:
             department_id = request.form.get('department_id')
             print(f"Processing rule addition for department {department_id}")
-            
             regle_form = DepartmentRegleForm()
             if regle_form.regle.data and regle_form.contenu.data:
                 department = Department.query.get(department_id)
@@ -1376,11 +1401,10 @@ def gestion_departements():
                     flash("Département non trouvé.", 'danger')
             else:
                 flash("Veuillez remplir tous les champs.", 'danger')
-
+        
         elif 'ajouter_piea' in request.form:
             department_id = request.form.get('department_id')
             print(f"Processing PIEA addition for department {department_id}")
-            
             piea_form = DepartmentPIEAForm()
             if piea_form.article.data and piea_form.contenu.data:
                 department = Department.query.get(department_id)
@@ -1407,7 +1431,7 @@ def gestion_departements():
     regle_form = DepartmentRegleForm()
     piea_form = DepartmentPIEAForm()
     departments = Department.query.order_by(Department.nom).all()
-    
+
     return render_template(
         'gestion_departements.html',
         department_form=department_form,
@@ -1416,8 +1440,10 @@ def gestion_departements():
         delete_department_form=delete_department_form,
         delete_rule_form=delete_rule_form,
         delete_piea_form=delete_piea_form,
-        departments=departments
+        departments=departments,
+        cegeps=cegeps  # Transmets les cégeps pour le formulaire d'édition inline
     )
+
 
 @main.route('/parametres/gestion_departements/supprimer/<int:departement_id>', methods=['POST'])
 @roles_required('admin')

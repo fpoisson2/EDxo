@@ -14,3 +14,4 @@ src/config/credentials.json
 /src/scripts/pdfs_extraits
 src/scripts/extraction.log
 /src/scripts/txt_output
+/myenv

@@ -595,9 +595,11 @@ class DeleteUserForm(FlaskForm):
     submit = SubmitField('Supprimer')
 
 class DepartmentForm(FlaskForm):
-    nom = StringField('Nom du Département', validators=[DataRequired(), Length(max=100)])
-    submit = SubmitField('Ajouter Département')
-
+    nom = StringField("Nom du Département", validators=[DataRequired()])
+    # Ajoute le champ cegep_id
+    cegep_id = SelectField("Cégep associé", coerce=int, validators=[DataRequired()])
+    submit = SubmitField("Ajouter")
+    
 class DepartmentRegleForm(FlaskForm):
     regle = StringField('Règle', validators=[DataRequired(), Length(max=200)])
     contenu = TextAreaField('Contenu', validators=[DataRequired()])
