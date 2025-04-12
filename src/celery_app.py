@@ -1,7 +1,8 @@
 from celery import Celery
 
 def make_celery():
-    from app import create_app
+    from    app import create_app
+
     flask_app = create_app()
 
     # Retrieve the broker and backend using legacy keys if necessary

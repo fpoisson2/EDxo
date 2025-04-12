@@ -43,6 +43,8 @@ from utils.scheduler_instance import scheduler, start_scheduler, shutdown_schedu
 
 from werkzeug.security import generate_password_hash
 
+from dotenv import load_dotenv 
+
 # Initialize logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -68,6 +70,7 @@ class TestConfig:
 
 
 def create_app(testing=False):
+    load_dotenv()
     base_path = os.path.dirname(os.path.dirname(__file__))
     app = Flask(
         __name__,
@@ -99,6 +102,11 @@ def create_app(testing=False):
             SECRET_KEY=os.getenv('SECRET_KEY'),
             RECAPTCHA_SITE_KEY=os.getenv('RECAPTCHA_PUBLIC_KEY'),
             RECAPTCHA_SECRET_KEY=os.getenv('RECAPTCHA_PRIVATE_KEY'),
+            MISTRAL_API_KEY=os.getenv('MISTRAL_API_KEY'),
+            OPENAI_API_KEY=os.getenv('OPENAI_API_KEY'),
+            MISTRAL_MODEL_OCR="mistral-ocr-latest",
+            OPENAI_MODEL_SECTION = "gpt-4o", # Modèle pour la détection de section
+            OPENAI_MODEL_EXTRACTION = "gpt-4o", # Modèle pour l'extraction de compétences
             WTF_CSRF_ENABLED=True,
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),

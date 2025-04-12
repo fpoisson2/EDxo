@@ -1,4 +1,6 @@
 # app/tasks.py
+import os
+
 
 import json
 import logging
@@ -22,6 +24,10 @@ from extensions import db  # Your SQLAlchemy instance
 from utils.openai_pricing import calculate_call_cost
 # Import any helper functions used in your logic
 from utils.utils import replace_tags_jinja2, get_plan_cadre_data
+
+from ocr_processing import api_clients, pdf_tools, web_utils
+
+from config.constants import *
 
 
 ###############################################################################
@@ -530,3 +536,205 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         db.session.rollback()
         logging.error("Unexpected error: %s", e, exc_info=True)
         return {"status": "error", "message": f"Erreur lors de la génération du contenu: {str(e)}"}
+
+
+@celery.task(bind=True)
+def process_ocr_task(self, pdf_source, pdf_title="Unknown PDF"):
+    """
+    Celery task to download (optional), OCR, and extract skills from a PDF.
+    Updates task state for progress tracking.
+    """
+    task_id = self.request.id
+    logging.info(f"Celery Task {task_id}: Starting OCR process for '{pdf_title}' ({pdf_source})")
+
+    # --- Define base directory for outputs related to this task ---
+    # You might want a more robust way to handle temporary files/folders
+    # For now, using a subfolder in TXT_FOLDER based on task_id
+    # Ensure TXT_FOLDER is defined in your config or adapt this
+    base_output_dir = "txt_outputs"
+    os.makedirs(base_output_dir, exist_ok=True)
+
+    # --- Result dictionary (similar to main_logic.py) ---
+    results = {
+        "task_id": task_id,
+        "pdf_title": pdf_title,
+        "pdf_source": pdf_source,
+        "status": "STARTED",
+        "download_path": None,
+        "ocr_markdown_path": None,
+        "section_info": None,
+        "section_pdf_path": None,
+        "txt_output_path": None,
+        "json_output_path": None,
+        "competences_count": 0,
+        "final_status": "In Progress",
+        "error": None
+    }
+
+    try:
+        # === ADAPTED WORKFLOW FROM main_logic.process_selected_pdf ===
+
+        # --- Step 1: Get the PDF file path ---
+        # If pdf_source is a URL, download it. If it's already a path, use it.
+        pdf_original_path = None
+        if pdf_source.startswith('http://') or pdf_source.startswith('https://'):
+            step_name = "download"
+            self.update_state(state='PROGRESS', meta={'step': step_name, 'message': f"Downloading: {pdf_title}..."})
+            # Ensure DOWNLOAD_FOLDER is configured
+            download_folder = "pdfs"
+            pdf_original_path = web_utils.telecharger_pdf(pdf_source, download_folder) # Assumes web_utils is imported if needed
+            if not pdf_original_path:
+                raise ValueError(f"Failed to download PDF from {pdf_source}")
+            results["download_path"] = pdf_original_path
+            self.update_state(state='PROGRESS', meta={'step': step_name, 'message': f"Downloaded: {os.path.basename(pdf_original_path)}"})
+        else:
+            # Assume pdf_source is already a local file path
+            if os.path.exists(pdf_source):
+                pdf_original_path = pdf_source
+                results["download_path"] = pdf_original_path # Record the source path
+                logging.info(f"Task {task_id}: Using existing file: {pdf_original_path}")
+            else:
+                 raise FileNotFoundError(f"Input PDF path not found: {pdf_source}")
+
+        # Get base name for output files
+        base_name = os.path.basename(pdf_original_path)
+        base_name_no_ext = os.path.splitext(base_name)[0]
+
+        # --- Step 2: OCR ---
+        step_name = "ocr"
+        self.update_state(state='PROGRESS', meta={'step': step_name, 'message': "Starting OCR..."})
+        markdown_filename = f"{base_name_no_ext}_ocr.md"
+        markdown_path = os.path.join(base_output_dir, markdown_filename) # Save in task-specific dir
+        # Use the original PDF URL if available for OCR, otherwise the path
+        ocr_input_source = pdf_source if pdf_source.startswith('http') else pdf_original_path
+        markdown_ok = api_clients.perform_ocr_and_save(ocr_input_source, markdown_path)
+        page_info = None
+        markdown_full_content = None
+
+        if markdown_ok:
+            results["ocr_markdown_path"] = markdown_path
+            self.update_state(state='PROGRESS', meta={'step': step_name, 'message': f"OCR complete: {markdown_filename}"})
+            try:
+                with open(markdown_path, "rt", encoding="utf-8") as f:
+                    markdown_full_content = f.read()
+
+                # --- Step 3: Section Find ---
+                step_name = "section_find"
+                self.update_state(state='PROGRESS', meta={'step': step_name, 'message': "Identifying section (OpenAI)..."})
+                page_info = api_clients.find_section_with_openai(markdown_full_content) # Can return None
+                results["section_info"] = page_info
+                if page_info and page_info.get("page_debut"):
+                    self.update_state(state='PROGRESS', meta={'step': step_name, 'message': f"Section identified: Pages {page_info.get('page_debut')}-{page_info.get('page_fin')}."})
+                else:
+                    self.update_state(state='PROGRESS', meta={'step': step_name, 'message': "Specific section not identified."})
+            except Exception as md_err:
+                logging.error(f"Task {task_id}: Error reading Markdown or finding section: {md_err}", exc_info=True)
+                self.update_state(state='PROGRESS', meta={'step': 'section_find', 'message': f"Warning: Error during section find: {md_err}"})
+        else:
+            self.update_state(state='PROGRESS', meta={'step': step_name, 'message': "OCR failed or skipped. Proceeding without section identification."})
+
+
+        # --- Step 4: Section Extract ---
+        step_name = "section_extract"
+        pdf_to_convert = pdf_original_path
+        section_pdf_path = None
+        if page_info and page_info.get("page_debut") and page_info.get("page_fin"):
+            self.update_state(state='PROGRESS', meta={'step': step_name, 'message': f"Extracting PDF section (pages {page_info['page_debut']}-{page_info['page_fin']})..."})
+            section_pdf_filename = f"{base_name_no_ext}_section.pdf"
+            section_pdf_path = os.path.join(base_output_dir, section_pdf_filename) # Save in task-specific dir
+            section_ok = pdf_tools.extract_pdf_section(
+                pdf_original_path, section_pdf_path,
+                page_info["page_debut"], page_info["page_fin"]
+            )
+            if section_ok:
+                pdf_to_convert = section_pdf_path
+                results["section_pdf_path"] = section_pdf_path
+                self.update_state(state='PROGRESS', meta={'step': step_name, 'message': f"Section PDF extracted: {section_pdf_filename}"})
+            else:
+                results["section_pdf_path"] = None
+                self.update_state(state='PROGRESS', meta={'step': step_name, 'message': "Warning: Failed to extract section. Using full PDF."})
+        # (No message needed if section wasn't identified in the first place)
+
+
+        # --- Step 5: Text Convert ---
+        step_name = "text_convert"
+        pdf_conv_basename = os.path.basename(pdf_to_convert)
+        self.update_state(state='PROGRESS', meta={'step': step_name, 'message': f"Converting '{pdf_conv_basename}' to text..."})
+        txt_output_filename = f"{base_name_no_ext}.txt"
+        txt_output_path = os.path.join(base_output_dir, txt_output_filename) # Save in task-specific dir
+        text_content = pdf_tools.convert_pdf_to_txt(pdf_to_convert, txt_output_path)
+
+        if not text_content:
+             raise ValueError(f"Text conversion failed for {pdf_conv_basename}")
+
+        results["txt_output_path"] = txt_output_path
+        self.update_state(state='PROGRESS', meta={'step': step_name, 'message': f"Text conversion successful: {txt_output_filename}"})
+
+
+        # --- Step 6: Skill Extract ---
+        step_name = "skill_extract"
+        json_output_filename = f"{base_name_no_ext}_competences.json"
+        json_output_path = os.path.join(base_output_dir, json_output_filename) # Save in task-specific dir
+        self.update_state(state='PROGRESS', meta={'step': step_name, 'message': "Extracting competences (OpenAI stream)..."})
+
+        # Define a simple callback for the stream chunks (optional, but good for finer progress)
+        def stream_callback(payload):
+             if payload.get("type") == "delta" and payload.get("data"):
+                # Could potentially update state more frequently here, but might be too much.
+                # For now, just log it if needed.
+                # logging.debug(f"Task {task_id}: Stream delta received.")
+                pass
+             elif payload.get("type") == "error":
+                 # Log errors reported during the stream
+                 logging.error(f"Task {task_id}: Error during skill extraction stream: {payload.get('message')}")
+                 # Maybe update state with a warning?
+                 self.update_state(state='PROGRESS', meta={'step': step_name, 'message': f"Warning during extraction: {payload.get('message')}"})
+
+
+        # This call might raise SkillExtractionError
+        competences_json_string = api_clients.extraire_competences_depuis_txt(
+            text_content,
+            json_output_path,
+            callback=stream_callback # Pass the simple callback
+        )
+
+        results["json_output_path"] = json_output_path
+        try:
+            # Validate and count results
+            competences_data = json.loads(competences_json_string)
+            nb_competences = len(competences_data.get('competences', []))
+            results["competences_count"] = nb_competences
+            results["final_status"] = "SUCCESS"
+            self.update_state(state='PROGRESS', meta={'step': step_name, 'message': f"Extraction successful. Found {nb_competences} competences. Saved: {json_output_filename}"})
+        except json.JSONDecodeError as json_err:
+             results["final_status"] = "COMPLETED_WITH_INVALID_JSON"
+             results["error"] = f"Final JSON parsing failed: {json_err}"
+             logging.error(f"Task {task_id}: {results['error']}")
+             self.update_state(state='PROGRESS', meta={'step': step_name, 'message': f"Warning: Extraction completed but final JSON is invalid: {json_err}"})
+
+
+        # === End of Adapted Workflow ===
+
+        logging.info(f"Task {task_id}: Process completed. Final status: {results['final_status']}")
+        # Return the results dictionary upon success or partial success
+        return results
+
+    except api_clients.SkillExtractionError as skill_e:
+         # Handle specific skill extraction failures
+         error_msg = f"Critical failure during competence extraction: {skill_e}"
+         logging.error(f"Task {task_id}: {error_msg}", exc_info=True)
+         results["final_status"] = "FAILURE"
+         results["error"] = error_msg
+         self.update_state(state='FAILURE', meta=results)
+         return results # Return results even on failure
+
+    except Exception as e:
+        # Handle any other unexpected errors
+        error_msg = f"General critical error during OCR processing: {e}"
+        logging.critical(f"Task {task_id}: {error_msg}", exc_info=True)
+        results["final_status"] = "FAILURE"
+        results["error"] = error_msg
+        # Update Celery state to FAILURE
+        self.update_state(state='FAILURE', meta=results)
+        # Return the results dictionary containing the error
+        return results
