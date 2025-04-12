@@ -687,8 +687,7 @@ Acquérir les données sur le terrain.
 
 2. Effectuer la reconnaissance des lieux.
 
-## - Repérage complet des éléments du relevé.
-
+- Repérage complet des éléments du relevé.
 - Détermination de la zone de travail en fonction du mandat.
 - Détermination adéquate des points de référence.
 - Confection soignée des croquis.
@@ -1401,17 +1400,15 @@ Créer le document cartographique.
 - Délimitation adéquate du territoire.
 - Choix approprié de l'échelle du document cartographique.
 
-2. Appliquer la projection cartographique.
+Identification juste des déformations.
 
-- Identification juste des déformations.
 - Analyse pertinente de l'impact des déformations.
 - Choix judicieux de la projection cartographique.
 - Projection appropriée des jeux de données.
 - Assignation appropriée de la projection cartographique.
 
-3. Représenter le phénomène.
+Sélection appropriée des données.
 
-- Sélection appropriée des données.
 - Usage approprié des icônes et des symboles (création, édition, configuration).
 - Séquence logique des calques cartographiques.
 - Étiquetage conforme des éléments.
@@ -1756,8 +1753,7 @@ Participer à la production de documents d'arpentage foncier.
 
 | Éléments de la compétence | Critères de performance |
 | :--: | :--: |
-| 3. Produire le rapport. | - Description juste des biens-fonds, des bâtisses, des <br> servitudes, des empiétements et des autres constatations. <br> - Rédaction correcte de l'historique cadastral et de la clause <br> de concordance. <br> - Description juste de la conformité de la position des <br> bâtiments et des structures. <br> - Usage approprié du langage juridique. |
-| 4. Finaliser les documents. | - Correction complète des erreurs. <br> - Obtention de l'approbation de l'arpenteuse-géomètre ou <br> l'arpenteur-géomètre. <br> - Assemblage soigné. <br> - Archivage adéquat au greffe. |
+| 3. Produire le rapport. | - Description juste des biens-fonds, des bâtisses, des <br> servitudes, des empiétements et des autres constatations. <br> - Rédaction correcte de l'historique cadastral et de la clause <br> de concordance. <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> - <br> -
 
 ## --- Page 50 ---
 
@@ -2104,24 +2100,12 @@ Précision: L'étude d'un minimum de huit œuvres permet d'atteindre les objecti
 | Énoncé de la compétence |  |
 | Traiter d'une question philosophique. |  |
 | Éléments de la compétence | Critères de performance |
-| 1. Distinguer la philosophie des autres <br> discours sur la réalité. | - Reconnaissance des principales <br> caractéristiques de la philosophie : projets, <br> objets, méthodes. |
-|  | - Identification des principales différences entre le <br> discours philosophique et les discours <br> scientifique et religieux. |
-|  | - Présentation claire de l'avènement de la <br> philosophie et de quelques moments de son <br> évolution. |
-| 2. Présenter la contribution de philosophes de <br> la tradition gréco-latine au traitement de <br> questions. | - Formulation cohérente de la pensée de l'auteur. |
-|  | - Référence appropriée au contexte <br> sociohistorique de la contribution. |
-|  | - Reconnaissance de l'intérêt actuel de la <br> contribution. |
-| 3. Produire une argumentation sur une <br> question philosophique. | - Élaboration d'une problématique philosophique <br> pertinente sur une question. |
-|  | - Formulation claire d'une thèse. |
-|  | - Présentation judicieuse d'arguments, <br> d'objections et de réfutations. |
-|  | - Respect des exigences de la rationalité dans <br> l'argumentation. |
-|  | - Rédaction d'un texte argumentatif d'au moins <br> 700 mots. |
-|  | - Utilisation appropriée de stratégies de révision. |
-
-
+| 1. Distinguer la philosophie des autres <br> discours sur la réalité. | - Reconnaissance des principales <br> caractéristiques de la philosophie : projets, <br> objets, méthodes. <br> - Identification des principales différences entre le <br> discours philosophique et les discours <br> scientifique et religieux. <br> - Présentation claire de l'avènement de la <br> philosophie et de quelques moments de son <br> évolution. |
+| 2. Présenter la contribution de philosophes de <br> la tradition gréco-latine au traitement de <br> questions. | - Formulation cohérente de la pensée de l'auteur. <br> - Référence appropriée au contexte <br> sociohistorique de la contribution. <br> - Reconnaissance de l'intérêt actuel de la <br> contribution. |
+| 3. Produire une argumentation sur une <br> question philosophique. | - Élaboration d'une problématique philosophique <br> pertinente sur une question. <br> - Formulation claire d'une thèse. <br> - Présentation judicieuse d'arguments, <br> d'objections et de réfutations. <br> - Respect des exigences de la rationalité dans <br> l'argumentation. <br> - Rédaction d'un texte argumentatif d'au moins <br> 700 mots. <br> - Utilisation appropriée de stratégies de révision. |
 | Activités d'apprentissage |  |
-| :-- | :-- |
 | Discipline : Philosophie |  |
-| Pondération: 3-1-3 |  |
+| Pondération : 3-1-3 |  |
 | Unités: $\quad 21 / 3$ |  |
 
 ## --- Page 59 ---
@@ -2686,7 +2670,7 @@ Les codes 340 et 345 peuvent être utilisés, dans la mesure où les cours ne so
 
 ## --- Page 73 ---
 
-| Sciences humaines |  | Code : 000W |
+| Sciences humaines |  | Code : 000 W |
 | :--: | :--: | :--: |
 | Objectif |  | Standard |
 | Énoncé de la compétence |  | Contexte de réalisation |

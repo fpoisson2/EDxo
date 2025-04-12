@@ -18,11 +18,12 @@ from wtforms import (
     PasswordField,
     HiddenField,
     TimeField,
-    DecimalField
+    DecimalField,
+    URLField
 )
 from wtforms import ValidationError, ColorField, SubmitField
 from wtforms import widgets
-from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional, Length, EqualTo, Email
+from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional, Length, EqualTo, Email, URL
 from wtforms.widgets import ListWidget, CheckboxInput
 
 from app.models import User
@@ -611,3 +612,8 @@ class DepartmentPIEAForm(FlaskForm):
 class DeleteForm(FlaskForm):
     """Simple form for CSRF protection on delete operations"""
     pass
+
+class OcrTriggerForm(FlaskForm):
+    pdf_url = URLField('URL du PDF', validators=[DataRequired(), URL()])
+    pdf_title = StringField('Titre (Optionnel)', validators=[Optional(), Length(max=100)])
+    submit = SubmitField('Démarrer le traitement')

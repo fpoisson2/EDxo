@@ -34,6 +34,7 @@ from app.routes.plan_de_cours import plan_de_cours_bp
 from app.routes.programme import programme_bp
 from app.routes.settings import settings_bp
 from app.routes.system import system_bp
+from app.routes.ocr_routes import ocr_bp
 # Import version
 from config.version import __version__
 # Import centralized extensions
@@ -157,6 +158,7 @@ def create_app(testing=False):
     app.register_blueprint(system_bp)
     app.register_blueprint(evaluation_bp)
     app.register_blueprint(gestion_programme_bp)
+    app.register_blueprint(ocr_bp)
 
     # Register helpers and handlers
     @app.context_processor

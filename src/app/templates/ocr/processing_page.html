@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Traitement OCR en cours{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Traitement OCR en cours...</h1>
+    <p>Veuillez patienter pendant l'analyse du document.</p>
+    <p><strong>ID de la tâche :</strong> {{ task_id }}</p>
+
+    <div id="status-messages" class="mt-3">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <span id="status-text" class="ms-2">Initialisation...</span>
+    </div>
+
+    <div id="progress-details" class="mt-2" style="font-size: 0.9em; color: grey;">
+        </div>
+
+    <div id="result-link" class="mt-4" style="display: none;">
+         <a href="#" class="btn btn-success">Voir les résultats</a>
+    </div>
+     <div id="error-message" class="mt-4 alert alert-danger" style="display: none;">
+         </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }} <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const taskId = "{{ task_id }}"; // Récupère l'ID de la tâche depuis le contexte Flask
+        const statusTextElement = document.getElementById('status-text');
+        const progressDetailsElement = document.getElementById('progress-details');
+        const resultLinkElement = document.getElementById('result-link').querySelector('a');
+        const resultLinkContainer = document.getElementById('result-link');
+        const errorMessageElement = document.getElementById('error-message');
+        const spinnerElement = document.querySelector('#status-messages .spinner-border');
+
+        let intervalId = null;
+
+        function checkTaskStatus() {
+            fetch(`/ocr/status/${taskId}`) // Appelle la route de statut
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Statut reçu:", data); // Pour le débogage
+
+                    // Mise à jour du texte principal du statut
+                    if (data.state === 'PROGRESS') {
+                        statusTextElement.textContent = `En cours (${data.info.step || ''})...`;
+                        if(spinnerElement) spinnerElement.style.display = 'inline-block'; // Garder le spinner
+                    } else if (data.state === 'SUCCESS') {
+                        statusTextElement.textContent = 'Terminé avec succès!';
+                        if(spinnerElement) spinnerElement.style.display = 'none'; // Cacher le spinner
+                    } else if (data.state === 'FAILURE') {
+                         statusTextElement.textContent = 'Échec du traitement.';
+                         if(spinnerElement) spinnerElement.style.display = 'none'; // Cacher le spinner
+                    } else {
+                        statusTextElement.textContent = data.state; // PENDING, etc.
+                        if(spinnerElement) spinnerElement.style.display = 'inline-block';
+                    }
+
+                    // Mise à jour des détails de progression
+                    if (data.info && data.info.message) {
+                         progressDetailsElement.textContent = data.info.message;
+                    } else if (data.state !== 'SUCCESS' && data.state !== 'FAILURE'){
+                         progressDetailsElement.textContent = ''; // Effacer si pas de message pertinent
+                    }
+
+                    // Gérer la fin de la tâche
+                    if (data.state === 'SUCCESS') {
+                        clearInterval(intervalId); // Arrêter le polling
+                        progressDetailsElement.textContent = `Traitement terminé. ${data.info.competences_count || 0} compétences trouvées.`; // Message final
+                        if (data.result_url) {
+                            resultLinkElement.href = data.result_url;
+                            resultLinkContainer.style.display = 'block'; // Afficher le lien vers les résultats
+                        }
+                        errorMessageElement.style.display = 'none';
+                    } else if (data.state === 'FAILURE') {
+                        clearInterval(intervalId); // Arrêter le polling
+                        const errorMsg = data.info && data.info.error ? data.info.error : 'Une erreur inconnue est survenue.';
+                        progressDetailsElement.textContent = `Erreur: ${errorMsg}`; // Afficher l'erreur détaillée
+                        errorMessageElement.textContent = `Le traitement a échoué. Détails: ${errorMsg}`;
+                        errorMessageElement.style.display = 'block';
+                        resultLinkContainer.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération du statut:', error);
+                    statusTextElement.textContent = 'Erreur de communication...';
+                    progressDetailsElement.textContent = `Impossible de vérifier le statut de la tâche (${error}).`;
+                    // On n'arrête pas forcément le polling ici, pourrait être temporaire
+                });
+        }
+
+        // Démarrer le polling toutes les 3 secondes (ajustez si nécessaire)
+        intervalId = setInterval(checkTaskStatus, 3000);
+
+        // Vérifier une première fois immédiatement
+        checkTaskStatus();
+    });
+</script>
+{% endblock %}

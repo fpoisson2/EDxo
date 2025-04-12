@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Résultats du Traitement OCR{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Résultats du Traitement OCR</h1>
+
+    {% if results %}
+        <p><strong>ID de la Tâche :</strong> {{ results.task_id }}</p>
+        <p><strong>PDF Traité :</strong> {{ results.pdf_title }}</p>
+        <p><strong>Source :</strong> {{ results.pdf_source }}</p>
+        <p><strong>Statut Final :</strong> <span class="badge bg-{% if results.final_status == 'SUCCESS' %}success{% elif results.final_status.startswith('COMPLETED_WITH') %}warning{% else %}danger{% endif %}">{{ results.final_status }}</span></p>
+
+        {% if results.error %}
+            <div class="alert alert-danger">
+                <strong>Erreur :</strong> {{ results.error }}
+            </div>
+        {% endif %}
+
+        {% if results.final_status == 'SUCCESS' or results.final_status.startswith('COMPLETED_WITH') %}
+            <h2>Détails :</h2>
+            <ul>
+                {% if results.download_path %}
+                    <li>Chemin PDF téléchargé : {{ results.download_path }}</li>
+                {% endif %}
+                {% if results.ocr_markdown_path %}
+                     <li>Chemin Markdown (OCR) : {{ results.ocr_markdown_path }}</li>
+                {% endif %}
+                 {% if results.section_info and results.section_info.page_debut %}
+                     <li>Section identifiée : Pages {{ results.section_info.page_debut }} - {{ results.section_info.page_fin }}</li>
+                 {% elif results.section_info is none and results.ocr_markdown_path %}
+                     <li>Section spécifique : Non identifiée</li>
+                 {% endif %}
+                 {% if results.section_pdf_path %}
+                     <li>Chemin PDF section : {{ results.section_pdf_path }}</li>
+                 {% endif %}
+                 {% if results.txt_output_path %}
+                     <li>Chemin Texte extrait : {{ results.txt_output_path }}</li>
+                 {% endif %}
+                 {% if results.json_output_path %}
+                     <li>Chemin JSON compétences : {{ results.json_output_path }}</li>
+                 {% endif %}
+                 <li>Nombre de compétences trouvées : {{ results.competences_count }}</li>
+            </ul>
+            {% endif %}
+
+    {% else %}
+        <div class="alert alert-warning">Aucun résultat trouvé pour cette tâche.</div>
+    {% endif %}
+
+     <a href="{{ url_for('ocr.show_trigger_page') }}" class="btn btn-secondary mt-3">Nouveau traitement</a>
+
+</div>
+{% endblock %}

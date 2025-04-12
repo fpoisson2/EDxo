@@ -13,7 +13,7 @@
                     "d’outils (ex. : logiciels de géomatique et de bureautique, outils d’arpentage et d’acquisition de données géospatiales)",
                     "d’équipement de protection",
                     "de normes",
-                    "des lois et règlements."
+                    "des lois et règlements"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -77,7 +77,7 @@
                     "d’outils de mesure et de géométrie",
                     "de documentation de référence",
                     "du mandat",
-                    "de normes."
+                    "de normes"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": null,
@@ -145,7 +145,7 @@
                     "du mandat",
                     "de normes",
                     "des lois et règlements",
-                    "des règles de santé et de sécurité du travail."
+                    "des règles de santé et de sécurité du travail"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -187,7 +187,7 @@
                 {
                     "element": "Assurer la qualité et la conservation des données.",
                     "criteres": [
-                        "Validation appropriée des mesures par : doubles vérifications, points de contrôle.",
+                        "Validation appropriée des mesures par : o doubles vérifications; o points de contrôle.",
                         "Complétude des données et des croquis.",
                         "Concordance entre les données acquises, le carnet de notes et le terrain.",
                         "Sauvegarde appropriée des fichiers et des documents."
@@ -214,13 +214,13 @@
                 "APartirDe": [
                     "de données de terrain (angles, distances, coordonnées et notes)",
                     "de nuages de points (ex. données lidar, données sonar)",
-                    "de points de contrôle et de référence."
+                    "de points de contrôle et de référence"
                 ],
                 "ALaideDe": [
                     "d’une calculatrice",
                     "d’un logiciel de calcul de données d’arpentage ou de traitement de nuages de points",
                     "du mandat",
-                    "de normes."
+                    "de normes"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -284,7 +284,7 @@
                     "des modèles numériques de terrain ou de surface (MNT ou MNS)",
                     "du mandat",
                     "de normes",
-                    "des lois et règlements."
+                    "des lois et règlements"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -343,14 +343,14 @@
                 "APartirDe": [
                     "d’images numériques géoréférencées (ex. : imagerie aérienne ou satellitaire, orthoimages)",
                     "de couples stéréoscopiques",
-                    "de données géospatiales (ex. : nuages de points)."
+                    "de données géospatiales (ex. : nuages de points)"
                 ],
                 "ALaideDe": [
-                    "de logiciels (ex. : logiciels de système d’information géographique [SIG], de dessin assisté par ordinateur [DAO] ou de photogrammétrie)",
+                    "de logiciels ( ex. : logiciels de système d’information géographique [SIG], de dessin assisté par ordinateur [DAO] ou de photogrammétrie)",
                     "d’algorithmes d’intelligence artificielle (ex. : algorithmes de détection d’objets, de segmentation)",
                     "d’un outil ou d’un environnement de vision stéréoscopique",
                     "du mandat",
-                    "de normes."
+                    "de normes"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -399,12 +399,12 @@
                 "APartirDe": [
                     "de données de terrain (ex. : coordonnées, croquis, mesures, notes, photographies)",
                     "de données géospatiales",
-                    "de modèles 3D (ex. : MNT, maquette numérique, bâti immobilier modélisé [BIM])."
+                    "de modèles 3D (ex. : MNT, maquette numérique, bâti immobilier modélisé [BIM])"
                 ],
                 "ALaideDe": [
                     "de logiciels (ex. : logiciels de DAO, d’arpentage)",
                     "du mandat",
-                    "de normes."
+                    "de normes"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -433,7 +433,7 @@
                     "element": "Annoter le plan.",
                     "criteres": [
                         "Inscription adéquate des cotes.",
-                        "Inscription adéquate des directions, des distances et des superficies.",
+                        "Inscription adéquate des directions, des distances et des superficies . ",
                         "Identification pertinente des éléments.",
                         "Inscription adéquate de la toponymie.",
                         "Hiérarchisation adéquate de la typographie."
@@ -468,13 +468,13 @@
                     "Lors de l’ajout de données à un produit géomatique ou d’arpentage existant."
                 ],
                 "APartirDe": [
-                    "de données (ex. : données géospatiales, tabulaires)."
+                    "de données (ex. : données géospatiales, tabulaires)"
                 ],
                 "ALaideDe": [
                     "de logiciels (ex. : logiciels de SIG, tableur, extracto-chargeur)",
                     "d’un langage de programmation et de bibliothèques logicielles",
                     "du mandat",
-                    "de normes."
+                    "de normes"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -550,15 +550,15 @@
                 "details_generaux": [
                     "Dans des entreprises ou des organismes de tailles variées.",
                     "Individuellement.",
-                    "Pour l ’interprétation et la validation de données géospatiales, pour l’analyse de l ’incertitude, etc."
+                    "Pour l’interprétation et la validation de données géospatiales, pour l’analyse de l’incertitude, etc."
                 ],
                 "APartirDe": [
-                    "de données (ex. : données géospatiales, données statistiques)."
+                    "de données (ex. : données géospatiales, données statistiques)"
                 ],
                 "ALaideDe": [
                     "de logiciels (ex. : tableur, logiciels de calcul spécialisé, de graphisme, de bureautique)",
                     "de la documentation de référence",
-                    "du mandat."
+                    "du mandat"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -605,13 +605,13 @@
                     "Individuellement ou en équipe."
                 ],
                 "APartirDe": [
-                    "de données (ex. : données géospatiales, statistiques)."
+                    "de données (ex. : données géospatiales, statistiques)"
                 ],
                 "ALaideDe": [
-                    "de logiciels (ex. : logiciels de SIG, d’analyse spatiale)",
+                    "de logiciels (ex. : logiciels de de SIG, d’analyse spatiale)",
                     "d’outils d’analyse spatiale (ex. : outils d’analyse de réseaux, de topographie, de géostatistiques, de voisinage)",
                     "de la documentation de référence",
-                    "du mandat."
+                    "du mandat"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -665,7 +665,7 @@
                     "de capteurs (ex. : géolocalisation et navigation par un système de satellites [GNSS], capteur inertiel, caméra)",
                     "des données géospatiales",
                     "du mandat",
-                    "de normes."
+                    "de normes"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -731,15 +731,15 @@
                     "Individuellement."
                 ],
                 "APartirDe": [
-                    "d’images numériques (ex. : imagerie satellitaire, aérienne, multispectrale, radar)."
+                    "d’images numériques (ex. : imagerie satellitaire, aérienne, multispectrale, radar)"
                 ],
                 "ALaideDe": [
                     "de logiciels (ex. : logiciels de traitement d’images, de télédétection)",
-                    "de méthodes de classification (ex. : méthode manuelle, automatisée, par apprentissage profond)",
+                    "de méthodes de classification (ex. : méthodes manuelle, automatisée, par apprentissage profond)",
                     "d’une clé d’interprétation",
                     "des données géospatiales",
                     "du mandat",
-                    "de normes."
+                    "de normes"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -806,13 +806,13 @@
                     "Pour la production de modèles 3D (ex. : MNT, MNS, BIM, maquette physique)."
                 ],
                 "APartirDe": [
-                    "de données (ex. : données de terrain, géospatiales, etc.)."
+                    "de données (ex. : données de terrain, géospatiales, etc.)"
                 ],
                 "ALaideDe": [
                     "de logiciels (ex. : logiciels de DAO, de SIG, de BIM, de traitement de nuages de points, de photogrammétrie)",
                     "d’appareils de modélisation 3D (ex. imprimante 3D, appareil CNC)",
                     "du mandat",
-                    "de normes."
+                    "de normes"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -879,14 +879,14 @@
                 ],
                 "APartirDe": [
                     "de données (ex. : données géospatiales, statistiques)",
-                    "d’informations complémentaires (ex. : graphiques, tableaux, images, résultats d’analyses spatiales et statistiques)."
+                    "d’informations complémentaires (ex. : graphiques, tableaux, images, résultats d’analyses spatiales et statistiques)"
                 ],
                 "ALaideDe": [
                     "de logiciels (ex. : logiciels de SIG, de graphisme)",
                     "d’une imprimante",
                     "de documents de référence",
                     "du mandat",
-                    "de normes."
+                    "de normes"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -962,16 +962,16 @@
                 "details_generaux": [
                     "Dans des entreprises ou des organismes de tailles variées.",
                     "Individuellement.",
-                    "En collaboration avec des personnes-ressources et des spécialistes de domaines variés."
+                    "En collaboration avec : des personnes-ressources; des spécialistes de domaines variés."
                 ],
                 "APartirDe": [
-                    "de données (ex. : données géospatiales, d’infrastructures)."
+                    "de données (ex. : données géospatiales, d’infrastructures)"
                 ],
                 "ALaideDe": [
                     "de logiciels (ex. : logiciels de SIG, système de gestion de base de données à référence spatiale)",
                     "de documents de référence",
                     "du mandat",
-                    "de normes."
+                    "de normes"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -1047,7 +1047,7 @@
                     "de documents d’arpentage de référence",
                     "du mandat",
                     "de normes",
-                    "des lois, des règlements et des politiques."
+                    "des lois, des règlements et des politiques"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -1099,7 +1099,7 @@
                 "details_generaux": [
                     "Dans des entreprises ou des organismes de tailles variées.",
                     "Dans le cadre d’un projet concernant la collecte et le traitement de données géospatiales.",
-                    "En collaboration avec l’équipe de terrain, l’équipe de traitement de données, la clientèle ou la superviseuse ou le superviseur, et les autres personnes qui collaborent au projet de production."
+                    "En collaboration avec : l’équipe de terrain; l’équipe de traitement de données; la clientèle ou la superviseuse ou le superviseur; les autres personnes qui collaborent au projet de production."
                 ],
                 "APartirDe": null,
                 "ALaideDe": [
@@ -1107,7 +1107,7 @@
                     "du mandat",
                     "de normes",
                     "des lois, des règlements et des politiques",
-                    "des règles de santé et de sécurité du travail."
+                    "des règles de santé et de sécurité du travail"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -1180,7 +1180,7 @@
                 "APartirDe": [
                     "de données (ex. : levés antérieurs, coordonnées connues)",
                     "de plans (ex. : plans d’arpentage, d’analyse, de calcul, d’architecture, d’ingénierie)",
-                    "de modèles 3D (ex. : MNT, BIM)."
+                    "de modèles 3D (ex. : MNT, BIM)"
                 ],
                 "ALaideDe": [
                     "de logiciels (ex. : logiciels de DAO, de calcul spécialisé)",
@@ -1190,7 +1190,7 @@
                     "du mandat",
                     "de normes",
                     "des lois et des règlements",
-                    "des règles de santé et de sécurité du travail."
+                    "des règles de santé et de sécurité du travail"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -1251,14 +1251,14 @@
                 ],
                 "APartirDe": [
                     "de recherches foncières, législatives et cadastrales",
-                    "de données de terrain."
+                    "de données de terrain"
                 ],
                 "ALaideDe": [
                     "de logiciels (ex. : logiciels de DAO, d’arpentage, de bureautique)",
                     "de documents d’arpentage",
                     "du mandat",
                     "de normes",
-                    "des lois, des règlements et des politiques."
+                    "des lois, des règlements et des politiques"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -1317,13 +1317,13 @@
                 "APartirDe": [
                     "de l’analyse foncière",
                     "de recherches foncières, législatives et cadastrales",
-                    "de données de terrain."
+                    "de données de terrain"
                 ],
                 "ALaideDe": [
                     "de logiciels (ex. : logiciels de DAO, d’arpentage foncier, de bureautique)",
                     "du mandat",
                     "des instructions pour la présentation des documents cadastraux",
-                    "des lois, des règlements et des politiques."
+                    "des lois, des règlements et des politiques"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
@@ -1378,7 +1378,7 @@
                 "APartirDe": [
                     "de données (ex. : données géospatiales, statistiques, d’infrastructures)",
                     "de modèles 3D (ex. : MNT, BIM)",
-                    "d’images et de logos."
+                    "d’images et de logos"
                 ],
                 "ALaideDe": [
                     "de logiciels (ex. : logiciels de SIG, de SIG Web)",
@@ -1387,7 +1387,7 @@
                     "de documents de référence",
                     "du mandat",
                     "de normes",
-                    "des lois et des règlements."
+                    "des lois et des règlements"
                 ]
             },
             "Critères de performance pour l’ensemble de la compétence": [
