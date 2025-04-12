@@ -1,0 +1,407 @@
+{
+    "competences": [
+        {
+            "Code": "01UJ",
+            "Nom de la compétence": "Analyser la fonction de travail.",
+            "Contexte de réalisation": {
+                "details_generaux": null,
+                "APartirDe": [
+                    "données récentes sur l’exercice des fonctions de travail de la profession.",
+                    "données récentes sur les entreprises et les établissements du secteur d’activité."
+                ],
+                "ALaideDe": null
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Caractériser la fonction de travail et ses conditions d’exercice.",
+                    "criteres": [
+                        "Pertinence de l’information recueillie.",
+                        "Examen complet des caractéristiques générales de la fonction de travail et de ses conditions d’exercice.",
+                        "Reconnaissance juste des possibilités d’emploi du secteur d’activité.",
+                        "Reconnaissance juste des différents milieux de travail et du rôle des personnes-ressources.",
+                        "Reconnaissance juste des différentes possibilités de cheminement de carrière.",
+                        "Délimitation juste du champ d’activité et des tâches par rapport à des fonctions de travail connexes."
+                    ]
+                },
+                {
+                    "element": "Examiner les tâches et les opérations liées à la fonction de travail.",
+                    "criteres": [
+                        "Examen poussé des opérations, des conditions d’exécution et des critères de performance relatifs à chacune des tâches.",
+                        "Détermination exacte de l’importance relative des tâches.",
+                        "Mise en relation des étapes du processus de travail avec les tâches de la fonction de travail.",
+                        "Mise en relation pertinente des tâches de la fonction de travail avec celles des autres personnes-ressources."
+                    ]
+                },
+                {
+                    "element": "Examiner les habiletés, les attitudes et les comportements nécessaires à l’exercice de la fonction de travail.",
+                    "criteres": [
+                        "Pertinence des liens établis entre les habiletés, les comportements et les tâches de la fonction de travail."
+                    ]
+                },
+                {
+                    "element": "Examiner le contexte d’exercice de la profession.",
+                    "criteres": [
+                        "Reconnaissance juste du rôle, des pouvoirs et des responsabilités des associations et des organismes du secteur d’activité.",
+                        "Examen complet des normes du travail touchant la profession.",
+                        "Reconnaissance juste des droits et des responsabilités des employeurs, des employés et des employées.",
+                        "Examen complet des règles de l’éthique professionnelle.",
+                        "Délimitation claire du rôle et des responsabilités des techniciennes et des techniciens par rapport à ceux des autres spécialistes."
+                    ]
+                },
+                {
+                    "element": "Reconnaître les possibilités de la veille technologique et du perfectionnement continu.",
+                    "criteres": [
+                        "Détermination juste des principaux facteurs à l’origine des besoins de formation continue dans le secteur de la mécanique du bâtiment.",
+                        "Examen approprié des possibilités offertes aux travailleuses et travailleurs en mécanique du bâtiment.",
+                        "Liste détaillée de la documentation, des sources de référence et des possibilités de formation continue."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "01UK",
+            "Nom de la compétence": "Assumer ses responsabilités au regard de la santé et de la sécurité.",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Travail individuel et en équipe."
+                ],
+                "APartirDe": [
+                    "lois et des règlements régissant la santé et la sécurité au travail pour le secteur de la construction."
+                ],
+                "ALaideDe": [
+                    "documentation technique.",
+                    "documents du SIMDUT et sur l’élimination des produits dangereux.",
+                    "équipement de protection individuelle et collective."
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Relever les dangers relatifs au milieu de travail.",
+                    "criteres": [
+                        "Détermination précise des postes de travail à haut risque d’accident.",
+                        "Détermination juste des situations de travail potentiellement dangereuses.",
+                        "Relevé exact de l’équipement et des produits dangereux.",
+                        "Interprétation juste des fiches signalétiques du SIMDUT.",
+                        "Communication claire des observations effectuées.",
+                        "Consignation précise de l’information."
+                    ]
+                },
+                {
+                    "element": "Recueillir de l’information sur les moyens de prévenir les accidents de travail.",
+                    "criteres": [
+                        "Interprétation correcte des lois et des règlements relativement aux situations de travail dangereuses.",
+                        "Pertinence de l’information recueillie sur l’organisation fonctionnelle et ergonomique des postes de travail.",
+                        "Recherche méthodique et efficace d’information dans la documentation française et anglaise.",
+                        "Curiosité dans la recherche d’information."
+                    ]
+                },
+                {
+                    "element": "Prévoir les mesures à prendre en cas d’accident.",
+                    "criteres": [
+                        "Détermination juste des mesures à prendre en fonction de l’accident et de sa gravité.",
+                        "Pertinence de l’équipement de protection choisi selon son utilité et la situation de travail.",
+                        "Planification détaillée d’un ensemble de mesures préventives."
+                    ]
+                },
+                {
+                    "element": "Suivre les directives administratives lors d’accidents de travail.",
+                    "criteres": [
+                        "Évaluation pertinente de l’accident et de sa gravité.",
+                        "Application juste des normes de sécurité selon les plans de prévention des accidents.",
+                        "Application juste des concepts et des principes à la base d’un comportement sécuritaire.",
+                        "Communication efficace avec les services d’urgence et les personnes intéressées.",
+                        "Utilisation judicieuse des formulaires à remplir lors d’accidents de travail.",
+                        "Interprétation juste des directives."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "01UL",
+            "Nom de la compétence": "Analyser les efforts, les forces et les charges exercées sur des systèmes mécaniques.",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Travail individuel et en équipe."
+                ],
+                "APartirDe": [
+                    "tâches relatives à la mécanique du bâtiment comme la conception et le travail sur l’équipement."
+                ],
+                "ALaideDe": [
+                    "documentation technique en français et en anglais.",
+                    "calculatrice, de tables, d’abaques et d’un ordinateur.",
+                    "appareils de mesure.",
+                    "systèmes de mesure international et impérial."
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser les forces exercées sur une structure.",
+                    "criteres": [
+                        "Schématisation appropriée des phénomènes physiques.",
+                        "Calculs précis de la résultante de plusieurs forces concourantes et non concourantes.",
+                        "Prise en considération des principes d’équilibre et des conditions d’équilibre, de translation et de rotation.",
+                        "Détermination juste de la distribution des forces dans les parties d’une structure.",
+                        "Interprétation correcte des résultats en fonction de la situation.",
+                        "Manifestation d’un esprit analytique efficace."
+                    ]
+                },
+                {
+                    "element": "Analyser la résistance des matériaux.",
+                    "criteres": [
+                        "Distinction claire des propriétés physiques des matériaux sous pression en fonction du type de système en cause.",
+                        "Prédiction exacte des causes de déformation des matériaux.",
+                        "Calcul précis des contraintes physiques et thermiques.",
+                        "Détermination exacte des limites et des contraintes d’utilisation des matériaux.",
+                        "Interprétation correcte des résultats en fonction de la situation.",
+                        "Manifestation d’un esprit analytique efficace."
+                    ]
+                },
+                {
+                    "element": "Analyser les mouvements dans un assemblage (cinématique).",
+                    "criteres": [
+                        "Reconnaissance précise des types de mouvements en cause.",
+                        "Détermination juste des paramètres à considérer en fonction du type de mouvement.",
+                        "Mesures appropriées à chaque type de mouvement.",
+                        "Manipulation soignée des appareils de mesure.",
+                        "Interprétation correcte des résultats en fonction de la situation."
+                    ]
+                },
+                {
+                    "element": "Analyser les forces dynamiques intervenant dans le fonctionnement des systèmes.",
+                    "criteres": [
+                        "Calcul précis des efforts et des forces engendrés par le mouvement.",
+                        "Évaluation juste des vibrations et des effets parasismiques sur les systèmes mécaniques.",
+                        "Souci de la précision dans la prise de mesures.",
+                        "Manipulation soignée des appareils de mesure.",
+                        "Calcul précis des efforts et des forces ainsi que de leurs effets.",
+                        "Prise en considération des principes de la dynamique.",
+                        "Détermination juste de la force nécessaire pour engendrer un mouvement donné.",
+                        "Interprétation correcte des résultats en fonction de la situation."
+                    ]
+                },
+                {
+                    "element": "Analyser la puissance énergétique engendrée dans un mécanisme en mouvement.",
+                    "criteres": [
+                        "Calcul précis de l’énergie nécessaire pour engendrer un mouvement.",
+                        "Prise en considération des principes de la conservation d’énergie et des lois de la physique.",
+                        "Calcul précis de la puissance et du rendement énergétique.",
+                        "Détermination correcte du coefficient de performance d’un système mécanique.",
+                        "Interprétation correcte des résultats en fonction de la situation."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "01UM",
+            "Nom de la compétence": "Analyser les conditions de transport des fluides en mécanique du bâtiment.",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Travail individuel et en équipe."
+                ],
+                "APartirDe": null,
+                "ALaideDe": [
+                    "documentation technique pertinente en français et en anglais.",
+                    "calculatrice, de tables, d’abaques et d’un ordinateur.",
+                    "appareils de mesure.",
+                    "systèmes de mesure international et impérial."
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Prendre connaissance de la situation.",
+                    "criteres": [
+                        "Interprétation juste du mandat.",
+                        "Observation attentive des faits.",
+                        "Détermination exacte du problème."
+                    ]
+                },
+                {
+                    "element": "Effectuer une recherche d’information.",
+                    "criteres": [
+                        "Recherche exhaustive de documents de référence pertinents.",
+                        "Détermination juste des propriétés physiques et thermodynamiques des fluides.",
+                        "Consultation de personnes-ressources compétentes.",
+                        "Détermination juste des analyses à effectuer."
+                    ]
+                },
+                {
+                    "element": "Effectuer des analyses.",
+                    "criteres": [
+                        "Prise en considération de la problématique et de la faisabilité.",
+                        "Utilisation judicieuse de la documentation technique.",
+                        "Différenciation appropriée du type de fluide en fonction des systèmes et des composants.",
+                        "Examen minutieux de l’état des fluides chauffés ou refroidis.",
+                        "Prise en considération des contraintes et des limites des fluides utilisés."
+                    ]
+                },
+                {
+                    "element": "Vérifier le comportement des fluides dans les canalisations.",
+                    "criteres": [
+                        "Détermination exacte du mode d’écoulement des fluides dans la tuyauterie et les conduits.",
+                        "Prise en considération des facteurs influant sur le comportement des fluides pour différents agencements de tuyauterie et de conduits.",
+                        "Respect des principes et des lois propres à la conservation d’énergie.",
+                        "Utilisation efficace de la documentation technique.",
+                        "Manipulation soignée et minutieuse des appareils de mesure.",
+                        "Calculs précis des pertes de charges lors du transport des fluides.",
+                        "Interprétation juste des calculs dans les systèmes d’unités international et impérial.",
+                        "Adéquation juste entre le comportement des fluides et les résultats recherchés."
+                    ]
+                },
+                {
+                    "element": "Communiquer les résultats.",
+                    "criteres": [
+                        "Traitement méthodique de l’ensemble des données.",
+                        "Pertinence et logique des idées.",
+                        "Clarté de la présentation."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "01UN",
+            "Nom de la compétence": "Exploiter un poste de travail informatisé.",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Travail individuel."
+                ],
+                "APartirDe": [
+                    "poste de travail informatisé branché à un réseau et à l’autoroute électronique."
+                ],
+                "ALaideDe": [
+                    "documentation technique en français et en anglais.",
+                    "logiciels d’avant-garde."
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Préparer le poste de travail.",
+                    "criteres": [
+                        "Vérification méthodique de l’installation des composants d’un poste informatique.",
+                        "Respect des règles d’ergonomie en ce qui concerne l’aménagement du poste de travail et la posture à adopter.",
+                        "Mise en marche et arrêt méthodiques d’un système d’exploitation.",
+                        "Préparation appropriée des disquettes et des autres outils de travail."
+                    ]
+                },
+                {
+                    "element": "Utiliser les fonctions de base d’un système d’exploitation.",
+                    "criteres": [
+                        "Utilisation appropriée des principales fonctions d’un environnement graphique telles que les fenêtres, les boîtes de dialogue et les barres de menus, d’outils et de défilement.",
+                        "Respect de la marche à suivre pour la création, l’enregistrement et l’impression de documents.",
+                        "Respect de la marche à suivre pour la navigation et le transfert de données d’un logiciel à l’autre.",
+                        "Utilisation appropriée des principales fonctions du gestionnaire de fichiers pour les différents supports informatiques tels que le disque dur, la disquette et le cédérom.",
+                        "Respect de la marche à suivre pour la compression et la décompression de fichiers.",
+                        "Personnalisation appropriée d’un environnement graphique en fonction des besoins.",
+                        "Utilisation appropriée d’un logiciel antivirus."
+                    ]
+                },
+                {
+                    "element": "Résoudre des problèmes d’utilisation de logiciels avec la fonction aide.",
+                    "criteres": [
+                        "Recherche efficace de l’information.",
+                        "Interprétation et application appropriées des solutions.",
+                        "Interprétation juste des termes techniques de logiciels anglais."
+                    ]
+                },
+                {
+                    "element": "Produire un court document par traitement de texte.",
+                    "criteres": [
+                        "Sélection juste des outils de base et de mise en forme, selon leurs fonctions respectives.",
+                        "Utilisation des commandes de base appropriées."
+                    ]
+                },
+                {
+                    "element": "Produire un document simple avec un tableur électronique.",
+                    "criteres": [
+                        "Sélection juste des outils de base et de mise en forme, selon leurs fonctions respectives.",
+                        "Utilisation des commandes de base appropriées."
+                    ]
+                },
+                {
+                    "element": "Utiliser l’autoroute électronique.",
+                    "criteres": [
+                        "Sélection des fonctions pertinentes du logiciel de communication.",
+                        "Navigation efficace pour la recherche d’information.",
+                        "Respect de la marche à suivre pour la création d’un répertoire de signets.",
+                        "Respect de la marche à suivre pour le traitement de l’information et du courrier électronique.",
+                        "Récupération et impression efficace de dessins, de textes, d’articles ou de catalogues des fabricants.",
+                        "Interprétation correcte de l’information en anglais."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "01UP",
+            "Nom de la compétence": "Interpréter des plans et des devis.",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Travail individuel et en équipe."
+                ],
+                "APartirDe": [
+                    "plans de bâtiments, de dessins techniques de systèmes mécaniques et de devis."
+                ],
+                "ALaideDe": [
+                    "documentation technique en français et en anglais.",
+                    "législation relative au bâtiment.",
+                    "système informatique.",
+                    "matériel et des instruments de mesure appropriés."
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Recueillir de l’information dans les plans et les devis.",
+                    "criteres": [
+                        "Mise en relation des différents types de plans.",
+                        "Reconnaissance juste des documents composant un ensemble de plans et de devis.",
+                        "Repérage exact des systèmes mécaniques d’un bâtiment sur les plans.",
+                        "Relevé complet de l’information et des données techniques dans les plans et les devis.",
+                        "Interprétation correcte des codes, des normes, des symboles et des légendes.",
+                        "Interprétation juste des codes de désignation des matériaux selon la codification canadienne, américaine et internationale.",
+                        "Adoption d’une posture de travail ergonomique."
+                    ]
+                },
+                {
+                    "element": "Reconnaître les composants des systèmes et leur interaction sur les dessins techniques.",
+                    "criteres": [
+                        "Repérage exact des différents systèmes mécaniques.",
+                        "Repérage exact des composants.",
+                        "Mise en relation du rôle des composants d’un système avec celui des autres composants."
+                    ]
+                },
+                {
+                    "element": "Relever de l’information pour le montage des systèmes.",
+                    "criteres": [
+                        "Détermination précise de l’information nécessaire au montage des composants.",
+                        "Collecte complète de l’information nécessaire à l’assemblage des composants des systèmes.",
+                        "Lecture précise des dessins d’atelier, ainsi que de détails et de coupe sur les plans et dans les devis.",
+                        "Interprétation judicieuse de l’information.",
+                        "Précision de l’information relevée dans les documents."
+                    ]
+                },
+                {
+                    "element": "Relever des mesures dimensionnelles.",
+                    "criteres": [
+                        "Manipulation minutieuse des instruments de mesure.",
+                        "Utilisation appropriée des échelles de mesure dans les calculs.",
+                        "Relevé exact des mesures de longueur, de surface et de volume.",
+                        "Conversion juste des mesures dimensionnelles dans les systèmes métrique et impérial.",
+                        "Utilisation appropriée des systèmes de mesure métrique et impérial."
+                    ]
+                },
+                {
+                    "element": "Établir des liens entre les plans et les devis.",
+                    "criteres": [
+                        "Association appropriée de l’information contenue dans les plans à celle figurant dans les devis.",
+                        "Consignation claire des liens relevés.",
+                        "Travail ordonné."
+                    ]
+                }
+            ]
+        }
+    ]
+}
