@@ -33,8 +33,7 @@ TXT_OUTPUT_FILENAME = "document_extrait.txt"
 JSON_OUTPUT_FILENAME = "competences_extraites.json"
 
 # URL de base
-MAIN_PAGE = "https://www.quebec.ca/education/cegep/services/programmes/programmes-etudes-techniques"
-# BASE_PREFIX n'est plus nécessaire si on utilise urljoin correctement
+MAIN_PAGE = "https://www.quebec.ca/education/cegeps-colleges-prives/services/programmes/programmes-etudes-techniques"
 
 # Dossiers
 DOWNLOAD_FOLDER = "pdfs"

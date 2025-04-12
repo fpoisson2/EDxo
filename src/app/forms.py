@@ -50,6 +50,14 @@ REGIONS = [
     ('À distance', 'À distance')
 ]
 
+class OcrProgrammeSelectionForm(FlaskForm):
+    """Formulaire pour sélectionner un secteur et un programme."""
+    secteur_url = SelectField('Secteur', choices=[], validators=[DataRequired("Veuillez choisir un secteur.")])
+    programme_url = SelectField('Programme', choices=[], validators=[DataRequired("Veuillez choisir un programme.")])
+    pdf_title = StringField('Titre (Optionnel - sera remplacé par le nom du programme si laissé vide)',
+                            validators=[Optional(), Length(max=150)])
+    submit = SubmitField('Démarrer le traitement OCR')
+
 class ForgotPasswordForm(FlaskForm):
     email = StringField('Adresse email', validators=[DataRequired(), Email()])
     recaptcha_token = HiddenField('Recaptcha Token')
