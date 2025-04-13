@@ -50,6 +50,28 @@ REGIONS = [
     ('À distance', 'À distance')
 ]
 
+class AssociateDevisForm(FlaskForm):
+    base_filename = HiddenField(validators=[DataRequired()])
+    programme_id = SelectField("Choisir le Programme Cible :", coerce=int, validators=[DataRequired()])
+    submit = SubmitField("Procéder à la Révision des Compétences")
+
+class ReviewImportConfirmForm(FlaskForm):
+    """
+    Formulaire soumis depuis la page de révision pour confirmer l'importation
+    des compétences ou juste la validation du texte OCR.
+    Contient principalement des champs cachés pour passer les informations nécessaires.
+    """
+    programme_id = HiddenField("ID Programme", validators=[DataRequired()])
+    base_filename = HiddenField("Nom de fichier de base", validators=[DataRequired()])
+    # Ce champ indiquera si des données structurées étaient présentes lors de l'affichage
+    import_structured = HiddenField("Import Structuré Possible") # Pas besoin de validator, on lit juste la valeur 'true'/'false'
+
+    # On peut définir le bouton submit ici ou le mettre directement en HTML
+    submit_confirm = SubmitField("Confirmer") # Texte générique, sera ajusté dans le template
+
+    # Note: Pas besoin de champs visibles ici car le but est de confirmer
+    # les données déjà affichées sur la page.
+
 class OcrProgrammeSelectionForm(FlaskForm):
     """Formulaire pour sélectionner un secteur et un programme."""
     secteur_url = SelectField('Secteur', choices=[], validators=[DataRequired("Veuillez choisir un secteur.")])

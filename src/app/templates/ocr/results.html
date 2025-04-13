@@ -43,7 +43,21 @@
                  {% endif %}
                  <li>Nombre de compétences trouvées : {{ results.competences_count }}</li>
             </ul>
+            {% if (results.final_status == 'SUCCESS' or results.final_status.startswith('COMPLETED_WITH')) and results.base_filename and results.ocr_markdown_path %}
+                {# Pointe vers la nouvelle route d'association dans le blueprint 'ocr' #}
+                <div class="mt-3 mb-3">
+                    <a href="{{ url_for('ocr.associate_devis', base_filename=results.base_filename) }}" class="btn btn-primary">
+                        <i class="bi bi-link-45deg"></i> Associer ce Devis à un Programme et Réviser
+                    </a>
+                    <small class="form-text text-muted d-block">Choisissez le programme existant auquel lier les résultats de cet OCR.</small>
+                </div>
+            {% elif results.ocr_markdown_path %}
+                 {# Message si OCR ok mais pas de base_filename ? (Ne devrait pas arriver si logique correcte) #}
+                 <div class="alert alert-warning mt-3">
+                     Le traitement OCR est terminé, mais une information manque pour l'associer (nom de fichier de base).
+                 </div>
             {% endif %}
+        {% endif %}
 
     {% else %}
         <div class="alert alert-warning">Aucun résultat trouvé pour cette tâche.</div>

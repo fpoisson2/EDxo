@@ -4,6 +4,9 @@ from io import BytesIO
 
 import requests
 
+import re
+import unicodedata 
+
 from jinja2 import Template
 from bs4 import BeautifulSoup
 from docxtpl import DocxTemplate
@@ -52,6 +55,44 @@ logger = logging.getLogger(__name__)
 DATABASE = 'programme.db'
 
 
+def normalize_text(text):
+    """ Supprime les accents et convertit en minuscules. """
+    if not text: return ""
+    # Normalisation NFD pour séparer les caractères des accents
+    nfkd_form = unicodedata.normalize('NFD', text.lower())
+    # Garder seulement les caractères ASCII non diacritiques
+    return "".join([c for c in nfkd_form if not unicodedata.combining(c)])
+
+def extract_code_from_title(title):
+    """ Extrait le code programme (ex: PE00-XXXXX ou XXX.XX) du début du titre. """
+    if not title: return None
+    # Regex pour PE + 2 chiffres + - + 5 alphanumériques OU 3 chiffres + . + 2 chiffres
+    match = re.search(r'^(PE\d{2}-\w{5}|\d{3}\.\w{2})', title.strip(), re.IGNORECASE)
+    return match.group(1).upper() if match else None
+
+def determine_base_filename(code, title):
+    """ Crée un nom de fichier de base normalisé à partir du code et du titre. """
+    if not code: return None
+    if not title: return code # Fallback si titre vide
+
+    # Enlever le code du début du titre pour éviter la redondance
+    title_part = re.sub(r'^(PE\d{2}-\w{5}|\d{3}\.\w{2})\s*[-–—]?\s*', '', title.strip(), flags=re.IGNORECASE)
+
+    # Normaliser: enlever accents, minuscule, remplacer non-alphanum par _
+    normalized_title = normalize_text(title_part)
+    # Remplacer les espaces et caractères non alphanumériques (sauf -) par _
+    # Garder les - car ils peuvent être dans le code
+    safe_title = re.sub(r'[^\w\-]+', '_', normalized_title).strip('_')
+    # Limiter la longueur pour éviter des noms de fichiers trop longs
+    max_len = 60
+    safe_title = safe_title[:max_len]
+
+    # Combiner code et titre nettoyé
+    base_name = f"{code}_{safe_title}".rstrip('_')
+    # Remplacer les multiples underscores par un seul
+    base_name = re.sub(r'_+', '_', base_name)
+    return base_name
+    
 def send_reset_email(user_email, token):
     # Construire l'URL de réinitialisation
     reset_url = url_for('main.reset_password', token=token, _external=True)

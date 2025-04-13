@@ -46,6 +46,8 @@ from werkzeug.security import generate_password_hash
 
 from dotenv import load_dotenv 
 
+from celery_app import celery, init_celery 
+
 # Initialize logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -146,6 +148,8 @@ def create_app(testing=False):
         migrate = Migrate(app, db)
         worker_id = os.getenv('GUNICORN_WORKER_ID')
         is_primary_worker = worker_id == '0' or worker_id is None
+
+    init_celery(app)
 
     # Register blueprints
     app.register_blueprint(routes.main)
