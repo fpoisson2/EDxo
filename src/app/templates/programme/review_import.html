@@ -1,6 +1,7 @@
-{% extends "base.html" %} {# Assurez-vous que votre base.html existe et fonctionne #}
+{% extends "base.html" %}
+{# Assurez-vous que votre base.html existe et fonctionne #}
 
-{% block title %}Révision avant Import - {{ programme.nom }}{% endblock %} {# Utiliser programme.nom ou programme.nom_programme #}
+{% block title %}Révision avant Import - {{ programme.nom }}{% endblock %}
 
 {% block styles %}
 {{ super() }}
@@ -82,98 +83,96 @@
     <h2>Révision avant Import : {{ programme.nom }} {% if programme.code_ministeriel %}({{ programme.code_ministeriel }}){% endif %}</h2>
     <p>Vérifiez les informations extraites du devis <strong>{{ base_filename }}</strong> avant de confirmer l'importation des compétences dans la base de données pour ce programme.</p>
 
-    {# Les flash messages seront affichés via base.html, aucune inclusion ici n'est nécessaire #}
-
-    <div class="review-container mt-3">
-        {# Colonne Gauche: Texte OCR Brut (Markdown) #}
-        <div class="review-column">
-            <h3>Texte OCR (Markdown)</h3>
-            <div class="review-column-content">
-                {% if ocr_text %}
-                    <div id="ocr-content-wrapper">
-                        <pre id="ocr-content"><code>{{ ocr_text }}</code></pre>
-                    </div>
-                {% else %}
-                    <div class="alert alert-warning">Le contenu du fichier Markdown n'a pas pu être chargé.</div>
-                {% endif %}
-            </div>
-        </div>
-
-        {# Colonne Droite: Compétences Structurées (JSON) #}
+    <div class="review-container">
+        {# Colonne: Compétences Structurées (JSON) #}
         <div class="review-column">
             <h3>Compétences Structurées (JSON)</h3>
-             <div class="review-column-content">
+            <div class="review-column-content">
                 {% if has_competencies_file and competencies_data %}
-                    {% if competencies_data.competences is defined and competencies_data.competences | length > 0 %}
-                         {% for comp in competencies_data.competences %}
+                    {% if competencies_data["competences"] is defined and competencies_data["competences"] | length > 0 %}
+                        {% for comp in competencies_data["competences"] %}
                             <div class="competence-block">
-                                <h5>{{ comp.code }}: {{ comp.enonce or comp.nom or 'Nom/Énoncé Manquant' }}</h5>
-                                {% if comp.contexte_de_realisation %}
-                                    <p><small><strong>Contexte:</strong> {{ comp.contexte_de_realisation }}</small></p>
+                                <h5>{{ comp["Code"] }} : {{ comp["Nom de la compétence"] or 'Nom/Énoncé Manquant' }}</h5>
+                                {% if comp["Contexte de réalisation"] %}
+                                    <strong>Contexte :</strong>
+                                    <ul>
+                                        {% for ctx in comp["Contexte de réalisation"] %}
+                                            <li>
+                                                {{ ctx.texte }}
+                                                {% if ctx.sous_points %}
+                                                    <ul>
+                                                        {% for sub in ctx.sous_points %}
+                                                            <li>{{ sub.texte }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
                                 {% endif %}
-                                {% if comp.criteria_de_performance and comp.criteria_de_performance | length > 0 %}
-                                     <strong>Critères de performance (Globaux) :</strong>
-                                     <ul>
-                                         {% for crit_g in comp.criteria_de_performance %}
-                                            <li>{{ crit_g }}</li>
-                                         {% endfor %}
-                                     </ul>
+                                {% if comp["Critères de performance pour l’ensemble de la compétence"] and comp["Critères de performance pour l’ensemble de la compétence"] | length > 0 %}
+                                    <strong>Critères de performance (Globaux) :</strong>
+                                    <ul>
+                                        {% for crit in comp["Critères de performance pour l’ensemble de la compétence"] %}
+                                            <li>{{ crit }}</li>
+                                        {% endfor %}
+                                    </ul>
                                 {% endif %}
-                                {% set elements = comp.elements or comp.element or [] %}
+                                {% set elements = comp["Éléments"] or [] %}
                                 {% if elements | length > 0 %}
                                     <strong>Éléments de compétence :</strong>
                                     <ul>
-                                    {% for elem in elements %}
-                                        {% if elem is string %}
-                                            <li>{{ elem }}</li>
-                                        {% elif elem is mapping %}
-                                            <li>
-                                                <strong>{{ elem.element or elem.nom or 'Élément ?' }}:</strong>
-                                                {% set criteres_elem = elem.criteres or elem.critere_performance %}
-                                                {% if criteres_elem %}
-                                                    {% if criteres_elem is iterable and criteres_elem is not string %}
-                                                        <ul>
-                                                        {% for crit_e in criteres_elem %}
-                                                            <li>{{ crit_e }}</li>
-                                                        {% endfor %}
-                                                        </ul>
-                                                    {% elif criteres_elem is string %}
-                                                         : {{ criteres_elem }}
+                                        {% for elem in elements %}
+                                            {% if elem is string %}
+                                                <li>{{ elem }}</li>
+                                            {% elif elem is mapping %}
+                                                <li>
+                                                    <strong>{{ elem["element"] or elem.get("nom", 'Élément ?') }}:</strong>
+                                                    {% set criteres_elem = elem.get("criteres") %}
+                                                    {% if criteres_elem %}
+                                                        {% if criteres_elem is iterable and criteres_elem is not string %}
+                                                            <ul>
+                                                                {% for crit_e in criteres_elem %}
+                                                                    <li>{{ crit_e }}</li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        {% elif criteres_elem is string %}
+                                                            : {{ criteres_elem }}
+                                                        {% endif %}
                                                     {% endif %}
-                                                {% endif %}
-                                            </li>
-                                        {% endif %}
-                                    {% endfor %}
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
                                     </ul>
                                 {% else %}
                                     <small class="text-muted">Aucun élément de compétence listé pour cette compétence.</small>
                                 {% endif %}
                             </div>
-                         {% endfor %}
+                        {% endfor %}
                     {% else %}
-                         <div class="alert alert-info">Aucune compétence trouvée dans la structure du fichier JSON.</div>
+                        <div class="alert alert-info">Aucune compétence trouvée dans la structure du fichier JSON.</div>
                     {% endif %}
                 {% elif has_competencies_file and not competencies_data %}
-                     <div class="alert alert-danger">Le fichier JSON a été trouvé mais n'a pas pu être lu ou est invalide. Vérifiez sa structure.</div>
+                    <div class="alert alert-danger">Le fichier JSON a été trouvé mais n'a pas pu être lu ou est invalide. Vérifiez sa structure.</div>
                 {% else %}
                     <div class="alert alert-info">Aucun fichier JSON de compétences structurées trouvé. Seule la confirmation du texte OCR est possible via le bouton ci-dessous.</div>
                 {% endif %}
-             </div>
+            </div>
         </div>
     </div>
 
     <form action="{{ url_for('programme.confirm_competencies_import') }}" method="POST" class="mt-4">
         {{ form.hidden_tag() }}
-        {% if has_competencies_file and competencies_data and competencies_data.competences is defined and competencies_data.competences | length > 0 %}
-             <button type="submit" name="submit_button" value="confirm_import" class="btn btn-success">
-                 <i class="bi bi-database-add"></i> Confirmer et Importer ces Compétences
-             </button>
-             <small class="form-text text-muted d-block">Importer les compétences structurées affichées ci-dessus pour le programme sélectionné.</small>
+        {% if has_competencies_file and competencies_data and competencies_data["competences"] is defined and competencies_data["competences"] | length > 0 %}
+            <button type="submit" name="submit_button" value="confirm_import" class="btn btn-success">
+                <i class="bi bi-database-add"></i> Confirmer et Importer ces Compétences
+            </button>
+            <small class="form-text text-muted d-block">Importer les compétences structurées affichées ci-dessus pour le programme sélectionné.</small>
         {% else %}
-             <button type="submit" name="submit_button" value="confirm_ocr" class="btn btn-secondary">
-                 <i class="bi bi-check-lg"></i> Confirmer le Texte OCR uniquement
-             </button>
-             <small class="form-text text-muted d-block">Confirme que le texte OCR a été révisé. Aucune importation de compétence structurée ne sera effectuée.</small>
+            <button type="submit" name="submit_button" value="confirm_ocr" class="btn btn-secondary">
+                <i class="bi bi-check-lg"></i> Confirmer le Texte OCR uniquement
+            </button>
+            <small class="form-text text-muted d-block">Confirme que le texte OCR a été révisé. Aucune importation de compétence structurée ne sera effectuée.</small>
         {% endif %}
         <a href="{{ url_for('programme.view_programme', programme_id=programme.id) }}" class="btn btn-outline-secondary ms-2">Annuler</a>
     </form>
