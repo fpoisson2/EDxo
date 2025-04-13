@@ -720,13 +720,20 @@ def process_ocr_task(self, pdf_source, pdf_title="Unknown PDF"):
         return results
 
     except api_clients.SkillExtractionError as skill_e:
-         # Handle specific skill extraction failures
-         error_msg = f"Critical failure during competence extraction: {skill_e}"
-         logging.error(f"Task {task_id}: {error_msg}", exc_info=True)
-         results["final_status"] = "FAILURE"
-         results["error"] = error_msg
-         self.update_state(state='FAILURE', meta=results)
-         return results # Return results even on failure
+        original = getattr(skill_e, 'original_exception', None)
+        error_msg = f"Critical failure during competence extraction: {skill_e}"
+        if original:
+            error_msg += f" | Caused by: {type(original).__name__}: {original}"
+
+        logging.error(f"Task {task_id}: {error_msg}", exc_info=True)
+        results["final_status"] = "FAILURE"
+        results["error"] = error_msg
+
+        self.update_state(state='FAILURE', meta=results)
+
+        # Pour forcer un type simple d'exception (ValueError est toujours serialisable par Celery)
+        raise ValueError(error_msg)
+
 
     except Exception as e:
         # Handle any other unexpected errors

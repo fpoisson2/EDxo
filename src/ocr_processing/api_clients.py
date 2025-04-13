@@ -11,7 +11,9 @@ import os # Ajout de os pour manipuler les chemins
 # === DÉFINIR L'EXCEPTION PERSONNALISÉE ===
 class SkillExtractionError(Exception):
     """Exception spécifique pour les erreurs lors de l'extraction des compétences."""
-    pass
+    def __init__(self, message, original_exception=None):
+        super().__init__(message)
+        self.original_exception = original_exception
 # =========================================
 
 
@@ -195,50 +197,35 @@ def extraire_competences_depuis_txt(text_content, output_json_filename, callback
                 "description": "Liste des objets représentant chaque compétence extraite du texte source.",
                 "items": {
                     "type": "object",
-                    # La liste 'required' doit contenir EXACTEMENT les mêmes clés que celles définies dans 'properties' juste après
                     "required": [
                         "Code",
-                        "Nom de la compétence", # AVEC ACCENT
-                        "Contexte de réalisation", # AVEC ACCENT
-                        "Critères de performance pour l’ensemble de la compétence", # AVEC ACCENTS
-                        "Éléments" # AVEC ACCENT
+                        "Nom de la compétence",
+                        "Contexte de réalisation",
+                        "Critères de performance pour l’ensemble de la compétence",
+                        "Éléments"
                     ],
                     "properties": {
-                        # Les clés ici doivent correspondre EXACTEMENT à celles de la liste 'required'
                         "Code": {
                             "type": "string",
                             "description": "Code alphanumérique unique de la compétence (ex: 02MU)."
                         },
-                        "Nom de la compétence": { # <-- CORRIGÉ: Remis l'accent
+                        "Nom de la compétence": {
                             "type": "string",
                             "description": "Le titre ou l'énoncé principal de la compétence."
                         },
-                        "Contexte de réalisation": { # <-- CORRIGÉ: Remis l'accent
-                            "type": ["object", "null"],
-                            "required": ["details_generaux", "APartirDe", "ALaideDe"],
-                            "properties": {
-                                "details_generaux": {
-                                    "type": ["array", "null"], "items": {"type": "string"},
-                                    "description": "Lignes de description générale du contexte (hors 'A Partir De' et 'A l'aide De'). Null ou vide si absent."
-                                },
-                                "APartirDe": {
-                                    "type": ["array", "null"], "items": {"type": "string"},
-                                    "description": "Liste des éléments sous 'À partir de:'. Null ou vide si absent."
-                                },
-                                "ALaideDe": {
-                                    "type": ["array", "null"], "items": {"type": "string"},
-                                    "description": "Liste des éléments sous 'À l’aide de:'. Null ou vide si absent."
-                                }
-                            },
-                            "description": "Objet contenant le contexte d'exécution structuré. Null si section absente.",
-                            "additionalProperties": False
+                        "Contexte de réalisation": {
+                            "type": ["array", "null"],
+                            "description": "Représente la structure hiérarchique du 'Contexte de réalisation' sous forme de liste imbriquée. Null si la section est absente.",
+                            "items": {
+                                "$ref": "#/definitions/context_item"
+                            }
                         },
-                        "Critères de performance pour l’ensemble de la compétence": { # <-- CORRIGÉ: Remis les accents
+                        "Critères de performance pour l’ensemble de la compétence": {
                             "type": ["array", "null"],
                             "items": {"type": "string"},
                             "description": "Liste des critères généraux. Null ou vide si section absente ou 'S.O.'."
                         },
-                        "Éléments": { # <-- Avec Accent (était correct)
+                        "Éléments": {
                             "type": ["array", "null"],
                             "description": "Liste des éléments spécifiques décomposant la compétence. Null si section absente.",
                             "items": {
@@ -259,12 +246,33 @@ def extraire_competences_depuis_txt(text_content, output_json_filename, callback
                             }
                         }
                     },
-                    "additionalProperties": False # Pour chaque objet compétence
+                    "additionalProperties": False
                 }
             }
         },
-        "additionalProperties": False # POUR L'OBJET RACINE
+        "additionalProperties": False,
+        "definitions": {
+            "context_item": {
+                "type": "object",
+                "required": ["texte", "sous_points"],
+                "properties": {
+                    "texte": {
+                        "type": "string",
+                        "description": "Contenu textuel du point principal ou sous-point."
+                    },
+                    "sous_points": {
+                        "type": ["array", "null"],
+                        "description": "Liste des sous-points hiérarchiques (ou null si aucun).",
+                        "items": {
+                            "$ref": "#/definitions/context_item"
+                        }
+                    }
+                },
+                "additionalProperties": False
+            }
+        }
     }
+
     # --- Fin Prompt et Schéma ---
 
     logging.info("Appel API OpenAI (stream) pour extraction compétences...")
@@ -286,7 +294,7 @@ def extraire_competences_depuis_txt(text_content, output_json_filename, callback
                 "strict": True,
                 "schema": json_schema
             }},
-            reasoning={}, tools=[], tool_choice="none", temperature=1, max_output_tokens=16384, top_p=1, store=True,
+            reasoning={}, tools=[], tool_choice="none", temperature=0.5, top_p=1, store=True,
             stream=True,
             # request_timeout=600 # Optionnel
         )
@@ -371,5 +379,5 @@ def extraire_competences_depuis_txt(text_content, output_json_filename, callback
         logging.error(msg, exc_info=True)
         if callback: callback({"type": "error", "message": f"Erreur majeure lors de l'extraction: {e}", "step": "skill_extract_error"})
         # === LEVER EXCEPTION (avec cause originale) ===
-        raise SkillExtractionError(msg) from e
+        raise SkillExtractionError(msg, original_exception=e) from e
         # ============================================
