@@ -94,7 +94,7 @@ def review_competencies_import():
         abort(404)
     
     # Chemins vers les fichiers
-    txt_output_dir = current_app.config.get('TXT_OUTPUT_DIR', 'src/txt_outputs')
+    txt_output_dir = current_app.config.get('TXT_OUTPUT_DIR', 'txt_outputs')
     ocr_file_path = os.path.join(txt_output_dir, f"{base_filename}_ocr.md")
     competencies_file_path = os.path.join(txt_output_dir, f"{base_filename}_competences.json")
     
