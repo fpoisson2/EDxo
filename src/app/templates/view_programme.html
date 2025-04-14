@@ -43,6 +43,11 @@
   <!-- Grille des Cours par Session -->
   <div class="d-flex justify-content-between align-items-start mb-3">
     <h3 class="mb-0">Cours par session</h3>
+    {# NEW LINK ADDED HERE #}
+    <a href="{{ url_for('programme.view_competences_programme', programme_id=programme.id) }}" class="btn btn-sm btn-outline-info">
+        <i class="fas fa-list-ul"></i> Voir toutes les compétences
+    </a>
+    {# END OF NEW LINK #}
   </div>
 
   <div class="table-responsive">

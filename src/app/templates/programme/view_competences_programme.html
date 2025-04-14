@@ -1,0 +1,36 @@
+{% extends 'index.html' %}
+
+{# Use the same block name as in view_programme.html #}
+{% block programmes_specific %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Compétences du Programme: {{ programme.nom }}</h2>
+        <a href="{{ url_for('programme.view_programme', programme_id=programme.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour au programme
+        </a>
+    </div>
+    <hr>
+
+    {% if competences %}
+        <p>Liste de toutes les compétences associées à ce programme. Cliquez sur une compétence pour voir les détails.</p>
+        <div class="list-group">
+            {% for comp in competences %}
+                <a href="{{ url_for('programme.view_competence', competence_id=comp.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                    <span>
+                        <strong>{{ comp.code }}</strong> - {{ comp.nom }}
+                    </span>
+                     <i class="fas fa-chevron-right"></i>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            Aucune compétence n'est actuellement définie pour ce programme.
+            {% if current_user.role in ['admin', 'coordo'] %}
+                {# You might want to add a link to import/add competencies here if needed #}
+                {% endif %}
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

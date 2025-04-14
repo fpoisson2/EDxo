@@ -542,11 +542,10 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         db.session.rollback()
         logging.error("Unexpected error: %s", e, exc_info=True)
         return {"status": "error", "message": f"Erreur lors de la génération du contenu: {str(e)}"}
-
 @shared_task(bind=True)
 def process_ocr_task(self, pdf_source, pdf_title):
     task_id = self.request.id
-    self.update_state(state='PROGRESS', meta={'status': 'Démarrage...', 'task_id': task_id})
+    self.update_state(state='PROGRESS', meta={'message': 'Démarrage...', 'task_id': task_id})
     logger.info(f"[{task_id}] Démarrage du traitement OCR pour: {pdf_title} ({pdf_source})")
 
     try:
@@ -555,15 +554,26 @@ def process_ocr_task(self, pdf_source, pdf_title):
         os.makedirs(pdf_output_dir, exist_ok=True)
         os.makedirs(txt_output_dir, exist_ok=True)
     except Exception as config_err:
-        logger.critical(f"[{task_id}] Erreur critique: Impossible d'accéder à la configuration ou de créer des répertoires: {config_err}", exc_info=True)
+        logger.critical(
+            f"[{task_id}] Erreur critique: Impossible d'accéder à la configuration ou de créer des répertoires: {config_err}",
+            exc_info=True
+        )
         self.update_state(state='FAILURE', meta={'task_id': task_id, 'error': f"Erreur de configuration: {config_err}"})
         return {'task_id': task_id, 'final_status': 'FAILURE', 'error': f"Erreur de configuration: {config_err}"}
 
     results = {
-        'task_id': task_id, 'pdf_title': pdf_title, 'pdf_source': pdf_source,
-        'base_filename': None, 'final_status': "In Progress", 'error': None,
-        'download_path': None, 'ocr_markdown_path': None, 'section_info': None,
-        'section_pdf_path': None, 'txt_output_path': None, 'json_output_path': None,
+        'task_id': task_id,
+        'pdf_title': pdf_title,
+        'pdf_source': pdf_source,
+        'base_filename': None,
+        'final_status': "In Progress",
+        'error': None,
+        'download_path': None,
+        'ocr_markdown_path': None,
+        'section_info': None,
+        'section_pdf_path': None,
+        'txt_output_path': None,
+        'json_output_path': None,
         'competences_count': 0,
     }
 
@@ -589,33 +599,31 @@ def process_ocr_task(self, pdf_source, pdf_title):
 
         # --- Étape 1: Téléchargement (si nécessaire) ---
         if pdf_source.startswith('http://') or pdf_source.startswith('https://'):
-            self.update_state(state='PROGRESS', meta={'status': 'Téléchargement PDF...', **results})
+            self.update_state(state='PROGRESS', meta={'message': 'Téléchargement PDF...', **results})
             # --- CORRECTION APPEL TELECHARGER_PDF ---
-            # Passer le répertoire de sortie, pas le chemin complet du fichier
-            # La fonction retournera le chemin complet où le fichier a été sauvegardé
+            # On passe le répertoire de sortie et la fonction retourne le chemin complet
             download_path_local = web_utils.telecharger_pdf(pdf_source, pdf_output_dir)
             # --- FIN CORRECTION ---
             if not download_path_local or not os.path.exists(download_path_local):
-                # Vérifier si le chemin retourné est valide
                 raise RuntimeError(f"Échec du téléchargement ou chemin invalide retourné pour {pdf_source}")
             results['download_path'] = download_path_local
             logger.info(f"[{task_id}] PDF téléchargé vers: {download_path_local}")
         elif os.path.exists(pdf_source):
-             download_path_local = pdf_source
-             results['download_path'] = download_path_local
-             logger.info(f"[{task_id}] Utilisation du fichier local existant: {download_path_local}")
+            download_path_local = pdf_source
+            results['download_path'] = download_path_local
+            logger.info(f"[{task_id}] Utilisation du fichier local existant: {download_path_local}")
         else:
-             raise FileNotFoundError(f"Source PDF invalide (ni URL, ni chemin existant): {pdf_source}")
+            raise FileNotFoundError(f"Source PDF invalide (ni URL, ni chemin existant): {pdf_source}")
 
         # --- Étape 2: OCR Complet ---
-        self.update_state(state='PROGRESS', meta={'status': 'OCR du document complet...', **results})
+        self.update_state(state='PROGRESS', meta={'message': 'OCR du document complet...', **results})
         ocr_markdown_path_local = os.path.join(txt_output_dir, f"{base_filename_local}_ocr.md")
         try:
             ocr_input_source = pdf_source if pdf_source.startswith('http') else download_path_local
             logger.info(f"[{task_id}] Appel de perform_ocr_and_save avec la source: {ocr_input_source}")
             ocr_success = api_clients.perform_ocr_and_save(ocr_input_source, ocr_markdown_path_local)
             if not ocr_success:
-                 raise RuntimeError("L'étape OCR a échoué (perform_ocr_and_save a retourné False/None).")
+                raise RuntimeError("L'étape OCR a échoué (perform_ocr_and_save a retourné False/None).")
             results['ocr_markdown_path'] = ocr_markdown_path_local
             logger.info(f"[{task_id}] OCR Markdown généré: {ocr_markdown_path_local}")
         except Exception as ocr_err:
@@ -623,18 +631,17 @@ def process_ocr_task(self, pdf_source, pdf_title):
             raise RuntimeError(f"Échec de l'OCR: {ocr_err}")
 
         # --- Étape 3: Identification Section ---
-        # ... (Code inchangé, utilise api_clients.find_section_with_openai) ...
-        self.update_state(state='PROGRESS', meta={'status': 'Identification section compétences...', **results})
-        markdown_content = None
+        self.update_state(state='PROGRESS', meta={'message': 'Identification section compétences...', **results})
         try:
             with open(ocr_markdown_path_local, 'r', encoding='utf-8') as f:
                 markdown_content = f.read()
         except FileNotFoundError:
-             logger.error(f"[{task_id}] Fichier Markdown introuvable pour identification section: {ocr_markdown_path_local}")
-             raise RuntimeError(f"Fichier OCR manquant après étape OCR: {ocr_markdown_path_local}")
+            logger.error(f"[{task_id}] Fichier Markdown introuvable pour identification section: {ocr_markdown_path_local}")
+            raise RuntimeError(f"Fichier OCR manquant après étape OCR: {ocr_markdown_path_local}")
         except Exception as read_err:
-             logger.error(f"[{task_id}] Erreur lecture fichier Markdown {ocr_markdown_path_local}: {read_err}", exc_info=True)
-             raise RuntimeError(f"Erreur lecture fichier OCR: {read_err}")
+            logger.error(f"[{task_id}] Erreur lecture fichier Markdown {ocr_markdown_path_local}: {read_err}", exc_info=True)
+            raise RuntimeError(f"Erreur lecture fichier OCR: {read_err}")
+
         try:
             section_info_local = api_clients.find_section_with_openai(markdown_content)
             results['section_info'] = section_info_local
@@ -648,45 +655,42 @@ def process_ocr_task(self, pdf_source, pdf_title):
 
         # --- Étape 4: Extraction Section PDF ---
         if section_info_local and section_info_local.get('page_debut') and section_info_local.get('page_fin'):
-             self.update_state(state='PROGRESS', meta={'status': 'Extraction section PDF...', **results})
-             section_pdf_path_local = os.path.join(txt_output_dir, f"{base_filename_local}_section.pdf")
-             try:
-                 # --- CORRECTION NOM FONCTION ---
-                 # Utilise pdf_tools.extract_pdf_section qui existe
-                 section_success = pdf_tools.extract_pdf_section(
-                     download_path_local,
-                     section_pdf_path_local,
-                     section_info_local['page_debut'],
-                     section_info_local['page_fin']
-                 )
-                 # --- FIN CORRECTION ---
-                 if section_success:
-                     results['section_pdf_path'] = section_pdf_path_local
-                     logger.info(f"[{task_id}] PDF de la section extrait: {section_pdf_path_local}")
-                 else:
-                      logger.warning(f"[{task_id}] Échec de l'extraction de la section PDF.")
-                      results['section_pdf_path'] = None # Assurer None si échec
-             except Exception as extract_err:
-                 logger.error(f"[{task_id}] Erreur extraction section PDF: {extract_err}", exc_info=True)
-                 results['section_pdf_path'] = None
+            self.update_state(state='PROGRESS', meta={'message': 'Extraction section PDF...', **results})
+            section_pdf_path_local = os.path.join(txt_output_dir, f"{base_filename_local}_section.pdf")
+            try:
+                # Utilise pdf_tools.extract_pdf_section qui existe
+                section_success = pdf_tools.extract_pdf_section(
+                    download_path_local,
+                    section_pdf_path_local,
+                    section_info_local['page_debut'],
+                    section_info_local['page_fin']
+                )
+                if section_success:
+                    results['section_pdf_path'] = section_pdf_path_local
+                    logger.info(f"[{task_id}] PDF de la section extrait: {section_pdf_path_local}")
+                else:
+                    logger.warning(f"[{task_id}] Échec de l'extraction de la section PDF.")
+                    results['section_pdf_path'] = None
+            except Exception as extract_err:
+                logger.error(f"[{task_id}] Erreur extraction section PDF: {extract_err}", exc_info=True)
+                results['section_pdf_path'] = None
 
         # --- Étape 5: Conversion PDF en Texte ---
-        # Utiliser le chemin de la section si elle a été extraite avec succès, sinon le PDF original
         pdf_to_convert = results.get("section_pdf_path") or download_path_local
-        # Vérifier que pdf_to_convert est bien un fichier avant de continuer
         if not pdf_to_convert or not os.path.isfile(pdf_to_convert):
-             logger.error(f"[{task_id}] Chemin PDF invalide ou manquant pour la conversion en texte: {pdf_to_convert}")
-             # Peut-être lever une erreur ou juste passer à la suite en sachant que JSON échouera
-             text_content = None
-             results['txt_output_path'] = None
-        else:
-            self.update_state(state='PROGRESS', meta={'status': f'Conversion PDF ({os.path.basename(pdf_to_convert)}) en texte...', **results})
-            txt_output_path_local = os.path.join(txt_output_dir, f"{base_filename_local}.txt")
+            logger.error(f"[{task_id}] Chemin PDF invalide ou manquant pour la conversion en texte: {pdf_to_convert}")
             text_content = None
+            results['txt_output_path'] = None
+        else:
+            self.update_state(
+                state='PROGRESS',
+                meta={'message': f'Conversion PDF ({os.path.basename(pdf_to_convert)}) en texte...', **results}
+            )
+            txt_output_path_local = os.path.join(txt_output_dir, f"{base_filename_local}.txt")
             try:
                 text_content = pdf_tools.convert_pdf_to_txt(pdf_to_convert, txt_output_path_local)
                 if not text_content:
-                     logger.warning(f"[{task_id}] Conversion PDF en texte a retourné un contenu vide pour {pdf_to_convert}")
+                    logger.warning(f"[{task_id}] Conversion PDF en texte a retourné un contenu vide pour {pdf_to_convert}")
                 results['txt_output_path'] = txt_output_path_local
                 logger.info(f"[{task_id}] Conversion PDF en texte terminée: {txt_output_path_local}")
             except Exception as txt_err:
@@ -695,37 +699,33 @@ def process_ocr_task(self, pdf_source, pdf_title):
                 text_content = None
 
         # --- Étape 6: Extraction JSON depuis Texte ---
-        self.update_state(state='PROGRESS', meta={'status': 'Extraction compétences (JSON)...', **results})
+        self.update_state(state='PROGRESS', meta={'message': 'Extraction compétences (JSON)...', **results})
         json_output_path_local = os.path.join(txt_output_dir, f"{base_filename_local}_competences.json")
 
         if text_content:
             try:
-                # Appel de la fonction d'extraction JSON corrigée
+                # Extraction JSON corrigée via la fonction d'API
                 competences_json_string = api_clients.extraire_competences_depuis_txt(
                     text_content,
                     json_output_path_local
                 )
-                # Valider et compter
                 try:
-                     with open(json_output_path_local, 'r', encoding='utf-8') as f_json:
-                         competences_data = json.load(f_json)
-                     competences_count_local = len(competences_data.get('competences', []))
-                     results['competences_count'] = competences_count_local
-                     results['json_output_path'] = json_output_path_local # Confirmer le chemin si succès
-                     logger.info(f"[{task_id}] Extraction JSON réussie: {competences_count_local} compétences. Fichier: {json_output_path_local}")
-                     if competences_count_local == 0:
-                          logger.warning(f"[{task_id}] Aucune compétence trouvée lors de l'extraction JSON.")
+                    with open(json_output_path_local, 'r', encoding='utf-8') as f_json:
+                        competences_data = json.load(f_json)
+                    competences_count_local = len(competences_data.get('competences', []))
+                    results['competences_count'] = competences_count_local
+                    results['json_output_path'] = json_output_path_local
+                    logger.info(f"[{task_id}] Extraction JSON réussie: {competences_count_local} compétences. Fichier: {json_output_path_local}")
+                    if competences_count_local == 0:
+                        logger.warning(f"[{task_id}] Aucune compétence trouvée lors de l'extraction JSON.")
                 except (FileNotFoundError, json.JSONDecodeError, Exception) as post_extract_err:
-                     logger.error(f"[{task_id}] Erreur lecture/validation JSON après extraction: {post_extract_err}")
-                     results['json_output_path'] = None
-                     results['competences_count'] = 0
-            # Gérer les erreurs spécifiques et générales de l'extraction JSON
+                    logger.error(f"[{task_id}] Erreur lecture/validation JSON après extraction: {post_extract_err}")
+                    results['json_output_path'] = None
+                    results['competences_count'] = 0
             except api_clients.SkillExtractionError as skill_err:
-                logger.error(f"[{task_id}] Erreur (SkillExtractionError) lors de l'appel API pour extraction JSON: {skill_err}", exc_info=False) # Pas besoin de traceback complet souvent
+                logger.error(f"[{task_id}] Erreur (SkillExtractionError) lors de l'appel API pour extraction JSON: {skill_err}", exc_info=False)
                 results['json_output_path'] = None
                 results['competences_count'] = 0
-                # Optionnel: Stocker l'erreur spécifique si besoin
-                # results['error'] = results.get('error') or f"SkillExtractionError: {skill_err}"
             except Exception as json_err:
                 logger.error(f"[{task_id}] Erreur inattendue lors de l'extraction JSON: {json_err}", exc_info=True)
                 results['json_output_path'] = None
@@ -735,14 +735,12 @@ def process_ocr_task(self, pdf_source, pdf_title):
             results['json_output_path'] = None
             results['competences_count'] = 0
 
-
         # --- Finalisation ---
-        # (Logique inchangée pour déterminer final_status_internal)
         if results.get("ocr_markdown_path") and results.get("json_output_path") and results.get("competences_count", 0) > 0:
             final_status_internal = "SUCCESS"
         elif results.get("ocr_markdown_path") and results.get("json_output_path") and results.get("competences_count", 0) == 0:
-             final_status_internal = "COMPLETED_WITH_JSON_EMPTY"
-             logger.warning(f"[{task_id}] Traitement terminé mais le JSON de compétences est vide.")
+            final_status_internal = "COMPLETED_WITH_JSON_EMPTY"
+            logger.warning(f"[{task_id}] Traitement terminé mais le JSON de compétences est vide.")
         elif results.get("ocr_markdown_path"):
             final_status_internal = "COMPLETED_WITH_OCR_ONLY"
             logger.warning(f"[{task_id}] Traitement terminé mais sans extraction JSON valide/réussie.")
@@ -753,7 +751,6 @@ def process_ocr_task(self, pdf_source, pdf_title):
         results["final_status"] = final_status_internal
         logger.info(f"[{task_id}] Traitement terminé avec statut: {final_status_internal}")
 
-
     except Exception as e:
         logger.critical(f"[{task_id}] Erreur majeure et inattendue dans la tâche process_ocr_task: {e}", exc_info=True)
         error_message_local = f"Erreur inattendue: {e}"
@@ -761,5 +758,8 @@ def process_ocr_task(self, pdf_source, pdf_title):
         results["error"] = error_message_local
 
     # --- Retourner les résultats ---
-    self.update_state(state=results['final_status'] if results['final_status'] != "FAILURE" else "FAILURE", meta=results)
+    self.update_state(
+        state=results['final_status'] if results['final_status'] != "FAILURE" else "FAILURE",
+        meta=results
+    )
     return results

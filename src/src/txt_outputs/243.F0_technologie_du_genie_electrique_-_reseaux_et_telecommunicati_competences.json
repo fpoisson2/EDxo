@@ -230,6 +230,10 @@
                         },
                         {
                             "texte": "de circuits électriques;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de supports de transmission :",
                             "sous_points": [
                                 {
                                     "texte": "électriques;",
@@ -472,7 +476,7 @@
                                     "sous_points": null
                                 },
                                 {
-                                    "texte": "etc.",
+                                    "texte": "etc.;",
                                     "sous_points": null
                                 }
                             ]
@@ -572,7 +576,7 @@
                                     "sous_points": null
                                 },
                                 {
-                                    "texte": "etc.",
+                                    "texte": "etc.;",
                                     "sous_points": null
                                 }
                             ]
@@ -682,7 +686,7 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "d’équipements, de systèmes ou de sous systèmes;",
+                            "texte": "d’équipements, de systèmes ou de sous-systèmes;",
                             "sous_points": null
                         },
                         {
@@ -1024,7 +1028,7 @@
                     ]
                 },
                 {
-                    "element": "Modifier le programme.",
+                    "element": "Modifier le programme",
                     "criteres": [
                         "Sauvegarde systématique du programme d’origine.",
                         "Pertinence des modifications."
@@ -1598,7 +1602,7 @@
         },
         {
             "Code": "02H4",
-            "Nom de la compétence": "Contrôler la qualité d’équipements et/ ou de systèmes de réseaux de télécommunications.",
+            "Nom de la compétence": "Contrôler la qualité d’équipements et/ou de systèmes de réseaux de télécommunications.",
             "Contexte de réalisation": [
                 {
                     "texte": "En industrie, au laboratoire ou dans un bureau.",
@@ -1681,7 +1685,7 @@
             ],
             "Éléments": [
                 {
-                    "element": "Examiner l’équipement et/ ou le système de réseau.",
+                    "element": "Examiner l’équipement et/ou le système de réseau.",
                     "criteres": [
                         "Consultation pertinente des documents (spécifications, normes, etc.).",
                         "Interprétation juste des objectifs du contrôle.",
