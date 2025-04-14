@@ -566,8 +566,8 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id, openai_key):
     logger.info(f"[{task_id}] Démarrage du traitement OCR pour: {pdf_title} ({pdf_source})")
 
     try:
-        pdf_output_dir = current_app.config.get('PDF_OUTPUT_DIR', 'src/pdfs_downloaded')
-        txt_output_dir = current_app.config.get('TXT_OUTPUT_DIR', 'src/txt_outputs')
+        pdf_output_dir = current_app.config.get('PDF_OUTPUT_DIR', 'pdfs_downloaded')
+        txt_output_dir = current_app.config.get('TXT_OUTPUT_DIR', 'txt_outputs')
         os.makedirs(pdf_output_dir, exist_ok=True)
         os.makedirs(txt_output_dir, exist_ok=True)
     except Exception as config_err:
