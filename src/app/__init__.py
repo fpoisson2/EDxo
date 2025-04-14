@@ -118,7 +118,8 @@ def create_app(testing=False):
             SESSION_COOKIE_SAMESITE='Lax',
             SESSION_TYPE='filesystem',
             CELERY_BROKER_URL='redis://127.0.0.1:6379/0',
-            CELERY_RESULT_BACKEND='redis://127.0.0.1:6379/0'
+            CELERY_RESULT_BACKEND='redis://127.0.0.1:6379/0',
+            TXT_OUTPUT_DIR=os.path.join(BASE_DIR, 'txt_outputs')
         )
 
     # Initialize extensions
