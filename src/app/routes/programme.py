@@ -336,7 +336,7 @@ def confirm_competencies_import():
             return redirect(url_for('programme.view_programme', programme_id=programme.id))
 
         # Cas 2: Importation des compétences à partir du fichier JSON
-        txt_output_dir = current_app.config.get('TXT_OUTPUT_DIR', 'src/txt_outputs')
+        txt_output_dir = current_app.config.get('TXT_OUTPUT_DIR')
         competencies_file_path = os.path.join(txt_output_dir, f"{base_filename}_competences.json")
         competences_added_count = 0
         elements_added_count = 0
