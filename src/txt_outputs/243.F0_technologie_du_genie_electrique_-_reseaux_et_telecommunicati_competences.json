@@ -1,0 +1,2073 @@
+{
+    "competences": [
+        {
+            "Code": "02GN",
+            "Nom de la compétence": "Explorer la profession.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans une optique d’orientation et de formation tout au long de la carrière, dans les domaines de la réseautique et des télécommunications.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement ou en collaboration avec des technologues et des ingénieurs.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de plateformes de publication (médias);",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de la documentation sur le développement durable;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des technologies de l’information et de la communication (TIC).",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de la réglementation encadrant la profession;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’informations sur le milieu du travail.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Pertinence de l’information recueillie.",
+                "Détermination adéquate de l’information.",
+                "Utilisation responsable de l’environnement numérique."
+            ],
+            "Éléments": [
+                {
+                    "element": "Différencier les milieux de travail.",
+                    "criteres": [
+                        "Distinction juste des grands secteurs d’activité technologique.",
+                        "Identification appropriée de types d’entreprises."
+                    ]
+                },
+                {
+                    "element": "Caractériser la profession et ses perspectives.",
+                    "criteres": [
+                        "Interprétation correcte des lois et règlements en vigueur.",
+                        "Examen adéquat des perspectives d’emploi.",
+                        "Reconnaissance des principales tendances du domaine.",
+                        "Définition juste de la place du développement durable dans la profession.",
+                        "Identification juste des responsabilités au regard de la profession."
+                    ]
+                },
+                {
+                    "element": "Examiner les tâches et les opérations de la profession.",
+                    "criteres": [
+                        "Prise en compte de l’importance de la gestion du temps et du stress.",
+                        "Identification juste de ses caractéristiques personnelles qui représentent des atouts dans le domaine."
+                    ]
+                },
+                {
+                    "element": "Examiner les habiletés et les comportements attendus dans la profession.",
+                    "criteres": [
+                        "Reconnaissance des aspects relatifs à la recherche de consensus concernant les décisions de l’équipe.",
+                        "Identification juste des attitudes et des comportements facilitant le travail d’équipe.",
+                        "Examen attentif des moyens assurant le développement de ses propres compétences, tout au long de sa carrière.",
+                        "Confirmation de son choix de formation."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02GP",
+            "Nom de la compétence": "Prévenir les atteintes à la santé, à la sécurité et à l’environnement.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement ou en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "d’équipements de protection individuelle et collective;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "du SIMDUT;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’affiches informatives;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de mesures de mitigation.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "des lignes directrices sur l’exposition aux radiofréquences;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de la réglementation sur la protection de l’environnement.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail."
+            ],
+            "Éléments": [
+                {
+                    "element": "Repérer les risques.",
+                    "criteres": [
+                        "Identification juste des risques présents."
+                    ]
+                },
+                {
+                    "element": "Examiner l’information relative à la santé et sécurité du travail.",
+                    "criteres": [
+                        "Interprétation juste des lois et recommandations en vigueur.",
+                        "Interprétation juste des recommandations en matière de santé et de sécurité du travail.",
+                        "Interprétation juste des règles internes de l’entreprise ou de la clientèle."
+                    ]
+                },
+                {
+                    "element": "Adopter des mesures de précaution.",
+                    "criteres": [
+                        "Vérification systématique des équipements de protection individuelle.",
+                        "Utilisation conforme de l’équipement de protection individuelle.",
+                        "Adoption de postures de travail ergonomiques.",
+                        "Signalement systématique de situations potentiellement dangereuses pour la personne ou pour l’environnement."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02GQ",
+            "Nom de la compétence": "Résoudre des problèmes en électronique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de formules liées à l’électronique, à des circuits, etc.;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de concepts scientifiques;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’instruments de mesure;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’ondes électromagnétiques;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de documentations techniques.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de problèmes simples;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de logiciels spécialisés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de circuits électriques;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de supports de transmission :",
+                            "sous_points": [
+                                {
+                                    "texte": "électriques;",
+                                    "sous_points": null
+                                },
+                                {
+                                    "texte": "optiques.",
+                                    "sous_points": null
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Rigueur de la démarche.",
+                "Respect des unités du Système International."
+            ],
+            "Éléments": [
+                {
+                    "element": "Caractériser les concepts scientifiques mis en jeu dans la résolution d’un problème.",
+                    "criteres": [
+                        "Nomination juste du concept.",
+                        "Reconnaissance juste des contextes liés au problème.",
+                        "Description adéquate du concept."
+                    ]
+                },
+                {
+                    "element": "Appliquer les lois et les équations à la résolution d’un problème.",
+                    "criteres": [
+                        "Identification juste des paramètres applicables en lien avec le problème.",
+                        "Formulation cohérente des équations relatives au problème.",
+                        "Mise en pratique appropriée des équations dans le cadre du problème."
+                    ]
+                },
+                {
+                    "element": "Produire les résultats qualitatifs et/ou quantitatifs.",
+                    "criteres": [
+                        "Résolution adéquate des équations.",
+                        "Expression numérique précise des résultats en lien avec le problème.",
+                        "Représentation claire des résultats (graphiquement ou numériquement)."
+                    ]
+                },
+                {
+                    "element": "Interpréter les résultats.",
+                    "criteres": [
+                        "Qualification et/ou quantification juste des résultats.",
+                        "Explication claire des résultats en lien avec le problème."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02GR",
+            "Nom de la compétence": "Interagir en contexte professionnel.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En participant à des rencontres.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide des technologies utilisées dans les milieux de travail.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir d’outils de communication (écrite, audio ou vidéo).",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect de l’interlocuteur.",
+                "Respect des règles de politesse.",
+                "Respect de la culture d’entreprise."
+            ],
+            "Éléments": [
+                {
+                    "element": "Communiquer avec des personnes.",
+                    "criteres": [
+                        "Interprétation juste des messages reçus.",
+                        "Formulation claire d’un message.",
+                        "Vérification appropriée de la compréhension de ses interlocuteurs."
+                    ]
+                },
+                {
+                    "element": "Évaluer la qualité des interactions.",
+                    "criteres": [
+                        "Appréciation réaliste de la qualité de ses interactions.",
+                        "Mise en place de moyens d’amélioration."
+                    ]
+                },
+                {
+                    "element": "Travailler au sein d’une équipe multidisciplinaire.",
+                    "criteres": [
+                        "Manifestation adéquate de :",
+                        "marques de respect;",
+                        "d’ouverture d’esprit;",
+                        "de collaboration.",
+                        "Respect des règles de fonctionnement en équipe.",
+                        "Respect du rôle, des responsabilités et de l’expertise de chacun.",
+                        "Collaboration efficace pour la résolution de problèmes."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02GS",
+            "Nom de la compétence": "Analyser des circuits.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement ou en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de documentation technique;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de logiciels (modélisation, simulation, calculs);",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de références.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de diagrammes schématiques;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de diagrammes de montage;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de résultats de calculs.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Identifier les pièces constitutives du circuit et leur fonction.",
+                    "criteres": [
+                        "Identification exhaustive des pièces constitutives du circuit.",
+                        "Consultation suffisante de la documentation technique ou des références relatives à chaque pièce.",
+                        "Détermination précise de la fonction de chaque pièce considérant sa position dans le circuit."
+                    ]
+                },
+                {
+                    "element": "Décomposer le circuit.",
+                    "criteres": [
+                        "Délimitation claire de chaque partie du circuit considérant leur fonction propre.",
+                        "Identification exhaustive de chaque entrée-sortie pour chaque partie du circuit.",
+                        "Désignation précise de la fonction de chaque partie du circuit."
+                    ]
+                },
+                {
+                    "element": "Déduire l’état de fonctionnement du circuit.",
+                    "criteres": [
+                        "Énonciation juste d’hypothèses de fonctionnement.",
+                        "Mise à l’épreuve appropriée de l’hypothèse.",
+                        "Vérification adéquate du résultat.",
+                        "Expression pertinente de l’état de fonctionnement."
+                    ]
+                },
+                {
+                    "element": "Documenter l’analyse.",
+                    "criteres": [
+                        "Communication concise de l’avancement de l’analyse.",
+                        "Documentation pertinente des résultats de l’analyse."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02GT",
+            "Nom de la compétence": "Analyser des informations techniques.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement ou en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de documents techniques :",
+                            "sous_points": [
+                                {
+                                    "texte": "de fiches techniques;",
+                                    "sous_points": null
+                                },
+                                {
+                                    "texte": "de plans de réseaux;",
+                                    "sous_points": null
+                                },
+                                {
+                                    "texte": "etc.",
+                                    "sous_points": null
+                                }
+                            ]
+                        },
+                        {
+                            "texte": "de programmes;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’organigrammes;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de forums d’experts.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de normes nationales et internationales et de standards;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de gabarits de document et autres;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de documents techniques.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Rassembler de l’information technique.",
+                    "criteres": [
+                        "Identification adéquate du besoin.",
+                        "Utilisation efficace de stratégies de recherche.",
+                        "Validation juste des sources.",
+                        "Sélection appropriée des informations."
+                    ]
+                },
+                {
+                    "element": "Interpréter de l’information technique.",
+                    "criteres": [
+                        "Synthèse appropriée de l’information.",
+                        "Vérification complète des résultats de recherche."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02GU",
+            "Nom de la compétence": "Réaliser des travaux d’atelier.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement ou en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "d’outils :",
+                            "sous_points": [
+                                {
+                                    "texte": "de brasure;",
+                                    "sous_points": null
+                                },
+                                {
+                                    "texte": "de sertissage;",
+                                    "sous_points": null
+                                },
+                                {
+                                    "texte": "manuels et électriques;",
+                                    "sous_points": null
+                                },
+                                {
+                                    "texte": "optiques grossissants;",
+                                    "sous_points": null
+                                },
+                                {
+                                    "texte": "etc.",
+                                    "sous_points": null
+                                }
+                            ]
+                        },
+                        {
+                            "texte": "d’équipements  de protection individuelle;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’instructions techniques;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’instructions d’assemblage ou de désassemblage.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "d’un système;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’un appareil;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de connecteurs, câbles, cabinets de branchement, de boîtier, d’une tour d’antenne, etc.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail.",
+                "Respect des principes relatifs au développement durable."
+            ],
+            "Éléments": [
+                {
+                    "element": "Préparer le travail.",
+                    "criteres": [
+                        "Sélection appropriée des outils.",
+                        "Préparation appropriée de l’espace de travail.",
+                        "Vérification rigoureuse de l’équipement de protection individuelle."
+                    ]
+                },
+                {
+                    "element": "Exécuter un travail d’atelier.",
+                    "criteres": [
+                        "Réalisation méthodique des travaux.",
+                        "Manipulation minutieuse des pièces coûteuses.",
+                        "Remplacement soigné de composants électroniques.",
+                        "Maintien fonctionnel de l’espace de travail.",
+                        "Maintien d’une protection électrostatique adéquate."
+                    ]
+                },
+                {
+                    "element": "Vérifier le travail.",
+                    "criteres": [
+                        "Vérification de la conformité du travail.",
+                        "Remise en ordre systématique des lieux."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02GV",
+            "Nom de la compétence": "Réaliser des prises de mesures.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement ou en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "d’instruments de mesure;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’outils spécialisés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de documentation technique.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "d’équipements, de systèmes ou de sous systèmes;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’une  procédure.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des normes :",
+                "de qualité en vigueur;",
+                "d’interférence électromagnétique;",
+                "de protection contre les phénomènes électrostatiques.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail."
+            ],
+            "Éléments": [
+                {
+                    "element": "Prendre connaissance de la situation.",
+                    "criteres": [
+                        "Clarté du portrait global.",
+                        "Identification précise du système.",
+                        "Identification juste des risques liés à la mesure.",
+                        "Prise en compte effective de l’impact de la mesure."
+                    ]
+                },
+                {
+                    "element": "Préparer la prise de mesures.",
+                    "criteres": [
+                        "Choix approprié de l’instrument de mesure.",
+                        "Vérification complète de l’état de l’instrument.",
+                        "Configuration adéquate de l’instrument.",
+                        "Préparation méthodique de la prise de mesures."
+                    ]
+                },
+                {
+                    "element": "Procéder à la prise de mesures.",
+                    "criteres": [
+                        "Réalisation sécuritaire du branchement.",
+                        "Validation de la procédure.",
+                        "Exactitude de la mesure.",
+                        "Précision du relevé de la mesure."
+                    ]
+                },
+                {
+                    "element": "Relever la mesure.",
+                    "criteres": [
+                        "Réalisation systématique du relevé.",
+                        "Absence d’ambiguïté du relevé."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02GW",
+            "Nom de la compétence": "Produire de la documentation technique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement ou en équipe",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de logiciels spécialisés.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de fiches techniques;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de plans du fabricant;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de normes nationales et internationales et de standards;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de gabarits de document et autres;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’informations archivées;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de versions précédentes.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des règlements relatifs aux droits d’auteur."
+            ],
+            "Éléments": [
+                {
+                    "element": "Planifier la production du document.",
+                    "criteres": [
+                        "Choix approprié des éléments à documenter.",
+                        "Choix pertinent du format de document."
+                    ]
+                },
+                {
+                    "element": "Élaborer le document.",
+                    "criteres": [
+                        "Respect des normes et standards propres au domaine.",
+                        "Exploitation efficace de l’outil de production.",
+                        "Vérification complète de la conformité.",
+                        "Rédaction soignée du document."
+                    ]
+                },
+                {
+                    "element": "Diffuser le document.",
+                    "criteres": [
+                        "Choix approprié du mode de diffusion.",
+                        "Archivage complet.",
+                        "Gestion efficace des versions."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02GX",
+            "Nom de la compétence": "Réaliser des tests.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de fiches techniques;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de plans du fabricant;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de logiciels spécialisés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’instruments de mesure spécialisés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’outils;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de sources d’information spécialisées;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’un banc de test.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de normes nationales et internationales et de standards;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de gabarits et /ou d’une unité de référence;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de prises de mesures;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’équipements, de systèmes ou de sous-systèmes.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des normes :",
+                "de qualité en vigueur;",
+                "d’interférence électromagnétique;",
+                "de protection contre les phénomènes électrostatiques.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail.",
+                "Respect de l’intégrité de l’équipement ou du système."
+            ],
+            "Éléments": [
+                {
+                    "element": "Prendre connaissance de la situation.",
+                    "criteres": [
+                        "Clarté du portrait global.",
+                        "Identification précise du système.",
+                        "Identification juste des risques liés aux tests.",
+                        "Prise en compte effective de l’impact du test."
+                    ]
+                },
+                {
+                    "element": "Planifier le test.",
+                    "criteres": [
+                        "Mise en place de l’équipement ou du système.",
+                        "Vérification complète de l’état du banc de test.",
+                        "Préparation méthodique de la séquence de test.",
+                        "Détermination appropriée des conditions environnementales pour la réalisation du test."
+                    ]
+                },
+                {
+                    "element": "Exécuter le test.",
+                    "criteres": [
+                        "Exécution méthodique de la séquence de test.",
+                        "Vérification de la cohérence de la séquence du test.",
+                        "Validation juste des résultats du test.",
+                        "Exactitude des résultats du test."
+                    ]
+                },
+                {
+                    "element": "Documenter le test.",
+                    "criteres": [
+                        "Réalisation systématique de la saisie.",
+                        "Documentation pertinente des résultats du test."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02GY",
+            "Nom de la compétence": "Programmer un équipement ou un système connecté.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements physiques ou virtuels.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement ou en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "d’environnements de développement intégrés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de sources d’information spécialisées;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de documentation technique;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de librairies;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de systèmes d’exploitation.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "d’objets connectés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de plateformes;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de langages de programmation de base;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de logiciels de programmation;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de scripts.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des normes de programmation.",
+                "Application rigoureuse des conventions d’écriture de programme.",
+                "Manipulation consciencieuse de l’équipement ou du système connecté."
+            ],
+            "Éléments": [
+                {
+                    "element": "Examiner le programme.",
+                    "criteres": [
+                        "Reconnaissance juste du langage.",
+                        "Identification juste des structures usuelles.",
+                        "Examen minutieux des algorithmes usuels.",
+                        "Reconnaissance des types de variables."
+                    ]
+                },
+                {
+                    "element": "Modifier le programme",
+                    "criteres": [
+                        "Sauvegarde systématique du programme d’origine.",
+                        "Pertinence des modifications."
+                    ]
+                },
+                {
+                    "element": "Exécuter le programme.",
+                    "criteres": [
+                        "Ajustements adéquats de paramètres avant l’exécution.",
+                        "Implantation efficace du programme.",
+                        "Vérification juste des résultats d’exécution.",
+                        "Pertinence des itérations."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02GZ",
+            "Nom de la compétence": "Exploiter des systèmes d’exploitation.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements physiques ou virtuels.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement ou en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de plans du fabricant;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de logiciels de programmation, de mises à jour;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de forums d’experts;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de documentation technique.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "d’objets connectés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de plateformes;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de systèmes d’exploitation;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de scripts.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des règles de compatibilité matériel/logiciel.",
+                "Manipulation consciencieuse de l’équipement ou du système connecté."
+            ],
+            "Éléments": [
+                {
+                    "element": "Installer un système d’exploitation.",
+                    "criteres": [
+                        "Choix judicieux.",
+                        "Paramétrage approprié lors de l’installation.",
+                        "Déploiement méthodique.",
+                        "Vérification systématique des fonctionnalités.",
+                        "Pertinence de la virtualisation."
+                    ]
+                },
+                {
+                    "element": "Configurer un système d’exploitation.",
+                    "criteres": [
+                        "Pertinence de la mise hors service de l’équipement.",
+                        "Choix adapté du mode de contrôle.",
+                        "Utilisation adaptée du mode de contrôle.",
+                        "Fonctionnement adéquat de la communication avec les périphériques.",
+                        "Vérification complète du fonctionnement."
+                    ]
+                },
+                {
+                    "element": "Assurer la mise à jour d’un système d’exploitation.",
+                    "criteres": [
+                        "Mise à jour pertinente.",
+                        "Déploiement correct.",
+                        "Détection efficace de problèmes.",
+                        "Vérification complète du fonctionnement et/ou de la communication avec le matériel.",
+                        "Planification adéquate de la prochaine mise à jour."
+                    ]
+                },
+                {
+                    "element": "Assurer l’archivage d’un système d’exploitation.",
+                    "criteres": [
+                        "Modification de la documentation.",
+                        "Mise en œuvre méthodique de l’archivage."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02H0",
+            "Nom de la compétence": "Configurer des réseaux de données.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements physiques ou virtuels.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement ou en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En accord avec le centre de surveillance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de commutateurs;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de routeurs;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de points d’accès;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de branchements;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de documentation technique;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’instruments;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de fichiers de configuration.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de logiciels de simulation;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de plans de réseau;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de plans d’adressage;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de dispositifs terminaux.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Préoccupation constante de la cybersécurité.",
+                "Prévision appropriée de l’évolution du réseau.",
+                "Respect des bonnes pratiques."
+            ],
+            "Éléments": [
+                {
+                    "element": "Planifier la configuration du réseau de données.",
+                    "criteres": [
+                        "Identification exhaustive des caractéristiques du réseau de données.",
+                        "Organisation judicieuse des stratégies de sécurité.",
+                        "Conformité exhaustive du plan.",
+                        "Choix raisonné des équipements."
+                    ]
+                },
+                {
+                    "element": "Configurer les équipements.",
+                    "criteres": [
+                        "Vérification préalable de la configuration.",
+                        "Configuration correcte des équipements.",
+                        "Sauvegarde systématique des configurations."
+                    ]
+                },
+                {
+                    "element": "Déployer le réseau.",
+                    "criteres": [
+                        "Branchements structurés de l’infrastructure.",
+                        "Validation appropriée du câblage.",
+                        "Mise en œuvre rigoureuse de la planification."
+                    ]
+                },
+                {
+                    "element": "Vérifier le fonctionnement du réseau.",
+                    "criteres": [
+                        "Validation exhaustive des fonctionnalités du réseau.",
+                        "Respect des règles de limitations du réseau.",
+                        "Utilisation juste des équipements de tests.",
+                        "Consignation systématique des résultats et des modifications."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02H1",
+            "Nom de la compétence": "Contribuer au changement technologique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement ou en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de médias spécialisés et généralistes;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de réseaux sociaux professionnels;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’encyclopédies en ligne;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de blogues d’experts;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de communautés de praticiens;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de sites Web d’entreprises;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de documentation technique;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de formations.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de stratégies de changement en entreprise;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de logiciels spécialisés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de stratégies d’autoformation.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Réaliser une veille technologique dans le domaine.",
+                    "criteres": [
+                        "Choix approprié des sources d’information.",
+                        "Distinction appropriée des technologies.",
+                        "Compréhension suffisante de la technologie."
+                    ]
+                },
+                {
+                    "element": "Participer à l’implantation d’une technologie.",
+                    "criteres": [
+                        "Examen critique des sources d’information.",
+                        "Reconnaissance appropriée du besoin.",
+                        "Participation active à l’implantation."
+                    ]
+                },
+                {
+                    "element": "Documenter l’implantation d’une technologie.",
+                    "criteres": [
+                        "Documentation complète."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02H2",
+            "Nom de la compétence": "Effectuer un diagnostic sur des équipements ou des systèmes.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement ou en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de fiches techniques;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de plans du fabricant;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de logiciels de programmation, de mises à jour;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’instruments de mesure;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’outils;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’archives issues de communautés de praticiens.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de normes nationales, internationales et aux standards;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de gabarits et/ou d’une unité de référence;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de prises de mesures.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des normes de qualité en vigueur.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail.",
+                "Respect de l’intégrité de l’équipement ou du système."
+            ],
+            "Éléments": [
+                {
+                    "element": "Prendre connaissance du problème.",
+                    "criteres": [
+                        "Reconnaissance juste de la complexité du problème.",
+                        "Consultation appropriée des ressources."
+                    ]
+                },
+                {
+                    "element": "Examiner les éléments.",
+                    "criteres": [
+                        "Inspection quatre sens exhaustive de l’équipement ou du système.",
+                        "Examen approprié de la documentation technique.",
+                        "Planification claire des tests à effectuer."
+                    ]
+                },
+                {
+                    "element": "Procéder à une boucle de débogage.",
+                    "criteres": [
+                        "Isolation appropriée des éléments à diagnostiquer.",
+                        "Vérification méthodique des constituants de l’équipement ou du système :",
+                        "branchement;",
+                        "alimentation;",
+                        "compatibilité des versions;",
+                        "etc.",
+                        "Interprétation juste des résultats des prises de mesures.",
+                        "Identification appropriée de la source du problème."
+                    ]
+                },
+                {
+                    "element": "Communiquer les résultats du diagnostic.",
+                    "criteres": [
+                        "Communication concise de l’avancement du diagnostic.",
+                        "Présentation claire des conclusions.",
+                        "Archivage appropriée des résultats."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02H3",
+            "Nom de la compétence": "Effectuer l’installation et la mise en service d’équipements ou de systèmes de réseaux de télécommunications.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En collaboration avec les autres membres de l’équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En accord avec le centre de surveillance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de plans du fabricant;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de logiciels spécialisés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’instruments de mesure spécialisés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’outils;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de pièces de remplacement;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’appareils ou d’équipements de remplacement.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de normes nationales et internationales et de standards;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de règlements en matière de développement durable;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de rapports de diagnostic;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de gabarits et/ou d’une unité de référence.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des normes de qualité en vigueur.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail.",
+                "Vérification systématique des performances.",
+                "Respect des normes environnementales en vigueur."
+            ],
+            "Éléments": [
+                {
+                    "element": "Planifier l’installation et la mise en service.",
+                    "criteres": [
+                        "Examen exhaustif des documents afférents à l’installation et à la mise en service.",
+                        "Vérification appropriée de l’emplacement de l’équipement ou du système.",
+                        "Estimation réaliste des ressources matérielles et humaines."
+                    ]
+                },
+                {
+                    "element": "Procéder à l’installation.",
+                    "criteres": [
+                        "Mise en place appropriée.",
+                        "Branchements minutieux des connexions et interconnexions.",
+                        "Mise sous tension sécuritaire.",
+                        "Vérification appropriée."
+                    ]
+                },
+                {
+                    "element": "Procéder à la mise en service.",
+                    "criteres": [
+                        "Mise en service complète.",
+                        "Vérification systématique du fonctionnement.",
+                        "Ajustement précis des paramètres."
+                    ]
+                },
+                {
+                    "element": "Documenter l’installation et/ou la mise en service.",
+                    "criteres": [
+                        "Documentation complète."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02H4",
+            "Nom de la compétence": "Contrôler la qualité d’équipements et/ ou de systèmes de réseaux de télécommunications.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En collaboration avec des concepteurs, opérateurs, clients, réparateurs, etc.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de plans du fabricant;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des statistiques de tests;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de logiciels spécialisés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’instruments de mesure spécialisés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’outils;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de bancs de tests automatisés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de procédures d’étalonnage.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de normes nationales et internationales et de standards;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de gabarits et/ou d’une unité de référence;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de spécifications et d’exigences techniques;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de résultats d’audits;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’émetteurs-récepteurs de radio fréquence (RF).",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des normes de qualité en vigueur.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail."
+            ],
+            "Éléments": [
+                {
+                    "element": "Examiner l’équipement et/ ou le système de réseau.",
+                    "criteres": [
+                        "Consultation pertinente des documents (spécifications, normes, etc.).",
+                        "Interprétation juste des objectifs du contrôle.",
+                        "Consultation appropriée des collaboratrices et collaborateurs."
+                    ]
+                },
+                {
+                    "element": "Élaborer une stratégie de contrôle de qualité.",
+                    "criteres": [
+                        "Sélection pertinente des critères d’acceptabilité de la qualité.",
+                        "Détermination appropriée des conditions environnementales pour la réalisation du test de contrôle de qualité.",
+                        "Choix approprié des instruments de mesure.",
+                        "Élaboration méthodique de procédures de tests.",
+                        "Élaboration méthodique de tests automatisés.",
+                        "Amélioration continue des procédures de contrôle de qualité."
+                    ]
+                },
+                {
+                    "element": "Procéder au contrôle de qualité de l’équipement ou du système.",
+                    "criteres": [
+                        "Validation minutieuse de la qualité selon les critères établis.",
+                        "Réglage précis de l’équipement, du réseau ou des conditions de test.",
+                        "Vérification régulière de l’exécution des tests (tests automatisés ou exécutés par un tiers).",
+                        "Pertinence de la rétroaction aux collaboratrices et collaborateurs."
+                    ]
+                },
+                {
+                    "element": "Documenter le contrôle de qualité.",
+                    "criteres": [
+                        "Rédaction conforme d’un rapport (rapport de tests, rapport d’étalonnage, etc.).",
+                        "Validation du rapport par les intervenants.",
+                        "Archivage conforme des documents."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02H5",
+            "Nom de la compétence": "Effectuer la maintenance d’équipements ou de systèmes de réseaux de télécommunications.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En collaboration avec les autres membres de l’équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En accord avec le centre de surveillance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de plans du fabricant.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de logiciels spécialisés.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’instruments  de mesure spécialisés.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’outils.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de pièces de remplacement.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de normes nationales et internationales et de standards;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de rapports de diagnostic;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de gabarits et/ou d’une unité de référence.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des normes de qualité en vigueur.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail.",
+                "Vérification systématique des performances."
+            ],
+            "Éléments": [
+                {
+                    "element": "Identifier les besoins de maintenance pour l’équipement ou le système.",
+                    "criteres": [
+                        "Consultation exhaustive des documents.",
+                        "Interprétation juste des critères d’acceptabilité.",
+                        "Sélection pertinente des critères d’acceptabilité."
+                    ]
+                },
+                {
+                    "element": "Inspecter l’équipement ou le système.",
+                    "criteres": [
+                        "Inspection 4 sens préliminaire complète de l’équipement ou du système en service.",
+                        "Validation minutieuse des critères d’acceptabilité.",
+                        "Inspection sécuritaire de l’équipement ou du système en service.",
+                        "Choix approprié de la solution.",
+                        "Pertinence du remplacement de l’équipement ou du système.",
+                        "Pertinence du remplacement des composants."
+                    ]
+                },
+                {
+                    "element": "Procéder à la maintenance de l’équipement ou du système.",
+                    "criteres": [
+                        "Pertinence de la mise hors service.",
+                        "Choix approprié de la séquence d’opérations.",
+                        "Vérification systématique de l’étalonnage des instruments.",
+                        "Mise à jour pertinente du logiciel."
+                    ]
+                },
+                {
+                    "element": "Procéder à la remise en service de l’équipement ou du système.",
+                    "criteres": [
+                        "Vérification exhaustive de l’ensemble.",
+                        "Vérification minutieuse de l’alimentation et des connexions.",
+                        "Remise en service complète.",
+                        "Vérification systématique du fonctionnement."
+                    ]
+                },
+                {
+                    "element": "Documenter la maintenance de l’équipement ou du système.",
+                    "criteres": [
+                        "Documentation complète.",
+                        "Archivage systématique des documents."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02H6",
+            "Nom de la compétence": "Effectuer le dépannage d’équipements ou de systèmes de réseaux de télécommunications.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sur des équipements ou des systèmes installés en hauteur ou en sous-terrain.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En collaboration avec les autres membres de l’équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En accord avec le centre de surveillance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de plans du fabricant;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de logiciels spécialisés;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’instruments de mesure spécialisés.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’outils;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de pièces de remplacement;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’appareils ou d’équipements de remplacement.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de normes nationales et internationales et de standards;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de rapports de diagnostic;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de gabarits et/ou d’une unité de référence;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de règlements en matière de développement durable.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des normes de qualité en vigueur.",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail.",
+                "Vérification appropriée des performances."
+            ],
+            "Éléments": [
+                {
+                    "element": "Planifier le dépannage.",
+                    "criteres": [
+                        "Examen exhaustif du problème.",
+                        "Appropriation adéquate du rapport de diagnostic.",
+                        "Estimation réaliste de l’impact du dépannage.",
+                        "Estimation réaliste des ressources matérielles et humaines."
+                    ]
+                },
+                {
+                    "element": "Procéder au dépannage.",
+                    "criteres": [
+                        "Pertinence de la mise hors service.",
+                        "Sélection pertinente de l’élément défectueux.",
+                        "Remplacement minutieux de l’élément.",
+                        "Traitement consciencieux des éléments à recycler.",
+                        "Vérification complète de l’installation."
+                    ]
+                },
+                {
+                    "element": "Procéder à la remise en service de l’équipement ou du système.",
+                    "criteres": [
+                        "Remise en service complète.",
+                        "Vérification systématique du fonctionnement."
+                    ]
+                },
+                {
+                    "element": "Documenter le dépannage de l’équipement ou du système.",
+                    "criteres": [
+                        "Documentation complète.",
+                        "Archivage systématique des documents."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "02H7",
+            "Nom de la compétence": "Assurer du soutien technique dans le domaine des réseaux de télécommunications.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En industrie, au laboratoire ou dans un bureau.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Chez la clientèle, en présence ou à distance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En collaboration avec les autres membres de l’équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En accord avec le centre de surveillance.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de documents techniques;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "du matériel requis;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de supports de communication;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de données de requêtes;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de tickets d’assistance technique;",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des technologies de l’information et de la communication (TIC).",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de l’historique de traitements des requêtes.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de données de discussion avec des clients.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de normes nationales, internationales et de standards.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de rapports de diagnostic.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des règles de courtoisie.",
+                "Assurance continue de la satisfaction."
+            ],
+            "Éléments": [
+                {
+                    "element": "Recueillir les attentes et les besoins.",
+                    "criteres": [
+                        "Consultation appropriée de l’historique.",
+                        "Consultation appropriée des personnes concernées.",
+                        "Identification juste des actions déjà entreprises.",
+                        "Examen de l’information nécessaire au soutien."
+                    ]
+                },
+                {
+                    "element": "Analyser les attentes et les besoins.",
+                    "criteres": [
+                        "Interprétation juste du contexte.",
+                        "Estimation appropriée du niveau de priorité de la requête.",
+                        "Ébauche réaliste de pistes de solution ou de résolution de problème."
+                    ]
+                },
+                {
+                    "element": "Procéder au soutien technique.",
+                    "criteres": [
+                        "Pertinence du transfert de la requête vers la personne ou le service concerné.",
+                        "Application juste des solutions.",
+                        "Suivi rigoureux de l’avancement de la requête.",
+                        "Transmission claire des instructions.",
+                        "Vulgarisation appropriée des informations."
+                    ]
+                },
+                {
+                    "element": "Veiller au suivi de la requête.",
+                    "criteres": [
+                        "Vérification appropriée du résultat.",
+                        "Documentation complète du traitement de la requête."
+                    ]
+                }
+            ]
+        }
+    ]
+}
