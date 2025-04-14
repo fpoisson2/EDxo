@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Résultats du Traitement OCR{% endblock %}
+{% block title %}Résultats du traitement du devis{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h1>Résultats du Traitement OCR</h1>
+    <h1>Résultats du traitement du devis</h1>
 
     {% if results %}
-        <p><strong>ID de la Tâche :</strong> {{ results.task_id }}</p>
-        <p><strong>PDF Traité :</strong> {{ results.pdf_title }}</p>
+        <p><strong>ID de la tâche :</strong> {{ results.task_id }}</p>
+        <p><strong>PDF traité :</strong> {{ results.pdf_title }}</p>
         <p><strong>Source :</strong> {{ results.pdf_source }}</p>
-        <p><strong>Statut Final :</strong> <span class="badge bg-{% if results.final_status == 'SUCCESS' %}success{% elif results.final_status.startswith('COMPLETED_WITH') %}warning{% else %}danger{% endif %}">{{ results.final_status }}</span></p>
+        <p><strong>Statut final :</strong> <span class="badge bg-{% if results.final_status == 'SUCCESS' %}success{% elif results.final_status.startswith('COMPLETED_WITH') %}warning{% else %}danger{% endif %}">{{ results.final_status }}</span></p>
 
         {% if results.error %}
             <div class="alert alert-danger">
@@ -47,9 +47,9 @@
                 {# Pointe vers la nouvelle route d'association dans le blueprint 'ocr' #}
                 <div class="mt-3 mb-3">
                     <a href="{{ url_for('ocr.associate_devis', base_filename=results.base_filename) }}" class="btn btn-primary">
-                        <i class="bi bi-link-45deg"></i> Associer ce Devis à un Programme et Réviser
+                        <i class="bi bi-link-45deg"></i> Associer ce devis à un programme et réviser
                     </a>
-                    <small class="form-text text-muted d-block">Choisissez le programme existant auquel lier les résultats de cet OCR.</small>
+                    <small class="form-text text-muted d-block">Choisissez le programme existant auquel lier les résultats de ce traitement.</small>
                 </div>
             {% elif results.ocr_markdown_path %}
                  {# Message si OCR ok mais pas de base_filename ? (Ne devrait pas arriver si logique correcte) #}

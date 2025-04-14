@@ -73,7 +73,7 @@
 {% block content %}
 <div class="container mt-4">
     <h2>Comparatif des compétences pour le programme {{ programme.nom }}</h2>
-    <p>Chaque bloc compare la version en Base de données (gauche) avec la version du Fichier JSON (droite). Les différences entre les deux sources sont mises en évidence.</p>
+    <p>Chaque bloc compare la version en base de données existante (gauche) avec la version importée (droite).</p>
     
     <div class="accordion" id="accordionCompetencies">
         {% for comp in comparisons %}
@@ -147,19 +147,7 @@
 <div class="section-block {% if db_criteres != json_criteres %}difference-highlight{% endif %}">
     <h5>Critères de performance :</h5>
     {% if comp.db and comp.db.criteres %}
-        {% if comp.db.criteres is string %}
-            <p>{{ comp.db.criteres }}</p>
-        {% elif comp.db.criteres is iterable %}
-            <ul>
-                {% for item in comp.db.criteres %}
-                    {% if item.startswith('<li>') and item.endswith('</li>') %}
-                        <li>{{ item[4:-5] }}</li>
-                    {% elif not (item == '<ul>' or item == '</ul>') %}
-                        <li>{{ item }}</li>
-                    {% endif %}
-                {% endfor %}
-            </ul>
-        {% endif %}
+      <div>{{ comp.db.criteres | safe }}</div>
     {% else %}
         <p><em>Non défini</em></p>
     {% endif %}

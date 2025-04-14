@@ -476,7 +476,7 @@
                                     "sous_points": null
                                 },
                                 {
-                                    "texte": "etc.;",
+                                    "texte": "etc.",
                                     "sous_points": null
                                 }
                             ]
@@ -576,7 +576,7 @@
                                     "sous_points": null
                                 },
                                 {
-                                    "texte": "etc.;",
+                                    "texte": "etc.",
                                     "sous_points": null
                                 }
                             ]
@@ -753,7 +753,7 @@
                     "sous_points": null
                 },
                 {
-                    "texte": "Individuellement ou en équipe",
+                    "texte": "Individuellement ou en équipe.",
                     "sous_points": null
                 },
                 {
@@ -1028,7 +1028,7 @@
                     ]
                 },
                 {
-                    "element": "Modifier le programme",
+                    "element": "Modifier le programme.",
                     "criteres": [
                         "Sauvegarde systématique du programme d’origine.",
                         "Pertinence des modifications."

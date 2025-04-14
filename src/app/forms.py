@@ -78,7 +78,7 @@ class OcrProgrammeSelectionForm(FlaskForm):
     programme_url = SelectField('Programme', choices=[], validators=[DataRequired("Veuillez choisir un programme.")])
     pdf_title = StringField('Titre (Optionnel - sera remplacé par le nom du programme si laissé vide)',
                             validators=[Optional(), Length(max=150)])
-    submit = SubmitField('Démarrer le traitement OCR')
+    submit = SubmitField('Démarrer le traitement du devis')
 
 class ForgotPasswordForm(FlaskForm):
     email = StringField('Adresse email', validators=[DataRequired(), Email()])
@@ -406,7 +406,7 @@ class ElementCompetenceForm(FlaskForm):
 
 class FilConducteurForm(FlaskForm):
     programme = SelectField('Programme', coerce=int, validators=[DataRequired()])
-    description = StringField('Description', validators=[DataRequired()])
+    description = StringField('Nom du fil', validators=[DataRequired()])
     couleur = ColorField('Couleur', validators=[Optional()])  # Nouveau champ pour la couleur
     submit = SubmitField('Ajouter Fil Conducteur')
 

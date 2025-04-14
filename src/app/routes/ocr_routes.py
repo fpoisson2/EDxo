@@ -160,7 +160,8 @@ def start_ocr_processing():
     if form.validate_on_submit():
         programme_url = form.programme_url.data
         selected_programme_text = dict(form.programme_url.choices).get(programme_url, '')
-        pdf_title = form.pdf_title.data.strip() or selected_programme_text or 'PDF Programme Inconnu'
+        # Suppression de l'accès au champ 'pdf_title'
+        pdf_title = selected_programme_text or 'PDF Programme Inconnu'
 
         try:
             # !!! Importation de la tâche déplacée ici !!!
@@ -170,7 +171,7 @@ def start_ocr_processing():
 
             task = celery.send_task(
                 'app.tasks.process_ocr_task', # Nom de la tâche à exécuter
-                args=[programme_url, pdf_title],  # Arguments positionnels de la tâche
+                args=[programme_url, pdf_title, current_user.id, current_user.openai_key],  # Arguments positionnels de la tâche
                 kwargs={}                    # Arguments nommés (aucun dans ce cas)
             )
             logger.info(f"Tâche Celery démarrée pour OCR: {task.id} pour l'URL: {programme_url} (Titre: {pdf_title})")

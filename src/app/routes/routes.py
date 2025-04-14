@@ -915,12 +915,14 @@ def edit_fil_conducteur(fil_id):
     return render_template('edit_fil_conducteur.html', form=form, fil=fil)
 
 @main.route('/add_fil_conducteur', methods=('GET', 'POST'))
-@role_required('admin')
+@roles_required('admin', 'coordo')
 @ensure_profile_completed
 def add_fil_conducteur():
     form = FilConducteurForm()
-    programmes = Programme.query.all()
-    form.programme.choices = [(p.id, p.nom) for p in programmes]
+    accessible_programmes = Programme.query.filter(
+        Programme.id.in_([p.id for p in current_user.programmes])
+    ).all()
+    form.programme.choices = [(p.id, p.nom) for p in accessible_programmes]
 
     if form.validate_on_submit():
         programme_id = form.programme.data
@@ -943,17 +945,45 @@ def add_fil_conducteur():
 
     return render_template('add_fil_conducteur.html', form=form)
 
+
 @main.route('/add_cours', methods=('GET', 'POST'))
-@role_required('admin')
+@roles_required('admin', 'coordo')
 @ensure_profile_completed
 def add_cours():
     form = CoursForm()
-    programmes = Programme.query.all()
-    elements_competence_rows = ElementCompetence.query.join(Competence).all()
+    
+    # Filtrer les programmes accessibles par l'utilisateur courant.
+    # Remplacez cette ligne par la méthode appropriée pour récupérer les programmes auxquels current_user a accès.
+    accessible_programmes = Programme.query.filter(
+        Programme.id.in_([p.id for p in current_user.programmes])
+    ).all()
 
-    form.programme.choices = [(p.id, p.nom) for p in programmes]
 
-    # Préparer la liste des éléments pour assigner en dynamique
+    # Récupération du programme par défaut à partir des paramètres GET (ex: ?programme_id=2)
+    # ou utilisation du premier programme accessible si aucun n'est spécifié.
+    selected_programme = request.args.get('programme_id', None)
+    if selected_programme is not None:
+        try:
+            selected_programme = int(selected_programme)
+        except ValueError:
+            selected_programme = None
+    if not selected_programme and accessible_programmes:
+        selected_programme = accessible_programmes[0].id
+
+    # Définir les choix du menu déroulant pour le champ programme
+    form.programme.choices = [(p.id, p.nom) for p in accessible_programmes]
+    form.programme.data = selected_programme
+
+    # Filtrer les éléments de compétence pour n'inclure que ceux associés au programme sélectionné.
+    # On suppose ici que le modèle Competence possède un attribut programme_id.
+    elements_competence_rows = (
+        ElementCompetence.query
+        .join(Competence)
+        .filter(Competence.programme_id == selected_programme)
+        .all()
+    )
+
+    # Préparer les choix pour chaque sous-formulaire d'élément de compétence.
     for subform in form.elements_competence:
         subform.element_competence.choices = [
             (ec.id, f"{ec.competence.code} - {ec.nom}") for ec in elements_competence_rows
@@ -1002,10 +1032,17 @@ def add_cours():
             db.session.rollback()
             flash(f'Erreur lors de l\'ajout du cours : {e}', 'danger')
 
-    return render_template('add_cours.html', form=form, elements_competence=elements_competence_rows)
+    # Conversion des objets ElementCompetence en dictionnaires pour la sérialisation JSON
+    elements_competence_dicts = [ec.to_dict() for ec in elements_competence_rows]
+    return render_template(
+        'add_cours.html',
+        form=form,
+        elements_competence=elements_competence_dicts
+    )
+
 
 @main.route('/add_cours_prealable', methods=('GET', 'POST'))
-@role_required('admin')
+@roles_required('admin', 'coordo')
 @ensure_profile_completed
 def add_cours_prealable():
     form = CoursPrealableForm()
@@ -1035,7 +1072,7 @@ def add_cours_prealable():
     return render_template('add_cours_prealable.html', form=form)
 
 @main.route('/add_cours_corequis', methods=('GET', 'POST'))
-@role_required('admin')
+@roles_required('admin', 'coordo')
 @ensure_profile_completed
 def add_cours_corequis():
     form = CoursCorequisForm()
@@ -1063,7 +1100,7 @@ def add_cours_corequis():
     return render_template('add_cours_corequis.html', form=form)
 
 @main.route('/add_competence_par_cours', methods=('GET', 'POST'))
-@role_required('admin')
+@roles_required('admin', 'coordo')
 @ensure_profile_completed
 def add_competence_par_cours():
     form = CompetenceParCoursForm()
@@ -1095,7 +1132,7 @@ def add_competence_par_cours():
     return render_template('add_competence_par_cours.html', form=form)
 
 @main.route('/add_element_competence_par_cours', methods=('GET', 'POST'))
-@role_required('admin')
+@roles_required('admin', 'coordo')
 @ensure_profile_completed
 def add_element_competence_par_cours():
     form = ElementCompetenceParCoursForm()
@@ -1155,7 +1192,7 @@ def add_element_competence_par_cours():
     return render_template('add_element_competence_par_cours.html', form=form)
 
 @main.route('/element_competence/<int:element_id>/edit', methods=['GET', 'POST'])
-@role_required('admin')
+@roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_element_competence(element_id):
     element = ElementCompetence.query.get(element_id)
@@ -1204,28 +1241,40 @@ def edit_element_competence(element_id):
             flash(f'Erreur lors de la mise à jour de l\'élément : {e}', 'danger')
 
     return render_template('edit_element_competence.html', form=form)
-
 @main.route('/edit_cours/<int:cours_id>', methods=('GET', 'POST'))
-@role_required('admin')
+@roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_cours(cours_id):
+    # Récupérer le cours à modifier
     cours = Cours.query.get(cours_id)
     if not cours:
         flash('Cours non trouvé.', 'danger')
         return redirect(url_for('main.index'))
 
-    # Récupérer tous les cours (pour préalables/corequis)
-    all_cours = Cours.query.filter(Cours.id != cours_id).all()
-    cours_choices = [(c.id, c.nom) for c in all_cours]
+    # Filtrer les programmes accessibles par l'usager courant
+    accessible_programmes = Programme.query.filter(
+        Programme.id.in_([p.id for p in current_user.programmes])
+    ).all()
 
-    # Précharger préalables existants
+    # Filtrer les cours accessibles pour les préalables/corequis (sans inclure le cours courant)
+    accessible_courses = Cours.query.filter(
+        Cours.programme_id.in_([p.id for p in current_user.programmes])
+    ).filter(Cours.id != cours_id).all()
+    cours_choices = [(c.id, c.nom) for c in accessible_courses]
+
+    # Précharger préalables et corequis existants
     prealables_existants = CoursPrealable.query.filter_by(cours_id=cours_id).all()
     corequis_existants = CoursCorequis.query.filter_by(cours_id=cours_id).all()
 
-    # Récupérer tous les éléments de compétence (avec code) pour le form
-    elements_competence_query = ElementCompetence.query.join(Competence).order_by(Competence.code, ElementCompetence.nom).all()
-    
-    # Convert ElementCompetence objects to JSON-serializable dictionaries
+    # Filtrer les éléments de compétence accessibles pour l'usager
+    elements_competence_query = (
+        ElementCompetence.query
+        .join(Competence)
+        .filter(Competence.programme_id.in_([p.id for p in current_user.programmes]))
+        .order_by(Competence.code, ElementCompetence.nom)
+        .all()
+    )
+    # Conversion des éléments de compétence en dictionnaires (pour usage en JS, si besoin)
     elements_competence = [
         {
             'id': ec.id,
@@ -1235,22 +1284,24 @@ def edit_cours(cours_id):
         }
         for ec in elements_competence_query
     ]
-    
-    ec_assoc = ElementCompetenceParCours.query.filter_by(cours_id=cours_id).all()
+    # Pour la construction des choix dans le formulaire, utilisez directement la query
+    ec_choices = [(ec.id, f"{ec.competence.code} - {ec.nom}") for ec in elements_competence_query]
 
-    # Rest of your existing code...
-    programmes = Programme.query.all()
-    fils_conducteurs = FilConducteur.query.all()
+    # Pour fil conducteur, on ne récupère que ceux liés aux programmes accessibles
+    fils_conducteurs = FilConducteur.query.filter(
+        FilConducteur.programme_id.in_([p.id for p in current_user.programmes])
+    ).all()
 
     form = CoursForm()
-    form.programme.choices = [(p.id, p.nom) for p in programmes]
+    # Définir les choix pour le menu déroulant des programmes accessibles
+    form.programme.choices = [(p.id, p.nom) for p in accessible_programmes]
 
-    # Use the query result for form choices, not the serialized version
-    ec_choices = [(ec.id, f"{ec.competence.code} - {ec.nom}") for ec in elements_competence_query]
+    # Choix pour corequis et fil conducteur
     form.corequis.choices = cours_choices
     form.fil_conducteur.choices = [(fc.id, fc.description) for fc in fils_conducteurs]
 
     if request.method == 'GET':
+        # Pré-remplissage du formulaire avec les données du cours existant
         form.programme.data = cours.programme_id
         form.code.data = cours.code
         form.nom.data = cours.nom
@@ -1261,30 +1312,28 @@ def edit_cours(cours_id):
         form.corequis.data = [c.cours_corequis_id for c in corequis_existants]
         form.fil_conducteur.data = cours.fil_conducteur_id if cours.fil_conducteur_id else None
 
+        # Rendre dynamiques les éléments de compétence existants
         form.elements_competence.entries = []
-        if ec_assoc:
+        if ec_assoc := ElementCompetenceParCours.query.filter_by(cours_id=cours_id).all():
             for ec_item in ec_assoc:
                 subform = form.elements_competence.append_entry()
                 subform.element_competence.choices = ec_choices
                 subform.element_competence.data = ec_item.element_competence_id
                 subform.status.data = ec_item.status
-        else:
-            subform = form.elements_competence.append_entry()
-            subform.element_competence.choices = ec_choices
 
+        # Pré-remplir les préalables existants
         form.prealables.entries = []
         for p in prealables_existants:
             p_subform = form.prealables.append_entry()
             p_subform.cours_prealable_id.choices = cours_choices
             p_subform.cours_prealable_id.data = p.cours_prealable_id
             p_subform.note_necessaire.data = p.note_necessaire
-
     else:
+        # Remettre à jour les choix en cas de POST
         for subform in form.elements_competence:
             subform.element_competence.choices = ec_choices
         for p_subform in form.prealables:
             p_subform.cours_prealable_id.choices = cours_choices
-
 
     if form.validate_on_submit():
         cours.programme_id = form.programme.data
@@ -1296,7 +1345,7 @@ def edit_cours(cours_id):
         cours.heures_travail_maison = form.heures_travail_maison.data
         cours.fil_conducteur_id = form.fil_conducteur.data
 
-        # Mettre à jour ElementCompetenceParCours
+        # Mettre à jour les associations d'éléments de compétence
         ElementCompetenceParCours.query.filter_by(cours_id=cours_id).delete()
         elements_data = form.elements_competence.data or []
         for ec in elements_data:
@@ -1310,7 +1359,7 @@ def edit_cours(cours_id):
                 )
                 db.session.add(new_ec_assoc)
 
-        # Mettre à jour CoursPrealable
+        # Mettre à jour les préalables
         CoursPrealable.query.filter_by(cours_id=cours_id).delete()
         prealables_data = form.prealables.data or []
         for p_data in prealables_data:
@@ -1324,7 +1373,7 @@ def edit_cours(cours_id):
                 )
                 db.session.add(new_pre)
 
-        # Mettre à jour CoursCorequis
+        # Mettre à jour les corequis
         CoursCorequis.query.filter_by(cours_id=cours_id).delete()
         corequis_data = form.corequis.data or []
         for c_id in corequis_data:
@@ -1342,7 +1391,12 @@ def edit_cours(cours_id):
             db.session.rollback()
             flash(f'Erreur lors de la mise à jour du cours : {e}', 'danger')
 
-    return render_template('edit_cours.html', form=form, elements_competence=elements_competence, cours_choices=cours_choices)
+    return render_template(
+        'edit_cours.html',
+        form=form,
+        elements_competence=elements_competence,
+        cours_choices=cours_choices
+    )
 
 @main.route('/parametres/gestion_departements', methods=['GET', 'POST'])
 @roles_required('admin')

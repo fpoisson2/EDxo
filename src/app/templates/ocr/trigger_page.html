@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Démarrer Traitement OCR{% endblock %}
+{% block title %}Importer devis ministériel{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h1>Démarrer un nouveau traitement OCR</h1>
+    <h1>Importer les compétences d'un devis ministériel</h1>
     <p>Sélectionnez un secteur puis un programme d'études.</p>
 
     {# --- Affichage des messages Flash --- #}
@@ -20,10 +20,10 @@
 
     {# --- Formulaire avec les Select --- #}
     <form method="POST" action="{{ url_for('ocr.start_ocr_processing') }}" id="ocrForm">
-        {{ form.hidden_tag() }} {# --- Sélecteur Secteur --- #}
+        {{ form.hidden_tag() }}
+        {# --- Sélecteur Secteur --- #}
         <div class="mb-3">
             {{ form.secteur_url.label(class="form-label") }}
-            {# Le form object passé depuis la route contient les choices #}
             {{ form.secteur_url(class="form-select" + (" is-invalid" if form.secteur_url.errors else ""), id="secteurSelect") }}
             {% if form.secteur_url.errors %}
                 <div class="invalid-feedback d-block">
@@ -35,29 +35,17 @@
         {# --- Sélecteur Programme (dynamique) --- #}
         <div class="mb-3">
             {{ form.programme_url.label(class="form-label") }}
-             {# Les choices sont peuplés par JS ou lors du re-rendu après erreur #}
             {{ form.programme_url(class="form-select" + (" is-invalid" if form.programme_url.errors else ""), id="programmeSelect", disabled=true) }}
-             {% if form.programme_url.errors %}
+            {% if form.programme_url.errors %}
                 <div class="invalid-feedback d-block">
                     {% for error in form.programme_url.errors %}<span>{{ error }}</span>{% endfor %}
                 </div>
             {% endif %}
-             {# Indicateur de chargement --- #}
-             <div id="programmeLoading" style="display: none;" class="mt-2 text-muted">
-                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                 Chargement des programmes...
-             </div>
-        </div>
-
-        {# --- Champ Titre (Optionnel) --- #}
-        <div class="mb-3">
-            {{ form.pdf_title.label(class="form-label") }}
-            {{ form.pdf_title(class="form-control" + (" is-invalid" if form.pdf_title.errors else ""), id="pdfTitleInput", placeholder="Sera rempli automatiquement si laissé vide") }}
-             {% if form.pdf_title.errors %}
-                <div class="invalid-feedback d-block">
-                    {% for error in form.pdf_title.errors %}<span>{{ error }}</span>{% endfor %}
-                </div>
-            {% endif %}
+            {# Indicateur de chargement --- #}
+            <div id="programmeLoading" style="display: none;" class="mt-2 text-muted">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Chargement des programmes...
+            </div>
         </div>
 
         {# --- Bouton Soumettre --- #}
@@ -72,17 +60,15 @@
 document.addEventListener('DOMContentLoaded', function() {
     const secteurSelect = document.getElementById('secteurSelect');
     const programmeSelect = document.getElementById('programmeSelect');
-    const pdfTitleInput = document.getElementById('pdfTitleInput');
     const programmeLoading = document.getElementById('programmeLoading');
     const submitBtn = document.getElementById('submitBtn');
-    // Garde en mémoire la valeur initiale du programme si le formulaire est re-rendu avec des erreurs
     const initialProgrammeUrl = programmeSelect.value;
 
-    // ----- Système de flash message JS placeholder (adaptez si nécessaire) -----
+    // Système de flash message pour afficher les erreurs ou informations
     const flashMessageSystem = {
         show(message, type = 'info') {
-            console.log(`Flash (${type}): ${message}`); // Log pour debug
-            const flashContainer = document.querySelector('.container.mt-4'); // Conteneur où afficher
+            console.log(`Flash (${type}): ${message}`);
+            const flashContainer = document.querySelector('.container.mt-4');
             if (!flashContainer) return;
 
             const alertDiv = document.createElement('div');
@@ -90,25 +76,22 @@ document.addEventListener('DOMContentLoaded', function() {
             alertDiv.setAttribute('role', 'alert');
             alertDiv.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
 
-            // Insérer au début du conteneur principal
             flashContainer.insertBefore(alertDiv, flashContainer.firstChild);
 
-            // Optionnel: faire disparaître après quelques secondes
             setTimeout(() => {
                 const toast = bootstrap.Alert.getOrCreateInstance(alertDiv);
                 if (toast) {
                     toast.close();
                 } else if (alertDiv.parentElement) {
-                     alertDiv.parentElement.removeChild(alertDiv); // Fallback si BS non chargé
+                     alertDiv.parentElement.removeChild(alertDiv);
                 }
-            }, 5000); // Disparaît après 5 secondes
+            }, 5000);
         },
         error: function(message) { this.show(message, 'danger'); },
         success: function(message) { this.show(message, 'success'); },
         warning: function(message) { this.show(message, 'warning'); },
         info: function(message) { this.show(message, 'info'); }
     };
-    // -----------------------------------------------------------------------
 
     // Fonction pour récupérer et peupler les programmes
     async function fetchProgrammes(secteurUrl) {
@@ -116,65 +99,55 @@ document.addEventListener('DOMContentLoaded', function() {
         programmeSelect.disabled = true;
         programmeLoading.style.display = 'block';
         submitBtn.disabled = true;
-        if (!pdfTitleInput.value) { // Ne pas effacer si l'utilisateur a déjà saisi un titre
-           pdfTitleInput.value = '';
-        }
-
 
         if (!secteurUrl) {
             programmeSelect.innerHTML = '<option value="">-- Choisir un programme --</option>';
             programmeLoading.style.display = 'none';
-            checkEnableSubmit(); // Mise à jour état bouton
+            checkEnableSubmit();
             return;
         }
 
         try {
-            // Construire l'URL pour l'API get_programmes
-            // Utilise url_for pour la robustesse, puis ajoute le paramètre
             const baseUrl = "{{ url_for('ocr.get_programmes_for_secteur', _external=True) }}";
             const fetchUrl = new URL(baseUrl);
             fetchUrl.searchParams.append('secteur_url', secteurUrl);
 
-            console.log("Fetching programmes from:", fetchUrl.toString()); // Debug
+            console.log("Fetching programmes from:", fetchUrl.toString());
 
             const response = await fetch(fetchUrl);
 
             if (!response.ok) {
-                 const errorData = await response.json().catch(() => ({ error: `Erreur HTTP ${response.status}` }));
-                 throw new Error(errorData.error || `Erreur HTTP ${response.status}`);
+                const errorData = await response.json().catch(() => ({ error: `Erreur HTTP ${response.status}` }));
+                throw new Error(errorData.error || `Erreur HTTP ${response.status}`);
             }
             const programmes = await response.json();
-            console.log("Programmes reçus:", programmes); // Debug
+            console.log("Programmes reçus:", programmes);
 
-            programmeSelect.innerHTML = '<option value="">-- Choisir un programme --</option>'; // Option par défaut
+            programmeSelect.innerHTML = '<option value="">-- Choisir un programme --</option>';
             if (programmes && !programmes.error && programmes.length > 0) {
                 programmes.forEach(prog => {
                     const title = String(prog.title || 'Programme sans titre').trim();
                     const url = String(prog.url || '').trim();
-                    if(url){ // Ajouter seulement si l'URL est valide
+                    if(url){
                         const option = document.createElement('option');
                         option.value = url;
                         option.textContent = title;
                         programmeSelect.appendChild(option);
                     } else {
-                         console.warn("Programme ignoré car URL manquante:", prog);
+                        console.warn("Programme ignoré car URL manquante:", prog);
                     }
                 });
                 programmeSelect.disabled = false;
-
-                // Essayer de re-sélectionner la valeur initiale si elle existe encore dans les nouvelles options
                 if (initialProgrammeUrl && programmeSelect.querySelector(`option[value="${initialProgrammeUrl}"]`)) {
                      console.log("Tentative de re-sélectionner:", initialProgrammeUrl);
                      programmeSelect.value = initialProgrammeUrl;
-                     // Déclencher le change pour mettre à jour le titre et l'état du bouton
                      programmeSelect.dispatchEvent(new Event('change'));
                 } else {
                      console.log("Valeur initiale non trouvée ou secteur différent, pas de re-sélection.");
                 }
-
             } else if (programmes.error) {
-                 programmeSelect.innerHTML = `<option value="">-- Erreur: ${programmes.error} --</option>`;
-                 flashMessageSystem.error(`Erreur serveur: ${programmes.error}`);
+                programmeSelect.innerHTML = `<option value="">-- Erreur: ${programmes.error} --</option>`;
+                flashMessageSystem.error(`Erreur serveur: ${programmes.error}`);
             } else {
                 programmeSelect.innerHTML = '<option value="">-- Aucun programme trouvé --</option>';
             }
@@ -184,44 +157,34 @@ document.addEventListener('DOMContentLoaded', function() {
             flashMessageSystem.error(`Erreur chargement programmes: ${error.message}`);
         } finally {
              programmeLoading.style.display = 'none';
-             checkEnableSubmit(); // Vérifier si le bouton doit être activé après chargement/erreur
+             checkEnableSubmit();
         }
     }
 
-    // Écouteur pour le changement de secteur
     secteurSelect.addEventListener('change', function() {
-        programmeSelect.value = ''; // Réinitialiser la sélection du programme explicitement
+        programmeSelect.value = '';
         fetchProgrammes(this.value);
     });
 
-     // Écouteur pour le changement de programme
-     programmeSelect.addEventListener('change', function() {
-        // Remplir le champ titre s'il est vide lorsque l'utilisateur sélectionne un programme
-        if (!pdfTitleInput.value.trim() && this.value && this.selectedIndex > 0) {
-             const selectedOptionText = this.options[this.selectedIndex].text;
-             pdfTitleInput.value = selectedOptionText;
-        }
+    programmeSelect.addEventListener('change', function() {
          checkEnableSubmit();
-     });
+    });
 
-     // Fonction pour activer/désactiver le bouton de soumission
-     function checkEnableSubmit() {
+    // Fonction pour activer/désactiver le bouton de soumission
+    function checkEnableSubmit() {
         if (secteurSelect.value && programmeSelect.value && !programmeSelect.disabled) {
              submitBtn.disabled = false;
         } else {
              submitBtn.disabled = true;
         }
-     }
+    }
 
-    // Appel initial pour peupler les programmes si un secteur est déjà sélectionné
-    // (utile si le formulaire est re-rendu après une erreur de validation POST)
     if (secteurSelect.value) {
         console.log("Secteur initial détecté:", secteurSelect.value, "Programme initial:", initialProgrammeUrl);
         fetchProgrammes(secteurSelect.value);
     } else {
-        checkEnableSubmit(); // Vérifier état initial si aucun secteur n'est pré-sélectionné
+        checkEnableSubmit();
     }
-
 });
 </script>
 {% endblock %}

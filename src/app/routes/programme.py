@@ -32,7 +32,7 @@ from app.models import (
     ElementCompetenceParCours,
     PlanDeCours
 )
-from utils.decorator import role_required, ensure_profile_completed
+from utils.decorator import role_required, ensure_profile_completed, roles_required
 
 # Utilities
 # Example of another blueprint import (unused here, just as in your snippet)
@@ -140,9 +140,7 @@ def review_competencies_import():
                     })
                 # Conversion du champ texte en une liste de critères à partir des lignes du texte
                 db_criteres = db_comp.criteria_de_performance
-                if isinstance(db_criteres, str):
-                    # Utilise splitlines() pour séparer chaque ligne et retire les espaces en trop
-                    db_criteres = [crit.strip() for crit in db_criteres.splitlines() if crit.strip()]
+
                 db_version = {
                     "code": db_comp.code,
                     "nom": db_comp.nom,
@@ -646,7 +644,7 @@ def view_programme(programme_id):
 
 
 @programme_bp.route('/competence/<int:competence_id>/edit', methods=['GET', 'POST'])
-@role_required('admin')
+@roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_competence(competence_id):
     form = CompetenceForm()
@@ -688,7 +686,7 @@ def edit_competence(competence_id):
 
 
 @programme_bp.route('/competence/<int:competence_id>/delete', methods=['POST'])
-@role_required('admin')
+@roles_required('admin', 'coordo')
 @ensure_profile_completed
 def delete_competence(competence_id):
     # Formulaire de suppression

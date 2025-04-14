@@ -68,13 +68,13 @@ def perform_ocr_and_save(pdf_url, output_markdown_filename):
 
 
 # --- Fonction find_section_with_openai (Garder `print` pour debug console si désiré) ---
-def find_section_with_openai(markdown_content):
+def find_section_with_openai(markdown_content, openai_key=None):
     """
     Utilise l'API OpenAI pour identifier la section "Formation spécifique".
     Retourne None en cas d'échec.
     """
     # --- Initialize client inside the function ---
-    api_key = current_app.config.get('OPENAI_API_KEY')
+    api_key = openai_key
     if not api_key:
         logging.error("Clé API OpenAI non trouvée dans la configuration. Impossible de trouver la section.")
         print("Erreur: Clé API OpenAI non configurée.")
@@ -137,7 +137,7 @@ def find_section_with_openai(markdown_content):
 
         logging.info(f"Section identifiée : Pages {page_info['page_debut']} à {page_info['page_fin']}")
         print(f"Section identifiée : Pages {page_info['page_debut']} à {page_info['page_fin']}") # Pour console serveur
-        return page_info
+        return {"result": page_info, "usage": getattr(response, "usage", None)}
 
     except json.JSONDecodeError as json_err:
         logging.error(f"Erreur de parsing JSON de la réponse OpenAI (section): {json_err}. Réponse brute: {json_response_str}", exc_info=False)
@@ -148,30 +148,29 @@ def find_section_with_openai(markdown_content):
         print(f"Erreur lors de l'appel API OpenAI (section): {e}") # Pour console serveur
         return None
 
-
-# --- Fonction extraire_competences_depuis_txt (CORRIGÉE pour schéma JSON + gestion erreur) ---
-def extraire_competences_depuis_txt(text_content, output_json_filename, callback=None):
+def extraire_competences_depuis_txt(text_content, output_json_filename, openai_key=None, callback=None):
     """
     Extrait les compétences via API OpenAI (stream).
     Lève SkillExtractionError en cas d'échec.
     """
     # --- Initialize client inside the function ---
-    api_key = current_app.config.get('OPENAI_API_KEY')
+    api_key = openai_key
     if not api_key:
         msg = "Clé API OpenAI non trouvée dans la configuration. Impossible d'extraire les compétences."
         logging.error(msg)
-        if callback: callback({"type": "error", "message": msg, "step": "skill_extract_init"})
-        raise SkillExtractionError(msg) # LEVER EXCEPTION
+        if callback:
+            callback({"type": "error", "message": msg, "step": "skill_extract_init"})
+        raise SkillExtractionError(msg)
     try:
         openai_client = OpenAI(api_key=api_key)
         logging.info("Client OpenAI initialisé pour extraire_competences_depuis_txt.")
     except Exception as e:
-         msg = f"Erreur initialisation client OpenAI dans extraire_competences: {e}"
-         logging.error(msg, exc_info=True)
-         if callback: callback({"type": "error", "message": msg, "step": "skill_extract_init"})
-         raise SkillExtractionError(msg) from e # LEVER EXCEPTION
+        msg = f"Erreur initialisation client OpenAI dans extraire_competences: {e}"
+        logging.error(msg, exc_info=True)
+        if callback:
+            callback({"type": "error", "message": msg, "step": "skill_extract_init"})
+        raise SkillExtractionError(msg) from e
     # --- End initialization ---
-
 
     # --- Définition Prompt et Schéma ---
     system_prompt_inline = (
@@ -179,7 +178,7 @@ def extraire_competences_depuis_txt(text_content, output_json_filename, callback
 
      Ton objectif principal est d'analyser le texte fourni par l'utilisateur, qui représente le contenu extrait d'un PDF (potentiellement bruité par l'OCR ou la conversion texte), d'identifier chaque bloc décrivant une compétence unique (généralement introduit par un code alphanumérique comme "Code : XXXX" ou "0XXX"), et d'en extraire méticuleusement les informations suivantes pour CHAQUE compétence trouvée:
      1.  Le `Code` de la compétence (ex: "02MU", "O1XY").
-     2.  Le `Nom de la compétence` (le titre ou énoncé principal, ex: "Adopter un comportement professionnel.").
+     2.  Le `Nom de la compétence` (le titre ou l'énoncé principal, ex: "Adopter un comportement professionnel.").
      3.  Le `Contexte de réalisation` : extrais toutes les lignes descriptives textuelles trouvées sous ce titre exact. Structure spécifiquement les sous-sections introduites par "À partir de :" et "À l’aide de :" comme des listes de chaînes de caractères dans des objets JSON imbriqués (`APartirDe`, `ALaideDe`) à l'intérieur de l'objet `Contexte de réalisation`. Les autres lignes descriptives générales vont dans `details_generaux`. Si une sous-section ("À partir de:", "À l'aide de:") est absente, sa valeur doit être `null` ou une liste vide. Si toute la section "Contexte de réalisation" est absente, sa valeur doit être `null`.
      4.  Les `Critères de performance pour l’ensemble de la compétence` : extrais les lignes descriptives textuelles trouvées sous ce titre exact sous forme de liste de chaînes de caractères. Si la section est absente ou marquée comme non applicable (ex: "S. O."), la valeur du champ doit être `null` ou une liste vide.
      5.  Les `Éléments` : Identifie chaque élément spécifique de la compétence (souvent numéroté `1.`, `2.`, etc., ou précédé d'une puce). Pour chaque élément, crée un objet contenant deux champs: `element` (la description textuelle de l'élément) et `criteres` (une liste de chaînes de caractères contenant les critères de performance associés *spécifiquement* à cet élément, trouvés immédiatement après la description de l'élément). Si aucun critère n'est listé pour un élément, `criteres` doit être `null` ou une liste vide. Si la section "Éléments" entière est absente, sa valeur doit être `null`.
@@ -216,9 +215,7 @@ def extraire_competences_depuis_txt(text_content, output_json_filename, callback
                         "Contexte de réalisation": {
                             "type": ["array", "null"],
                             "description": "Représente la structure hiérarchique du 'Contexte de réalisation' sous forme de liste imbriquée. Null si la section est absente.",
-                            "items": {
-                                "$ref": "#/definitions/context_item"
-                            }
+                            "items": {"$ref": "#/definitions/context_item"}
                         },
                         "Critères de performance pour l’ensemble de la compétence": {
                             "type": ["array", "null"],
@@ -263,121 +260,101 @@ def extraire_competences_depuis_txt(text_content, output_json_filename, callback
                     "sous_points": {
                         "type": ["array", "null"],
                         "description": "Liste des sous-points hiérarchiques (ou null si aucun).",
-                        "items": {
-                            "$ref": "#/definitions/context_item"
-                        }
+                        "items": {"$ref": "#/definitions/context_item"}
                     }
                 },
                 "additionalProperties": False
             }
         }
     }
-
     # --- Fin Prompt et Schéma ---
 
     logging.info("Appel API OpenAI (stream) pour extraction compétences...")
-    # print("\n--- Début de l'extraction des compétences (stream) ---") # Pour console serveur
-    if callback: callback({"type": "info", "message": "Début de l'extraction des compétences (stream)...", "step": "skill_extract"})
+    if callback:
+        callback({"type": "info", "message": "Début de l'extraction des compétences (stream)...", "step": "skill_extract"})
 
     full_json_string = ""
+    final_response = None  # Variable to capture the final response event
     try:
-        # === Appel API avec stream=True ===
         stream = openai_client.responses.create(
             model=current_app.config.get('OPENAI_MODEL_EXTRACTION'),
             input=[
                 {"role": "system", "content": [{"type": "input_text", "text": system_prompt_inline}]},
                 {"role": "user", "content": [{"type": "input_text", "text": text_content}]}
             ],
-            text={"format": {
-                "type": "json_schema",
-                "name": "extraire_competences_en_json",
-                "strict": True,
-                "schema": json_schema
-            }},
+            text={"format": {"type": "json_schema", "name": "extraire_competences_en_json", "strict": True, "schema": json_schema}},
             reasoning={}, tools=[], tool_choice="none", temperature=0.5, top_p=1, store=True,
-            stream=True,
-            # request_timeout=600 # Optionnel
+            stream=True
         )
 
-        # === Itération sur les événements du stream ===
         for event in stream:
             event_type = getattr(event, 'type', None)
-
             if event_type == 'response.output_text.delta':
                 delta = getattr(event, 'delta', '')
                 if delta:
                     full_json_string += delta
-                    # logging.info(f"API_CLIENTS: Delta reçu (callback), longueur={len(delta)}") # Décommenter pour debug fin
                     if callback:
                         try:
                             callback({"type": "delta", "data": delta})
                         except Exception as cb_err:
                             logging.error(f"Erreur dans la fonction callback: {cb_err}")
-
             elif event_type == 'response.failed':
                 error_info = getattr(event, 'response', {}).get('error', {})
                 error_message = error_info.get('message', 'Erreur stream inconnue')
                 msg = f"Événement d'erreur reçu pendant le stream OpenAI: {error_message}"
                 logging.error(f"{msg} Détails: {error_info}")
-                if callback: callback({"type": "error", "message": msg, "details": error_info, "step": "skill_extract_stream"})
-                # === LEVER EXCEPTION ===
+                if callback:
+                    callback({"type": "error", "message": msg, "details": error_info, "step": "skill_extract_stream"})
                 raise SkillExtractionError(msg)
-                # =======================
-
             elif event_type == 'response.completed':
                 logging.info("Événement 'response.completed' reçu du stream.")
-                if callback: callback({"type": "info", "message": "Stream OpenAI terminé.", "step": "skill_extract_stream"})
+                final_response = event
+                if callback:
+                    callback({"type": "info", "message": "Stream OpenAI terminé.", "step": "skill_extract_stream"})
 
-        # --- Fin de l'itération ---
         logging.info(f"Stream terminé. JSON complet assemblé (longueur: {len(full_json_string)}).")
-        if callback: callback({"type": "info", "message": "Traitement du stream terminé. Sauvegarde...", "step": "skill_extract_save"})
+        if callback:
+            callback({"type": "info", "message": "Traitement du stream terminé. Sauvegarde...", "step": "skill_extract_save"})
 
-        # --- Validation JSON avant sauvegarde (Optionnel mais recommandé) ---
         try:
             parsed_json_validation = json.loads(full_json_string)
             if not isinstance(parsed_json_validation, dict) or 'competences' not in parsed_json_validation:
-                 logging.warning("Le JSON assemblé ne contient pas la clé 'competences' attendue.")
-                 # On pourrait lever une erreur ici si c'est critique :
-                 # raise SkillExtractionError("Structure JSON invalide retournée par l'API (clé 'competences' manquante).")
+                logging.warning("Le JSON assemblé ne contient pas la clé 'competences' attendue.")
         except json.JSONDecodeError as json_val_err:
             logging.warning(f"Le JSON assemblé (stream) n'était pas valide AVANT sauvegarde: {json_val_err}")
-            # On pourrait lever une erreur ici si c'est critique :
-            # raise SkillExtractionError(f"Structure JSON invalide retournée par l'API (non-parsable): {json_val_err}") from json_val_err
 
-        # --- Sauvegarde du fichier ---
         try:
             with open(output_json_filename, "w", encoding="utf-8") as f:
-                # Essayer de parser à nouveau pour formater si valide, sinon sauvegarder brut
                 try:
-                    # Utiliser la version déjà parsée si la validation a réussi
                     if 'parsed_json_validation' in locals() and isinstance(parsed_json_validation, dict):
-                         json.dump(parsed_json_validation, f, ensure_ascii=False, indent=4)
-                    else: # Tenter de parser à nouveau au cas où la validation aurait échoué mais serait acceptable
-                         parsed_json = json.loads(full_json_string)
-                         json.dump(parsed_json, f, ensure_ascii=False, indent=4)
+                        json.dump(parsed_json_validation, f, ensure_ascii=False, indent=4)
+                    else:
+                        parsed_json = json.loads(full_json_string)
+                        json.dump(parsed_json, f, ensure_ascii=False, indent=4)
                 except json.JSONDecodeError:
                     logging.warning(f"JSON invalide lors de la tentative de formatage. Sauvegarde brute dans {output_json_filename}.")
-                    f.write(full_json_string) # Sauvegarde brute
+                    f.write(full_json_string)
         except IOError as io_err:
-             msg = f"Erreur d'écriture lors de la sauvegarde du JSON: {io_err}"
-             logging.error(msg, exc_info=True)
-             if callback: callback({"type": "error", "message": msg, "step": "skill_extract_save"})
-             raise SkillExtractionError(msg) from io_err # Lever notre exception
+            msg = f"Erreur d'écriture lors de la sauvegarde du JSON: {io_err}"
+            logging.error(msg, exc_info=True)
+            if callback:
+                callback({"type": "error", "message": msg, "step": "skill_extract_save"})
+            raise SkillExtractionError(msg) from io_err
 
         logging.info(f"Compétences extraites (stream) et sauvegardées dans {output_json_filename}")
-        if callback: callback({"type": "success", "message": f"Fichier JSON sauvegardé: {os.path.basename(output_json_filename)}", "step": "skill_extract_save"})
+        if callback:
+            callback({"type": "success", "message": f"Fichier JSON sauvegardé: {os.path.basename(output_json_filename)}", "step": "skill_extract_save"})
 
-        # --- Si tout va bien, retourner la chaîne JSON ---
-        return full_json_string
+        usage_info = getattr(final_response, "usage", None)
+
+        # --- Return both the JSON result and the usage info ---
+        return {"result": full_json_string, "usage": usage_info}
 
     except SkillExtractionError:
-         raise # Laisser remonter l'exception déjà logguée et callbackée
+        raise
     except Exception as e:
-        # Attraper d'autres erreurs (ex: erreur réseau avant stream, erreur .create())
-        # Comprend aussi l'erreur BadRequestError si le schéma est invalide
         msg = f"Erreur lors de l'appel ou du traitement du stream OpenAI (extraction): {e}"
         logging.error(msg, exc_info=True)
-        if callback: callback({"type": "error", "message": f"Erreur majeure lors de l'extraction: {e}", "step": "skill_extract_error"})
-        # === LEVER EXCEPTION (avec cause originale) ===
+        if callback:
+            callback({"type": "error", "message": f"Erreur majeure lors de l'extraction: {e}", "step": "skill_extract_error"})
         raise SkillExtractionError(msg, original_exception=e) from e
-        # ============================================
