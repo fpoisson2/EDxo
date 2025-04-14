@@ -55,7 +55,10 @@ gestion_programme_bp = Blueprint('gestion_programme', __name__, url_prefix='/ges
 @login_required
 @ensure_profile_completed
 def gestion_programme():
-    plans = PlanDeCours.query.join(Cours).all()
+    user_program_ids = [programme.id for programme in current_user.programmes]
+    plans = PlanDeCours.query.join(Cours).filter(
+        Cours.programme_id.in_(user_program_ids)
+    ).all()
     return render_template('gestion_programme/gestion_programme.html', plans=plans)
 
 # Route GET pour récupérer les données de vérification existantes

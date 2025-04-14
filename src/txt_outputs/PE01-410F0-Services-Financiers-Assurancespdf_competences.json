@@ -1,0 +1,2044 @@
+{
+    "competences": [
+        {
+            "Code": "00SZ",
+            "Nom de la compétence": "Analyser les fonctions de travail.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "d’information récente sur les fonctions de travail, les secteurs d’activité, les types d’entreprises et les organismes.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des lois, des règlements, des normes et des codes en vigueur.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des produits et des services offerts dans le domaine.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des règles relatives à l’obtention des certificats d’exercice.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Pertinence de l’information recueillie.",
+                "Démonstration d’autonomie dans ses démarches."
+            ],
+            "Éléments": [
+                {
+                    "element": "Examiner les renseignements relatifs au domaine des services financiers et des assurances.",
+                    "criteres": [
+                        "Distinction claire des types d’entreprises.",
+                        "Reconnaissance juste des produits et des services offerts dans le domaine.",
+                        "Distinction juste des organismes de réglementation.",
+                        "Reconnaissance juste des associations et des autres organismes professionnels."
+                    ]
+                },
+                {
+                    "element": "Caractériser les fonctions de travail relatives aux secteurs des services financiers, de l’assurance de dommages et de l’assurance de personnes.",
+                    "criteres": [
+                        "Distinction claire des fonctions de travail selon les secteurs.",
+                        "Reconnaissance juste des possibilités de travail dans les entreprises des secteurs visés.",
+                        "Distinction juste des caractéristiques générales des différents milieux de travail."
+                    ]
+                },
+                {
+                    "element": "Examiner les fonctions de travail et les tâches du domaine des services financiers et des assurances.",
+                    "criteres": [
+                        "Examen complet des caractéristiques générales des fonctions de travail et des conditions d’exercice, selon les secteurs visés.",
+                        "Distinction appropriée des caractéristiques propres à chacune des fonctions de travail.",
+                        "Examen complet des tâches, des conditions de réalisation et des critères de performance.",
+                        "Reconnaissance juste des cheminements de carrière possibles."
+                    ]
+                },
+                {
+                    "element": "Examiner les connaissances, les habiletés et les comportements nécessaires à l’exercice des fonctions de travail.",
+                    "criteres": [
+                        "Pertinence des liens établis entre les connaissances, les habiletés, les comportements et les tâches.",
+                        "Reconnaissance juste de l’importance de l’organisation du travail.",
+                        "Reconnaissance juste des règles de l’éthique professionnelle.",
+                        "Reconnaissance juste des risques pour la santé et la sécurité dans le domaine.",
+                        "Examen attentif des moyens permettant de développer ses compétences tout au long de sa carrière."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00T0",
+            "Nom de la compétence": "Utiliser les technologies de l’information et de la communication en milieu professionnel.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de données existantes.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des codes de déontologie des professions.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des lois et des règlements sur la protection des renseignements personnels.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des politiques de l’entreprise.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Souci constant de la sécurité informatique."
+            ],
+            "Éléments": [
+                {
+                    "element": "Utiliser des outils technologiques de traitement et de présentation de données.",
+                    "criteres": [
+                        "Utilisation appropriée des fonctions de base pour le repérage de données.",
+                        "Production et manipulation appropriées des données.",
+                        "Organisation appropriée des données.",
+                        "Présentation appropriée des données."
+                    ]
+                },
+                {
+                    "element": "Utiliser des outils technologiques destinés au travail collaboratif.",
+                    "criteres": [
+                        "Utilisation appropriée d’outils :",
+                        "de planification;",
+                        "de télécommunication;",
+                        "de partage de données.",
+                        "Application appropriée des règles de la communication numérique."
+                    ]
+                },
+                {
+                    "element": "Utiliser des outils technologiques destinés à la relation client et au développement des affaires.",
+                    "criteres": [
+                        "Utilisation appropriée d’outils informatiques et interactifs.",
+                        "Utilisation appropriée d’outils d’assistance à la clientèle.",
+                        "Utilisation responsable et éthique des outils.",
+                        "Application appropriée des règles de la communication numérique."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00T1",
+            "Nom de la compétence": "Interagir avec la clientèle à des fins de vente.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Avec une cliente ou un client.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "des besoins ciblés de la cliente ou du client.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des politiques de l’entreprise.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des lois et des règlements sur la protection des renseignements personnels.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect de l’éthique professionnelle dans les relations.",
+                "Respect des politiques de l’entreprise.",
+                "Respect des codes de déontologie des professions."
+            ],
+            "Éléments": [
+                {
+                    "element": "Adopter une approche client.",
+                    "criteres": [
+                        "Interprétation juste du contexte et des particularités de la situation de communication.",
+                        "Prise de contact appropriée.",
+                        "Pertinence des questions posées.",
+                        "Démonstration d’écoute active.",
+                        "Adaptation appropriée aux particularités de la clientèle.",
+                        "Manifestation d’empathie et d’ouverture d’esprit.",
+                        "Manifestation constante d’une attitude de respect envers la clientèle.",
+                        "Souci constant de l’éthique professionnelle."
+                    ]
+                },
+                {
+                    "element": "Solliciter la clientèle.",
+                    "criteres": [
+                        "Interprétation juste du contexte de sollicitation propre au domaine des services financiers et des assurances.",
+                        "Reconnaissance juste des particularités de la communication en situation de sollicitation.",
+                        "Préparation adéquate en vue de la sollicitation.",
+                        "Moyens de démarchage pertinents.",
+                        "Discours approprié à la situation."
+                    ]
+                },
+                {
+                    "element": "Effectuer une entrevue de vente.",
+                    "criteres": [
+                        "Interprétation juste des besoins de la cliente ou du client.",
+                        "Présentation claire de l’offre de service.",
+                        "Réponse adéquate aux objections.",
+                        "Pertinence de la solution proposée au regard des besoins et des attentes de la cliente ou du client.",
+                        "Conclusion adéquate de la transaction.",
+                        "Cohérence et qualité du discours."
+                    ]
+                },
+                {
+                    "element": "Assurer le suivi nécessaire auprès de la clientèle.",
+                    "criteres": [
+                        "Utilisation de moyens efficaces de suivi des transactions.",
+                        "Repérage juste d’occasions d’affaires supplémentaires qui correspondent aux besoins de la cliente ou du client.",
+                        "Vérification appropriée de la satisfaction de la cliente ou du client."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00T2",
+            "Nom de la compétence": "Collaborer en milieu professionnel.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Avec d’autres membres du personnel.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir des politiques de l’entreprise.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect de l’éthique professionnelle dans les relations.",
+                "Respect des politiques de l’entreprise."
+            ],
+            "Éléments": [
+                {
+                    "element": "Travailler en équipe.",
+                    "criteres": [
+                        "Respect des personnes, des rôles et des responsabilités.",
+                        "Participation à l’atteinte des objectifs.",
+                        "Pertinence des interventions.",
+                        "Communication efficace de l’information.",
+                        "Manifestation d’attitudes et de comportements favorisant la collaboration."
+                    ]
+                },
+                {
+                    "element": "Fournir du soutien à ses collègues de travail.",
+                    "criteres": [
+                        "Interprétation juste des demandes et des besoins.",
+                        "Manifestation d’empathie et d’ouverture d’esprit.",
+                        "Participation active à l’atteinte d’objectifs communs.",
+                        "Communication adaptée à la personne et à la situation."
+                    ]
+                },
+                {
+                    "element": "Interagir dans des situations conflictuelles.",
+                    "criteres": [
+                        "Interprétation juste de la situation.",
+                        "Examen critique de sa réaction devant la situation.",
+                        "Manifestation d’écoute et d’ouverture à l’égard d’un point de vue différent.",
+                        "Argumentation factuelle claire et respectueuse de son point de vue.",
+                        "Contribution importante à la recherche de solutions consensuelles."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00T3",
+            "Nom de la compétence": "Se conformer au cadre légal et réglementaire des services financiers et des assurances.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de la réglementation et des lois relatives aux secteurs de l’assurance de dommages, de l’assurance de personnes et des services financiers.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "du Code civil du Québec et de la common law.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de la jurisprudence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des contrats d’assurance de dommages des particuliers et des entreprises.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des contrats d’assurance de personnes.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des contrats de produits et de services financiers.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de régimes publics d’assurance.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Établissement de liens pertinents."
+            ],
+            "Éléments": [
+                {
+                    "element": "Examiner le cadre légal et réglementaire des services financiers et des assurances.",
+                    "criteres": [
+                        "Reconnaissance juste des sources de droit en vigueur.",
+                        "Distinction juste des lois et des règlements québécois et canadiens en vigueur dans le domaine.",
+                        "Distinction juste des dispositions du Code civil du Québec en vigueur dans le domaine.",
+                        "Repérage de l’information appropriée dans la documentation."
+                    ]
+                },
+                {
+                    "element": "Appliquer des principes généraux de droit relatifs aux contrats de services financiers, d’assurance de dommages et d’assurance de personnes.",
+                    "criteres": [
+                        "Interprétation juste de la portée des contrats.",
+                        "Distinction juste des intervenants dans les contrats.",
+                        "Repérage précis des principaux éléments et des caractéristiques des contrats.",
+                        "Interprétation juste des dispositions et des clauses principales des contrats.",
+                        "Prise en compte des règles de formation, de prise d’effet, de remise en vigueur et de résiliation ou d’annulation des contrats.",
+                        "Prise en compte des règles relatives à la désignation de bénéficiaire, à l’insaisissabilité des prestations, aux réclamations et au paiement des prestations."
+                    ]
+                },
+                {
+                    "element": "Examiner les règles qui encadrent l’activité des professionnelles et des professionnels du domaine inscrits auprès d’un organisme de réglementation.",
+                    "criteres": [
+                        "Distinction juste des organismes de réglementation autorisant les droits de pratique.",
+                        "Reconnaissance juste des obligations et des responsabilités des professionnelles et des professionnels du domaine.",
+                        "Interprétation juste de la portée des devoirs et des obligations prescrits par les codes de déontologie des professionnelles et des professionnels du domaine."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00T4",
+            "Nom de la compétence": "Analyser des données statistiques.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de données statistiques du domaine des services financiers et des assurances.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Utilisation efficace des outils technologiques."
+            ],
+            "Éléments": [
+                {
+                    "element": "Effectuer le traitement des données statistiques.",
+                    "criteres": [
+                        "Détermination juste des calculs à effectuer.",
+                        "Choix approprié des fonctions statistiques.",
+                        "Sélection appropriée des variables.",
+                        "Exécution correcte des fonctions sélectionnées.",
+                        "Exactitude des calculs."
+                    ]
+                },
+                {
+                    "element": "Présenter des résultats.",
+                    "criteres": [
+                        "Choix judicieux du mode de présentation de l’information.",
+                        "Présentation claire et ordonnée des résultats.",
+                        "Application rigoureuse des normes de présentation des tableaux et des graphiques.",
+                        "Souci de la précision et du détail."
+                    ]
+                },
+                {
+                    "element": "Interpréter les résultats.",
+                    "criteres": [
+                        "Mise en évidence des éléments significatifs au regard des résultats présentés.",
+                        "Établissement des liens pertinents entre les différents éléments à traiter.",
+                        "Justesse de l’interprétation."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00T5",
+            "Nom de la compétence": "Communiquer en anglais en milieu professionnel.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Avec des clientes ou des clients, des collègues, des fournisseuses ou des fournisseurs et d’autres professionnelles ou professionnels.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir des politiques de l’entreprise.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence en anglais.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect de l’éthique professionnelle dans les relations.",
+                "Respect des politiques de l’entreprise."
+            ],
+            "Éléments": [
+                {
+                    "element": "Recevoir de l’information orale.",
+                    "criteres": [
+                        "Interprétation juste du contexte.",
+                        "Interprétation juste des propos de l’interlocutrice ou de l’interlocuteur.",
+                        "Clarification des aspects incompris."
+                    ]
+                },
+                {
+                    "element": "Transmettre oralement de l’information.",
+                    "criteres": [
+                        "Utilisation des formules de politesse appropriées.",
+                        "Adaptation du niveau de langue en fonction de l’interlocutrice ou de l’interlocuteur.",
+                        "Utilisation de la terminologie d’affaires appropriée.",
+                        "Formulation de phrases correctes.",
+                        "Souci de la qualité de l’expression orale."
+                    ]
+                },
+                {
+                    "element": "Interpréter le contenu des documents rédigés en anglais.",
+                    "criteres": [
+                        "Interprétation juste de l’information.",
+                        "Clarification des aspects incompris.",
+                        "Utilisation de sources de référence appropriées."
+                    ]
+                },
+                {
+                    "element": "Correspondre par écrit en anglais.",
+                    "criteres": [
+                        "Utilisation correcte de la terminologie d’affaires courante.",
+                        "Application rigoureuse des règles grammaticales, orthographiques et syntaxiques.",
+                        "Rédaction d’un message cohérent, clair, précis et concis.",
+                        "Utilisation des formules de politesse appropriées.",
+                        "Adaptation du style et du niveau de langue en fonction de la destinataire ou du destinataire et du contexte.",
+                        "Présentation générale soignée."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00T6",
+            "Nom de la compétence": "Analyser des produits d’assurance de biens et de responsabilité civile des particuliers.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "des produits et des contrats d’assurance de biens et de responsabilité civile des particuliers.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de la réglementation et des lois relatives à l’assurance de biens et de responsabilité civile des particuliers.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Établissement de liens pertinents."
+            ],
+            "Éléments": [
+                {
+                    "element": "Examiner les produits d’assurance de biens et de responsabilité civile des particuliers.",
+                    "criteres": [
+                        "Distinction juste de la mise en marché des produits d’assurance de biens et de responsabilité civile des particuliers.",
+                        "Caractérisation appropriée des principaux produits d’assurance de biens et de responsabilité civile des particuliers.",
+                        "Comparaison juste des types de produits d’assurance de biens et de responsabilité civile des particuliers en fonction du type d’occupant."
+                    ]
+                },
+                {
+                    "element": "Interpréter des contrats d’assurance de biens et de responsabilité civile des particuliers.",
+                    "criteres": [
+                        "Prise en compte des renseignements dans les contrats d’assurance de biens et de responsabilité civile des particuliers.",
+                        "Reconnaissance juste des liens entre les subdivisions du contrat d’assurance de biens et de responsabilité civile des particuliers.",
+                        "Interprétation juste des garanties et des avenants.",
+                        "Prise en compte des limites des garanties, des exclusions et des avenants.",
+                        "Repérage juste des dispositions légales relatives aux contrats d’assurance de biens et de responsabilité civile des particuliers."
+                    ]
+                },
+                {
+                    "element": "Associer des produits d’assurance de biens et de responsabilité civile des particuliers aux différents besoins de la clientèle.",
+                    "criteres": [
+                        "Analyse juste des différents besoins.",
+                        "Concordance appropriée entre les produits et les besoins."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00T7",
+            "Nom de la compétence": "Analyser des produits d’assurance automobile des particuliers et des entreprises.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "des produits et des contrats d’assurance automobile des particuliers et des entreprises.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des lois relatives à l’assurance automobile.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des régimes publics et privés d’assurance automobile.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Établissement de liens pertinents."
+            ],
+            "Éléments": [
+                {
+                    "element": "Examiner, dans les lois, les dispositions relatives à l’assurance automobile.",
+                    "criteres": [
+                        "Comparaison juste des modalités de mise en marché de l’assurance automobile.",
+                        "Distinction juste des particularités des régimes publics et privés d’assurance automobile.",
+                        "Distinction juste des dispositions relatives aux dommages corporels et matériels.",
+                        "Repérage précis des garanties obligatoires et facultatives de l’assurance automobile."
+                    ]
+                },
+                {
+                    "element": "Examiner les produits d’assurance automobile des particuliers et des entreprises.",
+                    "criteres": [
+                        "Reconnaissance appropriée des formulaires de polices d’assurance automobile du Québec et de leurs caractéristiques.",
+                        "Reconnaissance appropriée des garanties et des avenants."
+                    ]
+                },
+                {
+                    "element": "Interpréter des contrats d’assurance automobile des particuliers et des entreprises.",
+                    "criteres": [
+                        "Prise en compte des renseignements dans les contrats d’assurance automobile.",
+                        "Reconnaissance juste des liens entre les subdivisions du contrat d’assurance automobile.",
+                        "Interprétation juste des garanties et des avenants.",
+                        "Prise en compte des limites des garanties, des exclusions et des avenants.",
+                        "Repérage juste des dispositions légales relatives aux contrats d’assurance automobile."
+                    ]
+                },
+                {
+                    "element": "Associer des produits d’assurance automobile aux différents besoins de la clientèle.",
+                    "criteres": [
+                        "Analyse juste des différents besoins.",
+                        "Concordance appropriée entre les produits et les besoins."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00T8",
+            "Nom de la compétence": "Effectuer la recommandation et la vente de produits d’assurance de dommages des particuliers.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Avec une cliente ou un client francophone ou anglophone.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "des produits et des contrats d’assurance automobile et de biens des particuliers.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des normes de prévention relatives aux bâtiments.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de régimes publics d’assurance.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de la réglementation et des lois relatives à l’assurance de dommages.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des lois et des règlements sur la protection des renseignements personnels.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des normes de souscription de l’assureur.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des politiques de l’entreprise.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de ressources professionnelles qualifiées.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des règles qui encadrent l’activité des professionnelles et des professionnels du domaine.",
+                "Adoption d’une approche client appropriée.",
+                "Repérage juste d’occasions d’affaires supplémentaires."
+            ],
+            "Éléments": [
+                {
+                    "element": "S’enquérir des besoins en matière d’assurance auprès de la cliente ou du client.",
+                    "criteres": [
+                        "Prise de contact appropriée.",
+                        "Interprétation juste de la nature de la demande.",
+                        "Collecte exhaustive des éléments d’information pertinents."
+                    ]
+                },
+                {
+                    "element": "Évaluer le risque à assurer.",
+                    "criteres": [
+                        "Évaluation pertinente du risque physique et du risque moral à assurer.",
+                        "Respect des critères d’admissibilité.",
+                        "Respect des normes de souscription de l’assureur."
+                    ]
+                },
+                {
+                    "element": "Recommander des produits adaptés aux besoins de la cliente ou du client.",
+                    "criteres": [
+                        "Choix judicieux de produits.",
+                        "Explication détaillée, à l’oral, des caractéristiques et des limites de la recommandation.",
+                        "Cohérence et justesse de la recommandation.",
+                        "Clarté de la présentation.",
+                        "Qualité du discours."
+                    ]
+                },
+                {
+                    "element": "Conclure la vente.",
+                    "criteres": [
+                        "Argumentation pertinente visant à démontrer les avantages de la recommandation.",
+                        "Clarification des aspects incompris et réponse adéquate aux objections.",
+                        "Adoption d’attitudes appropriées en situation de vente.",
+                        "Conclusion adéquate de la transaction."
+                    ]
+                },
+                {
+                    "element": "Assurer le suivi nécessaire.",
+                    "criteres": [
+                        "Vérification appropriée de la satisfaction de la cliente ou du client.",
+                        "Traitement efficace des demandes de modification, de renouvellement, de résiliation ou d’annulation de contrat.",
+                        "Utilisation de moyens efficaces visant à fidéliser la clientèle."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00W2",
+            "Nom de la compétence": "Analyser des produits d’assurance de biens et de responsabilité civile des entreprises.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de produits et de contrats d’assurance de biens et de responsabilité civile des entreprises.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de produits de cautionnement.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de la réglementation et des lois relatives à l’assurance de biens et de responsabilité civile des entreprises.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Établissement de liens pertinents."
+            ],
+            "Éléments": [
+                {
+                    "element": "Examiner les produits d’assurance de biens et de responsabilité civile des entreprises ainsi que les produits de cautionnement.",
+                    "criteres": [
+                        "Distinction juste de la mise en marché des produits :",
+                        "d’assurance de biens et de responsabilité civile des entreprises;",
+                        "de cautionnement.",
+                        "Reconnaissance juste des types de cautionnement.",
+                        "Caractérisation appropriée des principaux produits d’assurance de biens et de responsabilité civile des entreprises.",
+                        "Comparaison juste des types de produits d’assurance de biens et de responsabilité civile des entreprises en fonction du type d’entreprise visée."
+                    ]
+                },
+                {
+                    "element": "Interpréter des contrats d’assurance de biens et de responsabilité civile des entreprises.",
+                    "criteres": [
+                        "Prise en compte des renseignements dans les contrats d’assurance de biens et de responsabilité civile des entreprises.",
+                        "Reconnaissance juste des liens entre les subdivisions du contrat d’assurance de biens et de responsabilité civile des entreprises.",
+                        "Interprétation juste des garanties et des avenants.",
+                        "Prise en compte des limites des garanties, des exclusions et des avenants.",
+                        "Repérage juste des dispositions légales relatives aux contrats d’assurance de biens et de responsabilité civile des entreprises."
+                    ]
+                },
+                {
+                    "element": "Associer des produits d’assurance de biens et de responsabilité civile des entreprises aux différents besoins de la clientèle.",
+                    "criteres": [
+                        "Analyse juste des différents besoins.",
+                        "Concordance appropriée entre les produits et les besoins."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00W3",
+            "Nom de la compétence": "Analyser l’information financière d’une entreprise à des fins d’assurance.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "des lois et des règlements en vigueur.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’états financiers d’entreprises représentatifs de la clientèle.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "Dans les limites de la profession.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Établissement de liens pertinents."
+            ],
+            "Éléments": [
+                {
+                    "element": "Repérer les effets de la forme juridique et du secteur d’exploitation d’une entreprise sur sa comptabilité.",
+                    "criteres": [
+                        "Repérage précis des caractéristiques des différentes formes juridiques d’une entreprise.",
+                        "Repérage précis des caractéristiques des capitaux propres d’une entreprise en fonction de sa forme juridique.",
+                        "Distinction juste entre les états financiers d’une entreprise de services et ceux d’une entreprise commerciale."
+                    ]
+                },
+                {
+                    "element": "Interpréter les états financiers d’une entreprise.",
+                    "criteres": [
+                        "Distinction juste des types d’états financiers et de leurs composantes.",
+                        "Prise en compte de renseignements dans les états financiers.",
+                        "Interprétation juste des ratios d’une entreprise au regard des ratios moyens du secteur.",
+                        "Prise en compte des principes comptables généralement reconnus."
+                    ]
+                },
+                {
+                    "element": "Établir la valeur de la perte d’exploitation d’une entreprise.",
+                    "criteres": [
+                        "Prise en compte des données pertinentes relatives à la situation financière d’une entreprise.",
+                        "Prise en compte des facteurs et des variables liés à une interruption des affaires.",
+                        "Exactitude du calcul de la perte d’exploitation."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00W4",
+            "Nom de la compétence": "Effectuer la recommandation et la vente de produits d’assurance de dommages des entreprises.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Avec une cliente ou un client francophone ou anglophone.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "des produits et des contrats d’assurance automobile, de biens et de responsabilité civile des entreprises.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des normes de prévention relatives aux bâtiments.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de régimes publics d’assurance.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de la réglementation et des lois relatives à l’assurance de dommages.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des lois et des règlements sur la protection des renseignements personnels.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des normes de souscription de l’assureur.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des politiques de l’entreprise.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de ressources professionnelles qualifiées.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des règles qui encadrent l’activité des professionnelles et des professionnels du domaine.",
+                "Adoption d’une approche client appropriée."
+            ],
+            "Éléments": [
+                {
+                    "element": "Solliciter la clientèle.",
+                    "criteres": [
+                        "Repérage judicieux des clientes et des clients potentiels.",
+                        "Prise en compte du profil des personnes ciblées.",
+                        "Moyens de démarchage pertinents.",
+                        "Discours approprié à la situation."
+                    ]
+                },
+                {
+                    "element": "S’enquérir des besoins en matière d’assurance auprès de la cliente ou du client.",
+                    "criteres": [
+                        "Prise de contact appropriée.",
+                        "Interprétation juste de la nature de la demande.",
+                        "Collecte exhaustive des éléments d’information pertinents."
+                    ]
+                },
+                {
+                    "element": "Évaluer le risque à assurer.",
+                    "criteres": [
+                        "Justesse de l’information recueillie.",
+                        "Évaluation pertinente du risque physique et du risque moral à assurer.",
+                        "Respect des critères d’admissibilité.",
+                        "Respect des normes de souscription de l’assureur."
+                    ]
+                },
+                {
+                    "element": "Établir une recommandation adaptée aux besoins de la cliente ou du client.",
+                    "criteres": [
+                        "Choix judicieux de produits.",
+                        "Cohérence et justesse de la recommandation.",
+                        "Établissement de solutions de rechange pertinentes."
+                    ]
+                },
+                {
+                    "element": "Préparer la rencontre avec la cliente ou le client en vue de lui présenter la recommandation.",
+                    "criteres": [
+                        "Élaboration rigoureuse d’une argumentation mettant en relief les avantages et les limites de la recommandation.",
+                        "Documentation nécessaire complète."
+                    ]
+                },
+                {
+                    "element": "Recommander des produits adaptés aux besoins de la cliente ou du client.",
+                    "criteres": [
+                        "Explication détaillée, à l’oral, des caractéristiques et des limites de la recommandation.",
+                        "Clarté de la présentation.",
+                        "Qualité du discours."
+                    ]
+                },
+                {
+                    "element": "Conclure la vente.",
+                    "criteres": [
+                        "Argumentation pertinente visant à démontrer les avantages de la recommandation.",
+                        "Clarification des aspects incompris et réponse adéquate aux objections.",
+                        "Adoption d’attitudes appropriées en situation de vente.",
+                        "Conclusion adéquate de la transaction."
+                    ]
+                },
+                {
+                    "element": "Assurer le suivi nécessaire.",
+                    "criteres": [
+                        "Vérification appropriée de la satisfaction de la cliente ou du client.",
+                        "Repérage juste d’occasions d’affaires supplémentaires.",
+                        "Mise à jour appropriée du dossier de la cliente ou du client, au besoin.",
+                        "Utilisation de moyens efficaces visant à fidéliser la clientèle."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00W5",
+            "Nom de la compétence": "Régler un sinistre.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Avec une cliente ou un client francophone ou anglophone.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "des produits et des contrats d’assurance automobile et de biens des particuliers.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des normes de prévention relatives aux bâtiments.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de régimes publics d’assurance.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de la réglementation et des lois relatives à l’assurance de dommages.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des lois et des règlements sur la protection des renseignements personnels.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des politiques de l’entreprise.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de ressources professionnelles qualifiées.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des règles qui encadrent l’activité des professionnelles et des professionnels du domaine.",
+                "Adoption d’une approche client appropriée."
+            ],
+            "Éléments": [
+                {
+                    "element": "Prendre connaissance de la nature de la réclamation.",
+                    "criteres": [
+                        "Prise de contact appropriée avec la cliente ou le client.",
+                        "Communication claire avec la cliente ou le client.",
+                        "Collecte appropriée des renseignements utiles à la détermination du type d’enquête.",
+                        "Pertinence de l’information recueillie."
+                    ]
+                },
+                {
+                    "element": "Déterminer le type d’enquête nécessaire.",
+                    "criteres": [
+                        "Interprétation juste de l’information recueillie.",
+                        "Reconnaissance juste du type de sinistre.",
+                        "Évaluation juste de l’ampleur à donner à l’enquête.",
+                        "Reconnaissance juste des situations qui exigent que l’enquête soit confiée à une ressource externe."
+                    ]
+                },
+                {
+                    "element": "Planifier l’enquête.",
+                    "criteres": [
+                        "Planification juste des étapes de l’enquête.",
+                        "Choix des ressources appropriées.",
+                        "Établissement juste des visites à effectuer.",
+                        "Établissement juste de la nécessité de joindre les parties en cause et d’autres intervenants.",
+                        "Prise en compte de l’encadrement à apporter à la cliente ou au client tout au long du processus."
+                    ]
+                },
+                {
+                    "element": "Recueillir des observations et des renseignements sur le sinistre.",
+                    "criteres": [
+                        "Collecte complète des éléments d’information pertinents.",
+                        "Qualité et efficacité de la communication avec la cliente ou le client et les autres intervenants.",
+                        "Consignation ordonnée et méthodique des observations et des renseignements.",
+                        "Utilisation appropriée du matériel d’enquête.",
+                        "Ajustement approprié de la planification en cours d’enquête."
+                    ]
+                },
+                {
+                    "element": "Analyser les observations et les renseignements recueillis.",
+                    "criteres": [
+                        "Interprétation juste des observations et des renseignements recueillis.",
+                        "Interprétation juste des documents pertinents dans l’enquête.",
+                        "Recherche appropriée de la cause du sinistre.",
+                        "Détermination juste de la responsabilité de la personne assurée.",
+                        "Vérification systématique de la concordance entre les renseignements recueillis et ceux fournis par la cliente ou le client au moment de la souscription.",
+                        "Prise en compte de la portée des garanties du contrat d’assurance et des avenants applicables.",
+                        "Détermination juste de la recevabilité de la perte.",
+                        "Détermination juste de la possibilité de recouvrement."
+                    ]
+                },
+                {
+                    "element": "Préparer une proposition de règlement.",
+                    "criteres": [
+                        "Établissement juste de la valeur de la réclamation.",
+                        "Résumé clair des principaux éléments du règlement.",
+                        "Choix pertinent des renseignements à transmettre aux parties en cause et aux autres intervenants.",
+                        "Planification appropriée de la présentation de la proposition en fonction des éléments de négociation."
+                    ]
+                },
+                {
+                    "element": "Procéder au règlement.",
+                    "criteres": [
+                        "Explication détaillée du processus de règlement de sinistre.",
+                        "Présentation claire des principaux éléments du règlement.",
+                        "Vulgarisation appropriée des termes techniques.",
+                        "Négociation appropriée du règlement.",
+                        "Communication appropriée à la personne assurée de ses droits ainsi que de ses obligations contractuelles et légales."
+                    ]
+                },
+                {
+                    "element": "Assurer le suivi nécessaire.",
+                    "criteres": [
+                        "Suivi approprié des déboursés.",
+                        "Documentation nécessaire transmise à la cliente ou au client.",
+                        "Production conforme de rapports."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00W6",
+            "Nom de la compétence": "Déterminer l’impact financier de décisions relatives aux finances personnelles.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de données économiques.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de données financières.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Établissement de liens pertinents."
+            ],
+            "Éléments": [
+                {
+                    "element": "Interpréter l’information économique relative aux finances personnelles.",
+                    "criteres": [
+                        "Détermination juste des besoins d’information.",
+                        "Choix judicieux des sources d’information.",
+                        "Prise en compte de l’information nécessaire.",
+                        "Interprétation juste des données liées aux indicateurs économiques."
+                    ]
+                },
+                {
+                    "element": "Effectuer des calculs financiers utiles à la prise de décision financière.",
+                    "criteres": [
+                        "Détermination juste des calculs à effectuer :",
+                        "valeurs actuelle et future de placements et de dettes;",
+                        "rentabilité d’un placement et des coûts liés à une dette;",
+                        "taux d’intérêt;",
+                        "amortissement financier;",
+                        "taux de rendement interne d’un investissement;",
+                        "valeur actuelle d’un investissement;",
+                        "taux de change;",
+                        "taux et coûts : contrats de location ainsi que contrats d’achat et d’achat à tempérament.",
+                        "Utilisation efficace des outils de calcul financier.",
+                        "Exactitude des calculs."
+                    ]
+                },
+                {
+                    "element": "Analyser l’impact financier des décisions.",
+                    "criteres": [
+                        "Reconnaissance juste des objectifs financiers.",
+                        "Prise en compte des calculs financiers.",
+                        "Comparaison juste des avantages et des limites des décisions financières possibles."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00W7",
+            "Nom de la compétence": "Dresser le portrait de la situation financière d’un particulier.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir de données financières.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des normes de présentation."
+            ],
+            "Éléments": [
+                {
+                    "element": "Préparer les états financiers d’un particulier.",
+                    "criteres": [
+                        "Distinction juste des types d’états financiers et de leurs composantes :",
+                        "le bilan;",
+                        "l’état de la valeur nette;",
+                        "l’état des revenus et des dépenses;",
+                        "l’état de l’évolution des liquidités.",
+                        "Prise en compte des renseignements pertinents.",
+                        "Exactitude des calculs."
+                    ]
+                },
+                {
+                    "element": "Préparer le budget d’un particulier.",
+                    "criteres": [
+                        "Interprétation juste des données financières.",
+                        "Prise en compte des rentrées et des sorties de fonds.",
+                        "Exactitude des calculs."
+                    ]
+                },
+                {
+                    "element": "Préparer le bilan personnel à la suite d’un décès.",
+                    "criteres": [
+                        "Prise en compte des renseignements pertinents.",
+                        "Prise en compte des dépenses et des revenus liés au décès.",
+                        "Calcul précis du revenu imposable au décès."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00W8",
+            "Nom de la compétence": "Analyser des produits individuels et collectifs d’assurance de personnes.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de produits et de contrats d’assurance vie.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de produits et de contrats d’assurance contre la maladie et les accidents.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de la réglementation et des lois relatives à l’assurance de personnes.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de régimes publics d’assurance de personnes.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Établissement de liens pertinents."
+            ],
+            "Éléments": [
+                {
+                    "element": "Examiner les produits individuels et collectifs d’assurance de personnes.",
+                    "criteres": [
+                        "Distinction juste de la mise en marché des produits :",
+                        "d’assurance vie;",
+                        "d’assurance contre la maladie et les accidents.",
+                        "Caractérisation appropriée des principaux produits :",
+                        "d’assurance vie;",
+                        "d’assurance contre la maladie et les accidents.",
+                        "Comparaison juste des produits :",
+                        "d’assurance vie;",
+                        "d’assurance contre la maladie et les accidents."
+                    ]
+                },
+                {
+                    "element": "Interpréter des contrats individuels et collectifs d’assurance de personnes.",
+                    "criteres": [
+                        "Prise en compte des renseignements dans les contrats d’assurance vie et d’assurance contre la maladie et les accidents.",
+                        "Interprétation juste des clauses de contrats d’assurance vie et d’assurance contre la maladie et les accidents.",
+                        "Interprétation juste des garanties et des avenants.",
+                        "Prise en compte des limites des garanties, des exclusions et des avenants."
+                    ]
+                },
+                {
+                    "element": "Associer des produits d’assurance de personnes aux différents besoins de la clientèle.",
+                    "criteres": [
+                        "Analyse juste des différents besoins.",
+                        "Concordance appropriée entre les produits et les besoins."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00W9",
+            "Nom de la compétence": "Analyser des produits d’épargne et de placement.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de données financières.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de produits d’épargne et de placement.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de produits de rente.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de régimes d’épargne et de retraite.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "du cadre légal et réglementaire en vigueur.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Établissement de liens pertinents."
+            ],
+            "Éléments": [
+                {
+                    "element": "Examiner les produits d’épargne et de placement.",
+                    "criteres": [
+                        "Distinction juste de la mise en marché :",
+                        "des produits d’épargne et de placement;",
+                        "des contrats de rente.",
+                        "Caractérisation appropriée :",
+                        "des produits d’épargne et de placement;",
+                        "des contrats de rente.",
+                        "Comparaison juste :",
+                        "des produits d’épargne et de placement;",
+                        "des contrats de rente."
+                    ]
+                },
+                {
+                    "element": "Examiner les régimes d’épargne et de retraite.",
+                    "criteres": [
+                        "Distinction juste des régimes d’épargne et de retraite.",
+                        "Caractérisation appropriée des régimes d’épargne et de retraite.",
+                        "Comparaison juste des régimes d’épargne et de retraite."
+                    ]
+                },
+                {
+                    "element": "Examiner le profil financier de la cliente ou du client.",
+                    "criteres": [
+                        "Reconnaissance juste des objectifs d’épargne et de placement de la cliente ou du client.",
+                        "Prise en compte de la situation financière de la cliente ou du client.",
+                        "Distinction juste des besoins en revenus à la retraite.",
+                        "Reconnaissance juste du profil d’investisseur."
+                    ]
+                },
+                {
+                    "element": "Associer des produits d’épargne et de placement aux différents besoins de la clientèle.",
+                    "criteres": [
+                        "Analyse juste des différents besoins.",
+                        "Concordance appropriée entre les produits et les besoins."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00WA",
+            "Nom de la compétence": "Considérer l’incidence des dispositions fiscales sur la prise de décision en matière de finances personnelles.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "des lois, des règles et des normes fiscales en vigueur au Québec et au Canada.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de déclarations de revenus des particuliers.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "d’avis de cotisation des particuliers.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de contrats d’assurance de personnes.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de contrats de rente.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de régimes publics et privés de retraite.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de divers véhicules financiers enregistrés ou non.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de régimes publics d’assurance.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "Dans les limites de la profession.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Établissement de liens pertinents."
+            ],
+            "Éléments": [
+                {
+                    "element": "Examiner les dispositions relatives à la fiscalité des particuliers.",
+                    "criteres": [
+                        "Distinction juste du cadre fiscal de la ou du contribuable.",
+                        "Reconnaissance juste des lois, des règles et des normes fiscales des particuliers.",
+                        "Repérage précis des dispositions relatives à la fiscalité des particuliers."
+                    ]
+                },
+                {
+                    "element": "Analyser la déclaration de revenus d’un particulier.",
+                    "criteres": [
+                        "Caractérisation appropriée :",
+                        "de l’exercice financier;",
+                        "des méthodes utilisées;",
+                        "des formulaires utilisés.",
+                        "Prise en compte des types de revenus et de gains.",
+                        "Exactitude de l’analyse."
+                    ]
+                },
+                {
+                    "element": "Analyser l’impact fiscal des décisions financières d’un particulier.",
+                    "criteres": [
+                        "Prise en compte des règles fiscales applicables aux produits financiers et d’assurance ainsi qu’aux régimes d’État.",
+                        "Prise en compte des objectifs financiers du particulier.",
+                        "Analyse juste des avantages et des limites des règles d’imposition en fonction des décisions financières du particulier."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00WB",
+            "Nom de la compétence": "Effectuer la recommandation et la vente de produits d’assurance de personnes.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Avec une cliente ou un client francophone ou anglophone.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "de produits individuels et collectifs d’assurance de personnes.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de contrats d’assurance vie ou d’assurance contre la maladie et les accidents.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des régimes publics et privés de retraite.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des dispositions fiscales des particuliers.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de la réglementation et des lois relatives à l’assurance de personnes.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de régimes publics d’assurance de personnes.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des lois et des règlements sur la protection des renseignements personnels.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des normes de souscription de l’assureur.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des politiques de l’entreprise.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de ressources professionnelles qualifiées.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des règles qui encadrent l’activité des professionnelles et des professionnels du domaine.",
+                "Adoption d’une approche client appropriée."
+            ],
+            "Éléments": [
+                {
+                    "element": "Solliciter la clientèle.",
+                    "criteres": [
+                        "Repérage judicieux des clientes et des clients potentiels.",
+                        "Prise en compte du profil des personnes ciblées.",
+                        "Moyens de démarchage pertinents.",
+                        "Discours approprié à la situation."
+                    ]
+                },
+                {
+                    "element": "Recueillir des renseignements auprès de la cliente ou du client.",
+                    "criteres": [
+                        "Prise de contact appropriée.",
+                        "Interprétation juste de la nature de la demande.",
+                        "Collecte complète d’information en lien avec les besoins en assurances de personnes et d’autres éléments pertinents."
+                    ]
+                },
+                {
+                    "element": "Établir une recommandation adaptée aux besoins de la cliente ou du client.",
+                    "criteres": [
+                        "Interprétation juste de l’information recueillie.",
+                        "Prise en compte de la situation financière.",
+                        "Prise en compte des protections actuelles de la cliente ou du client.",
+                        "Prise en compte des risques au regard de la convenance des produits.",
+                        "Choix judicieux de produits.",
+                        "Cohérence et justesse de la recommandation."
+                    ]
+                },
+                {
+                    "element": "Préparer la rencontre avec la cliente ou le client en vue de lui présenter la recommandation.",
+                    "criteres": [
+                        "Élaboration rigoureuse d’une argumentation mettant en relief les avantages et les limites de la recommandation.",
+                        "Documentation nécessaire complète."
+                    ]
+                },
+                {
+                    "element": "Recommander des produits adaptés aux besoins de la cliente ou du client.",
+                    "criteres": [
+                        "Explication détaillée, à l’oral, des caractéristiques et des limites de la recommandation.",
+                        "Clarté de la présentation.",
+                        "Qualité du discours."
+                    ]
+                },
+                {
+                    "element": "Conclure la vente.",
+                    "criteres": [
+                        "Argumentation pertinente visant à démontrer les avantages de la recommandation.",
+                        "Clarification des aspects incompris et réponse adéquate aux objections.",
+                        "Adoption d’attitudes appropriées en situation de vente.",
+                        "Conclusion adéquate de la vente.",
+                        "Proposition remplie conformément aux lois et aux règlements en vigueur.",
+                        "Explication claire du préavis de remplacement du contrat existant.",
+                        "Documentation nécessaire transmise aux personnes concernées."
+                    ]
+                },
+                {
+                    "element": "Présenter le contrat à la cliente ou au client.",
+                    "criteres": [
+                        "Explication claire des options ou des modifications à la suite de la recommandation initiale.",
+                        "Explication détaillée du contrat.",
+                        "Respect des exigences de livraison du contrat.",
+                        "Documentation nécessaire complète."
+                    ]
+                },
+                {
+                    "element": "Assurer le suivi nécessaire.",
+                    "criteres": [
+                        "Vérification appropriée de la satisfaction de la cliente ou du client.",
+                        "Repérage juste d’occasions d’affaires supplémentaires.",
+                        "Mise à jour appropriée du dossier de la cliente ou du client, au besoin.",
+                        "Utilisation de moyens efficaces visant à fidéliser la clientèle."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00WC",
+            "Nom de la compétence": "Effectuer la recommandation et la vente de produits d’épargne et de placement.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Avec une cliente ou un client francophone ou anglophone.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "d’une base de données sur la clientèle.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des produits d’épargne et de placement.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des contrats de rente.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des dispositions fiscales des particuliers.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des normes de conformité relatives aux produits de crédit.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des lois et des règlements sur la protection des renseignements personnels.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des politiques de l’entreprise.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de ressources professionnelles qualifiées.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des règles qui encadrent l’activité des professionnelles et des professionnels du domaine.",
+                "Adoption d’une approche client appropriée."
+            ],
+            "Éléments": [
+                {
+                    "element": "Solliciter la clientèle.",
+                    "criteres": [
+                        "Repérage judicieux des clientes et des clients potentiels.",
+                        "Prise en compte du profil des personnes ciblées.",
+                        "Moyens de démarchage pertinents.",
+                        "Discours approprié à la situation."
+                    ]
+                },
+                {
+                    "element": "Recueillir des renseignements auprès de la cliente ou du client.",
+                    "criteres": [
+                        "Prise de contact appropriée.",
+                        "Interprétation juste de la nature de la demande.",
+                        "Collecte exhaustive des éléments d’information liés au profil d’investisseur :",
+                        "besoins et objectifs financiers;",
+                        "horizon temporel des placements;",
+                        "situation financière;",
+                        "tolérance au risque;",
+                        "connaissances en matière de placement.",
+                        "Collecte exhaustive des éléments d’information pertinents."
+                    ]
+                },
+                {
+                    "element": "Établir une recommandation adaptée aux besoins de la cliente ou du client.",
+                    "criteres": [
+                        "Interprétation juste de l’information recueillie.",
+                        "Prise en compte de la situation financière.",
+                        "Prise en compte des risques au regard de la convenance des produits.",
+                        "Choix judicieux de produits.",
+                        "Cohérence et justesse de la recommandation."
+                    ]
+                },
+                {
+                    "element": "Préparer la rencontre avec la cliente ou le client en vue de lui présenter la recommandation.",
+                    "criteres": [
+                        "Documentation nécessaire transmise à la cliente ou au client préalablement à la rencontre.",
+                        "Élaboration rigoureuse d’une argumentation mettant en relief les avantages et les limites de la recommandation.",
+                        "Documentation nécessaire complète."
+                    ]
+                },
+                {
+                    "element": "Recommander des produits adaptés aux besoins de la cliente ou du client.",
+                    "criteres": [
+                        "Explication détaillée, à l’oral, des caractéristiques et des limites de la recommandation.",
+                        "Clarté de la présentation.",
+                        "Qualité du discours."
+                    ]
+                },
+                {
+                    "element": "Conclure la vente.",
+                    "criteres": [
+                        "Argumentation pertinente visant à démontrer les avantages de la recommandation.",
+                        "Clarification des aspects incompris et réponse adéquate aux objections.",
+                        "Adoption d’attitudes appropriées en situation de vente.",
+                        "Documentation nécessaire complète.",
+                        "Conclusion adéquate de la transaction."
+                    ]
+                },
+                {
+                    "element": "Assurer le suivi nécessaire.",
+                    "criteres": [
+                        "Vérification appropriée de la satisfaction de la cliente ou du client.",
+                        "Repérage juste d’occasions d’affaires supplémentaires.",
+                        "Mise à jour appropriée du dossier de la cliente ou du client, au besoin.",
+                        "Utilisation de moyens efficaces visant à fidéliser la clientèle."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00WD",
+            "Nom de la compétence": "Analyser des produits de crédit destinés aux particuliers.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "des données financières de la cliente ou du client.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de contrats et de produits de crédit personnel.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des lois et des règlements en vigueur.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de données des agences d’évaluation du crédit.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Établissement de liens pertinents."
+            ],
+            "Éléments": [
+                {
+                    "element": "Examiner les produits de crédit.",
+                    "criteres": [
+                        "Distinction juste de la mise en marché des produits.",
+                        "Caractérisation appropriée des principaux produits de crédit.",
+                        "Comparaison juste des produits de crédit selon :",
+                        "le type de financement nécessaire;",
+                        "les besoins de la cliente ou du client."
+                    ]
+                },
+                {
+                    "element": "Analyser la situation financière d’un particulier.",
+                    "criteres": [
+                        "Prise en compte du niveau d’endettement.",
+                        "Prise en compte des contraintes financières.",
+                        "Prise en compte de la solvabilité.",
+                        "Évaluation juste de la capacité d’emprunt."
+                    ]
+                },
+                {
+                    "element": "Associer des produits de crédit à la situation financière d’un particulier.",
+                    "criteres": [
+                        "Analyse juste des différents besoins.",
+                        "Concordance appropriée entre les produits et la situation financière."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00WE",
+            "Nom de la compétence": "Effectuer la recommandation et la vente de produits de crédit.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Avec une cliente ou un client francophone ou anglophone.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir :",
+                    "sous_points": [
+                        {
+                            "texte": "d’une base de données sur la clientèle.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des produits de crédit.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des normes de conformité relatives aux produits de crédit.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des lois et des règlements sur la protection des renseignements personnels.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des normes et des politiques de sécurité.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "des politiques de l’entreprise.",
+                            "sous_points": null
+                        }
+                    ]
+                },
+                {
+                    "texte": "À l’aide :",
+                    "sous_points": [
+                        {
+                            "texte": "de ressources professionnelles qualifiées.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de sources de référence.",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de l’équipement, du matériel et des outils technologiques nécessaires.",
+                            "sous_points": null
+                        }
+                    ]
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Respect des règles qui encadrent l’activité des professionnelles et des professionnels du domaine.",
+                "Adoption d’une approche client appropriée."
+            ],
+            "Éléments": [
+                {
+                    "element": "Solliciter la clientèle.",
+                    "criteres": [
+                        "Repérage judicieux des clientes et des clients potentiels.",
+                        "Prise en compte du profil des personnes ciblées.",
+                        "Moyens de démarchage pertinents.",
+                        "Discours approprié à la situation."
+                    ]
+                },
+                {
+                    "element": "Recueillir des renseignements auprès de la cliente ou du client.",
+                    "criteres": [
+                        "Prise de contact appropriée.",
+                        "Interprétation juste de la nature de la demande.",
+                        "Collecte exhaustive des éléments d’information pertinents."
+                    ]
+                },
+                {
+                    "element": "Analyser la situation financière de la cliente ou du client.",
+                    "criteres": [
+                        "Justesse de l’information recueillie.",
+                        "Prise en compte du niveau d’endettement.",
+                        "Prise en compte des contraintes financières.",
+                        "Prise en compte de la solvabilité.",
+                        "Évaluation juste de la capacité d’emprunt."
+                    ]
+                },
+                {
+                    "element": "Établir une recommandation adaptée aux besoins de la cliente ou du client.",
+                    "criteres": [
+                        "Prise en compte de la situation financière.",
+                        "Choix judicieux de produits.",
+                        "Prise en compte des conditions de financement.",
+                        "Cohérence et justesse de la recommandation."
+                    ]
+                },
+                {
+                    "element": "Préparer la rencontre avec la cliente ou le client en vue de lui présenter la recommandation.",
+                    "criteres": [
+                        "Élaboration rigoureuse d’une argumentation mettant en relief les avantages et les limites de la recommandation.",
+                        "Documentation nécessaire complète."
+                    ]
+                },
+                {
+                    "element": "Recommander des produits adaptés aux besoins de la cliente ou du client.",
+                    "criteres": [
+                        "Communication claire, à l’oral, de l’approbation ou du refus de la demande de crédit.",
+                        "Explication détaillée, à l’oral, des caractéristiques et des limites de la recommandation.",
+                        "Clarté de la présentation.",
+                        "Qualité du discours."
+                    ]
+                },
+                {
+                    "element": "Conclure la vente.",
+                    "criteres": [
+                        "Argumentation pertinente.",
+                        "Clarification des aspects incompris et réponse adéquate aux questions.",
+                        "Adoption d’attitudes appropriées en situation de vente.",
+                        "Documentation nécessaire complète.",
+                        "Conclusion adéquate de la transaction."
+                    ]
+                },
+                {
+                    "element": "Assurer le suivi nécessaire.",
+                    "criteres": [
+                        "Vérification appropriée de la satisfaction de la cliente ou du client.",
+                        "Repérage juste d’occasions d’affaires supplémentaires.",
+                        "Mise à jour appropriée du dossier de la cliente ou du client, au besoin.",
+                        "Utilisation de moyens efficaces visant à fidéliser la clientèle."
+                    ]
+                }
+            ]
+        }
+    ]
+}

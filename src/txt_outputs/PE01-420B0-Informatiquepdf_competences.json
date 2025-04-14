@@ -1,0 +1,1886 @@
+{
+    "competences": [
+        {
+            "Code": "0000",
+            "Nom de la compétence": "Traiter l’information relative aux réalités du milieu du travail en informatique",
+            "Contexte de réalisation": {
+                "details_generaux": null,
+                "APartirDe": null,
+                "ALaideDe": [
+                    "documentation",
+                    "outils de recherche"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Rechercher de l’information sur les professions et les milieux de travail en informatique.",
+                    "criteres": [
+                        "Choix approprié des sources d’information.",
+                        "Fiabilité et diversité de l’information recueillie.",
+                        "Utilisation appropriée des outils de recherche."
+                    ]
+                },
+                {
+                    "element": "Analyser l’information sur les entreprises et les établissements embauchant des techniciennes et techniciens en informatique.",
+                    "criteres": [
+                        "Distinction juste des principales caractéristiques des domaines du développement des applications et de l’administration des réseaux informatiques.",
+                        "Distinction juste des caractéristiques des produits et des services offerts par les entreprises et les établissements.",
+                        "Distinction juste des différentes professions.",
+                        "Reconnaissance adéquate des associations professionnelles et syndicales présentes.",
+                        "Reconnaissance adéquate des sources et des niveaux de risque pour la santé et la sécurité au travail."
+                    ]
+                },
+                {
+                    "element": "Analyser l’information sur la profession de technicienne et technicien en informatique.",
+                    "criteres": [
+                        "Examen détaillé des tâches et des responsabilités liées à la profession.",
+                        "Distinction juste des connaissances, des comportements, des attitudes et des habiletés nécessaires à l’exercice de la profession.",
+                        "Distinction juste des limites d’intervention propres à la profession."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00Q1",
+            "Nom de la compétence": "Effectuer l’installation et la gestion d’ordinateurs",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour différents systèmes d’exploitation.",
+                    "À partir d’une demande."
+                ],
+                "APartirDe": [
+                    "une demande"
+                ],
+                "ALaideDe": [
+                    "ordinateurs",
+                    "périphériques",
+                    "composants internes amovibles",
+                    "documentation technique",
+                    "systèmes d’exploitation",
+                    "applications",
+                    "utilitaires",
+                    "pilotes",
+                    "modules d’extension"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Préparer l’ordinateur.",
+                    "criteres": [
+                        "Interprétation juste de la demande.",
+                        "Interprétation juste des spécifications de l’équipement informatique.",
+                        "Ajout correct de composants amovibles.",
+                        "Raccordement correct des périphériques.",
+                        "Positionnement ergonomique de l’ordinateur et de ses périphériques."
+                    ]
+                },
+                {
+                    "element": "Installer le système d’exploitation.",
+                    "criteres": [
+                        "Utilisation appropriée des utilitaires de préparation des systèmes de fichiers.",
+                        "Application correcte de la procédure d’installation du système d’exploitation et des pilotes.",
+                        "Configuration correcte du système d’exploitation et des pilotes.",
+                        "Personnalisation du système d’exploitation en fonction des besoins des utilisatrices et des utilisateurs."
+                    ]
+                },
+                {
+                    "element": "Installer des applications.",
+                    "criteres": [
+                        "Application correcte de la procédure d’installation des applications et des modules d’extension.",
+                        "Configuration correcte des applications et des modules d’extension.",
+                        "Personnalisation des applications en fonction des besoins des utilisatrices et des utilisateurs.",
+                        "Fonctionnement correct des applications."
+                    ]
+                },
+                {
+                    "element": "Effectuer des tâches de gestion du système d’exploitation.",
+                    "criteres": [
+                        "Organisation fonctionnelle de la structure des fichiers et des répertoires.",
+                        "Utilisation appropriée des utilitaires d’archivage et de compression.",
+                        "Création correcte des comptes et des groupes d’utilisateurs.",
+                        "Attribution correcte des droits d’accès.",
+                        "Gestion appropriée des processus, de la mémoire et de l’espace disque.",
+                        "Rédaction correcte de scripts."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00Q2",
+            "Nom de la compétence": "Utiliser des langages de programmation",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour des problèmes dont la solution est simple."
+                ],
+                "APartirDe": null,
+                "ALaideDe": [
+                    "algorithmes de base",
+                    "un débogueur",
+                    "un plan de tests fonctionnels"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser le problème.",
+                    "criteres": [
+                        "Décomposition correcte du problème.",
+                        "Détermination correcte des données d’entrée, des données de sortie et de la nature des traitements.",
+                        "Choix et adaptation appropriés de l’algorithme."
+                    ]
+                },
+                {
+                    "element": "Traduire l’algorithme dans le langage de programmation.",
+                    "criteres": [
+                        "Choix approprié des instructions et des types de données élémentaires.",
+                        "Découpage efficace du code informatique.",
+                        "Organisation logique des instructions.",
+                        "Respect de la syntaxe du langage.",
+                        "Code informatique conforme à l’algorithme."
+                    ]
+                },
+                {
+                    "element": "Déboguer le code.",
+                    "criteres": [
+                        "Utilisation efficace du débogueur.",
+                        "Repérage complet des erreurs.",
+                        "Détermination judicieuse de stratégies de correction des erreurs.",
+                        "Pertinence des correctifs.",
+                        "Notation claire des solutions aux problèmes rencontrés."
+                    ]
+                },
+                {
+                    "element": "Appliquer le plan de tests fonctionnels.",
+                    "criteres": [
+                        "Manifestation d’attitudes et de comportements empreints de rigueur.",
+                        "Repérage complet des erreurs de fonctionnement.",
+                        "Pertinence des correctifs.",
+                        "Fonctionnement correct du programme.",
+                        "Notation claire de l’information relative aux tests et à leurs résultats."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00Q3",
+            "Nom de la compétence": "Résoudre des problèmes d’informatique avec les mathématiques",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "À partir de situations problèmes."
+                ],
+                "APartirDe": [
+                    "situations problèmes"
+                ],
+                "ALaideDe": [
+                    "données quantitatives"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Traiter des nombres à représenter dans la mémoire d’un ordinateur.",
+                    "criteres": [
+                        "Représentation correcte de nombres dans différentes bases.",
+                        "Conversion correcte de nombres d’une base à une autre.",
+                        "Interprétation juste des limites des types de représentation des nombres.",
+                        "Interprétation juste de la précision des types de représentation des nombres.",
+                        "Choix approprié du type de représentation des nombres."
+                    ]
+                },
+                {
+                    "element": "Représenter des figures géométriques en deux dimensions sous la forme d’images numériques.",
+                    "criteres": [
+                        "Détermination correcte de la taille, de la dimension et de la résolution de l’image.",
+                        "Représentation correcte de points et de droites.",
+                        "Application correcte des équations de translation, de rotation et d’homothétie.",
+                        "Concordance des figures géométriques avec leur représentation dans l’image."
+                    ]
+                },
+                {
+                    "element": "Modéliser des raisonnements logiques à plusieurs variables.",
+                    "criteres": [
+                        "Formulation correcte des fonctions logiques.",
+                        "Simplification efficace des fonctions logiques.",
+                        "Utilisation appropriée de l’algèbre de Boole.",
+                        "Production exacte de tables de vérité.",
+                        "Vérification appropriée des fonctions logiques."
+                    ]
+                },
+                {
+                    "element": "Traiter des données quantitatives par les statistiques descriptives.",
+                    "criteres": [
+                        "Calcul exact de la moyenne, de la médiane, de la variance et de l’écart type.",
+                        "Clarté et exactitude des représentations graphiques des données.",
+                        "Analyse juste des résultats."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00Q4",
+            "Nom de la compétence": "Exploiter des logiciels de bureautique",
+            "Contexte de réalisation": {
+                "details_generaux": null,
+                "APartirDe": null,
+                "ALaideDe": [
+                    "logiciels de traitement de texte",
+                    "tableurs",
+                    "logiciels de dessin",
+                    "logiciels de présentation",
+                    "logiciels de travail collaboratif",
+                    "images",
+                    "sons",
+                    "vidéos",
+                    "normes de présentation"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Produire des rapports.",
+                    "criteres": [
+                        "Personnalisation correcte de l’interface du traitement de texte.",
+                        "Saisie correcte de l’information.",
+                        "Intégration correcte d’images.",
+                        "Utilisation et modification appropriées des styles et des modèles.",
+                        "Insertion correcte d’une table des matières automatique.",
+                        "Utilisation efficace du correcteur.",
+                        "Respect des normes de présentation."
+                    ]
+                },
+                {
+                    "element": "Produire des tableaux et des graphiques.",
+                    "criteres": [
+                        "Personnalisation adéquate de l’interface du tableur électronique.",
+                        "Choix approprié du type de tableau et de graphique à produire.",
+                        "Choix et utilisation appropriés des fonctions de recherche, de logique et de calcul.",
+                        "Élaboration de formules mathématiques appropriées.",
+                        "Respect des normes de présentation."
+                    ]
+                },
+                {
+                    "element": "Produire des diagrammes ou des plans.",
+                    "criteres": [
+                        "Personnalisation correcte de l’interface du logiciel de dessin.",
+                        "Choix de l’échelle et du format en fonction des exigences de représentation.",
+                        "Représentation correcte d’éléments géométriques.",
+                        "Utilisation d’une banque de symboles en fonction des exigences de représentation.",
+                        "Rédaction correcte et claire des annotations et du cartouche.",
+                        "Respect des normes de présentation."
+                    ]
+                },
+                {
+                    "element": "Produire des documents de présentation.",
+                    "criteres": [
+                        "Personnalisation correcte de l’interface du logiciel de présentation.",
+                        "Choix approprié de la résolution et du format d’affichage.",
+                        "Intégration adéquate d’images, de sons et de vidéos.",
+                        "Lisibilité des présentations.",
+                        "Respect des règles orthographiques et grammaticales.",
+                        "Respect des normes de présentation."
+                    ]
+                },
+                {
+                    "element": "Partager et synchroniser des documents.",
+                    "criteres": [
+                        "Personnalisation correcte de l’interface du logiciel de travail collaboratif.",
+                        "Conversion appropriée des formats de fichiers.",
+                        "Classification adéquate des documents.",
+                        "Attribution correcte des accès aux documents partagés.",
+                        "Gestion efficace des conflits de versions."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00Q5",
+            "Nom de la compétence": "Effectuer le déploiement d’un réseau informatique local",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour des réseaux informatiques locaux filaires et sans fil.",
+                    "À partir d’une demande."
+                ],
+                "APartirDe": [
+                    "une demande"
+                ],
+                "ALaideDe": [
+                    "ordinateurs",
+                    "dispositifs d’interconnexion",
+                    "câblage",
+                    "documentation technique"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Définir les caractéristiques du réseau informatique local.",
+                    "criteres": [
+                        "Interprétation juste de la demande.",
+                        "Détermination correcte des services à installer.",
+                        "Choix approprié des dispositifs d’interconnexion à installer.",
+                        "Diagramme d’architecture du réseau informatique local conforme au besoin."
+                    ]
+                },
+                {
+                    "element": "Installer les dispositifs d’interconnexion du réseau local.",
+                    "criteres": [
+                        "Positionnement et raccordement corrects des dispositifs d’interconnexion.",
+                        "Configuration correcte des dispositifs d’interconnexion.",
+                        "Notation claire des configurations effectuées."
+                    ]
+                },
+                {
+                    "element": "Connecter les ordinateurs au réseau local.",
+                    "criteres": [
+                        "Raccordement des ordinateurs au réseau informatique selon le diagramme d’architecture.",
+                        "Configuration correcte de l’accès au réseau.",
+                        "Notation claire des configurations effectuées."
+                    ]
+                },
+                {
+                    "element": "Installer des services de partage de ressources.",
+                    "criteres": [
+                        "Application rigoureuse de la procédure d’installation des services.",
+                        "Configuration correcte des services.",
+                        "Notation claire des configurations effectuées."
+                    ]
+                },
+                {
+                    "element": "Mettre en service le réseau local.",
+                    "criteres": [
+                        "Application rigoureuse des plans de tests.",
+                        "Pertinence des correctifs.",
+                        "Fonctionnement optimal du réseau."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00Q6",
+            "Nom de la compétence": "Exploiter les principes de la programmation orientée objet",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "À partir d’un problème."
+                ],
+                "APartirDe": [
+                    "un problème"
+                ],
+                "ALaideDe": [
+                    "règles de nomenclature",
+                    "règles de codage"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser le problème.",
+                    "criteres": [
+                        "Décomposition du problème en fonction des exigences de l’approche orientée objet.",
+                        "Détermination correcte des données d’entrée, des données de sortie et de la nature des traitements.",
+                        "Détermination juste des classes à modéliser.",
+                        "Détermination correcte des algorithmes à produire."
+                    ]
+                },
+                {
+                    "element": "Modéliser les classes.",
+                    "criteres": [
+                        "Détermination correcte des attributs et des méthodes des classes.",
+                        "Application judicieuse des principes d’encapsulation et d’héritage.",
+                        "Représentation graphique correcte des classes et de leurs relations.",
+                        "Respect des règles de nomenclature."
+                    ]
+                },
+                {
+                    "element": "Produire les algorithmes pour les méthodes.",
+                    "criteres": [
+                        "Détermination adéquate des opérations nécessaires pour chaque méthode.",
+                        "Détermination correcte d’une séquence logique des opérations.",
+                        "Vérification appropriée du fonctionnement des algorithmes.",
+                        "Représentation correcte des algorithmes."
+                    ]
+                },
+                {
+                    "element": "Générer l’interface graphique.",
+                    "criteres": [
+                        "Choix approprié des éléments graphiques pour l’affichage et la saisie.",
+                        "Positionnement correct des éléments graphiques.",
+                        "Paramétrage correct des éléments graphiques."
+                    ]
+                },
+                {
+                    "element": "Programmer des classes.",
+                    "criteres": [
+                        "Choix approprié des instructions, des types de données élémentaires et des structures de données.",
+                        "Organisation logique des instructions.",
+                        "Programmation correcte des messages à afficher à l’utilisatrice ou à l’utilisateur.",
+                        "Intégration correcte des classes dans le programme.",
+                        "Fonctionnement correct du programme.",
+                        "Respect de la syntaxe du langage.",
+                        "Respect des règles de codage."
+                    ]
+                },
+                {
+                    "element": "Documenter la programmation.",
+                    "criteres": [
+                        "Notation claire de commentaires dans le code informatique.",
+                        "Notation claire de la documentation d’aide à la programmation.",
+                        "Utilisation appropriée des générateurs de documentation."
+                    ]
+                },
+                {
+                    "element": "Appliquer la procédure liée à la gestion des versions de programmes.",
+                    "criteres": [
+                        "Configuration correcte du système de gestion de versions.",
+                        "Soumission méthodique du code modifié.",
+                        "Gestion judicieuse des branches et des conflits."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00Q7",
+            "Nom de la compétence": "Exploiter un système de gestion de base de données",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour un système de gestion de base de données relationnel ou autre."
+                ],
+                "APartirDe": [
+                    "un modèle de données",
+                    "spécifications du système de gestion de base de données"
+                ],
+                "ALaideDe": null
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Créer la base de données.",
+                    "criteres": [
+                        "Analyse juste du modèle de données.",
+                        "Analyse juste des spécifications du système de gestion de base de données.",
+                        "Formulation appropriée des instructions de création de la base de données."
+                    ]
+                },
+                {
+                    "element": "Formuler des requêtes de lecture, d’insertion, de modification et de suppression de données.",
+                    "criteres": [
+                        "Détermination judicieuse des types de requêtes à formuler.",
+                        "Utilisation appropriée des clauses, des opérateurs, des commandes ou des paramètres.",
+                        "Utilisation appropriée des expressions régulières.",
+                        "Fonctionnement correct des requêtes."
+                    ]
+                },
+                {
+                    "element": "Assurer la confidentialité et la cohérence des données.",
+                    "criteres": [
+                        "Détermination judicieuse des techniques à utiliser.",
+                        "Gestion correcte des autorisations.",
+                        "Cryptage approprié des données.",
+                        "Utilisation appropriée des contraintes d’intégrité référentielle, des déclencheurs ou des transactions."
+                    ]
+                },
+                {
+                    "element": "Programmer des traitements de données automatisés.",
+                    "criteres": [
+                        "Détermination judicieuse des traitements de données à automatiser.",
+                        "Création appropriée de procédures stockées ou de scripts.",
+                        "Notation claire de la documentation d’aide à la programmation."
+                    ]
+                },
+                {
+                    "element": "Sauvegarder et restaurer la base de données.",
+                    "criteres": [
+                        "Choix judicieux des techniques de sauvegarde et de restauration à utiliser.",
+                        "Utilisation appropriée de techniques de sauvegarde et de restauration de la base de données.",
+                        "Respect de la procédure et de la fréquence de sauvegarde."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00Q8",
+            "Nom de la compétence": "Effectuer des opérations de prévention en matière de sécurité de l’information",
+            "Contexte de réalisation": {
+                "details_generaux": null,
+                "APartirDe": null,
+                "ALaideDe": [
+                    "mesures de sécurité reconnues",
+                    "logiciels de sécurité informatique",
+                    "bibliothèques de cryptographie"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser des risques en matière de sécurité de l’information.",
+                    "criteres": [
+                        "Inventaire précis de l’équipement informatique et des applications installés.",
+                        "Inventaire adéquat des menaces potentielles et des vulnérabilités.",
+                        "Détermination correcte des conséquences sur la sécurité.",
+                        "Choix approprié des mesures de sécurité à appliquer."
+                    ]
+                },
+                {
+                    "element": "Appliquer des mesures de sécurité reconnues pour protéger le réseau.",
+                    "criteres": [
+                        "Utilisation appropriée des stratégies de sauvegarde.",
+                        "Utilisation appropriée des stratégies d’attribution des droits d’accès.",
+                        "Configuration et personnalisation correctes des logiciels antivirus et coupe-feu.",
+                        "Utilisation appropriée des utilitaires de cryptographie."
+                    ]
+                },
+                {
+                    "element": "Appliquer des mesures de sécurité reconnues pour protéger une application.",
+                    "criteres": [
+                        "Utilisation appropriée des stratégies de sécurisation des données entrées par l’utilisatrice et l’utilisateur.",
+                        "Utilisation appropriée des techniques de contrôle des erreurs et des exceptions.",
+                        "Utilisation appropriée de mécanismes d’authentification et d’autorisation sécuritaires.",
+                        "Utilisation appropriée des bibliothèques de cryptographie."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SE",
+            "Nom de la compétence": "Interagir dans un contexte professionnel",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour des formes d’organisation du travail variées."
+                ],
+                "APartirDe": null,
+                "ALaideDe": [
+                    "normes",
+                    "méthodes",
+                    "bonnes pratiques en matière de développement d’applications et de gestion de réseaux",
+                    "lois",
+                    "codes d’éthique",
+                    "politiques d’entreprise"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Établir des relations professionnelles avec des utilisatrices ou utilisateurs, ainsi que des clientes ou clients.",
+                    "criteres": [
+                        "Manifestation d’attitudes et de comportements démontrant une capacité d’écoute.",
+                        "Adaptation du niveau de langage selon la situation.",
+                        "Respect des règles de politesse et de courtoisie.",
+                        "Respect de l’approche client."
+                    ]
+                },
+                {
+                    "element": "Travailler au sein d’une équipe multidisciplinaire.",
+                    "criteres": [
+                        "Manifestation d’attitudes et de comportements de respect, d'ouverture d’esprit et de collaboration.",
+                        "Communication efficace avec les membres de l’équipe.",
+                        "Exécution correcte des tâches confiées.",
+                        "Respect des règles de fonctionnement en équipe.",
+                        "Respect de la culture d’entreprise.",
+                        "Respect des normes, des méthodes ou des bonnes pratiques en matière de développement d’applications et de gestion de réseaux.",
+                        "Respect des limites d’intervention professionnelle et de l’expertise des membres d’autres professions.",
+                        "Respect des échéances."
+                    ]
+                },
+                {
+                    "element": "Se situer au regard des obligations légales et des règles d’éthique professionnelle.",
+                    "criteres": [
+                        "Distinction juste des principaux délits et des principaux actes criminels dans le domaine informatique.",
+                        "Distinction juste des principales atteintes à la propriété intellectuelle dans le domaine informatique.",
+                        "Appréciation juste des conséquences des délits, des actes criminels et des atteintes à la propriété intellectuelle.",
+                        "Détermination des mesures appropriées selon la situation.",
+                        "Respect des lois, des codes d’éthique et des politiques d’entreprise."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SF",
+            "Nom de la compétence": "Évaluer des composants logiciels et matériels",
+            "Contexte de réalisation": {
+                "details_generaux": null,
+                "APartirDe": [
+                    "cahier des charges fonctionnel",
+                    "diagrammes d’architecture"
+                ],
+                "ALaideDe": [
+                    "sources d’information",
+                    "documentation technique"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Cerner les exigences techniques d’un projet de développement ou de déploiement.",
+                    "criteres": [
+                        "Analyse juste du cahier des charges fonctionnel.",
+                        "Analyse juste de l’architecture logicielle et de l’architecture du réseau informatique.",
+                        "Relevé complet des exigences techniques du projet."
+                    ]
+                },
+                {
+                    "element": "Rechercher des composants logiciels et matériels.",
+                    "criteres": [
+                        "Choix approprié des sources d’information.",
+                        "Inventaire précis des composants logiciels et matériels disponibles."
+                    ]
+                },
+                {
+                    "element": "Formuler des avis sur les composants logiciels et matériels.",
+                    "criteres": [
+                        "Analyse juste des caractéristiques des plateformes, des applications et des outils de développement.",
+                        "Analyse juste des caractéristiques des ordinateurs, des dispositifs d’interconnexion et des périphériques.",
+                        "Analyse juste des caractéristiques des protocoles de communication filaires et sans fil.",
+                        "Pertinence des avis sur la compatibilité des composants.",
+                        "Pertinence des avis sur la longévité, la stabilité, l’efficacité et la maintenabilité des composants."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SG",
+            "Nom de la compétence": "Fournir du soutien informatique aux utilisatrices et utilisateurs",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "À partir d’un incident, d’un problème ou d’une demande."
+                ],
+                "APartirDe": [
+                    "un incident",
+                    "un problème",
+                    "une demande"
+                ],
+                "ALaideDe": [
+                    "documentation",
+                    "base de connaissances",
+                    "normes de présentation"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Préciser le besoin.",
+                    "criteres": [
+                        "Analyse juste de l’incident, du problème ou de la demande.",
+                        "Consultation appropriée de la base de connaissances.",
+                        "Détermination judicieuse du niveau de priorité.",
+                        "Choix approprié de l’intervention à effectuer ou transmission de l’information à la personne ou au service concerné.",
+                        "Respect des limites d’intervention professionnelle."
+                    ]
+                },
+                {
+                    "element": "Assister des utilisatrices et des utilisateurs en ce qui a trait à l’emploi d’un ordinateur et de logiciels.",
+                    "criteres": [
+                        "Manifestation d’attitudes et de comportements favorisant l’établissement d’une relation de confiance.",
+                        "Relevé des actions significatives posées par les utilisatrices ou les utilisateurs.",
+                        "Pertinence des conseils.",
+                        "Pertinence et efficacité des démonstrations.",
+                        "Utilisation d’un niveau de langage approprié.",
+                        "Manifestation d’attitudes et de comportements empreints de patience."
+                    ]
+                },
+                {
+                    "element": "Préparer les documents d’aide aux utilisatrices et utilisateurs.",
+                    "criteres": [
+                        "Analyse juste de la documentation existante.",
+                        "Détermination judicieuse du niveau de connaissance des utilisatrices et utilisateurs.",
+                        "Production de documents conformes aux besoins des utilisatrices et utilisateurs.",
+                        "Utilisation du vocabulaire approprié.",
+                        "Respect des normes de documentation.",
+                        "Respect des règles orthographiques et grammaticales."
+                    ]
+                },
+                {
+                    "element": "Effectuer un suivi sur le soutien apporté.",
+                    "criteres": [
+                        "Vérification appropriée de la satisfaction de l’utilisatrice et de l’utilisateur.",
+                        "Détermination correcte du degré d’adéquation entre l’intervention et le besoin.",
+                        "Formulation claire de recommandations visant à prévenir la récurrence de pannes.",
+                        "Notation claire de l’intervention dans la base de connaissances."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SH",
+            "Nom de la compétence": "S’adapter à des technologies informatiques",
+            "Contexte de réalisation": {
+                "details_generaux": null,
+                "APartirDe": null,
+                "ALaideDe": [
+                    "sources d’information",
+                    "applications",
+                    "équipement informatique"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Effectuer une veille technologique.",
+                    "criteres": [
+                        "Recherche efficace de sources d’information.",
+                        "Utilisation appropriée des outils de veille.",
+                        "Analyse juste de l’information recueillie.",
+                        "Détermination judicieuse des technologies à expérimenter."
+                    ]
+                },
+                {
+                    "element": "Expérimenter une technologie matérielle ou logicielle.",
+                    "criteres": [
+                        "Raccordement correct de l’équipement informatique et des périphériques nécessaires.",
+                        "Installation correcte des applications ou des outils de développement nécessaires.",
+                        "Mise à l’essai adéquate de la technologie.",
+                        "Manifestation d’attitudes et de comportements démontrant l’autonomie et l’ouverture d’esprit."
+                    ]
+                },
+                {
+                    "element": "Formuler des avis sur la technologie.",
+                    "criteres": [
+                        "Participation active aux discussions.",
+                        "Justification adéquate du potentiel de la technologie."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SJ",
+            "Nom de la compétence": "Effectuer le déploiement de serveurs intranet",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour des serveurs intranet de différents types : physiques, virtualisés, redondants, distribués, etc.",
+                    "Pour différents services : authentification, annuaire, impression, partage de fichiers, téléphonie, DHCP, etc."
+                ],
+                "APartirDe": [
+                    "documents de conception"
+                ],
+                "ALaideDe": [
+                    "documentation technique"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser le projet de déploiement.",
+                    "criteres": [
+                        "Analyse juste des documents de conception.",
+                        "Analyse juste des caractéristiques techniques des services intranet à installer.",
+                        "Détermination correcte des tâches à effectuer."
+                    ]
+                },
+                {
+                    "element": "Monter les serveurs intranet.",
+                    "criteres": [
+                        "Positionnement et fixation des serveurs et des périphériques conformes aux plans.",
+                        "Installation correcte du ou des systèmes d’exploitation.",
+                        "Connexion correcte des serveurs au réseau.",
+                        "Identification correcte des serveurs, des périphériques et du câblage.",
+                        "Respect des procédures de raccordement du câblage structuré et de la réglementation applicable au domaine de l’électricité.",
+                        "Respect des règles de santé et de sécurité au travail."
+                    ]
+                },
+                {
+                    "element": "Installer les services intranet.",
+                    "criteres": [
+                        "Application correcte des procédures d’installation des services intranet.",
+                        "Configuration correcte des services intranet.",
+                        "Application correcte des procédures d’activation des services intranet."
+                    ]
+                },
+                {
+                    "element": "Procéder au renforcement de la sécurité.",
+                    "criteres": [
+                        "Configuration et personnalisation correctes des logiciels antivirus et coupe-feu.",
+                        "Organisation sécuritaire de la structure des fichiers et des répertoires.",
+                        "Gestion judicieuse des accès.",
+                        "Mise à jour adéquate des procédures de sauvegarde."
+                    ]
+                },
+                {
+                    "element": "Participer à la mise en service des serveurs intranet.",
+                    "criteres": [
+                        "Application rigoureuse des plans de tests.",
+                        "Pertinence des correctifs.",
+                        "Fonctionnement optimal des serveurs."
+                    ]
+                },
+                {
+                    "element": "Rédiger la documentation.",
+                    "criteres": [
+                        "Détermination correcte de l’information à rédiger.",
+                        "Notation claire du travail effectué."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SK",
+            "Nom de la compétence": "Effectuer le déploiement de serveurs Internet",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour des serveurs Internet de différents types : physiques, virtualisés, redondants, distribués, etc.",
+                    "Pour différents services : courriel, Web, visioconférence, infonuagique, etc."
+                ],
+                "APartirDe": [
+                    "documents de conception"
+                ],
+                "ALaideDe": [
+                    "documentation technique"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser le projet de déploiement.",
+                    "criteres": [
+                        "Analyse juste des documents de conception.",
+                        "Analyse juste des caractéristiques techniques des services Internet à installer.",
+                        "Détermination correcte des tâches à effectuer."
+                    ]
+                },
+                {
+                    "element": "Monter les serveurs Internet.",
+                    "criteres": [
+                        "Positionnement et fixation des serveurs et des périphériques conformes aux plans.",
+                        "Installation correcte du ou des systèmes d’exploitation.",
+                        "Connexion correcte des serveurs au réseau.",
+                        "Identification correcte des serveurs, des périphériques et du câblage.",
+                        "Respect des procédures de raccordement du câblage structuré et de la réglementation applicable au domaine de l’électricité.",
+                        "Respect des règles de santé et de sécurité au travail."
+                    ]
+                },
+                {
+                    "element": "Installer les services Internet.",
+                    "criteres": [
+                        "Application correcte des procédures d’installation des services Internet.",
+                        "Configuration correcte des services Internet.",
+                        "Application correcte des procédures d’activation des services Internet."
+                    ]
+                },
+                {
+                    "element": "Procéder au renforcement de la sécurité.",
+                    "criteres": [
+                        "Configuration et personnalisation correctes des logiciels antivirus et coupe-feu.",
+                        "Organisation sécuritaire de la structure des fichiers et des répertoires.",
+                        "Gestion judicieuse des accès.",
+                        "Mise à jour adéquate des procédures de sauvegarde."
+                    ]
+                },
+                {
+                    "element": "Participer à la mise en service des serveurs Internet.",
+                    "criteres": [
+                        "Application rigoureuse des plans de tests.",
+                        "Pertinence des correctifs.",
+                        "Fonctionnement optimal des serveurs."
+                    ]
+                },
+                {
+                    "element": "Rédiger la documentation.",
+                    "criteres": [
+                        "Détermination correcte de l’information à rédiger.",
+                        "Notation claire du travail effectué."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SL",
+            "Nom de la compétence": "Effectuer le déploiement de serveurs de base de données",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour des serveurs de base de données de différents types : physiques, virtualisés, redondants, distribués, etc.",
+                    "Pour des systèmes de gestion de base de données relationnels ou autres."
+                ],
+                "APartirDe": [
+                    "documents de conception"
+                ],
+                "ALaideDe": [
+                    "documentation technique"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser le projet de déploiement.",
+                    "criteres": [
+                        "Analyse juste des documents de conception.",
+                        "Analyse juste des caractéristiques techniques du système de gestion de base de données à installer.",
+                        "Détermination correcte des tâches à effectuer."
+                    ]
+                },
+                {
+                    "element": "Monter les serveurs de base de données.",
+                    "criteres": [
+                        "Positionnement et fixation des serveurs et des périphériques conformes aux plans.",
+                        "Installation correcte du ou des systèmes d’exploitation.",
+                        "Connexion correcte des serveurs au réseau.",
+                        "Identification correcte des serveurs, des périphériques et du câblage.",
+                        "Respect des procédures de raccordement du câblage structuré et de la réglementation applicable au domaine de l’électricité.",
+                        "Respect des règles de santé et de sécurité au travail."
+                    ]
+                },
+                {
+                    "element": "Installer les systèmes de gestion de base de données.",
+                    "criteres": [
+                        "Application correcte de la procédure d’installation des systèmes de gestion de base de données et des modules d’extension.",
+                        "Configuration correcte des systèmes de gestion de base de données et des modules d’extension.",
+                        "Création et migration des bases de données en fonction des besoins.",
+                        "Application correcte de la procédure d’activation des systèmes de gestion de base de données."
+                    ]
+                },
+                {
+                    "element": "Procéder au renforcement de la sécurité.",
+                    "criteres": [
+                        "Configuration et personnalisation correctes des logiciels antivirus et coupe-feu.",
+                        "Organisation sécuritaire de la structure des fichiers et des répertoires.",
+                        "Gestion judicieuse des accès.",
+                        "Mise à jour adéquate des procédures de sauvegarde."
+                    ]
+                },
+                {
+                    "element": "Participer à la mise en service des serveurs de base de données.",
+                    "criteres": [
+                        "Application rigoureuse des plans de tests.",
+                        "Pertinence des correctifs.",
+                        "Fonctionnement optimal des serveurs."
+                    ]
+                },
+                {
+                    "element": "Rédiger la documentation.",
+                    "criteres": [
+                        "Détermination correcte de l’information à rédiger.",
+                        "Notation claire du travail effectué."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SM",
+            "Nom de la compétence": "Effectuer le déploiement de dispositifs d’interconnexion de réseaux informatiques",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour des dispositifs d’interconnexion variés : commutateur, routeur, point d’accès sans fil, pare-feu, etc.",
+                    "Sur des technologies d’infrastructures variées de réseaux informatiques locaux, métropolitains et mondiaux."
+                ],
+                "APartirDe": [
+                    "documents de conception"
+                ],
+                "ALaideDe": [
+                    "documentation technique"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser le projet de déploiement.",
+                    "criteres": [
+                        "Analyse juste des documents de conception.",
+                        "Analyse juste des caractéristiques techniques des dispositifs d’interconnexion à installer.",
+                        "Détermination correcte des tâches à effectuer."
+                    ]
+                },
+                {
+                    "element": "Mettre en place les dispositifs d’interconnexion.",
+                    "criteres": [
+                        "Positionnement et fixation des dispositifs d’interconnexion conformes aux plans.",
+                        "Identification correcte des dispositifs d’interconnexion et du câblage.",
+                        "Respect des procédures de raccordement du câblage structuré et de la réglementation applicable au domaine de l’électricité.",
+                        "Respect des règles de santé et de sécurité au travail."
+                    ]
+                },
+                {
+                    "element": "Installer les dispositifs d’interconnexion.",
+                    "criteres": [
+                        "Application correcte de la procédure d’installation ou de mise à jour des micrologiciels.",
+                        "Configuration correcte des dispositifs.",
+                        "Gestion judicieuse des accès.",
+                        "Sauvegarde correcte des configurations.",
+                        "Respect des mesures de sécurité."
+                    ]
+                },
+                {
+                    "element": "Participer à la mise en service des dispositifs d’interconnexion.",
+                    "criteres": [
+                        "Application rigoureuse des plans de tests.",
+                        "Pertinence des correctifs.",
+                        "Fonctionnement optimal du réseau."
+                    ]
+                },
+                {
+                    "element": "Rédiger la documentation.",
+                    "criteres": [
+                        "Détermination correcte de l’information à rédiger.",
+                        "Notation claire du travail effectué."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SN",
+            "Nom de la compétence": "Automatiser des tâches de gestion de réseaux informatiques",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour différents systèmes d’exploitation."
+                ],
+                "APartirDe": [
+                    "tâches de gestion de réseaux récurrentes"
+                ],
+                "ALaideDe": null
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Préparer les outils d’automatisation.",
+                    "criteres": [
+                        "Analyse juste des tâches récurrentes et de l’environnement informatique.",
+                        "Choix judicieux du langage de programmation ou du logiciel de configuration à utiliser.",
+                        "Installation correcte des logiciels d’automatisation."
+                    ]
+                },
+                {
+                    "element": "Traduire la tâche dans un langage informatique.",
+                    "criteres": [
+                        "Rédaction correcte des scripts ou des configurations.",
+                        "Respect de la méthode d’automatisation."
+                    ]
+                },
+                {
+                    "element": "Effectuer des tests sur les scripts ou les configurations.",
+                    "criteres": [
+                        "Rédaction correcte des plans de tests.",
+                        "Application rigoureuse des plans de tests.",
+                        "Fonctionnement correct des scripts ou des configurations."
+                    ]
+                },
+                {
+                    "element": "Procéder à l’automatisation des tâches.",
+                    "criteres": [
+                        "Exécution correcte des scripts ou application correcte des configurations.",
+                        "Efficience des tâches automatisées."
+                    ]
+                },
+                {
+                    "element": "Rédiger la documentation.",
+                    "criteres": [
+                        "Détermination correcte de l’information à rédiger.",
+                        "Notation claire du travail effectué."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SP",
+            "Nom de la compétence": "Assurer la surveillance de réseaux informatiques",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour différents types de surveillance : détection des intrusions, détection des vulnérabilités, analyse de la performance, analyse de la disponibilité, etc.",
+                    "Sur des technologies d’infrastructures variées de réseaux informatiques locaux, métropolitains et mondiaux."
+                ],
+                "APartirDe": null,
+                "ALaideDe": [
+                    "documentation technique",
+                    "procédures d’intervention",
+                    "mesures de sécurité",
+                    "base de connaissances"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Définir des besoins de surveillance.",
+                    "criteres": [
+                        "Analyse juste des diagrammes d’architecture du réseau.",
+                        "Analyse juste des mesures de sécurité existantes et des procédures d’intervention.",
+                        "Analyse juste des avantages et des inconvénients des logiciels de surveillance existants.",
+                        "Détermination correcte des logiciels de surveillance à mettre en place."
+                    ]
+                },
+                {
+                    "element": "Installer les logiciels de surveillance.",
+                    "criteres": [
+                        "Application correcte de la procédure d’installation des logiciels de surveillance.",
+                        "Configuration et personnalisation correctes des logiciels de surveillance."
+                    ]
+                },
+                {
+                    "element": "Effectuer le monitorage.",
+                    "criteres": [
+                        "Analyse juste des fichiers journaux, de l’information transmise par les logiciels de surveillance ou de l’appel de service.",
+                        "Détection correcte et prompte des vulnérabilités et des attaques informatiques.",
+                        "Consultation appropriée de la base de connaissances.",
+                        "Détermination correcte de la cause du problème de fonctionnement ou de sécurité.",
+                        "Détermination correcte du niveau de priorité des interventions."
+                    ]
+                },
+                {
+                    "element": "Effectuer les interventions.",
+                    "criteres": [
+                        "Application rigoureuse des procédures d’intervention.",
+                        "Respect des mesures de sécurité, des obligations légales et des règles d’éthique professionnelle.",
+                        "Pertinence de l’information transmise aux personnes responsables."
+                    ]
+                },
+                {
+                    "element": "Rédiger la documentation.",
+                    "criteres": [
+                        "Détermination correcte de l’information à rédiger.",
+                        "Notation claire des interventions dans la base de connaissances.",
+                        "Formulation claire de recommandations sur les modifications à apporter aux procédures d’intervention et aux mesures de sécurité."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SQ",
+            "Nom de la compétence": "Collaborer à la conception d’un réseau informatique",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "À partir d’une demande et d’exigences de la cliente ou du client."
+                ],
+                "APartirDe": [
+                    "une demande",
+                    "exigences de la cliente ou du client"
+                ],
+                "ALaideDe": [
+                    "documentation technique",
+                    "normes",
+                    "méthodes",
+                    "bonnes pratiques en matière de gestion de réseaux"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Participer à l’élaboration du cahier des charges fonctionnel.",
+                    "criteres": [
+                        "Analyse juste de la demande et des exigences de la cliente ou du client.",
+                        "Analyse juste des caractéristiques de l’équipement informatique et des applications utilisés par la cliente ou le client.",
+                        "Pertinence des avis sur la nature des besoins.",
+                        "Pertinence des avis sur les normes, les méthodes et les bonnes pratiques à utiliser en matière de gestion de réseaux."
+                    ]
+                },
+                {
+                    "element": "Participer à la conception générale du réseau.",
+                    "criteres": [
+                        "Pertinence des avis sur l’architecture du réseau informatique à mettre en place ou à modifier.",
+                        "Pertinence des avis sur les services à mettre en place ou à modifier.",
+                        "Évaluation juste des composants logiciels et matériels à utiliser.",
+                        "Pertinence des avis sur les mesures de sécurité et les procédures d’intervention à mettre en place.",
+                        "Pertinence des avis sur la faisabilité de la solution informatique."
+                    ]
+                },
+                {
+                    "element": "Effectuer la conception détaillée.",
+                    "criteres": [
+                        "Établissement judicieux de la nomenclature et des adresses IP.",
+                        "Choix judicieux des applications et de l’équipement informatique à utiliser."
+                    ]
+                },
+                {
+                    "element": "Produire les documents de conception.",
+                    "criteres": [
+                        "Établissement correct et détaillé de la liste des applications et de l’équipement informatique nécessaires.",
+                        "Réalisation correcte des diagrammes d’architecture, des plans de câblage ou des plans d’aménagement des salles des serveurs.",
+                        "Participation active à la revue de conception.",
+                        "Utilisation du vocabulaire approprié.",
+                        "Respect des limites d’intervention professionnelle."
+                    ]
+                },
+                {
+                    "element": "Prendre des dispositions pour le démarrage du projet.",
+                    "criteres": [
+                        "Préparation correcte des appels d’offres.",
+                        "Estimation réaliste des coûts.",
+                        "Formulation claire de recommandations sur le choix des fournisseurs."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SR",
+            "Nom de la compétence": "Effectuer le développement d’applications natives sans base de données",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour différentes plateformes cibles : tablettes, téléphones intelligents, ordinateurs de bureau, etc.",
+                    "Pour de nouvelles applications et des applications à modifier."
+                ],
+                "APartirDe": [
+                    "documents de conception"
+                ],
+                "ALaideDe": [
+                    "compilateur conçu pour la plateforme cible",
+                    "compilateur croisé",
+                    "interpréteur",
+                    "émulateur sur la plateforme hôte",
+                    "images",
+                    "sons",
+                    "vidéos",
+                    "procédures de suivi des problèmes",
+                    "gestion des versions"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser le projet de développement de l’application.",
+                    "criteres": [
+                        "Analyse juste des documents de conception.",
+                        "Détermination correcte des tâches à effectuer."
+                    ]
+                },
+                {
+                    "element": "Préparer l’environnement de développement informatique.",
+                    "criteres": [
+                        "Installation correcte des logiciels et des bibliothèques sur la plateforme hôte.",
+                        "Configuration appropriée de la plateforme cible.",
+                        "Configuration appropriée du système de gestion de versions.",
+                        "Importation correcte du code source."
+                    ]
+                },
+                {
+                    "element": "Générer ou programmer l’interface graphique.",
+                    "criteres": [
+                        "Choix et utilisation appropriés des éléments graphiques pour l’affichage et la saisie.",
+                        "Intégration correcte des images.",
+                        "Adaptation de l’interface en fonction du format d’affichage et de la résolution."
+                    ]
+                },
+                {
+                    "element": "Programmer la logique applicative.",
+                    "criteres": [
+                        "Programmation correcte des interactions entre l’interface graphique et l’utilisatrice ou l’utilisateur.",
+                        "Programmation correcte des communications avec les périphériques et les fonctions logicielles de la plateforme cible.",
+                        "Utilisation judicieuse des fils d’exécution.",
+                        "Intégration précise des sons et des vidéos.",
+                        "Application correcte des techniques d’internationalisation.",
+                        "Application rigoureuse des techniques de programmation sécurisée."
+                    ]
+                },
+                {
+                    "element": "Contrôler la qualité de l’application.",
+                    "criteres": [
+                        "Application rigoureuse des plans de tests sur l’émulateur et sur la plateforme cible.",
+                        "Revues de code et de sécurité rigoureuses.",
+                        "Pertinence des correctifs.",
+                        "Respect des procédures de suivi des problèmes et de gestion des versions.",
+                        "Respect des documents de conception."
+                    ]
+                },
+                {
+                    "element": "Participer à la mise en service de l’application.",
+                    "criteres": [
+                        "Préparation appropriée de l’application en vue de son déploiement ou de son installation.",
+                        "Déploiement ou installation corrects de l’application."
+                    ]
+                },
+                {
+                    "element": "Rédiger la documentation.",
+                    "criteres": [
+                        "Détermination correcte de l’information à rédiger.",
+                        "Notation claire du travail effectué."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SS",
+            "Nom de la compétence": "Effectuer le développement d’applications natives avec base de données",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour différentes plateformes cibles : tablettes, téléphones intelligents, ordinateurs de bureau, etc.",
+                    "Pour de nouvelles applications et des applications à modifier."
+                ],
+                "APartirDe": [
+                    "documents de conception"
+                ],
+                "ALaideDe": [
+                    "compilateur conçu pour la plateforme cible",
+                    "compilateur croisé",
+                    "interpréteur",
+                    "émulateur sur la plateforme hôte",
+                    "images",
+                    "procédures de suivi des problèmes",
+                    "gestion des versions"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser le projet de développement de l’application.",
+                    "criteres": [
+                        "Analyse juste des documents de conception.",
+                        "Détermination correcte des tâches à effectuer."
+                    ]
+                },
+                {
+                    "element": "Préparer l’environnement de développement informatique.",
+                    "criteres": [
+                        "Installation correcte des logiciels et des bibliothèques sur la plateforme hôte.",
+                        "Configuration appropriée de la plateforme cible.",
+                        "Configuration appropriée du système de gestion de versions.",
+                        "Importation correcte du code source."
+                    ]
+                },
+                {
+                    "element": "Préparer la ou les bases de données.",
+                    "criteres": [
+                        "Création ou adaptations correctes de la base de données locale ou de la base de données distante.",
+                        "Insertion correcte des données initiales ou des données de tests.",
+                        "Respect du modèle de données."
+                    ]
+                },
+                {
+                    "element": "Générer ou programmer l’interface graphique.",
+                    "criteres": [
+                        "Choix et utilisation appropriés des éléments graphiques pour l’affichage et la saisie.",
+                        "Intégration correcte des images.",
+                        "Adaptation de l’interface en fonction du format d’affichage et de la résolution."
+                    ]
+                },
+                {
+                    "element": "Programmer la logique applicative.",
+                    "criteres": [
+                        "Programmation ou intégration correctes de mécanismes d’authentification et d’autorisation.",
+                        "Programmation correcte des interactions entre l’interface graphique et l’utilisatrice ou l’utilisateur.",
+                        "Choix approprié des clauses, des opérateurs, des commandes ou des paramètres dans les requêtes à la base de données.",
+                        "Manipulation correcte des données de la base de données.",
+                        "Programmation correcte de la synchronisation des données.",
+                        "Utilisation appropriée des services d’échange de données.",
+                        "Application correcte des techniques d’internationalisation.",
+                        "Application rigoureuse des techniques de programmation sécurisée."
+                    ]
+                },
+                {
+                    "element": "Contrôler la qualité de l’application.",
+                    "criteres": [
+                        "Application rigoureuse des plans de tests sur l’émulateur et sur la plateforme cible.",
+                        "Revues de code et de sécurité rigoureuses.",
+                        "Pertinence des correctifs.",
+                        "Respect des procédures de suivi des problèmes et de gestion des versions.",
+                        "Respect des documents de conception."
+                    ]
+                },
+                {
+                    "element": "Participer à la mise en service de l’application.",
+                    "criteres": [
+                        "Préparation appropriée de l’application en vue de son déploiement ou de son installation.",
+                        "Déploiement ou installation corrects de l’application."
+                    ]
+                },
+                {
+                    "element": "Rédiger la documentation.",
+                    "criteres": [
+                        "Détermination correcte de l’information à rédiger.",
+                        "Notation claire du travail effectué."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ST",
+            "Nom de la compétence": "Effectuer le développement d’applications Web non transactionnelles",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour des applications Web liées à la diffusion d’information, à la promotion, etc.",
+                    "Pour de nouvelles applications et des applications à modifier."
+                ],
+                "APartirDe": [
+                    "documents de conception"
+                ],
+                "ALaideDe": [
+                    "images",
+                    "procédures de suivi des problèmes",
+                    "gestion des versions"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser le projet de développement de l’application.",
+                    "criteres": [
+                        "Analyse juste des documents de conception.",
+                        "Détermination correcte des tâches à effectuer."
+                    ]
+                },
+                {
+                    "element": "Préparer l’environnement de développement informatique.",
+                    "criteres": [
+                        "Installation correcte de la plateforme de développement Web et du système de gestion de base de données de développement.",
+                        "Installation correcte des logiciels et des bibliothèques.",
+                        "Configuration appropriée du système de gestion de versions.",
+                        "Importation correcte du code source."
+                    ]
+                },
+                {
+                    "element": "Préparer la base de données.",
+                    "criteres": [
+                        "Création ou adaptations correctes de la base de données.",
+                        "Insertion correcte des données initiales ou des données de tests.",
+                        "Respect du modèle de données."
+                    ]
+                },
+                {
+                    "element": "Programmer l’interface Web.",
+                    "criteres": [
+                        "Utilisation appropriée du langage de balisage.",
+                        "Création et utilisation appropriées des feuilles de styles.",
+                        "Intégration correcte des images.",
+                        "Adaptation de l’interface en fonction du format d’affichage et de la résolution."
+                    ]
+                },
+                {
+                    "element": "Programmer la logique applicative du côté serveur.",
+                    "criteres": [
+                        "Choix approprié des clauses, des opérateurs, des commandes ou des paramètres dans les requêtes à la base de données.",
+                        "Manipulation correcte des données de la base de données.",
+                        "Programmation correcte de la transformation des données en information.",
+                        "Application correcte des techniques d’internationalisation.",
+                        "Application rigoureuse des techniques de programmation sécurisée."
+                    ]
+                },
+                {
+                    "element": "Programmer la logique applicative du côté client.",
+                    "criteres": [
+                        "Manipulation adéquate des objets du modèle DOM.",
+                        "Programmation correcte des interactions entre l’interface Web et l’utilisatrice ou l’utilisateur.",
+                        "Programmation et intégration adéquates d’animations ou de widgets."
+                    ]
+                },
+                {
+                    "element": "Contrôler la qualité de l’application.",
+                    "criteres": [
+                        "Application rigoureuse des plans de tests.",
+                        "Revues de code et de sécurité rigoureuses.",
+                        "Pertinence des correctifs.",
+                        "Respect des procédures de suivi des problèmes et de gestion des versions.",
+                        "Respect des documents de conception."
+                    ]
+                },
+                {
+                    "element": "Participer au déploiement de l’application chez un hébergeur Web.",
+                    "criteres": [
+                        "Détermination judicieuse du nom de domaine.",
+                        "Configuration appropriée de l’application chez l’hébergeur Web.",
+                        "Application correcte de la procédure de migration de l’application chez l’hébergeur Web.",
+                        "Application rigoureuse des mesures de sécurité.",
+                        "Respect des exigences de référencement."
+                    ]
+                },
+                {
+                    "element": "Rédiger la documentation.",
+                    "criteres": [
+                        "Détermination correcte de l’information à rédiger.",
+                        "Notation claire du travail effectué."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SU",
+            "Nom de la compétence": "Effectuer le développement d’applications Web transactionnelles",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour des applications Web transactionnelles : réservations, inscriptions, travail collaboratif, gestion des stocks, commerce électronique, etc.",
+                    "Pour de nouvelles applications et des applications à modifier."
+                ],
+                "APartirDe": [
+                    "documents de conception"
+                ],
+                "ALaideDe": [
+                    "images",
+                    "procédures de suivi des problèmes",
+                    "gestion des versions"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser le projet de développement de l’application.",
+                    "criteres": [
+                        "Analyse juste des documents de conception.",
+                        "Détermination correcte des tâches à effectuer."
+                    ]
+                },
+                {
+                    "element": "Préparer l’environnement de développement informatique.",
+                    "criteres": [
+                        "Installation correcte de la plateforme de développement Web et du système de gestion de base de données de développement.",
+                        "Installation correcte des logiciels et des bibliothèques.",
+                        "Configuration appropriée du système de gestion de versions.",
+                        "Importation correcte du code source."
+                    ]
+                },
+                {
+                    "element": "Préparer la base de données.",
+                    "criteres": [
+                        "Création ou adaptations correctes de la base de données.",
+                        "Insertion correcte des données initiales ou des données de tests.",
+                        "Respect du modèle de données."
+                    ]
+                },
+                {
+                    "element": "Programmer l’interface Web.",
+                    "criteres": [
+                        "Utilisation appropriée du langage de balisage.",
+                        "Création et utilisation appropriées des feuilles de styles.",
+                        "Intégration correcte des images.",
+                        "Création appropriée des formulaires Web.",
+                        "Adaptation de l’interface en fonction du format d’affichage et de la résolution."
+                    ]
+                },
+                {
+                    "element": "Programmer la logique applicative du côté serveur.",
+                    "criteres": [
+                        "Programmation ou intégration correctes de mécanismes d’authentification et d’autorisation.",
+                        "Programmation correcte des interactions entre l’interface Web et l’utilisatrice ou l’utilisateur.",
+                        "Choix approprié des clauses, des opérateurs, des commandes ou des paramètres dans les requêtes à la base de données.",
+                        "Manipulation correcte des données de la base de données.",
+                        "Utilisation appropriée des services d’échange de données.",
+                        "Application correcte des techniques d’internationalisation.",
+                        "Application rigoureuse des techniques de programmation sécurisée."
+                    ]
+                },
+                {
+                    "element": "Programmer la logique applicative du côté client.",
+                    "criteres": [
+                        "Manipulation adéquate des objets du modèle DOM.",
+                        "Programmation appropriée d’appels asynchrones.",
+                        "Programmation correcte des interactions entre l’interface Web et l’utilisatrice ou l’utilisateur.",
+                        "Utilisation systématique des techniques de validation de données des formulaires Web.",
+                        "Formulaires Web conformes aux exigences d’utilisabilité."
+                    ]
+                },
+                {
+                    "element": "Contrôler la qualité de l’application.",
+                    "criteres": [
+                        "Application rigoureuse des plans de tests.",
+                        "Revues de code et de sécurité rigoureuses.",
+                        "Pertinence des correctifs.",
+                        "Respect des procédures de suivi des problèmes et de gestion des versions.",
+                        "Respect des documents de conception."
+                    ]
+                },
+                {
+                    "element": "Participer au déploiement de l’application chez un hébergeur Web.",
+                    "criteres": [
+                        "Détermination judicieuse du nom de domaine.",
+                        "Configuration appropriée de l’application chez l’hébergeur Web.",
+                        "Application correcte de la procédure de migration de l’application chez l’hébergeur Web.",
+                        "Application rigoureuse des mesures de sécurité.",
+                        "Respect des exigences de référencement."
+                    ]
+                },
+                {
+                    "element": "Rédiger la documentation.",
+                    "criteres": [
+                        "Détermination correcte de l’information à rédiger.",
+                        "Notation claire du travail effectué."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SV",
+            "Nom de la compétence": "Effectuer le développement de services d’échange de données",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour des services d’échange de données alimentant des applications natives, Web ou des objets connectés.",
+                    "Pour de nouvelles applications et des applications à modifier."
+                ],
+                "APartirDe": [
+                    "documents de conception"
+                ],
+                "ALaideDe": [
+                    "procédures de suivi des problèmes",
+                    "gestion des versions"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser le projet de développement de l’application.",
+                    "criteres": [
+                        "Analyse juste des documents de conception.",
+                        "Détermination correcte des tâches à effectuer."
+                    ]
+                },
+                {
+                    "element": "Préparer l’environnement de développement informatique.",
+                    "criteres": [
+                        "Installation correcte de la plateforme de développement et du système de gestion de base de données de développement.",
+                        "Installation correcte des logiciels et des bibliothèques.",
+                        "Configuration appropriée du système de gestion de versions.",
+                        "Importation correcte du code source."
+                    ]
+                },
+                {
+                    "element": "Préparer la base de données.",
+                    "criteres": [
+                        "Création ou adaptations correctes de la base de données.",
+                        "Insertion correcte des données initiales ou des données de tests.",
+                        "Respect du modèle de données."
+                    ]
+                },
+                {
+                    "element": "Programmer la logique applicative du service.",
+                    "criteres": [
+                        "Programmation ou intégration correctes de mécanismes d’authentification, d’autorisation ou d’établissement de liaison sécurisée.",
+                        "Programmation correcte de la réception des données d’entrée.",
+                        "Choix approprié des clauses, des opérateurs, des commandes ou des paramètres dans les requêtes à la base de données.",
+                        "Manipulation correcte des données de la base de données.",
+                        "Programmation correcte de l’envoi des données de sortie.",
+                        "Application rigoureuse des techniques de programmation sécurisée.",
+                        "Respect des protocoles de communication et des formats d’échange de données."
+                    ]
+                },
+                {
+                    "element": "Programmer une application de test utilisant le service.",
+                    "criteres": [
+                        "Récupération exacte de l’interface du service.",
+                        "Utilisation appropriée du service.",
+                        "Conversion appropriée des données fournies par le service en données exploitables par l’application de test."
+                    ]
+                },
+                {
+                    "element": "Contrôler la qualité du service.",
+                    "criteres": [
+                        "Application rigoureuse des plans de tests.",
+                        "Revues de code et de sécurité rigoureuses.",
+                        "Pertinence des correctifs.",
+                        "Respect des procédures de suivi des problèmes et de gestion des versions.",
+                        "Respect des documents de conception."
+                    ]
+                },
+                {
+                    "element": "Participer au déploiement du service.",
+                    "criteres": [
+                        "Application correcte de la procédure de migration du service sur le serveur.",
+                        "Application rigoureuse des mesures de sécurité."
+                    ]
+                },
+                {
+                    "element": "Rédiger la documentation.",
+                    "criteres": [
+                        "Détermination correcte de l’information à rédiger.",
+                        "Notation claire du travail effectué."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SW",
+            "Nom de la compétence": "Effectuer le développement d’applications de jeu ou de simulation",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour différents jeux ou simulations : jeux d’action, jeux de rôles, simulateurs de vol, simulateurs de procédés industriels, etc.",
+                    "Pour de nouvelles applications et des applications à modifier."
+                ],
+                "APartirDe": [
+                    "documents de conception"
+                ],
+                "ALaideDe": [
+                    "moteurs de jeu ou de simulation",
+                    "sons",
+                    "images 2D et 3D",
+                    "procédures de suivi des problèmes",
+                    "gestion des versions"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser le projet de développement de l’application.",
+                    "criteres": [
+                        "Analyse juste des documents de conception.",
+                        "Détermination correcte des tâches à effectuer."
+                    ]
+                },
+                {
+                    "element": "Préparer l’environnement de développement informatique.",
+                    "criteres": [
+                        "Installation correcte des logiciels et des bibliothèques.",
+                        "Configuration appropriée du système de gestion de versions.",
+                        "Importation correcte du code source."
+                    ]
+                },
+                {
+                    "element": "Générer des représentations de mondes réels ou imaginaires.",
+                    "criteres": [
+                        "Choix et utilisation appropriés des éléments graphiques pour l’affichage et la saisie.",
+                        "Intégration correcte des images 2D et 3D.",
+                        "Adaptation des représentations en fonction du format d’affichage et de la résolution."
+                    ]
+                },
+                {
+                    "element": "Programmer la logique du jeu ou de la simulation.",
+                    "criteres": [
+                        "Programmation correcte des comportements des éléments graphiques et des périphériques.",
+                        "Programmation correcte des effets visuels.",
+                        "Intégration précise des sons.",
+                        "Programmation correcte des interactions.",
+                        "Application correcte des techniques d’internationalisation.",
+                        "Application rigoureuse des techniques de programmation sécurisée.",
+                        "Utilisation appropriée des moteurs de jeu ou de simulation."
+                    ]
+                },
+                {
+                    "element": "Contrôler la qualité de l’application.",
+                    "criteres": [
+                        "Application rigoureuse des plans de tests.",
+                        "Revues de code et de sécurité rigoureuses.",
+                        "Pertinence des correctifs.",
+                        "Respect des procédures de suivi des problèmes et de gestion des versions.",
+                        "Respect des documents de conception."
+                    ]
+                },
+                {
+                    "element": "Participer à la mise en service de l’application.",
+                    "criteres": [
+                        "Préparation appropriée de l’application en vue de son déploiement, de son exportation ou de son installation.",
+                        "Déploiement, exportation ou installation corrects de l’application."
+                    ]
+                },
+                {
+                    "element": "Rédiger la documentation.",
+                    "criteres": [
+                        "Détermination correcte de l’information à rédiger.",
+                        "Notation claire du travail effectué."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SX",
+            "Nom de la compétence": "Effectuer le développement d’applications pour des objets connectés",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "Pour des applications associées à des dispositifs mobiles prêts-à-porter, à la domotique, à l’immotique, à la robotique, à la surveillance de procédés, etc.",
+                    "Pour de nouvelles applications et des applications à modifier."
+                ],
+                "APartirDe": [
+                    "documents de conception"
+                ],
+                "ALaideDe": [
+                    "procédures de suivi des problèmes",
+                    "gestion des versions"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser le projet de développement de l’application.",
+                    "criteres": [
+                        "Analyse juste des documents de conception.",
+                        "Détermination correcte des tâches à effectuer."
+                    ]
+                },
+                {
+                    "element": "Préparer l’environnement de développement informatique et le banc d’essai.",
+                    "criteres": [
+                        "Installation correcte des logiciels et des bibliothèques.",
+                        "Position et fixation correctes des objets dans l’environnement de simulation.",
+                        "Connexion correcte des objets à l’ordinateur de développement, au réseau ou à d’autres objets.",
+                        "Mise à jour correcte des micrologiciels des objets.",
+                        "Configuration appropriée du système de gestion de versions.",
+                        "Importation correcte du code source."
+                    ]
+                },
+                {
+                    "element": "Générer ou programmer l’interface utilisateur.",
+                    "criteres": [
+                        "Choix et utilisation appropriés des éléments graphiques pour l’affichage et la saisie.",
+                        "Intégration correcte des images.",
+                        "Adaptation de l’interface en fonction du format d’affichage et de la résolution."
+                    ]
+                },
+                {
+                    "element": "Programmer la logique applicative de l’objet et la logique applicative de contrôle ou de surveillance.",
+                    "criteres": [
+                        "Programmation correcte des instructions d’acquisition, de traitement et de transmission des données.",
+                        "Programmation correcte des interactions entre l’interface et l’utilisatrice ou l’utilisateur.",
+                        "Utilisation appropriée des services d’échange de données.",
+                        "Application correcte des techniques d’internationalisation.",
+                        "Application rigoureuse des techniques de programmation sécurisée.",
+                        "Transfert correct de l’application sur l’objet connecté.",
+                        "Respect des contraintes temporelles."
+                    ]
+                },
+                {
+                    "element": "Contrôler la qualité de l’application.",
+                    "criteres": [
+                        "Application rigoureuse des plans de tests.",
+                        "Revues de code et de sécurité rigoureuses.",
+                        "Pertinence des correctifs.",
+                        "Respect des procédures de suivi des problèmes et de gestion des versions.",
+                        "Respect des documents de conception."
+                    ]
+                },
+                {
+                    "element": "Participer à la mise en service de l’application.",
+                    "criteres": [
+                        "Préparation appropriée de l’application en vue de son déploiement ou de son installation.",
+                        "Déploiement ou installation corrects de l’application.",
+                        "Exécution correcte des tests préopérationnels.",
+                        "Pertinence de l’information transmise aux utilisatrices ou utilisateurs sur le fonctionnement et la sécurité de l’application."
+                    ]
+                },
+                {
+                    "element": "Rédiger la documentation.",
+                    "criteres": [
+                        "Détermination correcte de l’information à rédiger.",
+                        "Notation claire du travail effectué."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00SY",
+            "Nom de la compétence": "Collaborer à la conception d’applications",
+            "Contexte de réalisation": {
+                "details_generaux": [
+                    "À partir d’une demande et d’exigences de la cliente ou du client."
+                ],
+                "APartirDe": [
+                    "une demande",
+                    "exigences de la cliente ou du client"
+                ],
+                "ALaideDe": [
+                    "normes",
+                    "méthodes",
+                    "bonnes pratiques en matière de développement d’applications"
+                ]
+            },
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Participer à l’élaboration du cahier des charges fonctionnel.",
+                    "criteres": [
+                        "Analyse juste de la demande et des exigences de la cliente ou du client.",
+                        "Analyse juste des caractéristiques de l’équipement informatique et des applications utilisés par la cliente ou le client.",
+                        "Pertinence des avis sur la nature des besoins.",
+                        "Pertinence des avis sur les normes, les méthodes et les bonnes pratiques à utiliser en matière de développement d’applications."
+                    ]
+                },
+                {
+                    "element": "Participer à la conception générale des applications.",
+                    "criteres": [
+                        "Pertinence des avis sur le choix de l’architecture logicielle.",
+                        "Évaluation juste des composants logiciels et matériels à utiliser.",
+                        "Pertinence des avis sur les mesures de sécurité à mettre en place.",
+                        "Pertinence des avis sur les stratégies de tests à utiliser.",
+                        "Pertinence des avis sur la faisabilité de la solution informatique."
+                    ]
+                },
+                {
+                    "element": "Effectuer la conception détaillée.",
+                    "criteres": [
+                        "Modélisation d’une base de données conforme au besoin.",
+                        "Détermination claire des données initiales d’une base de données.",
+                        "Description claire de la logique applicative et de l’interface à générer ou à programmer.",
+                        "Modélisation orientée objet conforme aux principes d’encapsulation, d’héritage, de composition ou de polymorphisme.",
+                        "Choix ou production judicieux des algorithmes.",
+                        "Respect des règles de nomenclature."
+                    ]
+                }
+            ]
+        }
+    ]
+}

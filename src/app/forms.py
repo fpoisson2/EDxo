@@ -18,11 +18,12 @@ from wtforms import (
     PasswordField,
     HiddenField,
     TimeField,
-    DecimalField
+    DecimalField,
+    URLField
 )
 from wtforms import ValidationError, ColorField, SubmitField
 from wtforms import widgets
-from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional, Length, EqualTo, Email
+from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional, Length, EqualTo, Email, URL
 from wtforms.widgets import ListWidget, CheckboxInput
 
 from app.models import User
@@ -48,6 +49,36 @@ REGIONS = [
     ('Saguenay–Lac-Saint-Jean', 'Saguenay–Lac-Saint-Jean'),
     ('À distance', 'À distance')
 ]
+
+class AssociateDevisForm(FlaskForm):
+    base_filename = HiddenField(validators=[DataRequired()])
+    programme_id = SelectField("Choisir le Programme Cible :", coerce=int, validators=[DataRequired()])
+    submit = SubmitField("Procéder à la Révision des Compétences")
+
+class ReviewImportConfirmForm(FlaskForm):
+    """
+    Formulaire soumis depuis la page de révision pour confirmer l'importation
+    des compétences ou juste la validation du texte OCR.
+    Contient principalement des champs cachés pour passer les informations nécessaires.
+    """
+    programme_id = HiddenField("ID Programme", validators=[DataRequired()])
+    base_filename = HiddenField("Nom de fichier de base", validators=[DataRequired()])
+    # Ce champ indiquera si des données structurées étaient présentes lors de l'affichage
+    import_structured = HiddenField("Import Structuré Possible") # Pas besoin de validator, on lit juste la valeur 'true'/'false'
+
+    # On peut définir le bouton submit ici ou le mettre directement en HTML
+    submit_confirm = SubmitField("Confirmer") # Texte générique, sera ajusté dans le template
+
+    # Note: Pas besoin de champs visibles ici car le but est de confirmer
+    # les données déjà affichées sur la page.
+
+class OcrProgrammeSelectionForm(FlaskForm):
+    """Formulaire pour sélectionner un secteur et un programme."""
+    secteur_url = SelectField('Secteur', choices=[], validators=[DataRequired("Veuillez choisir un secteur.")])
+    programme_url = SelectField('Programme', choices=[], validators=[DataRequired("Veuillez choisir un programme.")])
+    pdf_title = StringField('Titre (Optionnel - sera remplacé par le nom du programme si laissé vide)',
+                            validators=[Optional(), Length(max=150)])
+    submit = SubmitField('Démarrer le traitement du devis')
 
 class ForgotPasswordForm(FlaskForm):
     email = StringField('Adresse email', validators=[DataRequired(), Email()])
@@ -375,7 +406,7 @@ class ElementCompetenceForm(FlaskForm):
 
 class FilConducteurForm(FlaskForm):
     programme = SelectField('Programme', coerce=int, validators=[DataRequired()])
-    description = StringField('Description', validators=[DataRequired()])
+    description = StringField('Nom du fil', validators=[DataRequired()])
     couleur = ColorField('Couleur', validators=[Optional()])  # Nouveau champ pour la couleur
     submit = SubmitField('Ajouter Fil Conducteur')
 
@@ -611,3 +642,8 @@ class DepartmentPIEAForm(FlaskForm):
 class DeleteForm(FlaskForm):
     """Simple form for CSRF protection on delete operations"""
     pass
+
+class OcrTriggerForm(FlaskForm):
+    pdf_url = URLField('URL du PDF', validators=[DataRequired(), URL()])
+    pdf_title = StringField('Titre (Optionnel)', validators=[Optional(), Length(max=100)])
+    submit = SubmitField('Démarrer le traitement')

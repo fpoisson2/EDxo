@@ -124,10 +124,10 @@
         var newElement = document.createElement('div');
         newElement.classList.add('element-competence', 'mb-3', 'border', 'p-3');
         
-        // Créer les options pour le select d'élément de compétence
         var options = elements_competence.map(function(ec) {
-          return `<option value="${ec.id}">${ec.nom}</option>`;
+          return `<option value="${ec.id}">${ec.competence_code} - ${ec.nom}</option>`;
         }).join('');
+
         
         // Créer les options pour le select de statut
         var statutOptions = statuts.map(function(status) {

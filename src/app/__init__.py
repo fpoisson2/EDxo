@@ -34,6 +34,7 @@ from app.routes.plan_de_cours import plan_de_cours_bp
 from app.routes.programme import programme_bp
 from app.routes.settings import settings_bp
 from app.routes.system import system_bp
+from app.routes.ocr_routes import ocr_bp
 # Import version
 from config.version import __version__
 # Import centralized extensions
@@ -42,6 +43,10 @@ from utils.db_tracking import init_change_tracking
 from utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 
 from werkzeug.security import generate_password_hash
+
+from dotenv import load_dotenv 
+
+from celery_app import celery, init_celery 
 
 # Initialize logger
 logging.basicConfig(level=logging.INFO)
@@ -68,6 +73,7 @@ class TestConfig:
 
 
 def create_app(testing=False):
+    load_dotenv()
     base_path = os.path.dirname(os.path.dirname(__file__))
     app = Flask(
         __name__,
@@ -99,6 +105,11 @@ def create_app(testing=False):
             SECRET_KEY=os.getenv('SECRET_KEY'),
             RECAPTCHA_SITE_KEY=os.getenv('RECAPTCHA_PUBLIC_KEY'),
             RECAPTCHA_SECRET_KEY=os.getenv('RECAPTCHA_PRIVATE_KEY'),
+            MISTRAL_API_KEY=os.getenv('MISTRAL_API_KEY'),
+            OPENAI_API_KEY=os.getenv('OPENAI_API_KEY'),
+            MISTRAL_MODEL_OCR="mistral-ocr-latest",
+            OPENAI_MODEL_SECTION = "gpt-4.1-mini", # Modèle pour la détection de section
+            OPENAI_MODEL_EXTRACTION = "gpt-4.1-mini", # Modèle pour l'extraction de compétences
             WTF_CSRF_ENABLED=True,
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),
@@ -107,7 +118,8 @@ def create_app(testing=False):
             SESSION_COOKIE_SAMESITE='Lax',
             SESSION_TYPE='filesystem',
             CELERY_BROKER_URL='redis://127.0.0.1:6379/0',
-            CELERY_RESULT_BACKEND='redis://127.0.0.1:6379/0'
+            CELERY_RESULT_BACKEND='redis://127.0.0.1:6379/0',
+            TXT_OUTPUT_DIR=os.path.join(BASE_DIR, 'txt_outputs')
         )
 
     # Initialize extensions
@@ -138,6 +150,8 @@ def create_app(testing=False):
         worker_id = os.getenv('GUNICORN_WORKER_ID')
         is_primary_worker = worker_id == '0' or worker_id is None
 
+    init_celery(app)
+
     # Register blueprints
     app.register_blueprint(routes.main)
     app.register_blueprint(settings_bp)
@@ -149,6 +163,7 @@ def create_app(testing=False):
     app.register_blueprint(system_bp)
     app.register_blueprint(evaluation_bp)
     app.register_blueprint(gestion_programme_bp)
+    app.register_blueprint(ocr_bp)
 
     # Register helpers and handlers
     @app.context_processor

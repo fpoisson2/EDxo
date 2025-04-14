@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Importer devis ministériel{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Importer les compétences d'un devis ministériel</h1>
+    <p>Sélectionnez un secteur puis un programme d'études.</p>
+
+    {# --- Affichage des messages Flash --- #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {# --- Formulaire avec les Select --- #}
+    <form method="POST" action="{{ url_for('ocr.start_ocr_processing') }}" id="ocrForm">
+        {{ form.hidden_tag() }}
+        {# --- Sélecteur Secteur --- #}
+        <div class="mb-3">
+            {{ form.secteur_url.label(class="form-label") }}
+            {{ form.secteur_url(class="form-select" + (" is-invalid" if form.secteur_url.errors else ""), id="secteurSelect") }}
+            {% if form.secteur_url.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.secteur_url.errors %}<span>{{ error }}</span>{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        {# --- Sélecteur Programme (dynamique) --- #}
+        <div class="mb-3">
+            {{ form.programme_url.label(class="form-label") }}
+            {{ form.programme_url(class="form-select" + (" is-invalid" if form.programme_url.errors else ""), id="programmeSelect", disabled=true) }}
+            {% if form.programme_url.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.programme_url.errors %}<span>{{ error }}</span>{% endfor %}
+                </div>
+            {% endif %}
+            {# Indicateur de chargement --- #}
+            <div id="programmeLoading" style="display: none;" class="mt-2 text-muted">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Chargement des programmes...
+            </div>
+        </div>
+
+        {# --- Bouton Soumettre --- #}
+        {{ form.submit(class="btn btn-primary", id="submitBtn", disabled=true) }}
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const secteurSelect = document.getElementById('secteurSelect');
+    const programmeSelect = document.getElementById('programmeSelect');
+    const programmeLoading = document.getElementById('programmeLoading');
+    const submitBtn = document.getElementById('submitBtn');
+    const initialProgrammeUrl = programmeSelect.value;
+
+    // Système de flash message pour afficher les erreurs ou informations
+    const flashMessageSystem = {
+        show(message, type = 'info') {
+            console.log(`Flash (${type}): ${message}`);
+            const flashContainer = document.querySelector('.container.mt-4');
+            if (!flashContainer) return;
+
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.setAttribute('role', 'alert');
+            alertDiv.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
+
+            flashContainer.insertBefore(alertDiv, flashContainer.firstChild);
+
+            setTimeout(() => {
+                const toast = bootstrap.Alert.getOrCreateInstance(alertDiv);
+                if (toast) {
+                    toast.close();
+                } else if (alertDiv.parentElement) {
+                     alertDiv.parentElement.removeChild(alertDiv);
+                }
+            }, 5000);
+        },
+        error: function(message) { this.show(message, 'danger'); },
+        success: function(message) { this.show(message, 'success'); },
+        warning: function(message) { this.show(message, 'warning'); },
+        info: function(message) { this.show(message, 'info'); }
+    };
+
+    // Fonction pour récupérer et peupler les programmes
+    async function fetchProgrammes(secteurUrl) {
+        programmeSelect.innerHTML = '<option value="">-- Chargement... --</option>';
+        programmeSelect.disabled = true;
+        programmeLoading.style.display = 'block';
+        submitBtn.disabled = true;
+
+        if (!secteurUrl) {
+            programmeSelect.innerHTML = '<option value="">-- Choisir un programme --</option>';
+            programmeLoading.style.display = 'none';
+            checkEnableSubmit();
+            return;
+        }
+
+        try {
+            const baseUrl = "{{ url_for('ocr.get_programmes_for_secteur', _external=True) }}";
+            const fetchUrl = new URL(baseUrl);
+            fetchUrl.searchParams.append('secteur_url', secteurUrl);
+
+            console.log("Fetching programmes from:", fetchUrl.toString());
+
+            const response = await fetch(fetchUrl);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: `Erreur HTTP ${response.status}` }));
+                throw new Error(errorData.error || `Erreur HTTP ${response.status}`);
+            }
+            const programmes = await response.json();
+            console.log("Programmes reçus:", programmes);
+
+            programmeSelect.innerHTML = '<option value="">-- Choisir un programme --</option>';
+            if (programmes && !programmes.error && programmes.length > 0) {
+                programmes.forEach(prog => {
+                    const title = String(prog.title || 'Programme sans titre').trim();
+                    const url = String(prog.url || '').trim();
+                    if(url){
+                        const option = document.createElement('option');
+                        option.value = url;
+                        option.textContent = title;
+                        programmeSelect.appendChild(option);
+                    } else {
+                        console.warn("Programme ignoré car URL manquante:", prog);
+                    }
+                });
+                programmeSelect.disabled = false;
+                if (initialProgrammeUrl && programmeSelect.querySelector(`option[value="${initialProgrammeUrl}"]`)) {
+                     console.log("Tentative de re-sélectionner:", initialProgrammeUrl);
+                     programmeSelect.value = initialProgrammeUrl;
+                     programmeSelect.dispatchEvent(new Event('change'));
+                } else {
+                     console.log("Valeur initiale non trouvée ou secteur différent, pas de re-sélection.");
+                }
+            } else if (programmes.error) {
+                programmeSelect.innerHTML = `<option value="">-- Erreur: ${programmes.error} --</option>`;
+                flashMessageSystem.error(`Erreur serveur: ${programmes.error}`);
+            } else {
+                programmeSelect.innerHTML = '<option value="">-- Aucun programme trouvé --</option>';
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement des programmes:', error);
+            programmeSelect.innerHTML = `<option value="">-- Erreur chargement --</option>`;
+            flashMessageSystem.error(`Erreur chargement programmes: ${error.message}`);
+        } finally {
+             programmeLoading.style.display = 'none';
+             checkEnableSubmit();
+        }
+    }
+
+    secteurSelect.addEventListener('change', function() {
+        programmeSelect.value = '';
+        fetchProgrammes(this.value);
+    });
+
+    programmeSelect.addEventListener('change', function() {
+         checkEnableSubmit();
+    });
+
+    // Fonction pour activer/désactiver le bouton de soumission
+    function checkEnableSubmit() {
+        if (secteurSelect.value && programmeSelect.value && !programmeSelect.disabled) {
+             submitBtn.disabled = false;
+        } else {
+             submitBtn.disabled = true;
+        }
+    }
+
+    if (secteurSelect.value) {
+        console.log("Secteur initial détecté:", secteurSelect.value, "Programme initial:", initialProgrammeUrl);
+        fetchProgrammes(secteurSelect.value);
+    } else {
+        checkEnableSubmit();
+    }
+});
+</script>
+{% endblock %}

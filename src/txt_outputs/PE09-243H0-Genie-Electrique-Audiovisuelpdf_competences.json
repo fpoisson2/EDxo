@@ -1,0 +1,1747 @@
+{
+    "competences": [
+        {
+            "Code": "041Q",
+            "Nom de la compétence": "Traiter l’information relative aux réalités du milieu de travail en technologie de l’électronique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À l’aide de la documentation récente ainsi que des lois et des règlements en vigueur.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Rechercher de l’information sur le milieu de travail et la profession.",
+                    "criteres": [
+                        "Choix des sources d’information appropriées.",
+                        "Fiabilité et diversité de l’information recueillie.",
+                        "Utilisation appropriée des outils de recherche."
+                    ]
+                },
+                {
+                    "element": "Analyser l’information sur le milieu de travail.",
+                    "criteres": [
+                        "Distinction juste des types d’entreprises ou d’établissements.",
+                        "Reconnaissance des professions exercées dans le milieu de travail.",
+                        "Reconnaissance des associations professionnelles et syndicales présentes dans le milieu de travail.",
+                        "Interprétation juste de l’importance et des caractéristiques du développement technologique.",
+                        "Distinction juste des formes d’organisation du travail.",
+                        "Distinction juste des caractéristiques des produits et des services offerts par les entreprises ou les établissements."
+                    ]
+                },
+                {
+                    "element": "Analyser l’information sur la profession.",
+                    "criteres": [
+                        "Distinction juste des spécialisations.",
+                        "Examen détaillé des tâches et des responsabilités de la profession.",
+                        "Reconnaissance des risques pour la santé et la sécurité au travail.",
+                        "Distinction juste des connaissances et des habiletés nécessaires à l’exercice de la profession.",
+                        "Interprétation juste des normes et des conventions relatives à l’éthique professionnelle.",
+                        "Distinction juste des limites d’intervention propres à la profession."
+                    ]
+                },
+                {
+                    "element": "Faire une synthèse de l’information.",
+                    "criteres": [
+                        "Classement approprié de l’information.",
+                        "Synthèse correcte de l’information."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "041R",
+            "Nom de la compétence": "Mettre en œuvre des modèles mathématiques liés à l’électronique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Pour des activités de travail liées à la prise de mesure, au diagnostic de problèmes d’électronique, à des modifications, à l’exécution de tests et à la détermination de paramètres.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide d’ouvrages de référence, de fiches techniques, de tables et de graphiques.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide d’instruments de mesure et d’une calculatrice.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Prendre connaissance de la situation nécessitant la mise en œuvre d’un modèle.",
+                    "criteres": [
+                        "Interprétation juste de la situation.",
+                        "Interprétation juste des objectifs à atteindre.",
+                        "Interprétation juste de la documentation."
+                    ]
+                },
+                {
+                    "element": "Choisir le modèle.",
+                    "criteres": [
+                        "Interprétation juste des concepts mathématiques.",
+                        "Interprétation juste des symboles, de la terminologie et des conventions.",
+                        "Établissement clair des liens entre les composantes du modèle.",
+                        "Choix judicieux du modèle compte tenu de la situation, des objectifs à atteindre, des conditions d’application."
+                    ]
+                },
+                {
+                    "element": "Appliquer le modèle à la situation.",
+                    "criteres": [
+                        "Utilisation appropriée des formules mathématiques.",
+                        "Utilisation appropriée de la notation scientifique.",
+                        "Utilisation appropriée des unités de mesure.",
+                        "Utilisation appropriée des méthodes de résolution de problèmes.",
+                        "Exactitude des calculs.",
+                        "Consignation correcte des résultats."
+                    ]
+                },
+                {
+                    "element": "Évaluer les résultats.",
+                    "criteres": [
+                        "Vérification minutieuse des résultats de l’application.",
+                        "Critique de la vraisemblance des résultats.",
+                        "Justesse des correctifs apportés."
+                    ]
+                },
+                {
+                    "element": "Présenter les résultats.",
+                    "criteres": [
+                        "Présentation claire et soignée de la démarche utilisée, des résultats."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "037E",
+            "Nom de la compétence": "Diagnostiquer un problème d’électronique analogique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Avec différents circuits analogiques, des plans de circuits analogiques et un équipement comportant une défectuosité d’origine électronique analogique.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de procédures.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, d’outils et d’instruments de mesure, d’équipement antistatique, d’un ordinateur relié à un réseau et d’outils de diagnostic et de logiciels de simulation.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Prendre connaissance du problème et des spécifications.",
+                    "criteres": [
+                        "Interprétation juste du problème à résoudre.",
+                        "Interprétation juste des circuits et de leurs schémas.",
+                        "Interprétation juste des normes.",
+                        "Interprétation juste des méthodes de vérification."
+                    ]
+                },
+                {
+                    "element": "Repérer des anomalies.",
+                    "criteres": [
+                        "Vérification systématique de la conformité des composants aux schémas.",
+                        "Inspection visuelle de l’ensemble des composants.",
+                        "Consignation correcte des résultats de l’inspection."
+                    ]
+                },
+                {
+                    "element": "Prendre des mesures.",
+                    "criteres": [
+                        "Choix et utilisation appropriés des instruments de mesure.",
+                        "Respect de la procédure.",
+                        "Précision des mesures en tenant compte des effets des instruments.",
+                        "Consignation correcte des résultats."
+                    ]
+                },
+                {
+                    "element": "Analyser les résultats.",
+                    "criteres": [
+                        "Interprétation juste des résultats des vérifications.",
+                        "Détermination juste des calculs à effectuer en fonction des lois, des notions et des théorèmes applicables, des circuits.",
+                        "Exactitude des calculs.",
+                        "Traitement logique des résultats."
+                    ]
+                },
+                {
+                    "element": "Déterminer la ou les causes du problème.",
+                    "criteres": [
+                        "Interprétation juste des écarts constatés.",
+                        "Respect des étapes de diagnostic.",
+                        "Pertinence des hypothèses.",
+                        "Justesse du diagnostic."
+                    ]
+                },
+                {
+                    "element": "Rédiger un rapport.",
+                    "criteres": [
+                        "Clarté et précision de l’information.",
+                        "Utilisation de la terminologie appropriée."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "037F",
+            "Nom de la compétence": "Diagnostiquer un problème d’électronique numérique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Avec différents circuits numériques, des mémoires et des systèmes d’acquisition de données, des plans de circuits numériques et un équipement comportant une défectuosité d’origine électronique numérique.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de procédures.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, d’outils et d’instruments de mesure, d’équipement antistatique, d’un ordinateur relié à un réseau et d’outils de diagnostic et de logiciels de simulation.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Prendre connaissance du problème et des spécifications.",
+                    "criteres": [
+                        "Interprétation juste du problème à résoudre.",
+                        "Interprétation juste des circuits et de leurs schémas.",
+                        "Interprétation juste des normes.",
+                        "Interprétation juste des méthodes de vérification."
+                    ]
+                },
+                {
+                    "element": "Repérer des anomalies.",
+                    "criteres": [
+                        "Vérification systématique de la conformité des composants aux schémas.",
+                        "Inspection visuelle de l’ensemble des composants.",
+                        "Consignation correcte des résultats de l’inspection."
+                    ]
+                },
+                {
+                    "element": "Prendre des mesures.",
+                    "criteres": [
+                        "Choix et utilisation appropriés des instruments de mesure.",
+                        "Respect de la procédure.",
+                        "Précision des mesures en tenant compte des effets des instruments.",
+                        "Consignation correcte des résultats."
+                    ]
+                },
+                {
+                    "element": "Analyser les résultats.",
+                    "criteres": [
+                        "Interprétation juste des résultats des vérifications.",
+                        "Détermination juste des calculs à effectuer en fonction des lois, des notions et des théorèmes applicables, des circuits.",
+                        "Exactitude des calculs.",
+                        "Traitement logique des résultats."
+                    ]
+                },
+                {
+                    "element": "Déterminer la ou les causes du problème.",
+                    "criteres": [
+                        "Interprétation juste des écarts constatés.",
+                        "Respect des étapes de diagnostic.",
+                        "Pertinence des hypothèses.",
+                        "Justesse du diagnostic."
+                    ]
+                },
+                {
+                    "element": "Rédiger un rapport.",
+                    "criteres": [
+                        "Clarté et précision de l’information.",
+                        "Utilisation de la terminologie appropriée."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "037C",
+            "Nom de la compétence": "Traiter l’information technique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Dans le traitement d’information ayant trait aux technologies actuelles et aux nouvelles technologies.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de normes, de fiches techniques, de cahiers des charges, de plans et des recommandations des fabricants.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais et d’un ordinateur relié à un réseau et de logiciels appropriés.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Effectuer une recherche d’information technique.",
+                    "criteres": [
+                        "Détermination juste de l’objet de la recherche.",
+                        "Utilisation appropriée de l’ordinateur, des logiciels et des outils de recherche.",
+                        "Fiabilité et variété des sources d’information.",
+                        "Clarté de la communication au moment de consulter les personnes-ressources.",
+                        "Pertinence et exhaustivité de l’information recueillie."
+                    ]
+                },
+                {
+                    "element": "Organiser l’information.",
+                    "criteres": [
+                        "Interprétation juste de l’information recueillie.",
+                        "Classement approprié de l’information.",
+                        "Comparaison juste des données.",
+                        "Organisation cohérente et soignée des données."
+                    ]
+                },
+                {
+                    "element": "Consigner l’information.",
+                    "criteres": [
+                        "Respect des règles orthographiques et grammaticales.",
+                        "Respect des normes de rédaction.",
+                        "Utilisation appropriée des logiciels."
+                    ]
+                },
+                {
+                    "element": "Présenter l’information.",
+                    "criteres": [
+                        "Préparation appropriée de la présentation.",
+                        "Choix judicieux des logiciels.",
+                        "Utilisation appropriée des logiciels.",
+                        "Présentation claire et structurée de l’information.",
+                        "Prise en compte de l’intérêt de la ou du destinataire."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "041S",
+            "Nom de la compétence": "Communiquer en milieu de travail.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Dans différentes situations où la personne doit fournir des explications, conseiller les clientes et les clients, former des utilisatrices ou des utilisateurs, négocier avec des fournisseurs, dialoguer et discuter (réunions ou travaux en équipe).",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En utilisant certains moyens.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "S’assurer que l’environnement est propice à la communication.",
+                    "criteres": [
+                        "Repérage approprié des obstacles à la communication.",
+                        "Détermination des moyens permettant d’éliminer les principaux obstacles à la communication."
+                    ]
+                },
+                {
+                    "element": "Recevoir de l’information.",
+                    "criteres": [
+                        "Interprétation juste des messages verbaux et non verbaux.",
+                        "Écoute active de ses interlocutrices ou de ses interlocuteurs.",
+                        "Application correcte des techniques de reformulation et de reflet.",
+                        "Manifestation d’attitudes appropriées : empathie, patience, attention, respect d’autrui."
+                    ]
+                },
+                {
+                    "element": "Transmettre de l’information.",
+                    "criteres": [
+                        "Expression claire de ses idées.",
+                        "Choix et utilisation appropriés de moyens de communication.",
+                        "Utilisation de la terminologie française et de la terminologie anglaise appropriée.",
+                        "Vulgarisation appropriée de l’information à caractère technique.",
+                        "Vérification de la compréhension de ses interlocutrices ou de ses interlocuteurs.",
+                        "Manifestation d’attitudes appropriées : empathie, patience, courtoisie, diplomatie, bonne humeur, respect d’autrui."
+                    ]
+                },
+                {
+                    "element": "Évaluer la qualité de sa communication.",
+                    "criteres": [
+                        "Analyse critique de ses forces et de ses faiblesses.",
+                        "Détermination de moyens propres à améliorer sa capacité à communiquer."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042G",
+            "Nom de la compétence": "Intervenir en santé et sécurité en audiovisuel.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À l’aide de l’équipement de sécurité, de la Loi sur la santé et la sécurité du travail et du Système d’information sur les matières dangereuses utilisées au travail (SIMDUT).",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En manifestant sa capacité à respecter et à faire respecter les règles de santé et de sécurité au travail.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Évaluer les risques d’accident.",
+                    "criteres": [
+                        "Examen détaillé de l’environnement de travail.",
+                        "Pertinence du jugement concernant les situations potentiellement dangereuses.",
+                        "Transmission claire de l’information relative aux dangers potentiels."
+                    ]
+                },
+                {
+                    "element": "Choisir des moyens de prévention.",
+                    "criteres": [
+                        "Sélection judicieuse de l’équipement de protection individuel.",
+                        "Détermination juste des mesures de sécurité en fonction des lieux et des activités."
+                    ]
+                },
+                {
+                    "element": "Appliquer des pratiques de travail sécuritaires.",
+                    "criteres": [
+                        "Utilisation sécuritaire de l’équipement de levage et de manutention.",
+                        "Application adéquate des techniques de déplacement en hauteur.",
+                        "Respect des règles d’ergonomie.",
+                        "Communication claire des consignes relatives à la santé et à la sécurité."
+                    ]
+                },
+                {
+                    "element": "Réagir en situation d’urgence.",
+                    "criteres": [
+                        "Évaluation juste de ses capacités et de ses limites.",
+                        "Communication claire et précise avec les intervenantes et les intervenants.",
+                        "Application juste de la procédure d’urgence.",
+                        "Rapidité de l’intervention."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042H",
+            "Nom de la compétence": "Assurer la distribution de l’énergie électrique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Pour des installations temporaires, dans des salles et sur des scènes extérieures.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de matériel électrique tel que des boîtes de jonction, des câbles, des connecteurs, des batteries, des génératrices, etc., d’outils et d’instruments de mesure, d’échelles, d’échafaudages et de nacelles et d’ordinateurs et de logiciels.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des lois et règlements (Code de l’électricité du Québec), Code de construction et codes d’autres pays, des règles de santé et de sécurité au travail et des limites professionnelles établies notamment par les lois et les règlements.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Évaluer les besoins.",
+                    "criteres": [
+                        "Liste détaillée du matériel électrique en fonction de la demande.",
+                        "Prise en compte des ressources et des contraintes environnementales.",
+                        "Calcul précis des besoins en électricité."
+                    ]
+                },
+                {
+                    "element": "Planifier la distribution électrique.",
+                    "criteres": [
+                        "Détermination juste des besoins en électricité.",
+                        "Dessin clair des plans de distribution."
+                    ]
+                },
+                {
+                    "element": "Prévoir les mesures de santé et de sécurité.",
+                    "criteres": [
+                        "Choix judicieux de l’équipement de sécurité."
+                    ]
+                },
+                {
+                    "element": "Mettre en œuvre la planification.",
+                    "criteres": [
+                        "Installation appropriée de l’équipement de sécurité.",
+                        "Branchement sécuritaire du matériel électrique.",
+                        "Respect des techniques de raccordement.",
+                        "Inspection visuelle complète de l’installation.",
+                        "Exactitude des mesures.",
+                        "Alimentation séquentielle des charges.",
+                        "Équilibrage sécuritaire des phases.",
+                        "Résolution appropriée des problèmes techniques."
+                    ]
+                },
+                {
+                    "element": "Ranger le matériel électrique.",
+                    "criteres": [
+                        "Rangement sécuritaire."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042J",
+            "Nom de la compétence": "Câbler des systèmes audiovisuels.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir de directives.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, des devis d’installation, d’outils et d’instruments de mesure et d’un ordinateur.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Avec des câbles de fibre optique, des câbles de cuivre et des accessoires.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail, des normes et des standards en vigueur et des limites professionnelles établies notamment par les lois et les règlements.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Interpréter les plans, les devis d’installation et la documentation.",
+                    "criteres": [
+                        "Interprétation exacte des différents symboles inscrits sur les plans.",
+                        "Interprétation juste des caractéristiques de l’installation en fonction du type d’équipement et des lieux."
+                    ]
+                },
+                {
+                    "element": "Planifier le travail.",
+                    "criteres": [
+                        "Détermination juste des travaux à effectuer, du temps nécessaire.",
+                        "Choix approprié des outils et des instruments de mesure."
+                    ]
+                },
+                {
+                    "element": "Installer les câbles.",
+                    "criteres": [
+                        "Manipulation appropriée et sécuritaire de l’outillage.",
+                        "Application rigoureuse des techniques d’installation du câblage : mesure précise des longueurs, identification séquentielle des fils, passage sécuritaire des câbles, fixation solide, propreté des joints, disposition esthétique du câblage.",
+                        "Montage et soudage minutieux des divers connecteurs."
+                    ]
+                },
+                {
+                    "element": "Vérifier l’installation.",
+                    "criteres": [
+                        "Adéquation juste entre l’installation et les plans et devis.",
+                        "Respect des procédures de test.",
+                        "Communication claire et précise avec les membres de l’équipe."
+                    ]
+                },
+                {
+                    "element": "Ranger et nettoyer les lieux.",
+                    "criteres": [
+                        "Rangement soigné des outils.",
+                        "Nettoyage approprié des lieux."
+                    ]
+                },
+                {
+                    "element": "Assurer le suivi.",
+                    "criteres": [
+                        "Transmission claire des renseignements relatifs à l’inventaire, aux résultats des tests, aux travaux effectués, aux problèmes relevés."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042K",
+            "Nom de la compétence": "Faire des éclairages.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Pour une production de petite ou de moyenne envergure.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Pour une installation temporaire et une installation permanente.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans des milieux variés.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Selon des horaires variés.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans des conditions météorologiques diverses.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement et en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de directives de la direction technique ou de la réalisation, d’un projet de production et d’un devis technique.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, d’équipements d’éclairage et de supervision et d’outils et d’instruments de mesure.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail, des normes et des standards en vigueur et des limites professionnelles établies notamment par les lois et les règlements.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Établir un plan d’éclairage.",
+                    "criteres": [
+                        "Interprétation juste des besoins de la direction de la production.",
+                        "Détermination précise de l’emplacement des appareils, de la régie et du câblage, des points d’ancrage et d’accrochage, de l’équipement nécessaire en fonction du budget.",
+                        "Dessin détaillé du plan d’éclairage.",
+                        "Élaboration méticuleuse de la feuille de route.",
+                        "Manifestation du sens artistique."
+                    ]
+                },
+                {
+                    "element": "Préparer l’équipement et le vérifier.",
+                    "criteres": [
+                        "Vérification correcte du fonctionnement de l’équipement.",
+                        "Calibrage précis des appareils et de l’équipement d’éclairage.",
+                        "Modification correcte du choix de l’équipement en fonction de la disponibilité et des tests de performance."
+                    ]
+                },
+                {
+                    "element": "Installer le système d’éclairage.",
+                    "criteres": [
+                        "Déplacement sécuritaire de l’équipement.",
+                        "Accrochage sécuritaire des ponts et de leur système de sécurité.",
+                        "Localisation et branchement méthodiques de l’équipement selon les plans.",
+                        "Respect du Code de l’électricité du Québec au moment du branchement.",
+                        "Branchement sécuritaire des gradateurs.",
+                        "Exécution soignée de la mise au foyer.",
+                        "Installation adéquate du système d’intercommunication."
+                    ]
+                },
+                {
+                    "element": "Mettre en marche le système d’éclairage.",
+                    "criteres": [
+                        "Vérification correcte du fonctionnement du système d’éclairage.",
+                        "Configuration juste des consoles d’éclairage.",
+                        "Équilibrage exact des intensités relatives des différents projecteurs.",
+                        "Programmation minutieuse des séquences d’éclairage selon la feuille de route.",
+                        "Réajustement précis des éclairages relativement aux personnes et aux accessoires.",
+                        "Communication claire et précise avec les personnes."
+                    ]
+                },
+                {
+                    "element": "Assurer le fonctionnement de l’équipement.",
+                    "criteres": [
+                        "Séquencement approprié des intensités lumineuses.",
+                        "Adaptation correcte de la feuille de route.",
+                        "Fonctionnement optimal de l’équipement.",
+                        "Résolution appropriée des problèmes techniques."
+                    ]
+                },
+                {
+                    "element": "Démonter le système d’éclairage.",
+                    "criteres": [
+                        "Débranchement sécuritaire de l’équipement.",
+                        "Respect de l’ordre de démontage de l’équipement.",
+                        "Rangement ordonné de l’équipement dans les caisses.",
+                        "Désignation minutieuse de l’équipement défectueux."
+                    ]
+                },
+                {
+                    "element": "Entretenir l’équipement d’éclairage.",
+                    "criteres": [
+                        "Nettoyage et ajustement appropriés de l’équipement.",
+                        "Utilisation appropriée des outils et des instruments de mesure.",
+                        "Détection juste des problèmes potentiels.",
+                        "Détermination juste des besoins de maintenance."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042L",
+            "Nom de la compétence": "Sonoriser une salle ou une scène.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Pour une production de petite ou de moyenne envergure.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Pour une installation temporaire et une installation permanente.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans des milieux variés et selon des horaires variés.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans des conditions météorologiques diverses.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement et en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de directives de la direction technique ou de la réalisation, d’un projet de production et d’un devis technique.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, d’équipements de sonorisation et de supervision et d’outils et d’instruments de mesure.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail, des normes et des standards en vigueur et des limites professionnelles établies notamment par les lois et les règlements.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Établir un plan de sonorisation.",
+                    "criteres": [
+                        "Interprétation juste des besoins de la direction de la production.",
+                        "Détermination précise de l’emplacement des appareils, de la régie et du câblage, des échafaudages, des points d’ancrage et d’accrochage, de l’équipement nécessaire en fonction du budget.",
+                        "Dessin détaillé du plan de sonorisation.",
+                        "Établissement méticuleux de la feuille de route.",
+                        "Manifestation du sens artistique."
+                    ]
+                },
+                {
+                    "element": "Préparer l’équipement et le vérifier.",
+                    "criteres": [
+                        "Vérification correcte du fonctionnement de l’équipement.",
+                        "Calibrage précis des appareils et de l’équipement de sonorisation.",
+                        "Modification correcte du choix de l’équipement en fonction de la disponibilité et des tests de performance."
+                    ]
+                },
+                {
+                    "element": "Installer le système de sonorisation.",
+                    "criteres": [
+                        "Déplacement sécuritaire de l’équipement.",
+                        "Installation sécuritaire des enceintes acoustiques et de leur système de sécurité.",
+                        "Localisation et branchement méthodiques de l’équipement selon les plans.",
+                        "Respect du Code de l’électricité du Québec au moment du branchement.",
+                        "Installation adéquate du système d’intercommunication."
+                    ]
+                },
+                {
+                    "element": "Balancer le son.",
+                    "criteres": [
+                        "Vérification précise de la position et de l’orientation des haut-parleurs en fonction de l’acoustique de l’emplacement.",
+                        "Vérification correcte du fonctionnement du système de sonorisation de salle, de moniteurs et d’écouteurs avec et sans fil.",
+                        "Balancement interactif de l’ensemble des sources sonores.",
+                        "Communication claire et précise avec les personnes."
+                    ]
+                },
+                {
+                    "element": "Assurer le fonctionnement de l’équipement.",
+                    "criteres": [
+                        "Séquencement approprié des prises de son.",
+                        "Adaptation correcte de la feuille de route.",
+                        "Fonctionnement optimal de l’équipement.",
+                        "Résolution appropriée des problèmes techniques."
+                    ]
+                },
+                {
+                    "element": "Démonter le système de sonorisation.",
+                    "criteres": [
+                        "Débranchement sécuritaire de l’équipement.",
+                        "Respect de l’ordre de démontage de l’équipement.",
+                        "Enroulement adéquat des câbles.",
+                        "Rangement ordonné de l’équipement dans les caisses.",
+                        "Désignation minutieuse de l’équipement jugé non performant."
+                    ]
+                },
+                {
+                    "element": "Entretenir l’équipement de sonorisation.",
+                    "criteres": [
+                        "Nettoyage et ajustement appropriés de l’équipement.",
+                        "Utilisation appropriée des outils et des instruments de mesure.",
+                        "Détection juste des problèmes potentiels.",
+                        "Détermination juste des besoins de maintenance."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042M",
+            "Nom de la compétence": "Mettre en fonction un réseau audiovisuel.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Pour un réseau audiovisuel de topologies variées.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, des plans du réseau, des plans du bâtiment, des plans d’aménagement et des devis d’installation, d’outils et d’instruments de mesure, de logiciels, de câblage, de l’équipement de réseau et de systèmes d’alimentation ininterruptible (UPS).",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail et des normes et des standards en vigueur.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En collaboration avec des personnes-ressources au sein de l’entreprise ou à l’extérieur de celle-ci.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Planifier l’installation du réseau.",
+                    "criteres": [
+                        "Interprétation juste des besoins de la cliente ou du client.",
+                        "Détermination précise de l’emplacement de l’équipement et du câblage, des bâtis et tablettes.",
+                        "Interprétation juste des plans d’installation.",
+                        "Interprétation juste de l’organigramme.",
+                        "Interprétation juste des droits d’accès et des priorités."
+                    ]
+                },
+                {
+                    "element": "Installer l’équipement de réseau.",
+                    "criteres": [
+                        "Installation correcte des supports de transmission avec fil de cuivre, sans fil, avec fibre optique.",
+                        "Installation correcte des différentes interfaces de distribution de signaux.",
+                        "Respect des procédures d’installation de l’équipement.",
+                        "Alimentation électrique adéquate du système."
+                    ]
+                },
+                {
+                    "element": "Configurer le serveur.",
+                    "criteres": [
+                        "Installation correcte du système d’exploitation et des logiciels spécialisés.",
+                        "Vérification précise du fonctionnement.",
+                        "Vérification de l’attribution des noms d’usagères et d’usagers et des mots de passe."
+                    ]
+                },
+                {
+                    "element": "Vérifier le fonctionnement du réseau.",
+                    "criteres": [
+                        "Respect des procédures d’exécution des tests de conformité.",
+                        "Vérification correcte du fonctionnement des communications.",
+                        "Résolution appropriée des problèmes concernant l’équipement et les logiciels."
+                    ]
+                },
+                {
+                    "element": "Assurer un suivi.",
+                    "criteres": [
+                        "Consignation claire des résultats.",
+                        "Transmission correcte de l’information."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042N",
+            "Nom de la compétence": "Mettre en fonction des systèmes de contrôle audiovisuels.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, de devis d’installation, d’outils et d’instruments de mesure, de logiciels et d’ordinateurs, de supports de transmission, de générateurs de codes temporels ou de claquettes électroniques, d’équipements audiovisuels et de systèmes de contrôle.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail et des normes et des standards en vigueur.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Installer et configurer des systèmes de contrôle parallèle ou sériel.",
+                    "criteres": [
+                        "Interprétation juste des plans d’interconnexion.",
+                        "Installation correcte du câblage, des baies de raccordement et des répartiteurs.",
+                        "Dessin des plans des branchements conforme aux normes.",
+                        "Installation correcte des logiciels.",
+                        "Configuration appropriée des systèmes de contrôle.",
+                        "Synchronisation correcte des systèmes de machine à machine.",
+                        "Gestion appropriée des protocoles de communication.",
+                        "Vérification juste du fonctionnement des systèmes de contrôle."
+                    ]
+                },
+                {
+                    "element": "Installer et configurer des systèmes de contrôle d’interface et des protocoles multiples.",
+                    "criteres": [
+                        "Interprétation juste des plans d’interconnexion.",
+                        "Installation correcte du câblage, des baies de raccordement et des répartiteurs.",
+                        "Dessin des plans des branchements conforme aux normes.",
+                        "Installation correcte des logiciels.",
+                        "Synchronisation juste du son et de l’image.",
+                        "Configuration juste des systèmes de contrôle.",
+                        "Utilisation correcte de télécommandes universelles.",
+                        "Vérification juste du fonctionnement des systèmes de contrôle."
+                    ]
+                },
+                {
+                    "element": "Installer et configurer des transcodeurs et de convertisseurs.",
+                    "criteres": [
+                        "Interprétation juste des plans d’interconnexion.",
+                        "Dessin normalisé des plans des branchements.",
+                        "Installation correcte des câbles et des logiciels.",
+                        "Configuration ou programmation adéquates des transcodeurs ou des convertisseurs.",
+                        "Adaptation appropriée de détecteurs de mouvements, de chaleur, d’humidité et d’autres éléments.",
+                        "Vérification juste du fonctionnement des systèmes de contrôle."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042P",
+            "Nom de la compétence": "Présenter des documents audiovisuels.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Pour une présentation de petite ou de moyenne envergure.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans des endroits tels qu’un centre de congrès, un hôtel, une salle de réunion, une salle de spectacle, etc.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Selon des horaires variés.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement et en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de directives d’une supérieure ou d’un supérieur ou d’une cliente ou d’un client et de la feuille de route.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, de différents modes de présentation, des devis d’installation, d’équipements de présentation, d’un ordinateur et de logiciels spécialisés et d’outils et d’instruments de mesure.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail et des normes et des standards en vigueur.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Planifier le travail.",
+                    "criteres": [
+                        "Interprétation juste des besoins de la clientèle.",
+                        "Consultation correcte des plans d’aménagement.",
+                        "Détermination juste de l’équipement nécessaire.",
+                        "Dessin précis du plan d’installation des appareils."
+                    ]
+                },
+                {
+                    "element": "Monter une présentation.",
+                    "criteres": [
+                        "Collecte complète des originaux ou copies, génériques, sous-titres et logos, éléments sonores, effets spéciaux.",
+                        "Utilisation appropriée d’un logiciel de présentation, d’un système de contrôle.",
+                        "Respect des méthodes d’enregistrement en fonction du média choisi."
+                    ]
+                },
+                {
+                    "element": "Installer l’équipement.",
+                    "criteres": [
+                        "Modification correcte du choix de l’équipement en fonction de la disponibilité et des tests de performance.",
+                        "Respect du plan d’installation au moment de la mise en place des appareils.",
+                        "Raccordement précis des appareils.",
+                        "Calibrage précis des appareils.",
+                        "Vérification correcte du fonctionnement de l’équipement."
+                    ]
+                },
+                {
+                    "element": "Faire fonctionner les appareils.",
+                    "criteres": [
+                        "Fonctionnement optimal des appareils de présentation.",
+                        "Synchronisation correcte des événements.",
+                        "Jugement critique de la qualité de la présentation.",
+                        "Résolution rapide des problèmes techniques.",
+                        "Communication claire et précise avec la cliente ou le client."
+                    ]
+                },
+                {
+                    "element": "Démonter l’installation temporaire.",
+                    "criteres": [
+                        "Respect de l’ordre de démontage des appareils.",
+                        "Remisage adéquat de l’équipement.",
+                        "Désignation minutieuse des appareils jugés non performants."
+                    ]
+                },
+                {
+                    "element": "Entretenir l’équipement de présentation.",
+                    "criteres": [
+                        "Nettoyage et ajustement appropriés de l’équipement.",
+                        "Utilisation appropriée des outils et des instruments de mesure.",
+                        "Détection juste des problèmes potentiels.",
+                        "Détermination juste des besoins de maintenance."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042Q",
+            "Nom de la compétence": "Effectuer des prises de son.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Au moment d’une production, pour une installation temporaire et une installation permanente.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans des milieux variés et selon des horaires variés.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans des conditions météorologiques diverses.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Individuellement et en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de directives de la direction technique ou de la réalisation et de la feuille de route.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, des plans de raccordement des appareils, d’équipements d’enregistrement, d’outils et d’instruments de mesure et d’un ordinateur et de logiciels spécialisés.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail et des normes et des standards en vigueur.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Planifier la prise de son.",
+                    "criteres": [
+                        "Interprétation juste des besoins de la direction de la production.",
+                        "Consultation correcte des plans d’aménagement.",
+                        "Détermination juste du matériel nécessaire.",
+                        "Dessin précis du plan d’installation des appareils.",
+                        "Manifestation du sens artistique."
+                    ]
+                },
+                {
+                    "element": "Préparer l’équipement et le vérifier.",
+                    "criteres": [
+                        "Vérification correcte du fonctionnement de l’équipement.",
+                        "Modification correcte du choix de l’équipement en fonction de la disponibilité et de la performance."
+                    ]
+                },
+                {
+                    "element": "Installer l’équipement de prise de son.",
+                    "criteres": [
+                        "Respect du plan d’installation au moment de la mise en place des appareils de prise de son.",
+                        "Raccord précis des appareils.",
+                        "Orientation précise des perches de microphones.",
+                        "Exécution correcte des tests sommaires."
+                    ]
+                },
+                {
+                    "element": "Capter les sources sonores.",
+                    "criteres": [
+                        "Fonctionnement adéquat de la console de mixage.",
+                        "Enregistrement correct d’un signal de référence.",
+                        "Synchronisation précise du code temporel.",
+                        "Traitement approprié des signaux audio.",
+                        "Enregistrement correct des différentes sources sonores sur les supports analogiques ou numériques.",
+                        "Distribution adéquate des signaux audio pour les moniteurs ou la diffusion.",
+                        "Jugement critique de la qualité des signaux sonores.",
+                        "Communication claire et précise avec le personnel de la direction, le personnel technique, les artistes, les conférencières et conférenciers, etc.",
+                        "Résolution rapide des problèmes techniques."
+                    ]
+                },
+                {
+                    "element": "Évaluer la qualité des enregistrements avec la clientèle.",
+                    "criteres": [
+                        "Présentation correcte des résultats des enregistrements.",
+                        "Pertinence du jugement au regard de la qualité des enregistrements.",
+                        "Reproduction minutieuse des originaux sur les différents supports.",
+                        "Communication claire et précise avec les personnes."
+                    ]
+                },
+                {
+                    "element": "Démonter le système de prise de son.",
+                    "criteres": [
+                        "Respect de l’ordre de démontage de l’installation.",
+                        "Remisage adéquat de l’équipement.",
+                        "Désignation minutieuse des appareils jugés non performants."
+                    ]
+                },
+                {
+                    "element": "Archiver les enregistrements.",
+                    "criteres": [
+                        "Identification exacte des supports d’enregistrement.",
+                        "Catalogage correct des prises de son.",
+                        "Entreposage sécuritaire des originaux."
+                    ]
+                },
+                {
+                    "element": "Entretenir l’équipement de prise de son.",
+                    "criteres": [
+                        "Nettoyage et ajustement appropriés de l’équipement.",
+                        "Utilisation appropriée des outils et des instruments de mesure.",
+                        "Détection juste des problèmes potentiels.",
+                        "Détermination juste des besoins de maintenance."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042R",
+            "Nom de la compétence": "Produire des enregistrements vidéos.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "En situation de production, pour une installation temporaire et une installation permanente.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Pour des milieux variés, notamment des expositions, des spectacles, des événements spéciaux, et pour le milieu de l’enseignement.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Selon des horaires variés.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans des conditions climatiques diverses.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Travail individuel et travail en équipe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de directives de la direction technique ou de la réalisation.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir d’un scénario, d’un scénarimage et d’un découpage technique.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée, en français et en anglais.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide d’un plan d’installation et de câblage, d’équipements de prise de vues, de chartes et de mires ainsi que d’outils et d’instruments de mesure.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail ainsi que des normes et des standards en vigueur.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Planifier la prise de vues.",
+                    "criteres": [
+                        "Interprétation juste des besoins de la direction de production.",
+                        "Consultation correcte des plans d’aménagement.",
+                        "Détermination juste de l’équipement nécessaire.",
+                        "Manifestation du sens artistique."
+                    ]
+                },
+                {
+                    "element": "Préparer l’équipement et le vérifier.",
+                    "criteres": [
+                        "Nettoyage correct des lentilles et des moniteurs, des têtes du magnétoscope.",
+                        "Vérification minutieuse de l’équipement : la pression d’air de la colonne, la tension de la tête, la charge des piles, etc.",
+                        "Modification correcte du choix de l’équipement en fonction de sa disponibilité et des tests de performance."
+                    ]
+                },
+                {
+                    "element": "Installer l’équipement de prise de vues.",
+                    "criteres": [
+                        "Installation appropriée des câbles et des trépieds.",
+                        "Positionnement stable de la caméra sur le trépied.",
+                        "Ajustement ergonomique et balancement précis de la caméra.",
+                        "Équilibrage normalisé du blanc.",
+                        "Réglages normalisés en fonction du type de caméra : foyer arrière optique, hauteur et niveau (extérieur et potence (jib)), code temporel, niveaux sonores.",
+                        "Installation adéquate du système d’intercommunication."
+                    ]
+                },
+                {
+                    "element": "Régler l’unité de contrôle de la caméra.",
+                    "criteres": [
+                        "Choix judicieux du filtre optique.",
+                        "Réglages normalisés de la longueur de câbles, de la synchronisation horizontale, de la phase couleur, des niveaux de noirs, de l’équilibrage des blancs.",
+                        "Utilisation pertinente du répartiteur électronique audiovisuel."
+                    ]
+                },
+                {
+                    "element": "Capter les sources visuelles.",
+                    "criteres": [
+                        "Insertion correcte des barres couleur sur la cassette.",
+                        "Exécution précise des cadrages et des mouvements de caméra, selon les principes de la composition de l’image et les directives.",
+                        "Réglages précis de l’iris et de la distance focale en fonction de la composition de l’image demandée.",
+                        "Enregistrement correct des images.",
+                        "Résolution rapide de problèmes techniques."
+                    ]
+                },
+                {
+                    "element": "Évaluer la qualité des enregistrements avec la clientèle.",
+                    "criteres": [
+                        "Présentation correcte des résultats des enregistrements.",
+                        "Pertinence du jugement au regard de la qualité des enregistrements.",
+                        "Vérification minutieuse des copies.",
+                        "Communication claire et précise avec les personnes."
+                    ]
+                },
+                {
+                    "element": "Démonter les caméras et leurs accessoires.",
+                    "criteres": [
+                        "Débranchement sécuritaire des caméras.",
+                        "Respect de l’ordre de démontage des caméras.",
+                        "Enroulement adéquat des câbles.",
+                        "Rangement ordonné des caméras dans les caisses.",
+                        "Identification minutieuse des appareils jugés non performants."
+                    ]
+                },
+                {
+                    "element": "Archiver les enregistrements.",
+                    "criteres": [
+                        "Identification claire des supports d’enregistrement.",
+                        "Catalogage correct des prises de vues.",
+                        "Entreposage systématique des supports analogiques ou numériques."
+                    ]
+                },
+                {
+                    "element": "Entretenir l’équipement de prise de vues.",
+                    "criteres": [
+                        "Nettoyage et ajustement appropriés de l’équipement.",
+                        "Utilisation appropriée des outils et des instruments de mesure.",
+                        "Détection juste des problèmes potentiels.",
+                        "Détermination juste des besoins de maintenance."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042S",
+            "Nom de la compétence": "Effectuer le montage de documents audio ou vidéo.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Dans divers milieux et selon des horaires variés.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de directives de la direction technique ou de la réalisation.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir d’un scénario, d’un découpage technique, d’une feuille de route ou d’un scénarimage.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir des règles ou des répliques d’angles de prises de vues et de raccords de plans.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée, en français et en anglais.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide des plans de raccordement des appareils, d’équipement de montage et de mixage analogique et numérique, de banques de fichiers sonores et visuels, des outils et des instruments de mesure, d’un ordinateur et de logiciels spécialisés.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail ainsi que des normes et des standards en vigueur dont les normes nord-américaines et internationales d’ajustement des signaux électroniques.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Planifier le montage.",
+                    "criteres": [
+                        "Interprétation juste du découpage technique et de la feuille de route.",
+                        "Détermination juste des ressources audio et vidéo nécessaires au montage.",
+                        "Détermination juste des médias tels une bande, un fichier sur un serveur ou une lecture vidéo en transit (video streaming).",
+                        "Vérification adéquate de l’accès au réseau.",
+                        "Prise en compte des caractéristiques et des limites de faisabilité."
+                    ]
+                },
+                {
+                    "element": "Préparer l’équipement et le vérifier.",
+                    "criteres": [
+                        "Interprétation juste des plans d’installation de l’équipement.",
+                        "Respect de la méthode de mise en marche de l’équipement de mixage et de montage.",
+                        "Préparation correcte de l’équipement de montage : nettoyage approprié des têtes, respect de la méthode d’ajustement des magnétoscopes, préparation correcte des cassettes d’enregistrement, configuration précise du code temporel.",
+                        "Vérification correcte du fonctionnement des appareils ou du système."
+                    ]
+                },
+                {
+                    "element": "Produire la copie maîtresse du montage sonore.",
+                    "criteres": [
+                        "Transfert approprié des sources originales sur des supports analogiques ou numériques.",
+                        "Ajustement correct de la bande passante audio.",
+                        "Transformation correcte des sons en tenant compte des effets recherchés.",
+                        "Attribution des différentes sources sur les pistes de console.",
+                        "Équilibre adéquat des différentes pistes.",
+                        "Synchronisation précise des différentes pistes.",
+                        "Effets dramatiques ou comiques conformes à la conception artistique.",
+                        "Respect des directives inscrites sur la feuille de route.",
+                        "Vérification minutieuse de la qualité du travail."
+                    ]
+                },
+                {
+                    "element": "Produire le document original en basse résolution.",
+                    "criteres": [
+                        "Choix judicieux des séquences retenues.",
+                        "Intégration minutieuse de documents divers concernant les titrages, les superpositions d’images, les effets spéciaux, les ouvertures 2D ou 3D, les génériques.",
+                        "Insertion appropriée des sources sonores.",
+                        "Respect de la liste de montage (edit decision list).",
+                        "Utilisation adéquate du serveur de fichiers.",
+                        "Synchronisation exacte des différentes sources entre elles.",
+                        "Conversion adéquate de film à vidéo analogique ou numérique ou encore de virtuel à film.",
+                        "Numérisation correcte des sources audio et vidéo, avec ou sans compression."
+                    ]
+                },
+                {
+                    "element": "Produire le document original en haute résolution linéaire ou non-linéaire.",
+                    "criteres": [
+                        "Ajustement précis des différents signaux.",
+                        "Synchronisation précise des éléments de sortie.",
+                        "Vérification adéquate de la qualité du travail."
+                    ]
+                },
+                {
+                    "element": "Évaluer la qualité du montage avec la cliente ou le client.",
+                    "criteres": [
+                        "Pertinence du jugement au regard de la qualité du montage.",
+                        "Communication claire et précise avec la cliente ou le client au moment de la présentation du produit."
+                    ]
+                },
+                {
+                    "element": "Faire des copies des originaux.",
+                    "criteres": [
+                        "Transcodage précis des originaux.",
+                        "Vérification minutieuse des copies de sécurité.",
+                        "Identification adéquate des supports analogiques ou numériques contenant les enregistrements.",
+                        "Entreposage sécuritaire des originaux.",
+                        "Observation judicieuse des règles relatives aux droits d’auteur."
+                    ]
+                },
+                {
+                    "element": "Remplir les fiches d’évaluation technique.",
+                    "criteres": [
+                        "Consignation appropriée des résultats obtenus."
+                    ]
+                },
+                {
+                    "element": "Entretenir l’équipement de montage.",
+                    "criteres": [
+                        "Nettoyage et ajustement appropriés de l’équipement.",
+                        "Utilisation appropriée des outils et des instruments de mesure.",
+                        "Détection juste des problèmes potentiels.",
+                        "Détermination juste des besoins de maintenance."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042T",
+            "Nom de la compétence": "Effectuer des activités liées à la diffusion de documents audiovisuels.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Dans les différentes régies de production audiovisuelle : régie centrale, régie de mise en ondes, unité mobile, etc.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Pour une diffusion en direct ou différée, sur divers types de médias : radio, télévision, Internet, intranet, vidéo conférence, etc.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de directives de la direction de la production ou de la réalisation.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, d’équipements de régie, d’outils et d’instruments de mesure et d’un ordinateur et de logiciels spécialisés.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail, des normes et des standards en vigueur et des échéances.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Aiguiller des sources audiovisuelles.",
+                    "criteres": [
+                        "Établissement précis du plan de branchement.",
+                        "Vérification juste des entrées de l’aiguilleur.",
+                        "Réalisation adéquate des coupures, des mélanges, des effets spéciaux, etc.",
+                        "Respect de la synchronisation temporelle avec le réseau.",
+                        "Vérification continue de la qualité des signaux électroniques.",
+                        "Clarté de la communication avec les membres de l’équipe de réalisation.",
+                        "Transmission rapide de l’information relative aux problèmes."
+                    ]
+                },
+                {
+                    "element": "Gérer la mise en ondes.",
+                    "criteres": [
+                        "Regroupement complet des originaux et copies, génériques, sous-titres et logos, éléments sonores, effets spéciaux, messages publicitaires.",
+                        "Organisation correcte des raccords en fonction des besoins.",
+                        "Vérification correcte de la qualité des signaux en fonction des caractéristiques des moyens de communication.",
+                        "Réservation judicieuse du temps d’antenne, de la bande passante ou des services de fournisseurs.",
+                        "Transmission rapide de l’information relative aux problèmes."
+                    ]
+                },
+                {
+                    "element": "Assurer la diffusion des documents audiovisuels.",
+                    "criteres": [
+                        "Coordination adéquate des services avec les fournisseurs.",
+                        "Vérifications techniques précises des intrants et des extrants, de la télésurveillance des émetteurs, des événements sur le réseau informatique, de la liste des événements.",
+                        "Respect de la feuille de route.",
+                        "Résolution rapide des problèmes techniques.",
+                        "Archivage adéquat des documents diffusés : enregistrement continu, identification rigoureuse, entreposage sécuritaire.",
+                        "Transmission rapide de l’information relative aux problèmes."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042U",
+            "Nom de la compétence": "Assurer la maintenance de l’équipement audiovisuel.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Dans un atelier de réparation et chez les clientes et les clients.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Selon des horaires variés.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir des directives d’une supérieure ou d’un supérieur, d’un calendrier d’entretien préventif et d’une feuille de route ou d’un bon de travail.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, de bases de données sur les pièces et le matériel de remplacement, d’outils, d’instruments de mesure et d’étalons de calibration et d’un ordinateur portable.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail et des normes et des standards en vigueur.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Interpréter la demande.",
+                    "criteres": [
+                        "Communication claire et précise avec la cliente ou le client ou les fournisseurs : pertinence des questions, écoute attentive des explications.",
+                        "Interprétation juste des besoins ou du problème.",
+                        "Respect des personnes."
+                    ]
+                },
+                {
+                    "element": "Réparer l’équipement.",
+                    "criteres": [
+                        "Observation adéquate des symptômes du problème.",
+                        "Détermination précise de la ou des causes du problème.",
+                        "Utilisation appropriée des outils, des appareils et des instruments de mesure.",
+                        "Analyse approfondie de la nature du problème.",
+                        "Détermination juste de la séquence des travaux.",
+                        "Évaluation juste de la durée et des coûts des travaux ainsi que du matériel de remplacement nécessaire à la réparation.",
+                        "Demande d’approbation conforme en vue de l’intervention.",
+                        "Résolution appropriée du problème.",
+                        "Vérification adéquate du fonctionnement de l’équipement.",
+                        "Application correcte des modèles mathématiques."
+                    ]
+                },
+                {
+                    "element": "Assurer l’entretien préventif.",
+                    "criteres": [
+                        "Consultation régulière du calendrier d’entretien préventif.",
+                        "Respect de la procédure d’entretien.",
+                        "Nettoyage minutieux des appareils.",
+                        "Ajustements adéquats des appareils.",
+                        "Réalisation adéquate de tests de performance.",
+                        "Détection juste des problèmes potentiels."
+                    ]
+                },
+                {
+                    "element": "Produire un rapport.",
+                    "criteres": [
+                        "Consignation minutieuse des interventions effectuées ou des problèmes relevés.",
+                        "Exactitude des renseignements inscrits sur le bon de travail ou les demandes de service, la feuille de route, la facture.",
+                        "Communication claire et précise avec ses supérieures et supérieurs, ses collègues et les clientes et clients.",
+                        "Information précise au sujet des interventions effectuées, de l’utilisation optimale des appareils, des suggestions de modification."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042V",
+            "Nom de la compétence": "Modifier des systèmes audiovisuels.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Dans un atelier de réparation et chez les clientes et les clients.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Selon des horaires variés.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir des directives d’une supérieure ou d’un supérieur et d’un bon de travail.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, de logiciels de conception et de logiciels de simulation, de bases de données sur les pièces et l’équipement, d’outils, d’instruments de mesure et d’étalons de calibration et d’un ordinateur.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail, des normes et des standards en vigueur et des limites professionnelles établies notamment par les lois et les règlements.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Interpréter les besoins de la cliente ou du client.",
+                    "criteres": [
+                        "Interprétation juste des besoins de la cliente ou du client.",
+                        "Communication précise avec les utilisatrices ou les utilisateurs."
+                    ]
+                },
+                {
+                    "element": "Planifier le travail.",
+                    "criteres": [
+                        "Interprétation juste des plans et des manuels techniques.",
+                        "Recherche efficace d’information sur la nature de la modification."
+                    ]
+                },
+                {
+                    "element": "Concevoir des interfaces.",
+                    "criteres": [
+                        "Analyse rigoureuse de la situation.",
+                        "Prise en compte des caractéristiques des intrants et des extrants rattachés aux appareils, de la ou des fonctions souhaitées.",
+                        "Schéma clair et précis de l’interface.",
+                        "Détermination appropriée des composants."
+                    ]
+                },
+                {
+                    "element": "Fabriquer des interfaces.",
+                    "criteres": [
+                        "Utilisation adéquate des outils et des instruments de mesure.",
+                        "Fabrication correcte du prototype : soudage correct des composants, assemblage solide du prototype.",
+                        "Réorganisation appropriée des interconnexions.",
+                        "Reconfiguration adéquate des paramètres de fonctionnement.",
+                        "Vérification correcte du fonctionnement de l’interface."
+                    ]
+                },
+                {
+                    "element": "Mettre les systèmes en service.",
+                    "criteres": [
+                        "Respect de la procédure de mise en service des systèmes.",
+                        "Vérification adéquate du fonctionnement des systèmes."
+                    ]
+                },
+                {
+                    "element": "Mettre à jour la documentation technique et les plans.",
+                    "criteres": [
+                        "Exactitude des renseignements techniques.",
+                        "Reproduction schématique exacte.",
+                        "Adaptation précise des plans et de la documentation technique.",
+                        "Utilisation de la terminologie appropriée."
+                    ]
+                },
+                {
+                    "element": "Assurer le suivi.",
+                    "criteres": [
+                        "Compte rendu clair des modifications relativement aux résultats des tests, aux plans et aux schémas, à la documentation technique."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042W",
+            "Nom de la compétence": "Fournir un soutien technique à la production.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Au moment d’une préproduction, d’une production et d’une postproduction.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En présence ou non d’un client ou d’une cliente.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, des équipements audiovisuels et d’outils et d’instruments de mesure.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En manifestant le sens de l’éthique.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail et des normes et des standards en vigueur.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Émettre un avis sur les aspects techniques d’un projet à caractère audiovisuel.",
+                    "criteres": [
+                        "Interprétation juste d’un scénario ou d’un devis de projet.",
+                        "Étude détaillée des caractéristiques de l’équipement et des logiciels.",
+                        "Formulation claire de son opinion relativement au réalisme du projet et aux problèmes potentiels liés à l’utilisation de l’équipement et des logiciels."
+                    ]
+                },
+                {
+                    "element": "Conseiller les personnes sur le choix de l’équipement et des logiciels.",
+                    "criteres": [
+                        "Explication claire des possibilités en fonction des besoins."
+                    ]
+                },
+                {
+                    "element": "Fournir de l’information sur le fonctionnement des appareils audiovisuels.",
+                    "criteres": [
+                        "Écoute attentive des besoins.",
+                        "Préparation soignée de la documentation et des appareils.",
+                        "Explications claires et précises.",
+                        "Exécution structurée des démonstrations.",
+                        "Préoccupation réelle concernant la compréhension de la personne."
+                    ]
+                },
+                {
+                    "element": "Assister les personnes dans le réglage et l’utilisation des appareils et des systèmes.",
+                    "criteres": [
+                        "Application correcte de l’approche client.",
+                        "Explications claires et précises."
+                    ]
+                },
+                {
+                    "element": "Résoudre des problèmes techniques en cours de production.",
+                    "criteres": [
+                        "Diagnostic juste des problèmes.",
+                        "Application correcte de solutions optimales."
+                    ]
+                },
+                {
+                    "element": "Rédiger des cahiers de procédures.",
+                    "criteres": [
+                        "Interprétation juste des objectifs visés par les procédures : d’utilisation de l’équipement, d’optimisation du fonctionnement de l’équipement, de remplacement d’un équipement.",
+                        "Détermination correcte des étapes de la procédure en fonction de la cliente ou du client.",
+                        "Utilisation de la terminologie appropriée.",
+                        "Respect des règles d’orthographe, de grammaire et de ponctuation.",
+                        "Respect des règles de rédaction technique.",
+                        "Pertinence et cohérence des idées.",
+                        "Présentation soignée."
+                    ]
+                },
+                {
+                    "element": "Assurer le suivi auprès de la clientèle.",
+                    "criteres": [
+                        "Communication adéquate avec les personnes en français et en anglais."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "042X",
+            "Nom de la compétence": "Assurer la direction technique d’un projet audiovisuel.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "Pour une production de petite ou de moyenne envergure.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Au moment d’une préproduction, d’une production et d’une postproduction.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de scénarios et de scénarimages.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de la documentation technique appropriée en français, en anglais, de l’équipement de communication et de plans.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En manifestant le sens de l’éthique et de l’esthétisme.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Dans le respect des règles de santé et de sécurité au travail, des normes et des standards en vigueur et des limites professionnelles établies notamment par les lois et les règlements.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Rencontrer la clientèle.",
+                    "criteres": [
+                        "Interprétation juste des besoins de la cliente ou du client.",
+                        "Collecte complète des renseignements de nature technique, artistique et budgétaire."
+                    ]
+                },
+                {
+                    "element": "Planifier les opérations.",
+                    "criteres": [
+                        "Établissement clair d’un échéancier.",
+                        "Répartition correcte des enveloppes budgétaires.",
+                        "Transmission claire de la planification à la clientèle.",
+                        "Choix judicieux des chefs d’équipe.",
+                        "Logistique efficace."
+                    ]
+                },
+                {
+                    "element": "Tenir des rencontres techniques.",
+                    "criteres": [
+                        "Présentation détaillée du projet.",
+                        "Repérage technique approprié.",
+                        "Choix judicieux du personnel technique."
+                    ]
+                },
+                {
+                    "element": "Établir la disposition des équipements sur l’ensemble du site.",
+                    "criteres": [
+                        "Établissement précis des plans et devis."
+                    ]
+                },
+                {
+                    "element": "S’assurer que l’équipement est disponible.",
+                    "criteres": [
+                        "Choix judicieux des équipements audiovisuels et de sécurité.",
+                        "Communication régulière avec les fournisseurs."
+                    ]
+                },
+                {
+                    "element": "Superviser la production.",
+                    "criteres": [
+                        "Contrôle rigoureux de la qualité de la production.",
+                        "Coordination efficace entre le personnel technique et les autres personnes.",
+                        "Direction correcte du personnel.",
+                        "Gestion efficace des conflits.",
+                        "Respect de l’échéancier et du budget.",
+                        "Calme et diplomatie."
+                    ]
+                },
+                {
+                    "element": "Faire le suivi.",
+                    "criteres": [
+                        "Vérification systématique du retour de l’équipement.",
+                        "Vérification correcte du paiement des factures.",
+                        "Exactitude du bilan financier.",
+                        "Animation structurée de la rencontre d’évaluation technique."
+                    ]
+                }
+            ]
+        }
+    ]
+}

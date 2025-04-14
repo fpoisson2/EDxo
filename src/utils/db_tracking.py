@@ -61,7 +61,7 @@ def track_changes(mapper, connection, target, operation):
         connection.execute(
             DBChange.__table__.insert(),
             {
-                'timestamp': datetime.utcnow(),
+                'timestamp': datetime.utcnow().isoformat(),
                 'user_id': current_user.id if current_user and current_user.is_authenticated else None,
                 'operation': operation,
                 'table_name': target.__tablename__,

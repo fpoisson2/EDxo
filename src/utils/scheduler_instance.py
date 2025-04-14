@@ -7,6 +7,8 @@ from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 
 from utils.backup_utils import send_backup_email, get_scheduler_instance, send_backup_email_with_context
 
+from app.models import BackupConfig
+
 scheduler_lock = threading.Lock()
 scheduler = get_scheduler_instance()
 
@@ -40,7 +42,6 @@ def schedule_backup(app):
     logger.info(f"Current jobs: {scheduler.get_jobs()}")
     logger.info(f"Scheduler running: {scheduler.running}")
 
-    from app.models import BackupConfig
 
     if not is_main_process():
         return

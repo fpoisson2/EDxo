@@ -246,6 +246,14 @@ class ElementCompetence(db.Model):
     def __repr__(self):
         return f"<ElementCompetence {self.nom}>"
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "nom": self.nom,
+            "competence_code": self.competence.code if self.competence else ""
+        }
+
+
 class ElementCompetenceCriteria(db.Model):
     __tablename__ = "ElementCompetenceCriteria"
     id = db.Column(db.Integer, primary_key=True)

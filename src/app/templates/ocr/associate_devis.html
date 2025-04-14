@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Associer devis à un programme{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Associer les compétences du devis importé à un programme</h2>
+    <p>Le traitement pour le devis identifié par <strong>{{ devis_title }}</strong> est terminé.</p>
+    <p>Veuillez sélectionner le programme existant dans la base de données auquel vous souhaitez associer ces résultats avant de procéder à la révision et à l'importation des compétences.</p>
+
+    {% if form %}
+    <form action="{{ url_for('programme.review_competencies_import') }}" method="POST">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            {{ form.programme_id.label(class="form-label") }}
+            {{ form.programme_id(class="form-select") }}
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-arrow-right-square"></i> {{ form.submit.label.text }}
+        </button>
+        <a href="{{ url_for('ocr.show_trigger_page') }}" class="btn btn-secondary ms-2">Annuler</a>
+    </form>
+    {% else %}
+    <div class="alert alert-warning">
+        Aucun programme n'a été trouvé dans la base de données pour l'association. Veuillez d'abord créer des programmes.
+    </div>
+    <a href="{{ url_for('ocr.show_trigger_page') }}" class="btn btn-secondary ms-2">Retour</a>
+    {% endif %}
+</div>
+{% endblock %}

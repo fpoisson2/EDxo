@@ -68,6 +68,7 @@ Les dépendances sont déjà listées dans le fichier requirements.txt présent 
 
 ```
 pip install -r requirements.txt
+pip install --upgrade -r requirements.txt
 ```
 ## 4. Configuration
 ### 4.1 Variables d'environnement
@@ -79,7 +80,7 @@ SECRET_KEY='votre_cle_secrete'
 RECAPTCHA_PUBLIC_KEY='votre_cle_public recaptcha'
 RECAPTCHA_PRIVATE_KEY='votre_cle_secrete recaptcha'
 RECAPTCHA_THRESHOLD=0.5
-
+MISTRAL_API_KEY='votre_cle_mistral'
 ```
 
 Vous pouvez définir d'autres variables spécifiques à votre environnement

@@ -1,0 +1,1017 @@
+
+--- PAGE 1 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 18 Ministère de l’Enseignement supérieur  Formation spécifique  
+Code :  02GN 
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Explorer la profession.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• Dans une optique d’orientation et de formation tout au 
+long de la carrière, dans les domaines de la 
+réseautique et des télécommunications.  
+• Individuellement ou en collaboration avec des 
+technologues et des ingénieurs.  
+• À l’aide :  
+o de plateformes de publication (médias);  
+o de la documentation sur le développement durable;  
+o des technologies de l’information et de la 
+communication (TIC) . 
+• À partir :  
+o de la réglementation encadrant la profession;  
+o d’informations sur le milieu du travail . 
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Pertinence de l’information recueillie.  
+• Détermination adéquate de l’information.  
+• Utilisation responsable de l’environnement numérique.  
+ 
+  Éléments de la compétence  Critères de performance 
+1.  Différencier les milieux de travail.  • Distinction juste des grands secteurs d’activité 
+technologique.  
+• Identification appropriée de types d’entreprises.  
+2.  Caractéris er la profession et ses 
+perspectives . • Interprétation correcte des lois et règlements en 
+vigueur.  
+• Examen adéquat des perspectives d’emploi.  
+• Reconnaissance des principales tendances du 
+domaine.  
+• Définition juste de la place du développement durable 
+dans la prof ession.  
+• Identification juste des responsabilités au regard de la 
+profession.
+
+--- PAGE 2 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 19 Ministère de l’Enseignement supérieur    Éléments de la compétence  Critères de performance 
+3.  Examiner les tâches et les opérations de la 
+profession.  • Prise en compte de l’importance de la gestion du temps 
+et du stress.  
+• Identification juste de ses caractéristiques personnelles 
+qui représentent des atouts dans le domaine.  
+4.  Examiner les habiletés et les 
+comportements attendus dans la 
+profession.  • Reconnaissance des aspects relatifs à la recherche de 
+consensus concernant les décisions de l’équipe.  
+• Identification juste des attitudes et des comportements 
+facilitant le travail d’équipe.  
+• Examen attentif des moyens assurant le 
+développement de ses propres compétences, tout au 
+long de sa carrière.  
+• Confirmation de son choix de formation .
+
+--- PAGE 3 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 20 Ministère de l’Enseignement supérieur  Code :  02GP  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Prévenir les atteintes à la santé, à la sécurité et 
+à l’environnement.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• Individuellement ou en équipe.  
+• À l’aide :  
+o d’équipements de protection individuelle et 
+collective;  
+o du SIMDUT;  
+o d’affiches informatives;  
+o de mesures de mitigation.  
+• À partir :  
+o des lignes directrices sur l’exposition aux 
+radiofréquences;  
+o de la réglementation sur  la protection de 
+l’environnement.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect des lois et des règlements en matière de 
+santé et de sécurité du travail.  
+ 
+  Éléments de la compétence  Critères de performance 
+1.  Repérer les risques.  • Identification juste des risques présents.  
+2.  Examiner l’information relative à la santé et 
+sécurité du travail.  • Interprétation juste des lois et recommandations en 
+vigueur.  
+• Interprétation juste des recommandations en matière 
+de santé et de sécurité du travail.  
+• Interprétation juste des règles internes de l’entreprise 
+ou de la clientèle.  
+3.  Adopter des mesures de précaution.  • Vérification systématique des équipements de 
+protection individuelle.  
+• Utilisation conforme de l’équipement de protection 
+individuelle.  
+• Adoption de postures de travail ergonomiques.  
+• Signalement systématique de situations 
+potentiellement dangereuses pour la personne ou pour 
+l’environnement.
+
+--- PAGE 4 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 21 Ministère de l’Enseignement supérieur  Code :  02GQ  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Résoudre des problèmes en électronique.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• À l’aide :  
+o de formules liées à l’électronique, à des circuits, 
+etc.; 
+o de concepts scientifiques;  
+o d’instruments de mesure;  
+o d’ondes électromagnétiques;  
+o de document ations techniques.  
+• À partir :  
+o de problèmes simples;  
+o de logiciels spécialisés;  
+o de circuits électriques;  
+o de supports de transmission :  
+ électriques;  
+ optiques.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Rigueur de la démarche.  
+• Respect des unités du Système International.  
+ 
+  Éléments de la compétence  Critères de performance 
+1.  Caractériser  les concepts scientifiques mis 
+en jeu dans la résolution d’un problème.  • Nomination juste du concept.  
+• Reconnaissance juste des contextes  liés au problème.  
+• Description adéquate du concept.  
+2.  Appliquer les lois et les équations à la 
+résolution d’un problème.  • Identification juste des paramètres applicables en lien 
+avec le problème.  
+• Formulation cohérente des équations relatives au 
+problème.  
+• Mise en pratique appropriée des équations dans le 
+cadre du problème.  
+3.  Produire les résultats qualitatifs et/ou 
+quantitatifs.  • Résolution adéquate des équations.  
+• Expression numérique précise des résultats en lien 
+avec le problème.  
+• Représentation claire des résultats (graphiquement ou 
+numériquement).  
+4.  Interpréter les résultats.  • Qualification et/o u quantification juste des résultats.  
+• Explication claire des résultats en lien avec le 
+problème.
+
+--- PAGE 5 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 22 Ministère de l’Enseignement supérieur  Code :  02GR 
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Interagir en contexte professionnel.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• En participant à des rencontres.  
+• En présence ou à distance.  
+• À l’aide des technologies utilisées dans les milieux de 
+travail.  
+• À partir d’outils de communication (écrite, audio ou 
+vidéo).  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect de l’interlocuteur.  
+• Respect des règles de politesse.  
+• Respect de la culture d’entreprise.  
+ 
+  Éléments de la compétence  Critères de performance 
+1.  Communiquer avec des personnes.  • Interprétation juste des messages reçus.  
+• Formulation claire d’un message.  
+• Vérification appropriée de la compréhension de ses 
+interlocuteurs.  
+2.  Évaluer la qualité des interactions.  • Appréciation réaliste de la qualité de ses interactions.  
+• Mise en place de moyens d’amélioration.  
+3.  Travailler au sein d’une équipe 
+multidisciplinaire.  • Manifestation adéquate de :  
+o marques de respect;  
+o d’ouverture d’esprit;  
+o de collaboration.  
+• Respect des règles de fonctionnement en équipe.  
+• Respect du rôle, des responsabilités et de l’expertise 
+de chacun.  
+• Collaboration efficace pour la résolution de problèmes.
+
+--- PAGE 6 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 23 Ministère de l’Enseignement supérieur  Code :  02GS  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Analyser des circuits.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• Individuellement ou en équipe.  
+• À l’aide :  
+o de documentation technique;  
+o de logiciels (modélisation, simulation, calculs);  
+o de références.  
+• À partir :  
+o de diagrammes schématiques;  
+o de diagrammes de montage;  
+o de résultats de calculs.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Aucun . 
+ 
+  Éléments de la compétence  Critères de performance 
+1.  Identifier les pièces constitutives du circuit 
+et leur fonction.  • Identification exhaustive des pièces constitutives du 
+circuit.  
+• Consultation suffisante de la documentation technique 
+ou des références relatives à chaque pièce.  
+• Détermination précise de la fonction de chaque pièce 
+considérant sa position dans le circuit.  
+2.  Décomposer le circuit.  • Délimitation claire de chaque partie du circuit 
+considérant leur fonction propre.  
+• Identification exhaustive de chaque entrée-sortie pour 
+chaque partie du circuit.  
+• Désignation précise de la fonction de chaque partie du 
+circuit.  
+3.  Déduire l’état de fonctionnement du circuit.  • Énonciation juste d’hypothèses de fonctionnement.  
+• Mise à l’épreuve appropriée de l’hypothèse.  
+• Vérification adéquate du résultat.  
+• Expression pertinente de l’état de fonctionnement.  
+4.  Documenter l’analyse.  • Communication concise de l’avancement de l’analyse.  
+• Documentation pertinente des résultats de l’analyse.
+
+--- PAGE 7 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 24 Ministère de l’Enseignement supérieur  Code :  02GT  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Analyser des informations techniques.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• Individuellement ou en équipe.  
+• À l’aide :  
+o de documents techniques :  
+ de fiches techniques;  
+ de plans de réseaux;  
+ etc.; 
+o de programmes;  
+o d’organigrammes;  
+o de forums d’experts.  
+• À partir :  
+o de normes nationales et internationales et de 
+standards;  
+o de gabarits de document et autres;  
+o de documents techniques.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Aucun . 
+ 
+  Éléments de la compétence  Critères de performance 
+1.  Rassembler de l’information technique.  • Identification adéquate du besoin.  
+• Utilisation efficace de stratégies de recherche.  
+• Validation juste des sources.  
+• Sélection appropriée des informations.  
+2.  Interpréter de l’information technique.  • Synthèse appropriée de l’information.  
+• Vérification complète des résultats de recherche.
+
+--- PAGE 8 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 25 Ministère de l’Enseignement supérieur  Code :  02GU 
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Réaliser des travaux d’atelier.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• Individuellement ou en équipe.  
+• À l’aide :  
+o d’outils :  
+ de brasure;  
+ de sertissage;  
+ manuels et électriques;  
+ optiques grossissants;  
+ etc.; 
+o d’équipements  de protection individuelle;  
+o d’instructions techniques;  
+o d’instructions d’assemblage ou de désassemblage.  
+• À partir :  
+o d’un système;  
+o d’un appareil;  
+o de connecteurs, câbles, cabinets de branchement, 
+de boîtier, d’une tour d’antenne, etc.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect des lois et des règlements en matière de 
+santé et de sécurité du travail.  
+• Respect des principes relatifs au développement 
+durable.  
+ 
+  Éléments de la compétence  Critères de performance 
+1.  Préparer  le travail.  • Sélection appropriée des outils.  
+• Préparation appropriée de l’espace de travail.  
+• Vérification rigoureuse de l’équipement de protection 
+individuelle.  
+2.  Exécuter un travail d’atelier.  • Réalisation méthodique des travaux.  
+• Manipulation minutieuse des pièces coûteuses.  
+• Remplacement soigné de composants électroniques.  
+• Maintien fonctionnel de l’espace de travail.  
+• Maintien d’une protection électrostatique adéquate.  
+3.  Vérifier le travail.  • Vérification de la conformité du travail.  
+• Remise en o rdre systématique des lieux.
+
+--- PAGE 9 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 26 Ministère de l’Enseignement supérieur  Code :  02GV  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Réaliser des prises de mesures.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• Individuellement ou en équipe.  
+• À l’aide :  
+o d’instruments de mesure;  
+o d’outils spécialisés;  
+o de documentation technique.  
+• À partir :  
+o d’équipements, de systèmes ou de sous systèmes;  
+o d’une  procédure.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect des normes :  
+o de qualité en vigueur;  
+o d’interférence électromagnétique;  
+o de protection contre les phénomènes 
+électrostatiques.  
+• Respect des lois et des règlements en matière de 
+santé et de sécurité du travail.  
+ 
+ 
+  Éléments de la compétence  Critères de performance 
+1. Prendre connaissance de la situation.  • Clarté du portrait global.  
+• Identification précise du système.  
+• Identification juste des risques liés à la mesure.  
+• Prise en compte effective de l’impact de la mesure.  
+2. Préparer la prise de mesures.  • Choix approprié de l’instrument de mesure.  
+• Vérification complète de l’état de l’instrument.  
+• Configuration adéquate de l’instrument.  
+• Préparation méthodique de la prise de mesures.  
+3. Procéder à la prise de mesures.  • Réalisation sécuritaire du branchement.  
+• Validation de la procédure.  
+• Exactitude de la mesure.  
+• Précision du rel evé de la mesure.  
+4.  Relever la mesure.  • Réalisation systématique du relevé.  
+• Absence d’ambiguïté du relevé.
+
+--- PAGE 10 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 27 Ministère de l’Enseignement supérieur  Code :  02GW  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Produire de la documentation technique.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Individuellement ou en équipe  
+• À l’aide :  
+o de logiciels spécialisés.  
+• À partir :  
+o de fiches techniques;  
+o de plans du fabricant;  
+o de normes nationales et internationales et  de 
+standards;  
+o de gabarits de document et autres;  
+o d’informations archivées;  
+o de versions précédentes.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect des règlements relatifs aux droits d’auteur.  
+ 
+Éléments de la compétence  Critères de performance 
+1. Planifier la production du document.  • Choix approprié des éléments à documenter.  
+• Choix pertinent du format de document.  
+2. Élaborer le document.  • Respect des normes et standards propres au domaine.  
+• Exploitation efficace de l’outil de production.  
+• Vérification complète de la conformité.  
+• Rédaction soignée du document.  
+3. Diffuser le document.  • Choix approprié du mode de diffusion.  
+• Archivage complet.  
+• Gestion efficace des versions.
+
+--- PAGE 11 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 28 Ministère de l’Enseignement supérieur  Code :  02GX  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Réaliser des tests.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• À l’aide :  
+o de fiches techniques;  
+o de plans du fabricant;  
+o de logiciels spécialisés;  
+o d’instruments de mesure spécialisés;  
+o d’outils;  
+o de sources d’information spécialisées;  
+o d’un banc de test.  
+• À partir :  
+o de normes nationales et internationales et de 
+standards;  
+o de gabarits et /ou d’une unité de référence;  
+o de prises de mesures;  
+o d’équipements, de systèmes ou de sous -systèmes.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect des normes :  
+o de qualité en vigueur;  
+o d’interférence électromagnétique;  
+o de protection contre les phénomènes 
+électrostatiques.  
+• Respect des lois et des règlements en matière de santé 
+et de sécurité du travail.  
+• Respect de l’intégrité de l’équipement ou du système.  
+ 
+  Éléments de la compétence  Critères de performance 
+1.  Prendre connaissance de la situation.  • Clarté du portrait global.  
+• Identification précise du système.  
+• Identification juste des risques liés aux tests.  
+• Prise en compte effective de l’impact du test.  
+2.  Planifier le test.  • Mise en place de l’équipement ou du système.  
+• Vérification complète de l’état du banc de test.  
+• Préparation méthodique de la séquence de test.  
+• Détermination appropriée des conditions 
+environnementales pour la réalisation du test.  
+3.  Exécuter le test.  • Exécution méthodique de la séquence de test.  
+• Vérification de la cohérence de la séquence du test.  
+• Validation juste des résultats du test.  
+• Exactitude des résultats du test.
+
+--- PAGE 12 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 29 Ministère de l’Enseignement supérieur   
+  Éléments de la compétence  Critères de performance 
+4.  Documenter le test.  • Réalisation systématique de la saisie.  
+• Documentation pertinente des résultats du test.
+
+--- PAGE 13 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 30 Ministère de l’Enseignement supérieur  Code :  02GY  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Programmer un équipement ou un système 
+connecté.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements physiques ou virtuels.  
+• Individuellement ou en équipe.  
+• À l’aide :  
+o d’environnements de développement intégrés;  
+o de sources d’information spécialisées;  
+o de document ation technique;  
+o de librairies;  
+o de systèmes d’exploitation.  
+• À partir :  
+o d’objets connectés;  
+o de plateformes;  
+o de langages de programmation de base;  
+o de logiciels de programmation;  
+o de scripts.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect des normes de programmation.  
+• Application rigoureuse des conventions d’écriture de 
+programme.  
+• Manipulation consciencieuse de l’équipement ou du 
+système connecté.  
+ 
+ 
+  Éléments de la compétence  Critères de performance 
+1.  Examiner le programme.  • Reconnaissance juste du langage.  
+• Identification juste des structures usuelles.  
+• Examen minutieux des algorithmes usuels.  
+• Reconnaissance des types de variables.  
+2.  Modifier le programme  • Sauvegarde systématique du programme d’origine.  
+• Pertinence des modifications.  
+3.  Exécuter le programme.  • Ajustements adéquats de paramètres avant l’exécution.  
+• Implantation efficace du programme.  
+• Vérification juste des résultats d’exécution.  
+• Pertinence des itérations.
+
+--- PAGE 14 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 31 Ministère de l’Enseignement supérieur  Code :  02GZ  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Exploiter des systèmes d’exploitation.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• Sur des équipements physiques ou virtuels.  
+• Individuellement ou en équipe.  
+• À l’aide :  
+o de plans du fabricant;  
+o de logiciels de programmation, de mises à jour;  
+o de forums d’experts;  
+o de documentation technique.  
+• À partir :  
+o d’objets connectés;  
+o de plateformes;  
+o de systèmes d’exploitation;  
+o de scripts.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect des règles de compatibilité matériel/logiciel.  
+• Manipulation consciencieuse de l’équipement ou du 
+système connecté.  
+ 
+Éléments de la compétence  Critères de performance 
+1.  Installer un système d’exploitation.  • Choix judicieux.  
+• Paramétrage approprié lors de l’installation.  
+• Déploiement méthodique.  
+• Vérification systématique des fonctionnalités.  
+• Pertinence de la virtualisation.  
+2.  Configurer un système d’exploitation.  • Pertinence de la mise hors service de l’équipement.  
+• Choix adapté du mode de contrôle.  
+• Utilisation adaptée du mode de contrôle.  
+• Fonctionnement adéquat de la communication avec les 
+périphériques.  
+• Vérification complète du fonctionnement.  
+3.  Assurer la mise à jour d’un système 
+d’exploitation.  • Mise à jour pertinente.  
+• Déploiement correct.  
+• Détection efficace de problèmes.  
+• Vérification complète du fonctionnement et/ou de la 
+communication avec le matériel.  
+• Planification adéquate de la prochaine mise à jour.  
+4.  Assurer l’archivage d’un système 
+d’exploitation.  • Modification de la documentation.  
+• Mise en œuvre méthodique de l’archivage.
+
+--- PAGE 15 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 32 Ministère de l’Enseignement supérieur  Code :  02H0  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Configurer des réseaux de données.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• Sur des équipements physiques ou virtuels.  
+• Individuellement ou en équipe.  
+• En accord avec le centre de surveillance.  
+• À l’aide :  
+o de commutateurs;  
+o de routeurs;  
+o de points d’accès;  
+o de branchements;  
+o de documentation technique;  
+o d’instruments;  
+o de fichiers de configuration.  
+• À partir :  
+o de logiciels de simulation;  
+o de plans de réseau;  
+o de plans d’adressage;  
+o de dispositifs terminaux.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Préoccupation constante de la cybersécurité.  
+• Prévision appropriée de l’évolution du réseau.  
+• Respect des bonnes pratiques.  
+ 
+Éléments de la compétence  Critères de performance 
+1.  Planifier la configuration du réseau de 
+données.  • Identification exhaustive des caractéristiques du réseau 
+de données.  
+• Organisation judicieuse des stratégies de sécurité.  
+• Conformité exhaustive du plan.  
+• Choix raisonné des équipements.  
+2.  Configurer les équipements.  • Vérification préalable de la configuration.  
+• Configuration correcte des équipements.  
+• Sauvegarde systématique des configurations.  
+3.  Déployer le réseau.  • Branchements structurés de l’infrastructure.  
+• Validation appropriée du câblage.  
+• Mise en œuvre rigoureuse de la planification.  
+4.  Vérifier le fonctionnement du réseau.  • Validation exhaust ive des fonctionnalités du réseau.  
+• Respect des règles de limitations du réseau.  
+• Utilisation juste des équipements de tests.  
+• Consignation systématique des résultats et des 
+modifications.
+
+--- PAGE 16 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 33 Ministère de l’Enseignement supérieur  Code :  02H1  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Contribuer au changement technologique.  • En industrie, au laboratoire ou dans un bureau . 
+• Individuellement ou en équipe.  
+• À l’aide :  
+o de médias spécialisés et généralistes;  
+o de réseaux sociaux professionnels;  
+o d’encyclopédies en ligne;  
+o de blogues d’experts;  
+o de communautés de praticiens;  
+o de sites Web d’entreprises;  
+o de documentation technique;  
+o de formations.  
+• À partir :  
+o de stratégies de changement en entreprise;  
+o de logiciels spécialisés;  
+o de stratégies d’autoformation.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Aucun . 
+ 
+ 
+  Éléments de la compétence  Critères de performance 
+1.  Réaliser une veille technologique dans le 
+domaine.  • Choix approprié des sources d’information.  
+• Distinction appropriée des technologies.  
+• Compréhension suffisante de la technologie.  
+2.  Participer à l’implantation d’une 
+technologie.  • Examen critique des sources d’information.  
+• Reconnaissance appropriée du besoin.  
+• Participation active à l’implantation.  
+3.  Documenter l’implantation d’une 
+technologie.  • Documentation complète.
+
+--- PAGE 17 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 34 Ministère de l’Enseignement supérieur  Code :  02H2  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Effectuer un diagnostic sur des équipements ou 
+des systèmes.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• Individuellement ou en équipe.  
+• À l’aide :  
+o de fiches techniques;  
+o de plans du fabricant;  
+o de logiciels de programmation, de mises à jour;  
+o d’instruments de mesure;  
+o d’outils;  
+o d’archives issues de communautés de praticiens.  
+• À partir :  
+o de normes nat ionales, internationales et aux 
+standards;  
+o de gabarits et/ou d’une unité de référence;  
+o de prises de mesures.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect des normes de qualité en vigueur.  
+• Respect des lois et des règlements en matière de 
+santé et de sécurité du travail.  
+• Respect de l’intégrité de l’équipement ou du système.  
+ 
+  Éléments de la compétence  Critères de performance 
+1. Prendre connaissance du problème.  • Reconnaissance juste de la complexité du problème.  
+• Consultation appropriée des ressources.  
+2. Examiner les éléments.  • Inspection quatre sens exhaustive de l’équipement ou 
+du système.  
+• Examen approprié de la documentation technique.  
+• Planification claire des tests à effectuer.
+
+--- PAGE 18 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 35 Ministère de l’Enseignement supérieur   
+  Éléments de la compétence  Critères de performance 
+3. Procéder à une boucle de débogage.  • Isolation appropriée des éléments à diagnostiquer.  
+• Vérification méthodique des constituants de 
+l’équipement ou du système :  
+o branchements;  
+o alimentation;  
+o compatibilité des versions;  
+o etc. 
+• Interprétation juste des résultats des prises de 
+mesures.  
+• Identification appropriée de la source du problème.  
+4.  Communiquer les résultats du diagnostic.  • Communication concise de l’avancement du diagnostic.  
+• Présentation claire des conclusions.  
+• Archivage approprié des résultats.
+
+--- PAGE 19 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 36 Ministère de l’Enseignement supérieur  Code :  02H3  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Effectuer l’installation et la mise en service 
+d’équipements ou de systèmes de réseaux de 
+télécommunications.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• En collaboration avec les autres membres de l’équipe.  
+• En accord avec le centre de surveillance.  
+• À l’aide :  
+o de plans du fabricant;  
+o de logiciels spécialisés;  
+o d’instruments de mesure spécialisés;  
+o d’outils;  
+o de pièces de remplacement;  
+o d’appareils ou d’équipements de remplacement.  
+• À partir :  
+o de normes nationales et internationales et de 
+standards;  
+o de règlements en matière de développement 
+durable;  
+o de rapports de diagnostic;  
+o de gabarits et/ou d’une unité de référence.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect des normes de qualité en vigueur.  
+• Respect des lois et des règlements en matière de 
+santé et de sécurité du travail.  
+• Vérification systématique des performances.  
+• Respect des normes environnementales en vigueur.  
+ 
+  Éléments de la compétence  Critères de performance 
+1.  Planifier l’installation et la mise en service.  • Examen exhaustif des documents afférents à 
+l’installation et à la mise en service.  
+• Vérification appropriée de l’emplacement de 
+l’équipement ou du système.  
+• Estimation réaliste des ressources m atérielles et 
+humaines.  
+2.  Procéder à l’installation.  • Mise en place appropriée.  
+• Branchements minutieux des connexions et 
+interconnexions.  
+• Mise sous tension sécuritaire.  
+• Vérification appropriée.  
+3.  Procéder à la mise en service.  • Mise en service complète.  
+• Vérification systématique du fonctionnement.  
+• Ajustement précis des paramètres.
+
+--- PAGE 20 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 37 Ministère de l’Enseignement supérieur   
+  Éléments de la compétence  Critères de performance 
+4.  Documenter l’installation et/ou la mise en 
+service.  • Documentation complète.
+
+--- PAGE 21 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 38 Ministère de l’Enseignement supérieur  Code :  02H4  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Contrôler la qualité d’équipements et/ ou de 
+systèmes de réseaux de télécommunications.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• En collaboration avec des concepteurs, opérateurs, 
+clients, réparateurs, etc.  
+• À l’aide :  
+o de plans du fabricant;  
+o des statistiques de tests;  
+o de logiciels spécialisés;  
+o d’instruments de mesure spécialisés;  
+o d’outils;  
+o de bancs de tests automatisés;  
+o de procédures d’étalonnage.  
+• À partir :  
+o de normes nationales et internationales et de 
+standards;  
+o de gabarits et/ou d’une unité de référence;  
+o de spécifications et d’exigences techniques;  
+o de résultats d’audits;  
+o d’émetteurs -récepteurs de radio fréquence (RF).  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect des normes de qualité en vigueur.  
+• Respect des lois et des règlements en matière de 
+santé et de sécurité du travail.  
+ 
+  Éléments de la compétence  Critères de performance 
+1.  Examiner l’équipement et/ ou le système de 
+réseau.  • Consultation pertinente des documents (spécifications, 
+normes, etc.).  
+• Interprétation juste des objectifs du contrôle.  
+• Consultation appropriée des collaboratrices et 
+collaborateurs.  
+2.  Élaborer une stratégie de contrôle de 
+qualité.  • Sélection pertinente des critères d’acceptabilité de la 
+qualité.  
+• Détermination appropriée des conditions 
+environnementales pour la réalisation du test de 
+contrôle de qualité.  
+• Choix approprié des instruments de mesure.  
+• Élaboration méthodique de procédures de tests.  
+• Élaboration méthodique de tests automatisés.  
+• Amélioration continue des procédures de contrôle de 
+qualité.
+
+--- PAGE 22 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 39 Ministère de l’Enseignement supérieur   
+  Éléments de la compétence  Critères de performance 
+3.  Procéder au contrôle de qualité de 
+l’équipement ou du système.  • Validation minutieuse de la qualité selon les critères 
+établis.  
+• Réglage précis de l’équipement, du réseau ou des 
+conditions de test.  
+• Vérification régulière de l’exécution des tests (tests 
+automatisés ou exécutés par un tiers).  
+• Pertinence de la rétroaction aux collaboratrices et 
+collaborateurs.  
+4.  Documenter le contrôle de qualité.  • Rédaction conforme d’un rapport (rapport de tests, 
+rapport d’étalonnage, etc.).  
+• Validation du rapport par les intervenants.  
+• Archivage conforme des documents.
+
+--- PAGE 23 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 40 Ministère de l’Enseignement supérieur  Code :  02H5  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Effectuer la maintenance d’équipements ou de 
+systèmes de réseaux de télécommunications.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• En collaboration avec les autres membres de l’équipe.  
+• En accord avec le centre de surveillance.  
+• À l’aide :  
+o de plans du fabricant.  
+o de logiciels spécialisés.  
+o d’instruments  de mesure spécialisés.  
+o d’outils.  
+o de pièces de remplacement.  
+• À partir :  
+o de normes nationales et internationales et de 
+standards;  
+o de rapports de diagnostic;  
+o de gabarits et/ou d’une unité de référence.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect des normes de qualité en vigueur.  
+• Respect des lois et des règlements en matière de 
+santé et de sécurité du travail.  
+• Vérification systématique des performances.  
+ 
+  Éléments de la compétence  Critères de performance 
+1. Identifier les besoins de maintenance pour 
+l’équipement ou le système.  • Consultation exhaustive des documents.  
+• Interprétation juste des critères d’acceptabilité.  
+• Sélection pertinente des critères d’acceptabilité.  
+2. Inspecter l’équipement ou le système.  • Inspection 4 sens préliminaire complète de 
+l’équipement ou du système en service.  
+• Validation minutieuse des critères d’acceptabilité.  
+• Inspection sécuritaire de l’équipement ou du système 
+en service.  
+• Choix approprié de la solution.  
+• Pertinence du r emplacement de l’équipement ou du 
+système.  
+• Pertinence du remplacement des composants.  
+3. Procéder à la maintenance de l’équipement 
+ou du système.  • Pertinence de la mise hors service.  
+• Choix approprié de la séquence d’opérations.  
+• Vérification systématique de l’étalonnage des 
+instruments.  
+• Mise à jour pertinente du logiciel.
+
+--- PAGE 24 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 41 Ministère de l’Enseignement supérieur   
+  Éléments de la compétence  Critères de performance 
+4.  Procéder à la remise en service de 
+l’équipement ou du système.  • Vérification exhaustive de l’ensemble.  
+• Vérification minutieuse de l’alimentation et des 
+connexions.  
+• Remise en service complète.  
+• Vérification systématique du fonctionnement.  
+5.  Documenter la maintenance de 
+l’équipement ou du système.  • Documentation complète.  
+• Archivage systématique des documents.
+
+--- PAGE 25 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 42 Ministère de l’Enseignement supérieur  Code :  02H6  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Effectuer le dépannage d’équipements ou de 
+systèmes de réseaux de télécommunications.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• Sur des équipements ou des systèmes installés en 
+hauteur ou en sous -terrain.  
+• En collaboration avec les autres membres de l’équipe.  
+• En accord avec le centre de surveillance.  
+• À l’aide :  
+o de plans du fabricant;  
+o de logiciels spécialisés;  
+o d’instruments de mesure spécialisés.  
+o d’outils;  
+o de pièces de remplacement;  
+o d’appareils ou d’équipements de remplacement.  
+• À partir :  
+o de normes nationales et internationales et de 
+standards;  
+o de rapports de diagnostic;  
+o de gabarits et/ou d’une unité de référence;  
+o de règlements en matière de développement 
+durable.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect des normes de qualité en vigueur.  
+• Respect des lois et des règlements en matière de 
+santé et de sécurité du travail.  
+• Vérification appropriée des performances.  
+ 
+Éléments de la compétence  Critères de performance 
+1.  Planifier le dépannage.  • Examen exhaustif du problème.  
+• Appropriation adéquate du rapport de diagnostic.  
+• Estimation réaliste de l’impact du dépannage.  
+• Estimation réaliste des ressources matérielles et 
+humaines.  
+2.  Procéder au dépannage.  • Pertinence de la mise hors service.  
+• Sélection pertinente de l’élément défectueux.  
+• Remplacement minutieux de l’élément.  
+• Traitement consciencieux des éléments à recycler.  
+• Vérification complète de l’installation.  
+3.  Procéder à la remise en service de 
+l’équipement ou du système.  • Remise en service complète.  
+• Vérification systématique du fonctionnement.  
+Éléments de la compétence  Critères de performance 
+4.  Documenter le dépannage de l’équipement 
+ou du système.  • Documentation complète.  
+• Archivage systématique des documents.
+
+--- PAGE 26 ---
+Technologie du génie électrique : Réseaux et télécommunications  (243.F0)  
+ 43 Ministère de l’Enseignement supérieur  Code :  02H7  
+Objectif  Standard  
+ 
+Énoncé de la compétence Contexte de réalisation  
+Assurer du soutien technique dans le domaine 
+des réseaux de télécommunications.  • En industrie, au laboratoire ou dans un bureau . 
+• Chez la clientèle, en présence ou à distance.  
+• En collaboration avec les autres membres de l’équipe.  
+• En accord avec le centre de surveillance.  
+• À l’aide :  
+o de documents techniques;  
+o du matériel requis;  
+o de supports de communication;  
+o de données de requêtes;  
+o de tickets d’assistance technique;  
+o des technologies de l’information et de la 
+communication (TIC).  
+• À partir :  
+o de l’historique de traitements des requêtes.  
+o de données de discussion avec des clients.  
+o de normes nationales, internationales et de 
+standards.  
+o de rapports de diagnostic.  
+ 
+ Critères de performance pour l’ensemble de la 
+compétence  
+ • Respect des règles de courtoisie.  
+• Assurance continue de la satisfaction.  
+ 
+ Éléments de la compétence  Critères de performance 
+1. Recueillir les attentes et les besoins . • Consultation appropriée de l’historique.  
+• Consultation appropriée des personnes concernées.  
+• Identification juste des actions déjà entreprises.  
+• Examen de l’information nécessaire au soutien.  
+2.  Analyser les attentes et les besoins.  • Interprétation juste du contexte.  
+• Estimation appropriée du niveau de priorité de la 
+requête.  
+• Ébauche réaliste de pistes de solution ou de résolution 
+de problème.   
+3.  Procéder au soutien technique.  • Pertinence du transfert de la requête vers la personne 
+ou le service concerné.  
+• Application juste des solutions.  
+• Suivi rigoureux de l’avancement de la requête.  
+• Transmission claire des instructions.  
+• Vulgarisation appropriée des informations.  
+4.  Veiller au suivi de la requête.  • Vérification appropriée du résultat.  
+• Documentation complète du traitement de la requête.

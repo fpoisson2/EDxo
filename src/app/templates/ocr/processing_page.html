@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Traitement du devis en cours{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Traitement du devis en cours...</h1>
+    <p>Veuillez patienter pendant l'analyse du document.</p>
+    <p><strong>ID de la tâche :</strong> {{ task_id }}</p>
+
+    <!-- Barre de progression -->
+    <div class="progress my-3">
+        <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+             style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+            0%
+        </div>
+    </div>
+
+    <!-- Messages de statut -->
+    <div id="status-messages" class="mb-3">
+        <div id="spinner" class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <span id="status-text" class="ms-2">Initialisation...</span>
+    </div>
+
+    <!-- Détails supplémentaires -->
+    <div id="progress-details" class="mt-2" style="font-size: 0.9em; color: grey;"></div>
+
+    <!-- Lien vers le résultat -->
+    <div id="result-link" class="mt-4" style="display: none;">
+         <a href="#" class="btn btn-success">Voir les résultats</a>
+    </div>
+    <!-- Message d'erreur -->
+    <div id="error-message" class="mt-4 alert alert-danger" style="display: none;"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const taskId = "{{ task_id }}"; // Récupère l'ID de la tâche
+        const statusTextElement = document.getElementById('status-text');
+        const progressDetailsElement = document.getElementById('progress-details');
+        const progressBarElement = document.getElementById('progress-bar');
+        const resultLinkElement = document.getElementById('result-link').querySelector('a');
+        const resultLinkContainer = document.getElementById('result-link');
+        const errorMessageElement = document.getElementById('error-message');
+        const spinnerElement = document.getElementById('spinner');
+
+        let intervalId = null;
+
+        function updateProgressBar(percentage) {
+            progressBarElement.style.width = percentage + '%';
+            progressBarElement.setAttribute('aria-valuenow', percentage);
+            progressBarElement.textContent = percentage + '%';
+        }
+
+        function checkTaskStatus() {
+            fetch(`/ocr/status/${taskId}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Statut reçu:", data); // Pour le débogage
+
+                    // Mise à jour du statut principal
+                    if (data.state === 'PROGRESS') {
+                        const message = data.info?.message ? ` (${data.info.message})` : '';
+                        statusTextElement.textContent = `En cours${message}...`;
+                        if(spinnerElement) spinnerElement.style.display = 'inline-block'; // Garder le spinner
+
+                        // Mettre à jour la barre de progression si l'information est disponible
+                        if(data.info && data.info.progress !== undefined) {
+                            updateProgressBar(data.info.progress);
+                        }
+                    } else if (data.state === 'SUCCESS') {
+                        statusTextElement.textContent = 'Terminé avec succès !';
+                        spinnerElement.style.display = 'none';
+                        updateProgressBar(100); // Remplit la barre à 100%
+
+                        // Message final détaillé
+                        progressDetailsElement.textContent = `Traitement terminé. ${data.info.competences_count || 0} compétences trouvées.`;
+                        if (data.result_url) {
+                            resultLinkElement.href = data.result_url;
+                            resultLinkContainer.style.display = 'block';
+                        }
+                        errorMessageElement.style.display = 'none';
+                    } else if (data.state === 'FAILURE') {
+                        statusTextElement.textContent = 'Échec du traitement.';
+                        spinnerElement.style.display = 'none';
+                        const errorMsg = data.info && data.info.error ? data.info.error : 'Une erreur inconnue est survenue.';
+                        progressDetailsElement.textContent = `Erreur: ${errorMsg}`;
+                        errorMessageElement.textContent = `Le traitement a échoué. Détails: ${errorMsg}`;
+                        errorMessageElement.style.display = 'block';
+                        resultLinkContainer.style.display = 'none';
+
+                        // Optionnel : remettre la barre en rouge pour indiquer l'échec
+                        progressBarElement.classList.remove('bg-success');
+                        progressBarElement.classList.add('bg-danger');
+                    } else {
+                        // Cas PENDING ou autre
+                        statusTextElement.textContent = data.state;
+                        spinnerElement.style.display = 'inline-block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération du statut:', error);
+                    statusTextElement.textContent = 'Erreur de communication...';
+                    progressDetailsElement.textContent = `Impossible de vérifier le statut de la tâche (${error}).`;
+                    // Ici, le polling peut être maintenu car l’erreur peut être temporaire
+                });
+        }
+
+        // Démarrer le polling toutes les 3 secondes
+        intervalId = setInterval(checkTaskStatus, 3000);
+        // Vérification immédiate initiale
+        checkTaskStatus();
+    });
+</script>
+{% endblock %}

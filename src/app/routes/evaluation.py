@@ -122,7 +122,9 @@ def get_description(evaluation_id):
 @login_required
 @ensure_profile_completed
 def get_courses():
-    courses = Cours.query.all()
+    user_program_ids = [programme.id for programme in current_user.programmes]
+    courses = Cours.query.filter(Cours.programme_id.in_(user_program_ids)).all()
+
     courses_data = [{
         'id': str(course.id),
         'code': course.code,
@@ -130,7 +132,6 @@ def get_courses():
     } for course in courses]
     return jsonify(courses_data)
 
-@evaluation_bp.route('/create', methods=['GET', 'POST'])
 
 
 
@@ -517,7 +518,8 @@ def evaluation_wizard():
     grouped_cf = {}
     
     # Remplir les choix du formulaire de cours avec une option vide au début
-    courses = Cours.query.all()
+    user_program_ids = [programme.id for programme in current_user.programmes]
+    courses = Cours.query.filter(Cours.programme_id.in_(user_program_ids)).all()
     course_form.course.choices = [('', '-- Sélectionner un cours --')] + [
         (str(course.id), f"{course.code} - {course.nom}") 
         for course in courses

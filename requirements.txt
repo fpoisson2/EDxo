@@ -24,3 +24,10 @@ flask-bcrypt
 pytest
 celery
 redis
+requests
+beautifulsoup4
+PyPDF2
+python-dotenv
+mistralai
+openai
+Flask

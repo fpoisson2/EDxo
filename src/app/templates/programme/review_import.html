@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}Comparatif des Compétences - {{ programme.nom }}{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    /* --- Global Accordion --- */
+    .accordion-item {
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+    .accordion-button {
+        background-color: #f7f7f7;
+        font-weight: bold;
+    }
+    /* --- Card styles pour chaque colonne --- */
+    .base-card {
+        border: 1px solid #007bff;
+    }
+    .json-card {
+        border: 1px solid #ffc107;
+    }
+    .base-card .card-header {
+        background-color: #007bff;
+        color: #fff;
+    }
+    .json-card .card-header {
+        background-color: #ffc107;
+        color: #333;
+    }
+    /* --- Section Block Styles --- */
+    .section-block {
+        padding: 10px;
+        border-left: 4px solid #007bff;
+        margin-bottom: 15px;
+        background-color: #f9f9f9;
+        border-radius: 3px;
+    }
+    .json-content .section-block {
+        border-left-color: #ffc107;
+    }
+    /* Style appliqué aux sections présentant une différence */
+    .difference-highlight {
+        background-color: #ffe5e5;
+        border-left-color: #ff0000 !important;
+    }
+    .section-block h5 {
+        margin-top: 0;
+        margin-bottom: 5px;
+    }
+    .section-block p {
+        margin: 0;
+    }
+    .subsection {
+        margin-left: 15px;
+        padding-left: 10px;
+        border-left: 2px dashed #ccc;
+        margin-top: 10px;
+    }
+    ul {
+        padding-left: 20px;
+        list-style-type: disc;
+        margin-bottom: 0;
+    }
+    li {
+        margin-bottom: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Comparatif des compétences pour le programme {{ programme.nom }}</h2>
+    <p>Chaque bloc compare la version en base de données existante (gauche) avec la version importée (droite).</p>
+    
+    <div class="accordion" id="accordionCompetencies">
+        {% for comp in comparisons %}
+            {# Détermination du nom pour le titre – toujours afficher le code et le nom (de DB si disponible, sinon JSON) #}
+            {% set compName = comp.db.nom if (comp.db and comp.db.nom) else (comp.json.nom if (comp.json and comp.json.nom) else "Nom non défini") %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading{{ loop.index }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse{{ loop.index }}" aria-expanded="false"
+                        aria-controls="collapse{{ loop.index }}">
+                        Compétence {{ comp.code }} - {{ compName }}
+                    </button>
+                </h2>
+                <div id="collapse{{ loop.index }}" class="accordion-collapse collapse"
+                     aria-labelledby="heading{{ loop.index }}" data-bs-parent="#accordionCompetencies">
+                    <div class="accordion-body">
+                        <div class="row g-3">
+                            <!-- Colonne Base de données -->
+                            <div class="col-md-6">
+                                <div class="card base-card">
+                                    <div class="card-header">
+                                        Base de données
+                                    </div>
+                                    <div class="card-body base-content">
+                                        {# Section Nom #}
+                                        {% set db_nom = comp.db.nom if (comp.db and comp.db.nom) else "" %}
+                                        {% set json_nom = comp.json.nom if (comp.json and comp.json.nom) else "" %}
+                                        <div class="section-block {% if db_nom != json_nom %}difference-highlight{% endif %}">
+                                            <h5>Nom :</h5>
+                                            <p>{{ db_nom }}</p>
+                                        </div>
+                                        
+                                        {# Section Contexte #}
+                                        {% set db_contexte = comp.db.contexte|striptags|trim if (comp.db and comp.db.contexte) else "" %}
+                                        {% set json_contexte = "" %}
+                                        {% if comp.json and comp.json.contexte %}
+                                            {# Concaténation des textes de contexte pour JSON #}
+                                            {% for item in comp.json.contexte %}
+                                                {% set json_contexte = json_contexte ~ item.texte ~ " " %}
+                                            {% endfor %}
+                                            {% set json_contexte = json_contexte|trim %}
+                                        {% endif %}
+                                        <div class="section-block {% if db_contexte != json_contexte %}difference-highlight{% endif %}">
+                                            <h5>Contexte :</h5>
+                                            <p>{{ comp.db.contexte | safe }}</p>
+                                        </div>
+
+                                        {# Section Critères de performance #}
+                                        {% set db_criteres = "" %}
+                                        {% if comp.db and comp.db.criteres %}
+                                            {% if comp.db.criteres is iterable and comp.db.criteres is not string %}
+                                                {% for crit in comp.db.criteres %}
+                                                    {% set db_criteres = db_criteres ~ crit ~ " " %}
+                                                {% endfor %}
+                                            {% else %}
+                                                {% set db_criteres = comp.db.criteres %}
+                                            {% endif %}
+                                            {% set db_criteres = db_criteres|trim %}
+                                        {% endif %}
+                                        {% set json_criteres = "" %}
+                                        {% if comp.json and comp.json.criteres %}
+                                            {% if comp.json.criteres is iterable and comp.json.criteres is not string %}
+                                                {% for crit in comp.json.criteres %}
+                                                    {% set json_criteres = json_criteres ~ crit ~ " " %}
+                                                {% endfor %}
+                                            {% else %}
+                                                {% set json_criteres = comp.json.criteres %}
+                                            {% endif %}
+                                            {% set json_criteres = json_criteres|trim %}
+                                        {% endif %}
+<div class="section-block {% if db_criteres != json_criteres %}difference-highlight{% endif %}">
+    <h5>Critères de performance :</h5>
+    {% if comp.db and comp.db.criteres %}
+      <div>{{ comp.db.criteres | safe }}</div>
+    {% else %}
+        <p><em>Non défini</em></p>
+    {% endif %}
+</div>
+
+
+                                        {# Section Éléments de compétence #}
+                                        {% set db_elements = comp.db.elements if (comp.db and comp.db.elements) else [] %}
+                                        {% set json_elements = comp.json.elements if (comp.json and comp.json.elements) else [] %}
+                                        <div class="section-block {% if db_elements|length != json_elements|length %}difference-highlight{% endif %}">
+                                            <h5>Éléments de compétence :</h5>
+                                            {% if db_elements %}
+                                                <ul>
+                                                    {% for elem in db_elements %}
+                                                        <li>
+                                                            <strong>Nom :</strong> {{ elem.nom }}
+                                                            {% if elem.criteres %}
+                                                                <div class="subsection">
+                                                                    <strong>Critères :</strong>
+                                                                    {% if elem.criteres is iterable and elem.criteres is not string %}
+                                                                        <ul>
+                                                                            {% for crit in elem.criteres %}
+                                                                                <li>{{ crit }}</li>
+                                                                            {% endfor %}
+                                                                        </ul>
+                                                                    {% else %}
+                                                                        <p>{{ elem.criteres }}</p>
+                                                                    {% endif %}
+                                                                </div>
+                                                            {% endif %}
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% else %}
+                                                <p><em>Aucun élément renseigné.</em></p>
+                                            {% endif %}
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Colonne Fichier JSON -->
+                            <div class="col-md-6">
+                                <div class="card json-card">
+                                    <div class="card-header">
+                                        Fichier JSON
+                                    </div>
+                                    <div class="card-body json-content">
+                                        {# Section Nom pour JSON #}
+                                        <div class="section-block">
+                                            <h5>Nom :</h5>
+                                            <p>{{ comp.json.nom or "Non défini" }}</p>
+                                        </div>
+                                        {# Section Contexte pour JSON #}
+                                        <div class="section-block">
+                                            <h5>Contexte :</h5>
+                                            {% if comp.json.contexte %}
+                                                <ul>
+                                                    {% for item in comp.json.contexte %}
+                                                        <li>
+                                                            {{ item.texte }}
+                                                            {% if item.sous_points %}
+                                                                <ul>
+                                                                    {% for sous in item.sous_points %}
+                                                                        <li>{{ sous.texte }}</li>
+                                                                    {% endfor %}
+                                                                </ul>
+                                                            {% endif %}
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% else %}
+                                                <p><em>Non défini</em></p>
+                                            {% endif %}
+                                        </div>
+                                        {# Section Critères de performance pour JSON #}
+                                        <div class="section-block">
+                                            <h5>Critères de performance :</h5>
+                                            {% if comp.json.criteres %}
+                                                {% if comp.json.criteres is iterable and comp.json.criteres is not string %}
+                                                    <ul>
+                                                        {% for crit in comp.json.criteres %}
+                                                            <li>{{ crit }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% else %}
+                                                    <p>{{ comp.json.criteres }}</p>
+                                                {% endif %}
+                                            {% else %}
+                                                <p><em>Non défini</em></p>
+                                            {% endif %}
+                                        </div>
+                                        {# Section Éléments de compétence pour JSON #}
+                                        <div class="section-block">
+                                            <h5>Éléments de compétence :</h5>
+                                            {% if comp.json.elements %}
+                                                <ul>
+                                                    {% for elem in comp.json.elements %}
+                                                        <li>
+                                                            <strong>Nom :</strong> {{ elem.nom }}
+                                                            {% if elem.criteres %}
+                                                                <div class="subsection">
+                                                                    <strong>Critères :</strong>
+                                                                    {% if elem.criteres is iterable and elem.criteres is not string %}
+                                                                        <ul>
+                                                                            {% for crit in elem.criteres %}
+                                                                                <li>{{ crit }}</li>
+                                                                            {% endfor %}
+                                                                        </ul>
+                                                                    {% else %}
+                                                                        <p>{{ elem.criteres }}</p>
+                                                                    {% endif %}
+                                                                </div>
+                                                            {% endif %}
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% else %}
+                                                <p><em>Aucun élément renseigné.</em></p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> <!-- Fin row -->
+                    </div> <!-- Fin accordion-body -->
+                </div>
+            </div> <!-- Fin accordion-item -->
+        {% endfor %}
+    </div>
+    
+    <!-- Formulaire de confirmation de l'import -->
+    <form action="{{ url_for('programme.confirm_competencies_import') }}" method="POST" class="mt-4">
+        {{ form.hidden_tag() }}
+        <button type="submit" name="submit_button" value="confirm_import" class="btn btn-success">
+            <i class="bi bi-database-add"></i> Confirmer et Importer ces Compétences
+        </button>
+        <a href="{{ url_for('programme.view_programme', programme_id=programme.id) }}" class="btn btn-outline-secondary ms-2">
+            Annuler
+        </a>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+{% endblock %}
