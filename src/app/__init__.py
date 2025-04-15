@@ -108,8 +108,8 @@ def create_app(testing=False):
             MISTRAL_API_KEY=os.getenv('MISTRAL_API_KEY'),
             OPENAI_API_KEY=os.getenv('OPENAI_API_KEY'),
             MISTRAL_MODEL_OCR="mistral-ocr-latest",
-            OPENAI_MODEL_SECTION = "gpt-4.1", # Modèle pour la détection de section
-            OPENAI_MODEL_EXTRACTION = "gpt-4.1", # Modèle pour l'extraction de compétences
+            OPENAI_MODEL_SECTION = "gpt-4o", # Modèle pour la détection de section
+            OPENAI_MODEL_EXTRACTION = "gpt-4o", # Modèle pour l'extraction de compétences
             WTF_CSRF_ENABLED=True,
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),
