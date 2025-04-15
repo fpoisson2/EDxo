@@ -1,23 +1,20 @@
 {% extends "base.html" %}
-
 {% block title %}Résultats du traitement du devis{% endblock %}
-
 {% block content %}
 <div class="container mt-4">
     <h1>Résultats du traitement du devis</h1>
-
     {% if results %}
         <p><strong>ID de la tâche :</strong> {{ results.task_id }}</p>
-        <p><strong>PDF traité :</strong> {{ results.pdf_title }}</p>
-        <p><strong>Source :</strong> {{ results.pdf_source }}</p>
+        <p><strong>PDF traité :</strong> {{ results.pdf_title if results.pdf_title else "Information manquante" }}</p>
+        <p><strong>Source :</strong> {{ results.pdf_source if results.pdf_source else "Information manquante" }}</p>
         <p><strong>Statut final :</strong> <span class="badge bg-{% if results.final_status == 'SUCCESS' %}success{% elif results.final_status.startswith('COMPLETED_WITH') %}warning{% else %}danger{% endif %}">{{ results.final_status }}</span></p>
-
+        
         {% if results.error %}
             <div class="alert alert-danger">
                 <strong>Erreur :</strong> {{ results.error }}
             </div>
         {% endif %}
-
+        
         {% if results.final_status == 'SUCCESS' or results.final_status.startswith('COMPLETED_WITH') %}
             <h2>Détails :</h2>
             <ul>
@@ -41,9 +38,27 @@
                  {% if results.json_output_path %}
                      <li>Chemin JSON compétences : {{ results.json_output_path }}</li>
                  {% endif %}
-                 <li>Nombre de compétences trouvées : {{ results.competences_count }}</li>
+                 <li>Nombre de compétences trouvées : {{ results.competences_count | default(0) }}</li>
+                 {% if results.usage_details %}
+                 <li>
+                     <details>
+                         <summary>Détails d'utilisation API</summary>
+                         <ul>
+                             {% if results.usage_details.section %}
+                             <li>Section: {{ results.usage_details.section.prompt_tokens | default(0) }} tokens prompt, 
+                                {{ results.usage_details.section.completion_tokens | default(0) }} tokens completion</li>
+                             {% endif %}
+                             {% if results.usage_details.extraction %}
+                             <li>Extraction: {{ results.usage_details.extraction.prompt_tokens | default(0) }} tokens prompt, 
+                                {{ results.usage_details.extraction.completion_tokens | default(0) }} tokens completion</li>
+                             {% endif %}
+                         </ul>
+                     </details>
+                 </li>
+                 {% endif %}
             </ul>
-            {% if (results.final_status == 'SUCCESS' or results.final_status.startswith('COMPLETED_WITH')) and results.base_filename and results.ocr_markdown_path %}
+            
+            {% if (results.final_status == 'SUCCESS' or results.final_status.startswith('COMPLETED_WITH')) and results.base_filename %}
                 {# Pointe vers la nouvelle route d'association dans le blueprint 'ocr' #}
                 <div class="mt-3 mb-3">
                     <a href="{{ url_for('ocr.associate_devis', base_filename=results.base_filename) }}" class="btn btn-primary">
@@ -51,19 +66,29 @@
                     </a>
                     <small class="form-text text-muted d-block">Choisissez le programme existant auquel lier les résultats de ce traitement.</small>
                 </div>
-            {% elif results.ocr_markdown_path %}
-                 {# Message si OCR ok mais pas de base_filename ? (Ne devrait pas arriver si logique correcte) #}
-                 <div class="alert alert-warning mt-3">
-                     Le traitement OCR est terminé, mais une information manque pour l'associer (nom de fichier de base).
-                 </div>
+            {% elif not results.base_filename and results.json_output_path %}
+                {% set json_path_parts = results.json_output_path.split('/') %}
+                {% set filename_with_ext = json_path_parts[-1] if json_path_parts|length > 0 else '' %}
+                {% set filename_parts = filename_with_ext.split('_competences_final.json') %}
+                {% set possible_base_filename = filename_parts[0] if filename_parts|length > 0 else '' %}
+                
+                {% if possible_base_filename %}
+                <div class="mt-3 mb-3">
+                    <a href="{{ url_for('ocr.associate_devis', base_filename=possible_base_filename) }}" class="btn btn-primary">
+                        <i class="bi bi-link-45deg"></i> Associer ce devis à un programme et réviser
+                    </a>
+                    <small class="form-text text-muted d-block">Nom de base déduit du chemin JSON: {{ possible_base_filename }}</small>
+                </div>
+                {% else %}
+                <div class="alert alert-warning mt-3">
+                    Le traitement OCR est terminé, mais le nom de fichier de base n'a pas pu être déterminé.
+                </div>
+                {% endif %}
             {% endif %}
         {% endif %}
-
     {% else %}
         <div class="alert alert-warning">Aucun résultat trouvé pour cette tâche.</div>
     {% endif %}
-
      <a href="{{ url_for('ocr.show_trigger_page') }}" class="btn btn-secondary mt-3">Nouveau traitement</a>
-
 </div>
 {% endblock %}
