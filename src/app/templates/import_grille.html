@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Importation de la grille de cours{% endblock %}
+
+{% block content %}
+  <h1>Importation de la grille de cours</h1>
+  <form method="POST" enctype="multipart/form-data">
+      {{ form.hidden_tag() }}
+      <div>
+          {{ form.file.label }}<br>
+          {{ form.file() }}
+      </div>
+      <div>
+          {{ form.submit() }}
+      </div>
+  </form>
+{% endblock %}
