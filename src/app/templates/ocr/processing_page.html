@@ -148,7 +148,9 @@
                         }
                     } else {
                         // Cas PENDING ou autre
-                        statusTextElement.textContent = `État: ${data.state}`;
+                        statusTextElement.textContent = data.info && data.info.status
+                            ? `État: ${data.info.status}`
+                            : `État: ${data.state}`;
                         spinnerElement.style.display = 'inline-block';
                         if (data.info && data.info.status) {
                             progressDetailsElement.textContent = data.info.status;

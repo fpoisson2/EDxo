@@ -1056,9 +1056,9 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id, openai_key_ignored):
             'competences_count': len(competences_pages)
         })
         
-        json_output_path = os.path.join(txt_output_dir, f"{base_filename_local}_competences_final.json")
-        model_section = current_app.config.get('OPENAI_MODEL_SECTION', 'gpt-3.5-turbo')
-        model_extraction = current_app.config.get('OPENAI_MODEL_EXTRACTION', 'gpt-3.5-turbo')
+        json_output_path = os.path.join(txt_output_dir, f"{base_filename_local}_competences.json")
+        model_section = current_app.config.get('OPENAI_MODEL_SECTION')
+        model_extraction = current_app.config.get('OPENAI_MODEL_EXTRACTION')
         
         if competences_pages:
             total_competences = len(competences_pages)
