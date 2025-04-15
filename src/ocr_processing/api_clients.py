@@ -66,6 +66,177 @@ def perform_ocr_and_save(pdf_url, output_markdown_filename):
         print(f"Erreur lors de l'appel OCR: {e}") # Pour console serveur
         return False
 
+def find_competences_pages(markdown_content, openai_key=None):
+    """
+    Utilise l'API OpenAI pour identifier la section 'Formation spécifique'
+    et segmenter cette section en plusieurs blocs correspondant à chaque compétence.
+    L'IA doit retourner un JSON respectant le schéma suivant :
+    
+    {
+        "competences": [
+            {
+                "code": "04A0", 
+                "page_debut": 3, 
+                "page_fin": 8
+            },
+            {
+                "code": "04A1", 
+                "page_debut": 9, 
+                "page_fin": 14
+            },
+            ... (autres compétences)
+        ]
+    }
+    
+    Cela permettra de traiter une compétence à la fois.
+    """
+    # Préparer le prompt pour que l'IA segmente la section en retournant
+    # un tableau des bornes de page pour chaque compétence.
+    system_prompt = (
+        "Rôle : Assistant IA expert en analyse de documents OCRés de programmes d'études collégiales québécois.\n\n"
+        "Objectif : Identifier la section 'Formation spécifique' et segmenter cette section en plusieurs compétences. "
+        "Pour chaque compétence, retourne son code ainsi que la page de début et la page de fin correspondantes. "
+        "Le résultat doit être un objet JSON strict respectant le schéma suivant :\n"
+        "{\n"
+        '  "competences": [\n'
+        "    { \"code\": \"04A0\", \"page_debut\": <numéro>, \"page_fin\": <numéro> },\n"
+        "    ...\n"
+        "  ]\n"
+        "}\n\n"
+        "Assure-toi que 'page_debut' est la page où débute la compétence et 'page_fin' est la dernière page où elle se termine. "
+        "Utilise uniquement les pages comportant des informations de compétences (l'énoncé, le contexte, les éléments et les critères).\n\n"
+        "Voici le document OCRé en Markdown (avec indicateurs de page comme '## --- Page <numéro> ---') :\n"
+    )
+    
+    prompt_content = system_prompt + "\n" + markdown_content
+    messages = [
+        {"role": "system", "content": [{"type": "input_text", "text": system_prompt}]},
+        {"role": "user", "content": [{"type": "input_text", "text": prompt_content}]}
+    ]
+    
+    # Schéma JSON requis
+    json_schema = {
+        "type": "object",
+        "required": ["competences"],
+        "properties": {
+            "competences": {
+                "type": "array",
+                "description": "Liste des compétences avec leur code et bornes de pages.",
+                "items": {
+                    "type": "object",
+                    "required": ["code", "page_debut", "page_fin"],
+                    "properties": {
+                        "code": {"type": "string", "description": "Code de la compétence (ex: 04A0)."},
+                        "page_debut": {"type": "integer", "description": "Page de début de la compétence."},
+                        "page_fin": {"type": "integer", "description": "Page de fin de la compétence."}
+                    },
+                    "additionalProperties": False
+                }
+            }
+        },
+        "additionalProperties": False
+    }
+    
+    try:
+        openai_client = OpenAI(api_key=openai_key)
+    except Exception as e:
+        raise Exception(f"Erreur lors de l'initialisation d'OpenAI : {e}")
+    
+    try:
+        response = openai_client.responses.create(
+            model=current_app.config.get('OPENAI_MODEL_SECTION'),
+            input=messages,
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "CompetencePages",
+                    "strict": True,
+                    "schema": json_schema
+                }
+            },
+            reasoning={},
+            tools=[],
+            tool_choice="none",
+            temperature=0,
+            max_output_tokens=1000,
+            top_p=1,
+            store=True
+        )
+        json_response_str = response.output[0].content[0].text
+        pages_info = json.loads(json_response_str)
+        return pages_info  # Doit être un dict avec la clé "competences"
+    except Exception as e:
+        raise Exception(f"Erreur lors de l'appel à OpenAI pour segmentation des compétences : {e}")
+
+def extraire_text_competence(markdown_content, page_debut, page_fin):
+    """
+    Extrait du contenu Markdown uniquement le texte situé entre page_debut et page_fin.
+    
+    On se base sur les marqueurs "## --- Page <numéro> ---". 
+    """
+    import re
+    # Découper le Markdown en segments sur la base des pages
+    segments = re.split(r'## --- Page (\d+) ---', markdown_content)
+    texte_competence = ""
+    # L'array 'segments' contient [texte_avant, num_page, texte, num_page, texte, ...]
+    # On parcourt chaque bloc associé à un numéro de page et on reconstruit si le numéro est dans l'intervalle
+    for i in range(1, len(segments), 2):
+        try:
+            num_page = int(segments[i].strip())
+        except ValueError:
+            continue
+        if page_debut <= num_page <= page_fin:
+            texte_competence += segments[i+1].strip() + "\n"
+    return texte_competence.strip()
+
+def extraire_toutes_les_competences(markdown_content, openai_key, output_json_filename, callback=None):
+    """
+    Combine les étapes :
+     - Utilise find_competences_pages pour obtenir les bornes de pages pour chaque compétence.
+     - Pour chacune, extrait le texte correspondant.
+     - Pour chaque bloc, appelle extraire_competences_depuis_txt pour obtenir le JSON structuré.
+     - Concatène les résultats dans une seule structure JSON sous la clé 'competences'.
+    """
+    # Obtenir la liste des compétences avec leurs bornes de pages
+    pages_info = find_competences_pages(markdown_content, openai_key)
+    if not pages_info or "competences" not in pages_info:
+        raise Exception("Impossible d'identifier les bornes des compétences dans la section 'Formation spécifique'.")
+    
+    toutes_les_competences = []
+    for comp in pages_info["competences"]:
+        code_comp = comp.get("code")
+        page_debut = comp.get("page_debut")
+        page_fin = comp.get("page_fin")
+        # Extraire le texte associé à ces pages
+        texte_comp = extraire_text_competence(markdown_content, page_debut, page_fin)
+        if not texte_comp:
+            continue
+        # Appeler extraire_competences_depuis_txt pour traiter ce bloc
+        extraction_output = extraire_competences_depuis_txt(texte_comp, output_json_filename, openai_key, callback)
+        try:
+            competence_data = json.loads(extraction_output.get("result", "{}"))
+            # On attend que competence_data soit du type {"competences": [...]}
+            if "competences" in competence_data:
+                # On peut éventuellement filtrer ou annoter avec le code identifié
+                for comp_item in competence_data["competences"]:
+                    if not comp_item.get("Code"):
+                        comp_item["Code"] = code_comp
+                    toutes_les_competences.append(comp_item)
+        except Exception as e:
+            if callback:
+                callback({"type": "error", "message": f"Erreur lors du traitement du bloc (code {code_comp}) : {e}"})
+    
+    # Constitution du JSON final
+    final_json = {"competences": toutes_les_competences}
+    try:
+        with open(output_json_filename, "w", encoding="utf-8") as f:
+            json.dump(final_json, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        if callback:
+            callback({"type": "error", "message": f"Erreur lors de la sauvegarde du JSON final : {e}"})
+    
+    return final_json
+
 
 # --- Fonction find_section_with_openai (Garder `print` pour debug console si désiré) ---
 def find_section_with_openai(markdown_content, openai_key=None):
