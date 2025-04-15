@@ -123,7 +123,7 @@ def find_section_with_openai(markdown_content, openai_key=None):
             model=current_app.config.get('OPENAI_MODEL_SECTION'),
             input=messages,
             text={"format": {"type": "json_schema", "name": "PageSection", "schema": json_schema, "strict": True}},
-            reasoning={}, tools=[], tool_choice="none", temperature=0, max_output_tokens=1000, top_p=1, store=True,
+            reasoning={}, tools=[], tool_choice="none", max_output_tokens=1000, top_p=1, store=True,
             # request_timeout=60 # Optionnel
         )
         json_response_str = response.output[0].content[0].text
@@ -283,7 +283,7 @@ def extraire_competences_depuis_txt(text_content, output_json_filename, openai_k
                 {"role": "user", "content": [{"type": "input_text", "text": text_content}]}
             ],
             text={"format": {"type": "json_schema", "name": "extraire_competences_en_json", "strict": True, "schema": json_schema}},
-            reasoning={}, tools=[], tool_choice="none", temperature=0.5, top_p=1, store=True,
+            reasoning={}, tools=[], tool_choice="none", top_p=1, store=True,
             stream=True
         )
 
