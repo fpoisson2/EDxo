@@ -1,43 +1,51 @@
 {
     "competences": [
         {
-            "Code": "02NA",
-            "Nom de la compétence": "Gérer la production des données géospatiales.",
+            "Code": "02NC",
+            "Nom de la compétence": "Participer à la production de documents d’arpentage foncier.",
             "Contexte de réalisation": [
                 {
-                    "texte": "Dans des entreprises ou des organismes de tailles variées.",
+                    "texte": "Dans une étude d’arpenteuse-géomètre ou d’arpenteur-géomètre.",
                     "sous_points": null
                 },
                 {
-                    "texte": "Dans le cadre d’un projet concernant la collecte et le traitement de données géospatiales.",
+                    "texte": "Individuellement.",
                     "sous_points": null
                 },
                 {
-                    "texte": "En collaboration avec :",
+                    "texte": "En collaboration avec l’équipe de production.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Sous la supervision de l’arpenteuse-géomètre ou l’arpenteur-géomètre.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Pour la production d’une description technique, d’un certificat de localisation, d’un certificat d’implantation ou de piquetage, etc.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de :",
                     "sous_points": [
                         {
-                            "texte": "l’équipe de terrain;",
+                            "texte": "de recherches foncières, législatives et cadastrales;",
                             "sous_points": null
                         },
                         {
-                            "texte": "l’équipe de traitement  de données;",
-                            "sous_points": null
-                        },
-                        {
-                            "texte": "la clientèle ou la superviseuse ou le superviseur;",
-                            "sous_points": null
-                        },
-                        {
-                            "texte": "les autres personnes qui collaborent au projet de production.",
+                            "texte": "de données de terrain.",
                             "sous_points": null
                         }
                     ]
                 },
                 {
-                    "texte": "À l’aide :",
+                    "texte": "À l’aide de :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex.  : logiciels de bureautique, de gestion de projet);",
+                            "texte": "de logiciels (ex. : logiciels de DAO, d’arpentage, de bureautique);",
+                            "sous_points": null
+                        },
+                        {
+                            "texte": "de documents d’arpentage;",
                             "sous_points": null
                         },
                         {
@@ -49,11 +57,7 @@
                             "sous_points": null
                         },
                         {
-                            "texte": "des lois, des règlements et des politiques;",
-                            "sous_points": null
-                        },
-                        {
-                            "texte": "des règles de santé et de sécurité du travail.",
+                            "texte": "des lois, des règlements et des politiques.",
                             "sous_points": null
                         }
                     ]
@@ -61,58 +65,43 @@
             ],
             "Critères de performance pour l’ensemble de la compétence": [
                 "Respect des préceptes relatifs à la pratique professionnelle.",
-                "Respect des normes, des lois et des règlements.",
-                "Respect des exigences relatives à la santé, à la sécurité et à l’environnement."
+                "Respect des normes, des lois, des règlements et des politiques."
             ],
             "Éléments": [
                 {
-                    "element": "Déterminer les livrables et leurs caractéristiques.",
+                    "element": "Proposer une position pour les limites de propriété.",
                     "criteres": [
-                        "Examen attentif du mandat.",
-                        "Recherche pertinente de documents.",
-                        "Identification précise des données nécessaires.",
-                        "Identification juste de la précision de positionnement requise.",
-                        "Recherche convenable des données existantes et des données de référence.",
-                        "Identification du format et de la structure des données en fonction des normes."
+                        "Comparaison détaillée des données de terrain, des données cadastrales et des titres.",
+                        "Détermination cohérente de la géométrie et de la position des limites de propriété.",
+                        "Analyse juste de l’effet de la proposition sur les lots adjacents.",
+                        "Présentation détaillée de la proposition à l’arpenteuse-géomètre ou l’arpenteur-géomètre."
                     ]
                 },
                 {
-                    "element": "Élaborer le calendrier des tâches.",
+                    "element": "Produire le plan.",
                     "criteres": [
-                        "Choix des méthodes et des outils de captage en fonction des besoins.",
-                        "Identification complète des tâches et de la séquence de travail.",
-                        "Assignation judicieuse des tâches.",
-                        "Détermination plausible de l’échéancier.",
-                        "Vérification de la disponibilité des effectifs et de l’équipement en fonction de l’échéancier."
+                        "Représentation juste du bien-fonds et des données cadastrales.",
+                        "Représentation juste des bâtisses et des autres constructions.",
+                        "Représentation juste des servitudes, des empiétements et des autres constatations.",
+                        "Représentation juste des dimensions et des marges de recul."
                     ]
                 },
                 {
-                    "element": "Assurer la production des données.",
+                    "element": "Produire le rapport.",
                     "criteres": [
-                        "Vérification régulière du respect des normes.",
-                        "Vérification régulière de la sauvegarde des données.",
-                        "Suivi approprié des opérations.",
-                        "Résolution adéquate des problèmes.",
-                        "Ajustement pertinent de l’échéancier.",
-                        "Vérification appropriée de l’application des normes de santé et de sécurité au travail."
+                        "Description juste des biens-fonds, des bâtisses, des servitudes, des empiétements et des autres constatations.",
+                        "Rédaction correcte de l’historique cadastral et de la clause de concordance.",
+                        "Description juste de la conformité de la position des bâtiments et des structures.",
+                        "Usage approprié du langage juridique."
                     ]
                 },
                 {
-                    "element": "Assurer la qualité  et la complétude des livrables.",
+                    "element": "Finaliser les documents.",
                     "criteres": [
-                        "Vérification appropriée de l’exactitude et de la précision des données.",
-                        "Identification rigoureuse de la présence d’erreurs dans les données.",
-                        "Vérification appropriée de la complétude des données.",
-                        "Mise en place appropriée d’actions correctives.",
-                        "Vérification du format des données en fonction du mandat."
-                    ]
-                },
-                {
-                    "element": "Recommander des améliorations aux processus de production.",
-                    "criteres": [
-                        "Bilan complet des activités.",
-                        "Examen critique des processus.",
-                        "Identification juste des améliorations."
+                        "Correction complète des erreurs.",
+                        "Obtention de l’approbation de l’arpenteuse-géomètre ou l’arpenteur-géomètre.",
+                        "Assemblage soigné.",
+                        "Archivage adéquat au greffe."
                     ]
                 }
             ]
