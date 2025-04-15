@@ -16,19 +16,19 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "d’outils (ex. : logiciels de géomatique et de bureautique, outils d’arpentage et d’acquisition de données géospatiales);",
+                            "texte": "d’outils (ex. : logiciels de géomatique et de bureautique, outils d’arpentage et d’acquisition de données géospatiales)",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’équipement de protection;",
+                            "texte": "d’équipement de protection",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes;",
+                            "texte": "de normes",
                             "sous_points": null
                         },
                         {
-                            "texte": "des lois et règlements.",
+                            "texte": "des lois et règlements",
                             "sous_points": null
                         }
                     ]
@@ -93,11 +93,11 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de cartes et de plans;",
+                            "texte": "de cartes et de plans",
                             "sous_points": null
                         },
                         {
-                            "texte": "de métadonnées.",
+                            "texte": "de métadonnées",
                             "sous_points": null
                         }
                     ]
@@ -106,27 +106,27 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "d’une calculatrice;",
+                            "texte": "d’une calculatrice",
                             "sous_points": null
                         },
                         {
-                            "texte": "de logiciels;",
+                            "texte": "de logiciels",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’outils de mesure et de géométrie;",
+                            "texte": "d’outils de mesure et de géométrie",
                             "sous_points": null
                         },
                         {
-                            "texte": "de documentation de référence;",
+                            "texte": "de documentation de référence",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes.",
+                            "texte": "de normes",
                             "sous_points": null
                         }
                     ]
@@ -192,51 +192,51 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "d’équipement d’arpentage et de captage cartographique;",
+                            "texte": "d’équipement d’arpentage et de captage cartographique",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’un lidar ou d’un sonar (fixe ou mobile);",
+                            "texte": "d’un lidar ou d’un sonar (fixe ou mobile)",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’un drone ou d’un autre véhicule;",
+                            "texte": "d’un drone ou d’un autre véhicule",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’un appareil photographique;",
+                            "texte": "d’un appareil photographique",
                             "sous_points": null
                         },
                         {
-                            "texte": "du carnet de notes;",
+                            "texte": "du carnet de notes",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’équipement de protection et de matériel de signalisation;",
+                            "texte": "d’équipement de protection et de matériel de signalisation",
                             "sous_points": null
                         },
                         {
-                            "texte": "de plans et de données de référence;",
+                            "texte": "de plans et de données de référence",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’un plan de vol ou d’un trajet de captage;",
+                            "texte": "d’un plan de vol ou d’un trajet de captage",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes;",
+                            "texte": "de normes",
                             "sous_points": null
                         },
                         {
-                            "texte": "des lois et règlements;",
+                            "texte": "des lois et règlements",
                             "sous_points": null
                         },
                         {
-                            "texte": "des règles de santé et de sécurité du travail.",
+                            "texte": "des règles de santé et de sécurité du travail",
                             "sous_points": null
                         }
                     ]
@@ -281,7 +281,9 @@
                 {
                     "element": "Assurer la qualité et la conservation des données.",
                     "criteres": [
-                        "Validation appropriée des mesures par doubles vérifications; points de contrôle.",
+                        "Validation appropriée des mesures par :",
+                        "doubles vérifications;",
+                        "points de contrôle.",
                         "Complétude des données et des croquis.",
                         "Concordance entre les données acquises, le carnet de notes et le terrain.",
                         "Sauvegarde appropriée des fichiers et des documents."
@@ -313,15 +315,15 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de données de terrain (angles, distances, coordonnées et notes);",
+                            "texte": "de données de terrain (angles, distances, coordonnées et notes)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de nuages de points (ex. données lidar, données sonar);",
+                            "texte": "de nuages de points (ex. données lidar, données sonar)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de points de contrôle et de référence.",
+                            "texte": "de points de contrôle et de référence",
                             "sous_points": null
                         }
                     ]
@@ -330,19 +332,19 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "d’une calculatrice;",
+                            "texte": "d’une calculatrice",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’un logiciel de calcul de données d’arpentage ou de traitement de nuages de points;",
+                            "texte": "d’un logiciel de calcul de données d’arpentage ou de traitement de nuages de points",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes.",
+                            "texte": "de normes",
                             "sous_points": null
                         }
                     ]
@@ -414,23 +416,23 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de planification de vol, de photogrammétrie, de traitement d’images);",
+                            "texte": "de logiciels (ex. : logiciels de planification de vol, de photogrammétrie, de traitement d’images)",
                             "sous_points": null
                         },
                         {
-                            "texte": "des modèles numériques de terrain ou de surface (MNT ou MNS);",
+                            "texte": "des modèles numériques de terrain ou de surface (MNT ou MNS)",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes;",
+                            "texte": "de normes",
                             "sous_points": null
                         },
                         {
-                            "texte": "des lois et règlements.",
+                            "texte": "des lois et règlements",
                             "sous_points": null
                         }
                     ]
@@ -497,15 +499,15 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "d’images numériques géoréférencées (ex. : imagerie aérienne ou satellitaire, orthoimages);",
+                            "texte": "d’images numériques géoréférencées (ex. : imagerie aérienne ou satellitaire, orthoimages)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de couples stéréoscopiques;",
+                            "texte": "de couples stéréoscopiques",
                             "sous_points": null
                         },
                         {
-                            "texte": "de données géospatiales (ex. : nuages de points).",
+                            "texte": "de données géospatiales (ex. : nuages de points)",
                             "sous_points": null
                         }
                     ]
@@ -514,23 +516,23 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de système d’information géographique [SIG], de dessin assisté par ordinateur [DAO] ou de photogrammétrie);",
+                            "texte": "de logiciels (ex. : logiciels de système d’information géographique [SIG], de dessin assisté par ordinateur [DAO] ou de photogrammétrie)",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’algorithmes d’intelligence artificielle (ex. : algorithmes de détection d’objets, de segmentation);",
+                            "texte": "d’algorithmes d’intelligence artificielle (ex. : algorithmes de détection d’objets, de segmentation)",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’un outil ou d’un environnement de vision stéréoscopique;",
+                            "texte": "d’un outil ou d’un environnement de vision stéréoscopique",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes.",
+                            "texte": "de normes",
                             "sous_points": null
                         }
                     ]
@@ -587,15 +589,15 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de données de terrain (ex. : coordonnées, croquis, mesures, notes, photographies);",
+                            "texte": "de données de terrain (ex. : coordonnées, croquis, mesures, notes, photographies)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de données géospatiales;",
+                            "texte": "de données géospatiales",
                             "sous_points": null
                         },
                         {
-                            "texte": "de modèles 3D (ex. : MNT, maquette numérique, bâti immobilier modélisé [BIM]).",
+                            "texte": "de modèles 3D (ex. : MNT, maquette numérique, bâti immobilier modélisé [BIM])",
                             "sous_points": null
                         }
                     ]
@@ -604,15 +606,15 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de DAO, d’arpentage);",
+                            "texte": "de logiciels (ex. : logiciels de DAO, d’arpentage)",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes.",
+                            "texte": "de normes",
                             "sous_points": null
                         }
                     ]
@@ -689,7 +691,7 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de données (ex. : données géospatiales, tabulaires).",
+                            "texte": "de données (ex. : données géospatiales, tabulaires)",
                             "sous_points": null
                         }
                     ]
@@ -698,19 +700,19 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de SIG, tableur, extracto-chargeur);",
+                            "texte": "de logiciels (ex. : logiciels de SIG, tableur, extracto-chargeur)",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’un langage de programmation et de bibliothèques logicielles;",
+                            "texte": "d’un langage de programmation et de bibliothèques logicielles",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes.",
+                            "texte": "de normes",
                             "sous_points": null
                         }
                     ]
@@ -802,7 +804,7 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de données (ex. : données géospatiales, données statistiques).",
+                            "texte": "de données (ex. : données géospatiales, données statistiques)",
                             "sous_points": null
                         }
                     ]
@@ -811,15 +813,15 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : tableur, logiciels de calcul spécialisé, de graphisme, de bureautique);",
+                            "texte": "de logiciels (ex. : tableur, logiciels de calcul spécialisé, de graphisme, de bureautique)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de la documentation de référence;",
+                            "texte": "de la documentation de référence",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat.",
+                            "texte": "du mandat",
                             "sous_points": null
                         }
                     ]
@@ -876,7 +878,7 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de données (ex. : données géospatiales, statistiques).",
+                            "texte": "de données (ex. : données géospatiales, statistiques)",
                             "sous_points": null
                         }
                     ]
@@ -885,19 +887,19 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de SIG, d’analyse spatiale);",
+                            "texte": "de logiciels (ex. : logiciels de SIG, d’analyse spatiale)",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’outils d’analyse spatiale (ex. : outils d’analyse de réseaux, de topographie, de géostatistiques, de voisinage);",
+                            "texte": "d’outils d’analyse spatiale (ex. : outils d’analyse de réseaux, de topographie, de géostatistiques, de voisinage)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de la documentation de référence;",
+                            "texte": "de la documentation de référence",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat.",
+                            "texte": "du mandat",
                             "sous_points": null
                         }
                     ]
@@ -954,31 +956,31 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "d’un environnement de développement;",
+                            "texte": "d’un environnement de développement",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’un langage de programmation;",
+                            "texte": "d’un langage de programmation",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’outils de programmation (ex. : interfaces de programmation d’applications [API], bibliothèques logicielles, plateformes Web);",
+                            "texte": "d’outils de programmation (ex. : interfaces de programmation d’applications [API], bibliothèques logicielles, plateformes Web)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de capteurs (ex. : géolocalisation et navigation par un système de satellites [GNSS], capteur inertiel, caméra);",
+                            "texte": "de capteurs (ex. : géolocalisation et navigation par un système de satellites [GNSS], capteur inertiel, caméra)",
                             "sous_points": null
                         },
                         {
-                            "texte": "des données géospatiales;",
+                            "texte": "des données géospatiales",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes.",
+                            "texte": "de normes",
                             "sous_points": null
                         }
                     ]
@@ -1054,7 +1056,7 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "d’images numériques (ex. : imagerie satellitaire, aérienne, multispectrale, radar).",
+                            "texte": "d’images numériques (ex. : imagerie satellitaire, aérienne, multispectrale, radar)",
                             "sous_points": null
                         }
                     ]
@@ -1063,27 +1065,27 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de traitement d’images, de télédétection);",
+                            "texte": "de logiciels (ex. : logiciels de traitement d’images, de télédétection)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de méthodes de classification (ex. : méthodes manuelle, automatisée, par apprentissage profond);",
+                            "texte": "de méthodes de classification (ex. : méthodes manuelle, automatisée, par apprentissage profond)",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’une clé d’interprétation;",
+                            "texte": "d’une clé d’interprétation",
                             "sous_points": null
                         },
                         {
-                            "texte": "des données géospatiales;",
+                            "texte": "des données géospatiales",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes.",
+                            "texte": "de normes",
                             "sous_points": null
                         }
                     ]
@@ -1163,7 +1165,7 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de données (ex. : données de terrain, géospatiales, etc.).",
+                            "texte": "de données (ex. : données de terrain, géospatiales, etc.)",
                             "sous_points": null
                         }
                     ]
@@ -1172,19 +1174,19 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de DAO, de SIG, de BIM, de traitement de nuages de points, de photogrammétrie);",
+                            "texte": "de logiciels (ex. : logiciels de DAO, de SIG, de BIM, de traitement de nuages de points, de photogrammétrie)",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’appareils de modélisation 3D (ex. imprimante 3D, appareil CNC);",
+                            "texte": "d’appareils de modélisation 3D (ex. imprimante 3D, appareil CNC)",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes.",
+                            "texte": "de normes",
                             "sous_points": null
                         }
                     ]
@@ -1260,11 +1262,11 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de données (ex. : données géospatiales, statistiques);",
+                            "texte": "de données (ex. : données géospatiales, statistiques)",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’informations complémentaires (ex. : graphiques, tableaux, images, résultats d’analyses spatiales et statistiques).",
+                            "texte": "d’informations complémentaires (ex. : graphiques, tableaux, images, résultats d’analyses spatiales et statistiques)",
                             "sous_points": null
                         }
                     ]
@@ -1273,23 +1275,23 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de SIG, de graphisme);",
+                            "texte": "de logiciels (ex. : logiciels de SIG, de graphisme)",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’une imprimante;",
+                            "texte": "d’une imprimante",
                             "sous_points": null
                         },
                         {
-                            "texte": "de documents de référence;",
+                            "texte": "de documents de référence",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes.",
+                            "texte": "de normes",
                             "sous_points": null
                         }
                     ]
@@ -1377,11 +1379,11 @@
                     "texte": "En collaboration avec :",
                     "sous_points": [
                         {
-                            "texte": "des personnes-ressources;",
+                            "texte": "des personnes-ressources",
                             "sous_points": null
                         },
                         {
-                            "texte": "des spécialistes de domaines variés.",
+                            "texte": "des spécialistes de domaines variés",
                             "sous_points": null
                         }
                     ]
@@ -1390,7 +1392,7 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de données (ex. : données géospatiales, d’infrastructures).",
+                            "texte": "de données (ex. : données géospatiales, d’infrastructures)",
                             "sous_points": null
                         }
                     ]
@@ -1399,19 +1401,19 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de SIG, système de gestion de base de données à référence spatiale);",
+                            "texte": "de logiciels (ex. : logiciels de SIG, système de gestion de base de données à référence spatiale)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de documents de référence;",
+                            "texte": "de documents de référence",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes.",
+                            "texte": "de normes",
                             "sous_points": null
                         }
                     ]
@@ -1493,31 +1495,31 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de bureautique, d’édition de PDF);",
+                            "texte": "de logiciels (ex. : logiciels de bureautique, d’édition de PDF)",
                             "sous_points": null
                         },
                         {
-                            "texte": "du registre foncier;",
+                            "texte": "du registre foncier",
                             "sous_points": null
                         },
                         {
-                            "texte": "des plans cadastraux;",
+                            "texte": "des plans cadastraux",
                             "sous_points": null
                         },
                         {
-                            "texte": "de documents d’arpentage de référence;",
+                            "texte": "de documents d’arpentage de référence",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes;",
+                            "texte": "de normes",
                             "sous_points": null
                         },
                         {
-                            "texte": "des lois, des règlements et des politiques.",
+                            "texte": "des lois, des règlements et des politiques",
                             "sous_points": null
                         }
                     ]
@@ -1581,19 +1583,19 @@
                     "texte": "En collaboration avec :",
                     "sous_points": [
                         {
-                            "texte": "l’équipe de terrain;",
+                            "texte": "l’équipe de terrain",
                             "sous_points": null
                         },
                         {
-                            "texte": "l’équipe de traitement de données;",
+                            "texte": "l’équipe de traitement de données",
                             "sous_points": null
                         },
                         {
-                            "texte": "la clientèle ou la superviseuse ou le superviseur;",
+                            "texte": "la clientèle ou la superviseuse ou le superviseur",
                             "sous_points": null
                         },
                         {
-                            "texte": "les autres personnes qui collaborent au projet de production.",
+                            "texte": "les autres personnes qui collaborent au projet de production",
                             "sous_points": null
                         }
                     ]
@@ -1602,23 +1604,23 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de bureautique, de gestion de projet);",
+                            "texte": "de logiciels (ex. : logiciels de bureautique, de gestion de projet)",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes;",
+                            "texte": "de normes",
                             "sous_points": null
                         },
                         {
-                            "texte": "des lois, des règlements et des politiques;",
+                            "texte": "des lois, des règlements et des politiques",
                             "sous_points": null
                         },
                         {
-                            "texte": "des règles de santé et de sécurité du travail.",
+                            "texte": "des règles de santé et de sécurité du travail",
                             "sous_points": null
                         }
                     ]
@@ -1702,15 +1704,15 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de données (ex. : levés antérieurs, coordonnées connues);",
+                            "texte": "de données (ex. : levés antérieurs, coordonnées connues)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de plans (ex. : plans d’arpentage, d’analyse, de calcul, d’architecture, d’ingénierie);",
+                            "texte": "de plans (ex. : plans d’arpentage, d’analyse, de calcul, d’architecture, d’ingénierie)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de modèles 3D (ex. : MNT, BIM).",
+                            "texte": "de modèles 3D (ex. : MNT, BIM)",
                             "sous_points": null
                         }
                     ]
@@ -1719,35 +1721,35 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de DAO, de calcul spécialisé);",
+                            "texte": "de logiciels (ex. : logiciels de DAO, de calcul spécialisé)",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’équipement d’arpentage;",
+                            "texte": "d’équipement d’arpentage",
                             "sous_points": null
                         },
                         {
-                            "texte": "du carnet de notes;",
+                            "texte": "du carnet de notes",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’équipement de protection et de matériel de signalisation;",
+                            "texte": "d’équipement de protection et de matériel de signalisation",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes;",
+                            "texte": "de normes",
                             "sous_points": null
                         },
                         {
-                            "texte": "des lois et des règlements;",
+                            "texte": "des lois et des règlements",
                             "sous_points": null
                         },
                         {
-                            "texte": "des règles de santé et de sécurité du travail.",
+                            "texte": "des règles de santé et de sécurité du travail",
                             "sous_points": null
                         }
                     ]
@@ -1826,11 +1828,11 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de recherches foncières, législatives et cadastrales;",
+                            "texte": "de recherches foncières, législatives et cadastrales",
                             "sous_points": null
                         },
                         {
-                            "texte": "de données de terrain.",
+                            "texte": "de données de terrain",
                             "sous_points": null
                         }
                     ]
@@ -1839,23 +1841,23 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de DAO, d’arpentage, de bureautique);",
+                            "texte": "de logiciels (ex. : logiciels de DAO, d’arpentage, de bureautique)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de documents d’arpentage;",
+                            "texte": "de documents d’arpentage",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes;",
+                            "texte": "de normes",
                             "sous_points": null
                         },
                         {
-                            "texte": "des lois, des règlements et des politiques.",
+                            "texte": "des lois, des règlements et des politiques",
                             "sous_points": null
                         }
                     ]
@@ -1928,15 +1930,15 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de l’analyse foncière;",
+                            "texte": "de l’analyse foncière",
                             "sous_points": null
                         },
                         {
-                            "texte": "de recherches foncières, législatives et cadastrales;",
+                            "texte": "de recherches foncières, législatives et cadastrales",
                             "sous_points": null
                         },
                         {
-                            "texte": "de données de terrain.",
+                            "texte": "de données de terrain",
                             "sous_points": null
                         }
                     ]
@@ -1945,19 +1947,19 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de DAO, d’arpentage foncier, de bureautique);",
+                            "texte": "de logiciels (ex. : logiciels de DAO, d’arpentage foncier, de bureautique)",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "des instructions pour la présentation des documents cadastraux;",
+                            "texte": "des instructions pour la présentation des documents cadastraux",
                             "sous_points": null
                         },
                         {
-                            "texte": "des lois, des règlements et des politiques.",
+                            "texte": "des lois, des règlements et des politiques",
                             "sous_points": null
                         }
                     ]
@@ -2020,15 +2022,15 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de données (ex. : données géospatiales, statistiques, d’infrastructures);",
+                            "texte": "de données (ex. : données géospatiales, statistiques, d’infrastructures)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de modèles 3D (ex. : MNT, BIM);",
+                            "texte": "de modèles 3D (ex. : MNT, BIM)",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’images et de logos.",
+                            "texte": "d’images et de logos",
                             "sous_points": null
                         }
                     ]
@@ -2037,31 +2039,31 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de logiciels (ex. : logiciels de SIG, de SIG Web);",
+                            "texte": "de logiciels (ex. : logiciels de SIG, de SIG Web)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de langages de programmation;",
+                            "texte": "de langages de programmation",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’outils de programmation (ex. : bibliothèques logicielles, plateformes);",
+                            "texte": "d’outils de programmation (ex. : bibliothèques logicielles, plateformes)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de documents de référence;",
+                            "texte": "de documents de référence",
                             "sous_points": null
                         },
                         {
-                            "texte": "du mandat;",
+                            "texte": "du mandat",
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes;",
+                            "texte": "de normes",
                             "sous_points": null
                         },
                         {
-                            "texte": "des lois et des règlements.",
+                            "texte": "des lois et des règlements",
                             "sous_points": null
                         }
                     ]
@@ -2113,8 +2115,7 @@
                     "criteres": [
                         "Vérification complète des fonctionnalités.",
                         "Vérification de l’esthétique du produit.",
-                        "Correction complète des erreurs.",
-                        "Assistance technique adaptée."
+                        "Correction complète des erreurs."
                     ]
                 },
                 {

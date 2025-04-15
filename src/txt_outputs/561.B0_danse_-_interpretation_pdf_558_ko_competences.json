@@ -1,0 +1,1419 @@
+{
+    "competences": [
+        {
+            "Code": "00ZG",
+            "Nom de la compétence": "Analyser la profession.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir de visites dans différents milieux de la danse et de rencontres avec des spécialistes.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide d’une information récente sur l’exercice de la profession ainsi que sur les organismes et les établissements du secteur de la danse.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Caractériser la profession et les conditions de son exercice.",
+                    "criteres": [
+                        "Recherche d’information pertinente.",
+                        "Examen complet des caractéristiques générales et des conditions d’exercice de la profession.",
+                        "Reconnaissance juste des possibilités de pratique professionnelle."
+                    ]
+                },
+                {
+                    "element": "Examiner les exigences d’exercice de la profession.",
+                    "criteres": [
+                        "Reconnaissance juste des exigences d’exercice de la profession.",
+                        "Détermination de l’importance relative des exigences.",
+                        "Établissement de liens entre les différentes exigences."
+                    ]
+                },
+                {
+                    "element": "Reconnaître la nature et la complémentarité des métiers de la scène en danse.",
+                    "criteres": [
+                        "Détermination des fonctions, rôles et responsabilités associés à chacun des métiers de la scène en danse, en tenant compte de la nature et de la taille des compagnies.",
+                        "Caractérisation des relations de travail et des relations interpersonnelles qui s’établissent généralement entre les gens des métiers de la scène au cours d’une production chorégraphique.",
+                        "Reconnaissance de la spécificité de son rôle au sein d’une équipe de production scénique."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZH",
+            "Nom de la compétence": "Assumer le développement de sa sensibilité artistique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir de la définition de ses besoins en tant qu’artiste interprète.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de recherches personnelles.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Avec l’aide de personnes ressources.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Mettre en place les conditions favorables au développement de sa sensibilité artistique.",
+                    "criteres": [
+                        "Mise en place adéquate de conditions permettant de se laisser remuer profondément, de se laisser toucher sur les plans émotif et esthétique.",
+                        "Recherche assidue et utilisation pertinente d’occasions d’investir et d’acquérir sa sensibilité artistique et sa créativité.",
+                        "Établissement de liens entre le développement de sa sensibilité artistique et l’approfondissement de ses connaissances culturelles, historiques et artistiques."
+                    ]
+                },
+                {
+                    "element": "Approfondir sa sensibilité au mouvement dansé.",
+                    "criteres": [
+                        "Exploration soutenue de liens nouveaux entre un mouvement dansé et les caractéristiques des différents stimuli qui en sont la source.",
+                        "Repérage régulier de caractéristiques et de nuances au cours d’observations de mouvements dansés.",
+                        "Recherche régulière de sentis kinesthésiques clairs au cours de mouvements variés."
+                    ]
+                },
+                {
+                    "element": "Enrichir son expressivité.",
+                    "criteres": [
+                        "Recherche assidue de caractéristiques et de nuances de différents stimuli et exploitation de celles-ci dans le mouvement dansé.",
+                        "Recherche de traits distinctifs de différentes émotions et exploitation de ceux-ci dans le mouvement dansé.",
+                        "Exploration de la traduction en mouvements de divers sentiments, émotions et idées selon des modes de représentation variés.",
+                        "Exploration occasionnelle des possibilités expressives de la voix.",
+                        "Exploration régulière des possibilités expressives de son corps."
+                    ]
+                },
+                {
+                    "element": "Accroître son authenticité.",
+                    "criteres": [
+                        "Prise régulière de risques calculés et réalisation régulière de défis appropriés à son travail d’interprète.",
+                        "Exploration régulière de ses ressources intérieures et investissement judicieux de celles-ci dans son travail d’interprète.",
+                        "Investissement de soi constant dans le mouvement dansé.",
+                        "Perfectionnement de techniques de concentration et de présence et utilisation de celles-ci dans son travail d’interprète."
+                    ]
+                },
+                {
+                    "element": "Explorer son imaginaire.",
+                    "criteres": [
+                        "Engagement répété dans l’univers poétique de la danse.",
+                        "Création de mondes imaginaires variés."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZJ",
+            "Nom de la compétence": "Maintenir une condition physique conforme aux exigences de la profession.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À la suite d’une autoévaluation supervisée de ses forces et d’un relevé des points à améliorer relativement à la vigueur musculaire, à la souplesse et à la forme cardiovasculaire.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de consultations de spécialistes du conditionnement physique et de spécialistes de différentes techniques alternatives.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion de séances d’entraînement guidées et individuelles.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser ses besoins en matière de conditionnement physique.",
+                    "criteres": [
+                        "Examen des différentes possibilités en matière de conditionnement physique.",
+                        "Choix des méthodes de conditionnement physique appropriées à ses besoins.",
+                        "Structuration cohérente des différentes composantes de son programme personnalisé de conditionnement physique."
+                    ]
+                },
+                {
+                    "element": "S’entraîner.",
+                    "criteres": [
+                        "Préparation adéquate du corps par un échauffement corporel précédant l’entraînement.",
+                        "Application des modalités d’entraînement permettant le maintien des qualités musculaires et organiques.",
+                        "Maintien de ses capacités physiques et d’une esthétique physique appropriée au milieu professionnel.",
+                        "Application des modalités d’entraînement permettant le maintien des qualités perceptivo-motrices.",
+                        "Application de modalités d’entraînement permettant le développement de qualités physiques particulières."
+                    ]
+                },
+                {
+                    "element": "Utiliser des méthodes d’entraînement alternatives et complémentaires à la danse.",
+                    "criteres": [
+                        "Repérage des techniques alternatives appropriées à ses besoins.",
+                        "Usage régulier et judicieux des méthodes et techniques retenues."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZK",
+            "Nom de la compétence": "Maintenir une hygiène de vie adaptée aux exigences de la profession.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À l’occasion de chacune des situations particulières à la carrière d’interprète.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En tenant compte de son état de santé et de ses besoins particuliers.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Avec l’aide de spécialistes et de professionnelles et professionnels dans les secteurs en cours.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de toute documentation pertinente.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Adopter un régime alimentaire adapté aux exigences de la profession.",
+                    "criteres": [
+                        "Reconnaissance correcte de ses besoins nutritionnels, énergétiques et hydriques en fonction des situations d’entraînement, de performance, de repos et de récupération.",
+                        "Choix judicieux et application adéquate de régimes alimentaires adaptés aux différentes situations professionnelles.",
+                        "Reconnaissance correcte des principaux symptômes liés à une alimentation dysfonctionnelle.",
+                        "Établissement de liens entre une alimentation dysfonctionnelle et son incidence sur la qualité de la performance et de la santé à court et à long terme."
+                    ]
+                },
+                {
+                    "element": "Appliquer des stratégies de gestion de stress.",
+                    "criteres": [
+                        "Repérage juste des sources de stress liées aux différentes situations professionnelles et reconnaissance des principales réactions physiques, psychiques et comportementales qui leur sont associées.",
+                        "Établissement de liens entre les stratégies préventives et correctives de gestion de stress et les différentes situations professionnelles.",
+                        "Choix judicieux et application adéquate de méthodes de relaxation, de techniques de méditation et de techniques de visualisation adaptées aux différentes situations professionnelles.",
+                        "Choix judicieux et application convenable de méthodes de gestion des émotions.",
+                        "Application adéquate de stratégies de gestion du temps."
+                    ]
+                },
+                {
+                    "element": "Adopter et conserver de saines habitudes de vie.",
+                    "criteres": [
+                        "Établissement d’un équilibre entre les périodes de travail et les périodes de repos.",
+                        "Établissement de liens entre la consommation immodérée d’alcool, de tabac et de substances toxiques et leurs incidences sur la qualité de la performance et de la santé à terme et à long terme.",
+                        "Reconnaissance juste de ses besoins de sommeil et de repos et prise en considération de ces besoins dans la planification de ses journées de travail.",
+                        "Analyse de ses habitudes de vie et mise en place de stratégies d’amélioration réalistes."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZL",
+            "Nom de la compétence": "Gérer des situations associées à des problèmes et à des traumatismes physiques pouvant relever de la pratique de la danse.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir de la connaissance de sa morphologie spécifique, de ses limites et de ses capacités anatomo-physiologiques.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion des différentes situations de travail.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de conseils de professionnels de la santé et d’ouvrages de références.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Prévenir les problèmes et les traumatismes physiques pouvant être liés à la pratique de la danse professionnelle.",
+                    "criteres": [
+                        "Respect de sa morphologie spécifique et de ses limites anatomo-physiologiques lors de toute situation de travail corporel.",
+                        "Information des personnes intéressées quant à ses particularités morphologiques et à ses limites anatomo-physiologiques susceptibles d’entraîner des problèmes de santé.",
+                        "Application adéquate des principes d’entraînement physique et de travail corporel aux différentes situations du travail d’interprète.",
+                        "Pratique adéquate d’un échauffement adapté aux différentes situations du travail d’interprète.",
+                        "Application efficace des mesures de sécurité de base.",
+                        "Repérage et signalisation, aux autorités compétentes, de toute situation à risque reliée au travail et aux lieux."
+                    ]
+                },
+                {
+                    "element": "Gérer des situations pouvant provoquer des blessures d’usure.",
+                    "criteres": [
+                        "Reconnaissance juste des principaux signes avant-coureurs d’une blessure et détermination des modifications adéquates à apporter à l’activité physique en cours.",
+                        "Reconnaissance juste des conditions qui entraînent le surmenage, le surentraînement et les blessures d’usure et détermination des principales modifications à y apporter.",
+                        "Établissement des liens entre le surmenage, le surentraînement et la qualité de la performance.",
+                        "Établissement de liens entre l’absence de traitement de blessures d’usure et l’apparition d’une incapacité fonctionnelle."
+                    ]
+                },
+                {
+                    "element": "Appliquer les mesures nécessaires à la résolution de ses problèmes et à la guérison des traumatismes physiques liés à la pratique de la danse professionnelle.",
+                    "criteres": [
+                        "Reconnaissance juste des principaux traumatismes externes mineurs ainsi que des principales crampes musculaires et application adéquate des soins de base pertinents.",
+                        "Discrimination juste entre les situations qui exigent ou bien une application simple de premiers soins ou bien l’intervention d’une professionnelle ou d’un professionnel de la santé.",
+                        "Application adéquate de premiers soins et de soins relatifs à des blessures du premier degré.",
+                        "Reconnaissance et description précise des symptômes associés à des problèmes et à des traumatismes physiques vécus.",
+                        "Choix pertinent des professionnelles et des professionnels de la santé à consulter en fonction des problèmes vécus."
+                    ]
+                },
+                {
+                    "element": "Assurer le respect de ses droits comme artiste au regard de la santé et de la sécurité au travail.",
+                    "criteres": [
+                        "Reconnaissance juste des situations où une lésion professionnelle est susceptible de se produire.",
+                        "Reconnaissance de l’importance de développer une discipline personnelle en matière de respect de ses droits.",
+                        "Application juste de la procédure à suivre pour bénéficier, à la suite d’un accident de travail ou d’une maladie professionnelle, des différents services dispensés et indemnités versées par la CSST."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZM",
+            "Nom de la compétence": "Établir des communications interpersonnelles et professionnelles.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À l’occasion de chacune des situations particulières à la carrière d’interprète.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En interaction avec autrui.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Exprimer verbalement des opinions, des idées et des éléments de son vécu.",
+                    "criteres": [
+                        "Organisation cohérente de son discours.",
+                        "Justesse des termes utilisés.",
+                        "Production de résumés clairs de sa pensée.",
+                        "Justification succincte de ses opinions.",
+                        "Expression personnalisée de ses expériences et de ses perceptions."
+                    ]
+                },
+                {
+                    "element": "Écouter et recevoir l’exposé verbal d’autrui.",
+                    "criteres": [
+                        "Établissement d’une écoute active.",
+                        "Ouverture à ce que l’autre ressent sans porter de jugement.",
+                        "Reformulation approximative de ce qui a été dit."
+                    ]
+                },
+                {
+                    "element": "Établir et maintenir des échanges avec autrui.",
+                    "criteres": [
+                        "Apport pertinent d’idées et d’information en relation avec le propos de l’échange.",
+                        "Évaluation juste de la pertinence et de la qualité essentielle de son intervention et de ses propos.",
+                        "Respect du propos de l’échange.",
+                        "Critique centrée sur les idées et les opinions émises et non sur les personnes."
+                    ]
+                },
+                {
+                    "element": "Utiliser les terminologies propres aux différents domaines reliés à la profession.",
+                    "criteres": [
+                        "Utilisation pertinente des termes propres aux différents genres de danse pratiqués et à leur esthétique spécifique.",
+                        "Utilisation convenable des principaux termes musicaux en rapport avec la danse.",
+                        "Utilisation convenable des principaux termes des sciences de la santé en rapport avec la danse.",
+                        "Utilisation convenable des principaux termes de la production scénique."
+                    ]
+                },
+                {
+                    "element": "Utiliser des habiletés en matière de travail d’équipe.",
+                    "criteres": [
+                        "Participation active aux tâches communes.",
+                        "Respect constant de l’autre et de ses particularités.",
+                        "Démonstration sensible et pertinente d’entraide.",
+                        "Coopération dans la réalisation du travail d’équipe."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZN",
+            "Nom de la compétence": "Faire preuve d’une maîtrise corporelle nécessaire à la pratique de la danse classique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir des indications d’une ou d’un chorégraphe, d’une répétitrice ou d’un répétiteur, d’une enseignante ou d’un enseignant.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion de classes d’entraînement et en période de création, de répétition et de représentation publique.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Maîtriser le placement.",
+                    "criteres": [
+                        "Positionnement de chaque segment du corps en relation d’efficacité avec les segments adjacents dans des mouvements complexes.",
+                        "Autorégulation constante de l’alignement postural avec aisance et sans tension musculaire."
+                    ]
+                },
+                {
+                    "element": "Maîtriser l’équilibre.",
+                    "criteres": [
+                        "Maintien prolongé et avec aisance d’une position centrée ou décentrée, en situation d’équilibre statique précaire à partir d’appuis variés.",
+                        "Contrôle aisé de l’équilibre et du déséquilibre en situation comportant des difficultés techniques."
+                    ]
+                },
+                {
+                    "element": "Maîtriser la coordination.",
+                    "criteres": [
+                        "Mise en évidence d’un haut niveau de coordination globale dans tous les mouvements dansés.",
+                        "Différenciation fine et indépendance des segments corporels.",
+                        "Mise en évidence du haut niveau de coordination segmentaire exigé dans des mouvements complexes.",
+                        "Mise en évidence d’un haut niveau de coordination du regard avec les mouvements."
+                    ]
+                },
+                {
+                    "element": "Maîtriser les éléments techniques fondamentaux de la danse classique.",
+                    "criteres": [
+                        "Contrôle aisé de l’en dehors.",
+                        "Maîtrise du travail du bas de la jambe et du pied.",
+                        "Maîtrise de la technique de pointes pour femme ou maîtrise de «la grande technique en l’air» pour homme."
+                    ]
+                },
+                {
+                    "element": "Maîtriser la précision.",
+                    "criteres": [
+                        "Identification des détails du mouvement à reproduire.",
+                        "Réalisation avec clarté et netteté de mouvements à degrés de complexité variés.",
+                        "Démonstration d’assurance dans l’exécution des mouvements."
+                    ]
+                },
+                {
+                    "element": "Doser l’effort.",
+                    "criteres": [
+                        "Organisation juste de la répartition et de l’utilisation des énergies.",
+                        "Application de la bonne synergie musculaire.",
+                        "Utilisation de la respiration dans l’équilibration des énergies.",
+                        "Adaptation de la respiration en relation avec le niveau de difficulté des mouvements."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZP",
+            "Nom de la compétence": "Faire preuve d’une maîtrise corporelle nécessaire à la pratique de la danse contemporaine.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir des indications d’une ou d’un chorégraphe, d’une répétitrice ou d’un répétiteur ou encore, d’une enseignante ou d’un enseignant.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion de classes d’entraînement et en période de création, de répétition et de représentation publique.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Maîtriser l’alignement du corps et de ses segments dans sa globalité.",
+                    "criteres": [
+                        "Organisation de chaque segment du corps en relation d’efficacité avec les segments adjacents dans des mouvements exploitant le centrage et le décentrage.",
+                        "Aisance et constance dans l’autorégulation de l’alignement postural global."
+                    ]
+                },
+                {
+                    "element": "Maîtriser l’équilibre et l’action gravitaire.",
+                    "criteres": [
+                        "Maintien prolongé et avec aisance d’une position centrée et décentrée, en situation d’équilibre statique précaire à partir d’appuis sur différentes parties du corps.",
+                        "Contrôle aisé de l’équilibre en situation de mouvements de difficulté élevée.",
+                        "Exploitation du tombé, du récupéré et de l’abandon en intégrant la respiration.",
+                        "Contrôle et exploitation simultanés du centre de gravité, de la tonicité et du poids."
+                    ]
+                },
+                {
+                    "element": "Maîtriser la coordination.",
+                    "criteres": [
+                        "Mise en évidence d’un haut niveau de coordination globale dans tous les mouvements dansés.",
+                        "Différenciation fine et indépendance des segments corporels.",
+                        "Exploitation de la liberté de mouvements spécifiques à chaque articulation en maintenant la stabilité des parties adjacentes.",
+                        "Mise en évidence du haut niveau de coordination segmentaire exigé dans des mouvements complexes.",
+                        "Mise en évidence d’un haut niveau de coordination du regard avec les mouvements."
+                    ]
+                },
+                {
+                    "element": "Maîtriser la mobilité du tronc.",
+                    "criteres": [
+                        "Mise en évidence d’un haut niveau de mobilisation de la colonne vertébrale et du bassin en isolation et en association.",
+                        "Différenciation fine et indépendance de la tête, de la cage thoracique et du bassin.",
+                        "Exploitation de la liberté de mouvements spécifiques à la colonne vertébrale.",
+                        "Réalisation avec aisance de mouvements complexes du tronc."
+                    ]
+                },
+                {
+                    "element": "Maîtriser la précision.",
+                    "criteres": [
+                        "Identification des détails du mouvement à reproduire.",
+                        "Démonstration de clarté et de netteté dans la réalisation de mouvements de complexité variée.",
+                        "Démonstration d’assurance dans les mouvements dansés."
+                    ]
+                },
+                {
+                    "element": "Doser l’effort.",
+                    "criteres": [
+                        "Répartition juste de l’énergie déployée.",
+                        "Adaptation et intégration de la respiration en fonction du niveau de difficulté des mouvements.",
+                        "Application de la bonne synergie musculaire."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZQ",
+            "Nom de la compétence": "Utiliser un vocabulaire de mouvements propres à la pratique de la danse classique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir des indications d’une ou d’un chorégraphe, d’une répétitrice ou d’un répétiteur, d’une enseignante ou d’un enseignant.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion de classes d’entraînement et en période de création, de répétition et de représentation publique.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En situation de travail sur pointes, sur demi-pointes et à plat pour les interprètes féminines.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide d’un support musical ou d’indications rythmiques.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Utiliser une gamme de pas.",
+                    "criteres": [
+                        "Utilisation avec aisance d’une variété de pas exploitant différents appuis corporels.",
+                        "Reproduction de pas dans différentes directions."
+                    ]
+                },
+                {
+                    "element": "Utiliser une gamme de sauts.",
+                    "criteres": [
+                        "Utilisation avec aisance d’une variété de sauts faisant appel à des appuis et à des rythmes variés.",
+                        "Reproduction de sauts de hauteurs variées."
+                    ]
+                },
+                {
+                    "element": "Utiliser une gamme de rotations.",
+                    "criteres": [
+                        "Utilisation avec aisance d’une variété de sauts faisant appel à des appuis et à des rythmes variés.",
+                        "Exécution de rotations dans toutes les positions classiques.",
+                        "Exécution de rotations selon différents axes.",
+                        "Utilisation de techniques de rotation particulières selon le sexe."
+                    ]
+                },
+                {
+                    "element": "Utiliser une gamme de batteries.",
+                    "criteres": [
+                        "Utilisation aisée d’une variété de batteries.",
+                        "Clarté et rapidité dans l’exécution des batteries.",
+                        "Rendu fidèle des dynamismes et des rythmes des batteries."
+                    ]
+                },
+                {
+                    "element": "Utiliser une gamme de mouvements combinés.",
+                    "criteres": [
+                        "Utilisation aisée de mouvements des différentes gammes en combinaison simultanée entre elles.",
+                        "Utilisation aisée de mouvements de différentes gammes en combinaison avec des ports de bras variés."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZR",
+            "Nom de la compétence": "Utiliser un éventail de mouvements propres à la pratique de la danse contemporaine.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir des indications d’une ou d’un chorégraphe, d’une répétitrice ou d’un répétiteur, d’une enseignante ou d’un enseignant.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion de classes d’entraînement et en période de répétition et de représentation publique.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Pour l’utilisation de mouvements tels que la contraction, la courbe, la spirale et la suspension provenant, notamment, de différentes écoles de danse moderne et contemporaine.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Utiliser une gamme de pas.",
+                    "criteres": [
+                        "Utilisation avec aisance d’une variété de pas exploitant des appuis sur différentes parties du corps et différentes orientations des parties du corps.",
+                        "Reproduction de pas dans différentes directions."
+                    ]
+                },
+                {
+                    "element": "Utiliser une gamme de sauts.",
+                    "criteres": [
+                        "Utilisation avec aisance d’une variété de sauts faisant appel à différents appuis, différentes orientations et des rythmes variés.",
+                        "Reproduction de sauts de hauteurs variées."
+                    ]
+                },
+                {
+                    "element": "Utiliser une gamme d’actions permettant de s’abaisser et de s’élever.",
+                    "criteres": [
+                        "Utilisation avec aisance d’une variété d’actions permettant de s’abaisser et de s’élever en exploitant différents appuis corporels et différentes orientations.",
+                        "Utilisation d’une variété d’actions permettant de s’abaisser et de s’élever en exploitant le décentrage.",
+                        "Reproduction d’une variété de chutes."
+                    ]
+                },
+                {
+                    "element": "Utiliser une gamme de tours.",
+                    "criteres": [
+                        "Utilisation avec aisance d’une variété de tours exploitant différents appuis et différentes orientations.",
+                        "Reproduction de tours comprenant plusieurs révolutions.",
+                        "Reproduction de tours selon différents axes."
+                    ]
+                },
+                {
+                    "element": "Utiliser une gamme de mouvements combinés.",
+                    "criteres": [
+                        "Reproduction aisée de mouvements des différentes gammes en combinaison simultanée entre elles.",
+                        "Utilisation aisée de mouvements des différentes gammes en combinaison simultanée avec des mouvements recherchés du tronc.",
+                        "Utilisation aisée de mouvements des différentes gammes en combinaison simultanée avec des mouvements complexes des segments corporels.",
+                        "Exploitation des différentes qualités liées aux mouvements de la danse contemporaine telles que la respiration, le poids et les textures."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZS",
+            "Nom de la compétence": "Réaliser des enchaînements propres à la pratique de la danse classique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir des indications d’une ou d’un chorégraphe, d’une répétitrice ou d’un répétiteur, d’une enseignante ou d’un enseignant.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion de classes d’entraînement et en période de création, de répétition et de représentation publique.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Réaliser des enchaînements de mouvements provenant de différentes écoles.",
+                    "criteres": [
+                        "Détermination juste des mouvements de l’enchaînement à reproduire.",
+                        "Rendu fidèle des mouvements et des liaisons de l’enchaînement.",
+                        "Rendu fidèle du style de l’école de danse auquel l’enchaînement de mouvements appartient.",
+                        "Aisance à réaliser des enchaînements intégrant une variété de mouvements complexes."
+                    ]
+                },
+                {
+                    "element": "Réaliser des enchaînements exploitant des dynamismes variés.",
+                    "criteres": [
+                        "Détermination juste des dynamismes que comporte le phrasé de l’enchaînement à reproduire.",
+                        "Aisance à réaliser des enchaînements comprenant des changements de dynamisme.",
+                        "Rendu fidèle des dynamismes de l’enchaînement."
+                    ]
+                },
+                {
+                    "element": "Réaliser des enchaînements exploitant l’espace.",
+                    "criteres": [
+                        "Détermination juste des éléments spatiaux de l’enchaînement à reproduire.",
+                        "Aisance à réaliser des enchaînements comprenant des changements de direction et d’inclinaison du corps.",
+                        "Rendu fidèle des changements de direction et d’utilisation de l’espace."
+                    ]
+                },
+                {
+                    "element": "Réaliser des enchaînements témoignant d’un souci de finition.",
+                    "criteres": [
+                        "Détermination d’une intention qui motivera l’enchaînement à reproduire.",
+                        "Aisance à exprimer une intentionnalité dans la réalisation de l’enchaînement.",
+                        "Démonstration d’un travail de parachèvement de l’enchaînement."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZT",
+            "Nom de la compétence": "Réaliser des enchaînements propres à la pratique de la danse contemporaine.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir des indications d’une ou d’un chorégraphe d’une répétitrice ou d’un répétiteur, d’une enseignante ou d’un enseignant.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion de classes d’entraînement et en période de création, de répétition, de représentation publique et de recherche personnelle.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Réaliser des enchaînements exploitant des mouvements de gammes et d’écoles variés.",
+                    "criteres": [
+                        "Détermination juste des mouvements de l’enchaînement à reproduire.",
+                        "Détermination juste de l’apport stylistique des différentes écoles dans son développement technique et artistique.",
+                        "Rendu fidèle des mouvements et des liaisons dans l’enchaînement."
+                    ]
+                },
+                {
+                    "element": "Réaliser des enchaînements exploitant des dynamismes et des phrasés variés.",
+                    "criteres": [
+                        "Détermination juste de la musicalité et des dynamismes du phrasé de l’enchaînement à reproduire.",
+                        "Aisance à réaliser l’enchaînement comprenant des changements de dynamisme.",
+                        "Rendu fidèle de la musicalité, des dynamismes et des rythmes contenus dans l’enchaînement."
+                    ]
+                },
+                {
+                    "element": "Réaliser des enchaînements exploitant les éléments spatiaux.",
+                    "criteres": [
+                        "Détermination juste des éléments spatiaux de l’enchaînement à reproduire.",
+                        "Aisance à réaliser l’enchaînement comprenant des changements de direction, d’orientation et de niveau.",
+                        "Rendu fidèle des changements de direction, d’orientation et de niveau contenus dans l’enchaînement."
+                    ]
+                },
+                {
+                    "element": "Réaliser des enchaînements exploitant l’intentionnalité.",
+                    "criteres": [
+                        "Détermination d’intentions qui motiveront l’enchaînement à reproduire.",
+                        "Exploitation de l’intention dans la reproduction de l’enchaînement."
+                    ]
+                },
+                {
+                    "element": "Réaliser des enchaînements exploitant la complexité.",
+                    "criteres": [
+                        "Détermination des éléments qui déterminent la complexité de l’enchaînement à reproduire.",
+                        "Aisance à réaliser l’enchaînement comprenant une variété de mouvements et des changements dans les éléments spatiaux, dynamiques et musicaux.",
+                        "Intégration juste des différentes qualités reliées à l’enchaînement."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZU",
+            "Nom de la compétence": "Utiliser des techniques complémentaires à la danse classique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir des directives d’une ou d’un chorégraphe, d’une répétitrice ou d’un répétiteur, d’une enseignante ou d’un enseignant ou encore d’une ou d’un partenaire.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion de classes d’entraînement, de la création d’une œuvre, de répétitions et de représentations publiques.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Utiliser des techniques corporelles propres à d’autres genres de danse.",
+                    "criteres": [
+                        "Reproduction fidèle de mouvements et de la gestuelle propres à d’autres genres de danse.",
+                        "Application juste de principes fondamentaux, de techniques corporelles propres à d’autres genres de danse.",
+                        "Disponibilité artistique et intellectuelle soutenue."
+                    ]
+                },
+                {
+                    "element": "Utiliser une variété de techniques d’expression complémentaires.",
+                    "criteres": [
+                        "Ouverture face à l’exploration de techniques d’expression variées.",
+                        "Disponibilité artistique et intellectuelle soutenue."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZV",
+            "Nom de la compétence": "Utiliser des techniques complémentaires à la danse contemporaine.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir des indications d’une ou d’un chorégraphe, d’une répétitrice ou d’un répétiteur, d’une enseignante ou d’un enseignant ou encore d’une ou d’un partenaire.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion de classes d’entraînement et en période de création, de répétition et de représentation publique.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Utiliser des techniques corporelles propres à d’autres genres de danse et à des domaines connexes à la danse contemporaine.",
+                    "criteres": [
+                        "Reproduction fidèle de mouvements et de la gestuelle propres à d’autres genres de danse et à des domaines connexes à la danse contemporaine.",
+                        "Application juste de principes fondamentaux de techniques corporelles propres à d’autres genres de danse et à des domaines connexes à la danse contemporaine.",
+                        "Investissement soutenu de sa sensibilité artistique dans l’application des techniques.",
+                        "Application juste de principes fondamentaux de techniques de maniement d’éléments de costume et d’accessoires.",
+                        "Ajustement de techniques corporelles à des structures de l’environnement."
+                    ]
+                },
+                {
+                    "element": "Utiliser des techniques d’expression variées.",
+                    "criteres": [
+                        "Ouverture par rapport à l’exploration de techniques d’expression variées.",
+                        "Application juste des principes de base de techniques d’expression.",
+                        "Investissement soutenu de sa sensibilité artistique dans l’application de techniques d’expression."
+                    ]
+                },
+                {
+                    "element": "Intégrer des principes de l’apprentissage somatique dans l’application de techniques corporelles.",
+                    "criteres": [
+                        "Établissement de liens entre l’application de principes de l’apprentissage somatique et la qualité et l’efficacité de son travail corporel.",
+                        "Application judicieuse de principes de l’apprentissage somatique dans son travail corporel."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZW",
+            "Nom de la compétence": "Maîtriser des techniques d’interrelations corporelles, spatiales et temporelles en danse classique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir des consignes d’une répétitrice ou d’un répétiteur, d’une maîtresse ou d’un maître de ballet ou encore d’une ou un chorégraphe.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion de la création, de la répétition ou de la représentation d’une œuvre.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Utiliser les techniques de porté et de pas de deux.",
+                    "criteres": [
+                        "Précision dans l’utilisation de techniques de porté et de pas de deux.",
+                        "Reconnaissance des dangers inhérents aux techniques de porté et de pas de deux.",
+                        "Application des règles de sécurité appropriées à chaque situation.",
+                        "Respect de la ou du partenaire.",
+                        "Vigilance constante dans le travail avec l’autre."
+                    ]
+                },
+                {
+                    "element": "Maintenir son emplacement dans l’espace et à l’intérieur d’un groupe.",
+                    "criteres": [
+                        "Identification des données globales du mouvement de groupe et de sa place à l’intérieur de celui-ci.",
+                        "Adaptation instantanée à la gestuelle du groupe."
+                    ]
+                },
+                {
+                    "element": "Coordonner ses actions avec celles de ses partenaires.",
+                    "criteres": [
+                        "Harmonisation corporelle et temporelle de ses actions avec celles de ses partenaires.",
+                        "Adaptation aux changements apportés aux actions de ses partenaires."
+                    ]
+                },
+                {
+                    "element": "Assumer les rapports physiques et psychologiques liés aux interrelations corporelles avec une ou un partenaire.",
+                    "criteres": [
+                        "Reconnaissance de l’impact de la proximité et de l’interrelation corporelle sur les plans physique et psychologique.",
+                        "Distinction entre les effets réels produits par la proximité et les impressions artistiques et esthétiques recherchées."
+                    ]
+                },
+                {
+                    "element": "Utiliser sa sensibilité artistique dans l’application des techniques d’interrelations corporelles, temporelles et spatiales.",
+                    "criteres": [
+                        "Exploitation de ses possibilités expressives pendant les différentes interrelations.",
+                        "Ouverture à l’expérimentation."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZX",
+            "Nom de la compétence": "Maîtriser des techniques d’interrelations corporelles, spatiales et temporelles en danse contemporaine.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir des indications d’une ou d’un chorégraphe, d’un répétitrice ou d’une répétiteur, d’une enseignante ou d’un enseignant ou encore d’une ou d’un partenaire.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion d’ateliers et en période de création, de répétition et de représentation publique.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Utiliser des techniques d’interrelations corporelles dans son travail avec un ou plusieurs partenaires.",
+                    "criteres": [
+                        "Utilisation judicieuse et adéquate de techniques de porté, de danse-contact et d’arts du cirque dans des situations d’interdépendance corporelle.",
+                        "Reconnaissance des dangers inhérents aux situations de travail en interdépendance corporelle.",
+                        "Application des règles de sécurité appropriées à chaque situation."
+                    ]
+                },
+                {
+                    "element": "Respecter son rapport spatial avec ses partenaires.",
+                    "criteres": [
+                        "Maintien constant de son rapport spatial à son ou ses partenaires.",
+                        "Détermination juste du patron global du mouvement de groupe et de configuration.",
+                        "Adaptation judicieuse de son rapport spatial au groupe à l’occasion de situations imprévues."
+                    ]
+                },
+                {
+                    "element": "Coordonner temporellement ses actions avec celles de son ou ses partenaires.",
+                    "criteres": [
+                        "Détermination juste des relations temporelles en jeu.",
+                        "Maintien constant de sa relation temporelle avec les actions de son ou de ses partenaires.",
+                        "Adaptation judicieuse de sa relation temporelle avec son ou ses partenaires au moment de situations imprévues."
+                    ]
+                },
+                {
+                    "element": "Assumer les rapports physiques et psychologiques liés aux interrelations corporelles avec un ou des partenaires.",
+                    "criteres": [
+                        "Reconnaissance de l’impact de la proximité et de l’interrelation corporelle sur les plans physique et psychologique.",
+                        "Distinction entre les effets réels suscités par la proximité et les impressions artistiques et esthétiques recherchées."
+                    ]
+                },
+                {
+                    "element": "Utiliser sa sensibilité artistique dans l’application des techniques d’interrelations corporelles, temporelles et spatiales.",
+                    "criteres": [
+                        "Exploitation judicieuse de ses possibilités expressives lors des interrelations.",
+                        "Ouverture à l’expérimentation."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZY",
+            "Nom de la compétence": "Enrichir son éducation esthétique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir d’exigences personnelles et extérieures.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de la définition de ses besoins en tant qu’artiste interprète.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion de la présentation de productions artistiques variées.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion de phénomènes variés comportant des qualités esthétiques notables.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de toute documentation pertinente et d’échanges de vues entre condisciples.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Mettre en place les conditions susceptibles d’engendrer une attitude d’appréciation esthétique.",
+                    "criteres": [
+                        "Repérage de situations où une attitude d’appréciation esthétique serait pertinente, mises les situations habituelles de travail.",
+                        "Démonstration fréquente de l’attitude d’appréciation esthétique en des occasions variées."
+                    ]
+                },
+                {
+                    "element": "Approfondir son appréciation d’œuvres chorégraphiques et d’autres productions artistiques.",
+                    "criteres": [
+                        "Multiplication d’occasions d’apprécier des œuvres chorégraphiques et d’autres productions artistiques.",
+                        "Recherche des particularités des œuvres chorégraphiques et des productions appréciées.",
+                        "Établissement de liens pertinents entre diverses productions artistiques et des œuvres chorégraphiques.",
+                        "Exploration et appréciation justifiées des intentions esthétiques de différents artistes.",
+                        "Justification articulée de ses goûts."
+                    ]
+                },
+                {
+                    "element": "Accroître ses habiletés à situer les productions chorégraphiques dans l’histoire et dans les courants artistiques.",
+                    "criteres": [
+                        "Établissement de liens pertinents entre des œuvres chorégraphiques ainsi que leur chorégraphe et les courants artistiques et milieux socio-historiques dont elles sont issues.",
+                        "Exploration de liens pertinents entre les grands principes de certaines philosophies de l’art et l’art chorégraphique.",
+                        "Établissement de liens pertinents entre sa pratique artistique et différentes productions artistiques."
+                    ]
+                },
+                {
+                    "element": "Explorer d’autres médiums artistiques.",
+                    "criteres": [
+                        "Expérimentation occasionnelle de médiums artistiques autres que la danse.",
+                        "Exploration de complémentarités entre la danse et les autres médiums artistiques."
+                    ]
+                },
+                {
+                    "element": "Mettre à jour ses connaissances sur la danse.",
+                    "criteres": [
+                        "Repérage des principales sources d’information en danse.",
+                        "Consultation régulière de l’information courante touchant les principaux axes de développement en danse."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "00ZZ",
+            "Nom de la compétence": "Moduler des mouvements.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir des indications d’une ou d’un chorégraphe, d’une répétitrice ou d’un répétiteur, d’une enseignante ou d‘un enseignant ou encore d’une ou d’un partenaire.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Varier et nuancer les dynamismes du mouvement dansé.",
+                    "criteres": [
+                        "Différenciation nuancée et réalisations variées et précises de différents dynamismes du mouvement.",
+                        "Variations multiples et nuancées du phrasé dans la réalisation d’une séquence de mouvement."
+                    ]
+                },
+                {
+                    "element": "Harmoniser la réalisation de mouvements et de séquences de mouvements avec un accompagnement sonore.",
+                    "criteres": [
+                        "Intégration judicieuse, dans la réalisation du mouvement, d’éléments rythmiques, dynamiques et stylistiques d’un accompagnement sonore.",
+                        "Ajustement approprié des mouvements à des accompagnements sonores de natures et de styles variés."
+                    ]
+                },
+                {
+                    "element": "Créer des impressions par le mouvement.",
+                    "criteres": [
+                        "Variations subtiles et ajustements corrects du regard par rapport à l’impression recherchée.",
+                        "Projection du mouvement dans l’espace approprié à l’impression recherchée.",
+                        "Établissement de liens entre la production d’images mentales signifiantes et le mouvement, selon l’impression recherchée."
+                    ]
+                },
+                {
+                    "element": "Exploiter sa sensibilité dans la modulation du mouvement.",
+                    "criteres": [
+                        "Investissement constant de sa sensibilité artistique dans la modulation du mouvement.",
+                        "Exploitation judicieuse des possibilités expressives de la modulation du mouvement."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "0100",
+            "Nom de la compétence": "Adopter des attitudes et des comportements propices à une carrière en danse.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À l’occasion de chacune des situations spécifiques à la carrière d’interprète.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Faire preuve de respect d’une éthique professionnelle.",
+                    "criteres": [
+                        "Prise en considération des responsabilités professionnelles qui lui sont attribuées.",
+                        "Démonstration régulière de son sens de l’organisation et de son initiative.",
+                        "Démonstration régulière d’autodiscipline.",
+                        "Contribution sensible à la création d’un climat de respect mutuel entre condisciples.",
+                        "Respect et partage équitable des ressources matérielles communes.",
+                        "Respect de soi et des autres."
+                    ]
+                },
+                {
+                    "element": "Faire preuve de motivation.",
+                    "criteres": [
+                        "Démonstration régulière de son plein engagement et de son désir de donner le meilleur de soi-même.",
+                        "Démonstration régulière de persévérance et de ténacité lors de sa participation aux activités professionnelles."
+                    ]
+                },
+                {
+                    "element": "Composer avec la critique.",
+                    "criteres": [
+                        "Distinction pertinente entre une critique et une attaque personnelle.",
+                        "Prise en considération de la critique dans son travail."
+                    ]
+                },
+                {
+                    "element": "Faire preuve d’adaptation.",
+                    "criteres": [
+                        "Disposition réelle à modifier une tâche selon la demande du moment.",
+                        "Ajustement adapté aux changements organisationnels et chorégraphiques.",
+                        "Ajustement adéquat aux différents styles de fonctionnement des créatrices ou créateurs."
+                    ]
+                },
+                {
+                    "element": "Assurer la préparation matérielle et fonctionnelle de sa participation aux différentes situations professionnelles.",
+                    "criteres": [
+                        "Planification réaliste et utilisation adéquate des ressources matérielles nécessaires.",
+                        "Entretien régulier de son matériel professionnel.",
+                        "Application correcte des principes de base du maquillage, de la coiffure et de l’habillage de scène."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "0101",
+            "Nom de la compétence": "Danser des extraits de rôle du répertoire de la danse classique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À l’occasion de recherches personnelles et de perfectionnement.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de l’analyse de l’œuvre et du rôle à danser.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide du support musical ou rythmique associé à l’œuvre.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de vidéos et de notations chorégraphiques.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Rendre les spécificités stylistiques de l’œuvre de répertoire.",
+                    "criteres": [
+                        "Reconnaissance juste des spécificités stylistiques propres à l’œuvre.",
+                        "Rendu fidèle des particularités des enchaînements propres au style.",
+                        "Modulations fidèles au style.",
+                        "Rendu fidèle des particularités stylistiques des interrelations entre les partenaires."
+                    ]
+                },
+                {
+                    "element": "Appliquer les éléments techniques des extraits chorégraphiques propres au répertoire.",
+                    "criteres": [
+                        "Reconnaissance juste des particularités techniques de l’extrait à danser.",
+                        "Reproduction fidèle et aisée des éléments techniques de l’extrait.",
+                        "Exploitation judicieuse des indications techniques fournies."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "0102",
+            "Nom de la compétence": "Improviser en danse contemporaine.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À partir des indications d’une ou d’un chorégraphe, d’une répétitrice ou d’un répétiteur, d’une enseignante ou d’un enseignant ou encore d’une ou d’un partenaire.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’occasion d’ateliers et durant des périodes de création, de répétition et de représentation publique.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Entrer dans un monde imaginaire.",
+                    "criteres": [
+                        "Création rapide de l’attitude mentale qui favorise l’entrée à entrer dans un monde imaginaire, en interaction avec des partenaires.",
+                        "Saisie rapide et juste des thèmes d’improvisation.",
+                        "Ouverture à des stimuli variés et à l’autre.",
+                        "Dépassement de l’autocensure."
+                    ]
+                },
+                {
+                    "element": "Exploiter sa créativité en improvisation.",
+                    "criteres": [
+                        "Production immédiate de propositions d’éléments chorégraphiques.",
+                        "Variété et originalité de propositions d’éléments chorégraphiques adaptées aux thèmes.",
+                        "Utilisation variée de différents modes de représentation symbolique.",
+                        "Utilisation variée de sa voix et de sons corporels.",
+                        "Utilisation variée d’éléments des costumes et d’accessoires.",
+                        "Exploitation des possibilités expressives des thèmes proposés."
+                    ]
+                },
+                {
+                    "element": "Exploiter ses habiletés d’interprète pendant l’improvisation.",
+                    "criteres": [
+                        "Utilisation efficace de ses habiletés techniques dans l’improvisation.",
+                        "Utilisation fine de ses habiletés à moduler les mouvements improvisés.",
+                        "Utilisation judicieuse de ses habiletés à communiquer et à s’adapter aux autres.",
+                        "Utilisation sensible de ses habiletés à interagir avec les autres en mouvement."
+                    ]
+                },
+                {
+                    "element": "Exploiter sa sensibilité artistique pendant l’improvisation.",
+                    "criteres": [
+                        "Investissement constant de sa sensibilité artistique dans l’improvisation.",
+                        "Exploration de thèmes posant des défis artistiques."
+                    ]
+                },
+                {
+                    "element": "Établir des liens entre le travail d’improvisation et le travail d’interprétation et de création.",
+                    "criteres": [
+                        "Établissement de liens entre la capacité à reproduire la vitalité de l’instant présent dans une interprétation et la richesse du travail d’improvisation.",
+                        "Détermination de la contribution de l’improvisation dans la création d’une œuvre."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "0103",
+            "Nom de la compétence": "Participer au processus de création d’une œuvre chorégraphique en danse classique.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À l’occasion de la création d’une œuvre.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de réflexion, de recherches personnelles et d’échanges d’idées avec des condisciples.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de ressourcements provenant de disciplines artistiques variées.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de toute information pertinente.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Démontrer une réceptivité quant au travail de la ou du chorégraphe et à celui de ses partenaires.",
+                    "criteres": [
+                        "Reconnaissance juste du projet et de la démarche de la ou du chorégraphe.",
+                        "Formulation de commentaires pertinents quant au projet et au processus de création.",
+                        "Intégration judicieuse des commentaires de la ou du chorégraphe.",
+                        "Manifestation d’une ouverture d’esprit envers le monde poétique de la ou du chorégraphe."
+                    ]
+                },
+                {
+                    "element": "Prendre part au processus de création.",
+                    "criteres": [
+                        "Évaluation précise des exigences liées aux mouvements.",
+                        "Utilisation de techniques judicieuses.",
+                        "Réponse corporelle juste et rapide aux demandes de la ou du chorégraphe.",
+                        "Mémorisation rapide de son rôle.",
+                        "Adaptation juste à des styles variés.",
+                        "Utilisation créative de l’improvisation suivant les directives de la ou du chorégraphe.",
+                        "Disposition à agir à titre de mémoire vive."
+                    ]
+                },
+                {
+                    "element": "Exploiter sa sensibilité artistique.",
+                    "criteres": [
+                        "Adaptation juste de l’expression artistique à l’esthétique de la ou du chorégraphe.",
+                        "Choix judicieux et utilisation sensible de références variées.",
+                        "Prise en considération d’indices non verbaux de la ou du chorégraphe.",
+                        "Respect des orientations artistiques de la ou du chorégraphe."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "0104",
+            "Nom de la compétence": "Coopérer au processus de création d’une œuvre chorégraphique en danse contemporaine.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À l’occasion de la création d’une œuvre.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de réflexions, de recherches personnelles et d’échanges d’idées avec des condisciples.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de ressourcements provenant de disciplines artistiques variées.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de toute information pertinente.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Participer à l’établissement et au maintien d’un climat de travail propice à la création.",
+                    "criteres": [
+                        "Reconnaissance juste du projet et de la démarche de la ou du chorégraphe.",
+                        "Formulation de commentaires pertinents quant au projet et au processus de création.",
+                        "Manifestation d’un état de disponibilité aux demandes de la ou du chorégraphe.",
+                        "Manifestation d’une ouverture d’esprit envers le monde poétique de la ou du chorégraphe.",
+                        "Respect des directives de la ou du chorégraphe."
+                    ]
+                },
+                {
+                    "element": "Prendre part au processus de création.",
+                    "criteres": [
+                        "Mémorisation rapide de son rôle.",
+                        "Disposition à agir à titre de mémoire vive.",
+                        "Utilisation judicieuse de ses habiletés techniques.",
+                        "Modulation et transformation juste de mouvements et d’éléments chorégraphiques selon la demande de la ou du chorégraphe.",
+                        "Utilisation intégrée des différents éléments musicaux, matériels et environnementaux dans son rôle.",
+                        "Intégration judicieuse des critiques de la ou du chorégraphe et des commentaires de ses condisciples.",
+                        "Exploitation créative de l’improvisation."
+                    ]
+                },
+                {
+                    "element": "Exploiter sa sensibilité artistique afin d’inspirer la ou le chorégraphe.",
+                    "criteres": [
+                        "Reconnaissance de sa capacité à créer avec la ou le chorégraphe une esthétique nouvelle et contemporaine.",
+                        "Proposition d’idées adaptées aux différentes étapes du processus de création.",
+                        "Proposition de solutions appropriées aux problèmes chorégraphiques rencontrés.",
+                        "Adaptation juste de l’expression artistique à l’esthétique de la ou du chorégraphe.",
+                        "Recherche d’un ressourcement pour enrichir sa participation à la création."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "0105",
+            "Nom de la compétence": "S’approprier un rôle.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À l’occasion des répétitions d’une œuvre chorégraphique.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "En vue de l’interprétation d’un rôle ou d’un doublage.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide des directives de la ou du chorégraphe ou encore de la répétitrice ou du répétiteur.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de réflexions, de recherches personnelles et d’échanges d’idées avec des condisciples.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de vidéos, de notations chorégraphiques et de toute information pertinente.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Analyser son rôle et le mettre en rapport avec l’œuvre.",
+                    "criteres": [
+                        "Identification juste du type de rôle.",
+                        "Détermination juste de l’apport de son rôle à l’œuvre.",
+                        "Relevé de liens entre son rôle et celui des autres interprètes.",
+                        "Recherche judicieuse de pistes de compréhension et d’approfondissement de son rôle."
+                    ]
+                },
+                {
+                    "element": "S’ajuster aux exigences de la ou du chorégraphe.",
+                    "criteres": [
+                        "Mémorisation et reproduction précise des éléments chorégraphiques.",
+                        "Mémorisation et modulation précise des mouvements selon les directives.",
+                        "Adaptation du rôle à ses capacités, en accord avec la ou le chorégraphe.",
+                        "Mémorisation et adaptation de la mise en espace des éléments chorégraphiques de son rôle en relation avec ceux des autres interprètes.",
+                        "Intégration harmonieuse des différents éléments musicaux, matériels et environnementaux dans son rôle."
+                    ]
+                },
+                {
+                    "element": "Explorer les pistes relatives à son rôle et en proposer une interprétation personnelle.",
+                    "criteres": [
+                        "Intégration sensible de l’univers de la ou du chorégraphe dans ses essais d’interprétation du rôle.",
+                        "Exploitation de sa sensibilité artistique dans ses essais d’interprétation du rôle.",
+                        "Intégration des éléments techniques, chorégraphiques et artistiques dans sa proposition d’interprétation."
+                    ]
+                },
+                {
+                    "element": "Raffiner son appropriation du rôle.",
+                    "criteres": [
+                        "Application judicieuse d’un regard critique sur ses essais d’interprétation.",
+                        "Amélioration et peaufinement du rôle.",
+                        "Établissement de liens entre son rôle et celui des autres interprètes."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "0106",
+            "Nom de la compétence": "Interpréter un rôle.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À l’occasion d’une représentation publique d’une œuvre chorégraphique.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide d’un support technique.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "Avec l’aide de collaboratrices et de collaborateurs artistiques.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Communiquer l’univers poétique de l’œuvre aux spectatrices et aux spectateurs.",
+                    "criteres": [
+                        "Mise en place des conditions favorables à son entrée dans le rôle et dans l’univers poétique de l’œuvre.",
+                        "Maintien de sa présence scénique durant toute la représentation de l’œuvre.",
+                        "Investissement total de sa sensibilité artistique et de ses habiletés physiques et techniques dans sa prestation.",
+                        "Rendu, perceptible aux spectatrices et aux spectateurs, de l’univers poétique de son rôle.",
+                        "Établissement de liens avec les autres interprètes pour rendre sensible l’univers poétique de l’œuvre."
+                    ]
+                },
+                {
+                    "element": "Danser.",
+                    "criteres": [
+                        "Rendu de la modulation des mouvements.",
+                        "Rendu de l’intégration à son rôle des différents éléments musicaux, matériels et environnementaux.",
+                        "Exploitation de ses compétences d’interprète."
+                    ]
+                },
+                {
+                    "element": "Renouveler son engagement artistique d’une prestation à l’autre.",
+                    "criteres": [
+                        "Renouvellement constant de son engagement pendant toutes les représentations publiques de l’œuvre.",
+                        "Affinement des nuances qualitatives et techniques.",
+                        "Raffinement des éléments psychologiques de son rôle, d’une prestation à l’autre."
+                    ]
+                }
+            ]
+        },
+        {
+            "Code": "0107",
+            "Nom de la compétence": "Gérer sa carrière.",
+            "Contexte de réalisation": [
+                {
+                    "texte": "À l’occasion de la planification et au cours de sa carrière d’interprète.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À partir de réflexions personnelles et d’échanges d’idées avec des condisciples et des personnes-ressources.",
+                    "sous_points": null
+                },
+                {
+                    "texte": "À l’aide de toute information pertinente.",
+                    "sous_points": null
+                }
+            ],
+            "Critères de performance pour l’ensemble de la compétence": null,
+            "Éléments": [
+                {
+                    "element": "Favoriser son évolution professionnelle.",
+                    "criteres": [
+                        "Développement d’une vision réaliste de sa carrière professionnelle, actuelle et future.",
+                        "Réalisation d’autocritiques réalistes sur son travail d’interprète.",
+                        "Définition des besoins précis liés à son évolution professionnelle."
+                    ]
+                },
+                {
+                    "element": "Développer et maintenir un réseau de contacts professionnels.",
+                    "criteres": [
+                        "Préparation et mise à jour régulière d’un dossier sur les ressources professionnelles.",
+                        "Application judicieuse de modalités pour établir et maintenir des liens avec des organismes en danse.",
+                        "Application judicieuse de modalités pour établir et maintenir des liens avec la communauté artistique et le monde du spectacle."
+                    ]
+                },
+                {
+                    "element": "Appliquer des stratégies de recherche de travail en danse.",
+                    "criteres": [
+                        "Préparation judicieuse et planification d’une mise à jour continue de son curriculum vitæ et de son dossier.",
+                        "Repérage efficace d’organismes offrant des bourses et des subventions aux interprètes en danse.",
+                        "Préparation correcte et judicieuse de demandes de bourses, de subventions et de travail.",
+                        "Préparation adéquate d’auditions et d’évaluations.",
+                        "Repérage stratégique d’offres et de possibilités de travail.",
+                        "Reconnaissance de l’importance de faire preuve d’initiative et d’innovation au regard des stratégies de recherche de travail."
+                    ]
+                },
+                {
+                    "element": "Appliquer des stratégies de gestion de travail.",
+                    "criteres": [
+                        "Utilisation judicieuse de stratégies de négociation d’ententes de travail.",
+                        "Planification réaliste et gestion efficace de son horaire de travail.",
+                        "Prise en considération adéquate de la réglementation régissant le statut de l’artiste dans sa gestion financière."
+                    ]
+                }
+            ]
+        }
+    ]
+}
