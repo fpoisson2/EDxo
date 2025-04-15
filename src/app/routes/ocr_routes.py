@@ -189,48 +189,89 @@ def start_ocr_processing():
         logger.warning(f"Échec de validation du formulaire OCR : {form.errors}")
         return render_template('ocr/trigger_page.html', form=form)
 
-
-# --- Route pour VÉRIFIER LE STATUT de la tâche ---
 @ocr_bp.route('/status/<task_id>')
 @login_required
 def task_status(task_id):
     """Vérifie et retourne le statut de la tâche Celery."""
     try:
-        # Utiliser l'instance 'celery' importée pour obtenir le résultat
+        # Interroger la tâche avec l'ID fourni
         task = celery.AsyncResult(task_id)
-
         response_data = {'task_id': task_id, 'state': task.state, 'info': {}}
 
-        # Construire la réponse basée sur l'état
         if task.state == 'PENDING':
-            response_data['info'] = {'status': 'En attente...', 'message': 'La tâche est en file d\'attente ou n\'existe pas.'}
+            response_data['info'] = {
+                'status': 'En attente...',
+                'message': 'La tâche est en file d\'attente ou n\'existe pas.'
+            }
         elif task.state == 'PROGRESS':
             response_data['info'] = task.info if task.info else {'status': 'En cours...'}
-        elif task.state == 'SUCCESS' or task.state.startswith('COMPLETED_WITH'): # Inclure succès partiel
-             # task.info contient la valeur retournée par la tâche (le dict 'results')
-             response_data['info'] = task.info if task.info else {} # Utiliser task.info
-             response_data['result_url'] = url_for('ocr.task_result', task_id=task_id)
+        elif task.state == 'SUCCESS':
+            # Vérifier si c'est une tâche principale qui a lancé un workflow
+            result = task.result
+            if isinstance(result, dict) and 'message' in result and 'workflow a été lancé' in result.get('message', ''):
+                # C'est la tâche principale qui a lancé le chord/groupe
+                callback_id = result.get('task_id')
+                if callback_id:
+                    response_data['info'] = {
+                        'status': 'Traitement en arrière-plan',
+                        'message': result.get('message', 'Traitement en cours...'),
+                        'progress': 60,  # Progrès intermédiaire
+                        'callback_task_id': callback_id,
+                        'step': 'Traitement en arrière-plan'
+                    }
+                else:
+                    response_data['info'] = result
+            else:
+                # Si le résultat de la tâche finale contient une clé "callback_task_id",
+                # c'est que la tâche agrégée a mis à jour l'état de la tâche originale.
+                meta = result if result else {}
+                # On peut choisir ici d'afficher un lien vers les résultats du callback.
+                if isinstance(meta, dict) and meta.get('callback_task_id'):
+                    result_id = meta['callback_task_id']
+                else:
+                    result_id = task_id
+                response_data['info'] = meta
+                # Inclure l'URL de résultat si nous sommes en état de succès
+                response_data['result_url'] = url_for('ocr.task_result', task_id=result_id)
         elif task.state == 'FAILURE':
-            info = task.info # Contient l'exception
+            info = task.info
             error_detail = str(info)
             if isinstance(info, dict) and 'error' in info:
                 error_detail = info['error']
             elif isinstance(info, Exception):
-                 error_detail = f"{type(info).__name__}: {info}"
+                error_detail = f"{type(info).__name__}: {info}"
             response_data['info'] = {'error': error_detail, 'status': 'Échec'}
-            # Donner l'URL des résultats même en cas d'échec pour voir le message
             response_data['result_url'] = url_for('ocr.task_result', task_id=task_id)
-        else: # Autres états (REVOKED, RETRY, etc.)
+        else:
             response_data['info'] = {'status': task.state}
+
+        # Si nous avons trouvé un ID de callback et que ce n'est pas celui qu'on suit déjà,
+        # on peut essayer de récupérer des informations supplémentaires sur ce callback
+        callback_id = response_data['info'].get('callback_task_id')
+        if callback_id and callback_id != task_id:
+            try:
+                callback_task = celery.AsyncResult(callback_id)
+                if callback_task.state != 'PENDING':
+                    # On a des informations sur le callback, on peut les intégrer
+                    response_data['callback_state'] = callback_task.state
+                    if callback_task.state == 'SUCCESS' and callback_task.result:
+                        # Le callback a terminé, on peut récupérer son résultat
+                        response_data['info'] = callback_task.result
+                        response_data['state'] = callback_task.state
+                        # Mise à jour de l'URL du résultat pour pointer vers le callback
+                        response_data['result_url'] = url_for('ocr.task_result', task_id=callback_id)
+            except Exception as callback_err:
+                logger.warning(f"Erreur lors de la récupération du statut du callback {callback_id}: {callback_err}")
 
         return jsonify(response_data)
 
     except Exception as e:
-        # Capturer les erreurs potentielles lors de l'accès à Celery/Redis
         logger.error(f"Erreur dans task_status pour {task_id}: {e}", exc_info=True)
-        # Retourner une réponse d'erreur JSON standardisée
-        return jsonify({'task_id': task_id, 'state': 'ERROR', 'info': {'error': f'Erreur interne serveur: {e}'}}), 500
-
+        return jsonify({
+            'task_id': task_id,
+            'state': 'ERROR',
+            'info': {'error': f'Erreur interne serveur: {e}'}
+        }), 500
 
 
 @ocr_bp.route('/result/<task_id>')
@@ -240,18 +281,46 @@ def task_result(task_id):
     try:
         # Utiliser l'instance 'celery' importée
         task = celery.AsyncResult(task_id)
-
         results = None
+        
+        # Vérifier si c'est une tâche principale qui a lancé un callback
+        if task.state == 'SUCCESS' and isinstance(task.result, dict) and 'task_id' in task.result and 'workflow a été lancé' in task.result.get('message', ''):
+            # C'est une tâche "lanceur de workflow", on doit vérifier le callback
+            callback_id = task.result.get('task_id')
+            if callback_id:
+                logger.info(f"Tâche {task_id} est un lanceur de workflow, redirection vers le résultat du callback {callback_id}")
+                # Rediriger vers la page de résultat du callback
+                return redirect(url_for('ocr.task_result', task_id=callback_id))
+            else:
+                logger.warning(f"Tâche {task_id} est un lanceur de workflow mais l'ID du callback est manquant")
+        
         # Vérifier les états de succès ou d'échec pour obtenir les résultats/infos
         if task.state == 'SUCCESS' or task.state.startswith('COMPLETED_WITH'):
             results = task.result # task.result contient le dict retourné par la tâche
             if not isinstance(results, dict): # Vérification de sécurité
                  logger.warning(f"Résultat inattendu (pas dict) pour tâche {task_id} réussie: {results}")
                  results = {"task_id": task_id, "final_status": task.state, "raw_result": str(results)}
+            
             # Assurer que task_id et final_status sont là pour le template
             results['task_id'] = results.get('task_id', task_id)
             results['final_status'] = results.get('final_status', task.state)
-
+            
+            # Vérifier si les informations essentielles manquent
+            if not results.get('competences_count') and not results.get('base_filename') and not results.get('pdf_title'):
+                # Tenter de trouver une tâche originale ou callback associée
+                orig_task_id = results.get('original_task_id')
+                if orig_task_id and orig_task_id != task_id:
+                    logger.info(f"Tentative de récupération des informations depuis la tâche originale {orig_task_id}")
+                    try:
+                        orig_task = celery.AsyncResult(orig_task_id)
+                        if orig_task.state == 'SUCCESS' and isinstance(orig_task.result, dict):
+                            # Enrichir les résultats avec les informations de la tâche originale
+                            for key, value in orig_task.result.items():
+                                if key not in results:
+                                    results[key] = value
+                    except Exception as orig_err:
+                        logger.error(f"Erreur lors de la récupération de la tâche originale {orig_task_id}: {orig_err}")
+            
         elif task.state == 'FAILURE':
             error_info = task.result # task.result contient l'exception
             error_detail = str(error_info)
@@ -262,13 +331,11 @@ def task_result(task_id):
                 "pdf_title": "Inconnu (Échec)", "pdf_source": "Inconnue (Échec)"
             }
             flash(f"Le traitement a échoué: {error_detail}", "danger")
-
         else: # PENDING, PROGRESS, etc.
             flash("Le traitement n'est pas encore terminé ou dans un état inattendu.", "info")
             return redirect(url_for('ocr.task_status_page', task_id=task_id))
-
+        
         return render_template('ocr/results.html', results=results)
-
     except Exception as e:
         logger.error(f"Erreur dans task_result pour {task_id}: {e}", exc_info=True)
         flash(f"Erreur lors de la récupération des résultats de la tâche: {e}", "danger")
