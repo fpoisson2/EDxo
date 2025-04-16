@@ -39,7 +39,7 @@ from app.models import db, BackupConfig, User, Competence, ElementCompetence, El
                    PlanCadreCompetencesCertifiees, PlanCadreCompetencesDeveloppees, PlanDeCours, PlanDeCoursCalendrier, \
                    PlanDeCoursMediagraphie, PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, \
                    PlanDeCoursEvaluationsCapacites, Department, DepartmentRegles, DepartmentPIEA, \
-                   ListeProgrammeMinisteriel, Programme, Cours, ListeCegep, GlobalGenerationSettings, user_programme
+                   ListeProgrammeMinisteriel, Programme, Cours, ListeCegep, GlobalGenerationSettings, user_programme, CoursCorequis, CoursPrealable
 
 import base64
 
@@ -54,6 +54,355 @@ logger = logging.getLogger(__name__)
 
 DATABASE = 'programme.db'
 
+
+def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
+    """
+    Sauvegarde les données de la grille de cours en base de données en utilisant les modèles existants.
+    
+    Args:
+        grille_data (dict): Les données de la grille au format JSON
+        programme_id (int): ID du programme auquel associer la grille
+        programme_nom (str): Nom du programme
+        user_id (int): ID de l'utilisateur qui importe la grille
+        
+    Returns:
+        bool: True si la sauvegarde a réussi, False sinon
+    """
+    try:
+        # Importer datetime ici pour s'assurer qu'il est disponible
+        from datetime import datetime
+        from app.models import DBChange
+        
+        # Fonction pour créer manuellement des entrées DBChange
+        def create_db_change(operation, table_name, record_id, changes_dict):
+            new_change = DBChange(
+                timestamp=datetime.utcnow(),  # Utiliser l'objet datetime directement, pas sa représentation en chaîne
+                user_id=user_id,
+                operation=operation,
+                table_name=table_name,
+                record_id=record_id,
+                changes=changes_dict
+            )
+            db.session.add(new_change)
+        
+        # Vérifier que le programme existe
+        programme = Programme.query.get(programme_id)
+        if not programme:
+            logger.error(f"Programme avec ID {programme_id} introuvable")
+            return False
+        
+        # Commencer une transaction
+        db.session.begin_nested()
+        
+        # Dictionnaire pour suivre les codes de cours créés et leurs IDs
+        created_courses = {}
+        
+        # Traiter chaque session dans la grille
+        for session_data in grille_data.get('sessions', []):
+            # Vous pourriez utiliser:
+            session_value = session_data.get('numero_session', '0')
+            if isinstance(session_value, int):
+                session_num = session_value
+            else:
+                session_num = int(session_value.split(' ')[-1]) if session_value.split(' ')[-1].isdigit() else 0
+                
+            # Traiter chaque cours dans la session
+            for cours_data in session_data.get('cours', []):
+                code_cours = cours_data.get('code_cours')
+                titre_cours = cours_data.get('titre_cours')
+                
+                # Vérifier si le cours existe déjà (par code)
+                existing_cours = Cours.query.filter_by(
+                    programme_id=programme_id,
+                    code=code_cours
+                ).first()
+                
+                if existing_cours:
+                    # Stocker les anciennes valeurs pour le suivi des changements
+                    old_values = {
+                        "nom": existing_cours.nom,
+                        "session": existing_cours.session,
+                        "heures_theorie": existing_cours.heures_theorie,
+                        "heures_laboratoire": existing_cours.heures_laboratoire,
+                        "heures_travail_maison": existing_cours.heures_travail_maison
+                    }
+                    
+                    # Mettre à jour le cours existant
+                    existing_cours.nom = titre_cours
+                    existing_cours.session = session_num
+                    existing_cours.heures_theorie = cours_data.get('heures_theorie', 0)
+                    existing_cours.heures_laboratoire = cours_data.get('heures_labo', 0)
+                    existing_cours.heures_travail_maison = cours_data.get('heures_maison', 0)
+                    cours_id = existing_cours.id
+                    
+                    # Créer une entrée DBChange manuellement
+                    create_db_change(
+                        "UPDATE",
+                        "Cours",
+                        cours_id,
+                        {
+                            "old_values": old_values,
+                            "new_values": {
+                                "nom": titre_cours,
+                                "session": session_num,
+                                "heures_theorie": cours_data.get('heures_theorie', 0),
+                                "heures_laboratoire": cours_data.get('heures_labo', 0),
+                                "heures_travail_maison": cours_data.get('heures_maison', 0)
+                            }
+                        }
+                    )
+                else:
+                    # Créer un nouveau cours
+                    nouveau_cours = Cours(
+                        programme_id=programme_id,
+                        code=code_cours,
+                        nom=titre_cours,
+                        session=session_num,
+                        heures_theorie=cours_data.get('heures_theorie', 0),
+                        heures_laboratoire=cours_data.get('heures_labo', 0),
+                        heures_travail_maison=cours_data.get('heures_maison', 0)
+                    )
+                    db.session.add(nouveau_cours)
+                    db.session.flush()  # Pour obtenir l'ID du cours
+                    cours_id = nouveau_cours.id
+                    
+                    # Créer une entrée DBChange manuellement
+                    create_db_change(
+                        "INSERT",
+                        "Cours",
+                        cours_id,
+                        {
+                            "new_values": {
+                                "id": cours_id,
+                                "programme_id": programme_id,
+                                "code": code_cours,
+                                "nom": titre_cours,
+                                "session": session_num,
+                                "heures_theorie": cours_data.get('heures_theorie', 0),
+                                "heures_laboratoire": cours_data.get('heures_labo', 0),
+                                "heures_travail_maison": cours_data.get('heures_maison', 0)
+                            }
+                        }
+                    )
+                
+                # Stocker l'ID du cours pour référence ultérieure
+                created_courses[code_cours] = cours_id
+                
+                # Supprimer les préalables et corequis existants pour une mise à jour propre
+                CoursPrealable.query.filter_by(cours_id=cours_id).delete()
+                CoursCorequis.query.filter_by(cours_id=cours_id).delete()
+                
+                # Ajouter les préalables
+                for prerequis in cours_data.get('prerequis', []):
+                    prereq_code = prerequis.get('code_cours')
+                    pourcentage = prerequis.get('pourcentage_minimum', 0)
+                    
+                    # Ajouter le préalable
+                    new_prereq = CoursPrealable(
+                        cours_id=cours_id,
+                        cours_prealable_id=0,  # Temporaire, sera mis à jour après avoir traité tous les cours
+                        note_necessaire=pourcentage
+                    )
+                    db.session.add(new_prereq)
+                    db.session.flush()  # Pour obtenir l'ID
+                    
+                    # Créer une entrée DBChange manuellement
+                    create_db_change(
+                        "INSERT",
+                        "CoursPrealable",
+                        new_prereq.id,
+                        {
+                            "new_values": {
+                                "id": new_prereq.id,
+                                "cours_id": cours_id,
+                                "cours_prealable_id": 0,
+                                "note_necessaire": pourcentage
+                            }
+                        }
+                    )
+                
+                # Ajouter les corequis
+                for corequis in cours_data.get('corequis', []):
+                    corequis_code = corequis  # Adapter selon la structure réelle des données
+                    
+                    # Ajouter le corequis
+                    new_coreq = CoursCorequis(
+                        cours_id=cours_id,
+                        cours_corequis_id=0  # Temporaire, sera mis à jour après avoir traité tous les cours
+                    )
+                    db.session.add(new_coreq)
+                    db.session.flush()  # Pour obtenir l'ID
+                    
+                    # Créer une entrée DBChange manuellement
+                    create_db_change(
+                        "INSERT",
+                        "CoursCorequis",
+                        new_coreq.id,
+                        {
+                            "new_values": {
+                                "id": new_coreq.id,
+                                "cours_id": cours_id,
+                                "cours_corequis_id": 0
+                            }
+                        }
+                    )
+        
+        # Maintenant, mettre à jour les IDs des cours préalables et corequis
+        # Récupérer tous les préalables avec cours_prealable_id = 0
+        all_prerequisites = CoursPrealable.query.filter_by(cours_prealable_id=0).all()
+        for prereq in all_prerequisites:
+            # Trouver le cours parent
+            parent_cours = Cours.query.get(prereq.cours_id)
+            if parent_cours:
+                # Rechercher le code du cours préalable dans la grille JSON
+                for session_data in grille_data.get('sessions', []):
+                    for cours_data in session_data.get('cours', []):
+                        if cours_data.get('code_cours') == parent_cours.code:
+                            # Trouver les préalables dans le JSON
+                            for json_prereq in cours_data.get('prerequis', []):
+                                prereq_code = json_prereq.get('code_cours')
+                                # Si le cours préalable a été créé, mettre à jour l'ID
+                                if prereq_code in created_courses:
+                                    # Enregistrer l'ancienne valeur pour le suivi des changements
+                                    old_id = prereq.cours_prealable_id
+                                    new_id = created_courses[prereq_code]
+                                    
+                                    prereq.cours_prealable_id = new_id
+                                    
+                                    # Créer une entrée DBChange manuellement
+                                    create_db_change(
+                                        "UPDATE",
+                                        "CoursPrealable",
+                                        prereq.id,
+                                        {
+                                            "old_values": {"cours_prealable_id": old_id},
+                                            "new_values": {"cours_prealable_id": new_id}
+                                        }
+                                    )
+                                else:
+                                    # Sinon, essayer de trouver le cours par son code
+                                    prereq_course = Cours.query.filter_by(code=prereq_code).first()
+                                    if prereq_course:
+                                        # Enregistrer l'ancienne valeur pour le suivi des changements
+                                        old_id = prereq.cours_prealable_id
+                                        new_id = prereq_course.id
+                                        
+                                        prereq.cours_prealable_id = new_id
+                                        
+                                        # Créer une entrée DBChange manuellement
+                                        create_db_change(
+                                            "UPDATE",
+                                            "CoursPrealable",
+                                            prereq.id,
+                                            {
+                                                "old_values": {"cours_prealable_id": old_id},
+                                                "new_values": {"cours_prealable_id": new_id}
+                                            }
+                                        )
+                                    else:
+                                        # Si le cours préalable n'existe pas, supprimer l'entrée
+                                        create_db_change(
+                                            "DELETE",
+                                            "CoursPrealable",
+                                            prereq.id,
+                                            {
+                                                "deleted_values": {
+                                                    "id": prereq.id,
+                                                    "cours_id": prereq.cours_id,
+                                                    "cours_prealable_id": prereq.cours_prealable_id,
+                                                    "note_necessaire": prereq.note_necessaire
+                                                }
+                                            }
+                                        )
+                                        db.session.delete(prereq)
+        
+        # Récupérer tous les corequis avec cours_corequis_id = 0
+        all_corequisites = CoursCorequis.query.filter_by(cours_corequis_id=0).all()
+        for coreq in all_corequisites:
+            # Trouver le cours parent
+            parent_cours = Cours.query.get(coreq.cours_id)
+            if parent_cours:
+                # Rechercher le code du cours corequis dans la grille JSON
+                for session_data in grille_data.get('sessions', []):
+                    for cours_data in session_data.get('cours', []):
+                        if cours_data.get('code_cours') == parent_cours.code:
+                            # Trouver les corequis dans le JSON
+                            for corequis_code in cours_data.get('corequis', []):
+                                # Si le cours corequis a été créé, mettre à jour l'ID
+                                if corequis_code in created_courses:
+                                    # Enregistrer l'ancienne valeur pour le suivi des changements
+                                    old_id = coreq.cours_corequis_id
+                                    new_id = created_courses[corequis_code]
+                                    
+                                    coreq.cours_corequis_id = new_id
+                                    
+                                    # Créer une entrée DBChange manuellement
+                                    create_db_change(
+                                        "UPDATE",
+                                        "CoursCorequis",
+                                        coreq.id,
+                                        {
+                                            "old_values": {"cours_corequis_id": old_id},
+                                            "new_values": {"cours_corequis_id": new_id}
+                                        }
+                                    )
+                                else:
+                                    # Sinon, essayer de trouver le cours par son code
+                                    coreq_course = Cours.query.filter_by(code=corequis_code).first()
+                                    if coreq_course:
+                                        # Enregistrer l'ancienne valeur pour le suivi des changements
+                                        old_id = coreq.cours_corequis_id
+                                        new_id = coreq_course.id
+                                        
+                                        coreq.cours_corequis_id = new_id
+                                        
+                                        # Créer une entrée DBChange manuellement
+                                        create_db_change(
+                                            "UPDATE",
+                                            "CoursCorequis",
+                                            coreq.id,
+                                            {
+                                                "old_values": {"cours_corequis_id": old_id},
+                                                "new_values": {"cours_corequis_id": new_id}
+                                            }
+                                        )
+                                    else:
+                                        # Si le cours corequis n'existe pas, supprimer l'entrée
+                                        create_db_change(
+                                            "DELETE",
+                                            "CoursCorequis",
+                                            coreq.id,
+                                            {
+                                                "deleted_values": {
+                                                    "id": coreq.id,
+                                                    "cours_id": coreq.cours_id,
+                                                    "cours_corequis_id": coreq.cours_corequis_id
+                                                }
+                                            }
+                                        )
+                                        db.session.delete(coreq)
+        
+        # Enregistrer un résumé de l'importation
+        create_db_change(
+            "IMPORT",
+            "Cours",
+            programme_id,
+            {
+                "action": "Importation de grille de cours",
+                "programme": programme_nom,
+                "nb_cours": len(created_courses)
+            }
+        )
+        
+        # Valider la transaction
+        db.session.commit()
+        return True
+        
+    except Exception as e:
+        # En cas d'erreur, annuler la transaction
+        db.session.rollback()
+        logger.error(f"Erreur lors de la sauvegarde de la grille: {e}", exc_info=True)
+        return False
 
 def normalize_text(text):
     """ Supprime les accents et convertit en minuscules. """

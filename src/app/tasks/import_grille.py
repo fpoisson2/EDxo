@@ -28,8 +28,8 @@ GRILLE_SCHEMA = {
                 "required": ["numero_session", "cours"],
                 "properties": {
                     "numero_session": {
-                        "type": "string", # Use string to accommodate "Session 1", "Hiver 2025", etc.
-                        "description": "Ordre ou nom de la session."
+                        "type": "number",
+                        "description": "Numéro de session sous forme d'un chiffre (ex.: 1, 2, 3)."
                     },
                     "cours": {
                         "type": "array",
