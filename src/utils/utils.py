@@ -118,13 +118,14 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                 ).first()
                 
                 if existing_cours:
-                    # Stocker les anciennes valeurs pour le suivi des changements
+                # Stocker les anciennes valeurs pour le suivi des changements
                     old_values = {
                         "nom": existing_cours.nom,
                         "session": existing_cours.session,
                         "heures_theorie": existing_cours.heures_theorie,
                         "heures_laboratoire": existing_cours.heures_laboratoire,
-                        "heures_travail_maison": existing_cours.heures_travail_maison
+                        "heures_travail_maison": existing_cours.heures_travail_maison,
+                        "nombre_unites": existing_cours.nombre_unites
                     }
                     
                     # Mettre à jour le cours existant
@@ -133,6 +134,13 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                     existing_cours.heures_theorie = cours_data.get('heures_theorie', 0)
                     existing_cours.heures_laboratoire = cours_data.get('heures_labo', 0)
                     existing_cours.heures_travail_maison = cours_data.get('heures_maison', 0)
+                    # Mettre à jour le nombre d'unités en fonction des heures
+                    new_unites = (
+                        existing_cours.heures_theorie
+                        + existing_cours.heures_laboratoire
+                        + existing_cours.heures_travail_maison
+                    ) / 3
+                    existing_cours.nombre_unites = new_unites
                     cours_id = existing_cours.id
                     
                     # Créer une entrée DBChange manuellement
@@ -147,7 +155,8 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                                 "session": session_num,
                                 "heures_theorie": cours_data.get('heures_theorie', 0),
                                 "heures_laboratoire": cours_data.get('heures_labo', 0),
-                                "heures_travail_maison": cours_data.get('heures_maison', 0)
+                                "heures_travail_maison": cours_data.get('heures_maison', 0),
+                                "nombre_unites": new_unites
                             }
                         }
                     )

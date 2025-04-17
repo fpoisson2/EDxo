@@ -2,6 +2,8 @@
 import logging
 from datetime import datetime
 
+from collections import OrderedDict
+
 import bleach
 import markdown
 import requests
@@ -1241,162 +1243,150 @@ def edit_element_competence(element_id):
             flash(f'Erreur lors de la mise à jour de l\'élément : {e}', 'danger')
 
     return render_template('edit_element_competence.html', form=form)
-@main.route('/edit_cours/<int:cours_id>', methods=('GET', 'POST'))
-@roles_required('admin', 'coordo')
+
+
+
+@main.route('/edit_cours/<int:cours_id>', methods=('GET','POST'))
+@roles_required('admin','coordo')
 @ensure_profile_completed
 def edit_cours(cours_id):
-    # Récupérer le cours à modifier
-    cours = Cours.query.get(cours_id)
-    if not cours:
-        flash('Cours non trouvé.', 'danger')
-        return redirect(url_for('main.index'))
+    # --- 1) Récupérations de base ---
+    cours = Cours.query.get_or_404(cours_id)
+    user_prog_ids = [p.id for p in current_user.programmes]
 
-    # Filtrer les programmes accessibles par l'usager courant
+    # Programmes accessibles
     accessible_programmes = Programme.query.filter(
-        Programme.id.in_([p.id for p in current_user.programmes])
-    ).all()
+        Programme.id.in_(user_prog_ids)
+    ).order_by(Programme.nom).all()
 
-    # Filtrer les cours accessibles pour les préalables/corequis (sans inclure le cours courant)
-    accessible_courses = Cours.query.filter(
-        Cours.programme_id.in_([p.id for p in current_user.programmes])
-    ).filter(Cours.id != cours_id).all()
-    cours_choices = [(c.id, c.nom) for c in accessible_courses]
+    # Tous les cours du même programme (hors cours actuel)
+    programme_courses = [
+        (c.id, f"{c.code} - {c.nom}")
+        for c in Cours.query
+                    .filter_by(programme_id=cours.programme_id)
+                    .filter(Cours.id != cours_id)
+                    .order_by(Cours.code)
+                    .all()
+    ]
 
-    # Précharger préalables et corequis existants
+    # Pré‑chargement des existants
+    corequis_existants   = CoursCorequis.query.filter_by(cours_id=cours_id).all()
     prealables_existants = CoursPrealable.query.filter_by(cours_id=cours_id).all()
-    corequis_existants = CoursCorequis.query.filter_by(cours_id=cours_id).all()
+    fils_conducteurs     = FilConducteur.query.filter(
+        FilConducteur.programme_id.in_(user_prog_ids)
+    ).order_by(FilConducteur.description).all()
 
-    # Filtrer les éléments de compétence accessibles pour l'usager
-    elements_competence_query = (
+    # --- 2) Éléments de compétence ---
+    from app.models import Competence
+    elements_query = (
         ElementCompetence.query
-        .join(Competence)
-        .filter(Competence.programme_id.in_([p.id for p in current_user.programmes]))
+        .join(Competence, ElementCompetence.competence)
+        .filter(Competence.programme_id == cours.programme_id)
         .order_by(Competence.code, ElementCompetence.nom)
         .all()
     )
-    # Conversion des éléments de compétence en dictionnaires (pour usage en JS, si besoin)
-    elements_competence = [
-        {
-            'id': ec.id,
-            'nom': ec.nom,
-            'competence_code': ec.competence.code,
-            'competence_nom': ec.competence.nom
-        }
-        for ec in elements_competence_query
-    ]
-    # Pour la construction des choix dans le formulaire, utilisez directement la query
-    ec_choices = [(ec.id, f"{ec.competence.code} - {ec.nom}") for ec in elements_competence_query]
+    grouped = OrderedDict()
+    for ec in elements_query:
+        comp = ec.competence
+        grouped.setdefault(
+            comp.id,
+            {'code': comp.code, 'nom': comp.nom, 'elements': []}
+        )
+        grouped[comp.id]['elements'].append({'id': ec.id, 'nom': ec.nom})
+    grouped_elements = list(grouped.values())
 
-    # Pour fil conducteur, on ne récupère que ceux liés aux programmes accessibles
-    fils_conducteurs = FilConducteur.query.filter(
-        FilConducteur.programme_id.in_([p.id for p in current_user.programmes])
-    ).all()
+    existing_status = {
+        assoc.element_competence_id: assoc.status
+        for assoc in ElementCompetenceParCours.query.filter_by(cours_id=cours_id)
+    }
 
+    # --- 3) Formulaire ---
     form = CoursForm()
-    # Définir les choix pour le menu déroulant des programmes accessibles
-    form.programme.choices = [(p.id, p.nom) for p in accessible_programmes]
+    form.programme.choices     = [(p.id, p.nom) for p in accessible_programmes]
+    form.corequis.choices       = programme_courses
+    form.fil_conducteur.choices = [(f.id, f.description) for f in fils_conducteurs]
+    # Choices valides pour préalables
+    for sub in form.prealables:
+        sub.cours_prealable_id.choices = programme_courses
 
-    # Choix pour corequis et fil conducteur
-    form.corequis.choices = cours_choices
-    form.fil_conducteur.choices = [(fc.id, fc.description) for fc in fils_conducteurs]
-
+    # --- 4) GET : pré-remplissage ---
     if request.method == 'GET':
-        # Pré-remplissage du formulaire avec les données du cours existant
-        form.programme.data = cours.programme_id
-        form.code.data = cours.code
-        form.nom.data = cours.nom
-        form.session.data = cours.session
-        form.heures_theorie.data = cours.heures_theorie
+        form.programme.data        = cours.programme_id
+        form.code.data             = cours.code
+        form.nom.data              = cours.nom
+        form.session.data          = cours.session
+        form.heures_theorie.data   = cours.heures_theorie
         form.heures_laboratoire.data = cours.heures_laboratoire
         form.heures_travail_maison.data = cours.heures_travail_maison
-        form.corequis.data = [c.cours_corequis_id for c in corequis_existants]
-        form.fil_conducteur.data = cours.fil_conducteur_id if cours.fil_conducteur_id else None
 
-        # Rendre dynamiques les éléments de compétence existants
-        form.elements_competence.entries = []
-        if ec_assoc := ElementCompetenceParCours.query.filter_by(cours_id=cours_id).all():
-            for ec_item in ec_assoc:
-                subform = form.elements_competence.append_entry()
-                subform.element_competence.choices = ec_choices
-                subform.element_competence.data = ec_item.element_competence_id
-                subform.status.data = ec_item.status
+        form.corequis.data       = [c.cours_corequis_id for c in corequis_existants]
+        form.fil_conducteur.data = cours.fil_conducteur_id
 
-        # Pré-remplir les préalables existants
         form.prealables.entries = []
-        for p in prealables_existants:
-            p_subform = form.prealables.append_entry()
-            p_subform.cours_prealable_id.choices = cours_choices
-            p_subform.cours_prealable_id.data = p.cours_prealable_id
-            p_subform.note_necessaire.data = p.note_necessaire
-    else:
-        # Remettre à jour les choix en cas de POST
-        for subform in form.elements_competence:
-            subform.element_competence.choices = ec_choices
-        for p_subform in form.prealables:
-            p_subform.cours_prealable_id.choices = cours_choices
+        for pre in prealables_existants:
+            p = form.prealables.append_entry()
+            p.cours_prealable_id.choices = programme_courses
+            p.cours_prealable_id.data    = pre.cours_prealable_id
+            p.note_necessaire.data        = pre.note_necessaire
 
+    # --- 5) POST : mise à jour ---
     if form.validate_on_submit():
-        cours.programme_id = form.programme.data
-        cours.code = form.code.data
-        cours.nom = form.nom.data
-        cours.session = form.session.data
-        cours.heures_theorie = form.heures_theorie.data
-        cours.heures_laboratoire = form.heures_laboratoire.data
+        cours.programme_id        = form.programme.data
+        cours.code                = form.code.data
+        cours.nom                 = form.nom.data
+        cours.session             = form.session.data
+        cours.heures_theorie      = form.heures_theorie.data
+        cours.heures_laboratoire  = form.heures_laboratoire.data
         cours.heures_travail_maison = form.heures_travail_maison.data
-        cours.fil_conducteur_id = form.fil_conducteur.data
+        cours.fil_conducteur_id   = form.fil_conducteur.data
 
-        # Mettre à jour les associations d'éléments de compétence
+        # Mettre à jour les éléments de compétence (skip Non traité)
         ElementCompetenceParCours.query.filter_by(cours_id=cours_id).delete()
-        elements_data = form.elements_competence.data or []
-        for ec in elements_data:
-            element_id = ec.get('element_competence')
-            status = ec.get('status')
-            if element_id and status:
-                new_ec_assoc = ElementCompetenceParCours(
+        for ec in elements_query:
+            st = request.form.get(f'status_{ec.id}')
+            if st and st != 'Non traité':
+                db.session.add(ElementCompetenceParCours(
                     cours_id=cours_id,
-                    element_competence_id=element_id,
-                    status=status
-                )
-                db.session.add(new_ec_assoc)
+                    element_competence_id=ec.id,
+                    status=st
+                ))
 
-        # Mettre à jour les préalables
+        # Préalables
         CoursPrealable.query.filter_by(cours_id=cours_id).delete()
-        prealables_data = form.prealables.data or []
-        for p_data in prealables_data:
-            p_id = p_data['cours_prealable_id']
-            note = p_data['note_necessaire']
-            if p_id and note is not None:
-                new_pre = CoursPrealable(
+        for p in form.prealables.data or []:
+            pid, note = p.get('cours_prealable_id'), p.get('note_necessaire')
+            if pid and note is not None:
+                db.session.add(CoursPrealable(
                     cours_id=cours_id,
-                    cours_prealable_id=p_id,
+                    cours_prealable_id=pid,
                     note_necessaire=note
-                )
-                db.session.add(new_pre)
+                ))
 
-        # Mettre à jour les corequis
+        # Co‑requis
         CoursCorequis.query.filter_by(cours_id=cours_id).delete()
-        corequis_data = form.corequis.data or []
-        for c_id in corequis_data:
-            new_coreq = CoursCorequis(
+        for cid in form.corequis.data or []:
+            db.session.add(CoursCorequis(
                 cours_id=cours_id,
-                cours_corequis_id=c_id
-            )
-            db.session.add(new_coreq)
+                cours_corequis_id=cid
+            ))
 
         try:
             db.session.commit()
-            flash('Cours mis à jour avec succès!', 'success')
+            flash('Cours mis à jour avec succès !', 'success')
             return redirect(url_for('cours.view_cours', cours_id=cours_id))
         except Exception as e:
             db.session.rollback()
-            flash(f'Erreur lors de la mise à jour du cours : {e}', 'danger')
+            flash(f'Erreur lors de la mise à jour : {e}', 'danger')
 
+    # --- 6) Affichage final ---
     return render_template(
         'edit_cours.html',
         form=form,
-        elements_competence=elements_competence,
-        cours_choices=cours_choices
+        grouped_elements=grouped_elements,
+        existing_status=existing_status,
+        programme_courses=programme_courses
     )
+
 
 @main.route('/parametres/gestion_departements', methods=['GET', 'POST'])
 @roles_required('admin')

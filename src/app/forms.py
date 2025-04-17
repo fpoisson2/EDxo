@@ -467,8 +467,7 @@ class CoursForm(FlaskForm):
     heures_travail_maison = IntegerField('Heures Travail Maison', validators=[InputRequired(), NumberRange(min=0)])
     elements_competence = FieldList(
         FormField(ElementCompetenceStatusForm),
-        min_entries=0,
-        max_entries=50
+        min_entries=0
     )
     prealables = FieldList(FormField(CoursPrealableEntryForm), min_entries=0)
     corequis = SelectMultipleField('Cours Corequis', coerce=int)
