@@ -105,7 +105,7 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                 session_num = session_value
             else:
                 session_num = int(session_value.split(' ')[-1]) if session_value.split(' ')[-1].isdigit() else 0
-                
+
             # Traiter chaque cours dans la session
             for cours_data in session_data.get('cours', []):
                 code_cours = cours_data.get('code_cours')
@@ -153,6 +153,10 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                     )
                 else:
                     # Créer un nouveau cours
+                    heures_theorie = cours_data.get('heures_theorie', 0)
+                    heures_laboratoire=cours_data.get('heures_labo', 0)
+                    heures_travail_maison=cours_data.get('heures_maison', 0)
+                    nombre_unites = (heures_theorie+heures_laboratoire+heures_travail_maison)/3
                     nouveau_cours = Cours(
                         programme_id=programme_id,
                         code=code_cours,
@@ -160,7 +164,8 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                         session=session_num,
                         heures_theorie=cours_data.get('heures_theorie', 0),
                         heures_laboratoire=cours_data.get('heures_labo', 0),
-                        heures_travail_maison=cours_data.get('heures_maison', 0)
+                        heures_travail_maison=cours_data.get('heures_maison', 0),
+                        nombre_unites=nombre_unites,
                     )
                     db.session.add(nouveau_cours)
                     db.session.flush()  # Pour obtenir l'ID du cours
