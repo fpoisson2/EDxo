@@ -48,7 +48,7 @@ plan_cadre_bp = Blueprint('plan_cadre', __name__, url_prefix='/plan_cadre')
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def generate_plan_cadre_content(plan_id):
-    from app.tasks import generate_plan_cadre_content_task
+    from app.tasks.generation_plan_dadre import generate_plan_cadre_content_task
 
     plan = PlanCadre.query.get(plan_id)
     if not plan:

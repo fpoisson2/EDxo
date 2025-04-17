@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Confirmation d'importation de grille{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h1>Confirmation d'importation</h1>
+  
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+      <h5 class="card-title mb-0">Grille de cours détectée</h5>
+    </div>
+    <div class="card-body">
+      <h3>{{ nom_programme }}</h3>
+      
+      <h4 class="mt-4">Aperçu des sessions</h4>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Session</th>
+              <th>Nombre de cours</th>
+              <th>Exemples de cours</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for session in apercu_sessions %}
+            <tr>
+              <td>{{ session.numero }}</td>
+              <td>{{ session.nb_cours }}</td>
+              <td>
+                <ul class="list-unstyled mb-0">
+                  {% for cours in session.cours_exemples %}
+                  <li>{{ cours }}</li>
+                  {% endfor %}
+                  {% if session.nb_cours > 3 %}
+                  <li><em>... et {{ session.nb_cours - 3 }} autres cours</em></li>
+                  {% endif %}
+                </ul>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header bg-info text-white">
+      <h5 class="card-title mb-0">Associer au programme</h5>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('grille_bp.confirm_grille_import', task_id=task_id) }}">
+        {{ form.csrf_token }}
+        {{ form.task_id }}
+        {{ form.grille_json }}
+        
+        <div class="form-group mb-3">
+          <label for="{{ form.programme_id.id }}">Programme</label>
+          {{ form.programme_id }}
+          {% if form.programme_id.errors %}
+          <div class="invalid-feedback d-block">
+            {% for error in form.programme_id.errors %}
+            {{ error }}
+            {% endfor %}
+          </div>
+          {% endif %}
+          <div class="form-text">Sélectionnez le programme auquel associer cette grille de cours.</div>
+        </div>
+        
+        <div class="form-group mb-3">
+          <label for="{{ form.nom_programme.id }}">Nom du programme (tel que détecté)</label>
+          {{ form.nom_programme }}
+        </div>
+        
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle"></i> 
+          <strong>Attention :</strong> L'importation peut mettre à jour des cours existants. 
+          Assurez-vous que cette grille correspond bien au programme sélectionné.
+        </div>
+        
+        <div class="d-flex justify-content-between mt-4">
+          {{ form.annuler(class="btn btn-secondary") }}
+          {{ form.confirmer(class="btn btn-success") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

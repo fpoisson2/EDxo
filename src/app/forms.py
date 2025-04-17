@@ -50,6 +50,34 @@ REGIONS = [
     ('À distance', 'À distance')
 ]
 
+
+
+class ConfirmationGrilleForm(FlaskForm):
+    """Formulaire pour confirmer l'importation d'une grille de cours."""
+    programme_id = SelectField(
+        'Programme', 
+        validators=[DataRequired()], 
+        coerce=int,
+        render_kw={"class": "form-select"}
+    )
+    
+    nom_programme = StringField(
+        'Nom du programme (tel que détecté dans le PDF)', 
+        validators=[DataRequired(), Length(max=255)],
+        render_kw={"class": "form-control", "readonly": True}
+    )
+    
+    task_id = HiddenField('ID de la tâche')
+    grille_json = HiddenField('JSON de la grille')
+    
+    confirmer = SubmitField('Confirmer importation', render_kw={"class": "btn btn-success"})
+    annuler = SubmitField('Annuler', render_kw={"class": "btn btn-secondary"})
+
+
+class FileUploadForm(FlaskForm):
+    file = FileField("Importez un fichier PDF", validators=[DataRequired()])
+    submit = SubmitField("Envoyer")
+
 class AssociateDevisForm(FlaskForm):
     base_filename = HiddenField(validators=[DataRequired()])
     programme_id = SelectField("Choisir le Programme Cible :", coerce=int, validators=[DataRequired()])
@@ -439,8 +467,7 @@ class CoursForm(FlaskForm):
     heures_travail_maison = IntegerField('Heures Travail Maison', validators=[InputRequired(), NumberRange(min=0)])
     elements_competence = FieldList(
         FormField(ElementCompetenceStatusForm),
-        min_entries=0,
-        max_entries=50
+        min_entries=0
     )
     prealables = FieldList(FormField(CoursPrealableEntryForm), min_entries=0)
     corequis = SelectMultipleField('Cours Corequis', coerce=int)

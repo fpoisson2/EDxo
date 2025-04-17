@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block title %}Suivi de la tâche: {{ task_id }}{% endblock %}
+{% block head_extra %}
+{# Add Prism.js CSS without integrity attribute to avoid potential issues #}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" referrerpolicy="no-referrer" />
+<style>
+  /* Optional: Style the result area */
+  #result-area pre {
+    max-height: 60vh; /* Limit height and make scrollable */
+    overflow: auto;
+    background-color: #272822; /* Matches okaidia theme */
+    padding: 1em;
+    border-radius: 0.3em;
+  }
+  .status-message {
+      font-weight: bold;
+  }
+  .status-success { color: green; }
+  .status-error { color: red; }
+  .status-pending { color: orange; }
+  .status-progress { color: blue; }
+  
+  /* Animation pour l'indicateur de chargement */
+  #loading-indicator {
+    display: inline-block;
+  }
+  
+  /* Style pour les statistiques d'utilisation */
+  .usage-stats {
+    margin-top: 10px;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+  
+  /* Responsive design pour les petits écrans */
+  @media (max-width: 768px) {
+    #result-area pre {
+      max-height: 40vh;
+    }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h1>Suivi de la tâche</h1>
+  <p><strong>ID de la tâche :</strong> <span id="task-id">{{ task_id }}</span></p>
+  <p>
+    <strong>Statut :</strong>
+    <span id="task-status" class="status-message status-{{ state|lower }}">{{ state }}</span>
+    <span id="loading-indicator" style="display: none;"> ( Rafraîchissement en cours<span class="dots">...</span> )</span>
+  </p>
+<div id="result-area">
+    <h2>Résultat :</h2>
+    {% if result and result.status == 'success' %}
+      {# Render initial result if already successful #}
+      <div class="alert alert-success mb-3">
+        <strong>Extraction réussie !</strong> Vous pouvez maintenant confirmer l'importation de cette grille dans votre programme.
+        <div class="mt-2">
+          <a href="{{ url_for('grille_bp.confirm_grille_import', task_id=task_id) }}" class="btn btn-primary">
+            <i class="fas fa-check-circle"></i> Confirmer l'importation
+          </a>
+        </div>
+      </div>
+      <pre><code class="language-json">{{ result.result | tojson(indent=2) }}</code></pre>
+    {% elif result and result.status == 'error' %}
+      <div class="alert alert-danger" role="alert">
+        <strong>Erreur :</strong> {{ result.message }}
+      </div>
+    {% else %}
+      <p id="result-placeholder">En attente du résultat...</p>
+      <pre id="result-pre" style="display:none;"><code class="language-json" id="result-code"></code></pre>
+      <div id="error-alert" class="alert alert-danger" role="alert" style="display:none;">
+        <strong>Erreur :</strong> <span id="error-message"></span>
+      </div>
+    {% endif %}
+    
+    {# Section pour les statistiques d'utilisation des tokens #}
+    <div id="usage-stats" class="usage-stats" style="display: none;">
+      <h3>Statistiques d'utilisation</h3>
+      <p><strong>Tokens d'entrée :</strong> <span id="input-tokens">-</span></p>
+      <p><strong>Tokens de sortie :</strong> <span id="output-tokens">-</span></p>
+    </div>
+  </div>
+
+  <p class="mt-3"><a href="{{ url_for('grille_bp.import_grille') }}" class="btn btn-secondary">Revenir à l'import</a></p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{# Load Prism.js without integrity to avoid potential issues #}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js" referrerpolicy="no-referrer"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Éléments DOM à manipuler
+    const taskIdElement = document.getElementById("task-id");
+    const taskStatusElement = document.getElementById("task-status");
+    const loadingIndicator = document.getElementById("loading-indicator");
+    const resultPlaceholder = document.getElementById("result-placeholder");
+    const resultPre = document.getElementById("result-pre");
+    const resultCode = document.getElementById("result-code");
+    const errorAlert = document.getElementById("error-alert");
+    const errorMessage = document.getElementById("error-message");
+    const usageStats = document.getElementById("usage-stats");
+    const inputTokens = document.getElementById("input-tokens");
+    const outputTokens = document.getElementById("output-tokens");
+
+    // Obtenir l'ID de la tâche
+    const taskId = taskIdElement.textContent.trim();
+    
+    // États pour lesquels on continue de vérifier
+    const pendingStates = ["PENDING", "STARTED", "RECEIVED", "PROGRESS", "RETRY"];
+    
+    // Fonction pour mettre à jour les classes de statut
+    function updateStatusClasses(status) {
+        // Supprimer toutes les classes de statut
+        taskStatusElement.classList.remove("status-pending", "status-progress", "status-success", "status-error");
+        
+        // Ajouter la classe appropriée
+        if (status === "SUCCESS") {
+            taskStatusElement.classList.add("status-success");
+        } else if (status === "FAILURE") {
+            taskStatusElement.classList.add("status-error");
+        } else if (status === "PROGRESS") {
+            taskStatusElement.classList.add("status-progress");
+        } else {
+            taskStatusElement.classList.add("status-pending");
+        }
+    }
+
+    // Fonction pour formater et afficher le JSON
+    function displayJsonResult(jsonData) {
+        try {
+            // Si jsonData est déjà un objet JavaScript
+            let formatted;
+            if (typeof jsonData === 'string') {
+                // Tenter de le parser si c'est une chaîne JSON
+                formatted = JSON.stringify(JSON.parse(jsonData), null, 2);
+            } else {
+                // Sinon, utiliser directement l'objet
+                formatted = JSON.stringify(jsonData, null, 2);
+            }
+            
+            // Mettre à jour le contenu et afficher
+            resultCode.textContent = formatted;
+            resultPlaceholder.style.display = "none";
+            resultPre.style.display = "block";
+            
+            // Réappliquer la coloration syntaxique Prism
+            Prism.highlightElement(resultCode);
+        } catch (e) {
+            console.error("Erreur lors du formatage JSON:", e);
+            resultCode.textContent = jsonData; // Afficher en texte brut en cas d'erreur
+            resultPlaceholder.style.display = "none";
+            resultPre.style.display = "block";
+        }
+    }
+
+    // Fonction pour afficher un message d'erreur
+    function displayError(message) {
+        errorMessage.textContent = message;
+        errorAlert.style.display = "block";
+        resultPlaceholder.style.display = "none";
+    }
+    
+    // Fonction pour afficher les statistiques d'utilisation
+    function displayUsageStats(usage) {
+        if (usage && (usage.input_tokens || usage.output_tokens)) {
+            inputTokens.textContent = usage.input_tokens || "N/A";
+            outputTokens.textContent = usage.output_tokens || "N/A";
+            usageStats.style.display = "block";
+        }
+    }
+
+    // Fonction pour vérifier le statut de la tâche
+    async function checkTaskStatus() {
+        try {
+            loadingIndicator.style.display = "inline"; // Afficher l'indicateur de chargement
+            
+            const response = await fetch(`/api/task_status/${taskId}`);
+            const data = await response.json();
+            
+            // Mettre à jour l'état de la tâche
+            taskStatusElement.textContent = data.state;
+            updateStatusClasses(data.state);
+            
+            // Traiter en fonction de l'état
+if (data.state === "SUCCESS") {
+                if (data.status === "success") {
+                    // Afficher le résultat sous forme de JSON
+                    displayJsonResult(data.result);
+                    
+                    // Afficher les statistiques d'utilisation si disponibles
+                    if (data.usage) {
+                        displayUsageStats(data.usage);
+                    }
+                    
+                    // Ajouter le bouton de confirmation si ce n'est pas déjà fait
+                    if (!document.querySelector('.confirm-import-btn')) {
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-success mb-3';
+                        alertDiv.innerHTML = `
+                            <strong>Extraction réussie !</strong> Vous pouvez maintenant confirmer l'importation de cette grille dans votre programme.
+                            <div class="mt-2">
+                                <a href="/confirm_grille_import/${taskId}" class="btn btn-primary confirm-import-btn">
+                                    <i class="fas fa-check-circle"></i> Confirmer l'importation
+                                </a>
+                            </div>
+                        `;
+                        resultPre.parentNode.insertBefore(alertDiv, resultPre);
+                    }
+                } else {
+                    // Afficher le message d'erreur retourné par la tâche
+                    displayError(data.message || "Échec de la tâche sans message d'erreur spécifique");
+                }
+                
+                // Arrêter les vérifications
+                return false;
+                
+            } else if (data.state === "FAILURE") {
+                // Afficher le message d'erreur en cas d'échec
+                displayError(data.message || "La tâche a échoué sans message d'erreur spécifique");
+                
+                // Arrêter les vérifications
+                return false;
+            } else {
+                // Pour les états en cours, continuer les vérifications
+                return pendingStates.includes(data.state);
+            }
+        } catch (error) {
+            console.error("Erreur lors de la vérification du statut:", error);
+            taskStatusElement.textContent = "ERREUR DE CONNEXION";
+            updateStatusClasses("FAILURE");
+            displayError("Impossible de communiquer avec le serveur. Veuillez réessayer plus tard.");
+            
+            // Arrêter les vérifications en cas d'erreur de connexion
+            return false;
+        } finally {
+            loadingIndicator.style.display = "none"; // Masquer l'indicateur de chargement
+        }
+    }
+
+    // Animation des points pour l'indicateur de chargement
+    let dotCount = 3;
+    setInterval(() => {
+        const dots = document.querySelector(".dots");
+        if (dots) {
+            dotCount = (dotCount % 3) + 1;
+            dots.textContent = ".".repeat(dotCount);
+        }
+    }, 500);
+
+    // Fonction récursive avec délai pour vérifier périodiquement
+    function scheduleNextCheck() {
+        checkTaskStatus().then(shouldContinue => {
+            if (shouldContinue) {
+                // Vérifier toutes les 2 secondes
+                setTimeout(scheduleNextCheck, 2000);
+            }
+        });
+    }
+
+    // Démarrer les vérifications
+    scheduleNextCheck();
+});
+</script>
+{% endblock %}

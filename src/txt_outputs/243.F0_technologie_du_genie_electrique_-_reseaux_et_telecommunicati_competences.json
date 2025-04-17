@@ -17,7 +17,7 @@
                     "sous_points": null
                 },
                 {
-                    "texte": "Dans une optique d’orientation et de formation tout au long de la carrière, dans les domaines de la réseautique et des télécommunications.",
+                    "texte": "Dans une optique d’orientation et de formation tout au long de la carrière, dans les domaines de la réseaute et des télécommunications.",
                     "sous_points": null
                 },
                 {
@@ -120,19 +120,19 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "d’équipements de protection individuelle et collective;",
+                            "texte": "d’équipements de protection individuelle et collective",
                             "sous_points": null
                         },
                         {
-                            "texte": "du SIMDUT;",
+                            "texte": "du SIMDUT",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’affiches informatives;",
+                            "texte": "d’affiches informatives",
                             "sous_points": null
                         },
                         {
-                            "texte": "de mesures de mitigation.",
+                            "texte": "de mesures de mitigation",
                             "sous_points": null
                         }
                     ]
@@ -141,11 +141,11 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "des lignes directrices sur l’exposition aux radiofréquences;",
+                            "texte": "des lignes directrices sur l’exposition aux radiofréquences",
                             "sous_points": null
                         },
                         {
-                            "texte": "de la réglementation sur la protection de l’environnement.",
+                            "texte": "de la réglementation sur la protection de l’environnement",
                             "sous_points": null
                         }
                     ]
@@ -196,7 +196,7 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de formules liées à l’électronique, à des circuits, etc.;",
+                            "texte": "de formules liées à l’électronique, à des circuits, etc.",
                             "sous_points": null
                         },
                         {
@@ -339,10 +339,7 @@
                 {
                     "element": "Travailler au sein d’une équipe multidisciplinaire.",
                     "criteres": [
-                        "Manifestation adéquate de :",
-                        "marques de respect;",
-                        "d’ouverture d’esprit;",
-                        "de collaboration.",
+                        "Manifestation adéquate de : marques de respect; d’ouverture d’esprit; de collaboration.",
                         "Respect des règles de fonctionnement en équipe.",
                         "Respect du rôle, des responsabilités et de l’expertise de chacun.",
                         "Collaboration efficace pour la résolution de problèmes."
@@ -374,15 +371,15 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de documentation technique;",
+                            "texte": "de documentation technique",
                             "sous_points": null
                         },
                         {
-                            "texte": "de logiciels (modélisation, simulation, calculs);",
+                            "texte": "de logiciels (modélisation, simulation, calculs)",
                             "sous_points": null
                         },
                         {
-                            "texte": "de références.",
+                            "texte": "de références",
                             "sous_points": null
                         }
                     ]
@@ -391,21 +388,23 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de diagrammes schématiques;",
+                            "texte": "de diagrammes schématiques",
                             "sous_points": null
                         },
                         {
-                            "texte": "de diagrammes de montage;",
+                            "texte": "de diagrammes de montage",
                             "sous_points": null
                         },
                         {
-                            "texte": "de résultats de calculs.",
+                            "texte": "de résultats de calculs",
                             "sous_points": null
                         }
                     ]
                 }
             ],
-            "Critères de performance pour l’ensemble de la compétence": null,
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Aucun."
+            ],
             "Éléments": [
                 {
                     "element": "Identifier les pièces constitutives du circuit et leur fonction.",
@@ -476,7 +475,7 @@
                                     "sous_points": null
                                 },
                                 {
-                                    "texte": "etc.",
+                                    "texte": "etc.;",
                                     "sous_points": null
                                 }
                             ]
@@ -513,7 +512,9 @@
                     ]
                 }
             ],
-            "Critères de performance pour l’ensemble de la compétence": null,
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Aucun."
+            ],
             "Éléments": [
                 {
                     "element": "Rassembler de l’information technique.",
@@ -576,13 +577,13 @@
                                     "sous_points": null
                                 },
                                 {
-                                    "texte": "etc.",
+                                    "texte": "etc.;",
                                     "sous_points": null
                                 }
                             ]
                         },
                         {
-                            "texte": "d’équipements  de protection individuelle;",
+                            "texte": "d’équipements de protection individuelle;",
                             "sous_points": null
                         },
                         {
@@ -669,15 +670,15 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "d’instruments de mesure;",
+                            "texte": "instruments de mesure",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’outils spécialisés;",
+                            "texte": "outils spécialisés",
                             "sous_points": null
                         },
                         {
-                            "texte": "de documentation technique.",
+                            "texte": "documentation technique",
                             "sous_points": null
                         }
                     ]
@@ -686,11 +687,11 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "d’équipements, de systèmes ou de sous systèmes;",
+                            "texte": "équipements, de systèmes ou de sous systèmes",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’une  procédure.",
+                            "texte": "une procédure",
                             "sous_points": null
                         }
                     ]
@@ -698,10 +699,10 @@
             ],
             "Critères de performance pour l’ensemble de la compétence": [
                 "Respect des normes :",
-                "de qualité en vigueur;",
-                "d’interférence électromagnétique;",
-                "de protection contre les phénomènes électrostatiques.",
-                "Respect des lois et des règlements en matière de santé et de sécurité du travail."
+                "de qualité en vigueur",
+                "d’interférence électromagnétique",
+                "de protection contre les phénomènes électrostatiques",
+                "Respect des lois et des règlements en matière de santé et de sécurité du travail"
             ],
             "Éléments": [
                 {
@@ -777,7 +778,7 @@
                             "sous_points": null
                         },
                         {
-                            "texte": "de normes nationales et internationales et de standards;",
+                            "texte": "de normes nationales et internationales et  de standards;",
                             "sous_points": null
                         },
                         {
@@ -845,31 +846,31 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de fiches techniques;",
+                            "texte": "de fiches techniques",
                             "sous_points": null
                         },
                         {
-                            "texte": "de plans du fabricant;",
+                            "texte": "de plans du fabricant",
                             "sous_points": null
                         },
                         {
-                            "texte": "de logiciels spécialisés;",
+                            "texte": "de logiciels spécialisés",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’instruments de mesure spécialisés;",
+                            "texte": "d’instruments de mesure spécialisés",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’outils;",
+                            "texte": "d’outils",
                             "sous_points": null
                         },
                         {
-                            "texte": "de sources d’information spécialisées;",
+                            "texte": "de sources d’information spécialisées",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’un banc de test.",
+                            "texte": "d’un banc de test",
                             "sous_points": null
                         }
                     ]
@@ -878,19 +879,19 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de normes nationales et internationales et de standards;",
+                            "texte": "de normes nationales et internationales et de standards",
                             "sous_points": null
                         },
                         {
-                            "texte": "de gabarits et /ou d’une unité de référence;",
+                            "texte": "de gabarits et /ou d’une unité de référence",
                             "sous_points": null
                         },
                         {
-                            "texte": "de prises de mesures;",
+                            "texte": "de prises de mesures",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’équipements, de systèmes ou de sous-systèmes.",
+                            "texte": "d’équipements, de systèmes ou de sous-systèmes",
                             "sous_points": null
                         }
                     ]
@@ -898,9 +899,9 @@
             ],
             "Critères de performance pour l’ensemble de la compétence": [
                 "Respect des normes :",
-                "de qualité en vigueur;",
-                "d’interférence électromagnétique;",
-                "de protection contre les phénomènes électrostatiques.",
+                "de qualité en vigueur",
+                "d’interférence électromagnétique",
+                "de protection contre les phénomènes électrostatiques",
                 "Respect des lois et des règlements en matière de santé et de sécurité du travail.",
                 "Respect de l’intégrité de l’équipement ou du système."
             ],
@@ -1297,35 +1298,35 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de médias spécialisés et généralistes;",
+                            "texte": "de médias spécialisés et généralistes",
                             "sous_points": null
                         },
                         {
-                            "texte": "de réseaux sociaux professionnels;",
+                            "texte": "de réseaux sociaux professionnels",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’encyclopédies en ligne;",
+                            "texte": "d’encyclopédies en ligne",
                             "sous_points": null
                         },
                         {
-                            "texte": "de blogues d’experts;",
+                            "texte": "de blogues d’experts",
                             "sous_points": null
                         },
                         {
-                            "texte": "de communautés de praticiens;",
+                            "texte": "de communautés de praticiens",
                             "sous_points": null
                         },
                         {
-                            "texte": "de sites Web d’entreprises;",
+                            "texte": "de sites Web d’entreprises",
                             "sous_points": null
                         },
                         {
-                            "texte": "de documentation technique;",
+                            "texte": "de documentation technique",
                             "sous_points": null
                         },
                         {
-                            "texte": "de formations.",
+                            "texte": "de formations",
                             "sous_points": null
                         }
                     ]
@@ -1334,21 +1335,23 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de stratégies de changement en entreprise;",
+                            "texte": "de stratégies de changement en entreprise",
                             "sous_points": null
                         },
                         {
-                            "texte": "de logiciels spécialisés;",
+                            "texte": "de logiciels spécialisés",
                             "sous_points": null
                         },
                         {
-                            "texte": "de stratégies d’autoformation.",
+                            "texte": "de stratégies d’autoformation",
                             "sous_points": null
                         }
                     ]
                 }
             ],
-            "Critères de performance pour l’ensemble de la compétence": null,
+            "Critères de performance pour l’ensemble de la compétence": [
+                "Aucun."
+            ],
             "Éléments": [
                 {
                     "element": "Réaliser une veille technologique dans le domaine.",
@@ -1466,11 +1469,7 @@
                     "element": "Procéder à une boucle de débogage.",
                     "criteres": [
                         "Isolation appropriée des éléments à diagnostiquer.",
-                        "Vérification méthodique des constituants de l’équipement ou du système :",
-                        "branchement;",
-                        "alimentation;",
-                        "compatibilité des versions;",
-                        "etc.",
+                        "Vérification méthodique des constituants de l’équipement ou du système : branchements; alimentation; compatibilité des versions; etc.",
                         "Interprétation juste des résultats des prises de mesures.",
                         "Identification appropriée de la source du problème."
                     ]
@@ -1480,7 +1479,7 @@
                     "criteres": [
                         "Communication concise de l’avancement du diagnostic.",
                         "Présentation claire des conclusions.",
-                        "Archivage appropriée des résultats."
+                        "Archivage approprié des résultats."
                     ]
                 }
             ]
@@ -1513,27 +1512,27 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de plans du fabricant;",
+                            "texte": "de plans du fabricant",
                             "sous_points": null
                         },
                         {
-                            "texte": "de logiciels spécialisés;",
+                            "texte": "de logiciels spécialisés",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’instruments de mesure spécialisés;",
+                            "texte": "d’instruments de mesure spécialisés",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’outils;",
+                            "texte": "d’outils",
                             "sous_points": null
                         },
                         {
-                            "texte": "de pièces de remplacement;",
+                            "texte": "de pièces de remplacement",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’appareils ou d’équipements de remplacement.",
+                            "texte": "d’appareils ou d’équipements de remplacement",
                             "sous_points": null
                         }
                     ]
@@ -1542,19 +1541,19 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de normes nationales et internationales et de standards;",
+                            "texte": "de normes nationales et internationales et de standards",
                             "sous_points": null
                         },
                         {
-                            "texte": "de règlements en matière de développement durable;",
+                            "texte": "de règlements en matière de développement durable",
                             "sous_points": null
                         },
                         {
-                            "texte": "de rapports de diagnostic;",
+                            "texte": "de rapports de diagnostic",
                             "sous_points": null
                         },
                         {
-                            "texte": "de gabarits et/ou d’une unité de référence.",
+                            "texte": "de gabarits et/ou d’une unité de référence",
                             "sous_points": null
                         }
                     ]
@@ -1624,31 +1623,31 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de plans du fabricant;",
+                            "texte": "de plans du fabricant",
                             "sous_points": null
                         },
                         {
-                            "texte": "des statistiques de tests;",
+                            "texte": "des statistiques de tests",
                             "sous_points": null
                         },
                         {
-                            "texte": "de logiciels spécialisés;",
+                            "texte": "de logiciels spécialisés",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’instruments de mesure spécialisés;",
+                            "texte": "d’instruments de mesure spécialisés",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’outils;",
+                            "texte": "d’outils",
                             "sous_points": null
                         },
                         {
-                            "texte": "de bancs de tests automatisés;",
+                            "texte": "de bancs de tests automatisés",
                             "sous_points": null
                         },
                         {
-                            "texte": "de procédures d’étalonnage.",
+                            "texte": "de procédures d’étalonnage",
                             "sous_points": null
                         }
                     ]
@@ -1657,23 +1656,23 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de normes nationales et internationales et de standards;",
+                            "texte": "de normes nationales et internationales et de standards",
                             "sous_points": null
                         },
                         {
-                            "texte": "de gabarits et/ou d’une unité de référence;",
+                            "texte": "de gabarits et/ou d’une unité de référence",
                             "sous_points": null
                         },
                         {
-                            "texte": "de spécifications et d’exigences techniques;",
+                            "texte": "de spécifications et d’exigences techniques",
                             "sous_points": null
                         },
                         {
-                            "texte": "de résultats d’audits;",
+                            "texte": "de résultats d’audits",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’émetteurs-récepteurs de radio fréquence (RF).",
+                            "texte": "d’émetteurs-récepteurs de radio fréquence (RF)",
                             "sous_points": null
                         }
                     ]
@@ -1758,7 +1757,7 @@
                             "sous_points": null
                         },
                         {
-                            "texte": "d’instruments  de mesure spécialisés.",
+                            "texte": "d’instruments de mesure spécialisés.",
                             "sous_points": null
                         },
                         {
@@ -1869,27 +1868,27 @@
                     "texte": "À l’aide :",
                     "sous_points": [
                         {
-                            "texte": "de plans du fabricant;",
+                            "texte": "de plans du fabricant",
                             "sous_points": null
                         },
                         {
-                            "texte": "de logiciels spécialisés;",
+                            "texte": "de logiciels spécialisés",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’instruments de mesure spécialisés.",
+                            "texte": "d’instruments de mesure spécialisés",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’outils;",
+                            "texte": "d’outils",
                             "sous_points": null
                         },
                         {
-                            "texte": "de pièces de remplacement;",
+                            "texte": "de pièces de remplacement",
                             "sous_points": null
                         },
                         {
-                            "texte": "d’appareils ou d’équipements de remplacement.",
+                            "texte": "d’appareils ou d’équipements de remplacement",
                             "sous_points": null
                         }
                     ]
@@ -1898,19 +1897,19 @@
                     "texte": "À partir :",
                     "sous_points": [
                         {
-                            "texte": "de normes nationales et internationales et de standards;",
+                            "texte": "de normes nationales et internationales et de standards",
                             "sous_points": null
                         },
                         {
-                            "texte": "de rapports de diagnostic;",
+                            "texte": "de rapports de diagnostic",
                             "sous_points": null
                         },
                         {
-                            "texte": "de gabarits et/ou d’une unité de référence;",
+                            "texte": "de gabarits et/ou d’une unité de référence",
                             "sous_points": null
                         },
                         {
-                            "texte": "de règlements en matière de développement durable.",
+                            "texte": "de règlements en matière de développement durable",
                             "sous_points": null
                         }
                     ]

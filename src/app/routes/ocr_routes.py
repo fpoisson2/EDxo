@@ -165,12 +165,12 @@ def start_ocr_processing():
 
         try:
             # !!! Importation de la tâche déplacée ici !!!
-            from app.tasks import process_ocr_task
+            from app.tasks.ocr import process_ocr_task
             logger.info(f"Tentative d'envoi de la tâche 'app.tasks.process_ocr_task' via celery.send_task")
             logger.info(f"Configuration Celery utilisée: BROKER='{celery.conf.broker_url}', BACKEND='{celery.conf.result_backend}'")
 
             task = celery.send_task(
-                'app.tasks.process_ocr_task', # Nom de la tâche à exécuter
+                'app.tasks.ocr.process_ocr_task', # Nom de la tâche à exécuter
                 args=[programme_url, pdf_title, current_user.id, current_user.openai_key],  # Arguments positionnels de la tâche
                 kwargs={}                    # Arguments nommés (aucun dans ce cas)
             )
