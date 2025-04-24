@@ -9,13 +9,6 @@
     <!-- — Champs de base — -->
     <div class="row g-3">
       <div class="col-md-6">
-        {{ form.programme.label(class="form-label fw-bold") }}
-        {{ form.programme(class="form-select") }}
-        {% for err in form.programme.errors %}
-          <div class="text-danger small">{{ err }}</div>
-        {% endfor %}
-      </div>
-      <div class="col-md-6">
         {{ form.code.label(class="form-label fw-bold") }}
         {{ form.code(class="form-control") }}
         {% for err in form.code.errors %}
@@ -38,6 +31,17 @@
           {% endfor %}
         </div>
       {% endfor %}
+    </div>
+
+    <!-- Programmes associés (many-to-many) -->
+    <div class="row g-3 mt-2">
+      <div class="col-md-12">
+        {{ form.programmes_associes.label(class="form-label fw-bold") }}
+        {{ form.programmes_associes(class="form-select", multiple=True) }}
+        {% for err in form.programmes_associes.errors %}
+          <div class="text-danger small">{{ err }}</div>
+        {% endfor %}
+      </div>
     </div>
 
     <!-- — Éléments de Compétence — -->

@@ -2,13 +2,19 @@ from datetime import datetime
 
 from flask import current_app
 from flask_login import UserMixin
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint, select
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from extensions import db
 
 # Association table for User-Programme many-to-many relationship
 user_programme = db.Table('User_Programme',
     db.Column('user_id', db.Integer, db.ForeignKey('User.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
+)
+
+cours_programme = db.Table('Cours_Programme',
+    db.Column('cours_id', db.Integer, db.ForeignKey('Cours.id', ondelete='CASCADE'), primary_key=True),
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
@@ -955,9 +961,23 @@ class Programme(db.Model):
 
     # Relations
     fil_conducteurs = db.relationship("FilConducteur", back_populates="programme")
-    cours = db.relationship("Cours", back_populates="programme")
+    # Les relations Department et ListeProgrammeMinisteriel demeurent inchangées.
     department = db.relationship("Department", back_populates="programmes")
     liste_programme_ministeriel = db.relationship("ListeProgrammeMinisteriel", back_populates="programmes")
+
+    # ------------------------------------------------------------------
+    # Propriété de compatibilité : ``cours``
+    # ------------------------------------------------------------------
+    # Dans l'ancien schéma, ``programme.cours`` faisait référence à la clé
+    # étrangère *programme_id* dans la table *Cours*.  Cette colonne ayant
+    # disparu, l'information est maintenant accessible par la relation
+    # many-to-many créée comme *backref* de ``Cours.programmes`` (nommée
+    # ``cours_associes``).  On expose donc cette dernière sous le nom
+    # historique afin d'éviter au reste du code de changer immédiatement.
+
+    @property
+    def cours(self):
+        return list(self.cours_associes)
 
     def __repr__(self):
         return f"<Programme {self.nom}>"
@@ -969,7 +989,11 @@ class Programme(db.Model):
 class Cours(db.Model):
     __tablename__ = "Cours"
     id = db.Column(db.Integer, primary_key=True)
-    programme_id = db.Column(db.Integer, db.ForeignKey("Programme.id"), nullable=False)
+    # L'association à un ou plusieurs programmes se fait désormais **uniquement**
+    # via la table d'association ``Cours_Programme`` (relation plusieurs-à-plusieurs).
+    # Le champ historique ``programme_id`` – qui implémentait une relation
+    # un-à-plusieurs – a été retiré de la base de données.  Le code d'application
+    # ne doit donc plus l'utiliser.
     code = db.Column(db.Text, nullable=False)
     nom = db.Column(db.Text, nullable=False)
     nombre_unites = db.Column(db.Float, nullable=False, default=1.0)
@@ -984,9 +1008,57 @@ class Cours(db.Model):
     # Relationship back to FilConducteur
     fil_conducteur = db.relationship("FilConducteur", back_populates="cours_list")
 
-    programme = db.relationship("Programme", back_populates="cours")
+    # Association plusieurs-à-plusieurs vers Programme.
+    programmes = db.relationship(
+        "Programme",
+        secondary=cours_programme,
+        backref=db.backref("cours_associes", lazy="dynamic"),
+        lazy="dynamic"
+    )
+
     plan_cadre = db.relationship("PlanCadre", back_populates="cours", uselist=False)
     plans_de_cours = db.relationship("PlanDeCours", back_populates="cours")
+
+    # ------------------------------------------------------------------
+    # Propriété de compatibilité : ``programme_id`` / ``programme``
+    # ------------------------------------------------------------------
+    # De nombreuses parties du code historique font toujours référence au
+    # champ ``programme_id`` ou à l'attribut ``programme`` sur un objet
+    # Cours.  Pour éviter de casser l'application en attendant la mise à
+    # jour complète du code, on expose une propriété Python éponyme qui
+    # renvoie l'identifiant (resp. l'instance) du *premier* programme
+    # associé via la relation plusieurs-à-plusieurs.  Aucune colonne n'est
+    # cependant créée dans la base de données.
+
+    @property
+    def programme(self):
+        """Retourne le premier programme associé (héritage historique).
+
+        La méthode renvoie *None* lorsqu'aucun programme n'est associé ou
+        lorsque plusieurs programmes sont liés et qu'il serait ambigu d'en
+        choisir un.
+        """
+        return self.programmes.first() if hasattr(self, 'programmes') else None
+
+    @hybrid_property
+    def programme_id(self):
+        """Identifiant du *premier* programme associé (propriété legacy).
+
+        Permet également les filtres au niveau SQL (via la partie expression)
+        pour conserver la compatibilité du code existant qui exécute par
+        exemple ``Cours.query.filter_by(programme_id=...)``.
+        """
+        prog = self.programme
+        return prog.id if prog else None
+
+    @programme_id.expression
+    def programme_id(cls):  # pylint: disable=no-self-argument
+        return (
+            select(cours_programme.c.programme_id)
+            .where(cours_programme.c.cours_id == cls.id)
+            .limit(1)
+            .scalar_subquery()
+        )
 
     def __repr__(self):
         return f"<Cours {self.code} - {self.nom}>"

@@ -541,10 +541,11 @@ def view_programme(programme_id):
     # Récupérer les cours associés au programme + infos fil conducteur
     # (Dans ce modèle, FilConducteur n'est pas forcément relié par relationship, 
     # on utilise donc l’id fil_conducteur_id directement)
-    cours_liste = (Cours.query
-             .filter_by(programme_id=programme_id)
-             .order_by(Cours.session.asc())
-             .all())
+    cours_liste = (Programme.query.get(programme_id)
+                   .cours_associes
+                   .order_by(Cours.session.asc())
+                   .all())
+
 
     # Regrouper les cours par session
     cours_par_session = defaultdict(list)
