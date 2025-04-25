@@ -233,7 +233,7 @@ class User(UserMixin, db.Model):
 class Competence(db.Model):
     __tablename__ = "Competence"
     id = db.Column(db.Integer, primary_key=True)
-    #programme_id = db.Column(db.Integer, nullable=False)
+    programme_id = db.Column(db.Integer, nullable=False)
     code = db.Column(db.Text, nullable=False)
     nom = db.Column(db.Text, nullable=False)
     criteria_de_performance = db.Column(db.Text, nullable=True)
