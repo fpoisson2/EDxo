@@ -15,6 +15,18 @@
           <div class="text-danger small">{{ err }}</div>
         {% endfor %}
       </div>
+    <!-- — Programmes associés — -->
+    <div class="card mt-5">
+      <div class="card-header fw-bold">Programmes associés</div>
+      <div class="card-body">
+        {{ form.programmes_associes.label(class="form-label") }}
+        {{ form.programmes_associes(class="form-select form-select-sm", multiple=True) }}
+        {% for err in form.programmes_associes.errors %}
+          <div class="text-danger small">{{ err }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
       <div class="col-md-12">
         {{ form.nom.label(class="form-label fw-bold") }}
         {{ form.nom(class="form-control") }}
