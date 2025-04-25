@@ -126,8 +126,18 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # ----------------------------------------------------------------
         # 1) Prepare data and settings
         # ----------------------------------------------------------------
+        # Récupérer le nom et la session du cours via l'association CoursProgramme
         cours_nom = plan.cours.nom if plan.cours else "Non défini"
-        cours_session = plan.cours.session if (plan.cours and plan.cours.session) else "Non défini"
+        if plan.cours:
+            # Première programme associé (legacy)
+            primary_prog = plan.cours.programme
+            if primary_prog:
+                # session spécifique stockée dans la table d'association
+                cours_session = plan.cours.sessions_map.get(primary_prog.id, "Non défini")
+            else:
+                cours_session = "Non défini"
+        else:
+            cours_session = "Non défini"
 
         # Notifier le client que la génération est en cours
         self.update_state(

@@ -17,6 +17,21 @@
           <span class="text-danger">{{ error }}</span>
         {% endfor %}
       </div>
+      <!-- Session par Programme -->
+      <div id="programme_sessions" class="mt-3">
+        <div class="row g-3">
+          {% for pid, pname in form.programmes_associes.choices %}
+            <div class="col-md-4 mb-2 programme-session" data-programme-id="{{ pid }}" style="display:none;">
+              <label for="session_{{ pid }}" class="form-label fw-bold">Session pour {{ pname }}</label>
+              <select name="session_{{ pid }}" id="session_{{ pid }}" class="form-select form-select-sm">
+                {% for val, label in [(1,'Session 1'), (2,'Session 2'), (3,'Session 3'), (4,'Session 4'), (5,'Session 5'), (6,'Session 6')] %}
+                  <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
       
       <div class="form-group">
         <label for="{{ form.code.id }}">{{ form.code.label }}</label>
@@ -34,13 +49,6 @@
         {% endfor %}
       </div>
       
-      <div class="form-group">
-        <label for="{{ form.session.id }}">{{ form.session.label }}</label>
-        {{ form.session(class="form-control") }}
-        {% for error in form.session.errors %}
-          <span class="text-danger">{{ error }}</span>
-        {% endfor %}
-      </div>
       
       <div class="form-group">
         <label for="{{ form.heures_theorie.id }}">{{ form.heures_theorie.label }}</label>
@@ -71,5 +79,23 @@
       <button type="submit" class="btn btn-primary">Ajouter Cours</button>
     </form>
   </div>
-  
+  {% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const progSelect = document.querySelector('[name="programmes_associes"]');
+      const sessionsContainer = document.getElementById('programme_sessions');
+      if (progSelect && sessionsContainer) {
+        progSelect.addEventListener('change', () => {
+          const selected = Array.from(progSelect.selectedOptions).map(o => parseInt(o.value));
+          sessionsContainer.querySelectorAll('.programme-session').forEach(el => {
+            const pid = parseInt(el.getAttribute('data-programme-id'));
+            el.style.display = selected.includes(pid) ? 'block' : 'none';
+          });
+        });
+      }
+    });
+  </script>
 {% endblock %}

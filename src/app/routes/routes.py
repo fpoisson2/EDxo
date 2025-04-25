@@ -56,6 +56,7 @@ from app.models import (
     CompetenceParCours,
     ElementCompetenceParCours,
     Cours,
+    CoursProgramme,
     ListeCegep
 )
 from extensions import limiter
@@ -1002,7 +1003,6 @@ def add_cours():
     if form.validate_on_submit():
         code = form.code.data
         nom = form.nom.data
-        session_val = form.session.data
         heures_theorie = form.heures_theorie.data
         heures_laboratoire = form.heures_laboratoire.data
         heures_travail_maison = form.heures_travail_maison.data
@@ -1012,25 +1012,32 @@ def add_cours():
             code=code,
             nom=nom,
             nombre_unites=nombre_unites,
-            session=session_val,
             heures_theorie=heures_theorie,
             heures_laboratoire=heures_laboratoire,
             heures_travail_maison=heures_travail_maison
         )
 
         try:
+            # Enregistrer le nouveau cours
             db.session.add(new_cours)
             db.session.commit()
-
             # ----------------------------------------------------------
-            # Ajout des associations many-to-many (Cours_Programme)
+            # Ajout des associations many-to-many via CoursProgramme
             # ----------------------------------------------------------
             programmes_ids = form.programmes_associes.data or []
-
-            if programmes_ids:
-                programmes_a_associer = Programme.query.filter(Programme.id.in_(programmes_ids)).all()
-                new_cours.programmes.extend(programmes_a_associer)
-                db.session.commit()
+            for pid in programmes_ids:
+                # Lire la session spécifique
+                sess_val = request.form.get(f'session_{pid}')
+                try:
+                    sess = int(sess_val)
+                except (TypeError, ValueError):
+                    sess = 0
+                db.session.add(CoursProgramme(
+                    cours_id=new_cours.id,
+                    programme_id=pid,
+                    session=sess
+                ))
+            db.session.commit()
 
             elements_competence_data = form.elements_competence.data or []
             for ec in elements_competence_data:
@@ -1326,7 +1333,6 @@ def edit_cours(cours_id):
         # champs de base
         form.code.data                   = cours.code
         form.nom.data                    = cours.nom
-        form.session.data                = cours.session
         form.heures_theorie.data         = cours.heures_theorie
         form.heures_laboratoire.data     = cours.heures_laboratoire
         form.heures_travail_maison.data  = cours.heures_travail_maison
@@ -1351,22 +1357,30 @@ def edit_cours(cours_id):
         # mise à jour des champs de base
         cours.code                   = form.code.data
         cours.nom                    = form.nom.data
-        cours.session                = form.session.data
         cours.heures_theorie         = form.heures_theorie.data
         cours.heures_laboratoire     = form.heures_laboratoire.data
         cours.heures_travail_maison  = form.heures_travail_maison.data
         cours.fil_conducteur_id      = form.fil_conducteur.data
 
-        # M2M Programme ↔ Cours
+        # M2M Programme ↔ Cours (avec session par programme)
         nouveaux_ids = set(form.programmes_associes.data or [])
-        cours.programmes = (
-            Programme.query
-            .filter(Programme.id.in_(nouveaux_ids))
-            .all()
-            if nouveaux_ids else []
-        )
+        # Supprimer les anciennes associations
+        CoursProgramme.query.filter_by(cours_id=cours_id).delete()
+        # Créer les nouvelles associations avec session spécifique
+        for pid in nouveaux_ids:
+            # Récupérer la session pour ce programme, default à 0 si absent
+            sess_val = request.form.get(f'session_{pid}')
+            try:
+                sess = int(sess_val)
+            except (TypeError, ValueError):
+                sess = 0
+            db.session.add(CoursProgramme(
+                cours_id=cours_id,
+                programme_id=pid,
+                session=sess
+            ))
 
-        # Éléments de compétence
+        # Éléments de compétenc
         ElementCompetenceParCours.query.filter_by(cours_id=cours_id).delete()
         for ec in elements_query:
             st = request.form.get(f'status_{ec.id}')
@@ -1422,7 +1436,8 @@ def edit_cours(cours_id):
         form=form,
         grouped_elements=grouped_elements,
         existing_status=existing_status,
-        programme_courses=programme_courses
+        programme_courses=programme_courses,
+        cours=cours
     )
 
 

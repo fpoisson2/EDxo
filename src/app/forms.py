@@ -467,14 +467,6 @@ class CoursForm(FlaskForm):
     )
     code = StringField('Code', validators=[DataRequired()])
     nom = StringField('Nom', validators=[DataRequired()])
-    session = SelectField('Session', choices=[
-        (1, 'Session 1'),
-        (2, 'Session 2'),
-        (3, 'Session 3'),
-        (4, 'Session 4'),
-        (5, 'Session 5'),
-        (6, 'Session 6')
-    ], coerce=int, validators=[DataRequired()])
     heures_theorie = IntegerField('Heures Théorie', validators=[InputRequired(), NumberRange(min=0)])
     heures_laboratoire = IntegerField('Heures Laboratoire', validators=[InputRequired(), NumberRange(min=0)])
     heures_travail_maison = IntegerField('Heures Travail Maison', validators=[InputRequired(), NumberRange(min=0)])

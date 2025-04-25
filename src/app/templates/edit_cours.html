@@ -26,6 +26,13 @@
         {% endfor %}
       </div>
     </div>
+    <!-- Session par Programme -->
+    <div class="card mt-3">
+      <div class="card-header fw-bold">Session par Programme</div>
+      <div class="card-body">
+        <div class="row g-3" id="programme_sessions"></div>
+      </div>
+    </div>
 
       <div class="col-md-12">
         {{ form.nom.label(class="form-label fw-bold") }}
@@ -34,7 +41,7 @@
           <div class="text-danger small">{{ err }}</div>
         {% endfor %}
       </div>
-      {% for fld in [form.session, form.heures_theorie, form.heures_laboratoire, form.heures_travail_maison] %}
+      {% for fld in [form.heures_theorie, form.heures_laboratoire, form.heures_travail_maison] %}
         <div class="col-md-3">
           {{ fld.label(class="form-label fw-bold") }}
           {{ fld(class="form-control form-control-sm") }}
@@ -206,6 +213,44 @@
         container.appendChild(row);
         index++;
       });
+      // Dynamique : génération des selects de session par programme
+      const progSelect = document.querySelector('[name="programmes_associes"]');
+      const sessionsContainer = document.getElementById('programme_sessions');
+      const progChoices = {{ form.programmes_associes.choices|tojson|safe }};
+      const sessionOptions = [[1,'Session 1'], [2,'Session 2'], [3,'Session 3'], [4,'Session 4'], [5,'Session 5'], [6,'Session 6']];
+      const sessionMap = {{ cours.sessions_map|tojson|safe }};
+      function rebuildSessions() {
+        const selected = Array.from(progSelect.selectedOptions).map(o => parseInt(o.value));
+        sessionsContainer.innerHTML = '';
+        selected.forEach(pid => {
+          const pname = progChoices.find(c => c[0] === pid)[1];
+          const col = document.createElement('div');
+          col.className = 'col-md-4 mb-2 programme-session';
+          col.dataset.programmeId = pid;
+          const label = document.createElement('label');
+          label.htmlFor = `session_${pid}`;
+          label.className = 'form-label fw-bold';
+          label.textContent = `Session pour ${pname}`;
+          const select = document.createElement('select');
+          select.className = 'form-select form-select-sm';
+          select.name = `session_${pid}`;
+          select.id = `session_${pid}`;
+          sessionOptions.forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt[0];
+            o.textContent = opt[1];
+            if (sessionMap[pid] === opt[0]) o.selected = true;
+            select.appendChild(o);
+          });
+          col.appendChild(label);
+          col.appendChild(select);
+          sessionsContainer.appendChild(col);
+        });
+      }
+      if (progSelect && sessionsContainer) {
+        progSelect.addEventListener('change', rebuildSessions);
+        rebuildSessions();
+      }
     });
   </script>
 {% endblock %}
