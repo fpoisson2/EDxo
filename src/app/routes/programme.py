@@ -40,7 +40,6 @@ logger = logging.getLogger(__name__)
 
 programme_bp = Blueprint('programme', __name__, url_prefix='/programme')
 
-
 @programme_bp.route('/<int:programme_id>/competences')
 @login_required
 @ensure_profile_completed
@@ -49,22 +48,27 @@ def view_competences_programme(programme_id):
     Affiche la liste de toutes les compétences associées à un programme spécifique.
     """
     logger.debug(f"Accessing competencies list for programme ID: {programme_id}")
-    programme = Programme.query.get_or_404(programme_id) # get_or_404 handles not found
+    programme = Programme.query.get_or_404(programme_id)
 
-    # Vérifier si l'utilisateur a accès à ce programme
-    # (Using the same logic as in view_programme)
+    # Vérifier l’accès
     if programme not in current_user.programmes and current_user.role != 'admin':
         flash("Vous n'avez pas accès à ce programme.", 'danger')
-        # Redirect back to index or a relevant page
         return redirect(url_for('main.index'))
-        # Alternative: render_template('no_access.html')
 
-    # Récupérer toutes les compétences pour ce programme, triées par code
-    competences = Competence.query.filter_by(programme_id=programme.id).order_by(Competence.code).all()
+    # Récupérer toutes les compétences via la relation many-to-many,
+    # triées par code
+    competences = (
+        programme
+        .competences          # backref dynamique défini sur Competence.programmes
+        .order_by(Competence.code)
+        .all()
+    )
 
-    return render_template('programme/view_competences_programme.html',
-                           programme=programme,
-                           competences=competences)
+    return render_template(
+        'programme/view_competences_programme.html',
+        programme=programme,
+        competences=competences
+    )
 
 
 @programme_bp.route('/review_import', methods=['POST'])
