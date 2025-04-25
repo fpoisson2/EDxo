@@ -1261,7 +1261,6 @@ def edit_element_competence(element_id):
     return render_template('edit_element_competence.html', form=form)
 
 
-
 @main.route('/edit_cours/<int:cours_id>', methods=('GET', 'POST'))
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
@@ -1283,7 +1282,8 @@ def edit_cours(cours_id):
     programme_courses = [
         (c.id, f"{c.code} – {c.nom}")
         for c in Cours.query
-                     .filter(Cours.programme_id.in_(assoc_prog_ids))
+                     .join(Cours.programmes)
+                     .filter(Programme.id.in_(assoc_prog_ids))
                      .filter(Cours.id != cours_id)
                      .order_by(Cours.code)
                      .all()
@@ -1292,8 +1292,9 @@ def edit_cours(cours_id):
     # --- 3) Éléments de compétence de TOUS ces programmes ---
     elements_query = (
         ElementCompetence.query
-        .join(Competence, ElementCompetence.competence)
-        .filter(Competence.programme_id.in_(assoc_prog_ids))
+        .join(Competence)
+        .join(Competence.programmes)
+        .filter(Programme.id.in_(assoc_prog_ids))
         .order_by(Competence.code, ElementCompetence.nom)
         .all()
     )
@@ -1314,8 +1315,8 @@ def edit_cours(cours_id):
 
     # --- 4) Construction du formulaire ---
     form = CoursForm()
-    form.corequis.choices           = programme_courses
-    form.fil_conducteur.choices     = [(f.id, f.description) for f in fils_conducteurs]
+    form.corequis.choices            = programme_courses
+    form.fil_conducteur.choices      = [(f.id, f.description) for f in fils_conducteurs]
     form.programmes_associes.choices = [(p.id, p.nom) for p in accessible_programmes]
     for sub in form.prealables:
         sub.cours_prealable_id.choices = programme_courses
@@ -1323,12 +1324,12 @@ def edit_cours(cours_id):
     # --- 5) Pré-remplissage GET ---
     if request.method == 'GET':
         # champs de base
-        form.code.data               = cours.code
-        form.nom.data                = cours.nom
-        form.session.data            = cours.session
-        form.heures_theorie.data     = cours.heures_theorie
-        form.heures_laboratoire.data = cours.heures_laboratoire
-        form.heures_travail_maison.data = cours.heures_travail_maison
+        form.code.data                   = cours.code
+        form.nom.data                    = cours.nom
+        form.session.data                = cours.session
+        form.heures_theorie.data         = cours.heures_theorie
+        form.heures_laboratoire.data     = cours.heures_laboratoire
+        form.heures_travail_maison.data  = cours.heures_travail_maison
 
         # programmes associés
         form.programmes_associes.data = assoc_prog_ids
@@ -1348,18 +1349,22 @@ def edit_cours(cours_id):
     # --- 6) Traitement POST ---
     if form.validate_on_submit():
         # mise à jour des champs de base
-        cours.code                = form.code.data
-        cours.nom                 = form.nom.data
-        cours.session             = form.session.data
-        cours.heures_theorie      = form.heures_theorie.data
-        cours.heures_laboratoire  = form.heures_laboratoire.data
-        cours.heures_travail_maison = form.heures_travail_maison.data
-        cours.fil_conducteur_id   = form.fil_conducteur.data
+        cours.code                   = form.code.data
+        cours.nom                    = form.nom.data
+        cours.session                = form.session.data
+        cours.heures_theorie         = form.heures_theorie.data
+        cours.heures_laboratoire     = form.heures_laboratoire.data
+        cours.heures_travail_maison  = form.heures_travail_maison.data
+        cours.fil_conducteur_id      = form.fil_conducteur.data
 
         # M2M Programme ↔ Cours
         nouveaux_ids = set(form.programmes_associes.data or [])
-        cours.programmes = Programme.query \
-            .filter(Programme.id.in_(nouveaux_ids)).all() if nouveaux_ids else []
+        cours.programmes = (
+            Programme.query
+            .filter(Programme.id.in_(nouveaux_ids))
+            .all()
+            if nouveaux_ids else []
+        )
 
         # Éléments de compétence
         ElementCompetenceParCours.query.filter_by(cours_id=cours_id).delete()
@@ -1400,21 +1405,26 @@ def edit_cours(cours_id):
             flash(f'Erreur lors de la mise à jour : {e}', 'danger')
 
     # --- 7) Rendu final ---
+    grouped_elements = [
+        {
+            'code': comp.competence.code,
+            'nom': comp.competence.nom,
+            'elements': [
+                {'id': el.id, 'nom': el.nom}
+                for el in filter(lambda x: x.competence_id == comp.competence.id, elements_query)
+            ]
+        }
+        for comp in OrderedDict((c.competence_id, c) for c in elements_query).values()
+    ]
+
     return render_template(
         'edit_cours.html',
         form=form,
-        grouped_elements=[{
-            'code': comp.competence.code,
-            'nom':  comp.competence.nom,
-            'elements': [{
-                'id': el.id,
-                'nom': el.nom
-            } for el in [*(filter(lambda x: x.competence_id == comp.competence.id, elements_query))]
-            ]
-        } for comp in OrderedDict((c.competence_id, c) for c in elements_query).values()],
+        grouped_elements=grouped_elements,
         existing_status=existing_status,
         programme_courses=programme_courses
     )
+
 
 
 @main.route('/parametres/gestion_departements', methods=['GET', 'POST'])
