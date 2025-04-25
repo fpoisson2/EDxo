@@ -18,6 +18,13 @@ cours_programme = db.Table('Cours_Programme',
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
+competence_programme = db.Table(
+    'Competence_Programme',
+    db.Column('competence_id', db.Integer, db.ForeignKey('Competence.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('programme_id',   db.Integer, db.ForeignKey('Programme.id',    ondelete='CASCADE'), primary_key=True)
+)
+
+
 class MailgunConfig(db.Model):
     __tablename__ = 'mailgun_config'
     id = db.Column(db.Integer, primary_key=True)
@@ -226,7 +233,7 @@ class User(UserMixin, db.Model):
 class Competence(db.Model):
     __tablename__ = "Competence"
     id = db.Column(db.Integer, primary_key=True)
-    programme_id = db.Column(db.Integer, nullable=False)
+    #programme_id = db.Column(db.Integer, nullable=False)
     code = db.Column(db.Text, nullable=False)
     nom = db.Column(db.Text, nullable=False)
     criteria_de_performance = db.Column(db.Text, nullable=True)
@@ -234,6 +241,13 @@ class Competence(db.Model):
 
     # Relation vers éléments de compétence
     elements = db.relationship("ElementCompetence", back_populates="competence", cascade="all, delete-orphan")
+
+    programmes = db.relationship(
+        'Programme',
+        secondary=competence_programme,
+        backref=db.backref('competences', lazy='dynamic'),
+        lazy='dynamic'
+    )    
 
     def __repr__(self):
         return f"<Competence {self.code} - {self.nom}>"

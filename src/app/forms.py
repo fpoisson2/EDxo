@@ -415,7 +415,11 @@ class ProgrammeForm(FlaskForm):
     submit = SubmitField("Ajouter le programme")
 
 class CompetenceForm(FlaskForm):
-    programme = SelectField('Programme', coerce=int, validators=[DataRequired()])
+    programmes = SelectMultipleField(
+        "Programmes",
+        coerce=int,
+        validators=[DataRequired()]
+    )
     code = StringField('Code', validators=[DataRequired()])
     nom = StringField('Nom', validators=[DataRequired()])
     criteria_de_performance = TextAreaField('Critères de Performance', validators=[Optional()])
