@@ -643,51 +643,51 @@ def view_programme(programme_id):
                            cours_plans_mapping=cours_plans_mapping
                            )
 
-
 @programme_bp.route('/competence/<int:competence_id>/edit', methods=['GET', 'POST'])
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_competence(competence_id):
-    form = CompetenceForm()
-    # Récupérer la compétence
-    competence = Competence.query.get(competence_id)
-    # Récupérer la liste des programmes
+    competence = Competence.query.get_or_404(competence_id)
     programmes = Programme.query.all()
-
-    if competence is None:
-        flash('Compétence non trouvée.', 'danger')
-        return redirect(url_for('main.index'))
-
-    # Peupler le choix de programme
+    form = CompetenceForm()
     form.programmes.choices = [(p.id, p.nom) for p in programmes]
 
-    if request.method == 'POST' and form.validate_on_submit():
+    if form.validate_on_submit():
         try:
+            # MAJ many-to-many
             competence.programmes = Programme.query.filter(
                 Programme.id.in_(form.programmes.data)
             ).all()
             competence.code = form.code.data
-            competence.nom = form.nom.data
-            competence.criteria_de_performance = form.criteria_de_performance.data
-            competence.contexte_de_realisation = form.contexte_de_realisation.data
+            competence.nom  = form.nom.data
+            competence.criteria_de_performance   = form.criteria_de_performance.data
+            competence.contexte_de_realisation   = form.contexte_de_realisation.data
 
             db.session.commit()
-            flash('Compétence mise à jour avec succès!', 'success')
-            return redirect(url_for('programme.view_programme', programme_id=competence.programme_id))
-        except Exception as e:
-            flash(f'Erreur lors de la mise à jour de la compétence : {e}', 'danger')
-            return redirect(url_for('programme.edit_competence', competence_id=competence_id))
-    else:
-        # Pré-remplir le formulaire
-        form.programmes.data = [p.id for p in competence.programmes]
-        form.code.data = competence.code if competence.code else ''
-        form.nom.data = competence.nom
-        form.criteria_de_performance.data = competence.criteria_de_performance
-        form.contexte_de_realisation.data = competence.contexte_de_realisation
+            flash('Compétence mise à jour avec succès !', 'success')
 
-    # après commit
-    first_prog = competence.programmes[0].id if competence.programmes else None
-    return redirect(url_for('programme.view_programme', programme_id=first_prog))
+            # redirige vers le premier programme associé
+            first_id = competence.programmes[0].id if competence.programmes else None
+            return redirect(url_for('programme.view_programme', programme_id=first_id))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur lors de la mise à jour : {e}', 'danger')
+            return redirect(url_for('programme.edit_competence', competence_id=competence_id))
+
+    # --- GET ou validaton KO ---
+    # pré-remplissage
+    form.programmes.data             = [p.id for p in competence.programmes]
+    form.code.data                   = competence.code or ''
+    form.nom.data                    = competence.nom
+    form.criteria_de_performance.data = competence.criteria_de_performance
+    form.contexte_de_realisation.data = competence.contexte_de_realisation
+
+    return render_template(
+        'edit_competence.html',
+        form=competence,  # ou form=form
+        competence=competence
+    )
 
 
 @programme_bp.route('/competence/<int:competence_id>/delete', methods=['POST'])
