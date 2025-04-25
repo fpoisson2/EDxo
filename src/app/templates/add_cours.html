@@ -8,10 +8,12 @@
       {{ form.hidden_tag() }}
       
       <!-- Champs du Cours -->
+
+      <!-- Programmes associés (many-to-many) -->
       <div class="form-group">
-        <label for="{{ form.programme.id }}">{{ form.programme.label }}</label>
-        {{ form.programme(class="form-control") }}
-        {% for error in form.programme.errors %}
+        <label for="{{ form.programmes_associes.id }}">{{ form.programmes_associes.label }}</label>
+        {{ form.programmes_associes(class="form-select", multiple=True) }}
+        {% for error in form.programmes_associes.errors %}
           <span class="text-danger">{{ error }}</span>
         {% endfor %}
       </div>
@@ -63,100 +65,11 @@
           <span class="text-danger">{{ error }}</span>
         {% endfor %}
       </div>
-      
-      <!-- Section Éléments de Compétence -->
-      <div class="form-group">
-        <h3>Éléments de Compétence</h3>
-        
-        <div id="elements_competence">
-          {% for subform in form.elements_competence %}
-            <div class="element-competence mb-3 border p-3">
-              <div class="form-row">
-                <div class="col-md-6">
-                  <label for="{{ subform.element_competence.id }}">{{ subform.element_competence.label }}</label>
-                  {{ subform.element_competence(class="form-control") }}
-                  {% for error in subform.element_competence.errors %}
-                    <span class="text-danger">{{ error }}</span>
-                  {% endfor %}
-                </div>
-                <div class="col-md-6">
-                  <label for="{{ subform.status.id }}">{{ subform.status.label }}</label>
-                  {{ subform.status(class="form-control") }}
-                  {% for error in subform.status.errors %}
-                    <span class="text-danger">{{ error }}</span>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-        
-        <!-- Bouton pour ajouter un élément de compétence supplémentaire -->
-        <button type="button" class="btn btn-secondary" id="add-element-competence">Ajouter un Élément de Compétence</button>
-      </div>
-      
+
+    
       <!-- Bouton de Soumission -->
       <button type="submit" class="btn btn-primary">Ajouter Cours</button>
     </form>
   </div>
-  
-  <!-- JavaScript pour ajouter dynamiquement des éléments de compétence -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      var addButton = document.getElementById('add-element-competence');
-      var container = document.getElementById('elements_competence');
-      var index = {{ form.elements_competence|length }};
-      
-      // Liste des éléments de compétence disponibles
-      var elements_competence = {{ elements_competence | tojson }};
-      
-      // Liste des statuts
-      var statuts = [
-        'Non traité',
-        'Traité superficiellement',
-        'Développé significativement',
-        'Atteint',
-        'Réinvesti'
-      ];
-      
-      addButton.addEventListener('click', function() {
-        // Créer un nouveau bloc pour l'élément de compétence
-        var newElement = document.createElement('div');
-        newElement.classList.add('element-competence', 'mb-3', 'border', 'p-3');
-        
-        var options = elements_competence.map(function(ec) {
-          return `<option value="${ec.id}">${ec.competence_code} - ${ec.nom}</option>`;
-        }).join('');
-
-        
-        // Créer les options pour le select de statut
-        var statutOptions = statuts.map(function(status) {
-          return `<option value="${status}">${status}</option>`;
-        }).join('');
-        
-        newElement.innerHTML = `
-          <div class="form-row">
-            <div class="col-md-6">
-              <label for="elements_competence-${index}-element_competence">Élément de Compétence</label>
-              <select class="form-control" id="elements_competence-${index}-element_competence" name="elements_competence-${index}-element_competence">
-                <option value="">Sélectionnez un élément de compétence</option>
-                ${options}
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="elements_competence-${index}-status">Statut</label>
-              <select class="form-control" id="elements_competence-${index}-status" name="elements_competence-${index}-status">
-                <option value="">Sélectionnez un statut</option>
-                ${statutOptions}
-              </select>
-            </div>
-          </div>
-        `;
-        
-        container.appendChild(newElement);
-        index++;
-      });
-    });
-  </script>
   
 {% endblock %}

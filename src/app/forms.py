@@ -451,7 +451,16 @@ class ElementCompetenceStatusForm(Form):
     ], validators=[DataRequired()])
 
 class CoursForm(FlaskForm):
-    programme = SelectField('Programme', coerce=int, validators=[DataRequired()])
+    # Champ supplémentaire pour l'association à plusieurs programmes. L'utilisateur
+    # peut sélectionner un ou plusieurs autres programmes (en plus du programme
+    # principal ci-dessus) auxquels le cours sera lié via la relation many-to-many
+    # ``Cours.programmes``.
+    programmes_associes = SelectMultipleField(
+        'Programmes associés',
+        coerce=int,
+        validators=[Optional()],
+        render_kw={"class": "form-select", "multiple": True}
+    )
     code = StringField('Code', validators=[DataRequired()])
     nom = StringField('Nom', validators=[DataRequired()])
     session = SelectField('Session', choices=[

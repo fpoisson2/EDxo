@@ -517,6 +517,36 @@ def get_programme_id_for_cours(cours_id):
     cours = db.session.get(Cours, cours_id)
     return cours.programme_id if cours else None
 
+# ---------------------------------------------------------------------------
+# Nouveauté : prise en charge d'un cours associé à plusieurs programmes
+# ---------------------------------------------------------------------------
+
+def get_programme_ids_for_cours(cours_id):
+    """Return the list of programme IDs linked to the given course.
+
+    The list includes the legacy ``programme_id`` (s'il existe) ainsi que
+    l'ensemble des programmes associés via la relation many-to-many introduite
+    par la table *Cours_Programme*.
+    """
+    cours = db.session.get(Cours, cours_id)
+    if not cours:
+        return []
+
+    ids = set()
+    # Premier, le champ hérité programme_id
+    if cours.programme_id is not None:
+        ids.add(cours.programme_id)
+
+    # Ensuite, tous les programmes liés via la relation many-to-many
+    try:
+        ids.update(p.id for p in cours.programmes)
+    except Exception:
+        # La relation peut ne pas exister si les migrations ne sont pas encore
+        # appliquées.  Dans ce cas on ignore simplement.
+        pass
+
+    return list(ids)
+
 def is_coordo_for_programme(user_id, programme_id):
     """Check if user is coordinator for given programme."""
     user = db.session.get(User, user_id)
