@@ -685,7 +685,7 @@ def edit_competence(competence_id):
 
     return render_template(
         'edit_competence.html',
-        form=competence,  # ou form=form
+        form=form,  # ou form=form
         competence=competence
     )
 
