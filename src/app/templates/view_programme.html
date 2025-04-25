@@ -23,14 +23,16 @@
       </h5>
       <ul class="list-inline mb-0">
         {% for fil in fil_conducteurs %}
+          {% set bg = fil.couleur or '#ffffff' %}
+          {% set txt = 'black' if bg|brightness > 128 else 'white' %}
           {% if current_user.role in ['admin', 'coordo'] %}
-            <li class="list-inline-item" style="background-color: {{ fil.couleur }}; color: {{ 'white' if fil.couleur else 'black' }}; padding: 0.2rem 0.5rem; border-radius: 0.2rem;">
+            <li class="list-inline-item" style="background-color: {{ bg }}; color: {{ txt }}; padding: 0.2rem 0.5rem; border-radius: 0.2rem;">
               <a href="{{ url_for('main.edit_fil_conducteur', fil_id=fil.id) }}" style="color: inherit; text-decoration: none;">
                 {{ fil.description }}
               </a>
             </li>
           {% else %}
-            <li class="list-inline-item" style="background-color: {{ fil.couleur }}; color: {{ 'white' if fil.couleur else 'black' }}; padding: 0.2rem 0.5rem; border-radius: 0.2rem;">
+            <li class="list-inline-item" style="background-color: {{ bg }}; color: {{ txt }}; padding: 0.2rem 0.5rem; border-radius: 0.2rem;">
               {{ fil.description }}
             </li>
           {% endif %}
@@ -81,11 +83,13 @@
                 {% for c in cours_list %}
                   <div class="col mb-3">
                     <div class="card h-100 d-flex flex-column">
-                      <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}"
+                {% set bgc = c.fil_conducteur.couleur if c.fil_conducteur else '#f2f2f2' %}
+                {% set txtc = 'black' if bgc|brightness > 128 else 'white' %}
+                <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}"
                          class="text-decoration-none d-flex align-items-center justify-content-center card-header"
                          style="
-                             background-color: {{ c.fil_conducteur.couleur if c.fil_conducteur else '#f2f2f2' }};
-                             color: {{ 'white' if c.fil_conducteur else 'black' }};
+                             background-color: {{ bgc }};
+                             color: {{ txtc }};
                              min-height: 3rem; 
                              text-align: center; 
                              word-wrap: break-word; 
