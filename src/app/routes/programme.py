@@ -542,13 +542,14 @@ def view_programme(programme_id):
     # Récupérer les fils conducteurs associés
     fil_conducteurs = FilConducteur.query.filter_by(programme_id=programme_id).all()
 
-    # Récupérer les cours associés au programme + infos fil conducteur
-    # (Dans ce modèle, FilConducteur n'est pas forcément relié par relationship, 
-    # on utilise donc l’id fil_conducteur_id directement)
-    cours_liste = (Programme.query.get(programme_id)
-                   .cours_associes
-                   .order_by(Cours.session.asc())
-                   .all())
+    # Récupérer les cours associés via la table d'association, triés par session
+    # (chaque association CoursProgramme contient la session pour ce programme)
+    # 'programme' a déjà été récupéré ci-dessus
+    cours_assocs = sorted(programme.cours_assocs, key=lambda a: a.session)
+    # Liste des objets Cours
+    cours_liste = [assoc.cours for assoc in cours_assocs]
+    # Mapping cours_id -> session spécifique à ce programme
+    session_map = {assoc.cours.id: assoc.session for assoc in cours_assocs}
 
 
     # Regrouper les cours par session
@@ -577,7 +578,9 @@ def view_programme(programme_id):
         else:
             cours.dernier_plan = None
             
-        cours_par_session[cours.session].append(cours)
+        # Grouper par session définie dans la relation CoursProgramme
+        sess = session_map.get(cours.id)
+        cours_par_session[sess].append(cours)
 
     # Récupérer préalables et co-requis pour chaque cours
     prerequisites = {}

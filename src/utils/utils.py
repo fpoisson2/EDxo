@@ -663,16 +663,24 @@ def get_plan_cadre_data(cours_id, db_path='programme.db'):
     plan_cadre = {}
 
     try:
-        # 1. Nom du cours, Code du cours et session
+        # 1. Nom du cours, Code du cours et session via table d'association
         cours = db.session.query(Cours).filter_by(id=cours_id).first()
         if not cours:
             print(f"Aucun cours trouvé avec l'ID {cours_id}.")
             return None
-
+        # Déterminer la session liée au premier programme associé
+        session_value = 'Non défini'
+        primary_prog = cours.programme
+        if primary_prog:
+            try:
+                session_map = {assoc.programme_id: assoc.session for assoc in cours.programme_assocs}
+                session_value = session_map.get(primary_prog.id, 'Non défini')
+            except Exception:
+                session_value = 'Non défini'
         plan_cadre['cours'] = {
             'nom': cours.nom,
             'code': cours.code,
-            'session': cours.session,
+            'session': session_value,
             'heures_theorie': cours.heures_theorie,
             'heures_laboratoire': cours.heures_laboratoire,
             'heures_maison': cours.heures_travail_maison
@@ -813,11 +821,14 @@ def get_plan_cadre_data(cours_id, db_path='programme.db'):
         #    Reprise de la logique "SELECT ... FROM Cours AS C JOIN ElementCompetenceParCours"
         #    Filtre sur les mêmes éléments de compétence que cours_id
         subquery = db.session.query(ElementCompetenceParCours.element_competence_id).filter_by(cours_id=cours_id).subquery()
+        # 9. Cours développant une même compétence avant, pendant et après
+        # Suppression de l'ancien champ session, on renvoie None
+        from sqlalchemy import literal
         cours_developpant = db.session.query(
             Cours.id.label('cours_id'),
             Cours.nom.label('cours_nom'),
             Cours.code.label('code'),
-            Cours.session.label('session')
+            literal(None).label('session')
         ) \
         .join(ElementCompetenceParCours, Cours.id == ElementCompetenceParCours.cours_id) \
         .filter(ElementCompetenceParCours.element_competence_id.in_(subquery)) \
@@ -922,6 +933,14 @@ def generate_docx_with_template(plan_id):
     programme = None
     if cours.programme_id:
         programme = db.session.query(Programme).filter_by(id=cours.programme_id).first()
+    # Construire le mapping session par programme (via table d'association)
+    try:
+        session_map = {assoc.programme_id: assoc.session for assoc in cours.programme_assocs}
+    except Exception:
+        session_map = {}
+    # Valeur de session par défaut pour le premier programme
+    primary_prog = programme
+    default_session = session_map.get(primary_prog.id) if primary_prog else None
 
     # Récupérer les compétences développées (texte, description)
     competences_developpees = db.session.query(PlanCadreCompetencesDeveloppees).filter_by(plan_cadre_id=plan_id).all()
@@ -976,14 +995,13 @@ def generate_docx_with_template(plan_id):
                 # Récupérer les cours associés
                 assoc_cours = db.session.query(Cours, ElementCompetenceParCours).join(
                     ElementCompetenceParCours, Cours.id == ElementCompetenceParCours.cours_id
-                ).filter(ElementCompetenceParCours.element_competence_id == ec_item.id).order_by(Cours.session).all()
+                ).filter(ElementCompetenceParCours.element_competence_id == ec_item.id).all()
 
                 for (cours_assoc, ecpc_assoc) in assoc_cours:
                     element_competence["cours_associes"].append({
                         "cours_id": cours_assoc.id,
                         "cours_code": cours_assoc.code,
                         "cours_nom": cours_assoc.nom,
-                        "cours_session": cours_assoc.session,
                         "status": ecpc_assoc.status
                     })
 
@@ -1036,14 +1054,13 @@ def generate_docx_with_template(plan_id):
                 # Récupérer les cours associés
                 assoc_cours = db.session.query(Cours, ElementCompetenceParCours).join(
                     ElementCompetenceParCours, Cours.id == ElementCompetenceParCours.cours_id
-                ).filter(ElementCompetenceParCours.element_competence_id == ec_item.id).order_by(Cours.session).all()
+                ).filter(ElementCompetenceParCours.element_competence_id == ec_item.id).all()
 
                 for (cours_assoc, ecpc_assoc) in assoc_cours:
                     element_competence["cours_associes"].append({
                         "cours_id": cours_assoc.id,
                         "cours_code": cours_assoc.code,
                         "cours_nom": cours_assoc.nom,
-                        "cours_session": cours_assoc.session,
                         "status": ecpc_assoc.status
                     })
 
@@ -1098,11 +1115,12 @@ def generate_docx_with_template(plan_id):
     # 9. Cours développant une même compétence avant, pendant et après
     #    On refait une requête similaire pour lister tous les cours liés
     subq = db.session.query(ElementCompetenceParCours.element_competence_id).filter_by(cours_id=plan.cours_id).subquery()
+    from sqlalchemy import literal
     cours_meme_competence = db.session.query(
         Cours.id.label('cours_id'),
         Cours.nom.label('cours_nom'),
         Cours.code.label('code'),
-        Cours.session.label('session')
+        literal(None).label('session')
     ) \
     .join(ElementCompetenceParCours, Cours.id == ElementCompetenceParCours.cours_id) \
     .filter(ElementCompetenceParCours.element_competence_id.in_(subq)) \
@@ -1126,7 +1144,7 @@ def generate_docx_with_template(plan_id):
         'cours': {
             'code': cours.code,
             'nom': cours.nom,
-            'session': cours.session,
+            'session': default_session,
             'heures_theorie': cours.heures_theorie,
             'heures_laboratoire': cours.heures_laboratoire,
             'heures_travail_maison': cours.heures_travail_maison,

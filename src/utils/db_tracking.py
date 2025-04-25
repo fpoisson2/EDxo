@@ -58,15 +58,26 @@ def track_changes(mapper, connection, target, operation):
             
         changes = process_changes(mapper, target, operation)
         
+        # Sanitize changes: convert any datetime in changes to ISO strings
+        def sanitize(obj):
+            if isinstance(obj, dict):
+                return {k: sanitize(v) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [sanitize(item) for item in obj]
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            return obj
+        clean_changes = sanitize(changes)
         connection.execute(
             DBChange.__table__.insert(),
             {
-                'timestamp': datetime.utcnow().isoformat(),
+                # Utiliser un objet datetime UTC pour la colonne DateTime
+                'timestamp': datetime.utcnow(),
                 'user_id': current_user.id if current_user and current_user.is_authenticated else None,
                 'operation': operation,
                 'table_name': target.__tablename__,
                 'record_id': getattr(target, 'id', None),
-                'changes': changes
+                'changes': clean_changes
             }
         )
     except Exception as e:

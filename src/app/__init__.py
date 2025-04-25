@@ -123,6 +123,22 @@ def create_app(testing=False):
             CELERY_RESULT_BACKEND='redis://127.0.0.1:6379/0',
             TXT_OUTPUT_DIR=os.path.join(BASE_DIR, 'txt_outputs')
         )
+    # Jinja filter to compute perceived brightness of a hex color
+    def brightness(hex_color):
+        if not hex_color:
+            return 0
+        s = hex_color.lstrip('#')
+        if len(s) != 6:
+            return 0
+        try:
+            r = int(s[0:2], 16)
+            g = int(s[2:4], 16)
+            b = int(s[4:6], 16)
+        except ValueError:
+            return 0
+        # Perceived brightness formula
+        return (r * 299 + g * 587 + b * 114) / 1000
+    app.jinja_env.filters['brightness'] = brightness
 
     # Initialize extensions
     login_manager.init_app(app)

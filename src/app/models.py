@@ -13,10 +13,22 @@ user_programme = db.Table('User_Programme',
     db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
 )
 
-cours_programme = db.Table('Cours_Programme',
+# Association table for Cours-Programme with per-programme session
+cours_programme = db.Table(
+    'Cours_Programme',
     db.Column('cours_id', db.Integer, db.ForeignKey('Cours.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
+    db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('session', db.Integer, nullable=False, default=0),
+    extend_existing=True
 )
+
+class CoursProgramme(db.Model):
+    """Modèle d'association entre Cours et Programme incluant la session."""
+    __table__ = cours_programme
+
+    # Relations vers Cours et Programme
+    cours = db.relationship('Cours', back_populates='programme_assocs')
+    programme = db.relationship('Programme', back_populates='cours_assocs')
 
 competence_programme = db.Table(
     'Competence_Programme',
@@ -989,9 +1001,19 @@ class Programme(db.Model):
     # ``cours_associes``).  On expose donc cette dernière sous le nom
     # historique afin d'éviter au reste du code de changer immédiatement.
 
+    # Relation many-to-many vers Cours via la table d'association
+    cours_associes = db.relationship(
+        'Cours',
+        secondary=cours_programme,
+        back_populates='programmes',
+        lazy='dynamic'
+    )
     @property
     def cours(self):
         return list(self.cours_associes)
+    
+    # Association object pour Cours-Programme, incluant la session par programme
+    cours_assocs = db.relationship('CoursProgramme', back_populates='programme', cascade='all, delete-orphan')
 
     def __repr__(self):
         return f"<Programme {self.nom}>"
@@ -1011,7 +1033,6 @@ class Cours(db.Model):
     code = db.Column(db.Text, nullable=False)
     nom = db.Column(db.Text, nullable=False)
     nombre_unites = db.Column(db.Float, nullable=False, default=1.0)
-    session = db.Column(db.Integer, nullable=False, default=0)
     heures_theorie = db.Column(db.Integer, nullable=False, default=0)
     heures_laboratoire = db.Column(db.Integer, nullable=False, default=0)
     heures_travail_maison = db.Column(db.Integer, nullable=False, default=0)
@@ -1022,12 +1043,18 @@ class Cours(db.Model):
     # Relationship back to FilConducteur
     fil_conducteur = db.relationship("FilConducteur", back_populates="cours_list")
 
-    # Association plusieurs-à-plusieurs vers Programme.
+    # Objet d'association Cours ↔ Programme (incluant le champ session)
+    programme_assocs = db.relationship(
+        'CoursProgramme',
+        back_populates='cours',
+        cascade='all, delete-orphan'
+    )
+    # Relation many-to-many vers Programme (facilitant les jointures)
     programmes = db.relationship(
-        "Programme",
+        'Programme',
         secondary=cours_programme,
-        backref=db.backref("cours_associes", lazy="dynamic"),
-        lazy="dynamic"
+        back_populates='cours_associes',
+        lazy='dynamic'
     )
 
     plan_cadre = db.relationship("PlanCadre", back_populates="cours", uselist=False)
@@ -1046,13 +1073,9 @@ class Cours(db.Model):
 
     @property
     def programme(self):
-        """Retourne le premier programme associé (héritage historique).
-
-        La méthode renvoie *None* lorsqu'aucun programme n'est associé ou
-        lorsque plusieurs programmes sont liés et qu'il serait ambigu d'en
-        choisir un.
-        """
-        return self.programmes.first() if hasattr(self, 'programmes') else None
+        """Retourne le premier programme associé (héritage historique)."""
+        # Retourne le premier élément de la liste, ou None si inexistante
+        return self.programmes[0] if self.programmes else None
 
     @hybrid_property
     def programme_id(self):
@@ -1076,6 +1099,11 @@ class Cours(db.Model):
 
     def __repr__(self):
         return f"<Cours {self.code} - {self.nom}>"
+    
+    @property
+    def sessions_map(self):
+        """Retourne un dict mapping programme_id -> session pour ce cours."""
+        return {assoc.programme_id: assoc.session for assoc in getattr(self, 'programme_assocs', [])}
 
 class ListeCegep(db.Model):
     __tablename__ = "ListeCegep"
