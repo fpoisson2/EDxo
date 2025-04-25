@@ -659,7 +659,7 @@ def edit_competence(competence_id):
         return redirect(url_for('main.index'))
 
     # Peupler le choix de programme
-    form.programme.choices = [(p.id, p.nom) for p in programmes]
+    form.programmes.choices = [(p.id, p.nom) for p in programmes]
 
     if request.method == 'POST' and form.validate_on_submit():
         try:
