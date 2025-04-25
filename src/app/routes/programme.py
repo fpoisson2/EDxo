@@ -663,7 +663,9 @@ def edit_competence(competence_id):
 
     if request.method == 'POST' and form.validate_on_submit():
         try:
-            competence.programme_id = form.programme.data
+            competence.programmes = Programme.query.filter(
+                Programme.id.in_(form.programmes.data)
+            ).all()
             competence.code = form.code.data
             competence.nom = form.nom.data
             competence.criteria_de_performance = form.criteria_de_performance.data
@@ -677,13 +679,15 @@ def edit_competence(competence_id):
             return redirect(url_for('programme.edit_competence', competence_id=competence_id))
     else:
         # Pré-remplir le formulaire
-        form.programme.data = competence.programme_id
+        form.programmes.data = [p.id for p in competence.programmes]
         form.code.data = competence.code if competence.code else ''
         form.nom.data = competence.nom
         form.criteria_de_performance.data = competence.criteria_de_performance
         form.contexte_de_realisation.data = competence.contexte_de_realisation
 
-    return render_template('edit_competence.html', form=form, competence=competence)
+    # après commit
+    first_prog = competence.programmes[0].id if competence.programmes else None
+    return redirect(url_for('programme.view_programme', programme_id=first_prog))
 
 
 @programme_bp.route('/competence/<int:competence_id>/delete', methods=['POST'])

@@ -11,10 +11,11 @@
  <form method="POST">
    {{ form.hidden_tag() }}
    
-   <div class="form-group">
-     {{ form.programme.label(class="form-label") }}
-     {{ form.programme(class="form-control") }}
-   </div>
+    <div class="form-group">
+      {{ form.programmes.label(class="form-label") }}
+      {{ form.programmes(class="form-control", multiple=True) }}
+    </div>
+
    
    <div class="form-group">
      {{ form.code.label(class="form-label") }}
