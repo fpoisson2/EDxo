@@ -1,66 +1,88 @@
-import json
-
-import tiktoken
-from flask import Blueprint, render_template, request, current_app, Response, stream_with_context, session
+# chat.py – Responses API + DEBUG (SDK 1.23 → ≥1.25)
+import json, pprint, tiktoken
+from flask import Blueprint, render_template, request, Response, stream_with_context, session
 from flask_login import login_required, current_user
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
+import itertools
 
+# ─── évènements texte ───────────────────────────────────────────
+try:
+    from openai.types.responses import ResponseTextBlockDeltaEvent
+    TEXT_EVENTS = (ResponseTextBlockDeltaEvent,)
+except ImportError:
+    from openai.types.responses import ResponseTextDeltaEvent
+    TEXT_EVENTS = (ResponseTextDeltaEvent,)
+
+# ─── évènements function_call (SDK ≥ 1.25) ─────────────────────
+try:
+    from openai.types.responses import (
+        ResponseOutputItemAddedEvent,
+        ResponseOutputItemDoneEvent,
+    )
+    OUTPUT_ITEM_EVENTS = (ResponseOutputItemAddedEvent, ResponseOutputItemDoneEvent)
+    TEXT_EVENTS += (ResponseOutputItemAddedEvent,)
+except ImportError:
+    OUTPUT_ITEM_EVENTS = ()
+
+from openai.types.responses import ResponseFunctionCallArgumentsDeltaEvent
+try:
+    from openai.types.responses import ResponseCreatedEvent
+except ImportError:
+    ResponseCreatedEvent = None
+
+from openai.types.responses import ResponseFunctionToolCall   # ← Fallback
+
+
+# ─── app imports internes ───────────────────────────────────────
 from app.forms import ChatForm
 from app.models import User, PlanCadre, PlanDeCours, Cours, db, ChatHistory
 from utils.decorator import ensure_profile_completed
-# Importez votre fonction pour récupérer la tarification depuis la BD
 from utils.openai_pricing import calculate_call_cost
 
-chat = Blueprint('chat', __name__)
+chat = Blueprint("chat", __name__)
 
-def estimate_tokens_for_text(text, model="gpt-4o"):
-    """Retourne une estimation du nombre de tokens d'un texte pur avec des prints de débogage."""
-    print(f"[DEBUG] estimate_tokens_for_text() - Texte d'entrée : {text[:80]}...")
-    print(f"[DEBUG] estimate_tokens_for_text() - Modèle demandé : {model}")
-    
+def extract_text(ev):
+    """Renvoie le texte s’il existe, sinon None."""
+    if hasattr(ev, "delta") and isinstance(ev.delta, str):
+        return ev.delta
+    if getattr(ev, "item", None) and isinstance(ev.item, object):
+        return getattr(ev.item, "text", None)
+    return None
+
+
+# ─── token util ─────────────────────────────────────────────────
+def estimate_tokens_for_text(txt: str, model="gpt-4.1"):
     try:
-        encoding = tiktoken.encoding_for_model(model)
-        print(f"[DEBUG] estimate_tokens_for_text() - Encodage sélectionné : {encoding.name}")
+        enc = tiktoken.encoding_for_model(model)
     except KeyError:
-        print(f"[DEBUG] estimate_tokens_for_text() - ⚠️ Modèle '{model}' non trouvé. Sélection d'un encodage alternatif...")
-        available_encodings = tiktoken.list_encoding_names()
-        print(f"[DEBUG] estimate_tokens_for_text() - Encodages disponibles : {available_encodings}")
-        encoding_name = "o200k_base" if "o200k_base" in available_encodings else "cl100k_base"
-        encoding = tiktoken.get_encoding(encoding_name)
-        print(f"[DEBUG] estimate_tokens_for_text() - Encodage de repli sélectionné : {encoding.name}")
+        enc = tiktoken.get_encoding("cl100k_base")
+    return len(enc.encode(txt))
 
-    encoded_text = encoding.encode(text)
-    print(f"[DEBUG] estimate_tokens_for_text() - Nombre de tokens : {len(encoded_text)}")
-    return len(encoded_text)
-
-# -------------------------------------------------------------------------
-# Fonctions pour get_plan_de_cours
-# -------------------------------------------------------------------------
+# ─── TOOLS (schéma strict) ─────────────────────────────────────
 def get_plan_de_cours_function():
-    return {
-        "name": "get_plan_de_cours",
-        "description": (
-            "Récupère les informations détaillées d'un plan de cours à partir "
-            "du code du cours et, si fourni, de la session."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string",
-                    "description": "Code complet ou partiel du cours (ex: '243-2J5', '420')"
-                },
-                "session": {
-                    "type": "string",
-                    "description": (
-                        "Session précise (ex: 'H25', 'A24'). "
-                        "Si non spécifié, prendre la plus récente disponible."
-                    )
-                }
-            },
-            "required": ["code"]
-        },
-    }
+    return {"type": "function","name": "get_plan_de_cours","description": "Récupère un plan de cours.",
+            "parameters": {"type": "object","properties": {"code": {"type": "string"}}, "required": ["code"],
+                           "additionalProperties": False}, "strict": True}
+
+def get_plan_cadre_function():
+    return {"type": "function","name": "get_plan_cadre","description": "Récupère un plan-cadre.",
+            "parameters": {"type": "object","properties": {"nom": {"type": "string"}, "code": {"type": "string"}},
+                           "required": ["nom","code"],"additionalProperties": False},"strict": True}
+
+def get_multiple_plan_cadre_function():
+    return {"type": "function","name": "get_multiple_plan_cadre","description": "Récupère plusieurs plans-cadres.",
+            "parameters": {"type": "object","properties": {"codes": {"type": "array","items": {"type": "string"}}},
+                           "required": ["codes"],"additionalProperties": False},"strict": True}
+
+def list_all_plan_cadre_function():
+    return {"type": "function","name": "list_all_plan_cadre","description": "Liste tous les plans-cadres.",
+            "parameters": {"type": "object","properties": {}, "required": [],"additionalProperties": False},"strict": True}
+
+def list_all_plan_de_cours_function():
+    return {"type": "function","name": "list_all_plan_de_cours","description": "Liste tous les plans de cours.",
+            "parameters": {"type": "object","properties": {}, "required": [],"additionalProperties": False},"strict": True}
+
+
 
 def handle_get_plan_de_cours(params):
     print(f"[DEBUG] handle_get_plan_de_cours() - Paramètres reçus : {params}")
@@ -84,33 +106,6 @@ def handle_get_plan_de_cours(params):
     else:
         print("[DEBUG] handle_get_plan_de_cours() - Aucun plan de cours trouvé.")
         return None
-
-# -------------------------------------------------------------------------
-# Fonctions pour get_plan_cadre
-# -------------------------------------------------------------------------
-def get_plan_cadre_function():
-    return {
-        "name": "get_plan_cadre",
-        "description": (
-            "Récupère un plan-cadre à partir du nom ou du code d'un cours. "
-            "Le plan-cadre contient les détails sur le contenu, les objectifs, "
-            "les évaluations, les compétences, etc."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "nom": {
-                    "type": "string",
-                    "description": "Nom complet ou partiel du cours (ex: 'Systèmes analogiques', 'Programmation')"
-                },
-                "code": {
-                    "type": "string",
-                    "description": "Code complet ou partiel du cours (ex: '243-2J5', '420')"
-                }
-            },
-            "required": ["nom", "code"]
-        },
-    }
 
 def handle_get_plan_cadre(params):
     print(f"[DEBUG] handle_get_plan_cadre() - Paramètres reçus : {params}")
@@ -291,45 +286,6 @@ def handle_get_multiple_plan_cadre(params):
     return results
 
 
-def get_multiple_plan_cadre_function():
-    return {
-        "name": "get_multiple_plan_cadre",
-        "description": (
-            "Récupère les plans-cadres pour plusieurs cours. "
-            "Renvoie un tableau des plans-cadres correspondant aux codes de cours fournis."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "codes": {
-                    "type": "array",
-                    "description": "Liste des codes de cours (ex: ['243-2J5','420'])",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "required": ["codes"]
-        },
-    }
-
-
-# -------------------------------------------------------------------------
-# NOUVELLES FONCTIONS : list_all_plan_de_cours & list_all_plan_cadre
-# -------------------------------------------------------------------------
-def list_all_plan_de_cours_function():
-    return {
-        "name": "list_all_plan_de_cours",
-        "description": (
-            "Retourne la liste de tous les plans de cours disponibles. "
-            "Chaque élément contient les informations principales du plan de cours."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {},
-            "required": []
-        },
-    }
 
 def handle_list_all_plan_de_cours():
     print("[DEBUG] handle_list_all_plan_de_cours() - Récupération de tous les plans de cours.")
@@ -344,19 +300,6 @@ def handle_list_all_plan_de_cours():
         })
     return result
 
-def list_all_plan_cadre_function():
-    return {
-        "name": "list_all_plan_cadre",
-        "description": (
-            "Retourne la liste de tous les plans-cadres disponibles. "
-            "Chaque élément contient les informations principales du plan-cadre."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {},
-            "required": []
-        },
-    }
 
 def handle_list_all_plan_cadre():
     print("[DEBUG] handle_list_all_plan_cadre() - Récupération de tous les plans-cadres.")
@@ -372,266 +315,184 @@ def handle_list_all_plan_cadre():
         })
     return result
 
-# -------------------------------------------------------------------------
-# Routes
-# -------------------------------------------------------------------------
-@chat.route('/chat')
+# ─── route index ───────────────────────────────────────────────
+@chat.route("/chat")
 @login_required
 @ensure_profile_completed
 def index():
-    print("[DEBUG] Accessing chat index route.")
-    form = ChatForm()
-    if 'chat_history' not in session:
-        print("[DEBUG] Initialisation de session['chat_history'].")
-        session['chat_history'] = []
-        session.modified = True
-    return render_template('chat/index.html', form=form)
+    session.pop("last_response_id", None)
+    return render_template("chat/index.html", form=ChatForm())
 
-@chat.route('/chat/send', methods=['POST'])
+
+def _update_last_response_id(ev):
+    """Stocke dans la session l'id de la dernière réponse complétée."""
+    from openai.types.responses import ResponseCreatedEvent, ResponseCompletedEvent
+
+    if isinstance(ev, ResponseCreatedEvent):
+        session["last_response_id"] = ev.response.id
+        session.modified = True
+    elif isinstance(ev, ResponseCompletedEvent):
+        session["last_response_id"] = ev.response.id
+        session.modified = True
+
+
+# ────────────────────────────────────────────────────────────────
+#  Route /chat/send
+# ----------------------------------------------------------------
+@chat.route("/chat/send", methods=["POST"])
 @login_required
 @ensure_profile_completed
 def send_message():
-    # --- Partie 1 : Vérifications (aucun yield ici) ---
-    # On peut utiliser directement current_app ici puisque nous sommes dans le contexte de la requête
-    app_obj = current_app  # pas besoin de _get_current_object() ici
+    # ───── 1. Lecture du message utilisateur ────────────────────────────────
+    data = request.get_json(silent=True) or {}
+    user_msg = (data.get("message") or "").strip()
+    if not user_msg:
+        return Response("", 400)
 
-    print("\n" + "=" * 50)
-    print("[DEBUG] DÉBUT DE LA REQUÊTE /chat/send")
-    print("=" * 50)
-    
-    # Récupération de l'utilisateur via Flask-Login
-    try:
-        user = current_user
-    except Exception as e:
-        print("[DEBUG] Erreur lors de la récupération de current_user:", str(e))
-        user = None
-
-    if user is None:
-        print("[DEBUG] Erreur: current_user est None")
-        return app_obj.response_class(
-            response=json.dumps({'error': 'Utilisateur non authentifié'}),
-            status=401,
-            mimetype='application/json'
-        )
-
-    # Récupération de l'historique depuis la DB
-    recent_messages = ChatHistory.get_recent_history(user.id)
-    current_history = [
-        {"role": msg.role, "content": msg.content}
-        for msg in reversed(recent_messages)
+    client       = OpenAI(api_key=current_user.openai_key)
+    prev_id      = session.get("last_response_id")  # peut être None
+    tools_schema = [
+        get_plan_cadre_function(),
+        get_plan_de_cours_function(),
+        get_multiple_plan_cadre_function(),
+        list_all_plan_cadre_function(),
+        list_all_plan_de_cours_function(),
     ]
-    print("[DEBUG] Historique actuel (depuis DB):")
-    for i, msg in enumerate(current_history, start=1):
-        print(f"  {i}. {msg['role']} -> {msg['content'][:80]}...")
 
-    data = request.get_json()
-    if not data or 'message' not in data:
-        print("[DEBUG] Erreur: 'message' est manquant dans la requête.")
-        return app_obj.response_class(
-            response=json.dumps({'error': 'Message manquant'}),
-            status=400,
-            mimetype='application/json'
-        )
+    # construction de l'input
+    inp = []
+    if prev_id is None:          # tout premier tour => system-prompt
+        inp.append({
+            "type": "message",
+            "role": "system",
+            "content": [{"type": "input_text", "text": "Vous êtes EDxo …"}]
+        })
+    inp.append({
+        "type": "message",
+        "role": "user",
+        "content": [{"type": "input_text", "text": user_msg}]
+    })
 
-    # Vérification des crédits
-    if user.credits is None:
-        user.credits = 0.0
-    if user.credits <= 0:
-        print("[DEBUG] Erreur: Crédits insuffisants.")
-        return app_obj.response_class(
-            response=json.dumps({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}),
-            status=403,
-            mimetype='application/json'
-        )
-
-    message = data.get('message')
-    print(f"[DEBUG] MESSAGE REÇU du front-end: {message}")
-
-    # Vérification de la clé API OpenAI
-    if not user.openai_key:
-        print("[DEBUG] Erreur: Clé OpenAI non configurée pour l'utilisateur.")
-        return app_obj.response_class(
-            response=json.dumps({'error': 'Clé OpenAI non configurée'}),
-            status=400,
-            mimetype='application/json'
-        )
-
-    client = OpenAI(api_key=user.openai_key)
-
-    # --- Partie 2 : Création du générateur de streaming ---
-    def generate_stream():
+    # petite fonction utilitaire ------------------------------------------------
+    def safe_openai_stream(**kwargs):
+        """Appelle l'API et, si erreur « No tool output », ré-essaye sans prev_id."""
         try:
-            # On peut dès le début émettre un message "processing"
-            yield f"data: {json.dumps({'type': 'processing', 'content': 'En attente de une réponse...'})}\n\n"
+            return client.responses.create(**kwargs, stream=True)
+        except OpenAIError as e:
+            if "No tool output found for function call" in str(e) and kwargs.get("previous_response_id"):
+                # on efface l'id fautif et on relance une conversation propre
+                session.pop("last_response_id", None)
+                kwargs["previous_response_id"] = None
+                return client.responses.create(**kwargs, stream=True)
+            raise
 
-            # Construction des messages pour GPT
-            messages = [
-                {"role": "system", "content": "Vous êtes EDxo, un assistant spécialisé dans les informations pédagogiques."}
-            ]
-            messages.extend(current_history)
-            messages.append({"role": "user", "content": message})
-            
-            # Sauvegarde du message utilisateur dans la DB
-            new_message = ChatHistory(user_id=user.id, role="user", content=message)
-            db.session.add(new_message)
-            db.session.commit()
-
-            model = "gpt-4o"
-            prompt_text = "\n".join([msg["content"] for msg in messages])
-            prompt_tokens = estimate_tokens_for_text(prompt_text, model)
-
-            # Définition des fonctions disponibles pour GPT
-            functions = [
-                get_plan_cadre_function(),
-                get_plan_de_cours_function(),
-                list_all_plan_de_cours_function(),
-                list_all_plan_cadre_function(),
-                get_multiple_plan_cadre_function()
-            ]
-            
-            print("[DEBUG] Envoi de la requête initiale à OpenAI avec fonctions disponibles.")
-            initial_response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                functions=functions,
-                stream=True
-            )
-            
-            output_chunks = []
-            collected_content = ""
-            function_call_data = None
-            function_args = ""
-
-            # Parcours du flux de la réponse initiale
-            for chunk in initial_response:
-                if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
-                    content = chunk.choices[0].delta.content
-                    output_chunks.append(content)
-                    collected_content += content
-                    yield f"data: {json.dumps({'type': 'content', 'content': content})}\n\n"
-                elif hasattr(chunk.choices[0].delta, "function_call"):
-                    fc = chunk.choices[0].delta.function_call
-                    if function_call_data is None and hasattr(fc, 'name'):
-                        function_call_data = fc.name
-                        yield f"data: {json.dumps({'type': 'function_call', 'content': 'Appel de fonction en cours...'})}\n\n"
-                    if hasattr(fc, 'arguments'):
-                        function_args += fc.arguments
-
-            full_output = "".join(output_chunks)
-            completion_tokens = estimate_tokens_for_text(full_output, model)
-            total_cost_initial = calculate_call_cost(prompt_tokens, completion_tokens, model)
-            print(f"[DEBUG] Coût estimé - prompt: {prompt_tokens:.6f}, output: {completion_tokens:.6f}, total: {total_cost_initial:.6f}")
-
-            total_cost_follow_up = 0
-
-            # Si une fonction a été appelée, on traite le résultat
-            if function_call_data:
-                print(f"[DEBUG] Une fonction a été appelée: {function_call_data}")
-                try:
-                    args = {}
-                    if function_args.strip():
-                        args = json.loads(function_args)
-                    
-                    if function_call_data == "get_plan_cadre":
-                        result = handle_get_plan_cadre(args)
-                    elif function_call_data == "get_plan_de_cours":
-                        result = handle_get_plan_de_cours(args)
-                    elif function_call_data == "list_all_plan_de_cours":
-                        result = handle_list_all_plan_de_cours()
-                    elif function_call_data == "list_all_plan_cadre":
-                        result = handle_list_all_plan_cadre()
-                    elif function_call_data == "get_multiple_plan_cadre":  # <--
-                        result = handle_get_multiple_plan_cadre(args)
-                    else:
-                        print(f"[DEBUG] Nom de fonction inattendu: {function_call_data}")
-                        result = None
-                    
-                    if result:
-                        print(f"[DEBUG] Résultat de {function_call_data} obtenu, on relance GPT.")
-                        follow_up_messages = messages.copy()
-                        follow_up_messages.extend([
-                            {
-                                "role": "assistant",
-                                "content": collected_content,
-                                "function_call": {
-                                    "name": function_call_data,
-                                    "arguments": function_args
-                                }
-                            },
-                            {
-                                "role": "function",
-                                "name": function_call_data,
-                                "content": json.dumps(result)
-                            }
-                        ])
-
-                        follow_up_response = client.chat.completions.create(
-                            model=model,
-                            messages=follow_up_messages,
-                            stream=True
-                        )
-                        follow_up_chunks = []
-                        follow_up_content = ""
-
-                        for chunk in follow_up_response:
-                            if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
-                                content = chunk.choices[0].delta.content
-                                follow_up_chunks.append(content)
-                                follow_up_content += content
-                                yield f"data: {json.dumps({'type': 'content', 'content': content})}\n\n"
-                            elif hasattr(chunk.choices[0].delta, 'function_call'):
-                                yield f"data: {json.dumps({'type': 'function_call', 'content': 'Appel de fonction en cours...'})}\n\n"
-
-                        full_follow_up_output = "".join(follow_up_chunks)
-                        completion_tokens_follow_up = estimate_tokens_for_text(full_follow_up_output, model)
-                        total_cost_follow_up = calculate_call_cost(prompt_tokens, completion_tokens_follow_up, model)
-
-                        # Sauvegarde de la réponse finale du bot
-                        if follow_up_content:
-                            assistant_message = ChatHistory(user_id=user.id, role="assistant", content=follow_up_content)
-                            db.session.add(assistant_message)
-                            db.session.commit()
-                    else:
-                        print(f"[DEBUG] La fonction {function_call_data} n'a rien retourné.")
-                        no_result_msg = "Aucun résultat correspondant."
-                        yield f"data: {json.dumps({'type': 'content', 'content': no_result_msg})}\n\n"
-
-                except Exception as err:
-                    error_msg = f"[DEBUG] Erreur lors du traitement de la fonction: {str(err)}"
-                    print(error_msg)
-                    yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
-            
-            total_cost_global = round(total_cost_initial + total_cost_follow_up, 6)
-            print(f"[DEBUG] Coût total combiné : {total_cost_global:.6f}")
-            
-            # Mise à jour des crédits de l'utilisateur
-            try:
-                updated_user = db.session.get(User, user.id)
-                if updated_user.credits is None:
-                    updated_user.credits = 0.0
-                updated_user.credits = round(updated_user.credits - total_cost_global, 6)
-                db.session.commit()
-                print(f"[DEBUG] Crédit utilisateur mis à jour. Nouveau solde: {updated_user.credits}")
-            except Exception as err:
-                print(f"[DEBUG] ❌ Erreur lors de la mise à jour du crédit: {str(err)}")
-            
-            yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
-            
-        except Exception as err:
-            error_msg = f"[DEBUG] Exception globale dans generate_stream(): {str(err)}"
-            print(error_msg)
-            yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
-            yield f"data: {json.dumps({'type': 'done', 'content': ''})}\n\n"
-
-    # --- Partie 3 : Retour de la réponse SSE ---
-    print("[DEBUG] Retour d'une Response SSE (Server-Sent Events).")
-    return Response(
-        stream_with_context(generate_stream()),
-        mimetype='text/event-stream',
-        headers={
-            'Cache-Control': 'no-cache',
-            'Content-Type': 'text/event-stream',
-            'X-Accel-Buffering': 'no'
-        }
+    # ───── 2. Premier appel API (avec safeguard) ─────────────────────────────
+    raw_stream = safe_openai_stream(
+        model="gpt-4.1-mini",
+        input=inp,
+        tools=tools_schema,
+        previous_response_id=prev_id,
+        tool_choice="auto",
+        text={"format": {"type": "text"}},
+        temperature=1,
+        max_output_tokens=2048,
     )
 
+    # lit le premier event pour avoir tout de suite le nouvel id
+    try:
+        first_ev = next(raw_stream)
+    except StopIteration:
+        return Response("Flux OpenAI vide", 500)
+
+    # on NE stocke l'id que si la réponse *n'est pas* un function_call
+    def maybe_store_id(ev):
+        from openai.types.responses import ResponseCreatedEvent, ResponseCompletedEvent
+        if isinstance(ev, ResponseCreatedEvent):
+            session["last_response_id"] = ev.response.id
+            session.modified = True
+        elif isinstance(ev, ResponseCompletedEvent):
+            # si la réponse se termine par un vrai message assistant
+            if (ev.response.output and
+                getattr(ev.response.output[0], "type", "") != "function_call"):
+                session["last_response_id"] = ev.response.id
+                session.modified = True
+
+    maybe_store_id(first_ev)
+
+    # ───── 3. Générateur SSE ─────────────────────────────────────────────────
+    from openai.types.responses import (
+        ResponseOutputItemAddedEvent, ResponseOutputItemDoneEvent,
+        ResponseFunctionCallArgumentsDeltaEvent
+    )
+
+    def sse():
+        yield "data: {\"type\": \"processing\"}\n\n"
+
+        # on traite le 1ᵉʳ évènement puis le reste
+        pending_tool = False  # sommes-nous en train de gérer un call ?
+        fn_name = fn_args = call_id = None
+
+        for ev in itertools.chain([first_ev], raw_stream):
+            maybe_store_id(ev)
+
+            # ------------ nouveau function_call --------------------------------
+            if (isinstance(ev, ResponseOutputItemAddedEvent)
+                    and getattr(ev.item, "type", "") == "function_call"):
+                pending_tool = True
+                fn_name      = ev.item.name
+                call_id      = ev.item.call_id
+                fn_args      = ""
+                yield f"data: {{\"type\": \"function_call\", \"content\": \"{fn_name}\"}}\n\n"
+                continue
+
+            # ------------ accumulation des arguments ---------------------------
+            if pending_tool and isinstance(ev, ResponseFunctionCallArgumentsDeltaEvent):
+                fn_args += ev.delta
+                continue
+
+            # ------------ fin du function_call ---------------------------------
+            if pending_tool and isinstance(ev, ResponseOutputItemDoneEvent):
+                pending_tool = False
+                # exécution locale du tool
+                result = {
+                    "get_plan_cadre":           handle_get_plan_cadre,
+                    "get_plan_de_cours":        handle_get_plan_de_cours,
+                    "get_multiple_plan_cadre":  handle_get_multiple_plan_cadre,
+                    "list_all_plan_cadre":      lambda _: handle_list_all_plan_cadre(),
+                    "list_all_plan_de_cours":   lambda _: handle_list_all_plan_de_cours(),
+                }[fn_name](json.loads(fn_args or "{}"))
+
+                # follow-up avec la sortie --------------------------------------
+                follow_stream = client.responses.create(
+                    model="gpt-4.1-mini",
+                    previous_response_id=session.get("last_response_id"),
+                    input=[{
+                        "type": "function_call_output",
+                        "call_id": call_id,
+                        "output": json.dumps(result)
+                    }],
+                    tool_choice="auto",
+                    text={"format": {"type": "text"}},
+                    stream=True,
+                )
+
+                for ev2 in follow_stream:
+                    maybe_store_id(ev2)
+                    txt = extract_text(ev2)
+                    if txt:
+                        yield "data: " + json.dumps({"type": "content", "content": txt}) + "\n\n"
+                continue  # retourne à la boucle principale
+
+            # ------------ texte normal -----------------------------------------
+            txt = extract_text(ev)
+            if txt:
+                yield "data: " + json.dumps({"type": "content", "content": txt}) + "\n\n"
+
+        yield "data: {\"type\": \"done\"}\n\n"
+
+    # ───── 4. Response SSE ----------------------------------------------------
+    return Response(
+        stream_with_context(sse()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )

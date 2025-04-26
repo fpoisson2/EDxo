@@ -13,6 +13,9 @@ import os
 from datetime import timedelta, datetime, timezone
 from pathlib import Path
 
+from flask_session import Session
+
+
 from dotenv import load_dotenv
 from flask import Flask, session, jsonify, redirect, url_for, request, current_app
 from flask_login import current_user, logout_user, UserMixin
@@ -76,6 +79,7 @@ class TestConfig:
 
 def create_app(testing=False):
     load_dotenv()
+    print(f"--- DEBUG: SECRET_KEY lue depuis l'environnement: {os.getenv('SECRET_KEY')} ---")
     base_path = os.path.dirname(os.path.dirname(__file__))
     app = Flask(
         __name__,
@@ -98,6 +102,9 @@ def create_app(testing=False):
         print(f"🔍 Debug: Static folder -> {app.static_folder}")
 
         base_path = Path(__file__).parent.parent
+
+        SESS_DIR = os.path.join(BASE_DIR, "flask_sessions")
+        os.makedirs(SESS_DIR, exist_ok=True)      # ← avant Session(app)
         app.config.update(
             PREFERRED_URL_SCHEME='https',
             SQLALCHEMY_DATABASE_URI=f"sqlite:///{DB_PATH}?timeout=30",
@@ -115,14 +122,18 @@ def create_app(testing=False):
             WTF_CSRF_ENABLED=True,
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),
-            SESSION_COOKIE_SECURE=True,
+            SESSION_COOKIE_SECURE = False,
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Lax',
             SESSION_TYPE='filesystem',
+            SESSION_FILE_DIR=os.path.join(BASE_DIR, 'flask_sessions'),  # si filesystem
+            SESSION_PERMANENT=False,
             CELERY_BROKER_URL='redis://127.0.0.1:6379/0',
             CELERY_RESULT_BACKEND='redis://127.0.0.1:6379/0',
             TXT_OUTPUT_DIR=os.path.join(BASE_DIR, 'txt_outputs')
         )
+        Session(app)
+
     # Jinja filter to compute perceived brightness of a hex color
     def brightness(hex_color):
         if not hex_color:
