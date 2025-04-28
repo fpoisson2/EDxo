@@ -187,6 +187,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.Text, nullable=False)
     password = db.Column(db.Text, nullable=False)
+    last_openai_response_id = db.Column(db.String, nullable=True)
     # Nouveaux champs
     image = db.Column(db.Text, nullable=True)
     nom = db.Column(db.Text, nullable=True)
@@ -844,26 +845,48 @@ class PlanDeCoursCalendrier(db.Model):
         return f"<PlanDeCoursCalendrier id={self.id}>"
 
 class ChatHistory(db.Model):
-    __tablename__ = 'chat_history'
-    
+    __tablename__ = 'chat_history' # Bonne pratique de définir explicitement
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(
         db.Integer,
         db.ForeignKey('User.id', ondelete='CASCADE', name='fk_chathistory_user_id'),
         nullable=False
     )
+    # Rôles possibles: 'user', 'assistant', 'function', 'system'
     role = db.Column(db.String(50), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, server_default=db.text('CURRENT_TIMESTAMP'))
-    
-    user = db.relationship('User', 
-                          backref=db.backref('chat_histories', 
-                                           lazy=True,
-                                           cascade='all, delete-orphan'))
+
+    # Contenu textuel OU résultat JSON pour 'function'
+    # *** CHANGEMENT ICI: nullable=True ***
+    content = db.Column(db.Text, nullable=True)
+
+    # *** NOUVEAU CHAMP: Nom de la fonction pour role='function' ***
+    name = db.Column(db.String(100), nullable=True)
+
+    # *** NOUVEAU CHAMP: Nom de la fonction demandée par role='assistant' ***
+    function_call_name = db.Column(db.String(100), nullable=True)
+    # *** NOUVEAU CHAMP: Arguments (JSON) demandés par role='assistant' ***
+    function_call_args = db.Column(db.Text, nullable=True)
+
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, server_default=db.func.current_timestamp()) # Amélioré
+
+    # Assurez-vous que le nom de la classe User est correct ('User')
+    user = db.relationship('User',
+                           backref=db.backref('chat_histories',
+                                              lazy=True,
+                                              cascade='all, delete-orphan'))
 
     @classmethod
     def get_recent_history(cls, user_id, limit=10):
-        return cls.query.filter_by(user_id=user_id).order_by(cls.timestamp.desc()).limit(limit).all()
+        """Récupère les N derniers messages et les retourne dans l'ordre chronologique."""
+        recent = cls.query.filter_by(user_id=user_id)\
+                          .order_by(cls.timestamp.desc())\
+                          .limit(limit)\
+                          .all()
+        return recent[::-1] # Inverse pour ordre chrono
+
+    def __repr__(self):
+        return f'<ChatHistory {self.id} User:{self.user_id} Role:{self.role}>'
 
 
 class PlanDeCoursMediagraphie(db.Model):
