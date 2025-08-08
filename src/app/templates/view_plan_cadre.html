@@ -761,6 +761,10 @@
                                 <div class="text-danger">{{ error }}</div>
                             {% endfor %}
                         </div>
+                        <div class="form-check mb-3">
+                            {{ generate_form.improve_only(class="form-check-input") }}
+                            {{ generate_form.improve_only.label(class="form-check-label") }}
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>

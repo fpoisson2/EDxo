@@ -356,6 +356,7 @@ class GenerateContentForm(FlaskForm):
         validators=[DataRequired()],
         default='gpt-4o'
     )
+    improve_only = BooleanField('Améliorer le contenu existant', default=False)
     submit = SubmitField('Générer le plan-cadre')
 
     def __init__(self, *args, **kwargs):

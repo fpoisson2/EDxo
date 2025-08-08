@@ -117,6 +117,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # Assume that form_data has already been validated
         additional_info = form_data.get("additional_info", "")
         ai_model = form_data.get("ai_model", "")
+        improve_only = form_data.get("improve_only", False)
 
         # Save additional info and the AI model in the plan
         plan.additional_info = additional_info
@@ -204,13 +205,22 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             if section_name in field_to_plan_cadre_column:
                 col_name = field_to_plan_cadre_column[section_name]
                 if is_ai:
-                    ai_fields.append({"field_name": section_name, "prompt": replaced_text})
+                    entry = {"field_name": section_name, "prompt": replaced_text}
+                    if improve_only:
+                        entry["current_content"] = getattr(plan, col_name) or ""
+                    ai_fields.append(entry)
                 else:
                     non_ai_updates_plan_cadre.append((col_name, replaced_text))
             elif section_name in field_to_table_insert:
                 table_name = field_to_table_insert[section_name]
                 if section_name == "Objets cibles" and is_ai:
-                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
+                    entry = {"field_name": section_name, "prompt": replaced_text}
+                    if improve_only:
+                        entry["current_content"] = [
+                            {"texte": oc.texte, "description": oc.description}
+                            for oc in plan.objets_cibles
+                        ]
+                    ai_fields_with_description.append(entry)
                 if section_name == "Description des compétences développées" and is_ai:
                     competences = (
                         db.session.query(Competence.code, Competence.nom)
@@ -232,7 +242,13 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     else:
                         competences_text = "\n(Aucune compétence de type 'developpee' trouvée)\n"
                     replaced_text += f"\n\n{competences_text}"
-                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
+                    entry = {"field_name": section_name, "prompt": replaced_text}
+                    if improve_only:
+                        entry["current_content"] = [
+                            {"texte": cd.texte, "description": cd.description}
+                            for cd in plan.competences_developpees
+                        ]
+                    ai_fields_with_description.append(entry)
                 if section_name == "Description des Compétences certifiées" and is_ai:
                     competences = (
                         db.session.query(Competence.code, Competence.nom)
@@ -254,7 +270,13 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     else:
                         competences_text = "\n(Aucune compétence 'certifiée' trouvée)\n"
                     replaced_text += f"\n\n{competences_text}"
-                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
+                    entry = {"field_name": section_name, "prompt": replaced_text}
+                    if improve_only:
+                        entry["current_content"] = [
+                            {"texte": cc.texte, "description": cc.description}
+                            for cc in plan.competences_certifiees
+                        ]
+                    ai_fields_with_description.append(entry)
                 if section_name == "Description des cours corequis" and is_ai:
                     corequis_data = (
                         db.session.query(CoursCorequis.id, Cours.code, Cours.nom)
@@ -270,7 +292,13 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     else:
                         cours_text = "\n(Aucun cours corequis)\n"
                     replaced_text += f"\n\n{cours_text}"
-                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
+                    entry = {"field_name": section_name, "prompt": replaced_text}
+                    if improve_only:
+                        entry["current_content"] = [
+                            {"texte": cc.texte, "description": cc.description}
+                            for cc in plan.cours_corequis
+                        ]
+                    ai_fields_with_description.append(entry)
                 if section_name == "Description des cours préalables" and is_ai:
                     prealables_data = (
                         db.session.query(CoursPrealable.id, Cours.code, Cours.nom, CoursPrealable.note_necessaire)
@@ -287,7 +315,13 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     else:
                         cours_text = "\n(Ce cours n'est prérequis pour aucun autre cours)\n"
                     replaced_text += f"\n\n{cours_text}"
-                    ai_fields_with_description.append({"field_name": section_name, "prompt": replaced_text})
+                    entry = {"field_name": section_name, "prompt": replaced_text}
+                    if improve_only:
+                        entry["current_content"] = [
+                            {"texte": cp.texte, "description": cp.description}
+                            for cp in plan.cours_prealables
+                        ]
+                    ai_fields_with_description.append(entry)
                 if not is_ai:
                     non_ai_inserts_other_table.append((table_name, replaced_text))
             else:
@@ -328,11 +362,17 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # 2) Appel unique à l'API OpenAI (endpoint responses)
         # ----------------------------------------------------------------
         schema_json = json.dumps(PlanCadreAIResponse.schema(), indent=4, ensure_ascii=False)
+        improve_clause = (
+            "Améliore uniquement le contenu fourni dans 'current_content' s'il est présent. Garde la structure générale et reformule sans réécrire entièrement.\n\n"
+            if improve_only
+            else ""
+        )
         combined_instruction = (
             f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. "
             f"Informations importantes à considérer avant tout: {additional_info}\n\n"
             "Voici le schéma JSON auquel ta réponse doit strictement adhérer :\n\n"
             f"{schema_json}\n\n"
+            f"{improve_clause}"
             "Utilise un langage neutre (par exemple, 'étudiant' => 'personne étudiante').\n\n"
             "Si tu utilises des guillemets, utilise des guillemets français '«' et '»'\n\b"
             "Voici différents prompts :\n"
