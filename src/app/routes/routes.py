@@ -150,8 +150,15 @@ def task_status(task_id):
     res = AsyncResult(task_id, app=celery)
     current_state = res.state
     # Récupération du meta si présent, sinon message par défaut
-    meta = res.info if res.info else {}
-    current_message = meta.get('message', '')
+    meta = res.info
+    if isinstance(meta, dict):
+        current_message = meta.get('message', '')
+    elif meta is None:
+        meta = {}
+        current_message = ''
+    else:
+        # Peut être une Exception (ex.: NotRegistered)
+        current_message = str(meta)
     logger.info("Task %s state: %s, meta: %s", task_id, current_state, meta)
     
     return jsonify({

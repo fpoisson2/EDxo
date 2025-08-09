@@ -13,14 +13,14 @@ def make_celery_instance():
     backend_url = os.getenv('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/0')
 
     celery_instance = Celery(
-        # Utiliser un nom logique, par exemple basé sur le package principal si connu
-        # ou simplement 'tasks' si c'est le module principal des tâches.
-        # Éviter d'utiliser __name__ si ce fichier n'est pas le point d'entrée principal
-        # que Celery utilise pour découvrir les tâches.
-        'app.tasks', # Pointant vers le module où les tâches sont définies
+        # Nom logique de l'application Celery (à des fins de logs)
+        'app',
         broker=redis_url,
         backend=backend_url,
-        include=['app.tasks'] # Assurer la découverte explicite
+        # Importer le package des tâches tel qu'il est disponible lorsque
+        # vous lancez la commande depuis le dossier `src/` (guides du repo).
+        # Le nom de tâche effectif est figé via le décorateur `name=...`.
+        include=['app.tasks']
     )
 
     celery_instance.conf.update(

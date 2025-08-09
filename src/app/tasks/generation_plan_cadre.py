@@ -90,7 +90,8 @@ class PlanCadreAIResponse(OpenAIFunctionModel):
     savoir_etre: Optional[List[str]] = None
     capacites: Optional[List[AICapacite]] = None
 
-@celery.task(bind=True)
+# Register with a stable, fully-qualified name so producers and workers match
+@celery.task(bind=True, name='src.app.tasks.generation_plan_cadre.generate_plan_cadre_content_task')
 def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
     """
     Celery task to generate the content of a plan-cadre via GPT.
