@@ -869,12 +869,19 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="mb-3">
+                        <!-- Groupe prompt général (génération/amélioration globale) -->
+                        <div class="mb-3" id="generalPromptGroup">
                             {{ generate_form.additional_info.label(class="form-label") }}
-                            {{ generate_form.additional_info(class="form-control border-0", rows="3", placeholder="Décrivez brièvement le contexte. Pour la baguette magique, un message simple et ciblé est prérempli.") }}
+                            {{ generate_form.additional_info(class="form-control border-0", rows="3", placeholder="Décrivez brièvement le contexte de génération/amélioration globale.") }}
                             {% for error in generate_form.additional_info.errors %}
                                 <div class="text-danger">{{ error }}</div>
                             {% endfor %}
+                        </div>
+                        <!-- Groupe prompt simple (baguette magique) -->
+                        <div class="mb-3 d-none" id="wandPromptGroup">
+                            <label class="form-label">Instruction (baguette magique)</label>
+                            <textarea name="wand_instruction" class="form-control border-0" rows="3" placeholder="Ex.: Rendre ce texte plus clair, simple et concis, sans ajouter d'information."></textarea>
+                            <div class="form-text">Cette instruction courte est utilisée uniquement pour améliorer la section ciblée.</div>
                         </div>
                         <div class="mb-3">
                             {{ generate_form.ai_model.label(class="form-label") }}
@@ -897,7 +904,7 @@
                                 <div class="text-danger">{{ error }}</div>
                             {% endfor %}
                         </div>
-                        {# Suppression de la case à cocher "Améliorer le contenu existant" (#6399) #}
+                        {# Case à cocher supprimée (mode géré par les boutons) #}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
@@ -1531,6 +1538,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const openImproveBtn = document.getElementById('openImproveBtn');
     const openGenerateBtn = document.getElementById('openGenerateBtn');
     const targetColumnsHidden = document.getElementById('genTargetColumns');
+    const generalPromptGroup = document.getElementById('generalPromptGroup');
+    const wandPromptGroup = document.getElementById('wandPromptGroup');
 
     if (!generateForm || !confirmGenerateBtn || !modalLoadingSpinner) {
         return;
@@ -1543,7 +1552,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (targetColumnsHidden) targetColumnsHidden.value = '';
             modalTitle.textContent = 'Améliorer le plan-cadre';
             confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer la proposition';
-            // Ne pas pré-remplir additional_info ici (amélioration globale)
+            // Vue: prompt global visible, prompt baguette caché
+            if (generalPromptGroup) generalPromptGroup.classList.remove('d-none');
+            if (wandPromptGroup) wandPromptGroup.classList.add('d-none');
         });
     }
     if (openGenerateBtn && modalTitle) {
@@ -1555,6 +1566,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Nettoyer additional_info au besoin
             const aiField = generateForm.querySelector('textarea[name="additional_info"]');
             if (aiField) aiField.value = '';
+            // Vue: prompt global visible, prompt baguette caché
+            if (generalPromptGroup) generalPromptGroup.classList.remove('d-none');
+            if (wandPromptGroup) wandPromptGroup.classList.add('d-none');
         });
     }
 
@@ -1564,6 +1578,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const col = this.getAttribute('data-target-column') || '';
             if (modeHidden) modeHidden.value = 'improve';
             if (targetColumnsHidden) targetColumnsHidden.value = col;
+            // Activer le mode "wand" pour un prompt distinct et simple
+            if (modeHidden) modeHidden.value = 'wand';
             // Déterminer un titre humain lisible depuis l'étiquette proche
             let sectionTitle = '';
             const labelEl = this.closest('label, h6');
@@ -1573,10 +1589,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!sectionTitle) sectionTitle = 'Section sélectionnée';
             if (modalTitle) modalTitle.textContent = `Améliorer: ${sectionTitle}`;
             if (confirmGenerateBtn) confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer la proposition';
-            // Préremplir un prompt simple et ciblé
-            const aiField = generateForm.querySelector('textarea[name="additional_info"]');
-            if (aiField) {
-                aiField.value = `Améliorer uniquement la section « ${sectionTitle} ». Rendre le texte plus clair, simple et concis. Conserver le sens et le contexte du cours. Ne pas modifier les autres sections.`;
+            // Afficher le prompt baguette et masquer le prompt global
+            if (generalPromptGroup) generalPromptGroup.classList.add('d-none');
+            if (wandPromptGroup) {
+                wandPromptGroup.classList.remove('d-none');
+                const wandField = generateForm.querySelector('textarea[name="wand_instruction"]');
+                if (wandField) {
+                    wandField.value = `Améliorer uniquement la section « ${sectionTitle} ». Rendre le texte plus clair, simple et concis sans ajouter d'information.`;
+                }
             }
         });
     });
@@ -1599,7 +1619,7 @@ document.addEventListener('DOMContentLoaded', function() {
             confirmGenerateBtn.disabled = false;
             modalLoadingSpinner.classList.add('d-none');
             // Rétablir le texte selon le mode actuel
-            if (modeHidden && modeHidden.value === 'improve') {
+            if (modeHidden && (modeHidden.value === 'improve' || modeHidden.value === 'wand')) {
                 confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer la proposition';
             } else {
                 confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer le plan-cadre';
@@ -1626,7 +1646,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             confirmGenerateBtn.disabled = false;
             modalLoadingSpinner.classList.add('d-none');
-            if (modeHidden && modeHidden.value === 'improve') {
+            if (modeHidden && (modeHidden.value === 'improve' || modeHidden.value === 'wand')) {
                 confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer la proposition';
             } else {
                 confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer le plan-cadre';

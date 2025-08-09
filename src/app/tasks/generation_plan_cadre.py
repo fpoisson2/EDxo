@@ -115,6 +115,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             return {"status": "error", "message": "Vous n’avez plus de crédits pour effectuer un appel OpenAI."}
 
         # Assume that form_data has already been validated
+        mode = (form_data.get("mode") or "").strip().lower()
         additional_info = form_data.get("additional_info", "")
         ai_model = form_data.get("ai_model", "")
         improve_only = form_data.get("improve_only", False)
@@ -123,11 +124,20 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             target_columns = [c.strip() for c in target_columns.split(',') if c.strip()]
         reasoning_effort = form_data.get("reasoning_effort") or None
         verbosity = form_data.get("verbosity") or None
+        wand_instruction = form_data.get("wand_instruction") or ""
 
-        # Save additional info and the AI model in the plan
-        plan.additional_info = additional_info
-        plan.ai_model = ai_model
-        db.session.commit()
+        # Si le mode baguette est activé: forcer une amélioration ciblée et un prompt minimal
+        if mode == 'wand':
+            improve_only = True
+            # Remplacer additional_info par l'instruction courte si fournie
+            if wand_instruction:
+                additional_info = wand_instruction
+
+        # Save additional info and the AI model in the plan (éviter d'écraser en mode baguette)
+        if mode != 'wand':
+            plan.additional_info = additional_info
+            plan.ai_model = ai_model
+            db.session.commit()
 
         # ----------------------------------------------------------------
         # 1) Prepare data and settings
@@ -428,26 +438,51 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # 2) Appel unique à l'API OpenAI (endpoint responses)
         # ----------------------------------------------------------------
         schema_json = json.dumps(PlanCadreAIResponse.schema(), indent=4, ensure_ascii=False)
-        improve_clause = (
-            "Améliore uniquement le contenu fourni dans 'current_content' s'il est présent. Garde la structure générale et reformule sans réécrire entièrement.\n\n"
-            if improve_only
-            else ""
-        )
-        combined_instruction = (
-            f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. "
-            f"Informations importantes à considérer avant tout: {additional_info}\n\n"
-            "Voici le schéma JSON auquel ta réponse doit strictement adhérer :\n\n"
-            f"{schema_json}\n\n"
-            f"{improve_clause}"
-            "Utilise un langage neutre (par exemple, 'étudiant' => 'personne étudiante').\n\n"
-            "Si tu utilises des guillemets, utilise des guillemets français '«' et '»'\n\b"
-            "Voici différents prompts :\n"
-            f"- fields: {ai_fields}\n\n"
-            f"- fields_with_description: {ai_fields_with_description}\n\n"
-            f"- savoir_etre: {ai_savoir_etre}\n\n"
-            f"- capacites: {ai_capacites_prompt}\n\n"
-            "Retourne un JSON valide correspondant à PlanCadreAIResponse."
-        )
+        if mode == 'wand':
+            # Prompt minimaliste et ciblé pour la baguette magique
+            improve_clause = (
+                "Améliore uniquement le 'current_content' fourni pour les sections ciblées. "
+                "Objectifs: clarté, simplicité, concision. N'ajoute aucune information et ne modifie aucune autre section.\n\n"
+            )
+            combined_instruction = (
+                f"Contexte: cours '{cours_nom}', session {cours_session}. Instruction: {additional_info}\n\n"
+                "Respecte strictement ce schéma JSON:\n\n"
+                f"{schema_json}\n\n"
+                f"{improve_clause}"
+                "Prompts fournis pour les sections ciblées:\n"
+                f"- fields: {ai_fields}\n\n"
+                f"- fields_with_description: {ai_fields_with_description}\n\n"
+                f"- savoir_etre: {ai_savoir_etre}\n\n"
+                f"- capacites: {ai_capacites_prompt}\n\n"
+                "Retourne un JSON valide correspondant à PlanCadreAIResponse."
+            )
+            system_message = (
+                f"Assistant de rédaction concis. Améliore uniquement la section ciblée. Instruction: {additional_info}"
+            )
+        else:
+            improve_clause = (
+                "Améliore uniquement le contenu fourni dans 'current_content' s'il est présent. Garde la structure générale et reformule sans réécrire entièrement.\n\n"
+                if improve_only
+                else ""
+            )
+            combined_instruction = (
+                f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. "
+                f"Informations importantes à considérer avant tout: {additional_info}\n\n"
+                "Voici le schéma JSON auquel ta réponse doit strictement adhérer :\n\n"
+                f"{schema_json}\n\n"
+                f"{improve_clause}"
+                "Utilise un langage neutre (par exemple, 'étudiant' => 'personne étudiante').\n\n"
+                "Si tu utilises des guillemets, utilise des guillemets français '«' et '»'\n\b"
+                "Voici différents prompts :\n"
+                f"- fields: {ai_fields}\n\n"
+                f"- fields_with_description: {ai_fields_with_description}\n\n"
+                f"- savoir_etre: {ai_savoir_etre}\n\n"
+                f"- capacites: {ai_capacites_prompt}\n\n"
+                "Retourne un JSON valide correspondant à PlanCadreAIResponse."
+            )
+            system_message = (
+                f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. Informations importantes: {additional_info}"
+            )
         print(combined_instruction)
         client = OpenAI(api_key=openai_key)
         total_prompt_tokens = 0
@@ -467,8 +502,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             request_kwargs = dict(
                 model=ai_model,
                 input=[
-                    {"role": "system",
-                     "content": f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. Informations importantes: {additional_info}"},
+                    {"role": "system", "content": system_message},
                     {"role": "user", "content": combined_instruction}
                 ],
                 text=text_params,

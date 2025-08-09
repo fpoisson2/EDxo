@@ -58,13 +58,22 @@ def generate_plan_cadre_content(plan_id):
         return jsonify(success=False, message='Plan Cadre non trouvé.')
 
     form = GenerateContentForm()
-    if not form.validate_on_submit():
-        return jsonify(success=False, message='Erreur de validation du formulaire.')
+    mode = request.form.get('mode')
+    # Validation: en mode 'wand', le champ distinct est utilisé, on évite d'exiger additional_info
+    if mode != 'wand':
+        if not form.validate_on_submit():
+            return jsonify(success=False, message='Erreur de validation du formulaire.')
     
     # Forcer le mode amélioration si demandé explicitement
-    improved_mode = (request.form.get('mode') == 'improve') or bool(form.improve_only.data)
+    # mode déjà défini ci-dessus
+    improved_mode = (mode in ('improve', 'wand')) or bool(form.improve_only.data)
     payload = dict(form.data)
     payload['improve_only'] = bool(improved_mode)
+    payload['mode'] = mode
+    # Instruction spécifique à la baguette magique (facultative)
+    wand_instruction = request.form.get('wand_instruction')
+    if wand_instruction is not None:
+        payload['wand_instruction'] = wand_instruction
     # Propager un périmètre ciblé si présent
     target_cols = request.form.getlist('target_columns') or []
     if not target_cols:
