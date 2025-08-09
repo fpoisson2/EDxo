@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import sys
+
 from flask import current_app
 from flask_login import UserMixin
 from sqlalchemy import UniqueConstraint, select
@@ -7,10 +9,15 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from extensions import db
 
+# Alias to prevent duplicate imports when modules use ``app.models``
+sys.modules.setdefault("app.models", sys.modules[__name__])
+
 # Association table for User-Programme many-to-many relationship
-user_programme = db.Table('User_Programme',
+user_programme = db.Table(
+    'User_Programme',
     db.Column('user_id', db.Integer, db.ForeignKey('User.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True)
+    db.Column('programme_id', db.Integer, db.ForeignKey('Programme.id', ondelete='CASCADE'), primary_key=True),
+    extend_existing=True,
 )
 
 # Association table for Cours-Programme with per-programme session
@@ -33,7 +40,8 @@ class CoursProgramme(db.Model):
 competence_programme = db.Table(
     'Competence_Programme',
     db.Column('competence_id', db.Integer, db.ForeignKey('Competence.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('programme_id',   db.Integer, db.ForeignKey('Programme.id',    ondelete='CASCADE'), primary_key=True)
+    db.Column('programme_id',   db.Integer, db.ForeignKey('Programme.id',    ondelete='CASCADE'), primary_key=True),
+    extend_existing=True,
 )
 
 

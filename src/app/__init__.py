@@ -1,3 +1,10 @@
+"""Application factory and setup for the EDxo project."""
+
+import sys
+
+# Ensure consistent module imports whether using ``app`` or ``src.app``
+sys.modules.setdefault("app", sys.modules[__name__])
+
 # src/app/__init__.py
 
 # TODO: Ajouter un status au plan de cours (Brouillon, en révision, complété), Permettre l'édition seulement lorsqu'en brouillon pour le prof. Permettre l'édition lorsqu'il est en révision par le coordo.
