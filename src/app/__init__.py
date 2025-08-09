@@ -7,6 +7,8 @@
 # TODO: Saisir plans de cours S1 (sauf 1J5=déja fait)
 # TODO: Faudrait pouvoir mettre 2 ou 3 enseignants sur un plan de cours
 
+from app.models import BackupConfig
+
 import atexit
 import logging
 import os
