@@ -9,13 +9,20 @@
 
     <!-- Boutons d'Action Supplémentaires -->
     <div class="d-flex gap-3 mb-5 align-items-center">
-        <button type="button" class="btn btn-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
+        {% if current_user.role in ['admin', 'coordo'] %}
+        <button type="button" id="openGenerateBtn" class="btn btn-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
             <i class="bi bi-box-arrow-up-right me-2"></i>
             <span class="btn-text">Générer le plan-cadre</span>
             <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="loadingSpinner">
                 <span class="visually-hidden">Chargement...</span>
             </span>
         </button>
+
+        <button type="button" id="openImproveBtn" class="btn btn-outline-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
+            <i class="bi bi-magic me-2"></i>
+            <span>Améliorer le plan-cadre</span>
+        </button>
+        {% endif %}
 
         <a href="{{ url_for('plan_cadre.export_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary d-flex align-items-center">
             <i class="bi bi-file-earmark-word me-2"></i>
@@ -107,7 +114,14 @@
                     <div class="accordion-body">
                         <!-- Place et rôle du cours dans le programme (avec Toast UI Editor) -->
                         <div class="mb-2">
-                            <label class="fw-bold"><strong>Place et rôle du cours dans le programme</strong></label>
+                            <label class="fw-bold d-flex align-items-center gap-2">
+                                <strong>Place et rôle du cours dans le programme</strong>
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="place_intro" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                {% endif %}
+                            </label>
                             {{ plan_form.place_intro(class="form-control border-0 auto-resize use-toast",
                                                      oninput="autoResize(this)",
                                                      style="overflow:hidden; resize:none;") }}
@@ -116,7 +130,13 @@
                         <!-- Compétences développées (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Compétences développées</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Compétences développées
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="competences_developpees" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-competence-developpee" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -154,7 +174,13 @@
                         <!-- Objets cibles (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Objets cibles</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Objets cibles
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objets_cibles" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-objet-cible" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -192,7 +218,13 @@
                         <!-- Compétences certifiées (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Compétences certifiées</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Compétences certifiées
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="competences_certifiees" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-competence-certifiee" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -230,7 +262,13 @@
                         <!-- Cours corequis (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Cours corequis</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Cours corequis
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_corequis" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-cours-corequis" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -268,7 +306,13 @@
                         <!-- Cours préalables (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Cours préalables</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Cours préalables
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_prealables" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-cours-prealable" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -306,7 +350,13 @@
                         <!-- Cours reliés (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Cours reliés</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Cours reliés
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_relies" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-cours-relies" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -742,6 +792,8 @@
             <div class="modal-content">
                 <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post" id="generateContentForm">
                     {{ generate_form.hidden_tag() }}
+                    <input type="hidden" name="mode" id="genMode" value="generate">
+                    <input type="hidden" name="target_columns" id="genTargetColumns" value="">
                     <div class="modal-header">
                         <h5 class="modal-title" id="generateModalLabel">Générer le plan-cadre</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
@@ -758,6 +810,20 @@
                             {{ generate_form.ai_model.label(class="form-label") }}
                             {{ generate_form.ai_model(class="form-select border-0") }}
                             {% for error in generate_form.ai_model.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="mb-3">
+                            {{ generate_form.reasoning_effort.label(class="form-label") }}
+                            {{ generate_form.reasoning_effort(class="form-select border-0") }}
+                            {% for error in generate_form.reasoning_effort.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="mb-3">
+                            {{ generate_form.verbosity.label(class="form-label") }}
+                            {{ generate_form.verbosity(class="form-select border-0") }}
+                            {% for error in generate_form.verbosity.errors %}
                                 <div class="text-danger">{{ error }}</div>
                             {% endfor %}
                         </div>
@@ -1392,6 +1458,48 @@ document.addEventListener('DOMContentLoaded', function() {
     const generateForm = document.getElementById('generateContentForm');
     const confirmGenerateBtn = document.getElementById('confirmGenerateBtn');
     const modalLoadingSpinner = document.getElementById('modalLoadingSpinner');
+    const improveCheckbox = generateForm ? generateForm.querySelector('input[name="improve_only"]') : null;
+    const modeHidden = document.getElementById('genMode');
+    const modalTitle = document.getElementById('generateModalLabel');
+    const openImproveBtn = document.getElementById('openImproveBtn');
+    const openGenerateBtn = document.getElementById('openGenerateBtn');
+    const targetColumnsHidden = document.getElementById('genTargetColumns');
+
+    if (!generateForm || !confirmGenerateBtn || !modalLoadingSpinner) {
+        return;
+    }
+
+    // Préconfigurer le modal selon le bouton choisi
+    if (openImproveBtn && improveCheckbox && modalTitle) {
+        openImproveBtn.addEventListener('click', function() {
+            improveCheckbox.checked = true;
+            if (modeHidden) modeHidden.value = 'improve';
+            if (targetColumnsHidden) targetColumnsHidden.value = '';
+            modalTitle.textContent = 'Améliorer le plan-cadre';
+            confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer la proposition';
+        });
+    }
+    if (openGenerateBtn && improveCheckbox && modalTitle) {
+        openGenerateBtn.addEventListener('click', function() {
+            improveCheckbox.checked = false;
+            if (modeHidden) modeHidden.value = 'generate';
+            if (targetColumnsHidden) targetColumnsHidden.value = '';
+            modalTitle.textContent = 'Générer le plan-cadre';
+            confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer le plan-cadre';
+        });
+    }
+
+    // Magic wand per-section: open modal in improve mode with target column
+    document.querySelectorAll('.magic-generate').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const col = this.getAttribute('data-target-column') || '';
+            if (improveCheckbox) improveCheckbox.checked = true;
+            if (modeHidden) modeHidden.value = 'improve';
+            if (targetColumnsHidden) targetColumnsHidden.value = col;
+            if (modalTitle) modalTitle.textContent = 'Améliorer la section sélectionnée';
+            if (confirmGenerateBtn) confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer la proposition';
+        });
+    });
 
     generateForm.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -1410,7 +1518,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             confirmGenerateBtn.disabled = false;
             modalLoadingSpinner.classList.add('d-none');
-            confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer le plan-cadre';
+            // Rétablir le texte selon le mode
+            if (improveCheckbox && improveCheckbox.checked) {
+                confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer la proposition';
+            } else {
+                confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer le plan-cadre';
+            }
 
             const generateModalEl = document.getElementById('generateModal');
             const modalInstance = bootstrap.Modal.getInstance(generateModalEl);
@@ -1421,15 +1534,23 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 taskId = data.task_id;
                 sessionStorage.setItem('currentTaskId', taskId);
+                // Démarrer le polling immédiatement si disponible
+                if (typeof startTaskPolling === 'function') {
+                    startTaskPolling(taskId);
+                }
                 flashMessageSystem.info(data.message);
             } else {
-                flashMessageSystem.error(data.message);
+                flashMessageSystem.error(data.message || 'Action non autorisée.');
             }
         })
         .catch(error => {
             confirmGenerateBtn.disabled = false;
             modalLoadingSpinner.classList.add('d-none');
-            confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer le plan-cadre';
+            if (improveCheckbox && improveCheckbox.checked) {
+                confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer la proposition';
+            } else {
+                confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer le plan-cadre';
+            }
             flashMessageSystem.error('Erreur lors de la génération du plan-cadre.');
             console.error("Erreur lors de la génération du plan-cadre:", error);
         });

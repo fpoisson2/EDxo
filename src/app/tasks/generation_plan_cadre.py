@@ -118,6 +118,11 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         additional_info = form_data.get("additional_info", "")
         ai_model = form_data.get("ai_model", "")
         improve_only = form_data.get("improve_only", False)
+        target_columns = form_data.get("target_columns") or []
+        if isinstance(target_columns, str):
+            target_columns = [c.strip() for c in target_columns.split(',') if c.strip()]
+        reasoning_effort = form_data.get("reasoning_effort") or None
+        verbosity = form_data.get("verbosity") or None
 
         # Save additional info and the AI model in the plan
         plan.additional_info = additional_info
@@ -196,6 +201,41 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         def replace_jinja(text_):
             return replace_tags_jinja2(text_, plan_cadre_data)
 
+        # Reverse map for filtering by column/section
+        reverse_field_map = {v: k for k, v in field_to_plan_cadre_column.items()}
+
+        def include_section(section_name: str, col_name: str = None) -> bool:
+            if not target_columns:
+                return True
+            # Match by PlanCadre column name when available
+            if col_name and col_name in target_columns:
+                return True
+            # Match by logical section keys
+            # Simple field via display name
+            if reverse_field_map.get(col_name) == section_name:
+                return True
+            # Collections and specials
+            logical_key_map = {
+                'Description des compétences développées': 'competences_developpees',
+                'Description des Compétences certifiées': 'competences_certifiees',
+                'Description des cours corequis': 'cours_corequis',
+                'Objets cibles': 'objets_cibles',
+                'Description des cours reliés': 'cours_relies',
+                'Description des cours préalables': 'cours_prealables',
+                'Savoir-être': 'savoirs_etre',
+                'Capacité et pondération': 'capacites',
+                "Savoirs nécessaires d'une capacité": 'capacites',
+                "Savoirs faire d'une capacité": 'capacites',
+                "Moyen d'évaluation d'une capacité": 'capacites'
+            }
+            key = logical_key_map.get(section_name)
+            if key and key in target_columns:
+                return True
+            # Direct match for text columns
+            if col_name and col_name in target_columns:
+                return True
+            return False
+
         # Parcours des paramètres de génération
         for section_name, conf_data in parametres_dict.items():
             raw_text = str(conf_data.get('text_content', "") or "")
@@ -204,15 +244,26 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
 
             if section_name in field_to_plan_cadre_column:
                 col_name = field_to_plan_cadre_column[section_name]
+                if not include_section(section_name, col_name):
+                    continue
                 if is_ai:
                     entry = {"field_name": section_name, "prompt": replaced_text}
                     if improve_only:
                         entry["current_content"] = getattr(plan, col_name) or ""
                     ai_fields.append(entry)
                 else:
-                    non_ai_updates_plan_cadre.append((col_name, replaced_text))
+                    # Si on cible des colonnes, on n'applique pas de non-AI en mode partiel
+                    if target_columns:
+                        pass
+                    else:
+                        if improve_only:
+                            non_ai_updates_plan_cadre.append((col_name, replaced_text))
+                        else:
+                            non_ai_updates_plan_cadre.append((col_name, replaced_text))
             elif section_name in field_to_table_insert:
                 table_name = field_to_table_insert[section_name]
+                if not include_section(section_name):
+                    continue
                 if section_name == "Objets cibles" and is_ai:
                     entry = {"field_name": section_name, "prompt": replaced_text}
                     if improve_only:
@@ -323,7 +374,13 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                         ]
                     ai_fields_with_description.append(entry)
                 if not is_ai:
-                    non_ai_inserts_other_table.append((table_name, replaced_text))
+                    if target_columns:
+                        pass
+                    else:
+                        if improve_only:
+                            non_ai_inserts_other_table.append((table_name, replaced_text))
+                        else:
+                            non_ai_inserts_other_table.append((table_name, replaced_text))
             else:
                 target_sections = [
                     'Capacité et pondération',
@@ -332,27 +389,36 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     "Moyen d'évaluation d'une capacité"
                 ]
                 if section_name == 'Savoir-être':
+                    if not include_section(section_name):
+                        continue
                     if is_ai:
                         ai_savoir_etre = replaced_text
                     else:
-                        lines = [l.strip() for l in replaced_text.split("\n") if l.strip()]
-                        for line in lines:
-                            se_obj = PlanCadreSavoirEtre(plan_cadre_id=plan.id, texte=line)
-                            db.session.add(se_obj)
+                        if improve_only:
+                            # Reporter dans l'aperçu; pas de modification BD immédiate
+                            ai_savoir_etre = replaced_text
+                        else:
+                            lines = [l.strip() for l in replaced_text.split("\n") if l.strip()]
+                            for line in lines:
+                                se_obj = PlanCadreSavoirEtre(plan_cadre_id=plan.id, texte=line)
+                                db.session.add(se_obj)
                 elif section_name in target_sections:
+                    if not include_section(section_name):
+                        continue
                     if is_ai:
                         section_formatted = f"### {section_name}\n{replaced_text}"
                         ai_capacites_prompt.append(section_formatted)
-        # Appliquer les mises à jour non-AI sur le plan
-        for col_name, val in non_ai_updates_plan_cadre:
-            setattr(plan, col_name, val)
-        # Exécuter les insertions non-AI dans les autres tables
-        for table_name, val in non_ai_inserts_other_table:
-            db.session.execute(
-                text(f"INSERT INTO {table_name} (plan_cadre_id, texte) VALUES (:pcid, :val)"),
-                {"pcid": plan.id, "val": val}
-            )
-        db.session.commit()
+        # Appliquer les mises à jour non-AI sur le plan (sauf si mode amélioration)
+        if not improve_only:
+            for col_name, val in non_ai_updates_plan_cadre:
+                setattr(plan, col_name, val)
+            # Exécuter les insertions non-AI dans les autres tables
+            for table_name, val in non_ai_inserts_other_table:
+                db.session.execute(
+                    text(f"INSERT INTO {table_name} (plan_cadre_id, texte) VALUES (:pcid, :val)"),
+                    {"pcid": plan.id, "val": val}
+                )
+            db.session.commit()
 
         # Si aucune génération AI n'est requise, retourner tôt
         if not ai_fields and not ai_savoir_etre and not ai_capacites_prompt and not ai_fields_with_description:
@@ -387,24 +453,31 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         total_prompt_tokens = 0
         total_completion_tokens = 0
         try:
-            response = client.responses.create(
+            text_params = {
+                "format": {
+                    "type": "json_schema",
+                    "name": "PlanCadreAIResponse",
+                    "schema": PlanCadreAIResponse.schema(),
+                    "strict": True
+                }
+            }
+            if verbosity in {"low", "medium", "high"}:
+                text_params["verbosity"] = verbosity
+
+            request_kwargs = dict(
                 model=ai_model,
                 input=[
                     {"role": "system",
                      "content": f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. Informations importantes: {additional_info}"},
                     {"role": "user", "content": combined_instruction}
                 ],
-                text={
-                    "format": {
-                        "type": "json_schema",
-                        "name": "PlanCadreAIResponse",
-                        "schema": PlanCadreAIResponse.schema(),
-                        "strict": True
-                    }
-                },
+                text=text_params,
                 store=True,
-                # Other parameters as needed (e.g., temperature, top_p, etc.)
             )
+            if reasoning_effort in {"minimal", "low", "medium", "high"}:
+                request_kwargs["reasoning"] = {"effort": reasoning_effort}
+
+            response = client.responses.create(**request_kwargs)
         except Exception as e:
             logging.error(f"OpenAI error: {e}")
             result_meta = {"status": "error", "message": f"Erreur API OpenAI: {str(e)}"}
@@ -417,7 +490,11 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
 
         usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
         usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
-        total_cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
+        try:
+            total_cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
+        except Exception as e:
+            logging.warning(f"Tarification indisponible pour le modèle {ai_model}: {e}. Coût défini à 0.")
+            total_cost = 0.0
         logging.info(
             f"Appel OpenAI ({ai_model}): {total_cost:.6f}$ ({usage_prompt} prompt, {usage_completion} completion)"
         )
@@ -435,14 +512,35 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # ----------------------------------------------------------------
         parsed_json = json.loads(response.output_text)
         parsed_data = PlanCadreAIResponse(**parsed_json)
+
         def clean_text(val):
             return val.strip().strip('"').strip("'") if val else ""
+
+        # Construire une proposition (aperçu) si improve_only
+        proposed = {
+            'fields': {},
+            'fields_with_description': {
+                'Description des compétences développées': [],
+                'Description des Compétences certifiées': [],
+                'Description des cours corequis': [],
+                'Description des cours préalables': [],
+                'Objets cibles': []
+            },
+            'savoir_etre': [],
+            'capacites': []
+        }
+
+        # 3.a Champs simples
         for fobj in (parsed_data.fields or []):
             fname = fobj.field_name
             fcontent = clean_text(fobj.content)
             if fname in field_to_plan_cadre_column:
                 col = field_to_plan_cadre_column[fname]
-                setattr(plan, col, fcontent)
+                if improve_only:
+                    proposed['fields'][col] = fcontent
+                else:
+                    setattr(plan, col, fcontent)
+
         table_mapping = {
             "Description des compétences développées": "PlanCadreCompetencesDeveloppees",
             "Description des Compétences certifiées": "PlanCadreCompetencesCertifiees",
@@ -450,12 +548,11 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             "Description des cours préalables": "PlanCadreCoursPrealables",
             "Objets cibles": "PlanCadreObjetsCibles"
         }
+
+        # 3.b Champs avec description (listes)
         for fobj in (parsed_data.fields_with_description or []):
             fname = fobj.field_name
             if not fname:
-                continue
-            table_name = table_mapping.get(fname)
-            if not table_name:
                 continue
             elements_to_insert = []
             if isinstance(fobj.content, list):
@@ -463,70 +560,126 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     texte_comp = clean_text(item.texte) if item.texte else ""
                     desc_comp = clean_text(item.description) if item.description else ""
                     if texte_comp or desc_comp:
-                        elements_to_insert.append((texte_comp, desc_comp))
+                        elements_to_insert.append({"texte": texte_comp, "description": desc_comp})
             elif isinstance(fobj.content, str):
-                elements_to_insert.append((clean_text(fobj.content), ""))
-            for (texte_comp, desc_comp) in elements_to_insert:
-                if not texte_comp and not desc_comp:
-                    continue
-                db.session.execute(
-                    text(f"""
-                        INSERT OR REPLACE INTO {table_name} (plan_cadre_id, texte, description)
-                        VALUES (:pid, :txt, :desc)
-                    """),
-                    {"pid": plan.id, "txt": texte_comp, "desc": desc_comp}
-                )
-        if parsed_data.savoir_etre:
-            for se_item in parsed_data.savoir_etre:
-                se_obj = PlanCadreSavoirEtre(
-                    plan_cadre_id=plan.id,
-                    texte=clean_text(se_item)
-                )
-                db.session.add(se_obj)
-        if parsed_data.capacites:
-            for cap in parsed_data.capacites:
-                new_cap = PlanCadreCapacites(
-                    plan_cadre_id=plan.id,
-                    capacite=clean_text(cap.capacite),
-                    description_capacite=clean_text(cap.description_capacite),
-                    ponderation_min=int(cap.ponderation_min) if cap.ponderation_min else 0,
-                    ponderation_max=int(cap.ponderation_max) if cap.ponderation_max else 0
-                )
-                db.session.add(new_cap)
-                db.session.flush()
-                if cap.savoirs_necessaires:
-                    for sn in cap.savoirs_necessaires:
-                        sn_obj = PlanCadreCapaciteSavoirsNecessaires(
-                            capacite_id=new_cap.id,
-                            texte=clean_text(sn)
-                        )
-                        db.session.add(sn_obj)
-                if cap.savoirs_faire:
-                    for sf in cap.savoirs_faire:
-                        sf_obj = PlanCadreCapaciteSavoirsFaire(
-                            capacite_id=new_cap.id,
-                            texte=clean_text(sf.texte),
-                            cible=clean_text(sf.cible),
-                            seuil_reussite=clean_text(sf.seuil_reussite)
-                        )
-                        db.session.add(sf_obj)
-                if cap.moyens_evaluation:
-                    for me in cap.moyens_evaluation:
-                        me_obj = PlanCadreCapaciteMoyensEvaluation(
-                            capacite_id=new_cap.id,
-                            texte=clean_text(me)
-                        )
-                        db.session.add(me_obj)
-        db.session.commit()
+                elements_to_insert.append({"texte": clean_text(fobj.content), "description": ""})
 
-        result = {
-            "status": "success",
-            "message": f"Contenu généré automatiquement avec succès! Coût total: {round(total_cost, 4)} crédits.",
-            "plan_id": plan.id,
-            "cours_id": plan.cours_id
-        }
-        self.update_state(state="SUCCESS", meta=result)
-        return result
+            if improve_only:
+                if fname in proposed['fields_with_description']:
+                    proposed['fields_with_description'][fname] = elements_to_insert
+            else:
+                table_name = table_mapping.get(fname)
+                if not table_name:
+                    continue
+                for el in elements_to_insert:
+                    db.session.execute(
+                        text(f"""
+                            INSERT OR REPLACE INTO {table_name} (plan_cadre_id, texte, description)
+                            VALUES (:pid, :txt, :desc)
+                        """),
+                        {"pid": plan.id, "txt": el["texte"], "desc": el["description"]}
+                    )
+
+        # 3.c Savoir-être
+        if parsed_data.savoir_etre:
+            if improve_only:
+                proposed['savoir_etre'] = [clean_text(se_item) for se_item in parsed_data.savoir_etre]
+            else:
+                for se_item in parsed_data.savoir_etre:
+                    se_obj = PlanCadreSavoirEtre(
+                        plan_cadre_id=plan.id,
+                        texte=clean_text(se_item)
+                    )
+                    db.session.add(se_obj)
+
+        # 3.d Capacités
+        if parsed_data.capacites:
+            if improve_only:
+                for cap in parsed_data.capacites:
+                    proposed['capacites'].append({
+                        'capacite': clean_text(cap.capacite),
+                        'description_capacite': clean_text(cap.description_capacite),
+                        'ponderation_min': int(cap.ponderation_min) if cap.ponderation_min else 0,
+                        'ponderation_max': int(cap.ponderation_max) if cap.ponderation_max else 0,
+                        'savoirs_necessaires': [clean_text(sn) for sn in (cap.savoirs_necessaires or [])],
+                        'savoirs_faire': [
+                            {
+                                'texte': clean_text(sf.texte),
+                                'cible': clean_text(sf.cible),
+                                'seuil_reussite': clean_text(sf.seuil_reussite)
+                            } for sf in (cap.savoirs_faire or [])
+                        ],
+                        'moyens_evaluation': [clean_text(me) for me in (cap.moyens_evaluation or [])]
+                    })
+            else:
+                for cap in parsed_data.capacites:
+                    new_cap = PlanCadreCapacites(
+                        plan_cadre_id=plan.id,
+                        capacite=clean_text(cap.capacite),
+                        description_capacite=clean_text(cap.description_capacite),
+                        ponderation_min=int(cap.ponderation_min) if cap.ponderation_min else 0,
+                        ponderation_max=int(cap.ponderation_max) if cap.ponderation_max else 0
+                    )
+                    db.session.add(new_cap)
+                    db.session.flush()
+                    if cap.savoirs_necessaires:
+                        for sn in cap.savoirs_necessaires:
+                            sn_obj = PlanCadreCapaciteSavoirsNecessaires(
+                                capacite_id=new_cap.id,
+                                texte=clean_text(sn)
+                            )
+                            db.session.add(sn_obj)
+                    if cap.savoirs_faire:
+                        for sf in cap.savoirs_faire:
+                            sf_obj = PlanCadreCapaciteSavoirsFaire(
+                                capacite_id=new_cap.id,
+                                texte=clean_text(sf.texte),
+                                cible=clean_text(sf.cible),
+                                seuil_reussite=clean_text(sf.seuil_reussite)
+                            )
+                            db.session.add(sf_obj)
+                    if cap.moyens_evaluation:
+                        for me in cap.moyens_evaluation:
+                            me_obj = PlanCadreCapaciteMoyensEvaluation(
+                                capacite_id=new_cap.id,
+                                texte=clean_text(me)
+                            )
+                            db.session.add(me_obj)
+
+        if improve_only:
+            # Ajouter aussi les sections non-AI préparées dans l'aperçu
+            for col_name, val in non_ai_updates_plan_cadre:
+                proposed['fields'][col_name] = val
+            # Pour les tables avec description, stocker les valeurs textuelles telles quelles
+            for table_name, val in non_ai_inserts_other_table:
+                # On mappe vers les clés d'affichage connues, sinon on ignore
+                reverse_map = {v: k for k, v in table_mapping.items()}
+                display_key = reverse_map.get(table_name)
+                if display_key and display_key in proposed['fields_with_description']:
+                    proposed['fields_with_description'][display_key] = [
+                        {"texte": val, "description": ""}
+                    ]
+
+            result = {
+                "status": "success",
+                "message": f"Proposition d'amélioration générée. Coût: {round(total_cost, 4)} crédits.",
+                "plan_id": plan.id,
+                "cours_id": plan.cours_id,
+                "preview": True,
+                "proposed": proposed
+            }
+            self.update_state(state="SUCCESS", meta=result)
+            return result
+        else:
+            db.session.commit()
+            result = {
+                "status": "success",
+                "message": f"Contenu généré automatiquement avec succès! Coût total: {round(total_cost, 4)} crédits.",
+                "plan_id": plan.id,
+                "cours_id": plan.cours_id
+            }
+            self.update_state(state="SUCCESS", meta=result)
+            return result
 
     except Exception as e:
         db.session.rollback()

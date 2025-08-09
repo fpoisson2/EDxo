@@ -356,6 +356,25 @@ class GenerateContentForm(FlaskForm):
         validators=[DataRequired()],
         default='gpt-4o'
     )
+    reasoning_effort = SelectField(
+        "Effort de raisonnement",
+        choices=[
+            ('minimal', 'Minimal'),
+            ('low', 'Faible'),
+            ('medium', 'Moyen'),
+            ('high', 'Élevé')
+        ],
+        default='medium'
+    )
+    verbosity = SelectField(
+        "Verbosité",
+        choices=[
+            ('low', 'Faible'),
+            ('medium', 'Moyenne'),
+            ('high', 'Élevée')
+        ],
+        default='medium'
+    )
     improve_only = BooleanField('Améliorer le contenu existant', default=False)
     submit = SubmitField('Générer le plan-cadre')
 

@@ -451,10 +451,16 @@
         .then(data => {
           console.log("Task status:", data.state, data.result);
           if (data.state === 'SUCCESS') {
-            let coursId = data.result.cours_id;
-            let planId = data.result.plan_id;
-            let planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
-            addNotification("Génération terminée. Cliquez <a href='" + planCadreUrl + "'>ici</a> pour voir le plan-cadre.", "success", planCadreUrl);
+            if (data.result && data.result.preview) {
+              const planId = data.result.plan_id;
+              const reviewUrl = `/plan_cadre/${planId}/review?task_id=` + currentTaskId;
+              addNotification("Proposition d'amélioration prête. Cliquez pour comparer et appliquer.", "success", reviewUrl);
+            } else {
+              const coursId = data.result.cours_id;
+              const planId = data.result.plan_id;
+              const planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
+              addNotification("Génération terminée. Cliquez pour voir le plan-cadre.", "success", planCadreUrl);
+            }
             stopPolling();
             clearTaskId();
           } else if (data.state === 'FAILURE') {
