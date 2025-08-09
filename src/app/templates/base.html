@@ -455,15 +455,20 @@
             try { window.onTaskStreamUpdate(data.meta); } catch(e) { console.warn('onTaskStreamUpdate error', e); }
           }
           if (data.state === 'SUCCESS') {
-            if (data.result && data.result.preview) {
-              const planId = data.result.plan_id;
+            const payload = data.result || data.meta || {};
+            if (payload.preview) {
+              const planId = payload.plan_id;
               const reviewUrl = `/plan_cadre/${planId}/review?task_id=` + currentTaskId;
               addNotification("Proposition d'amélioration prête. Cliquez pour comparer et appliquer.", "success", reviewUrl);
             } else {
-              const coursId = data.result.cours_id;
-              const planId = data.result.plan_id;
-              const planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
-              addNotification("Génération terminée. Cliquez pour voir le plan-cadre.", "success", planCadreUrl);
+              const coursId = payload.cours_id;
+              const planId = payload.plan_id;
+              if (coursId && planId) {
+                const planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
+                addNotification("Génération terminée. Cliquez pour voir le plan-cadre.", "success", planCadreUrl);
+              } else {
+                addNotification("Génération terminée.", "success");
+              }
             }
             stopPolling();
             clearTaskId();
