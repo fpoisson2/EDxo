@@ -563,36 +563,37 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             # Streaming if requested by client
             do_stream = str(form_data.get("stream") or "0").lower() in ("1", "true", "yes", "on")
             streamed_text = None
+            response = None
             if do_stream:
                 try:
                     request_kwargs_stream = dict(request_kwargs)
-                    request_kwargs_stream["stream"] = True
-                    stream = client.responses.create(**request_kwargs_stream)
-                    streamed_text = ""
-                    seq = 0
-                    for event in stream:
-                        etype = getattr(event, 'type', '') or ''
-                        # Primary text delta event
-                        if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
-                            delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
-                            if delta:
-                                streamed_text += delta
-                                seq += 1
-                                self.update_state(state='PROGRESS', meta={
-                                    'message': 'Génération en cours...',
-                                    'stream_chunk': delta,
-                                    'stream_buffer': streamed_text,
-                                    'seq': seq
-                                })
-                                logger.info("Stream chunk %s: %s", seq, delta)
-                        elif etype.endswith('response.completed') or etype == 'response.completed':
-                            break
+                    with client.responses.stream(**request_kwargs_stream) as stream:
+                        streamed_text = ""
+                        seq = 0
+                        for event in stream:
+                            etype = getattr(event, 'type', '') or ''
+                            # Primary text delta event
+                            if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                                delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                                if delta:
+                                    streamed_text += delta
+                                    seq += 1
+                                    self.update_state(state='PROGRESS', meta={
+                                        'message': 'Génération en cours...',
+                                        'stream_chunk': delta,
+                                        'stream_buffer': streamed_text,
+                                        'seq': seq
+                                    })
+                                    logger.info("Stream chunk %s: %s", seq, delta)
+                            elif etype.endswith('response.completed') or etype == 'response.completed':
+                                break
+                        response = stream.get_final_response()
                 except Exception as se:
                     logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
                     streamed_text = None
+                    response = None
 
             # Non-stream or fallback: perform standard request
-            response = None
             if streamed_text is None:
                 response = client.responses.create(**request_kwargs)
         except Exception as e:
@@ -791,6 +792,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 "preview": True,
                 "proposed": proposed
             }
+            if streamed_text:
+                result["stream_buffer"] = streamed_text
             self.update_state(state="SUCCESS", meta=result)
             return result
         else:
@@ -801,6 +804,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 "plan_id": plan.id,
                 "cours_id": plan.cours_id
             }
+            if streamed_text:
+                result["stream_buffer"] = streamed_text
             self.update_state(state="SUCCESS", meta=result)
             return result
 
