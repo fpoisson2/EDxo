@@ -530,7 +530,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             system_message = (
                 f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. Informations importantes: {additional_info}"
             )
-        print(combined_instruction)
+        # combined_instruction can be large; avoid noisy stdout
+        logger.debug(combined_instruction)
         client = OpenAI(api_key=openai_key)
         total_prompt_tokens = 0
         total_completion_tokens = 0
@@ -560,7 +561,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 request_kwargs["reasoning"] = {"effort": reasoning_effort}
 
             # Streaming if requested by client
-            do_stream = str(form_data.get("stream") or "0").lower() in ("1","true","yes")
+            do_stream = str(form_data.get("stream") or "0").lower() in ("1", "true", "yes", "on")
             streamed_text = None
             if do_stream:
                 try:
@@ -583,6 +584,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                     'stream_buffer': streamed_text,
                                     'seq': seq
                                 })
+                                logger.info("Stream chunk %s: %s", seq, delta)
                         elif etype.endswith('response.completed') or etype == 'response.completed':
                             break
                 except Exception as se:

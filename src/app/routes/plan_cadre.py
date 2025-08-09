@@ -73,7 +73,7 @@ def generate_plan_cadre_content(plan_id):
     # Activer le streaming si demandé par le client (hidden input "stream")
     stream_flag = request.form.get('stream')
     if stream_flag is not None:
-        payload['stream'] = stream_flag
+        payload['stream'] = stream_flag.lower() in ('1', 'true', 'yes', 'on')
     # Instruction spécifique à la baguette magique (facultative)
     wand_instruction = request.form.get('wand_instruction')
     if wand_instruction is not None:
