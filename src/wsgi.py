@@ -1,8 +1,9 @@
-from app import create_app
+# src/wsgi.py
+from .app import create_app  # <- import relatif
 
 # Create the Flask application instance
 application = create_app()
-app = application  # Gunicorn looks for 'application' by default, but we also provide 'app'
+app = application  # exposer 'app' et 'application' est OK
 
 if __name__ == "__main__":
     application.run()
