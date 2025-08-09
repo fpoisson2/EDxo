@@ -535,6 +535,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         total_prompt_tokens = 0
         total_completion_tokens = 0
         try:
+            self.update_state(state='PROGRESS', meta={'message': "Appel au modèle IA en cours..."})
             text_params = {
                 "format": {
                     "type": "json_schema",
@@ -558,19 +559,47 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             if reasoning_effort in {"minimal", "low", "medium", "high"}:
                 request_kwargs["reasoning"] = {"effort": reasoning_effort}
 
-            response = client.responses.create(**request_kwargs)
+            # Streaming if requested by client
+            do_stream = str(form_data.get("stream") or "0").lower() in ("1","true","yes")
+            streamed_text = None
+            if do_stream:
+                try:
+                    request_kwargs_stream = dict(request_kwargs)
+                    request_kwargs_stream["stream"] = True
+                    stream = client.responses.create(**request_kwargs_stream)
+                    streamed_text = ""
+                    seq = 0
+                    for event in stream:
+                        etype = getattr(event, 'type', '') or ''
+                        # Primary text delta event
+                        if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                            delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                            if delta:
+                                streamed_text += delta
+                                seq += 1
+                                self.update_state(state='PROGRESS', meta={'message': 'Génération en cours...', 'stream_chunk': delta, 'seq': seq})
+                        elif etype.endswith('response.completed') or etype == 'response.completed':
+                            break
+                except Exception as se:
+                    logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
+                    streamed_text = None
+
+            # Non-stream or fallback: perform standard request
+            response = None
+            if streamed_text is None:
+                response = client.responses.create(**request_kwargs)
         except Exception as e:
             logging.error(f"OpenAI error: {e}")
             result_meta = {"status": "error", "message": f"Erreur API OpenAI: {str(e)}"}
             self.update_state(state="SUCCESS", meta=result_meta)
             return result_meta
 
-        if hasattr(response, 'usage'):
+        if response is not None and hasattr(response, 'usage'):
             total_prompt_tokens += response.usage.input_tokens
             total_completion_tokens += response.usage.output_tokens
 
-        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
-        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
+        usage_prompt = response.usage.input_tokens if (response is not None and hasattr(response, 'usage')) else 0
+        usage_completion = response.usage.output_tokens if (response is not None and hasattr(response, 'usage')) else 0
         try:
             total_cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
         except Exception as e:
@@ -591,7 +620,12 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # ----------------------------------------------------------------
         # 3) Traitement de la réponse générée par l'IA
         # ----------------------------------------------------------------
-        parsed_json = json.loads(response.output_text)
+        if streamed_text is not None and streamed_text.strip():
+            self.update_state(state='PROGRESS', meta={'message': "Réponse reçue (stream), analyse des résultats..."})
+            parsed_json = json.loads(streamed_text)
+        else:
+            self.update_state(state='PROGRESS', meta={'message': "Réponse reçue, analyse des résultats..."})
+            parsed_json = json.loads(response.output_text)
         parsed_data = PlanCadreAIResponse(**parsed_json)
 
         def clean_text(val):
@@ -741,6 +775,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                         {"texte": val, "description": ""}
                     ]
 
+            self.update_state(state='PROGRESS', meta={'message': "Préparation de l’aperçu des changements..."})
             result = {
                 "status": "success",
                 "message": f"Proposition d'amélioration générée. Coût: {round(total_cost, 4)} crédits.",

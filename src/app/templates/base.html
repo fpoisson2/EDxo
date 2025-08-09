@@ -450,6 +450,10 @@
         .then(response => response.json())
         .then(data => {
           console.log("Task status:", data.state, data.result);
+          // Stream updates, if any
+          if (data && data.meta && typeof window.onTaskStreamUpdate === 'function') {
+            try { window.onTaskStreamUpdate(data.meta); } catch(e) { console.warn('onTaskStreamUpdate error', e); }
+          }
           if (data.state === 'SUCCESS') {
             if (data.result && data.result.preview) {
               const planId = data.result.plan_id;

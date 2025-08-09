@@ -870,6 +870,7 @@
                     {{ generate_form.hidden_tag() }}
                     <input type="hidden" name="mode" id="genMode" value="generate">
                     <input type="hidden" name="target_columns" id="genTargetColumns" value="">
+                    <input type="hidden" name="stream" id="genStream" value="0">
                     <div class="modal-header">
                         <h5 class="modal-title" id="generateModalLabel">Générer le plan-cadre</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
@@ -911,6 +912,11 @@
                             {% endfor %}
                         </div>
                         {# Case à cocher supprimée (mode géré par les boutons) #}
+                        <div id="streamContainer" class="d-none">
+                            <label class="form-label">Aperçu en direct</label>
+                            <div class="small text-muted mb-1" id="streamStatus"></div>
+                            <pre id="streamOutput" class="form-control" style="height: 240px; overflow:auto; background:#f9f9f9"></pre>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
@@ -1544,6 +1550,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const openImproveBtn = document.getElementById('openImproveBtn');
     const openGenerateBtn = document.getElementById('openGenerateBtn');
     const targetColumnsHidden = document.getElementById('genTargetColumns');
+    const streamHidden = document.getElementById('genStream');
     const generalPromptGroup = document.getElementById('generalPromptGroup');
     const wandPromptGroup = document.getElementById('wandPromptGroup');
 
@@ -1561,6 +1568,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Vue: prompt global visible, prompt baguette caché
             if (generalPromptGroup) generalPromptGroup.classList.remove('d-none');
             if (wandPromptGroup) wandPromptGroup.classList.add('d-none');
+            if (streamHidden) streamHidden.value = '0';
         });
     }
     if (openGenerateBtn && modalTitle) {
@@ -1575,6 +1583,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Vue: prompt global visible, prompt baguette caché
             if (generalPromptGroup) generalPromptGroup.classList.remove('d-none');
             if (wandPromptGroup) wandPromptGroup.classList.add('d-none');
+            if (streamHidden) streamHidden.value = '0';
         });
     }
 
@@ -1604,6 +1613,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     wandField.value = `Améliorer uniquement la section « ${sectionTitle} ». Rendre le texte plus clair, simple et concis sans ajouter d'information.`;
                 }
             }
+            if (streamHidden) streamHidden.value = '1';
         });
     });
 
@@ -1633,9 +1643,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const generateModalEl = document.getElementById('generateModal');
             const modalInstance = bootstrap.Modal.getInstance(generateModalEl);
-            if (modalInstance) {
-                modalInstance.hide();
-            }
 
             if (data.success) {
                 taskId = data.task_id;
@@ -1643,6 +1650,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Démarrer le polling immédiatement si disponible
                 if (typeof startTaskPolling === 'function') {
                     startTaskPolling(taskId);
+                }
+                // Activer l'aperçu streaming si demandé
+                const doStream = streamHidden && streamHidden.value === '1';
+                if (doStream) {
+                    const container = document.getElementById('streamContainer');
+                    const out = document.getElementById('streamOutput');
+                    const status = document.getElementById('streamStatus');
+                    if (container && out) {
+                        out.textContent = '';
+                        container.classList.remove('d-none');
+                    }
+                    window.onTaskStreamUpdate = function(meta) {
+                        try {
+                            if (!meta) return;
+                            const out = document.getElementById('streamOutput');
+                            const status = document.getElementById('streamStatus');
+                            if (status && meta.message) status.textContent = meta.message;
+                            if (out && meta.stream_chunk) {
+                                out.textContent += meta.stream_chunk;
+                                out.scrollTop = out.scrollHeight;
+                            }
+                        } catch (e) { console.warn('stream update error', e); }
+                    };
+                } else if (modalInstance) {
+                    modalInstance.hide();
                 }
                 flashMessageSystem.info(data.message);
             } else {

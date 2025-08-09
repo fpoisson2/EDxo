@@ -164,6 +164,7 @@ def task_status(task_id):
     return jsonify({
         'state': current_state,
         'message': current_message,
+        'meta': meta,
         'result': res.result if current_state == 'SUCCESS' else None
     })
 

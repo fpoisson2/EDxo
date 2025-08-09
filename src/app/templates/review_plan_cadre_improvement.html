@@ -135,11 +135,12 @@
                     {% elif section == 'capacites' %}
                       <div>
                         {% for cap in change.after %}
+                          {% set cap_index = loop.index0 %}
                           <div class="mb-3 pb-2 border-bottom">
                             <div class="d-flex align-items-center justify-content-between">
                               <div><strong>Capacité:</strong> {{ cap.capacite }}</div>
                               <div class="form-check">
-                                <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites]" value="{{ loop.index0 }}" disabled>
+                                <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites]" value="{{ cap_index }}" disabled>
                                 <label class="form-check-label">Ajouter cette capacité</label>
                               </div>
                             </div>
@@ -153,7 +154,7 @@
                                   {% for sn in cap.savoirs_necessaires %}
                                     <li>
                                       <div class="form-check">
-                                        <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites][{{ loop.parent.index0 }}][savoirs_necessaires]" value="{{ loop.index0 }}" disabled>
+                                        <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites][{{ cap_index }}][savoirs_necessaires]" value="{{ loop.index0 }}" disabled>
                                         <label class="form-check-label">{{ sn }}</label>
                                       </div>
                                     </li>
@@ -167,7 +168,7 @@
                                   {% for sf in cap.savoirs_faire %}
                                     <li>
                                       <div class="form-check">
-                                        <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites][{{ loop.parent.index0 }}][savoirs_faire]" value="{{ loop.index0 }}" disabled>
+                                        <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites][{{ cap_index }}][savoirs_faire]" value="{{ loop.index0 }}" disabled>
                                         <label class="form-check-label">
                                           <strong>{{ sf.texte }}</strong>
                                           {% if sf.cible %}<div class="small">Cible: {{ sf.cible }}</div>{% endif %}
@@ -185,7 +186,7 @@
                                   {% for me in cap.moyens_evaluation %}
                                     <li>
                                       <div class="form-check">
-                                        <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites][{{ loop.parent.index0 }}][moyens_evaluation]" value="{{ loop.index0 }}" disabled>
+                                        <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites][{{ cap_index }}][moyens_evaluation]" value="{{ loop.index0 }}" disabled>
                                         <label class="form-check-label">{{ me }}</label>
                                       </div>
                                     </li>
