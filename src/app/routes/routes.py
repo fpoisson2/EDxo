@@ -12,7 +12,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy import func  # Add this at the top with your other imports
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from app.forms import (
+from ..forms import (
     ProgrammeForm,
     CompetenceForm,
     ElementCompetenceForm,
@@ -39,7 +39,7 @@ from app.forms import (
     ResetPasswordForm
 
 )
-from app.models import (
+from ..models import (
     db,
     User,
     Department,

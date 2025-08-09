@@ -5,8 +5,8 @@ from flask import Blueprint, render_template, request, current_app, Response, st
 from flask_login import login_required, current_user
 from openai import OpenAI
 
-from app.forms import ChatForm
-from app.models import User, PlanCadre, PlanDeCours, Cours, db, ChatHistory
+from ..forms import ChatForm
+from ..models import User, PlanCadre, PlanDeCours, Cours, db, ChatHistory
 from utils.decorator import ensure_profile_completed
 # Importez votre fonction pour récupérer la tarification depuis la BD
 from utils.openai_pricing import calculate_call_cost

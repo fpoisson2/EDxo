@@ -10,7 +10,7 @@ from openai import OpenAI
 from pydantic import BaseModel, ValidationError
 
 # Import SQLAlchemy DB and models
-from app.models import (
+from ..models import (
     db,
     PlanDeCours,
     Cours,

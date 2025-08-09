@@ -8,7 +8,7 @@ from flask_login import login_required, current_user
 from flask_wtf.csrf import validate_csrf, CSRFError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from app.forms import (
+from ..forms import (
     DeleteForm,
     PlanCadreForm,
     CapaciteItemForm,
@@ -16,7 +16,7 @@ from app.forms import (
     GenerateContentForm
 )
 # Import all necessary models and the db session
-from app.models import (
+from ..models import (
     db,
     Cours,
     PlanCadre,
