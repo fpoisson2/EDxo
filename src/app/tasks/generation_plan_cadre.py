@@ -577,7 +577,12 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                             if delta:
                                 streamed_text += delta
                                 seq += 1
-                                self.update_state(state='PROGRESS', meta={'message': 'Génération en cours...', 'stream_chunk': delta, 'seq': seq})
+                                self.update_state(state='PROGRESS', meta={
+                                    'message': 'Génération en cours...',
+                                    'stream_chunk': delta,
+                                    'stream_buffer': streamed_text,
+                                    'seq': seq
+                                })
                         elif etype.endswith('response.completed') or etype == 'response.completed':
                             break
                 except Exception as se:

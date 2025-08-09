@@ -1667,8 +1667,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             const out = document.getElementById('streamOutput');
                             const status = document.getElementById('streamStatus');
                             if (status && meta.message) status.textContent = meta.message;
-                            if (out && meta.stream_chunk) {
-                                out.textContent += meta.stream_chunk;
+                            if (out) {
+                                if (meta.stream_buffer) {
+                                    out.textContent = meta.stream_buffer;
+                                } else if (meta.stream_chunk) {
+                                    out.textContent += meta.stream_chunk;
+                                }
                                 out.scrollTop = out.scrollHeight;
                             }
                         } catch (e) { console.warn('stream update error', e); }
