@@ -428,7 +428,13 @@
                         <!-- Capacités -->
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="fw-bold">Capacités</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Capacités
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="capacites" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-capacite" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>

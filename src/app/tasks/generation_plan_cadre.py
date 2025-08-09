@@ -208,24 +208,24 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         non_ai_inserts_other_table = []
         ai_savoir_etre = None
         ai_capacites_prompt = []
+        current_capacites_snapshot = []
 
         def replace_jinja(text_):
             return replace_tags_jinja2(text_, plan_cadre_data)
 
-        # Reverse map for filtering by column/section
-        reverse_field_map = {v: k for k, v in field_to_plan_cadre_column.items()}
-
         def include_section(section_name: str, col_name: str = None) -> bool:
+            """Return True if this section should be included given target_columns.
+
+            - When target_columns is empty: include everything.
+            - For simple text fields: include when the internal column name is targeted.
+            - For collections/specials: include when the mapped logical key is targeted.
+            """
             if not target_columns:
                 return True
-            # Match by PlanCadre column name when available
+            # Match by PlanCadre column name when available (simple text fields)
             if col_name and col_name in target_columns:
                 return True
-            # Match by logical section keys
-            # Simple field via display name
-            if reverse_field_map.get(col_name) == section_name:
-                return True
-            # Collections and specials
+            # Collections and specials: map display section names to logical keys
             logical_key_map = {
                 'Description des compétences développées': 'competences_developpees',
                 'Description des Compétences certifiées': 'competences_certifiees',
@@ -241,9 +241,6 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             }
             key = logical_key_map.get(section_name)
             if key and key in target_columns:
-                return True
-            # Direct match for text columns
-            if col_name and col_name in target_columns:
                 return True
             return False
 
@@ -419,6 +416,24 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     if is_ai:
                         section_formatted = f"### {section_name}\n{replaced_text}"
                         ai_capacites_prompt.append(section_formatted)
+        # Préparer un instantané concis des capacités actuelles (utile en mode amélioration)
+        if improve_only and (not target_columns or 'capacites' in target_columns):
+            for cap in (plan.capacites or [])[:4]:  # limiter à 4 capacités pour rester concis
+                current_capacites_snapshot.append({
+                    'capacite': cap.capacite or '',
+                    'description_capacite': (cap.description_capacite or '')[:500],
+                    'ponderation_min': int(cap.ponderation_min or 0),
+                    'ponderation_max': int(cap.ponderation_max or 0),
+                    'savoirs_necessaires': [(sn.texte or '')[:200] for sn in list(cap.savoirs_necessaires)[:8]],
+                    'savoirs_faire': [
+                        {
+                            'texte': (sf.texte or '')[:200],
+                            'cible': (sf.cible or '')[:200],
+                            'seuil_reussite': (sf.seuil_reussite or '')[:200]
+                        } for sf in list(cap.savoirs_faire)[:8]
+                    ],
+                    'moyens_evaluation': [(me.texte or '')[:200] for me in list(cap.moyens_evaluation)[:6]]
+                })
         # Appliquer les mises à jour non-AI sur le plan (sauf si mode amélioration)
         if not improve_only:
             for col_name, val in non_ai_updates_plan_cadre:
@@ -438,48 +453,79 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # ----------------------------------------------------------------
         # 2) Appel unique à l'API OpenAI (endpoint responses)
         # ----------------------------------------------------------------
-        schema_json = json.dumps(PlanCadreAIResponse.schema(), indent=4, ensure_ascii=False)
+        # Contexte compact du cours pour aider une génération ciblée
+        def clip(txt, n=600):
+            txt = (txt or '')
+            return (txt[:n] + '…') if len(txt) > n else txt
+
+        context_parts = []
+        # Champs principaux du plan
+        if plan.place_intro:
+            context_parts.append(f"Place du cours: {clip(plan.place_intro, 400)}")
+        if plan.objectif_terminal:
+            context_parts.append(f"Objectif terminal: {clip(plan.objectif_terminal, 300)}")
+        if plan.structure_intro:
+            context_parts.append(f"Intro structure: {clip(plan.structure_intro, 300)}")
+        # Listes clefs (résumé)
+        if plan.competences_developpees:
+            cds = [cd.texte for cd in plan.competences_developpees[:5] if (cd.texte or '').strip()]
+            if cds:
+                context_parts.append("Compétences développées: " + "; ".join(cds))
+        if plan.objets_cibles:
+            ocs = [oc.texte for oc in plan.objets_cibles[:5] if (oc.texte or '').strip()]
+            if ocs:
+                context_parts.append("Objets cibles: " + "; ".join(ocs))
+
+        course_context_compact = "\n".join(context_parts) or None
+
+        # Note: The JSON schema is already enforced via the Responses API (text.format with strict schema).
+        # Avoid embedding the full schema in the prompt to reduce input size.
         if mode == 'wand':
             # Prompt minimaliste et ciblé pour la baguette magique
             improve_clause = (
-                "Améliore uniquement le 'current_content' fourni pour les sections ciblées. "
-                "Objectifs: clarté, simplicité, concision. N'ajoute aucune information et ne modifie aucune autre section.\n\n"
+                "Si un 'current_content' est fourni pour la section ciblée, améliore-le. "
+                "Sinon, produis un contenu complet et concis respectant le schéma demandé pour cette section. "
+                "Objectifs: clarté, simplicité, concision. N'ajoute aucune information hors périmètre et ne modifie aucune autre section.\n\n"
             )
             combined_instruction = (
                 f"Contexte: cours '{cours_nom}', session {cours_session}. Instruction: {additional_info}\n\n"
-                "Respecte strictement ce schéma JSON:\n\n"
-                f"{schema_json}\n\n"
                 f"{improve_clause}"
-                "Prompts fournis pour les sections ciblées:\n"
+                "Réponds au format JSON attendu (schéma imposé par l'API).\n"
+                "Prompts fournis pour les sections ciblées uniquement:\n"
                 f"- fields: {ai_fields}\n\n"
                 f"- fields_with_description: {ai_fields_with_description}\n\n"
                 f"- savoir_etre: {ai_savoir_etre}\n\n"
                 f"- capacites: {ai_capacites_prompt}\n\n"
-                "Retourne un JSON valide correspondant à PlanCadreAIResponse."
+                + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if course_context_compact else "")
+                + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if current_capacites_snapshot else "")
+                + ("Exigences pour chaque capacité: inclure 'description_capacite', une plage 'ponderation_min'/'ponderation_max',\n"
+                   "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
             )
             system_message = (
                 f"Assistant de rédaction concis. Améliore uniquement la section ciblée. Instruction: {additional_info}"
             )
         else:
             improve_clause = (
-                "Améliore uniquement le contenu fourni dans 'current_content' s'il est présent. Garde la structure générale et reformule sans réécrire entièrement.\n\n"
-                if improve_only
-                else ""
+                "S'il y a un 'current_content', améliore-le. Sinon, génère un contenu approprié pour les sections ciblées. "
+                "Garde la structure générale et reformule sans réécrire entièrement.\n\n"
+            if improve_only
+            else ""
             )
             combined_instruction = (
                 f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. "
                 f"Informations importantes à considérer avant tout: {additional_info}\n\n"
-                "Voici le schéma JSON auquel ta réponse doit strictement adhérer :\n\n"
-                f"{schema_json}\n\n"
                 f"{improve_clause}"
-                "Utilise un langage neutre (par exemple, 'étudiant' => 'personne étudiante').\n\n"
-                "Si tu utilises des guillemets, utilise des guillemets français '«' et '»'\n\b"
-                "Voici différents prompts :\n"
+                "Utilise un langage neutre (par ex. 'personne étudiante').\n"
+                "Si tu utilises des guillemets, utilise « » (français).\n\n"
+                "Voici différents prompts (seules les sections pertinentes sont fournies) :\n"
                 f"- fields: {ai_fields}\n\n"
                 f"- fields_with_description: {ai_fields_with_description}\n\n"
                 f"- savoir_etre: {ai_savoir_etre}\n\n"
                 f"- capacites: {ai_capacites_prompt}\n\n"
-                "Retourne un JSON valide correspondant à PlanCadreAIResponse."
+                + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if course_context_compact else "")
+                + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if current_capacites_snapshot else "")
+                + ("Exigences pour chaque capacité: inclure 'description_capacite', une plage 'ponderation_min'/'ponderation_max',\n"
+                   "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
             )
             system_message = (
                 f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. Informations importantes: {additional_info}"
