@@ -6,9 +6,9 @@ from flask import send_from_directory, current_app
 from flask_login import login_required, current_user
 from flask_wtf.csrf import CSRFProtect
 
-from app.forms import GlobalGenerationSettingsForm, DeletePlanForm, UploadForm, ProfileEditForm, AnalysePromptForm, \
+from ..forms import GlobalGenerationSettingsForm, DeletePlanForm, UploadForm, ProfileEditForm, AnalysePromptForm, \
     OpenAIModelForm
-from app.routes.evaluation import AISixLevelGridResponse
+from .evaluation import AISixLevelGridResponse
 from config.constants import SECTIONS  # Importer la liste des sections
 from utils.decorator import role_required, roles_required, ensure_profile_completed
 
@@ -16,7 +16,7 @@ csrf = CSRFProtect()
 
 
 # Importez bien sûr db, User et GlobalGenerationSettings depuis vos modèles
-from app.models import db, User, GlobalGenerationSettings, GrillePromptSettings, PlanDeCours, Cours, Programme, PlanDeCoursPromptSettings, AnalysePlanCoursPrompt, ListeCegep, Department, OpenAIModel
+from ..models import db, User, GlobalGenerationSettings, GrillePromptSettings, PlanDeCours, Cours, Programme, PlanDeCoursPromptSettings, AnalysePlanCoursPrompt, ListeCegep, Department, OpenAIModel
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 

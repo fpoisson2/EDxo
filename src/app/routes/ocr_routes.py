@@ -9,8 +9,8 @@ from flask_login import login_required
 
 # --- Imports Projet ---
 from extensions import csrf
-from app.forms import OcrProgrammeSelectionForm
-from app.forms import AssociateDevisForm
+from ..forms import OcrProgrammeSelectionForm
+from ..forms import AssociateDevisForm
 try:
     from ocr_processing import web_utils
     from config import constants
@@ -29,7 +29,7 @@ except ImportError as e:
 
 from flask_login import login_required, current_user
 
-from app.models import (
+from ..models import (
     Programme
 )
 
@@ -165,7 +165,7 @@ def start_ocr_processing():
 
         try:
             # !!! Importation de la tâche déplacée ici !!!
-            from app.tasks.ocr import process_ocr_task
+            from ..tasks.ocr import process_ocr_task
             logger.info(f"Tentative d'envoi de la tâche 'app.tasks.process_ocr_task' via celery.send_task")
             logger.info(f"Configuration Celery utilisée: BROKER='{celery.conf.broker_url}', BACKEND='{celery.conf.result_backend}'")
 

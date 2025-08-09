@@ -43,10 +43,9 @@ except ImportError:
 
 from openai.types.responses import ResponseFunctionToolCall  # ← Fallback
 
+from ..forms import ChatForm
+from ..models import User, PlanCadre, PlanDeCours, Cours, db, ChatHistory
 
-# ─── app imports internes ───────────────────────────────────────
-from app.forms import ChatForm
-from app.models import User, PlanCadre, PlanDeCours, Cours, db, ChatHistory
 from utils.decorator import ensure_profile_completed
 from utils.openai_pricing import calculate_call_cost
 

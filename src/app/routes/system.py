@@ -19,8 +19,8 @@ from flask import (
 from flask_login import login_required
 from sqlalchemy import text
 
-from app.forms import BackupConfigForm, MailgunConfigForm
-from app.models import db, BackupConfig, DBChange, User, MailgunConfig
+from ..forms import BackupConfigForm, MailgunConfigForm
+from ..models import db, BackupConfig, DBChange, User, MailgunConfig
 from utils.backup_utils import send_backup_email
 from utils.decorator import roles_required, ensure_profile_completed
 from utils.scheduler_instance import scheduler, schedule_backup

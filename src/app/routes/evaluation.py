@@ -25,14 +25,14 @@ from openai import OpenAIError
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 
-from app.forms import (
+from ..forms import (
     CourseSelectionForm,
     PlanSelectionForm,
     EvaluationGridForm,
     EvaluationSelectionForm,
     SixLevelGridForm
 )
-from app.models import (
+from ..models import (
     db,
     Cours,
     PlanDeCours,

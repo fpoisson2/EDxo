@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy import text
 
 # Import your models – adjust these imports as needed:
-from app.models import (
+from ..models import (
     PlanCadre, GlobalGenerationSettings, Competence, ElementCompetence,
     ElementCompetenceParCours, CoursCorequis, Cours, CoursPrealable,
     PlanCadreSavoirEtre, PlanCadreCapacites,

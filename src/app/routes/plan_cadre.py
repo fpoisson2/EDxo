@@ -5,13 +5,13 @@ import traceback
 from flask import Blueprint, render_template, redirect, url_for, request, flash, send_file, jsonify, session
 from flask_login import login_required, current_user
 
-from app.forms import (
+from ..forms import (
     DeleteForm,
     PlanCadreForm,
     GenerateContentForm
 )
 # Import SQLAlchemy DB and models
-from app.models import (
+from ..models import (
     db,
     PlanCadre,
     PlanCadreCapacites,
@@ -48,7 +48,7 @@ plan_cadre_bp = Blueprint('plan_cadre', __name__, url_prefix='/plan_cadre')
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def generate_plan_cadre_content(plan_id):
-    from app.tasks.generation_plan_cadre import generate_plan_cadre_content_task
+    from ..tasks.generation_plan_cadre import generate_plan_cadre_content_task
 
     plan = PlanCadre.query.get(plan_id)
     if not plan:

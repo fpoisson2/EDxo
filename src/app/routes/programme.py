@@ -12,13 +12,13 @@ import html
 import json
 from flask_login import login_required, current_user
 
-from app.forms import (
+from ..forms import (
     CompetenceForm,
     DeleteForm,
     ReviewImportConfirmForm
 )
 # Import SQLAlchemy models
-from app.models import (
+from ..models import (
     db,
     User,
     Programme,

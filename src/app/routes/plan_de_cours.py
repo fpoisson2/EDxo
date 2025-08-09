@@ -16,8 +16,8 @@ from openai import OpenAIError
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 
-from app.forms import PlanDeCoursForm
-from app.models import (
+from ..forms import PlanDeCoursForm
+from ..models import (
     db, Cours, PlanCadre, User,
     PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
     PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, Programme,

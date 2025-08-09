@@ -2,16 +2,16 @@ import os
 import uuid
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, Response, jsonify
 from flask_login import login_required, current_user
-from app.forms import FileUploadForm
-from app.tasks.import_grille import extract_grille_from_pdf_task
+from ..forms import FileUploadForm
+from ..tasks.import_grille import extract_grille_from_pdf_task
 import logging
 from celery.result import AsyncResult   
 from celery_app import celery
-from app.forms import (
+from ..forms import (
     ConfirmationGrilleForm
 )
 
-from app.models import db, BackupConfig, User, Competence, ElementCompetence, ElementCompetenceCriteria, \
+from ..models import db, BackupConfig, User, Competence, ElementCompetence, ElementCompetenceCriteria, \
                    ElementCompetenceParCours, FilConducteur, CoursPrealable, CoursCorequis, CompetenceParCours, \
                    PlanCadre, PlanCadreCoursCorequis, PlanCadreCapacites, PlanCadreCapaciteSavoirsNecessaires, \
                    PlanCadreCapaciteSavoirsFaire, PlanCadreCapaciteMoyensEvaluation, PlanCadreSavoirEtre, \

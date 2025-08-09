@@ -27,20 +27,20 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Import models and routes
-from app import models
-from app.routes import routes
-from app.routes.chat import chat
+from . import models
+from .routes import routes
+from .routes.chat import chat
 # Import blueprints
-from app.routes.cours import cours_bp
-from app.routes.evaluation import evaluation_bp
-from app.routes.gestion_programme import gestion_programme_bp
-from app.routes.plan_cadre import plan_cadre_bp
-from app.routes.plan_de_cours import plan_de_cours_bp
-from app.routes.programme import programme_bp
-from app.routes.settings import settings_bp
-from app.routes.system import system_bp
-from app.routes.ocr_routes import ocr_bp
-from app.routes.grilles import grille_bp
+from .routes.cours import cours_bp
+from .routes.evaluation import evaluation_bp
+from .routes.gestion_programme import gestion_programme_bp
+from .routes.plan_cadre import plan_cadre_bp
+from .routes.plan_de_cours import plan_de_cours_bp
+from .routes.programme import programme_bp
+from .routes.settings import settings_bp
+from .routes.system import system_bp
+from .routes.ocr_routes import ocr_bp
+from .routes.grilles import grille_bp
 
 # Import version
 from config.version import __version__
@@ -158,7 +158,7 @@ def create_app(testing=False):
     bcrypt.init_app(app)
     limiter.init_app(app)
 
-    from app.models import User  # Import your User model
+    from .models import User  # Import your User model
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -285,7 +285,7 @@ def create_app(testing=False):
                     logger.warning(
                         "⚠️ Table 'backup_config' introuvable, la planification des sauvegardes est ignorée.")
 
-                from app.init.prompt_settings import init_plan_de_cours_prompts
+                from .init.prompt_settings import init_plan_de_cours_prompts
                 init_plan_de_cours_prompts()
 
                 # Perform WAL checkpoint
@@ -335,7 +335,7 @@ def create_app(testing=False):
         with app.app_context():
             # Always create missing tables; create_all() will do nothing if tables already exist.
             db.create_all()
-            from app.models import User  # Ensure the User model is imported
+            from .models import User  # Ensure the User model is imported
 
             # Check if an admin user exists; if not, create one.
             if not User.query.filter_by(role='admin').first():

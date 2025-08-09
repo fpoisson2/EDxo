@@ -2,8 +2,8 @@
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from app import db, logger
-from app.models import PlanDeCoursPromptSettings
+from .. import db, logger
+from ..models import PlanDeCoursPromptSettings
 
 
 def init_plan_de_cours_prompts():
