@@ -686,4 +686,18 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("Erreur lors de la génération du plan-cadre:", error);
         });
     });
+
+    const sectionsNav = document.getElementById('sectionsNav');
+    if (sectionsNav) {
+        new bootstrap.ScrollSpy(document.body, { target: '#sectionsNav', offset: 100 });
+    }
+    document.querySelectorAll('#sectionsOffcanvas .nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            const offcanvasEl = document.getElementById('sectionsOffcanvas');
+            const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+            if (offcanvas) {
+                offcanvas.hide();
+            }
+        });
+    });
 });
