@@ -329,45 +329,36 @@ def handle_list_all_plan_cadre():
 # --- UPDATED ID Management ---
 # Centralized function to manage ID based on events
 def maybe_store_id(ev):
-    # Ensure imports are available
-    from openai.types.responses import ResponseCreatedEvent, ResponseCompletedEvent
+    """Persist response ID in session only when a text answer is completed."""
+    from openai.types.responses import ResponseCompletedEvent
 
-    current_id_before = session.get("last_response_id") # Get ID before potential change
-    new_id = None
-    event_type = ev.__class__.__name__ if hasattr(ev, '__class__') else type(ev).__name__
-    response_id = getattr(getattr(ev, 'response', None), 'id', None) # Safely get response ID
-
+    current_id_before = session.get("last_response_id")
+    event_type = ev.__class__.__name__ if hasattr(ev, "__class__") else type(ev).__name__
+    response_id = getattr(getattr(ev, "response", None), "id", None)
     if not response_id:
-        # print(f"[DEBUG LOG] maybe_store_id ({event_type}): Event has no response ID. Skipping.")
-        return # Cannot store if event has no response.id
+        return
 
-    if isinstance(ev, ResponseCreatedEvent):
-        new_id = response_id
-        session["last_response_id"] = new_id
-        session.modified = True
-        print(f"[DEBUG LOG] maybe_store_id ({event_type}): Set last_response_id. Before='{current_id_before}', New='{new_id}'")
-    elif isinstance(ev, ResponseCompletedEvent) and ResponseCompletedEvent is not None:
-        # Check output type condition
+    if isinstance(ev, ResponseCompletedEvent):
         is_function_call = False
-        # Check if output exists and the first item's type is function_call
-        if ev.response and hasattr(ev.response, 'output') and ev.response.output:
-             output_item_1 = ev.response.output[0]
-             if hasattr(output_item_1, "type"):
-                  is_function_call = (getattr(output_item_1, "type", "") == "function_call")
+        if ev.response and hasattr(ev.response, "output") and ev.response.output:
+            first = ev.response.output[0]
+            if hasattr(first, "type"):
+                is_function_call = getattr(first, "type", "") == "function_call"
 
-        print(f"[DEBUG LOG] maybe_store_id ({event_type}): Completed ID='{response_id}'. Final output[0] is function call: {is_function_call}.")
+        print(
+            f"[DEBUG LOG] maybe_store_id ({event_type}): Completed ID='{response_id}'. Final output[0] is function call: {is_function_call}."
+        )
 
-        if not is_function_call: # Update only if not ending with a function call
-            new_id = response_id
-            session["last_response_id"] = new_id
+        if not is_function_call:
+            session["last_response_id"] = response_id
             session.modified = True
-            print(f"[DEBUG LOG] maybe_store_id ({event_type}): Confirmed/Set last_response_id (not function call). Before='{current_id_before}', New='{new_id}'")
+            print(
+                f"[DEBUG LOG] maybe_store_id ({event_type}): Confirmed/Set last_response_id (not function call). Before='{current_id_before}', New='{response_id}'"
+            )
         else:
-            # Log that we are *not* updating because it's a function call completion
-            print(f"[DEBUG LOG] maybe_store_id ({event_type}): NOT updating last_response_id on completion because output[0] is function call. ID remains '{current_id_before}'.")
-    # else:
-    #     # Optionally log other event types if needed for deeper debugging
-    #     print(f"[DEBUG LOG] maybe_store_id ({event_type}): Did not match Created/Completed event. ID='{response_id}'. No action.")
+            print(
+                f"[DEBUG LOG] maybe_store_id ({event_type}): NOT updating last_response_id on completion because output[0] is function call. ID remains '{current_id_before}'."
+            )
 
 # --- Safe Stream Wrapper ---
 # (safe_openai_stream reste majoritairement inchangé, mais on lira l'ID depuis current_user maintenant)
@@ -430,7 +421,6 @@ def send_message():
         return Response("Empty message", 400)
     print(f"[DEBUG LOG] User message: '{user_msg}'")
 
-    client = OpenAI(api_key=current_user.openai_key)
     cfg = ChatModelConfig.get_current()
     chat_model = cfg.chat_model or "gpt-4.1-mini"
     reasoning_effort = cfg.reasoning_effort
@@ -609,6 +599,8 @@ def send_message():
             for ev_count, ev in enumerate(event_iterator):
                 print(f"[DEBUG LOG] SSE Loop ({ev_count}): Processing event type: {ev.__class__.__name__}")
 
+                maybe_store_id(ev)
+
                 # Track the last response ID seen
                 response_id = getattr(getattr(ev, 'response', None), 'id', None)
                 if response_id:
@@ -729,13 +721,14 @@ def send_message():
                         )
                         if reasoning_effort in {"minimal", "low", "medium", "high"}:
                             follow_kwargs["reasoning"] = {"effort": reasoning_effort}
-                        follow_stream = client.responses.create(**follow_kwargs)
+                        follow_stream = safe_openai_stream(**follow_kwargs)
                         print("[DEBUG LOG] SSE: follow_stream call initiated.")
 
                         # --- Process Follow-up Stream ---
                         print("[DEBUG LOG] SSE: Processing follow_stream...")
                         for ev2_count, ev2 in enumerate(follow_stream):
                             print(f"[DEBUG LOG] SSE Follow Loop ({ev2_count}): Processing event type: {ev2.__class__.__name__}")
+                            maybe_store_id(ev2)
                             # Track the latest response ID seen (from the follow-up stream)
                             response_id2 = getattr(getattr(ev2, 'response', None), 'id', None)
                             if response_id2:

@@ -80,30 +80,26 @@ def test_context_persisted_after_tool_call(client, app, monkeypatch):
     monkeypatch.setattr(chat, "handle_get_plan_de_cours", lambda args: {"ok": True})
 
     captured_follow_kwargs = {}
+    call_count = 0
 
-    class FakeOpenAI:
-        def __init__(self, api_key=None):
-            self.api_key = api_key
-            self.responses = self
-
-        def create(self, **kwargs):
-            nonlocal captured_follow_kwargs
+    def fake_safe_openai_stream(**kwargs):
+        nonlocal captured_follow_kwargs, call_count
+        call_count += 1
+        if call_count == 1:
+            def gen():
+                yield FakeResponseCreatedEvent("id1")
+                yield FakeFunctionCallAddedEvent("get_plan_de_cours", "call1", "id1")
+                yield FakeFunctionCallArgumentsDeltaEvent("{}", "id1")
+                yield FakeFunctionCallDoneEvent("id1")
+                yield FakeResponseCompletedEvent("id1")
+            return gen()
+        else:
             captured_follow_kwargs = kwargs
             def gen():
                 yield FakeResponseCreatedEvent("id2")
                 yield FakeTextDeltaEvent("done", "id2")
             return gen()
 
-    def fake_safe_openai_stream(**kwargs):
-        def gen():
-            yield FakeResponseCreatedEvent("id1")
-            yield FakeFunctionCallAddedEvent("get_plan_de_cours", "call1", "id1")
-            yield FakeFunctionCallArgumentsDeltaEvent("{}", "id1")
-            yield FakeFunctionCallDoneEvent("id1")
-            yield FakeResponseCompletedEvent("id1")
-        return gen()
-
-    monkeypatch.setattr(chat, "OpenAI", FakeOpenAI)
     monkeypatch.setattr(chat, "safe_openai_stream", fake_safe_openai_stream)
 
     response = client.post("/chat/send", json={"message": "hello"})
