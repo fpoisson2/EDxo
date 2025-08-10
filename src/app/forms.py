@@ -26,7 +26,7 @@ from wtforms import widgets
 from wtforms.validators import DataRequired, InputRequired, NumberRange, Optional, Length, EqualTo, Email, URL
 from wtforms.widgets import ListWidget, CheckboxInput
 
-from .models import User
+from .models import User, ChatModelConfig
 from utils.openai_pricing import get_all_models
 
 # Liste des régions disponibles
@@ -366,7 +366,6 @@ class AnalysePromptForm(FlaskForm):
     ai_model = SelectField(
         'Modèle d\'IA',
         validators=[DataRequired()],
-        default='gpt-4o',
         render_kw={"class": "form-control"}
     )
     submit = SubmitField('Sauvegarder', render_kw={"class": "btn btn-primary"})
@@ -379,13 +378,16 @@ class AnalysePromptForm(FlaskForm):
         # Vous pouvez adapter le libellé en fonction de vos besoins (ex: ajouter le tarif)
         self.ai_model.choices = [(model.name, model.name) for model in models]
 
+        cfg = ChatModelConfig.get_current()
+        if not self.ai_model.data:
+            self.ai_model.data = cfg.chat_model
+
 
 class GenerateContentForm(FlaskForm):
     additional_info = TextAreaField('Informations complémentaires', validators=[DataRequired()])
     ai_model = SelectField(
         'Modèle d\'IA',
-        validators=[DataRequired()],
-        default='gpt-4o'
+        validators=[DataRequired()]
     )
     reasoning_effort = SelectField(
         "Effort de raisonnement",
@@ -413,6 +415,10 @@ class GenerateContentForm(FlaskForm):
         super().__init__(*args, **kwargs)
         models = get_all_models()
         self.ai_model.choices = [(model.name, model.name) for model in models]
+
+        cfg = ChatModelConfig.get_current()
+        if not self.ai_model.data:
+            self.ai_model.data = cfg.chat_model
 
 class LoginForm(FlaskForm):
     username = StringField('Nom d\'utilisateur', 
