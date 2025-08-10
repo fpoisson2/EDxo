@@ -1,3 +1,10 @@
+import logging
+import os
+
+from utils.logging_config import setup_logging
+
+setup_logging(level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO")))
+
 from app import create_app
 
 app = create_app()

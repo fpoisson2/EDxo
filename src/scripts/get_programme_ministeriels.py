@@ -6,17 +6,18 @@ import requests
 from PyPDF2 import PdfReader
 from bs4 import BeautifulSoup
 
+from utils.logging_config import setup_logging, get_logger
+
 # ------------------------
 # Configuration et dossiers
 # ------------------------
 
-# Configuration du logging
 LOG_FILENAME = 'extraction.log'
-logging.basicConfig(
-    filename=LOG_FILENAME,
-    level=logging.ERROR,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+setup_logging(level=logging.ERROR)
+logger = get_logger(__name__)
+file_handler = logging.FileHandler(LOG_FILENAME)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logger.addHandler(file_handler)
 
 # URL de la page principale (non utilisé dans cette version simplifiée)
 MAIN_PAGE = "https://www.quebec.ca/education/cegep/services/programmes/programmes-etudes-techniques"

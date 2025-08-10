@@ -1,10 +1,10 @@
 import threading
 from functools import wraps
-import logging
 from datetime import datetime
 from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 
 from utils.backup_utils import send_backup_email, get_scheduler_instance, send_backup_email_with_context
+from utils.logging_config import get_logger
 from config.env import GUNICORN_WORKER_ID
 
 from app.models import BackupConfig
@@ -12,8 +12,7 @@ from app.models import BackupConfig
 scheduler_lock = threading.Lock()
 scheduler = get_scheduler_instance()
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 def with_scheduler_lock(f):
     @wraps(f)

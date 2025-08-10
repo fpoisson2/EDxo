@@ -43,13 +43,11 @@ from app.models import db, BackupConfig, User, Competence, ElementCompetence, El
 import base64
 
 import pytz
-import logging
-
 from pathlib import Path
 
-# Configuration de base du logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from utils.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 DATABASE = 'programme.db'
 
@@ -498,16 +496,18 @@ def is_teacher_in_programme(user_id, programme_id):
 
     user = db.session.get(User, user_id)
     if not user:
-        logging.debug(f"is_teacher_in_programme: Aucun utilisateur trouvé avec l'ID {user_id}")
+        logger.debug(f"is_teacher_in_programme: Aucun utilisateur trouvé avec l'ID {user_id}")
         return False
     if user.role != 'professeur':
-        logging.debug(f"is_teacher_in_programme: L'utilisateur {user_id} a le rôle '{user.role}', et non 'enseignant'")
+        logger.debug(f"is_teacher_in_programme: L'utilisateur {user_id} a le rôle '{user.role}', et non 'enseignant'")
         return False
     
     # Vérifie si le programme est associé à l'utilisateur via la table user_programme
     associated = db.session.query(user_programme).filter_by(user_id=user_id, programme_id=programme_id).first() is not None
     
-    logging.debug(f"is_teacher_in_programme: L'utilisateur {user_id} est associé au programme {programme_id}: {associated}")
+    logger.debug(
+        f"is_teacher_in_programme: L'utilisateur {user_id} est associé au programme {programme_id}: {associated}"
+    )
 
     return associated
 
