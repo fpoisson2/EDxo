@@ -28,35 +28,11 @@ h6 {
     padding: 0.2rem;
     border-bottom: 1px solid black;
 }
-#floatingSaveBtn, #floatingCancelBtn {
-    position: fixed;
-    bottom: 20px;
+
+#actionBar {
     z-index: 1000;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
-#floatingSaveBtn {
-    right: 20px;
-    background-color: #0d6efd;
-    color: white;
-}
-#floatingCancelBtn {
-    right: 90px;
-    background-color: #dc3545;
-    color: white;
-}
-#floatingSaveBtn .bi, #floatingCancelBtn .bi {
-    font-size: 1.5rem;
-}
-#floatingSaveBtn, #floatingCancelBtn {
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-#floatingSaveBtn.d-none, #floatingCancelBtn.d-none {
-    opacity: 0;
-    visibility: hidden;
+
+body.with-action-bar {
+    padding-bottom: 80px;
 }
