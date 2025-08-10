@@ -21,7 +21,7 @@ from ..models import db, BackupConfig, User, Competence, ElementCompetence, Elem
                    PlanDeCoursEvaluationsCapacites, Department, DepartmentRegles, DepartmentPIEA, \
                    ListeProgrammeMinisteriel, Programme, Cours, ListeCegep, GlobalGenerationSettings, user_programme, CoursCorequis, CoursPrealable
 
-from utils.utils import save_grille_to_database
+from utils import save_grille_to_database
 
 import json
 

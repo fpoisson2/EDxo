@@ -4,7 +4,7 @@ from ..forms import ProgrammeForm
 from ..models import db, Department, ListeProgrammeMinisteriel, Programme
 from .routes import main
 from utils.decorator import roles_required, role_required
-from utils.utils import get_all_cegeps
+from utils import get_all_cegeps
 
 
 @main.route('/gestion_programmes_cegep', methods=['GET', 'POST'])

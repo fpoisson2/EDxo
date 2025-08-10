@@ -2,47 +2,54 @@ import os
 from datetime import datetime
 from io import BytesIO
 
-import requests
-
 import re
-import unicodedata 
+import unicodedata
 
 from jinja2 import Template
 from bs4 import BeautifulSoup
 from docxtpl import DocxTemplate
-from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, TimeField, BooleanField
-from wtforms.validators import DataRequired, Email
-from apscheduler.schedulers.background import BackgroundScheduler
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
+from flask import current_app
 
-from utils.scheduler_instance import scheduler, start_scheduler
+from app.models import (
+    db,
+    User,
+    Competence,
+    ElementCompetence,
+    ElementCompetenceCriteria,
+    ElementCompetenceParCours,
+    FilConducteur,
+    CoursPrealable,
+    CoursCorequis,
+    CompetenceParCours,
+    PlanCadre,
+    PlanCadreCoursCorequis,
+    PlanCadreCapacites,
+    PlanCadreCapaciteSavoirsNecessaires,
+    PlanCadreCapaciteSavoirsFaire,
+    PlanCadreCapaciteMoyensEvaluation,
+    PlanCadreSavoirEtre,
+    PlanCadreObjetsCibles,
+    PlanCadreCoursRelies,
+    PlanCadreCoursPrealables,
+    PlanCadreCompetencesCertifiees,
+    PlanCadreCompetencesDeveloppees,
+    PlanDeCours,
+    PlanDeCoursCalendrier,
+    PlanDeCoursMediagraphie,
+    PlanDeCoursDisponibiliteEnseignant,
+    PlanDeCoursEvaluations,
+    PlanDeCoursEvaluationsCapacites,
+    Department,
+    DepartmentRegles,
+    DepartmentPIEA,
+    ListeProgrammeMinisteriel,
+    Programme,
+    Cours,
+    ListeCegep,
+    GlobalGenerationSettings,
+    user_programme,
+)
 
-from app.models import User, Cours, Programme, MailgunConfig
-
-from flask import current_app, url_for
-
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email.mime.text import MIMEText
-from email import encoders
-
-from app.models import db, BackupConfig, User, Competence, ElementCompetence, ElementCompetenceCriteria, \
-                   ElementCompetenceParCours, FilConducteur, CoursPrealable, CoursCorequis, CompetenceParCours, \
-                   PlanCadre, PlanCadreCoursCorequis, PlanCadreCapacites, PlanCadreCapaciteSavoirsNecessaires, \
-                   PlanCadreCapaciteSavoirsFaire, PlanCadreCapaciteMoyensEvaluation, PlanCadreSavoirEtre, \
-                   PlanCadreObjetsCibles, PlanCadreCoursRelies, PlanCadreCoursPrealables, \
-                   PlanCadreCompetencesCertifiees, PlanCadreCompetencesDeveloppees, PlanDeCours, PlanDeCoursCalendrier, \
-                   PlanDeCoursMediagraphie, PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, \
-                   PlanDeCoursEvaluationsCapacites, Department, DepartmentRegles, DepartmentPIEA, \
-                   ListeProgrammeMinisteriel, Programme, Cours, ListeCegep, GlobalGenerationSettings, user_programme, CoursCorequis, CoursPrealable
-
-import base64
-
-import pytz
 from pathlib import Path
 
 from utils.logging_config import get_logger
@@ -453,35 +460,6 @@ def determine_base_filename(code, title):
     base_name = re.sub(r'_+', '_', base_name)
     return base_name
     
-def send_reset_email(user_email, token):
-    # Construire l'URL de réinitialisation
-    reset_url = url_for('main.reset_password', token=token, _external=True)
-    subject = "Réinitialisation de votre mot de passe"
-    text = f"""Bonjour,
-
-    Pour réinitialiser votre mot de passe, veuillez cliquer sur le lien suivant :
-    {reset_url}
-
-    Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer ce message.
-    """
-    # Récupérer la configuration Mailgun depuis la BD
-    mailgun_config = MailgunConfig.query.first()
-    if not mailgun_config:
-        current_app.logger.error("La configuration Mailgun est manquante!")
-        return
-
-    url = f"https://api.mailgun.net/v3/{mailgun_config.mailgun_domain}/messages"
-    auth = ("api", mailgun_config.mailgun_api_key)
-    data = {
-        "from": "EDxo <no-reply@edxo.ca>",
-        "to": user_email,
-        "subject": subject,
-        "text": text,
-    }
-    response = requests.post(url, auth=auth, data=data)
-    if response.status_code != 200:
-        current_app.logger.error(f"Erreur lors de l'envoi de l'email: {response.text}")
-
 def is_teacher_in_programme(user_id, programme_id):
     """
     Vérifie si un enseignant est associé à un programme donné.
