@@ -852,22 +852,26 @@
     <!-- Barre d'actions fixe en bas -->
     <div id="actionBar" class="fixed-bottom bg-white border-top d-none shadow">
         <div class="container py-2">
-            <div class="d-flex gap-2">
-                <button type="button"
-                        id="floatingSaveBtn"
-                        class="btn btn-primary flex-fill"
-                        name="submit_plan"
-                        value="submit_plan">
-                    <span class="btn-text">Enregistrer</span>
-                    <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="loadingSpinner">
-                        <span class="visually-hidden">Chargement...</span>
-                    </span>
-                </button>
-                <button type="button"
-                        id="floatingCancelBtn"
-                        class="btn btn-danger flex-fill">
-                    Annuler
-                </button>
+            <div class="row g-2">
+                <div class="col">
+                    <button type="button"
+                            id="floatingSaveBtn"
+                            class="btn btn-primary w-100"
+                            name="submit_plan"
+                            value="submit_plan">
+                        <span class="btn-text">Enregistrer</span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="loadingSpinner">
+                            <span class="visually-hidden">Chargement...</span>
+                        </span>
+                    </button>
+                </div>
+                <div class="col">
+                    <button type="button"
+                            id="floatingCancelBtn"
+                            class="btn btn-danger w-100">
+                        Annuler
+                    </button>
+                </div>
             </div>
         </div>
     </div>
