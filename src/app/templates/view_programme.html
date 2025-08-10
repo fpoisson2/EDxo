@@ -81,7 +81,7 @@
                 {% set bgc = c.fil_conducteur.couleur if c.fil_conducteur else '#f2f2f2' %}
                 {% set txtc = 'black' if bgc|brightness > 128 else 'white' %}
                     <div class="card-body p-2 flex-grow-1">
-                      <p class="card-title text-center mb-2" style="background-color: {{ bgc }}; color: {{ txtc }}; padding: 0.4rem; word-wrap: break-word; white-space: break-spaces; overflow: hidden; font-size: 0.75rem;">
+                      <p class="card-title text-center mb-1" style="background-color: {{ bgc }}; color: {{ txtc }}; padding: 0.2rem; font-size: 0.7rem; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                         <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}" class="text-decoration-none" style="color: inherit;">
                           <strong>{{ c.code }}</strong> - {{ c.nom }}
                         </a>
