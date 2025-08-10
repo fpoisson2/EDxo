@@ -642,14 +642,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # Construire une proposition (aperçu) si improve_only
         proposed = {
             'fields': {},
-            'fields_with_description': {
-                'Description des compétences développées': [],
-                'Description des Compétences certifiées': [],
-                'Description des cours corequis': [],
-                'Description des cours préalables': [],
-                'Objets cibles': []
-            },
-            'savoir_etre': [],
+            'fields_with_description': {},
             'capacites': []
         }
 
@@ -688,8 +681,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 elements_to_insert.append({"texte": clean_text(fobj.content), "description": ""})
 
             if improve_only:
-                if fname in proposed['fields_with_description']:
-                    proposed['fields_with_description'][fname] = elements_to_insert
+                proposed.setdefault('fields_with_description', {})
+                proposed['fields_with_description'][fname] = elements_to_insert
             else:
                 table_name = table_mapping.get(fname)
                 if not table_name:
@@ -778,10 +771,25 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 # On mappe vers les clés d'affichage connues, sinon on ignore
                 reverse_map = {v: k for k, v in table_mapping.items()}
                 display_key = reverse_map.get(table_name)
-                if display_key and display_key in proposed['fields_with_description']:
+                if display_key:
+                    proposed.setdefault('fields_with_description', {})
                     proposed['fields_with_description'][display_key] = [
                         {"texte": val, "description": ""}
                     ]
+
+            # Nettoyer l'aperçu pour ne conserver que les sections avec contenu
+            if not proposed['fields']:
+                proposed.pop('fields')
+            if 'fields_with_description' in proposed:
+                proposed['fields_with_description'] = {
+                    k: v for k, v in proposed['fields_with_description'].items() if v
+                }
+                if not proposed['fields_with_description']:
+                    proposed.pop('fields_with_description')
+            if not proposed.get('savoir_etre'):
+                proposed.pop('savoir_etre', None)
+            if not proposed['capacites']:
+                proposed.pop('capacites')
 
             self.update_state(state='PROGRESS', meta={'message': "Préparation de l’aperçu des changements..."})
             result = {
