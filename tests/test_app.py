@@ -140,3 +140,13 @@ def test_login_with_admin(client, app, monkeypatch):
         assert "_user_id" in session, "User not logged in; session missing '_user_id'."
         # L'ID est stocké en tant que chaîne. Vérifiez qu'il correspond à celui de l'admin.
         assert session["_user_id"] == str(admin_id), "Logged in user id does not match admin's id."
+
+
+def test_chat_model_config_defaults(app):
+    with app.app_context():
+        from src.app import db
+        ChatModelConfig = get_model_by_name("ChatModelConfig", db)
+        assert ChatModelConfig is not None, "ChatModelConfig model not found."
+        cfg = ChatModelConfig.get_current()
+        assert cfg.chat_model is not None
+        assert cfg.tool_model is not None

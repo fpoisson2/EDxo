@@ -44,7 +44,7 @@ except ImportError:
 from openai.types.responses import ResponseFunctionToolCall  # ← Fallback
 
 from ..forms import ChatForm
-from ..models import User, PlanCadre, PlanDeCours, Cours, db, ChatHistory
+from ..models import User, PlanCadre, PlanDeCours, Cours, db, ChatHistory, ChatModelConfig
 
 from utils.decorator import ensure_profile_completed
 from utils.openai_pricing import calculate_call_cost
@@ -429,6 +429,11 @@ def send_message():
     print(f"[DEBUG LOG] User message: '{user_msg}'")
 
     client = OpenAI(api_key=current_user.openai_key)
+    cfg = ChatModelConfig.get_current()
+    chat_model = cfg.chat_model or "gpt-4.1-mini"
+    tool_model = cfg.tool_model or chat_model
+    reasoning_effort = cfg.reasoning_effort
+    verbosity = cfg.verbosity
 
     # --- Fetch and Format History ---
     print("[DEBUG LOG] Fetching last 10 messages from ChatHistory.")
@@ -528,15 +533,23 @@ def send_message():
     print(f"[DEBUG LOG] Final input structure preview (first item type): {inp[0]['type'] if inp else 'empty'}, role: {inp[0].get('role') if inp else 'n/a'}")
     print(f"[DEBUG LOG] Total items in input: {len(inp)}")
     print("[DEBUG LOG] Initiating API call (raw_stream)...")
+    text_params = {"format": {"type": "text"}}
+    if verbosity in {"low", "medium", "high"}:
+        text_params["verbosity"] = verbosity
+    request_kwargs = dict(
+        model=chat_model,
+        input=inp,
+        tools=tools_schema,
+        previous_response_id=prev_id,
+        tool_choice="auto",
+        text=text_params,
+        temperature=1,
+        max_output_tokens=2048,
+    )
+    if reasoning_effort in {"minimal", "low", "medium", "high"}:
+        request_kwargs["reasoning"] = {"effort": reasoning_effort}
     try:
-        raw_stream = safe_openai_stream(
-            model="gpt-4.1-mini", # Use a capable model
-            input=inp, # Use the constructed input list with history
-            tools=tools_schema,
-            previous_response_id=prev_id, # Still pass prev_id for API state tracking
-            tool_choice="auto",
-            text={"format": {"type": "text"}}, temperature=1, max_output_tokens=2048,
-        )
+        raw_stream = safe_openai_stream(**request_kwargs)
         print("[DEBUG LOG] API call initiated.")
 
         # Lire le premier event pour l'itération
@@ -697,13 +710,22 @@ def send_message():
 
                     try:
                         print("[DEBUG LOG] SSE: Initiating follow_stream API call...")
-                        follow_stream = client.responses.create(
-                            model="gpt-4.1-mini",
-                            previous_response_id=id_for_followup, # Link to the state before the tool result
+                        text_params = {"format": {"type": "text"}}
+                        if verbosity in {"low", "medium", "high"}:
+                            text_params["verbosity"] = verbosity
+                        follow_kwargs = dict(
+                            model=tool_model,
+                            previous_response_id=id_for_followup,
                             input=[{"type": "function_call_output", "call_id": call_id, "output": tool_result_json}],
-                            tool_choice="auto", text={"format": {"type": "text"}}, stream=True,
-                            temperature=1, max_output_tokens=2048,
+                            tool_choice="auto",
+                            text=text_params,
+                            stream=True,
+                            temperature=1,
+                            max_output_tokens=2048,
                         )
+                        if reasoning_effort in {"minimal", "low", "medium", "high"}:
+                            follow_kwargs["reasoning"] = {"effort": reasoning_effort}
+                        follow_stream = client.responses.create(**follow_kwargs)
                         print("[DEBUG LOG] SSE: follow_stream call initiated.")
 
                         # --- Process Follow-up Stream ---
