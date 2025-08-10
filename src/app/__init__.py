@@ -17,7 +17,6 @@ sys.modules.setdefault("app", sys.modules[__name__])
 from .models import BackupConfig
 
 import atexit
-import logging
 import os
 from datetime import timedelta, datetime, timezone
 from pathlib import Path
@@ -67,7 +66,6 @@ from werkzeug.security import generate_password_hash
 
 from celery_app import celery, init_celery
 from config.env import (
-    LOG_LEVEL,
     SECRET_KEY,
     RECAPTCHA_PUBLIC_KEY,
     RECAPTCHA_PRIVATE_KEY,
@@ -82,9 +80,10 @@ from config.env import (
     validate,
 )
 
+from utils.logging_config import get_logger
+
 # Initialize logger
-logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO))
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 # Define TestConfig within the application code

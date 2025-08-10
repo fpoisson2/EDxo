@@ -1,10 +1,15 @@
 # EDxo/src/celery_app.py
-import logging  # Ajouter l'import logging
+import logging
+import os
+
+from utils.logging_config import setup_logging, get_logger
+
+setup_logging(level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO")))
+logger = get_logger(__name__)
+
 from celery import Celery
 from config.env import CELERY_BROKER_URL, CELERY_RESULT_BACKEND
 # PAS d'import de create_app ici au niveau module
-
-logger = logging.getLogger(__name__) # Initialiser un logger pour ce module
 
 # Fonction pour créer l'instance Celery SANS dépendance immédiate à l'app Flask
 def make_celery_instance():

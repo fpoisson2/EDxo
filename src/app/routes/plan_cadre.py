@@ -1,5 +1,4 @@
 # plan_de_cours.py
-import logging
 import traceback
 
 from flask import (
@@ -42,16 +41,9 @@ from utils.utils import (
     generate_docx_with_template,
     # Note: remove if no longer needed: get_db_connection
 )
+from utils.logging_config import get_logger
 
-###############################################################################
-# Configuration Logging
-###############################################################################
-logging.basicConfig(
-    level=logging.ERROR,
-    filename='app_errors.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logger = get_logger(__name__)
 
 ###############################################################################
 # Blueprint
@@ -454,7 +446,7 @@ def apply_improvement(plan_id):
         flash("Améliorations appliquées avec succès.", 'success')
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Erreur lors de l'application de l'amélioration: {e}")
+        logger.error(f"Erreur lors de l'application de l'amélioration: {e}")
         flash(f"Erreur lors de l'application des changements: {e}", 'danger')
 
     return redirect(url_for('cours.view_plan_cadre', cours_id=plan.cours_id, plan_id=plan_id))
@@ -650,7 +642,7 @@ def edit_plan_cadre(plan_id):
 
         except Exception as e:
             db.session.rollback()
-            logging.error(f"Erreur update plan_cadre {plan_id}: {e}")
+            logger.error(f"Erreur update plan_cadre {plan_id}: {e}")
             traceback.print_exc()
             flash(f"Erreur lors de la mise à jour du Plan Cadre : {str(e)}", 'danger')
 

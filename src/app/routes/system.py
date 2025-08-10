@@ -1,5 +1,4 @@
 # routes/system.py
-import logging
 import os
 from datetime import datetime
 
@@ -24,10 +23,9 @@ from ..models import db, BackupConfig, DBChange, User, MailgunConfig
 from utils.backup_utils import send_backup_email
 from utils.decorator import roles_required, ensure_profile_completed
 from utils.scheduler_instance import scheduler, schedule_backup
+from utils.logging_config import get_logger
 
-# Configuration de base du logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 system_bp = Blueprint('system', __name__)
 
