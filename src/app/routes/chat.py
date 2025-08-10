@@ -329,7 +329,7 @@ def handle_list_all_plan_cadre():
 # --- UPDATED ID Management ---
 # Centralized function to manage ID based on events
 def maybe_store_id(ev):
-    """Persist response ID in session only when a text answer is completed."""
+    """Persist response ID for follow-up calls and finalize after text output."""
     from openai.types.responses import ResponseCompletedEvent
 
     current_id_before = session.get("last_response_id")
@@ -340,24 +340,21 @@ def maybe_store_id(ev):
 
     if isinstance(ev, ResponseCompletedEvent):
         is_function_call = False
-        if ev.response and hasattr(ev.response, "output") and ev.response.output:
+        if ev.response and getattr(ev.response, "output", None):
             first = ev.response.output[0]
-            if hasattr(first, "type"):
-                is_function_call = getattr(first, "type", "") == "function_call"
+            is_function_call = getattr(first, "type", "") == "function_call"
 
-        print(
-            f"[DEBUG LOG] maybe_store_id ({event_type}): Completed ID='{response_id}'. Final output[0] is function call: {is_function_call}."
-        )
-
-        if not is_function_call:
+        if is_function_call:
             session["last_response_id"] = response_id
             session.modified = True
             print(
-                f"[DEBUG LOG] maybe_store_id ({event_type}): Confirmed/Set last_response_id (not function call). Before='{current_id_before}', New='{response_id}'"
+                f"[DEBUG LOG] maybe_store_id ({event_type}): Function call, preserving ID '{response_id}' (before='{current_id_before}')."
             )
         else:
+            session["last_response_id"] = response_id
+            session.modified = True
             print(
-                f"[DEBUG LOG] maybe_store_id ({event_type}): NOT updating last_response_id on completion because output[0] is function call. ID remains '{current_id_before}'."
+                f"[DEBUG LOG] maybe_store_id ({event_type}): Final text, updated last_response_id from '{current_id_before}' to '{response_id}'."
             )
 
 # --- Safe Stream Wrapper ---
@@ -569,7 +566,6 @@ def send_message():
     def sse():
         # --- Variables for internal tracking and DB logging ---
         # ... (rest of your sse generator variables remain the same) ...
-        current_request_last_created_id = None
         final_id_to_persist_for_api = None
         last_response_object_id = None
 
@@ -606,11 +602,6 @@ def send_message():
                 if response_id:
                     last_response_object_id = response_id
 
-                # Store the ID from ResponseCreatedEvent
-                if isinstance(ev, ResponseCreatedEvent) and response_id:
-                    current_request_last_created_id = response_id
-                    print(f"[DEBUG LOG] SSE: Storing current_request_last_created_id = {current_request_last_created_id}")
-
                 # --- Tool Call Detection and Processing ---
                 if (isinstance(ev, ResponseOutputItemAddedEvent)
                         and getattr(ev.item, "type", "") == "function_call"):
@@ -629,6 +620,12 @@ def send_message():
                 if pending_tool and isinstance(ev, ResponseOutputItemDoneEvent) and getattr(ev.item, "type", "") == "function_call":
                     print(f"[DEBUG LOG] SSE: Detected function_call end. Name='{fn_name}'. Args='{fn_args_str}'")
                     pending_tool = False
+
+                    # Preserve the response ID for the follow-up call
+                    if response_id:
+                        session["last_response_id"] = response_id
+                        session.modified = True
+                        print(f"[DEBUG LOG] SSE: Stored last_response_id='{response_id}' for tool_outputs.")
 
                     if not fn_name or not call_id: # Validation
                         print(f"[ERROR LOG] SSE: Missing fn_name/call_id. Name={fn_name}, CallID={call_id}")
@@ -695,12 +692,11 @@ def send_message():
 
 
                     # --- Call Follow-up API ---
-                    id_for_followup = current_request_last_created_id # Use the ID created *before* the tool call
+                    id_for_followup = session.get("last_response_id")
                     if not id_for_followup:
-                        print("[ERROR LOG] SSE: Cannot make follow_stream call because current_request_last_created_id is missing!")
+                        print("[ERROR LOG] SSE: Cannot make follow_stream call because last_response_id is missing!")
                         yield f"data: {json.dumps({'type': 'error', 'content': 'Erreur interne: Impossible de continuer après l\'exécution de l\'outil.'})}\n\n"
-                        # Maybe try to recover or just end here? Ending is safer.
-                        break # Exit the main loop
+                        break
 
                     print(f"[DEBUG LOG] SSE: Preparing follow_stream call. Using previous_response_id = {id_for_followup}")
 
