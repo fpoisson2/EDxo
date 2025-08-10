@@ -39,7 +39,7 @@ from ..models import (
     ElementCompetenceParCours
 )
 from utils.decorator import role_required, ensure_profile_completed
-from utils.utils import get_programme_id_for_cours, is_coordo_for_programme
+from utils import get_programme_id_for_cours, is_coordo_for_programme
 
 cours_bp = Blueprint('cours', __name__, url_prefix='/cours')
 

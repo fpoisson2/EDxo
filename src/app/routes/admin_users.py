@@ -5,7 +5,7 @@ from ..models import db, User, Programme
 from ..forms import CreateUserForm, DeleteUserForm, CreditManagementForm, EditUserForm
 from .routes import main
 from utils.decorator import role_required, ensure_profile_completed
-from utils.utils import get_all_cegeps, get_cegep_details_data
+from utils import get_all_cegeps, get_cegep_details_data
 from werkzeug.security import generate_password_hash
 
 

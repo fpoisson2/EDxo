@@ -62,10 +62,10 @@ from ..models import (
 from src.extensions import limiter
 from utils.decorator import role_required, roles_required, ensure_profile_completed
 from utils.decorator import public_route
-from utils.utils import (
+from utils import (
     get_all_cegeps,
     get_cegep_details_data,
-    send_reset_email
+    send_reset_email,
 )
 from utils.recaptcha import verify_recaptcha
 

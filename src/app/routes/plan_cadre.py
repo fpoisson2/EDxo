@@ -37,7 +37,7 @@ from ..models import (
     PlanCadreCapaciteMoyensEvaluation
 )
 from utils.decorator import role_required, roles_required, ensure_profile_completed
-from utils.utils import (
+from utils import (
     generate_docx_with_template,
     # Note: remove if no longer needed: get_db_connection
 )
