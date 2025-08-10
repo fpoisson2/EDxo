@@ -1,12 +1,12 @@
 """Gestion de l'historique des conversations."""
 from typing import List
 
-from ...models import ChatHistory, db
+from app.models import ChatHistory, db
 
 
-def add_message(user_id: int, role: str, content: str, name: str | None = None) -> ChatHistory:
+def add_message(user_id: int, role: str, content: str) -> ChatHistory:
     """Ajoute un message à l'historique et le persiste."""
-    entry = ChatHistory(user_id=user_id, role=role, content=content, name=name)
+    entry = ChatHistory(user_id=user_id, role=role, content=content)
     db.session.add(entry)
     db.session.commit()
     return entry

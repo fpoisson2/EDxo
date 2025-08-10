@@ -884,17 +884,8 @@ class ChatHistory(db.Model):
     # Rôles possibles: 'user', 'assistant', 'function', 'system'
     role = db.Column(db.String(50), nullable=False)
 
-    # Contenu textuel OU résultat JSON pour 'function'
-    # *** CHANGEMENT ICI: nullable=True ***
-    content = db.Column(db.Text, nullable=True)
-
-    # *** NOUVEAU CHAMP: Nom de la fonction pour role='function' ***
-    name = db.Column(db.String(100), nullable=True)
-
-    # *** NOUVEAU CHAMP: Nom de la fonction demandée par role='assistant' ***
-    function_call_name = db.Column(db.String(100), nullable=True)
-    # *** NOUVEAU CHAMP: Arguments (JSON) demandés par role='assistant' ***
-    function_call_args = db.Column(db.Text, nullable=True)
+    # Contenu textuel du message
+    content = db.Column(db.Text, nullable=False)
 
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, server_default=db.func.current_timestamp()) # Amélioré
 
