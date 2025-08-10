@@ -75,15 +75,18 @@ pip install --upgrade -r requirements.txt
 
 L'application utilise python-dotenv pour charger les variables d'environnement depuis un fichier .env. Créez un fichier .env à la racine du projet avec au moins :
 
-``` 
+```
 SECRET_KEY='votre_cle_secrete'
 RECAPTCHA_PUBLIC_KEY='votre_cle_public recaptcha'
 RECAPTCHA_PRIVATE_KEY='votre_cle_secrete recaptcha'
 RECAPTCHA_THRESHOLD=0.5
 MISTRAL_API_KEY='votre_cle_mistral'
+OPENAI_MODEL_SECTION='gpt-4.1'
+OPENAI_MODEL_EXTRACTION='gpt-4.1-mini'
 ```
 
 Vous pouvez définir d'autres variables spécifiques à votre environnement
+`OPENAI_MODEL_SECTION` et `OPENAI_MODEL_EXTRACTION` contrôlent respectivement les modèles OpenAI utilisés pour la détection des sections et l'extraction de compétences.
 
 ### v4.2 Paramètres de l'application
 

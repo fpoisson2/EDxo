@@ -37,21 +37,25 @@ logger = logging.getLogger(__name__)
 # Tâche d'Extraction JSON par Compétence (avec logging ajouté)
 ###############################################################################
 @shared_task(bind=True)
-def extract_json_competence(self, competence, download_path_local, txt_output_dir, base_filename_local, openai_key):
+def extract_json_competence(self, competence, download_path_local, txt_output_dir, base_filename_local, openai_key, model=None):
     """
     Tâche de traitement pour une compétence.
     Extrait et analyse une compétence spécifique à partir d'un PDF.
     """
     task_id = self.request.id
     code_comp = competence.get("code", "NO_CODE")  # Default value
-    logger.info(f"[{task_id}/{code_comp}] Démarrage extraction compétence.")
+    if model is None:
+        model = current_app.config.get('OPENAI_MODEL_EXTRACTION')
+    else:
+        current_app.config['OPENAI_MODEL_EXTRACTION'] = model
+    logger.info(f"[{task_id}/{code_comp}] Démarrage extraction compétence (model: {model}).")
     
     try:
         # Initialisation des variables d'utilisation de l'API
         api_usage = {
             "prompt_tokens": 0,
             "completion_tokens": 0,
-            "model": current_app.config.get('OPENAI_MODEL_EXTRACTION', 'gpt-3.5-turbo')
+            "model": model
         }
         
         # Extraction des pages
@@ -92,7 +96,7 @@ def extract_json_competence(self, competence, download_path_local, txt_output_di
         
         # Extraction des compétences via l'API OpenAI
         output_json_filename = os.path.join(txt_output_dir, f"{base_filename_local}_competence_{code_comp}.json")
-        logger.info(f"[{task_id}/{code_comp}] Appel OpenAI pour extraction -> {output_json_filename}")
+        logger.info(f"[{task_id}/{code_comp}] Appel OpenAI ({model}) pour extraction -> {output_json_filename}")
         
         try:
             extraction_output = api_clients.extraire_competences_depuis_txt(competence_text, output_json_filename, openai_key)
@@ -537,6 +541,7 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id, openai_key_ignored):
         
         update_progress("Segmentation", "Étape 3/5 - Segmentation...", 45)
         logger.info(f"[{task_id}] Étape 3: Segmentation compétences...")
+        model_section = current_app.config.get('OPENAI_MODEL_SECTION')
         try:
             with open(ocr_markdown_path_local, 'r', encoding='utf-8') as f:
                 markdown_content = f.read()
@@ -547,7 +552,7 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id, openai_key_ignored):
             raise RuntimeError(f"Erreur lecture fichier OCR: {read_err}")
             
         try:
-            logger.info(f"[{task_id}] Appel find_competences_pages...")
+            logger.info(f"[{task_id}] Appel find_competences_pages ({model_section})...")
             segmentation_output = api_clients.find_competences_pages(markdown_content, openai_key)
             logger.debug(f"[{task_id}] Réponse brute de find_competences_pages: {segmentation_output}")
             
@@ -604,7 +609,6 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id, openai_key_ignored):
         })
         
         json_output_path = os.path.join(txt_output_dir, f"{base_filename_local}_competences.json")
-        model_section = current_app.config.get('OPENAI_MODEL_SECTION')
         model_extraction = current_app.config.get('OPENAI_MODEL_EXTRACTION')
         
         if competences_pages:
@@ -614,7 +618,7 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id, openai_key_ignored):
             
             extraction_tasks_signatures = [
                 extract_json_competence.s(
-                    comp, download_path_local, txt_output_dir, base_filename_local, openai_key
+                    comp, download_path_local, txt_output_dir, base_filename_local, openai_key, model_extraction
                 )
                 for comp in competences_pages if comp.get('code') and comp.get('page_debut') is not None
             ]

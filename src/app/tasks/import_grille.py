@@ -5,9 +5,7 @@ from celery_app import celery
 from openai import OpenAI
 import logging
 
-# Flask's current_app might not be available directly in a Celery task context
-# unless specifically configured. If needed for config, access via celery.conf
-# from flask import current_app # Generally avoid direct Flask imports in tasks
+from flask import current_app
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +80,7 @@ GRILLE_SCHEMA = {
 
 
 @celery.task(bind=True)
-def extract_grille_from_pdf_task(self, pdf_path, model="gpt-4.1", openai_key=None): # Suggesting gpt-4o as it's newer
+def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None):
     """
     Tâche Celery qui :
      1. Charge un fichier PDF via OpenAI.
@@ -95,7 +93,9 @@ def extract_grille_from_pdf_task(self, pdf_path, model="gpt-4.1", openai_key=Non
     :return: Dictionnaire avec le résultat ou un message d'erreur.
     """
     task_id = self.request.id
-    logger.info(f"[{task_id}] Starting task for PDF: {pdf_path}")
+    if model is None:
+        model = current_app.config.get("OPENAI_MODEL_EXTRACTION")
+    logger.info(f"[{task_id}] Starting task for PDF: {pdf_path} (model: {model})")
 
     if not openai_key:
         logger.error(f"[{task_id}] Missing OpenAI API Key.")
