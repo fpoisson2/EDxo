@@ -688,8 +688,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     const sectionsNav = document.getElementById('sectionsNav');
+    let scrollSpyInstance;
     if (sectionsNav) {
-        new bootstrap.ScrollSpy(document.body, { target: '#sectionsNav', offset: 100 });
+        scrollSpyInstance = new bootstrap.ScrollSpy(document.body, { target: '#sectionsNav', offset: 100 });
     }
     document.querySelectorAll('#sectionsNav .nav-link, #sectionsOffcanvas .nav-link').forEach(link => {
         link.addEventListener('click', () => {
@@ -699,7 +700,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (item) {
                     const collapseEl = item.querySelector('.accordion-collapse');
                     if (collapseEl) {
-                        new bootstrap.Collapse(collapseEl, { toggle: true });
+                        const collapseInstance = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+                        collapseInstance.show();
+                        if (scrollSpyInstance) {
+                            scrollSpyInstance.refresh();
+                        }
                     }
                 }
             }
