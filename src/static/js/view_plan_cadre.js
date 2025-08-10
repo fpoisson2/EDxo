@@ -686,4 +686,49 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("Erreur lors de la génération du plan-cadre:", error);
         });
     });
+
+    const sectionsNav = document.getElementById('sectionsNav');
+    let scrollSpyInstance;
+    if (sectionsNav) {
+        scrollSpyInstance = new bootstrap.ScrollSpy(document.body, { target: '#sectionsNav', offset: 100 });
+    }
+    document.querySelectorAll('#sectionsNav .nav-link, #sectionsOffcanvas .nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetSelector = link.getAttribute('href');
+            if (!targetSelector || !targetSelector.startsWith('#')) {
+                return;
+            }
+            const item = document.querySelector(targetSelector);
+            if (!item) {
+                return;
+            }
+
+            const collapseEl = item.querySelector('.accordion-collapse');
+            if (collapseEl) {
+                const collapseInstance = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+                collapseInstance.show();
+            }
+
+            const scrollToTarget = () => {
+                item.scrollIntoView({ behavior: 'smooth' });
+                if (scrollSpyInstance) {
+                    scrollSpyInstance.refresh();
+                }
+            };
+
+            const offcanvasEl = document.getElementById('sectionsOffcanvas');
+            const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+            if (offcanvas) {
+                const handler = () => {
+                    offcanvasEl.removeEventListener('hidden.bs.offcanvas', handler);
+                    scrollToTarget();
+                };
+                offcanvasEl.addEventListener('hidden.bs.offcanvas', handler);
+                offcanvas.hide();
+            } else {
+                scrollToTarget();
+            }
+        });
+    });
 });
