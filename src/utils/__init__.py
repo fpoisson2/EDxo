@@ -1,6 +1,12 @@
-"""Convenience imports for utility helpers."""
+"""Convenience imports for utility helpers.
 
-from .email_helpers import send_reset_email
+This module exposes a subset of utility functions while avoiding expensive or
+application-specific imports at module import time.  In particular, importing
+``send_reset_email`` directly would pull in the Flask application models and
+cause circular import issues during application start up.  To sidestep this we
+provide a lightweight proxy that performs the actual import only when the
+function is invoked."""
+
 from .google_api import build_gmail_service
 from .backup_utils import (
     get_scheduler_instance,
@@ -23,6 +29,20 @@ from .utils import (
     replace_tags_jinja2,
     generate_docx_with_template,
 )
+
+
+def send_reset_email(*args, **kwargs) -> None:
+    """Lazy proxy to :func:`utils.email_helpers.send_reset_email`.
+
+    Importing ``email_helpers`` at module load time introduces a circular
+    dependency because that module relies on ``app.models`` which, in turn,
+    imports from :mod:`utils`.  Deferring the import until the function is
+    called breaks this cycle while keeping a convenient top-level export.
+    """
+
+    from .email_helpers import send_reset_email as _send_reset_email
+
+    _send_reset_email(*args, **kwargs)
 
 __all__ = [
     "send_reset_email",
