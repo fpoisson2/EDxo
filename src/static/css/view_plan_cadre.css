@@ -1,0 +1,62 @@
+/* Uniformiser les polices */
+.toastui-editor-contents,
+.toastui-editor-contents *,
+.toastui-editor .ProseMirror {
+    font-family: inherit !important;
+    font-size: inherit !important;
+}
+
+/* S'assurer que la couleur du texte est cohérente */
+.toastui-editor-contents p {
+    color: #212529 !important;
+}
+
+/* Styles divers */
+.accordion-body > div:not(:last-child) {
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+label.fw-bold {
+    color: black;
+    padding: 0.2rem;
+    border-bottom: 1px solid black;
+}
+h6 {
+    color: black;
+    padding: 0.2rem;
+    border-bottom: 1px solid black;
+}
+#floatingSaveBtn, #floatingCancelBtn {
+    position: fixed;
+    bottom: 20px;
+    z-index: 1000;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+#floatingSaveBtn {
+    right: 20px;
+    background-color: #0d6efd;
+    color: white;
+}
+#floatingCancelBtn {
+    right: 90px;
+    background-color: #dc3545;
+    color: white;
+}
+#floatingSaveBtn .bi, #floatingCancelBtn .bi {
+    font-size: 1.5rem;
+}
+#floatingSaveBtn, #floatingCancelBtn {
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+#floatingSaveBtn.d-none, #floatingCancelBtn.d-none {
+    opacity: 0;
+    visibility: hidden;
+}
