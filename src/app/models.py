@@ -69,8 +69,8 @@ class ChatModelConfig(db.Model):
     __tablename__ = 'chat_model_config'
 
     id = db.Column(db.Integer, primary_key=True)
-    chat_model = db.Column(db.String(64), nullable=False, default='gpt-4.1-mini')
-    tool_model = db.Column(db.String(64), nullable=False, default='gpt-4.1-mini')
+    chat_model = db.Column(db.String(64), nullable=False)
+    tool_model = db.Column(db.String(64), nullable=False)
     reasoning_effort = db.Column(db.String(16))
     verbosity = db.Column(db.String(16))
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -79,7 +79,11 @@ class ChatModelConfig(db.Model):
     def get_current(cls):
         config = cls.query.first()
         if not config:
-            config = cls()
+            config = cls(
+                chat_model=current_app.config.get('DEFAULT_CHAT_MODEL', 'gpt-4.1-mini'),
+                tool_model=current_app.config.get('DEFAULT_TOOL_MODEL',
+                                                  current_app.config.get('DEFAULT_CHAT_MODEL', 'gpt-4.1-mini'))
+            )
             db.session.add(config)
             db.session.commit()
         return config
@@ -89,13 +93,17 @@ class AnalysePlanCoursPrompt(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     prompt_template = db.Column(db.Text, nullable=False)
-    ai_model = db.Column(
-        db.String(50), 
-        nullable=False, 
-        server_default='gpt-4o'  # Utiliser server_default au lieu de default
-    )
+    ai_model = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+
+    def __init__(self, **kwargs):
+        if 'ai_model' not in kwargs or kwargs['ai_model'] is None:
+            kwargs['ai_model'] = current_app.config.get(
+                'DEFAULT_ANALYSE_AI_MODEL',
+                current_app.config.get('DEFAULT_CHAT_MODEL', 'gpt-4.1-mini')
+            )
+        super().__init__(**kwargs)
 
 
 class PlanDeCoursPromptSettings(db.Model):
@@ -408,8 +416,8 @@ class PlanCadre(db.Model):
     eval_evaluation_de_la_langue = db.Column(db.Text, nullable=True)
     eval_evaluation_sommatives_apprentissages = db.Column(db.Text, nullable=True)
     additional_info = db.Column(db.Text, nullable=True)
-    ai_model = db.Column(db.Text, nullable=True, server_default="gpt-4o")
-    modified_by_id = db.Column(db.Integer, 
+    ai_model = db.Column(db.Text, nullable=True)
+    modified_by_id = db.Column(db.Integer,
                              db.ForeignKey("User.id", name="fk_plan_cadre_modified_by"),
                              nullable=True)
     modified_at = db.Column(db.DateTime, nullable=True)
@@ -429,6 +437,14 @@ class PlanCadre(db.Model):
 
     def __repr__(self):
         return f"<PlanCadre id={self.id} pour Cours id={self.cours_id}>"
+
+    def __init__(self, **kwargs):
+        if 'ai_model' not in kwargs or kwargs['ai_model'] is None:
+            kwargs['ai_model'] = current_app.config.get(
+                'DEFAULT_ANALYSE_AI_MODEL',
+                current_app.config.get('DEFAULT_CHAT_MODEL', 'gpt-4.1-mini')
+            )
+        super().__init__(**kwargs)
 
     def to_dict(self):
         """

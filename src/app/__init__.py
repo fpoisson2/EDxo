@@ -83,6 +83,9 @@ class TestConfig:
     SECRET_KEY = 'test_key'
     RECAPTCHA_PUBLIC_KEY = 'test_public'
     RECAPTCHA_SECRET_KEY = 'test_secret'
+    DEFAULT_CHAT_MODEL = 'gpt-4.1-mini'
+    DEFAULT_TOOL_MODEL = 'gpt-4.1-mini'
+    DEFAULT_ANALYSE_AI_MODEL = 'gpt-4o'
     # Add other testing-specific configurations here
 
 
@@ -128,6 +131,9 @@ def create_app(testing=False):
             MISTRAL_MODEL_OCR="mistral-ocr-latest",
             OPENAI_MODEL_SECTION = "gpt-4.1", # Modèle pour la détection de section
             OPENAI_MODEL_EXTRACTION = "gpt-4.1-mini", # Modèle pour l'extraction de compétences
+            DEFAULT_CHAT_MODEL=os.getenv('DEFAULT_CHAT_MODEL', 'gpt-4.1-mini'),
+            DEFAULT_TOOL_MODEL=os.getenv('DEFAULT_TOOL_MODEL', os.getenv('DEFAULT_CHAT_MODEL', 'gpt-4.1-mini')),
+            DEFAULT_ANALYSE_AI_MODEL=os.getenv('DEFAULT_ANALYSE_AI_MODEL', 'gpt-4o'),
             WTF_CSRF_ENABLED=True,
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),

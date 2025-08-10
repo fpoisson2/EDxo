@@ -93,6 +93,23 @@ Production : Lit les paramètres depuis les variables d'environnement et configu
 Test : Utilise une base de données SQLite en mémoire et désactive la protection CSRF.
 La configuration est gérée dans la fonction create_app située dans src/app/__init__.py.
 
+### 4.3 Changer les modèles IA par défaut
+
+Les champs `chat_model`, `tool_model` et `ai_model` des tables associées ne possèdent plus de valeur par défaut codée en dur. Lors de la première initialisation, les valeurs sont lues depuis la configuration de l'application :
+
+- `DEFAULT_CHAT_MODEL`
+- `DEFAULT_TOOL_MODEL`
+- `DEFAULT_ANALYSE_AI_MODEL`
+
+Ces variables peuvent être définies dans le fichier `.env` avant la création de la base de données. Une fois l'application démarrée, les modèles peuvent être ajustés sans modifier le code :
+
+1. **Via l'interface d'administration** :
+   - `/settings/chat_models` pour les modèles de conversation.
+   - `/settings/analyse_prompt` pour le modèle d'analyse de plan de cours.
+2. **Directement en base** : mettre à jour les tables `chat_model_config` ou `analyse_plan_cours_prompt` via un outil SQL.
+
+Ainsi, il suffit de modifier la base ou d'utiliser la page d'admin pour changer ces valeurs.
+
 ## 5. Exécution de l'application
 ### 5.1 Mode Développement
 
