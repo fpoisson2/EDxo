@@ -57,50 +57,40 @@
     </div>
   </div>
 
-  <div class="table-responsive">
-    <table class="table table-bordered table-striped">
-      <thead class="thead-dark">
-        <tr>
-          <th>Session</th>
-          <th>Cours</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for session, cours_list in cours_par_session.items() %}
-          <tr>
-            <td>
-              <div class="d-flex flex-column align-items-start">
-                <span class="mb-2">{{ session }}</span>
-                <a href="{{ url_for('plan_de_cours.export_session_plans', programme_id=programme.id, session=session) }}" 
-                   class="btn btn-sm btn-outline-primary" 
-                   title="Exporter tous les plans de cours de la session {{ session }}">
-                  <i class="fas fa-file-export"></i> Exporter tous les plans de cours
-                </a>
-              </div>
-            </td>
-            <td>
-              <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6">
-                {% for c in cours_list %}
-                  <div class="col mb-3">
-                    <div class="card h-100 d-flex flex-column">
+  <div class="accordion" id="sessionsAccordion">
+    {% for session, cours_list in cours_par_session.items() %}
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading-{{ loop.index }}">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ loop.index }}" aria-expanded="false" aria-controls="collapse-{{ loop.index }}">
+            Session {{ session }}
+          </button>
+        </h2>
+        <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ loop.index }}" data-bs-parent="#sessionsAccordion">
+          <div class="accordion-body">
+            <div class="d-flex justify-content-end mb-2">
+              <a href="{{ url_for('plan_de_cours.export_session_plans', programme_id=programme.id, session=session) }}"
+                 class="btn btn-sm btn-outline-primary"
+                 title="Exporter tous les plans de cours de la session {{ session }}">
+                <i class="fas fa-file-export"></i> Exporter tous les plans de cours
+              </a>
+            </div>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6">
+              {% for c in cours_list %}
+                <div class="col mb-3">
+                  <div class="card h-100 d-flex flex-column">
                 {% set bgc = c.fil_conducteur.couleur if c.fil_conducteur else '#f2f2f2' %}
                 {% set txtc = 'black' if bgc|brightness > 128 else 'white' %}
-                <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}"
-                         class="text-decoration-none d-flex align-items-center justify-content-center card-header"
-                         style="
-                             background-color: {{ bgc }};
-                             color: {{ txtc }};
-                             min-height: 3rem; 
-                             text-align: center; 
-                             word-wrap: break-word; 
-                             white-space: break-spaces; 
-                             overflow: hidden;
-                         ">
-                         <span><strong>{{ c.code }}</strong> - {{ c.nom }}</span>
-                      </a>
-
-                      <div class="card-body p-2 flex-grow-1">
-                        <p><strong>Heures :</strong> {{ c.heures_theorie }} - {{ c.heures_laboratoire }} - {{ c.heures_travail_maison }}</p>
+                    <div class="card-body p-2 flex-grow-1">
+                      <p class="card-title text-center mb-1" style="background-color: {{ bgc }}; color: {{ txtc }}; padding: 0.2rem; font-size: 0.7rem; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                        <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}" class="text-decoration-none" style="color: inherit;">
+                          <strong>{{ c.code }}</strong> - {{ c.nom }}
+                        </a>
+                      </p>
+                      <p class="mb-2"><strong>Heures :</strong> {{ c.heures_theorie }} - {{ c.heures_laboratoire }} - {{ c.heures_travail_maison }}</p>
+                      <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#details-{{ c.id }}" aria-expanded="false" aria-controls="details-{{ c.id }}">
+                        Détails
+                      </button>
+                      <div id="details-{{ c.id }}" class="collapse mt-2">
                         <p><strong>Compétences :</strong>
                           {% if competencies_codes[c.id] %}
                             {% for code in competencies_codes[c.id] %}
@@ -127,36 +117,36 @@
                           {% endif %}
                         </p>
                       </div>
+                    </div>
 
-                      <!-- Boutons Plan-Cadre et Plan-de-cours -->
-                      <div class="card-footer mt-auto text-center">
-                        <!-- Bouton Plan-Cadre existant -->
-                        <a href="{{ url_for('cours.view_or_add_plan_cadre', cours_id=c.id) }}" class="btn btn-sm btn-info w-100 fs-6 mb-2">
-                          Plan-Cadre
-                        </a>
+                    <!-- Boutons Plan-Cadre et Plan-de-cours -->
+                    <div class="card-footer mt-auto text-center">
+                      <!-- Bouton Plan-Cadre existant -->
+                      <a href="{{ url_for('cours.view_or_add_plan_cadre', cours_id=c.id) }}" class="btn btn-sm btn-info w-100 fs-6 mb-2">
+                        Plan-Cadre
+                      </a>
 
-                        <button class="btn btn-sm btn-secondary w-100 fs-6 plan-cours-btn" 
-                                data-id="{{ c.id }}" 
-                                data-code="{{ c.code }}" 
-                                data-nom="{{ c.nom|e }}"
-                                type="button">
-                          Plan de cours
-                        </button>
-
-
+                      <button class="btn btn-sm btn-secondary w-100 fs-6 plan-cours-btn"
+                              data-id="{{ c.id }}"
+                              data-code="{{ c.code }}"
+                              data-nom="{{ c.nom|e }}"
+                              type="button">
+                        Plan de cours
+                      </button>
 
 
-                      </div>
+
 
                     </div>
+
                   </div>
-                {% endfor %}
-              </div>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
   </div>
 
 {% if current_user.role in ['admin', 'coordo'] %}
@@ -190,16 +180,10 @@
   .card:hover {
     transform: scale(1.02);
   }
-  .card-header {
-    font-size: 0.9rem;
-    padding: 0.4rem;
-    text-align: center;
-    white-space: normal;
-  }
-  .card-body {
-    padding: 0.4rem;
-    font-size: 0.75rem;
-  }
+    .card-body {
+      padding: 0.4rem;
+      font-size: 0.75rem;
+    }
   .card-body p {
     margin-bottom: 0.2rem;
   }
