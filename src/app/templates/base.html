@@ -455,22 +455,29 @@
             try { window.onTaskStreamUpdate(data.meta); } catch(e) { console.warn('onTaskStreamUpdate error', e); }
           }
           if (data.state === 'SUCCESS') {
-            if (data.result && data.result.preview) {
-              const planId = data.result.plan_id;
+            const payload = data.result || data.meta || {};
+            if (payload.preview) {
+              const planId = payload.plan_id;
               const reviewUrl = `/plan_cadre/${planId}/review?task_id=` + currentTaskId;
               addNotification("Proposition d'amélioration prête. Cliquez pour comparer et appliquer.", "success", reviewUrl);
             } else {
-              const coursId = data.result.cours_id;
-              const planId = data.result.plan_id;
-              const planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
-              addNotification("Génération terminée. Cliquez pour voir le plan-cadre.", "success", planCadreUrl);
+              const coursId = payload.cours_id;
+              const planId = payload.plan_id;
+              if (coursId && planId) {
+                const planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
+                addNotification("Génération terminée. Cliquez pour voir le plan-cadre.", "success", planCadreUrl);
+              } else {
+                addNotification("Génération terminée.", "success");
+              }
             }
             stopPolling();
             clearTaskId();
+            window.onTaskStreamUpdate = null;
           } else if (data.state === 'FAILURE') {
             addNotification("La génération a échoué : " + (data.result?.message || "Une erreur est survenue."), "error");
             stopPolling();
             clearTaskId();
+            window.onTaskStreamUpdate = null;
           } else if (data.state === 'PROGRESS') {
             addNotification(data.message || "Génération en cours...", "in-progress");
             setTimeout(checkTaskStatus, 3000);
@@ -637,7 +644,7 @@
         if (type === "in-progress") {
           const existingIndex = notifications.findIndex(notif => notif.type === "in-progress");
           if (existingIndex !== -1) {
-            if (notifications[existingIndex].message !== message) {
+            if (notifications[existingIndex].message !== message || notifications[existingIndex].link !== link) {
               notifications[existingIndex].message = message;
               notifications[existingIndex].link = link;
               notifications[existingIndex].timestamp = new Date().toISOString();
@@ -646,6 +653,8 @@
             }
             return;
           }
+        } else {
+          notifications = notifications.filter(n => n.type !== "in-progress");
         }
         const notif = {
           id: Date.now(),

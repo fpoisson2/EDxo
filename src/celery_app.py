@@ -30,7 +30,7 @@ def make_celery_instance():
         timezone='America/New_York', # Adapter si nécessaire
         enable_utc=True,
         broker_connection_retry_on_startup=True,
-        # task_ignore_result=False # Décommenter si vous voulez que les résultats soient toujours stockés par défaut
+        task_ignore_result=False  # Stocker les états pour permettre le suivi depuis le frontend
     )
 
     # Définir la classe de tâche pour le contexte Flask

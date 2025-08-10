@@ -159,19 +159,28 @@ def task_status(task_id):
     else:
         # Peut être une Exception (ex.: NotRegistered)
         current_message = str(meta)
+
+    # En mode succès, certains backends peuvent ne pas exposer res.result ;
+    # on se rabat alors sur meta pour éviter un résultat vide côté client.
+    result_payload = res.result if current_state == 'SUCCESS' else None
+    if current_state == 'SUCCESS' and not result_payload:
+        result_payload = meta if isinstance(meta, dict) else None
+
     logger.info("Task %s state: %s, meta: %s", task_id, current_state, meta)
-    
+
     return jsonify({
         'state': current_state,
         'message': current_message,
         'meta': meta,
-        'result': res.result if current_state == 'SUCCESS' else None
+        'result': result_payload
     })
 
 
 
 @main.route('/clear_task_id', methods=['POST'])
 def clear_task_id():
+    """Retire l'identifiant de tâche de la session sans supprimer
+    immédiatement le résultat côté Celery."""
     session.pop('task_id', None)
     return jsonify(success=True)
 

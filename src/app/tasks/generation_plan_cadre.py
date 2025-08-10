@@ -7,7 +7,7 @@ from typing import List, Optional
 
 # Import your OpenAI client (adjust this import according to your library)
 from openai import OpenAI
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, create_model
 from sqlalchemy import text
 
 # Import your models – adjust these imports as needed:
@@ -37,20 +37,35 @@ logger = logging.getLogger(__name__)
 # Schemas Pydantic pour IA
 ###############################################################################
 def _postprocess_openai_schema(schema: dict) -> None:
+    """Recursively tailor a Pydantic schema for OpenAI JSON responses."""
     schema.pop('default', None)
-    schema['additionalProperties'] = False
-    props = schema.get("properties")
+
+    # $ref nodes cannot have siblings like "additionalProperties"; stop here
+    if '$ref' in schema:
+        return
+
+    # Only apply object-specific keywords to object schemas
+    if schema.get('type') == 'object' or 'properties' in schema:
+        schema['additionalProperties'] = False
+
+    props = schema.get('properties')
     if props:
-        schema["required"] = list(props.keys())
+        schema['required'] = list(props.keys())
         for prop_schema in props.values():
             _postprocess_openai_schema(prop_schema)
-    if "items" in schema:
-        items = schema["items"]
+
+    if 'items' in schema:
+        items = schema['items']
         if isinstance(items, dict):
             _postprocess_openai_schema(items)
         elif isinstance(items, list):
             for item in items:
                 _postprocess_openai_schema(item)
+
+    # Recurse into definitions if present
+    if '$defs' in schema:
+        for def_schema in schema['$defs'].values():
+            _postprocess_openai_schema(def_schema)
 
 class OpenAIFunctionModel(BaseModel):
     model_config = ConfigDict(
@@ -84,11 +99,6 @@ class AICapacite(OpenAIFunctionModel):
     savoirs_faire: Optional[List[AISavoirFaire]] = None
     moyens_evaluation: Optional[List[str]] = None
 
-class PlanCadreAIResponse(OpenAIFunctionModel):
-    fields: Optional[List[AIField]] = None
-    fields_with_description: Optional[List[AIFieldWithDescription]] = None
-    savoir_etre: Optional[List[str]] = None
-    capacites: Optional[List[AICapacite]] = None
 
 # Register with a stable, fully-qualified name so producers and workers match
 @celery.task(bind=True, name='src.app.tasks.generation_plan_cadre.generate_plan_cadre_content_task')
@@ -530,7 +540,23 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             system_message = (
                 f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. Informations importantes: {additional_info}"
             )
-        print(combined_instruction)
+        # combined_instruction can be large; avoid noisy stdout
+        logger.debug(combined_instruction)
+
+        # Construire dynamiquement le modèle Pydantic selon les sections demandées
+        model_fields = {}
+        if ai_fields:
+            model_fields["fields"] = (List[AIField], ...)
+        if ai_fields_with_description:
+            model_fields["fields_with_description"] = (List[AIFieldWithDescription], ...)
+        if ai_savoir_etre:
+            model_fields["savoir_etre"] = (List[str], ...)
+        if ai_capacites_prompt:
+            model_fields["capacites"] = (List[AICapacite], ...)
+        PlanCadreAIResponse = create_model(
+            "PlanCadreAIResponse", __base__=OpenAIFunctionModel, **model_fields
+        )
+
         client = OpenAI(api_key=openai_key)
         total_prompt_tokens = 0
         total_completion_tokens = 0
@@ -560,37 +586,39 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 request_kwargs["reasoning"] = {"effort": reasoning_effort}
 
             # Streaming if requested by client
-            do_stream = str(form_data.get("stream") or "0").lower() in ("1","true","yes")
+            do_stream = str(form_data.get("stream") or "0").lower() in ("1", "true", "yes", "on")
             streamed_text = None
+            response = None
             if do_stream:
                 try:
                     request_kwargs_stream = dict(request_kwargs)
-                    request_kwargs_stream["stream"] = True
-                    stream = client.responses.create(**request_kwargs_stream)
-                    streamed_text = ""
-                    seq = 0
-                    for event in stream:
-                        etype = getattr(event, 'type', '') or ''
-                        # Primary text delta event
-                        if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
-                            delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
-                            if delta:
-                                streamed_text += delta
-                                seq += 1
-                                self.update_state(state='PROGRESS', meta={
-                                    'message': 'Génération en cours...',
-                                    'stream_chunk': delta,
-                                    'stream_buffer': streamed_text,
-                                    'seq': seq
-                                })
-                        elif etype.endswith('response.completed') or etype == 'response.completed':
-                            break
+                    with client.responses.stream(**request_kwargs_stream) as stream:
+                        streamed_text = ""
+                        seq = 0
+                        for event in stream:
+                            etype = getattr(event, 'type', '') or ''
+                            # Primary text delta event
+                            if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                                delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                                if delta:
+                                    streamed_text += delta
+                                    seq += 1
+                                    self.update_state(state='PROGRESS', meta={
+                                        'message': 'Génération en cours...',
+                                        'stream_chunk': delta,
+                                        'stream_buffer': streamed_text,
+                                        'seq': seq
+                                    })
+                                    logger.info("Stream chunk %s: %s", seq, delta)
+                            elif etype.endswith('response.completed') or etype == 'response.completed':
+                                break
+                        response = stream.get_final_response()
                 except Exception as se:
                     logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
                     streamed_text = None
+                    response = None
 
             # Non-stream or fallback: perform standard request
-            response = None
             if streamed_text is None:
                 response = client.responses.create(**request_kwargs)
         except Exception as e:
@@ -639,19 +667,12 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # Construire une proposition (aperçu) si improve_only
         proposed = {
             'fields': {},
-            'fields_with_description': {
-                'Description des compétences développées': [],
-                'Description des Compétences certifiées': [],
-                'Description des cours corequis': [],
-                'Description des cours préalables': [],
-                'Objets cibles': []
-            },
-            'savoir_etre': [],
+            'fields_with_description': {},
             'capacites': []
         }
 
         # 3.a Champs simples
-        for fobj in (parsed_data.fields or []):
+        for fobj in (getattr(parsed_data, "fields", []) or []):
             fname = fobj.field_name
             fcontent = clean_text(fobj.content)
             if fname in field_to_plan_cadre_column:
@@ -670,7 +691,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         }
 
         # 3.b Champs avec description (listes)
-        for fobj in (parsed_data.fields_with_description or []):
+        for fobj in (getattr(parsed_data, "fields_with_description", []) or []):
             fname = fobj.field_name
             if not fname:
                 continue
@@ -685,8 +706,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 elements_to_insert.append({"texte": clean_text(fobj.content), "description": ""})
 
             if improve_only:
-                if fname in proposed['fields_with_description']:
-                    proposed['fields_with_description'][fname] = elements_to_insert
+                proposed.setdefault('fields_with_description', {})
+                proposed['fields_with_description'][fname] = elements_to_insert
             else:
                 table_name = table_mapping.get(fname)
                 if not table_name:
@@ -701,7 +722,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     )
 
         # 3.c Savoir-être
-        if parsed_data.savoir_etre:
+        if getattr(parsed_data, "savoir_etre", None):
             if improve_only:
                 proposed['savoir_etre'] = [clean_text(se_item) for se_item in parsed_data.savoir_etre]
             else:
@@ -713,7 +734,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     db.session.add(se_obj)
 
         # 3.d Capacités
-        if parsed_data.capacites:
+        if getattr(parsed_data, "capacites", None):
             if improve_only:
                 for cap in parsed_data.capacites:
                     proposed['capacites'].append({
@@ -775,10 +796,25 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 # On mappe vers les clés d'affichage connues, sinon on ignore
                 reverse_map = {v: k for k, v in table_mapping.items()}
                 display_key = reverse_map.get(table_name)
-                if display_key and display_key in proposed['fields_with_description']:
+                if display_key:
+                    proposed.setdefault('fields_with_description', {})
                     proposed['fields_with_description'][display_key] = [
                         {"texte": val, "description": ""}
                     ]
+
+            # Nettoyer l'aperçu pour ne conserver que les sections avec contenu
+            if not proposed['fields']:
+                proposed.pop('fields')
+            if 'fields_with_description' in proposed:
+                proposed['fields_with_description'] = {
+                    k: v for k, v in proposed['fields_with_description'].items() if v
+                }
+                if not proposed['fields_with_description']:
+                    proposed.pop('fields_with_description')
+            if not proposed.get('savoir_etre'):
+                proposed.pop('savoir_etre', None)
+            if not proposed['capacites']:
+                proposed.pop('capacites')
 
             self.update_state(state='PROGRESS', meta={'message': "Préparation de l’aperçu des changements..."})
             result = {
@@ -789,6 +825,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 "preview": True,
                 "proposed": proposed
             }
+            if streamed_text:
+                result["stream_buffer"] = streamed_text
             self.update_state(state="SUCCESS", meta=result)
             return result
         else:
@@ -799,6 +837,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 "plan_id": plan.id,
                 "cours_id": plan.cours_id
             }
+            if streamed_text:
+                result["stream_buffer"] = streamed_text
             self.update_state(state="SUCCESS", meta=result)
             return result
 

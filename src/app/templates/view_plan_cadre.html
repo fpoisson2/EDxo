@@ -1647,10 +1647,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 taskId = data.task_id;
                 sessionStorage.setItem('currentTaskId', taskId);
-                // Démarrer le polling immédiatement si disponible
-                if (typeof startTaskPolling === 'function') {
-                    startTaskPolling(taskId);
-                }
                 // Activer l'aperçu streaming si demandé
                 const doStream = streamHidden && streamHidden.value === '1';
                 if (doStream) {
@@ -1677,8 +1673,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         } catch (e) { console.warn('stream update error', e); }
                     };
-                } else if (modalInstance) {
-                    modalInstance.hide();
+                } else {
+                    window.onTaskStreamUpdate = null;
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                }
+                // Démarrer le polling uniquement après la configuration du streaming
+                if (typeof startTaskPolling === 'function') {
+                    startTaskPolling(taskId);
                 }
                 flashMessageSystem.info(data.message);
             } else {
