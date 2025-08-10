@@ -7,7 +7,7 @@ from flask_login import UserMixin
 from sqlalchemy import UniqueConstraint, select
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from extensions import db
+from src.extensions import db
 
 # Alias to prevent duplicate imports when modules use ``app.models``
 sys.modules.setdefault("app.models", sys.modules[__name__])

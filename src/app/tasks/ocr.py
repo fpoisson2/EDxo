@@ -21,7 +21,7 @@ from ..models import (
 
 from celery import shared_task, group, signature
 from celery_app import celery  # Your Celery instance (configured with your Flask app)
-from extensions import db  # Your SQLAlchemy instance
+from src.extensions import db  # Your SQLAlchemy instance
 from utils.openai_pricing import calculate_call_cost
 # Import any helper functions used in your logic
 from utils.utils import replace_tags_jinja2, get_plan_cadre_data, determine_base_filename, extract_code_from_title
