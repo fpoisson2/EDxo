@@ -1,7 +1,7 @@
 import json
-from werkzeug.security import generate_password_hash
-from types import SimpleNamespace
 import sys
+from types import SimpleNamespace
+from werkzeug.security import generate_password_hash
 
 
 def get_model_by_name(model_name, db):
@@ -51,7 +51,7 @@ def login(client, app, monkeypatch):
 
 
 class FakeResponses:
-    def create(self, model, input):
+    def create(self, model, input, tools=None):
         text = f"Je suis un bot, vous avez dit : {input[-1]['content']}"
         return SimpleNamespace(output=[SimpleNamespace(content=[SimpleNamespace(text=text)])])
 
@@ -70,3 +70,34 @@ def test_send_message_returns_assistant_response(client, app, monkeypatch):
     first = json.loads(payloads[0][len("data: "):])
     assert first["content"] != "bonjour"
     assert "bonjour" in first["content"]
+
+
+class ToolResponses:
+    def __init__(self):
+        self.calls = 0
+
+    def create(self, model, input, tools=None):
+        self.calls += 1
+        if self.calls == 1:
+            tool_call = SimpleNamespace(
+                type="tool_call", name="get_plan_de_cours", arguments={"code": "XYZ"}
+            )
+            return SimpleNamespace(output=[SimpleNamespace(content=[tool_call])])
+        last = json.loads(input[-1]["content"])
+        text = f"Résultat pour {last['code']}"
+        return SimpleNamespace(output=[SimpleNamespace(content=[SimpleNamespace(text=text)])])
+
+
+class FakeOpenAIWithTool:
+    def __init__(self, api_key=None):
+        self.responses = ToolResponses()
+
+
+def test_tool_call_executes_handler(client, app, monkeypatch):
+    chat_module = sys.modules["src.app.routes.chat"]
+    monkeypatch.setattr(chat_module, "OpenAI", FakeOpenAIWithTool)
+    login(client, app, monkeypatch)
+    resp = client.post("/chat/send", json={"message": "outil"})
+    payloads = [line for line in resp.data.decode().split("\n") if line.startswith("data: ")]
+    first = json.loads(payloads[0][len("data: "):])
+    assert "Résultat pour XYZ" in first["content"]
