@@ -1,10 +1,12 @@
-from flask import Blueprint, request, Response, stream_with_context
+from flask import Blueprint, request, Response, stream_with_context, render_template
 from flask_login import login_required, current_user
 
 from utils.decorator import ensure_profile_completed
 
 from .history import add_message, get_last_messages
 from .stream import simple_stream
+from app.forms import ChatForm
+from types import SimpleNamespace
 
 chat = Blueprint("chat", __name__)
 
@@ -13,7 +15,10 @@ chat = Blueprint("chat", __name__)
 @ensure_profile_completed
 def index():
     """Endpoint principal du chat."""
-    return "chat index"
+    form = ChatForm()
+    if not hasattr(form, "csrf_token"):
+        form.csrf_token = SimpleNamespace(current_token="")
+    return render_template("chat/index.html", form=form)
 
 @chat.route("/chat/send", methods=["POST"])
 @login_required
