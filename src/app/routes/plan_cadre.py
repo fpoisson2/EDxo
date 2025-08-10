@@ -2,7 +2,18 @@
 import logging
 import traceback
 
-from flask import Blueprint, render_template, redirect, url_for, request, flash, send_file, jsonify, session
+from flask import (
+    Blueprint,
+    render_template,
+    redirect,
+    url_for,
+    request,
+    flash,
+    send_file,
+    jsonify,
+    session,
+    current_app,
+)
 from flask_login import login_required, current_user
 
 from ..forms import (
@@ -52,6 +63,8 @@ plan_cadre_bp = Blueprint('plan_cadre', __name__, url_prefix='/plan_cadre')
 @ensure_profile_completed
 def generate_plan_cadre_content(plan_id):
     from ..tasks.generation_plan_cadre import generate_plan_cadre_content_task
+    from celery_app import celery
+    from celery.result import AsyncResult
 
     plan = PlanCadre.query.get(plan_id)
     if not plan:
@@ -87,9 +100,17 @@ def generate_plan_cadre_content(plan_id):
     if target_cols:
         payload['target_columns'] = target_cols
 
-    # Lancer la tâche Celery
+    # Oublier une éventuelle tâche précédente pour ne conserver que la plus récente
+    old_task_id = session.pop('task_id', None)
+    if old_task_id:
+        try:
+            AsyncResult(old_task_id, app=celery).forget()
+        except Exception as e:
+            current_app.logger.warning('Impossible de supprimer l\'ancienne tâche %s: %s', old_task_id, e)
+
+    # Lancer la nouvelle tâche Celery
     task = generate_plan_cadre_content_task.delay(plan_id, payload, current_user.id)
-    session['task_id'] = task.id  # Vous pouvez toujours mettre à jour la session si besoin
+    session['task_id'] = task.id  # mémoriser uniquement la dernière tâche
 
     # Retourner le task id dans la réponse AJAX
     return jsonify(success=True, message='La génération est en cours. Vous serez notifié une fois terminée.', task_id=task.id)
