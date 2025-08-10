@@ -363,32 +363,42 @@
           'Content-Type': 'application/json',
           'X-CSRF-Token': '{{ form.csrf_token.current_token }}'
         },
+        credentials: 'same-origin',
         body: JSON.stringify({
           message: message,
           csrf_token: '{{ form.csrf_token.current_token }}'
         })
       });
-      const contentType = response.headers.get('content-type');
+      const contentType = response.headers.get('content-type') || '';
       if (!response.ok) {
-        const errorData = await response.json();
-        if (errorData.error) {
-          addMessage('Système', errorData.error, 'system', true);
-          return;
+        let errorMessage = `Erreur HTTP! Statut: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            addMessage('Système', errorData.error, 'system', true);
+            return;
+          }
+        } catch (_) {
+          const text = await response.text();
+          errorMessage = text || errorMessage;
         }
-        throw new Error(`Erreur HTTP! Statut: ${response.status}`);
+        throw new Error(errorMessage);
       }
-      if (contentType && contentType.includes('text/event-stream')) {
+      if (contentType.includes('text/event-stream')) {
         const reader = response.body.getReader();
         // Création du message EDxo vide
         const aiMessage = addMessage('EDxo', '', 'ai');
         await handleStreamResponse(reader, aiMessage);
-      } else {
+      } else if (contentType.includes('application/json')) {
         const data = await response.json();
         if (data.error) {
           addMessage('Système', data.error, 'system', true);
         } else {
           addMessage('EDxo', data.content, 'ai');
         }
+      } else {
+        const text = await response.text();
+        addMessage('Système', text || 'Réponse inattendue du serveur.', 'system', true);
       }
     } catch (error) {
       console.error('Erreur:', error);
