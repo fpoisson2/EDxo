@@ -29,5 +29,7 @@ def send_message():
     message = data.get("message", "")
     add_message(current_user.id, "user", message)
     history = get_last_messages(current_user.id)
-    generator = simple_stream(message, history)
+    reply = f"Je suis un bot, vous avez dit : {message}"
+    add_message(current_user.id, "assistant", reply)
+    generator = simple_stream(reply, history)
     return Response(stream_with_context(generator), mimetype="text/event-stream")
