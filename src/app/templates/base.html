@@ -644,7 +644,7 @@
         if (type === "in-progress") {
           const existingIndex = notifications.findIndex(notif => notif.type === "in-progress");
           if (existingIndex !== -1) {
-            if (notifications[existingIndex].message !== message) {
+            if (notifications[existingIndex].message !== message || notifications[existingIndex].link !== link) {
               notifications[existingIndex].message = message;
               notifications[existingIndex].link = link;
               notifications[existingIndex].timestamp = new Date().toISOString();
@@ -653,6 +653,8 @@
             }
             return;
           }
+        } else {
+          notifications = notifications.filter(n => n.type !== "in-progress");
         }
         const notif = {
           id: Date.now(),

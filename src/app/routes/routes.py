@@ -179,15 +179,9 @@ def task_status(task_id):
 
 @main.route('/clear_task_id', methods=['POST'])
 def clear_task_id():
-    from celery_app import celery
-    from celery.result import AsyncResult
-
-    task_id = session.pop('task_id', None)
-    if task_id:
-        try:
-            AsyncResult(task_id, app=celery).forget()
-        except Exception as e:
-            current_app.logger.warning('Impossible de supprimer la tâche %s: %s', task_id, e)
+    """Retire l'identifiant de tâche de la session sans supprimer
+    immédiatement le résultat côté Celery."""
+    session.pop('task_id', None)
     return jsonify(success=True)
 
 @main.route('/gestion_cegeps', methods=['GET', 'POST'])
