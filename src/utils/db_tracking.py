@@ -2,7 +2,7 @@ from flask_login import current_user
 from sqlalchemy import event
 from datetime import datetime
 import sqlalchemy.exc
-from extensions import db
+from src.extensions import db
 
 def process_changes(mapper, target, operation):
     changes = {}

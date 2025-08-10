@@ -59,7 +59,7 @@ from ..models import (
     CoursProgramme,
     ListeCegep
 )
-from extensions import limiter
+from src.extensions import limiter
 from utils.decorator import role_required, roles_required, ensure_profile_completed
 from utils.utils import (
     get_all_cegeps,

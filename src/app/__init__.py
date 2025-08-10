@@ -52,7 +52,7 @@ from .routes.grilles import grille_bp
 # Import version
 from config.version import __version__
 # Import centralized extensions
-from extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
+from src.extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
 from utils.db_tracking import init_change_tracking
 from utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 

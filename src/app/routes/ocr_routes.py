@@ -8,7 +8,7 @@ from flask import (
 from flask_login import login_required
 
 # --- Imports Projet ---
-from extensions import csrf
+from src.extensions import csrf
 from ..forms import OcrProgrammeSelectionForm
 from ..forms import AssociateDevisForm
 try:
