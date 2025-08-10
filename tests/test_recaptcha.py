@@ -32,3 +32,14 @@ def test_verify_recaptcha_missing_token(app):
     """A missing token should return False without calling the API."""
     with app.test_request_context('/'):
         assert verify_recaptcha("") is False
+
+
+def test_verify_recaptcha_exception(app, monkeypatch):
+    """The helper returns False when requests.post raises an exception."""
+
+    def mock_post(url, data, timeout=None):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("utils.recaptcha.requests.post", mock_post)
+    with app.test_request_context('/'):
+        assert verify_recaptcha("token") is False
