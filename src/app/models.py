@@ -64,6 +64,26 @@ class OpenAIModel(db.Model):
     def __repr__(self):
         return f"<OpenAIModel {self.name}>"
 
+
+class ChatModelConfig(db.Model):
+    __tablename__ = 'chat_model_config'
+
+    id = db.Column(db.Integer, primary_key=True)
+    chat_model = db.Column(db.String(64), nullable=False, default='gpt-4.1-mini')
+    tool_model = db.Column(db.String(64), nullable=False, default='gpt-4.1-mini')
+    reasoning_effort = db.Column(db.String(16))
+    verbosity = db.Column(db.String(16))
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    @classmethod
+    def get_current(cls):
+        config = cls.query.first()
+        if not config:
+            config = cls()
+            db.session.add(config)
+            db.session.commit()
+        return config
+
 class AnalysePlanCoursPrompt(db.Model):
     __tablename__ = 'analyse_plan_cours_prompt'
     
