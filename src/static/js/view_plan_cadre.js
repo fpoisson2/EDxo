@@ -377,20 +377,18 @@ function removeCapacite(button) {
 }
 
 function showFloatingButtons() {
-    const floatingSaveBtn = document.getElementById('floatingSaveBtn');
-    const floatingCancelBtn = document.getElementById('floatingCancelBtn');
-    if (floatingSaveBtn && floatingCancelBtn) {
-        floatingSaveBtn.classList.remove('d-none');
-        floatingCancelBtn.classList.remove('d-none');
+    const actionBar = document.getElementById('actionBar');
+    if (actionBar) {
+        actionBar.classList.remove('d-none');
+        document.body.classList.add('with-action-bar');
     }
 }
 
 function hideFloatingButtons() {
-    const floatingSaveBtn = document.getElementById('floatingSaveBtn');
-    const floatingCancelBtn = document.getElementById('floatingCancelBtn');
-    if (floatingSaveBtn && floatingCancelBtn) {
-        floatingSaveBtn.classList.add('d-none');
-        floatingCancelBtn.classList.add('d-none');
+    const actionBar = document.getElementById('actionBar');
+    if (actionBar) {
+        actionBar.classList.add('d-none');
+        document.body.classList.remove('with-action-bar');
     }
 }
 

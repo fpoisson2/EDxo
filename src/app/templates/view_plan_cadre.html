@@ -849,24 +849,32 @@
         </div>
     </div>
 
-    <!-- Bouton d'Enregistrement Flottant -->
-    {# Utilisation d'un bouton type="button" pour éviter une double soumission #}
-    <button type="button" 
-            id="floatingSaveBtn" 
-            class="btn btn-primary btn-lg rounded-circle shadow-lg d-none"
-            title="Enregistrer le Plan-cadre"
-            name="submit_plan"
-            value="submit_plan">
-        <i class="bi bi-save"></i>
-    </button>
-
-    <!-- Bouton Flottant "Annuler" -->
-    <button type="button" 
-            id="floatingCancelBtn" 
-            class="btn btn-danger btn-lg rounded-circle shadow-lg d-none"
-            title="Annuler les modifications">
-        <i class="bi bi-x-circle"></i>
-    </button>
+    <!-- Barre d'actions fixe en bas -->
+    <div id="actionBar" class="fixed-bottom bg-white border-top d-none shadow">
+        <div class="container py-2">
+            <div class="row g-2">
+                <div class="col">
+                    <button type="button"
+                            id="floatingSaveBtn"
+                            class="btn btn-primary w-100"
+                            name="submit_plan"
+                            value="submit_plan">
+                        <span class="btn-text">Enregistrer</span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="loadingSpinner">
+                            <span class="visually-hidden">Chargement...</span>
+                        </span>
+                    </button>
+                </div>
+                <div class="col">
+                    <button type="button"
+                            id="floatingCancelBtn"
+                            class="btn btn-danger w-100">
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Génération du Plan-cadre (Formulaire Séparé) -->
     <div class="modal fade" id="generateModal" tabindex="-1" aria-labelledby="generateModalLabel" aria-hidden="true">
