@@ -7,7 +7,7 @@ from typing import List, Optional
 
 # Import your OpenAI client (adjust this import according to your library)
 from openai import OpenAI
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, create_model
 from sqlalchemy import text
 
 # Import your models – adjust these imports as needed:
@@ -84,11 +84,6 @@ class AICapacite(OpenAIFunctionModel):
     savoirs_faire: Optional[List[AISavoirFaire]] = None
     moyens_evaluation: Optional[List[str]] = None
 
-class PlanCadreAIResponse(OpenAIFunctionModel):
-    fields: Optional[List[AIField]] = None
-    fields_with_description: Optional[List[AIFieldWithDescription]] = None
-    savoir_etre: Optional[List[str]] = None
-    capacites: Optional[List[AICapacite]] = None
 
 # Register with a stable, fully-qualified name so producers and workers match
 @celery.task(bind=True, name='src.app.tasks.generation_plan_cadre.generate_plan_cadre_content_task')
@@ -532,6 +527,21 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             )
         # combined_instruction can be large; avoid noisy stdout
         logger.debug(combined_instruction)
+
+        # Construire dynamiquement le modèle Pydantic selon les sections demandées
+        model_fields = {}
+        if ai_fields:
+            model_fields["fields"] = (List[AIField], ...)
+        if ai_fields_with_description:
+            model_fields["fields_with_description"] = (List[AIFieldWithDescription], ...)
+        if ai_savoir_etre:
+            model_fields["savoir_etre"] = (List[str], ...)
+        if ai_capacites_prompt:
+            model_fields["capacites"] = (List[AICapacite], ...)
+        PlanCadreAIResponse = create_model(
+            "PlanCadreAIResponse", __base__=OpenAIFunctionModel, **model_fields
+        )
+
         client = OpenAI(api_key=openai_key)
         total_prompt_tokens = 0
         total_completion_tokens = 0
@@ -647,7 +657,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         }
 
         # 3.a Champs simples
-        for fobj in (parsed_data.fields or []):
+        for fobj in (getattr(parsed_data, "fields", []) or []):
             fname = fobj.field_name
             fcontent = clean_text(fobj.content)
             if fname in field_to_plan_cadre_column:
@@ -666,7 +676,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         }
 
         # 3.b Champs avec description (listes)
-        for fobj in (parsed_data.fields_with_description or []):
+        for fobj in (getattr(parsed_data, "fields_with_description", []) or []):
             fname = fobj.field_name
             if not fname:
                 continue
@@ -697,7 +707,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     )
 
         # 3.c Savoir-être
-        if parsed_data.savoir_etre:
+        if getattr(parsed_data, "savoir_etre", None):
             if improve_only:
                 proposed['savoir_etre'] = [clean_text(se_item) for se_item in parsed_data.savoir_etre]
             else:
@@ -709,7 +719,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     db.session.add(se_obj)
 
         # 3.d Capacités
-        if parsed_data.capacites:
+        if getattr(parsed_data, "capacites", None):
             if improve_only:
                 for cap in parsed_data.capacites:
                     proposed['capacites'].append({
