@@ -31,8 +31,9 @@ h6 {
 
 #actionBar {
     z-index: 1000;
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 body.with-action-bar {
-    padding-bottom: 80px;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
 }
