@@ -67,10 +67,11 @@ from utils.scheduler_instance import scheduler, start_scheduler, shutdown_schedu
 
 from werkzeug.security import generate_password_hash
 
-from celery_app import celery, init_celery 
+from celery_app import celery, init_celery
 
 # Initialize logger
-logging.basicConfig(level=logging.INFO)
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(level=getattr(logging, log_level, logging.INFO))
 logger = logging.getLogger(__name__)
 
 # Load environment variables
@@ -95,7 +96,10 @@ class TestConfig:
 
 def create_app(testing=False):
     load_dotenv()
-    print(f"--- DEBUG: SECRET_KEY lue depuis l'environnement: {os.getenv('SECRET_KEY')} ---")
+    if os.getenv('SECRET_KEY'):
+        logger.debug("SECRET_KEY environment variable is set.")
+    else:
+        logger.warning("SECRET_KEY environment variable is not set.")
     base_path = os.path.dirname(os.path.dirname(__file__))
     app = Flask(
         __name__,
