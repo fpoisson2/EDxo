@@ -37,20 +37,35 @@ logger = logging.getLogger(__name__)
 # Schemas Pydantic pour IA
 ###############################################################################
 def _postprocess_openai_schema(schema: dict) -> None:
+    """Recursively tailor a Pydantic schema for OpenAI JSON responses."""
     schema.pop('default', None)
-    schema['additionalProperties'] = False
-    props = schema.get("properties")
+
+    # $ref nodes cannot have siblings like "additionalProperties"; stop here
+    if '$ref' in schema:
+        return
+
+    # Only apply object-specific keywords to object schemas
+    if schema.get('type') == 'object' or 'properties' in schema:
+        schema['additionalProperties'] = False
+
+    props = schema.get('properties')
     if props:
-        schema["required"] = list(props.keys())
+        schema['required'] = list(props.keys())
         for prop_schema in props.values():
             _postprocess_openai_schema(prop_schema)
-    if "items" in schema:
-        items = schema["items"]
+
+    if 'items' in schema:
+        items = schema['items']
         if isinstance(items, dict):
             _postprocess_openai_schema(items)
         elif isinstance(items, list):
             for item in items:
                 _postprocess_openai_schema(item)
+
+    # Recurse into definitions if present
+    if '$defs' in schema:
+        for def_schema in schema['$defs'].values():
+            _postprocess_openai_schema(def_schema)
 
 class OpenAIFunctionModel(BaseModel):
     model_config = ConfigDict(
