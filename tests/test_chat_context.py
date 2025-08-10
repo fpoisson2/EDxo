@@ -35,6 +35,11 @@ class FakeTextDeltaEvent:
         self.response = SimpleNamespace(id=response_id)
 
 
+class FakeResponseCompletedEvent:
+    def __init__(self, response_id):
+        self.response = SimpleNamespace(id=response_id)
+
+
 def test_context_persisted_after_tool_call(client, app, monkeypatch):
     # Patch reCAPTCHA
     monkeypatch.setattr("requests.post", fake_requests_post)
@@ -95,6 +100,7 @@ def test_context_persisted_after_tool_call(client, app, monkeypatch):
             yield FakeFunctionCallAddedEvent("get_plan_de_cours", "call1", "id1")
             yield FakeFunctionCallArgumentsDeltaEvent("{}", "id1")
             yield FakeFunctionCallDoneEvent("id1")
+            yield FakeResponseCompletedEvent("id1")
         return gen()
 
     monkeypatch.setattr(chat, "OpenAI", FakeOpenAI)

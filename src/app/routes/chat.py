@@ -761,7 +761,7 @@ def send_message():
 
                     # Reset state after tool call processing is complete
                     fn_name = fn_args_str = call_id = tool_result_obj = tool_result_json = None
-                    continue # Move to the next event in the *original* iterator (if any)
+                    break  # Stop processing remaining events from the original stream (they may reference the old response ID)
 
 
                 # ------------ Normal Text (not part of a tool call sequence being processed currently) -------------
