@@ -691,8 +691,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sectionsNav) {
         new bootstrap.ScrollSpy(document.body, { target: '#sectionsNav', offset: 100 });
     }
-    document.querySelectorAll('#sectionsOffcanvas .nav-link').forEach(link => {
+    document.querySelectorAll('#sectionsNav .nav-link, #sectionsOffcanvas .nav-link').forEach(link => {
         link.addEventListener('click', () => {
+            const targetSelector = link.getAttribute('href');
+            if (targetSelector && targetSelector.startsWith('#')) {
+                const item = document.querySelector(targetSelector);
+                if (item) {
+                    const collapseEl = item.querySelector('.accordion-collapse');
+                    if (collapseEl) {
+                        new bootstrap.Collapse(collapseEl, { toggle: true });
+                    }
+                }
+            }
             const offcanvasEl = document.getElementById('sectionsOffcanvas');
             const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
             if (offcanvas) {
