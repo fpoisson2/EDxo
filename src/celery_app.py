@@ -1,7 +1,7 @@
 # EDxo/src/celery_app.py
-import os
-import logging # Ajouter l'import logging
+import logging  # Ajouter l'import logging
 from celery import Celery
+from config.env import CELERY_BROKER_URL, CELERY_RESULT_BACKEND
 # PAS d'import de create_app ici au niveau module
 
 logger = logging.getLogger(__name__) # Initialiser un logger pour ce module
@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__) # Initialiser un logger pour ce module
 # Fonction pour créer l'instance Celery SANS dépendance immédiate à l'app Flask
 def make_celery_instance():
     """Crée et configure une instance Celery de base."""
-    redis_url = os.getenv('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
-    backend_url = os.getenv('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/0')
+    redis_url = CELERY_BROKER_URL
+    backend_url = CELERY_RESULT_BACKEND
 
     celery_instance = Celery(
         # Nom logique de l'application Celery (à des fins de logs)

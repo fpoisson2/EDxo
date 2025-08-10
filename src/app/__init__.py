@@ -24,8 +24,6 @@ from pathlib import Path
 
 from flask_session import Session
 
-
-from dotenv import load_dotenv
 from flask import Flask, session, jsonify, redirect, url_for, request, current_app
 from flask_login import current_user, logout_user, UserMixin
 from flask_migrate import Migrate
@@ -68,14 +66,25 @@ from utils.scheduler_instance import scheduler, start_scheduler, shutdown_schedu
 from werkzeug.security import generate_password_hash
 
 from celery_app import celery, init_celery
+from config.env import (
+    LOG_LEVEL,
+    SECRET_KEY,
+    RECAPTCHA_PUBLIC_KEY,
+    RECAPTCHA_PRIVATE_KEY,
+    MISTRAL_API_KEY,
+    OPENAI_API_KEY,
+    OPENAI_MODEL_SECTION,
+    OPENAI_MODEL_EXTRACTION,
+    CELERY_BROKER_URL,
+    CELERY_RESULT_BACKEND,
+    GUNICORN_WORKER_ID,
+    CELERY_WORKER,
+    validate,
+)
 
 # Initialize logger
-log_level = os.getenv("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(level=getattr(logging, log_level, logging.INFO))
+logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO))
 logger = logging.getLogger(__name__)
-
-# Load environment variables
-load_dotenv()
 
 
 # Define TestConfig within the application code
@@ -95,11 +104,12 @@ class TestConfig:
 
 
 def create_app(testing=False):
-    load_dotenv()
-    if os.getenv('SECRET_KEY'):
-        logger.debug("SECRET_KEY environment variable is set.")
-    else:
-        logger.warning("SECRET_KEY environment variable is not set.")
+    if not testing:
+        validate()
+        if SECRET_KEY:
+            logger.debug("SECRET_KEY environment variable is set.")
+        else:
+            logger.warning("SECRET_KEY environment variable is not set.")
     base_path = os.path.dirname(os.path.dirname(__file__))
     app = Flask(
         __name__,
@@ -131,14 +141,14 @@ def create_app(testing=False):
             SQLALCHEMY_TRACK_MODIFICATIONS=False,
             DB_PATH=DB_PATH,
             UPLOAD_FOLDER=os.path.join(base_path, 'static', 'docs'),
-            SECRET_KEY=os.getenv('SECRET_KEY'),
-            RECAPTCHA_SITE_KEY=os.getenv('RECAPTCHA_PUBLIC_KEY'),
-            RECAPTCHA_SECRET_KEY=os.getenv('RECAPTCHA_PRIVATE_KEY'),
-            MISTRAL_API_KEY=os.getenv('MISTRAL_API_KEY'),
-            OPENAI_API_KEY=os.getenv('OPENAI_API_KEY'),
+            SECRET_KEY=SECRET_KEY,
+            RECAPTCHA_SITE_KEY=RECAPTCHA_PUBLIC_KEY,
+            RECAPTCHA_SECRET_KEY=RECAPTCHA_PRIVATE_KEY,
+            MISTRAL_API_KEY=MISTRAL_API_KEY,
+            OPENAI_API_KEY=OPENAI_API_KEY,
             MISTRAL_MODEL_OCR="mistral-ocr-latest",
-            OPENAI_MODEL_SECTION=os.getenv("OPENAI_MODEL_SECTION", "gpt-4.1"),  # Modèle pour la détection de section
-            OPENAI_MODEL_EXTRACTION=os.getenv("OPENAI_MODEL_EXTRACTION", "gpt-4.1-mini"),  # Modèle pour l'extraction de compétences
+            OPENAI_MODEL_SECTION=OPENAI_MODEL_SECTION,  # Modèle pour la détection de section
+            OPENAI_MODEL_EXTRACTION=OPENAI_MODEL_EXTRACTION,  # Modèle pour l'extraction de compétences
             WTF_CSRF_ENABLED=True,
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),
@@ -148,8 +158,8 @@ def create_app(testing=False):
             SESSION_TYPE='filesystem',
             SESSION_FILE_DIR=os.path.join(BASE_DIR, 'flask_sessions'),  # si filesystem
             SESSION_PERMANENT=False,
-            CELERY_BROKER_URL='redis://127.0.0.1:6379/0',
-            CELERY_RESULT_BACKEND='redis://127.0.0.1:6379/0',
+            CELERY_BROKER_URL=CELERY_BROKER_URL,
+            CELERY_RESULT_BACKEND=CELERY_RESULT_BACKEND,
             TXT_OUTPUT_DIR=os.path.join(BASE_DIR, 'txt_outputs')
         )
         Session(app)
@@ -196,7 +206,7 @@ def create_app(testing=False):
 
     if not testing:
         migrate = Migrate(app, db)
-        worker_id = os.getenv('GUNICORN_WORKER_ID')
+        worker_id = GUNICORN_WORKER_ID
         is_primary_worker = worker_id == '0' or worker_id is None
 
     init_celery(app)
@@ -324,14 +334,14 @@ def create_app(testing=False):
     if not testing:
         # Production-only setup
         # Only start the scheduler if NOT running in a Celery worker
-        if not os.environ.get("CELERY_WORKER"):
+        if not CELERY_WORKER:
             with app.app_context():
                 # Set WAL journal mode
                 with db.engine.connect() as connection:
                     connection.execute(text('PRAGMA journal_mode=WAL;'))
 
                 # Determine if this is the primary worker
-                worker_id = os.getenv('GUNICORN_WORKER_ID')
+                worker_id = GUNICORN_WORKER_ID
                 is_primary_worker = worker_id == '0' or worker_id is None
 
                 if not scheduler.running and is_primary_worker:

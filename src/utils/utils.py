@@ -10,7 +10,6 @@ import unicodedata
 from jinja2 import Template
 from bs4 import BeautifulSoup
 from docxtpl import DocxTemplate
-from dotenv import load_dotenv
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, TimeField, BooleanField
 from wtforms.validators import DataRequired, Email
