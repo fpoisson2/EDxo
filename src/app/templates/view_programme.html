@@ -85,47 +85,43 @@
                     <div class="card h-100 d-flex flex-column">
                 {% set bgc = c.fil_conducteur.couleur if c.fil_conducteur else '#f2f2f2' %}
                 {% set txtc = 'black' if bgc|brightness > 128 else 'white' %}
-                <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}"
-                         class="text-decoration-none d-flex align-items-center justify-content-center card-header"
-                         style="
-                             background-color: {{ bgc }};
-                             color: {{ txtc }};
-                             min-height: 3rem; 
-                             text-align: center; 
-                             word-wrap: break-word; 
-                             white-space: break-spaces; 
-                             overflow: hidden;
-                         ">
-                         <span><strong>{{ c.code }}</strong> - {{ c.nom }}</span>
-                      </a>
-
                       <div class="card-body p-2 flex-grow-1">
-                        <p><strong>Heures :</strong> {{ c.heures_theorie }} - {{ c.heures_laboratoire }} - {{ c.heures_travail_maison }}</p>
-                        <p><strong>Compétences :</strong>
-                          {% if competencies_codes[c.id] %}
-                            {% for code in competencies_codes[c.id] %}
-                              <a href="{{ url_for('programme.view_competence_by_code', competence_code=code) }}" class="badge bg-primary text-white">{{ code }}</a>
-                            {% endfor %}
-                          {% else %}
-                            <em>Aucune</em>
-                          {% endif %}
-                        </p>
-                        <p><strong>Prérequis :</strong>
-                          {% if prerequisites[c.id] %}
-                            {% for prereq, note in prerequisites[c.id] %}
-                              {{ prereq }} ({{ note }}%)
-                            {% endfor %}
-                          {% else %}
-                            <em>Aucun</em>
-                          {% endif %}
-                        </p>
-                        <p><strong>Co-requis :</strong>
-                          {% if corequisites[c.id] %}
-                            {{ corequisites[c.id]|join(', ') }}
-                          {% else %}
-                            <em>Aucun</em>
-                          {% endif %}
-                        </p>
+                        <h6 class="card-title text-center mb-2" style="background-color: {{ bgc }}; color: {{ txtc }}; padding: 0.4rem; word-wrap: break-word; white-space: break-spaces; overflow: hidden;">
+                          <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}" class="text-decoration-none" style="color: inherit;">
+                            <strong>{{ c.code }}</strong> - {{ c.nom }}
+                          </a>
+                        </h6>
+                        <p class="mb-2"><strong>Heures :</strong> {{ c.heures_theorie }} - {{ c.heures_laboratoire }} - {{ c.heures_travail_maison }}</p>
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#details-{{ c.id }}" aria-expanded="false" aria-controls="details-{{ c.id }}">
+                          Détails
+                        </button>
+                        <div id="details-{{ c.id }}" class="collapse mt-2">
+                          <p><strong>Compétences :</strong>
+                            {% if competencies_codes[c.id] %}
+                              {% for code in competencies_codes[c.id] %}
+                                <a href="{{ url_for('programme.view_competence_by_code', competence_code=code) }}" class="badge bg-primary text-white">{{ code }}</a>
+                              {% endfor %}
+                            {% else %}
+                              <em>Aucune</em>
+                            {% endif %}
+                          </p>
+                          <p><strong>Prérequis :</strong>
+                            {% if prerequisites[c.id] %}
+                              {% for prereq, note in prerequisites[c.id] %}
+                                {{ prereq }} ({{ note }}%)
+                              {% endfor %}
+                            {% else %}
+                              <em>Aucun</em>
+                            {% endif %}
+                          </p>
+                          <p><strong>Co-requis :</strong>
+                            {% if corequisites[c.id] %}
+                              {{ corequisites[c.id]|join(', ') }}
+                            {% else %}
+                              <em>Aucun</em>
+                            {% endif %}
+                          </p>
+                        </div>
                       </div>
 
                       <!-- Boutons Plan-Cadre et Plan-de-cours -->
@@ -190,16 +186,10 @@
   .card:hover {
     transform: scale(1.02);
   }
-  .card-header {
-    font-size: 0.9rem;
-    padding: 0.4rem;
-    text-align: center;
-    white-space: normal;
-  }
-  .card-body {
-    padding: 0.4rem;
-    font-size: 0.75rem;
-  }
+    .card-body {
+      padding: 0.4rem;
+      font-size: 0.75rem;
+    }
   .card-body p {
     margin-bottom: 0.2rem;
   }
