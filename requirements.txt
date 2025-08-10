@@ -1,11 +1,11 @@
 flask
 flask-wtf
+flask-session
 flask-ckeditor
 python-dotenv
 beautifulsoup4
 docxtpl
 flask-login
-flask-wtf
 openai
 markdown
 bleach
@@ -25,9 +25,5 @@ pytest
 celery
 redis
 requests
-beautifulsoup4
 PyPDF2
-python-dotenv
 mistralai
-openai
-Flask
