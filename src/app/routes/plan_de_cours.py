@@ -21,7 +21,7 @@ from ..models import (
     db, Cours, PlanCadre, User,
     PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
     PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, Programme,
-    PlanDeCoursPromptSettings
+    PlanDeCoursPromptSettings, ChatModelConfig
 )
 from utils.decorator import ensure_profile_completed
 from utils.openai_pricing import calculate_call_cost
@@ -186,7 +186,13 @@ def generate_content():
         print(f"Clé manquante dans le contexte : {e}")
         return jsonify({'error': f'Variable manquante dans le contexte: {str(e)}'}), 400
 
-    ai_model = "gpt-4o"
+    cfg = ChatModelConfig.get_current()
+    override = (
+        data.get('model')
+        or request.args.get('model')
+        or request.form.get('model')
+    )
+    ai_model = override or current_app.config.get('DEFAULT_CHAT_MODEL') or cfg.chat_model
 
 
     user = db.session.query(User).with_for_update().get(current_user.id)

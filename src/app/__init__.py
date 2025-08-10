@@ -128,6 +128,7 @@ def create_app(testing=False):
             MISTRAL_MODEL_OCR="mistral-ocr-latest",
             OPENAI_MODEL_SECTION = "gpt-4.1", # Modèle pour la détection de section
             OPENAI_MODEL_EXTRACTION = "gpt-4.1-mini", # Modèle pour l'extraction de compétences
+            DEFAULT_CHAT_MODEL=os.getenv('DEFAULT_CHAT_MODEL'),
             WTF_CSRF_ENABLED=True,
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),
@@ -143,6 +144,7 @@ def create_app(testing=False):
         )
         Session(app)
 
+    app.config.setdefault('DEFAULT_CHAT_MODEL', os.getenv('DEFAULT_CHAT_MODEL'))
     # Jinja filter to compute perceived brightness of a hex color
     def brightness(hex_color):
         if not hex_color:

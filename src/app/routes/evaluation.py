@@ -43,7 +43,8 @@ from ..models import (
     EvaluationSavoirFaire,
     PlanCadreCapaciteSavoirsFaire,
     GrillePromptSettings,
-    User
+    User,
+    ChatModelConfig,
 )
 from utils.decorator import roles_required, ensure_profile_completed
 from utils.openai_pricing import calculate_call_cost
@@ -460,7 +461,13 @@ def generate_six_level_grid():
     if not user or not user.openai_key:
         return jsonify({'error': 'Clé OpenAI non configurée'}), 400
 
-    ai_model = "gpt-4o"
+    cfg = ChatModelConfig.get_current()
+    override = (
+        data.get('model')
+        or request.args.get('model')
+        or request.form.get('model')
+    )
+    ai_model = override or current_app.config.get('DEFAULT_CHAT_MODEL') or cfg.chat_model
 
     user_credits = user.credits
     user_id = current_user.id

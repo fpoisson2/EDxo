@@ -1,6 +1,6 @@
 # chat.py – Responses API + DEBUG (SDK 1.23 → ≥1.25) - WITH ADDED LOGGING
 import json, pprint, tiktoken, logging
-from flask import Blueprint, render_template, request, Response, stream_with_context, session
+from flask import Blueprint, render_template, request, Response, stream_with_context, session, current_app
 from flask_login import login_required, current_user
 from openai import OpenAI, OpenAIError
 import itertools
@@ -430,7 +430,9 @@ def send_message():
 
     client = OpenAI(api_key=current_user.openai_key)
     cfg = ChatModelConfig.get_current()
-    chat_model = cfg.chat_model or "gpt-4.1-mini"
+    override = data.get("model") or request.args.get("model") or request.form.get("model")
+    default_model = current_app.config.get("DEFAULT_CHAT_MODEL") or cfg.chat_model
+    chat_model = override or default_model
     tool_model = cfg.tool_model or chat_model
     reasoning_effort = cfg.reasoning_effort
     verbosity = cfg.verbosity
