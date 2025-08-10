@@ -2,10 +2,10 @@ import threading
 from functools import wraps
 import logging
 from datetime import datetime
-import os
 from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 
 from utils.backup_utils import send_backup_email, get_scheduler_instance, send_backup_email_with_context
+from config.env import GUNICORN_WORKER_ID
 
 from app.models import BackupConfig
 
@@ -23,8 +23,7 @@ def with_scheduler_lock(f):
     return wrapper
 
 def is_main_process():
-    worker_id = os.getenv("GUNICORN_WORKER_ID")
-    return worker_id is None or worker_id == "0"
+    return GUNICORN_WORKER_ID is None or GUNICORN_WORKER_ID == "0"
 
 def start_scheduler():
     if not scheduler.running and is_main_process():
