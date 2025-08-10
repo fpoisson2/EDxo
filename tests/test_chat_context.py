@@ -73,6 +73,7 @@ def test_context_persisted_after_tool_call(client, app, monkeypatch):
     monkeypatch.setattr(chat, "ResponseOutputItemAddedEvent", FakeFunctionCallAddedEvent)
     monkeypatch.setattr(chat, "ResponseFunctionCallArgumentsDeltaEvent", FakeFunctionCallArgumentsDeltaEvent)
     monkeypatch.setattr(chat, "ResponseOutputItemDoneEvent", FakeFunctionCallDoneEvent)
+    monkeypatch.setattr(chat, "ResponseCompletedEvent", FakeResponseCompletedEvent)
     chat.OUTPUT_ITEM_EVENTS = (FakeFunctionCallAddedEvent, FakeFunctionCallDoneEvent)
     chat.TEXT_EVENTS = (FakeTextDeltaEvent, FakeFunctionCallAddedEvent)
 
@@ -98,6 +99,7 @@ def test_context_persisted_after_tool_call(client, app, monkeypatch):
             def gen():
                 yield FakeResponseCreatedEvent("id2")
                 yield FakeTextDeltaEvent("done", "id2")
+                yield FakeResponseCompletedEvent("id2")
             return gen()
 
     monkeypatch.setattr(chat, "safe_openai_stream", fake_safe_openai_stream)
@@ -123,6 +125,7 @@ def test_context_persisted_after_tool_call(client, app, monkeypatch):
         def gen():
             yield FakeResponseCreatedEvent("id3")
             yield FakeTextDeltaEvent("next", "id3")
+            yield FakeResponseCompletedEvent("id3")
         return gen()
 
     monkeypatch.setattr(chat, "safe_openai_stream", fake_safe_openai_stream_second)

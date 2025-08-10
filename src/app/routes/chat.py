@@ -330,33 +330,25 @@ def handle_list_all_plan_cadre():
 # Centralized function to manage ID based on events
 def maybe_store_id(ev):
     """Persist response ID for follow-up calls and finalize after text output."""
-    from openai.types.responses import ResponseCompletedEvent
+    if ResponseCompletedEvent is None or not isinstance(ev, ResponseCompletedEvent):
+        return
 
     current_id_before = session.get("last_response_id")
-    event_type = ev.__class__.__name__ if hasattr(ev, "__class__") else type(ev).__name__
     response_id = getattr(getattr(ev, "response", None), "id", None)
     if not response_id:
         return
 
-    if isinstance(ev, ResponseCompletedEvent):
-        is_function_call = False
-        if ev.response and getattr(ev.response, "output", None):
-            first = ev.response.output[0]
-            is_function_call = getattr(first, "type", "") == "function_call"
+    is_function_call = False
+    if ev.response and getattr(ev.response, "output", None):
+        first = ev.response.output[0]
+        is_function_call = getattr(first, "type", "") == "function_call"
 
-        if is_function_call:
-            session["last_response_id"] = response_id
-            session.modified = True
-            print(
-                f"[DEBUG LOG] maybe_store_id ({event_type}): Function call, preserving ID '{response_id}' (before='{current_id_before}')."
-            )
-        else:
-            session["last_response_id"] = response_id
-            session.modified = True
-            print(
-                f"[DEBUG LOG] maybe_store_id ({event_type}): Final text, updated last_response_id from '{current_id_before}' to '{response_id}'."
-            )
-
+    session["last_response_id"] = response_id
+    session.modified = True
+    if is_function_call:
+        print(f"[DEBUG] function_call → preserve ID '{response_id}' (before {current_id_before})")
+    else:
+        print(f"[DEBUG] final text → update last_response_id {current_id_before} → {response_id}")
 # --- Safe Stream Wrapper ---
 # (safe_openai_stream reste majoritairement inchangé, mais on lira l'ID depuis current_user maintenant)
 def safe_openai_stream(**kwargs):
