@@ -1,6 +1,6 @@
 # chat.py – Responses API + DEBUG (SDK 1.23 → ≥1.25) - WITH ADDED LOGGING
 import json, pprint, tiktoken, logging
-from flask import Blueprint, render_template, request, Response, stream_with_context, session
+from flask import Blueprint, render_template, request, Response, stream_with_context, session, current_app
 from flask_login import login_required, current_user
 from openai import OpenAI, OpenAIError
 import itertools
@@ -61,7 +61,9 @@ def extract_text(ev):
 
 
 # ─── token util ─────────────────────────────────────────────────
-def estimate_tokens_for_text(txt: str, model="gpt-4.1"):
+def estimate_tokens_for_text(txt: str, model=None):
+    if model is None:
+        model = current_app.config.get("OPENAI_MODEL_SECTION")
     try:
         enc = tiktoken.encoding_for_model(model)
     except KeyError:
