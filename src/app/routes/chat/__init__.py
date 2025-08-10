@@ -7,6 +7,7 @@ from .history import add_message, get_last_messages
 from .stream import simple_stream
 from app.forms import ChatForm
 from types import SimpleNamespace
+from openai import OpenAI, OpenAIError
 
 chat = Blueprint("chat", __name__)
 
@@ -29,7 +30,15 @@ def send_message():
     message = data.get("message", "")
     add_message(current_user.id, "user", message)
     history = get_last_messages(current_user.id)
-    reply = f"Je suis un bot, vous avez dit : {message}"
+    messages = [{"role": m.role, "content": m.content} for m in history]
+
+    try:
+        client = OpenAI(api_key=current_user.openai_key)
+        response = client.responses.create(model="gpt-4o-mini", input=messages)
+        reply = response.output[0].content[0].text
+    except OpenAIError:
+        reply = "Erreur lors de l'appel à OpenAI"
+
     add_message(current_user.id, "assistant", reply)
     generator = simple_stream(reply, history)
     return Response(stream_with_context(generator), mimetype="text/event-stream")

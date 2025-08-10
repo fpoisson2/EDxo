@@ -1,5 +1,7 @@
 import json
 from werkzeug.security import generate_password_hash
+from types import SimpleNamespace
+import sys
 
 
 def get_model_by_name(model_name, db):
@@ -32,6 +34,7 @@ def login(client, app, monkeypatch):
                 role="admin",
                 credits=100.0,
                 is_first_connexion=False,
+                openai_key="sk-test",
             )
             db.session.add(user)
             db.session.commit()
@@ -47,7 +50,20 @@ def login(client, app, monkeypatch):
     )
 
 
+class FakeResponses:
+    def create(self, model, input):
+        text = f"Je suis un bot, vous avez dit : {input[-1]['content']}"
+        return SimpleNamespace(output=[SimpleNamespace(content=[SimpleNamespace(text=text)])])
+
+
+class FakeOpenAI:
+    def __init__(self, api_key=None):
+        self.responses = FakeResponses()
+
+
 def test_send_message_returns_assistant_response(client, app, monkeypatch):
+    chat_module = sys.modules["src.app.routes.chat"]
+    monkeypatch.setattr(chat_module, "OpenAI", FakeOpenAI)
     login(client, app, monkeypatch)
     resp = client.post("/chat/send", json={"message": "bonjour"})
     payloads = [line for line in resp.data.decode().split("\n") if line.startswith("data: ")]
