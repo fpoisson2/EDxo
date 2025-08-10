@@ -216,6 +216,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.Text, nullable=False)
     password = db.Column(db.Text, nullable=False)
     last_openai_response_id = db.Column(db.String, nullable=True)
+    last_openai_response_model = db.Column(db.String, nullable=True)
     # Nouveaux champs
     image = db.Column(db.Text, nullable=True)
     nom = db.Column(db.Text, nullable=True)
