@@ -6,7 +6,6 @@ from collections import OrderedDict
 
 import bleach
 import markdown
-import requests
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy import func  # Add this at the top with your other imports
@@ -68,6 +67,7 @@ from utils.utils import (
     get_cegep_details_data,
     send_reset_email
 )
+from utils.recaptcha import verify_recaptcha
 
 logger = logging.getLogger(__name__)
 
@@ -104,15 +104,7 @@ def forgot_password():
         if not recaptcha_token:
             flash("Le token reCAPTCHA est manquant. Veuillez réessayer.", "danger")
             return redirect(url_for('main.forgot_password'))
-        verify_url = "https://www.google.com/recaptcha/api/siteverify"
-        payload = {
-            'secret': current_app.config['RECAPTCHA_SECRET_KEY'],
-            'response': recaptcha_token,
-            'remoteip': request.remote_addr
-        }
-        response = requests.post(verify_url, data=payload)
-        result = response.json()
-        if not result.get('success', False) or result.get('score', 0) < 0.5:
+        if not verify_recaptcha(recaptcha_token):
             flash("La vérification reCAPTCHA a échoué. Veuillez réessayer.", "danger")
             return redirect(url_for('main.forgot_password'))
 
@@ -143,15 +135,7 @@ def reset_password(token):
         if not recaptcha_token:
             flash("Le token reCAPTCHA est manquant. Veuillez réessayer.", "danger")
             return redirect(url_for('main.reset_password', token=token))
-        verify_url = "https://www.google.com/recaptcha/api/siteverify"
-        payload = {
-            'secret': current_app.config['RECAPTCHA_SECRET_KEY'],
-            'response': recaptcha_token,
-            'remoteip': request.remote_addr
-        }
-        response = requests.post(verify_url, data=payload)
-        result = response.json()
-        if not result.get('success', False) or result.get('score', 0) < 0.5:
+        if not verify_recaptcha(recaptcha_token):
             flash("La vérification reCAPTCHA a échoué. Veuillez réessayer.", "danger")
             return redirect(url_for('main.reset_password', token=token))
 
@@ -261,17 +245,7 @@ def login():
             flash("Le token reCAPTCHA est manquant. Veuillez réessayer.", "danger")
             return redirect(url_for('main.login'))
 
-        verify_url = "https://www.google.com/recaptcha/api/siteverify"
-        payload = {
-            'secret': current_app.config['RECAPTCHA_SECRET_KEY'],
-            'response': recaptcha_token,
-            'remoteip': request.remote_addr
-        }
-        response = requests.post(verify_url, data=payload)
-        result = response.json()
-
-        # Seuil à ajuster selon vos besoins (ex. 0.5)
-        if not result.get('success', False) or result.get('score', 0) < 0.5:
+        if not verify_recaptcha(recaptcha_token):
             flash("La vérification reCAPTCHA a échoué. Veuillez réessayer.", "danger")
             return redirect(url_for('main.login'))
 
