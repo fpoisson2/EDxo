@@ -1,6 +1,6 @@
 from flask_login import current_user
 from sqlalchemy import event
-from datetime import datetime
+from datetime import datetime, timezone
 import sqlalchemy.exc
 from src.extensions import db
 
@@ -72,7 +72,7 @@ def track_changes(mapper, connection, target, operation):
             DBChange.__table__.insert(),
             {
                 # Utiliser un objet datetime UTC pour la colonne DateTime
-                'timestamp': datetime.utcnow(),
+                'timestamp': datetime.now(timezone.utc),
                 'user_id': current_user.id if current_user and current_user.is_authenticated else None,
                 'operation': operation,
                 'table_name': target.__tablename__,

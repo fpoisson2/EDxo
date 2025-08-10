@@ -48,3 +48,8 @@ def ensure_profile_completed(f):
             return redirect(url_for('main.welcome'))
         return f(*args, **kwargs)
     return decorated_function
+
+# Mark a route as public (no auth redirect in before_request)
+def public_route(f):
+    f.is_public = True
+    return f

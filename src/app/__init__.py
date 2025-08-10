@@ -36,6 +36,15 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 # Import models and routes
 from . import models
 from .routes import routes
+# Import route modules that extend the 'main' blueprint
+from .routes import admin_cegeps  # noqa: F401
+from .routes import admin_programmes  # noqa: F401
+from .routes import programmes_cegep  # noqa: F401
+from .routes import admin_users  # noqa: F401
+from .routes import courses_management  # noqa: F401
+from .routes import competences_management  # noqa: F401
+from .routes import fil_conducteur_routes  # noqa: F401
+from .routes import settings_departements  # noqa: F401
 from .routes.chat import chat
 # Import blueprints
 from .routes.cours import cours_bp
@@ -57,8 +66,6 @@ from utils.db_tracking import init_change_tracking
 from utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 
 from werkzeug.security import generate_password_hash
-
-from dotenv import load_dotenv 
 
 from celery_app import celery, init_celery 
 
@@ -108,7 +115,7 @@ def create_app(testing=False):
             os.makedirs(DB_DIR)
         DB_PATH = os.path.join(DB_DIR, "programme.db")
 
-        print(f"🔍 Debug: Static folder -> {app.static_folder}")
+        # Static folder resolved via app.static_folder
 
         base_path = Path(__file__).parent.parent
 
@@ -212,17 +219,13 @@ def create_app(testing=False):
 
     @app.before_request
     def before_request():
-        # Define endpoints that do not require authentication
-        PUBLIC_ENDPOINTS = {
-            'static',
-            'main.login',
-            'main.get_credit_balance',
-            'version',
-            'main.forgot_password',
-            'main.reset_password'
-        }
-
-        if request.endpoint in PUBLIC_ENDPOINTS or request.path.startswith('/static/'):
+        # Allow static files and explicitly public routes to bypass auth redirect
+        view_func = app.view_functions.get(request.endpoint)
+        if (
+            request.endpoint == 'static' or
+            request.path.startswith('/static/') or
+            (view_func is not None and getattr(view_func, 'is_public', False))
+        ):
             return
 
         if not current_user.is_authenticated:
@@ -252,10 +255,22 @@ def create_app(testing=False):
             session['last_activity'] = now.isoformat()
 
             # Update 'last_login' at most once per minute
-            if (not current_user.last_login or
-                    (datetime.utcnow() - current_user.last_login).total_seconds() > 60):
-                current_user.last_login = datetime.utcnow()
+            if not current_user.last_login:
+                current_user.last_login = datetime.now(timezone.utc)
                 db.session.commit()
+            else:
+                try:
+                    last_login = current_user.last_login
+                    # Ensure timezone-aware comparison
+                    if getattr(last_login, 'tzinfo', None) is None:
+                        last_login = last_login.replace(tzinfo=timezone.utc)
+                    if (datetime.now(timezone.utc) - last_login).total_seconds() > 60:
+                        current_user.last_login = datetime.now(timezone.utc)
+                        db.session.commit()
+                except Exception:
+                    # Fallback: set last_login safely
+                    current_user.last_login = datetime.now(timezone.utc)
+                    db.session.commit()
 
         except SQLAlchemyError as e:
             logger.error(f"❌ Database error: {e}")
@@ -270,9 +285,7 @@ def create_app(testing=False):
             session.modified = True
         return response
 
-    @app.route('/version')
-    def version():
-        return jsonify(version=__version__)
+    # '/version' is now served by the main blueprint
 
     def checkpoint_wal():
         with app.app_context():
