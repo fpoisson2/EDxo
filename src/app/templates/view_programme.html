@@ -8,14 +8,14 @@
   </div>
 
   <!-- Statistiques sur le Programme et Fils Conducteurs -->
-  <div class="d-flex justify-content-between align-items-start mb-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start mb-4">
     <div>
       <p><strong>Total d'heures théoriques :</strong> {{ total_heures_theorie }} heures</p>
       <p><strong>Total d'heures pratiques :</strong> {{ total_heures_laboratoire }} heures</p>
       <p><strong>Total d'heures de travail à la maison :</strong> {{ total_heures_travail_maison }} heures</p>
       <p><strong>Total d'unités :</strong> {{ "%.2f"|format(total_unites) }}</p>
     </div>
-    <div class="small text-muted text-end" style="max-width: 40%; margin-top: 0; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+    <div class="small text-muted text-end" style="margin-top: 0; display: flex; flex-wrap: wrap; gap: 0.5rem;">
       <h5 style="flex-basis: 100%;">Fils Conducteurs 
         {% if current_user.role in ['admin', 'coordo'] %}
           <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-sm btn-primary">Ajouter</a>
