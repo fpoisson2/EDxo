@@ -508,6 +508,10 @@ def send_message():
     # --- Construct Final Input ---
     inp = []
     prev_id = current_user.last_openai_response_id
+    prev_model = current_user.last_openai_response_model
+    if prev_id and prev_model:
+        chat_model = prev_model
+        tool_model = prev_model
     print(f"[DEBUG LOG] Constructing API input. prev_id={prev_id}. History items to add={len(history_input)}")
 
     # Add system prompt ONLY if there's no previous ID (start of a conversation state)
@@ -716,7 +720,7 @@ def send_message():
                         if verbosity in {"low", "medium", "high"}:
                             text_params["verbosity"] = verbosity
                         follow_kwargs = dict(
-                            model=tool_model,
+                            model=chat_model,
                             previous_response_id=id_for_followup,
                             input=[{"type": "function_call_output", "call_id": call_id, "output": tool_result_json}],
                             tool_choice="auto",
@@ -820,6 +824,7 @@ def send_message():
                     user_to_update = db.session.get(User, current_user.id)
                     if user_to_update:
                         user_to_update.last_openai_response_id = final_id_to_persist_for_api
+                        user_to_update.last_openai_response_model = chat_model
                         db.session.commit()
                         print(f"[DB LOG] COMMITTED final last_openai_response_id for user {current_user.id} to {final_id_to_persist_for_api}")
                     else:
