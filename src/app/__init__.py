@@ -26,7 +26,7 @@ from flask_session import Session
 from flask import Flask, session, jsonify, redirect, url_for, request, current_app
 from flask_login import current_user, logout_user, UserMixin
 from flask_migrate import Migrate
-from sqlalchemy import text, UniqueConstraint
+from sqlalchemy import text, UniqueConstraint, inspect
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -207,6 +207,14 @@ def create_app(testing=False):
         migrate = Migrate(app, db)
         worker_id = GUNICORN_WORKER_ID
         is_primary_worker = worker_id == '0' or worker_id is None
+        if is_primary_worker:
+            with app.app_context():
+                inspector = inspect(db.engine)
+                if inspector.has_table('User'):
+                    columns = [col['name'] for col in inspector.get_columns('User')]
+                    if 'last_openai_response_model' not in columns:
+                        db.session.execute(text('ALTER TABLE "User" ADD COLUMN last_openai_response_model TEXT'))
+                        db.session.commit()
 
     init_celery(app)
 
