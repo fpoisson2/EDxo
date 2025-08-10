@@ -86,11 +86,11 @@
                 {% set bgc = c.fil_conducteur.couleur if c.fil_conducteur else '#f2f2f2' %}
                 {% set txtc = 'black' if bgc|brightness > 128 else 'white' %}
                       <div class="card-body p-2 flex-grow-1">
-                        <h6 class="card-title text-center mb-2" style="background-color: {{ bgc }}; color: {{ txtc }}; padding: 0.4rem; word-wrap: break-word; white-space: break-spaces; overflow: hidden;">
+                        <p class="card-title text-center mb-2" style="background-color: {{ bgc }}; color: {{ txtc }}; padding: 0.4rem; word-wrap: break-word; white-space: break-spaces; overflow: hidden; font-size: 0.75rem;">
                           <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}" class="text-decoration-none" style="color: inherit;">
                             <strong>{{ c.code }}</strong> - {{ c.nom }}
                           </a>
-                        </h6>
+                        </p>
                         <p class="mb-2"><strong>Heures :</strong> {{ c.heures_theorie }} - {{ c.heures_laboratoire }} - {{ c.heures_travail_maison }}</p>
                         <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#details-{{ c.id }}" aria-expanded="false" aria-controls="details-{{ c.id }}">
                           Détails
