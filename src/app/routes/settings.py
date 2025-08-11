@@ -96,13 +96,15 @@ def chat_model_settings():
 
     if form.validate_on_submit():
         config.chat_model = form.chat_model.data
-        config.tool_model = form.tool_model.data
+        # Nouveau fonctionnement: tool_model = chat_model (toujours le même modèle)
+        config.tool_model = config.chat_model
         config.reasoning_effort = form.reasoning_effort.data
         config.verbosity = form.verbosity.data
         db.session.commit()
         flash('Paramètres du chat mis à jour.', 'success')
         return redirect(url_for('settings.chat_model_settings'))
-
+    # Assurer l'affichage cohérent: refléter le couplage côté formulaire
+    form.tool_model.data = config.chat_model
     return render_template('settings/chat_models.html', form=form)
 
 @settings_bp.route('/edit_profile', methods=['GET', 'POST'])

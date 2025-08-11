@@ -382,20 +382,34 @@ def safe_openai_stream(**kwargs):
         print(f"[ERROR LOG] safe_openai_stream: Encountered OpenAIError: {e}")
         # Gérer l'erreur spécifique en N'UTILISANT PAS l'ID fautif lors de la relance
         if "No tool output found for function call" in str(e) and kwargs.get("previous_response_id"):
+            import re
             faulty_id = kwargs.get('previous_response_id')
-            print(f"[DEBUG LOG] safe_openai_stream: Specific error matched for ID '{faulty_id}'. Retrying without previous_response_id.")
-            # Pas besoin de pop de la session, on relance juste sans l'ID
+            # Try to recover by emitting a minimal error output for the pending tool call
+            m = re.search(r"function call (call_[A-Za-z0-9]+)", str(e))
+            if m:
+                call_id = m.group(1)
+                print(f"[RETRY] safe_openai_stream: Re-emitting minimal tool error for call_id={call_id} with previous_response_id={faulty_id}")
+                client = OpenAI(api_key=current_user.openai_key)
+                text_params = kwargs.get("text") or {"format": {"type": "text"}}
+                follow_kwargs = dict(
+                    model=kwargs.get("model"),
+                    previous_response_id=faulty_id,
+                    input=[{"type": "function_call_output", "call_id": call_id, "output": json.dumps({"error": "tool failed"})}],
+                    tool_choice="auto",
+                    text=text_params,
+                    stream=True,
+                )
+                if "temperature" in kwargs:
+                    follow_kwargs["temperature"] = kwargs["temperature"]
+                if "max_output_tokens" in kwargs:
+                    follow_kwargs["max_output_tokens"] = kwargs["max_output_tokens"]
+                if "reasoning" in kwargs:
+                    follow_kwargs["reasoning"] = kwargs["reasoning"]
+                return client.responses.create(**follow_kwargs)
+            # If we can't parse call_id, last resort: start new thread
+            print(f"[DEBUG LOG] safe_openai_stream: Could not parse call_id from error. Starting a new thread without previous_response_id.")
             kwargs["previous_response_id"] = None
             client = OpenAI(api_key=current_user.openai_key)
-            # ICI: Il pourrait être judicieux de mettre à jour la DB pour effacer l'ID fautif ?
-            # try:
-            #     if current_user.last_openai_response_id == faulty_id:
-            #         current_user.last_openai_response_id = None
-            #         db.session.commit()
-            #         print(f"[DB LOG] Cleared faulty response ID {faulty_id} from DB.")
-            # except Exception as db_err:
-            #     print(f"[ERROR LOG] Failed to clear faulty ID from DB: {db_err}")
-            #     db.session.rollback()
             return client.responses.create(**kwargs, stream=True)
         print(f"[ERROR LOG] safe_openai_stream: Error not handled by specific clause, re-raising.")
         raise
@@ -413,7 +427,10 @@ def index():
     #     print(f"[ERROR LOG] Failed to clear last_openai_response_id in DB on load: {db_err}")
     #     db.session.rollback()
     print("[DEBUG LOG] /chat loaded.")
-    return render_template("chat/index.html", form=ChatForm())
+    cfg = ChatModelConfig.get_current()
+    current_model = (cfg.chat_model or "gpt-4.1-mini") if cfg else "gpt-4.1-mini"
+    prev_id = current_user.last_openai_response_id
+    return render_template("chat/index.html", form=ChatForm(), chat_model_name=current_model, previous_response_id=prev_id)
 
 # ────────────────────────────────────────────────────────────────
 #  Route /chat/send - MODIFIED TO INCLUDE HISTORY
@@ -433,7 +450,8 @@ def send_message():
     client = OpenAI(api_key=current_user.openai_key)
     cfg = ChatModelConfig.get_current()
     chat_model = cfg.chat_model or "gpt-4.1-mini"
-    tool_model = cfg.tool_model or chat_model
+    # Règle stricte: tool_model = chat_model (même modèle pour initial et follow-up)
+    tool_model = chat_model
     reasoning_effort = cfg.reasoning_effort
     verbosity = cfg.verbosity
 
@@ -517,9 +535,10 @@ def send_message():
         print("[DEBUG LOG] No prev_id found, adding system prompt.")
         inp.append({"type": "message", "role": "system", "content": [{"type": "input_text", "text": "Vous êtes EDxo, un assistant IA spécialisé dans les plans de cours et plans-cadres du Cégep Garneau. Répondez de manière concise et professionnelle en français québécois."}]}) # Customize your system prompt
 
-    # Add formatted history messages
-    # IMPORTANT: Test if the API actually uses these when prev_id is present.
-    inp.extend(history_input)
+    # Add formatted history messages only when there is no prev_id
+    # Une fois previous_response_id disponible, on ne renvoie plus d'historique manuel
+    if prev_id is None:
+        inp.extend(history_input)
 
     # Add current user message LAST
     inp.append({"type": "message", "role": "user", "content": [{"type": "input_text", "text": user_msg}]})
@@ -551,6 +570,7 @@ def send_message():
     if reasoning_effort in {"minimal", "low", "medium", "high"}:
         request_kwargs["reasoning"] = {"effort": reasoning_effort}
     try:
+        print(f"[LOG] Initial call model={chat_model}, previous_response_id={prev_id}")
         raw_stream = safe_openai_stream(**request_kwargs)
         print("[DEBUG LOG] API call initiated.")
 
@@ -580,6 +600,9 @@ def send_message():
         current_request_last_created_id = None
         final_id_to_persist_for_api = None
         last_response_object_id = None
+        # Track follow-up stream latest ID to persist it preferentially
+        had_followup = False
+        last_followup_response_id = None
 
         pending_tool = False
         fn_name = fn_args_str = call_id = None
@@ -615,7 +638,11 @@ def send_message():
                 # Store the ID from ResponseCreatedEvent
                 if isinstance(ev, ResponseCreatedEvent) and response_id:
                     current_request_last_created_id = response_id
-                    print(f"[DEBUG LOG] SSE: Storing current_request_last_created_id = {current_request_last_created_id}")
+                    print(f"[LOG] Created initial response.id={current_request_last_created_id} (model={chat_model}, prev_id={prev_id})")
+
+                # Log completion events
+                if ResponseCompletedEvent is not None and isinstance(ev, ResponseCompletedEvent) and response_id:
+                    print(f"[LOG] Completed initial response.id={response_id}")
 
                 # --- Tool Call Detection and Processing ---
                 if (isinstance(ev, ResponseOutputItemAddedEvent)
@@ -624,7 +651,7 @@ def send_message():
                     fn_name = getattr(ev.item, "name", None)
                     call_id = getattr(ev.item, "call_id", None)
                     fn_args_str = "" # Reset args
-                    print(f"[DEBUG LOG] SSE: Detected function_call start: name='{fn_name}', call_id='{call_id}'")
+                    print(f"[LOG] Tool call requested: name='{fn_name}', call_id='{call_id}' on response.id={last_response_object_id}")
                     yield f"data: {json.dumps({'type': 'function_call', 'content': fn_name})}\n\n"
                     continue
 
@@ -708,7 +735,7 @@ def send_message():
                         # Maybe try to recover or just end here? Ending is safer.
                         break # Exit the main loop
 
-                    print(f"[DEBUG LOG] SSE: Preparing follow_stream call. Using previous_response_id = {id_for_followup}")
+                    print(f"[LOG] Preparing follow-up with previous_response_id={id_for_followup}, model={tool_model}, call_id={call_id}")
 
                     try:
                         print("[DEBUG LOG] SSE: Initiating follow_stream API call...")
@@ -738,6 +765,12 @@ def send_message():
                             response_id2 = getattr(getattr(ev2, 'response', None), 'id', None)
                             if response_id2:
                                 last_response_object_id = response_id2 # Update with the newest ID
+                                last_followup_response_id = response_id2
+                                had_followup = True
+                            if isinstance(ev2, ResponseCreatedEvent) and response_id2:
+                                print(f"[LOG] Created follow-up response.id={response_id2} (model={tool_model}, prev_id={id_for_followup}, call_id={call_id})")
+                            if ResponseCompletedEvent is not None and isinstance(ev2, ResponseCompletedEvent) and response_id2:
+                                print(f"[LOG] Completed follow-up response.id={response_id2} (call_id={call_id})")
 
                             # Extract and accumulate text from the follow-up
                             txt = extract_text(ev2)
@@ -748,9 +781,82 @@ def send_message():
 
                     except OpenAIError as api_e: # Handle API errors during follow-up
                         print(f"[ERROR LOG] SSE: OpenAI API Error during follow_stream for tool '{fn_name}': {api_e}")
-                        error_content = f"Erreur API OpenAI après l'exécution de l'outil {fn_name}."
-                        accumulated_assistant_text += f"\n[ERREUR] {error_content}" # Add error to log
-                        yield f"data: {json.dumps({'type': 'error', 'content': error_content})}\n\n"
+                        # Retry strategy for "No tool output found for function call"
+                        if "No tool output found for function call" in str(api_e):
+                            try:
+                                print(f"[RETRY] Re-emitting minimal error output with same previous_response_id={id_for_followup}, call_id={call_id}")
+                                minimal_err = json.dumps({"error": "tool failed"})
+                                text_params2 = {"format": {"type": "text"}}
+                                if verbosity in {"low", "medium", "high"}:
+                                    text_params2["verbosity"] = verbosity
+                                retry_kwargs = dict(
+                                    model=tool_model,
+                                    previous_response_id=id_for_followup,
+                                    input=[{"type": "function_call_output", "call_id": call_id, "output": minimal_err}],
+                                    tool_choice="auto",
+                                    text=text_params2,
+                                    stream=True,
+                                    temperature=1,
+                                    max_output_tokens=2048,
+                                )
+                                if reasoning_effort in {"minimal", "low", "medium", "high"}:
+                                    retry_kwargs["reasoning"] = {"effort": reasoning_effort}
+                                retry_stream = client.responses.create(**retry_kwargs)
+                                for ev3_count, ev3 in enumerate(retry_stream):
+                                    response_id3 = getattr(getattr(ev3, 'response', None), 'id', None)
+                                    if response_id3:
+                                        last_response_object_id = response_id3
+                                        last_followup_response_id = response_id3
+                                        had_followup = True
+                                    if isinstance(ev3, ResponseCreatedEvent) and response_id3:
+                                        print(f"[LOG] Created follow-up(retry) response.id={response_id3} (model={tool_model}, prev_id={id_for_followup}, call_id={call_id})")
+                                    if ResponseCompletedEvent is not None and isinstance(ev3, ResponseCompletedEvent) and response_id3:
+                                        print(f"[LOG] Completed follow-up(retry) response.id={response_id3} (call_id={call_id})")
+                                    txt3 = extract_text(ev3)
+                                    if txt3:
+                                        accumulated_assistant_text += txt3
+                                        yield "data: " + json.dumps({"type": "content", "content": txt3}) + "\n\n"
+                                # If retry succeeded, continue the outer loop
+                                print("[RETRY] Minimal error output follow-up completed.")
+                            except OpenAIError as retry_e:
+                                print(f"[ERROR LOG] Retry follow-up failed: {retry_e}")
+                                # Last resort: start a new thread (no previous_response_id)
+                                try:
+                                    print("[FALLBACK] Starting a new thread (nouvelle conversation) without previous_response_id due to follow-up failure.")
+                                    text_params3 = {"format": {"type": "text"}}
+                                    if verbosity in {"low", "medium", "high"}:
+                                        text_params3["verbosity"] = verbosity
+                                    new_thread_kwargs = dict(
+                                        model=tool_model,
+                                        input=[{"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "L'outil a échoué; je poursuis sans lui."}]}],
+                                        tool_choice="auto",
+                                        text=text_params3,
+                                        stream=True,
+                                        temperature=1,
+                                        max_output_tokens=2048,
+                                    )
+                                    new_thread_stream = client.responses.create(**new_thread_kwargs)
+                                    for ev4 in new_thread_stream:
+                                        response_id4 = getattr(getattr(ev4, 'response', None), 'id', None)
+                                        if response_id4:
+                                            last_response_object_id = response_id4
+                                        if isinstance(ev4, ResponseCreatedEvent) and response_id4:
+                                            print(f"[LOG] Created new-thread response.id={response_id4} (model={tool_model})")
+                                        if ResponseCompletedEvent is not None and isinstance(ev4, ResponseCompletedEvent) and response_id4:
+                                            print(f"[LOG] Completed new-thread response.id={response_id4}")
+                                        txt4 = extract_text(ev4)
+                                        if txt4:
+                                            accumulated_assistant_text += txt4
+                                            yield "data: " + json.dumps({"type": "content", "content": txt4}) + "\n\n"
+                                except Exception as new_thread_e:
+                                    print(f"[ERROR LOG] New-thread fallback failed: {new_thread_e}")
+                                    error_content = f"Erreur API OpenAI après l'exécution de l'outil {fn_name}."
+                                    accumulated_assistant_text += f"\n[ERREUR] {error_content}"
+                                    yield f"data: {json.dumps({'type': 'error', 'content': error_content})}\n\n"
+                        else:
+                            error_content = f"Erreur API OpenAI après l'exécution de l'outil {fn_name}."
+                            accumulated_assistant_text += f"\n[ERREUR] {error_content}" # Add error to log
+                            yield f"data: {json.dumps({'type': 'error', 'content': error_content})}\n\n"
                     except Exception as follow_e: # Handle generic errors during follow-up
                         print(f"[ERROR LOG] SSE: Unexpected error during follow_stream processing for tool '{fn_name}': {follow_e}")
                         error_content = "Une erreur inattendue s'est produite lors du traitement de la réponse de l'outil."
@@ -773,7 +879,10 @@ def send_message():
                     yield "data: " + json.dumps({"type": "content", "content": txt}) + "\n\n"
 
             # --- End of the main event processing loop ---
-            final_id_to_persist_for_api = last_response_object_id # The very last ID seen
+            # Prefer the last follow-up response id if one occurred; else use the last seen id
+            final_id_to_persist_for_api = last_followup_response_id if had_followup and last_followup_response_id else last_response_object_id
+            if had_followup:
+                print(f"[LOG] Prefer persisting follow-up id: {final_id_to_persist_for_api}")
             print(f"[DEBUG LOG] SSE: Event stream processing finished. Determined final_id_to_persist_for_api = {final_id_to_persist_for_api}")
             print(f"[DEBUG LOG] SSE: Accumulated final assistant text: '{accumulated_assistant_text[:100]}...'")
 
@@ -822,6 +931,7 @@ def send_message():
                         user_to_update.last_openai_response_id = final_id_to_persist_for_api
                         db.session.commit()
                         print(f"[DB LOG] COMMITTED final last_openai_response_id for user {current_user.id} to {final_id_to_persist_for_api}")
+                        print(f"[LOG] Persisted previous_response_id={final_id_to_persist_for_api}")
                     else:
                         # This should ideally not happen if the user is logged in
                         print(f"[ERROR LOG] Could not find user {current_user.id} in session to update response ID.")
@@ -833,7 +943,9 @@ def send_message():
                 # This could happen if the stream was empty or errored out immediately.
                 print("[DEBUG LOG] SSE: No final_id_to_persist_for_api determined. DB not updated for Responses API state.")
 
-            yield "data: {\"type\": \"done\"}\n\n"
+            # Emit done with model and persisted id so UI can refresh badge
+            done_payload = {"type": "done", "model": chat_model, "prev_id": final_id_to_persist_for_api}
+            yield "data: " + json.dumps(done_payload) + "\n\n"
             print(f"[DEBUG LOG] === SSE generator yielding done (Final API ID persisted: {final_id_to_persist_for_api}) === ")
 
 
