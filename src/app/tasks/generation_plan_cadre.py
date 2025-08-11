@@ -493,6 +493,129 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
 
         course_context_compact = "\n".join(context_parts) or None
 
+        # Construit un contexte des sections précédentes selon l'ordre d'affichage (view_plan_cadre)
+        previous_sections_context = None
+        try:
+            # Ordre global des sections éditables dans l'UI
+            ordered_sections = [
+                # Partie 2 — Repères généraux
+                ("place_intro", "Place et rôle du cours"),
+                ("competences_developpees", "Compétences développées"),
+                ("objets_cibles", "Objets cibles"),
+                ("competences_certifiees", "Compétences certifiées"),
+                ("cours_corequis", "Cours corequis"),
+                ("cours_prealables", "Cours préalables"),
+                # Partie 3 — Résultats visés
+                ("objectif_terminal", "Objectif terminal"),
+                ("capacites", "Capacités"),
+                # Partie 4 — Organisation de l'apprentissage
+                ("structure_intro", "Structure du cours"),
+                ("structure_activites_theoriques", "Activités théoriques"),
+                ("structure_activites_pratiques", "Activités pratiques"),
+                ("structure_activites_prevues", "Organisation du cours (activités prévues)"),
+                # Partie 5 — Évaluation
+                ("eval_evaluation_sommative", "Évaluation sommative des apprentissages"),
+                ("eval_nature_evaluations_sommatives", "Nature des évaluations sommatives"),
+                ("eval_evaluation_de_la_langue", "Évaluation de la langue"),
+                ("eval_evaluation_sommatives_apprentissages", "Évaluation formative des apprentissages"),
+                # Partie 5 — Savoir-être (affiché après les évaluations dans la vue)
+                ("savoirs_etre", "Savoir-être"),
+            ]
+
+            # Trouver le premier index ciblé (si amélioration ciblée)
+            target_idx = None
+            if improve_only and target_columns:
+                key_to_index = {k: i for i, (k, _) in enumerate(ordered_sections)}
+                for col in target_columns:
+                    if col in key_to_index:
+                        idx = key_to_index[col]
+                        if target_idx is None or idx < target_idx:
+                            target_idx = idx
+
+            def add_section(label: str, value: str, buf: list, max_len: int = 800):
+                if value and value.strip():
+                    buf.append(f"## {label}\n{clip(value, max_len)}")
+
+            def list_to_lines(items: list, label_fn, max_items: int = 6, max_len_item: int = 220):
+                lines = []
+                for it in items[:max_items]:
+                    txt = label_fn(it)
+                    if not txt:
+                        continue
+                    lines.append(f"- {clip(txt, max_len_item)}")
+                return "\n".join(lines)
+
+            if target_idx is not None and target_idx > 0:
+                blocks = []
+                for i, (key, label) in enumerate(ordered_sections[:target_idx]):
+                    if key == "place_intro":
+                        add_section(label, getattr(plan, "place_intro", ""), blocks, 900)
+                    elif key == "competences_developpees":
+                        lines = list_to_lines(list(plan.competences_developpees or []),
+                                              lambda x: (x.texte or "") + (f" — {x.description}" if getattr(x, "description", None) else ""))
+                        if lines:
+                            blocks.append(f"## {label}\n{lines}")
+                    elif key == "objets_cibles":
+                        lines = list_to_lines(list(plan.objets_cibles or []),
+                                              lambda x: (x.texte or "") + (f" — {x.description}" if getattr(x, "description", None) else ""))
+                        if lines:
+                            blocks.append(f"## {label}\n{lines}")
+                    elif key == "competences_certifiees":
+                        lines = list_to_lines(list(plan.competences_certifiees or []),
+                                              lambda x: (x.texte or "") + (f" — {x.description}" if getattr(x, "description", None) else ""))
+                        if lines:
+                            blocks.append(f"## {label}\n{lines}")
+                    elif key == "cours_corequis":
+                        lines = list_to_lines(list(plan.cours_corequis or []),
+                                              lambda x: (x.texte or "") + (f" — {x.description}" if getattr(x, "description", None) else ""))
+                        if lines:
+                            blocks.append(f"## {label}\n{lines}")
+                    elif key == "cours_prealables":
+                        lines = list_to_lines(list(plan.cours_prealables or []),
+                                              lambda x: (x.texte or "") + (f" — {x.description}" if getattr(x, "description", None) else ""))
+                        if lines:
+                            blocks.append(f"## {label}\n{lines}")
+                    elif key == "objectif_terminal":
+                        add_section(label, getattr(plan, "objectif_terminal", ""), blocks, 900)
+                    elif key == "capacites":
+                        caps = []
+                        for cap in list(plan.capacites or [])[:3]:
+                            line = (cap.capacite or "").strip()
+                            if cap.ponderation_min or cap.ponderation_max:
+                                line += f" (pondération: {int(cap.ponderation_min or 0)}–{int(cap.ponderation_max or 0)}%)"
+                            if cap.description_capacite:
+                                line += f" — {clip(cap.description_capacite, 240)}"
+                            caps.append(f"- {clip(line, 300)}")
+                        if caps:
+                            blocks.append(f"## {label}\n" + "\n".join(caps))
+                    elif key == "structure_intro":
+                        add_section(label, getattr(plan, "structure_intro", ""), blocks, 900)
+                    elif key == "structure_activites_theoriques":
+                        add_section(label, getattr(plan, "structure_activites_theoriques", ""), blocks, 900)
+                    elif key == "structure_activites_pratiques":
+                        add_section(label, getattr(plan, "structure_activites_pratiques", ""), blocks, 900)
+                    elif key == "structure_activites_prevues":
+                        add_section(label, getattr(plan, "structure_activites_prevues", ""), blocks, 900)
+                    elif key == "eval_evaluation_sommative":
+                        add_section(label, getattr(plan, "eval_evaluation_sommative", ""), blocks, 800)
+                    elif key == "eval_nature_evaluations_sommatives":
+                        add_section(label, getattr(plan, "eval_nature_evaluations_sommatives", ""), blocks, 800)
+                    elif key == "eval_evaluation_de_la_langue":
+                        add_section(label, getattr(plan, "eval_evaluation_de_la_langue", ""), blocks, 600)
+                    elif key == "eval_evaluation_sommatives_apprentissages":
+                        add_section(label, getattr(plan, "eval_evaluation_sommatives_apprentissages", ""), blocks, 800)
+                    elif key == "savoirs_etre":
+                        lines = list_to_lines(list(plan.savoirs_etre or []), lambda x: x.texte or "")
+                        if lines:
+                            blocks.append(f"## {label}\n{lines}")
+
+                if blocks:
+                    previous_sections_context = (
+                        "Contexte des sections précédentes (extrait):\n" + "\n\n".join(blocks)
+                    )
+        except Exception as _:
+            previous_sections_context = None
+
         # Note: The JSON schema is already enforced via the Responses API (text.format with strict schema).
         # Avoid embedding the full schema in the prompt to reduce input size.
         if mode == 'wand':
@@ -512,6 +635,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 f"- savoir_etre: {ai_savoir_etre}\n\n"
                 f"- capacites: {ai_capacites_prompt}\n\n"
                 + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if course_context_compact else "")
+                + (f"{previous_sections_context}\n\n" if previous_sections_context else "")
                 + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if current_capacites_snapshot else "")
                 + ("Exigences pour chaque capacité: inclure 'description_capacite', une plage 'ponderation_min'/'ponderation_max',\n"
                    "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
@@ -538,6 +662,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 f"- savoir_etre: {ai_savoir_etre}\n\n"
                 f"- capacites: {ai_capacites_prompt}\n\n"
                 + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if course_context_compact else "")
+                + (f"{previous_sections_context}\n\n" if previous_sections_context else "")
                 + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if current_capacites_snapshot else "")
                 + ("Exigences pour chaque capacité: inclure 'description_capacite', une plage 'ponderation_min'/'ponderation_max',\n"
                    "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
