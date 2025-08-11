@@ -346,7 +346,7 @@ def maybe_store_id(ev):
         session["last_response_id"] = new_id
         session.modified = True
         print(f"[DEBUG LOG] maybe_store_id ({event_type}): Set last_response_id. Before='{current_id_before}', New='{new_id}'")
-    elif isinstance(ev, ResponseCompletedEvent) and ResponseCompletedEvent is not None:
+    elif (ResponseCompletedEvent is not None) and isinstance(ev, ResponseCompletedEvent):
         # Check output type condition
         is_function_call = False
         # Check if output exists and the first item's type is function_call
@@ -616,7 +616,7 @@ def send_message():
                 if response_id:
                     last_response_object_id = response_id
 
-                if isinstance(ev, ResponseCompletedEvent) and response_id:
+                if (ResponseCompletedEvent is not None) and isinstance(ev, ResponseCompletedEvent) and response_id:
                     print(f"[DEBUG LOG] SSE Loop: Observed ResponseCompletedEvent id={response_id}")
 
                 # Store the ID from ResponseCreatedEvent
@@ -747,7 +747,7 @@ def send_message():
                                 last_response_object_id = response_id2 # Update with the newest ID
                                 if isinstance(ev2, ResponseCreatedEvent):
                                     print(f"[DEBUG LOG] SSE Follow Loop: ResponseCreatedEvent id={response_id2}")
-                            if isinstance(ev2, ResponseCompletedEvent) and response_id2:
+                            if (ResponseCompletedEvent is not None) and isinstance(ev2, ResponseCompletedEvent) and response_id2:
                                 print(f"[DEBUG LOG] SSE Follow Loop: Observed ResponseCompletedEvent id={response_id2}")
 
                             # Extract and accumulate text from the follow-up
