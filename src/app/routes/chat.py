@@ -417,20 +417,33 @@ def safe_openai_stream(**kwargs):
 @login_required
 @ensure_profile_completed
 def index():
-    # On ne vide plus l'ID ici, la conversation peut potentiellement reprendre
-    # Si vous voulez vider l'historique à chaque chargement, faites-le en DB:
-    # try:
-    #     current_user.last_openai_response_id = None
-    #     db.session.commit()
-    #     print("[DB LOG] Cleared last_openai_response_id for user on /chat load.")
-    # except Exception as db_err:
-    #     print(f"[ERROR LOG] Failed to clear last_openai_response_id in DB on load: {db_err}")
-    #     db.session.rollback()
-    print("[DEBUG LOG] /chat loaded.")
+    """Reset conversation state on page load and render the chat interface."""
+
+    # Supprime tout ID de réponse précédent côté session pour repartir à zéro.
+    session.pop("last_response_id", None)
+    session.modified = True
+
+    # Réinitialise l'ID de réponse persistant en base de données.
+    try:
+        current_user.last_openai_response_id = None
+        db.session.commit()
+        print("[DB LOG] Cleared last_openai_response_id for user on /chat load.")
+    except Exception as db_err:
+        db.session.rollback()
+        current_app.logger.error(
+            "Failed to clear last_openai_response_id in DB on /chat load: %s",
+            db_err,
+        )
+
     cfg = ChatModelConfig.get_current()
     current_model = (cfg.chat_model or "gpt-4.1-mini") if cfg else "gpt-4.1-mini"
     prev_id = current_user.last_openai_response_id
-    return render_template("chat/index.html", form=ChatForm(), chat_model_name=current_model, previous_response_id=prev_id)
+    return render_template(
+        "chat/index.html",
+        form=ChatForm(),
+        chat_model_name=current_model,
+        previous_response_id=prev_id,
+    )
 
 # ────────────────────────────────────────────────────────────────
 #  Route /chat/send - MODIFIED TO INCLUDE HISTORY
