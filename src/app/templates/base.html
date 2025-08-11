@@ -153,6 +153,13 @@
       .header-container .dropdown-menu {
         z-index: 2000;
       }
+      /* S'assurer que les modaux passent au-dessus du header et des menus */
+      .modal-backdrop {
+        z-index: 2050;
+      }
+      .modal {
+        z-index: 2060;
+      }
       /* Flash Messages */
       .flash-message {
         opacity: 0;
