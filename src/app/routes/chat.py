@@ -513,8 +513,10 @@ def send_message():
 
     # --- Construct Final Input ---
     inp = []
-    prev_id = current_user.last_openai_response_id
-    print(f"[DEBUG LOG] Constructing API input. prev_id={prev_id}. History items to add={len(history_input)}")
+    prev_id = session.get("last_response_id") or current_user.last_openai_response_id
+    print(
+        f"[DEBUG LOG] Constructing API input. prev_id={prev_id}. History items to add={len(history_input)}"
+    )
 
     # Add system prompt and history only if there is no previous_response_id
     # Once prev_id exists, we rely on server-side state exclusively
@@ -610,6 +612,9 @@ def send_message():
             # ... (The entire loop processing events, handling tools, calling follow_stream, accumulating text, etc. remains the same) ...
             for ev_count, ev in enumerate(event_iterator):
                 print(f"[DEBUG LOG] SSE Loop ({ev_count}): Processing event type: {ev.__class__.__name__}")
+
+                # Persist IDs as events arrive
+                maybe_store_id(ev)
 
                 # Track the last response ID seen
                 response_id = getattr(getattr(ev, 'response', None), 'id', None)
@@ -741,6 +746,10 @@ def send_message():
                         print("[DEBUG LOG] SSE: Processing follow_stream...")
                         for ev2_count, ev2 in enumerate(follow_stream):
                             print(f"[DEBUG LOG] SSE Follow Loop ({ev2_count}): Processing event type: {ev2.__class__.__name__}")
+
+                            # Persist IDs as events arrive
+                            maybe_store_id(ev2)
+
                             # Track the latest response ID seen (from the follow-up stream)
                             response_id2 = getattr(getattr(ev2, 'response', None), 'id', None)
                             if response_id2:
@@ -826,23 +835,33 @@ def send_message():
 
             # --- Commit Final Response ID for API State (Separate Commit) ---
             if final_id_to_persist_for_api:
+                session["last_response_id"] = final_id_to_persist_for_api
+                session.modified = True
                 try:
                     # Re-fetch the user within the session context for update
                     user_to_update = db.session.get(User, current_user.id)
                     if user_to_update:
                         user_to_update.last_openai_response_id = final_id_to_persist_for_api
                         db.session.commit()
-                        print(f"[DB LOG] COMMITTED final last_openai_response_id for user {current_user.id} to {final_id_to_persist_for_api}")
+                        print(
+                            f"[DB LOG] COMMITTED final last_openai_response_id for user {current_user.id} to {final_id_to_persist_for_api}"
+                        )
                     else:
                         # This should ideally not happen if the user is logged in
-                        print(f"[ERROR LOG] Could not find user {current_user.id} in session to update response ID.")
-                        db.session.rollback() # Rollback just this attempted ID update
+                        print(
+                            f"[ERROR LOG] Could not find user {current_user.id} in session to update response ID."
+                        )
+                        db.session.rollback()  # Rollback just this attempted ID update
                 except Exception as db_err:
-                    print(f"[ERROR LOG] FAILED to commit final last_openai_response_id to DB: {db_err}")
-                    db.session.rollback() # Rollback just this attempted ID update
+                    print(
+                        f"[ERROR LOG] FAILED to commit final last_openai_response_id to DB: {db_err}"
+                    )
+                    db.session.rollback()  # Rollback just this attempted ID update
             else:
                 # This could happen if the stream was empty or errored out immediately.
-                print("[DEBUG LOG] SSE: No final_id_to_persist_for_api determined. DB not updated for Responses API state.")
+                print(
+                    "[DEBUG LOG] SSE: No final_id_to_persist_for_api determined. DB not updated for Responses API state."
+                )
 
             yield "data: {\"type\": \"done\"}\n\n"
             print(f"[DEBUG LOG] === SSE generator yielding done (Final API ID persisted: {final_id_to_persist_for_api}) === ")
