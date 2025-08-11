@@ -20,46 +20,40 @@
             <i class="fas fa-file-import"></i> Importer une grille
           </a>
           {% endif %}
+          <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#vp-fil-bar" aria-expanded="false" aria-controls="vp-fil-bar">
+            <i class="bi bi-tags"></i> Fils
+          </button>
         </div>
       </div>
 
-      <div class="mt-2">
-        <div class="text-muted fw-semibold mb-1">Fils conducteurs
-          {% if current_user.role in ['admin', 'coordo'] %}
-          <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-xs btn-primary ms-2">Ajouter</a>
-          {% endif %}
-        </div>
-        <div class="vp-fil-list">
+      <div id="vp-fil-bar" class="collapse mt-2">
+        <div class="vp-fil-list" role="list">
           {% for fil in fil_conducteurs %}
-            {% set bg = fil.couleur or '#ffffff' %}
-            {% set txt = 'black' if bg|brightness > 128 else 'white' %}
-            {% if current_user.role in ['admin', 'coordo'] %}
-            <a class="vp-fil-tag" href="{{ url_for('main.edit_fil_conducteur', fil_id=fil.id) }}" style="background-color: {{ bg }}; color: {{ txt }}; text-decoration: none;">
-              {{ fil.description }}
-            </a>
-            {% else %}
-            <span class="vp-fil-tag" style="background-color: {{ bg }}; color: {{ txt }};">{{ fil.description }}</span>
-            {% endif %}
+            {% set bg = fil.couleur or '#cccccc' %}
+            <span class="vp-fil-dot" title="{{ fil.description }}" style="--dot: {{ bg }}"></span>
           {% else %}
             <span class="vp-empty">Aucun fil conducteur</span>
           {% endfor %}
+          {% if current_user.role in ['admin', 'coordo'] %}
+            <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-xs btn-primary ms-2">Ajouter</a>
+          {% endif %}
         </div>
       </div>
     </div>
     <div class="vp-stats">
-      <div class="vp-stat">
-        <div class="label">Heures théoriques</div>
-        <div class="value">{{ total_heures_theorie }}</div>
+      <div class="vp-stat vp-stat-theorie">
+        <div class="label">Théorie</div>
+        <div class="value">{{ total_heures_theorie }} h</div>
       </div>
-      <div class="vp-stat">
-        <div class="label">Heures pratiques</div>
-        <div class="value">{{ total_heures_laboratoire }}</div>
+      <div class="vp-stat vp-stat-pratique">
+        <div class="label">Pratique</div>
+        <div class="value">{{ total_heures_laboratoire }} h</div>
       </div>
-      <div class="vp-stat">
-        <div class="label">Travail à la maison</div>
-        <div class="value">{{ total_heures_travail_maison }}</div>
+      <div class="vp-stat vp-stat-maison">
+        <div class="label">Travail maison</div>
+        <div class="value">{{ total_heures_travail_maison }} h</div>
       </div>
-      <div class="vp-stat">
+      <div class="vp-stat vp-stat-unites">
         <div class="label">Unités</div>
         <div class="value">{{ "%.2f"|format(total_unites) }}</div>
       </div>
@@ -70,14 +64,8 @@
     <div class="filters">
       <div class="input-group input-group-sm" style="max-width: 260px;">
         <span class="input-group-text"><i class="bi bi-search"></i></span>
-        <input id="vp-search" type="search" class="form-control" placeholder="Rechercher un cours (code, nom)">
+        <input id="vp-search" type="search" class="form-control" placeholder="Rechercher (code ou nom) — / pour chercher">
       </div>
-      <select id="vp-filter-fil" class="form-select form-select-sm" style="max-width: 220px;">
-        <option value="">Tous les fils conducteurs</option>
-        {% for fil in fil_conducteurs %}
-          <option value="{{ fil.id }}">{{ fil.description }}</option>
-        {% endfor %}
-      </select>
     </div>
     <div class="d-flex gap-2">
       <button class="btn btn-sm btn-outline-secondary" type="button" id="vp-expand-all" data-state="collapsed">
@@ -88,11 +76,10 @@
 
   <div class="accordion" id="sessionsAccordion">
     {% for session, cours_list in cours_par_session.items() %}
-      <div class="accordion-item vp-session">
+      <div class="accordion-item vp-session" id="session-{{ loop.index }}">
         <h2 class="accordion-header" id="heading-{{ loop.index }}">
           <button class="accordion-button collapsed vp-session-header" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ loop.index }}" aria-expanded="false" aria-controls="collapse-{{ loop.index }}">
             <span class="fw-semibold">Session {{ session }}</span>
-            <span class="text-muted small">{{ cours_list|length }} cours</span>
           </button>
         </h2>
         <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ loop.index }}" data-bs-parent="#sessionsAccordion">
@@ -110,20 +97,18 @@
                 {% set bgc = c.fil_conducteur.couleur if c.fil_conducteur else '#f2f2f2' %}
                 {% set fil_id = c.fil_conducteur.id if c.fil_conducteur else '' %}
                 <div class="col mb-3 vp-course" data-code="{{ c.code|lower }}" data-name="{{ c.nom|lower }}" data-fil="{{ fil_id }}">
-                  <div class="vp-course-card">
+                  <div class="vp-course-card" style="--fil: {{ bgc }};">
                     <div class="vp-course-head">
                       <span class="vp-color-dot" style="background-color: {{ bgc }};"></span>
                       <h6 class="vp-course-title mb-0">
-                        <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}" class="text-decoration-none">
+                        <a href="{{ url_for('cours.view_cours', cours_id=c.id) }}" class="text-decoration-none" data-code="{{ c.code }}" data-nom="{{ c.nom }}">
                           <strong>{{ c.code }}</strong> — {{ c.nom }}
                         </a>
                       </h6>
                     </div>
                     <div class="vp-course-body">
-                      <div class="vp-chips mb-2">
-                        <span class="vp-chip" title="Heures théorie">T {{ c.heures_theorie }}</span>
-                        <span class="vp-chip" title="Heures laboratoire">P {{ c.heures_laboratoire }}</span>
-                        <span class="vp-chip" title="Travail à la maison">TM {{ c.heures_travail_maison }}</span>
+                      <div class="vp-hours mb-2" title="Théorie‑Pratique‑Maison">
+                        <span class="vp-hours-badge">{{ c.heures_theorie }}‑{{ c.heures_laboratoire }}‑{{ c.heures_travail_maison }} h</span>
                       </div>
                       <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#details-{{ c.id }}" aria-expanded="false" aria-controls="details-{{ c.id }}">
                         Détails
@@ -326,48 +311,94 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Filtres simples (recherche + fil conducteur)
+    // Filtres simples (recherche seulement)
     const searchInput = document.getElementById('vp-search');
-    const filSelect = document.getElementById('vp-filter-fil');
     const applyFilters = () => {
       const q = (searchInput.value || '').trim().toLowerCase();
-      const fil = filSelect.value;
-      document.querySelectorAll('.vp-course').forEach(node => {
-        const code = node.dataset.code;
-        const name = node.dataset.name;
-        const nodeFil = node.dataset.fil;
-        const matchesSearch = !q || code.includes(q) || name.includes(q);
-        const matchesFil = !fil || nodeFil === fil;
-        node.style.display = (matchesSearch && matchesFil) ? '' : 'none';
+      let firstMatch;
+
+      // Reset previous highlights
+      document.querySelectorAll('.vp-course-title a').forEach(a => {
+        a.innerHTML = `<strong>${a.dataset.code}</strong> — ${a.dataset.nom}`;
       });
+
+      // Filter courses and track matches per session
+      document.querySelectorAll('.accordion-item.vp-session').forEach(sessionItem => {
+        const collapseEl = sessionItem.querySelector('.accordion-collapse');
+        const rows = sessionItem.querySelectorAll('.vp-course');
+        let matchesInSession = 0;
+        rows.forEach(node => {
+          const code = node.dataset.code;
+          const name = node.dataset.name;
+          const matches = !q || code.includes(q) || name.includes(q);
+          node.style.display = matches ? '' : 'none';
+          if (matches) {
+            matchesInSession++;
+            if (!firstMatch) firstMatch = node;
+            // Highlight
+            const a = node.querySelector('.vp-course-title a');
+            if (q && a) {
+              const rawCode = a.dataset.code;
+              const rawNom = a.dataset.nom;
+              const safe = (t)=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+              const hl = (t)=>t.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi'), m=>`<mark>${m}</mark>`);
+              a.innerHTML = `<strong>${hl(safe(rawCode))}</strong> — ${hl(safe(rawNom))}`;
+            }
+          }
+        });
+        // Expand sessions with matches; collapse others
+        const bs = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+        if (q) {
+          if (matchesInSession > 0 && !collapseEl.classList.contains('show')) bs.show();
+          if (matchesInSession === 0 && collapseEl.classList.contains('show')) bs.hide();
+        }
+      });
+
+      // Scroll to first match on new non-empty query
+      if (q && firstMatch) {
+        firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     };
-    if (searchInput) searchInput.addEventListener('input', applyFilters);
-    if (filSelect) filSelect.addEventListener('change', applyFilters);
+    if (searchInput) {
+      searchInput.addEventListener('input', applyFilters);
+      // Keyboard shortcut to focus search
+      window.addEventListener('keydown', (e) => {
+        if (e.key === '/' && !e.target.matches('input, textarea')) {
+          e.preventDefault();
+          searchInput.focus();
+        }
+      });
+    }
 
     // Déplier/Replier tous les détails visibles
     const expandBtn = document.getElementById('vp-expand-all');
     if (expandBtn) {
       expandBtn.addEventListener('click', () => {
         const state = expandBtn.getAttribute('data-state');
-        const collapseEls = document.querySelectorAll('.accordion-collapse.show .collapse, .accordion-collapse.collapsing .collapse');
-        const allDetails = document.querySelectorAll('.accordion-collapse.show .collapse');
+        const sessionCollapses = document.querySelectorAll('.accordion-collapse');
         if (state === 'collapsed') {
-          // Open all details for visible courses only
-          document.querySelectorAll('.accordion-collapse.show .vp-course').forEach(card => {
+          // Open all sessions
+          sessionCollapses.forEach(s => bootstrap.Collapse.getOrCreateInstance(s, { toggle: false }).show());
+          // Open all details within
+          document.querySelectorAll('.accordion-collapse .vp-course').forEach(card => {
             if (card.style.display === 'none') return;
             const detail = card.querySelector('.collapse');
-            if (detail && !detail.classList.contains('show')) new bootstrap.Collapse(detail, { show: true });
+            if (detail && !detail.classList.contains('show')) bootstrap.Collapse.getOrCreateInstance(detail, { toggle: false }).show();
           });
           expandBtn.setAttribute('data-state', 'expanded');
           expandBtn.innerHTML = '<i class="bi bi-arrows-collapse"></i> Tout replier';
         } else {
-          allDetails.forEach(d => new bootstrap.Collapse(d, { toggle: true }));
+          // Close all details
+          document.querySelectorAll('.accordion-collapse .collapse.show').forEach(d => bootstrap.Collapse.getOrCreateInstance(d, { toggle: false }).hide());
+          // Close all sessions
+          sessionCollapses.forEach(s => bootstrap.Collapse.getOrCreateInstance(s, { toggle: false }).hide());
           expandBtn.setAttribute('data-state', 'collapsed');
           expandBtn.innerHTML = '<i class="bi bi-arrows-expand"></i> Tout déplier';
         }
       });
     }
-});
+
+  });
 
 async function openPlanCoursModal(coursId, coursCode, coursNom) {
     document.getElementById('modalCoursId').value = coursId;

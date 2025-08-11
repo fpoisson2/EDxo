@@ -6,6 +6,10 @@
   --vp-muted: #6c757d;
   --vp-soft: #f5f7fb;
   --vp-border: #e9ecef;
+  --vp-theorie: #0d6efd;   /* blue */
+  --vp-pratique: #198754;  /* green */
+  --vp-maison: #fd7e14;    /* orange */
+  --vp-unites: #6f42c1;    /* purple */
 }
 
 .vp-header {
@@ -37,6 +41,23 @@
 
 .vp-stat .label { color: var(--vp-muted); font-size: 0.8rem; }
 .vp-stat .value { font-weight: 700; font-size: 1.15rem; }
+
+/* Category color emphasis */
+.vp-stat { position: relative; }
+.vp-stat::before {
+  content: "";
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 4px; border-radius: var(--vp-card-radius) 0 0 var(--vp-card-radius);
+  background: var(--vp-border);
+}
+.vp-stat-theorie::before { background: var(--vp-theorie); }
+.vp-stat-pratique::before { background: var(--vp-pratique); }
+.vp-stat-maison::before { background: var(--vp-maison); }
+.vp-stat-unites::before { background: var(--vp-unites); }
+.vp-stat-theorie .value { color: var(--vp-theorie); }
+.vp-stat-pratique .value { color: var(--vp-pratique); }
+.vp-stat-maison .value { color: var(--vp-maison); }
+.vp-stat-unites .value { color: var(--vp-unites); }
 
 @media (min-width: 768px) {
   .vp-header { grid-template-columns: 2fr 3fr; }
@@ -82,12 +103,15 @@
   height: 100%;
   border-radius: var(--vp-card-radius);
   border: 1px solid var(--vp-border);
+  border-left: 4px solid var(--vp-border);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   background: #fff;
 }
+
+.vp-course-card { border-left-color: var(--fil, var(--vp-border)); }
 
 .vp-course-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
 
@@ -126,6 +150,8 @@
 
 .vp-fil-list { display: flex; gap: 0.35rem; flex-wrap: wrap; }
 .vp-fil-tag { border-radius: 999px; padding: 0.1rem 0.5rem; font-size: 0.75rem; }
+.vp-fil-list { align-items: center; overflow-x: auto; padding-bottom: 2px; }
+.vp-fil-dot { width: 16px; height: 16px; border-radius: 50%; border: 1px solid #0002; background: var(--dot); display: inline-block; }
 
 .vp-empty { color: var(--vp-muted); font-style: italic; }
 
@@ -135,3 +161,15 @@
   #planCoursModal .modal-content { border-radius: 0; }
 }
 
+/* Compact hours badge */
+.vp-hours { display: flex; align-items: center; }
+.vp-hours-badge {
+  display: inline-block;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: #fbfcff;
+  border: 1px solid var(--fil, var(--vp-border));
+  border-radius: 8px;
+  padding: 0.2rem 0.5rem;
+  color: var(--fil, inherit);
+}
