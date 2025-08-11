@@ -4,8 +4,8 @@
   --vp-gap: 0.75rem;
   --vp-card-radius: 10px;
   --vp-muted: #6c757d;
-  --vp-soft: #f5f7fb;
-  --vp-border: #e9ecef;
+  --vp-soft: #eef2f7;
+  --vp-border: #cfd6e4;
   --vp-theorie: #0d6efd;   /* blue */
   --vp-pratique: #198754;  /* green */
   --vp-maison: #fd7e14;    /* orange */
@@ -40,7 +40,7 @@
 }
 
 .vp-stat .label { color: var(--vp-muted); font-size: 0.8rem; }
-.vp-stat .value { font-weight: 700; font-size: 1.15rem; }
+.vp-stat .value { font-weight: 800; font-size: 1.25rem; }
 
 /* Category color emphasis */
 .vp-stat { position: relative; }
@@ -103,7 +103,7 @@
   height: 100%;
   border-radius: var(--vp-card-radius);
   border: 1px solid var(--vp-border);
-  border-left: 4px solid var(--vp-border);
+  border-left: 5px solid var(--vp-border);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -113,7 +113,7 @@
 
 .vp-course-card { border-left-color: var(--fil, var(--vp-border)); }
 
-.vp-course-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+.vp-course-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,0.12); }
 
 .vp-course-head {
   padding: 0.5rem 0.6rem;
@@ -133,12 +133,11 @@
 .vp-course-title {
   margin: 0;
   font-size: 0.9rem;
-  line-height: 1.2;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  line-height: 1.25;
+  display: block;
+  overflow: visible;
 }
+.vp-course-title a { color: #111; }
 
 .vp-course-body { padding: 0.5rem 0.6rem 0.25rem; font-size: 0.85rem; }
 .vp-chips { display: flex; gap: 0.35rem; flex-wrap: wrap; }
@@ -151,7 +150,7 @@
 .vp-fil-list { display: flex; gap: 0.35rem; flex-wrap: wrap; }
 .vp-fil-tag { border-radius: 999px; padding: 0.1rem 0.5rem; font-size: 0.75rem; }
 .vp-fil-list { align-items: center; overflow-x: auto; padding-bottom: 2px; }
-.vp-fil-dot { width: 16px; height: 16px; border-radius: 50%; border: 1px solid #0002; background: var(--dot); display: inline-block; }
+.vp-fil-dot { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #0003; background: var(--dot); display: inline-block; }
 
 .vp-empty { color: var(--vp-muted); font-style: italic; }
 
@@ -167,9 +166,12 @@
   display: inline-block;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  background: #fbfcff;
+  background: #ffffff;
   border: 1px solid var(--fil, var(--vp-border));
   border-radius: 8px;
   padding: 0.2rem 0.5rem;
   color: var(--fil, inherit);
 }
+
+/* High-contrast highlight for search */
+mark { background: #fff3bf; color: #000; padding: 0 .1em; border-radius: 2px; }

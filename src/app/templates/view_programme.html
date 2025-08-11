@@ -82,7 +82,7 @@
             <span class="fw-semibold">Session {{ session }}</span>
           </button>
         </h2>
-        <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ loop.index }}" data-bs-parent="#sessionsAccordion">
+        <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ loop.index }}">
           <div class="accordion-body">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <div class="small text-muted">Exporter tous les plans de cours</div>
@@ -92,7 +92,7 @@
                 <i class="fas fa-file-export"></i> Exporter
               </a>
             </div>
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4" data-session="{{ session }}">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-6" data-session="{{ session }}">
               {% for c in cours_list %}
                 {% set bgc = c.fil_conducteur.couleur if c.fil_conducteur else '#f2f2f2' %}
                 {% set fil_id = c.fil_conducteur.id if c.fil_conducteur else '' %}
@@ -395,6 +395,13 @@ document.addEventListener('DOMContentLoaded', function() {
           expandBtn.setAttribute('data-state', 'collapsed');
           expandBtn.innerHTML = '<i class="bi bi-arrows-expand"></i> Tout déplier';
         }
+      });
+    }
+
+    // Desktop: expand all sessions by default (details remain collapsed)
+    if (window.matchMedia('(min-width: 992px)').matches) {
+      document.querySelectorAll('.accordion-collapse').forEach(s => {
+        bootstrap.Collapse.getOrCreateInstance(s, { toggle: false }).show();
       });
     }
 
