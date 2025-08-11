@@ -37,3 +37,15 @@ h6 {
 body.with-action-bar {
     padding-bottom: calc(80px + env(safe-area-inset-bottom));
 }
+
+/* Évite que la barre collante masque les sections ancrées */
+#planCadreAccordion .accordion-item {
+    scroll-margin-top: 140px; /* hauteur approx. header + nav collante */
+}
+
+@media (max-width: 768px) {
+    /* Sur mobile, seule la barre d'en-tête compte */
+    #planCadreAccordion .accordion-item {
+        scroll-margin-top: 80px;
+    }
+}

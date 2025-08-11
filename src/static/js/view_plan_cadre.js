@@ -404,6 +404,36 @@ function showFlashMessage(message, type) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des liens d'ancrage pour éviter le masquage par la nav collante
+    function getStickyOffset() {
+        const sticky = document.getElementById('sectionsNav');
+        if (!sticky) return 0;
+        const styles = window.getComputedStyle(sticky);
+        const top = parseInt(styles.top || '0', 10) || 0;
+        const height = sticky.offsetHeight || 0;
+        return top + height + 8; // petit espace visuel
+    }
+
+    function closeOffcanvasIfOpen() {
+        const offcanvasEl = document.getElementById('sectionsOffcanvas');
+        if (!offcanvasEl) return;
+        const instance = bootstrap.Offcanvas.getInstance(offcanvasEl);
+        if (instance) instance.hide();
+    }
+
+    document.querySelectorAll('#sectionsNav a[href^="#"], #sectionsOffcanvas a[href^="#"]').forEach((a) => {
+        a.addEventListener('click', (e) => {
+            const href = a.getAttribute('href');
+            if (!href || href.length < 2) return;
+            const target = document.querySelector(href);
+            if (!target) return;
+            e.preventDefault();
+            const y = target.getBoundingClientRect().top + window.pageYOffset - getStickyOffset();
+            window.scrollTo({ top: Math.max(y, 0), behavior: 'smooth' });
+            closeOffcanvasIfOpen();
+        });
+    });
+
     // Initialisation des éditeurs Toast UI pour les textarea ciblés (ceux avec la classe use-toast)
     initAllToastEditors();
 
