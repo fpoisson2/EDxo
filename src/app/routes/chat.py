@@ -793,8 +793,14 @@ def send_message():
                     yield "data: " + json.dumps({"type": "content", "content": txt}) + "\n\n"
 
             # --- End of the main event processing loop ---
-            final_id_to_persist_for_api = last_response_object_id # The very last ID seen
-            print(f"[DEBUG LOG] SSE: Event stream processing finished. Determined final_id_to_persist_for_api = {final_id_to_persist_for_api}")
+            # Prefer the ID stored in session (updated by maybe_store_id) to avoid being overwritten by
+            # trailing events from an earlier response after a tool follow-up.
+            session_id = session.get("last_response_id")
+            final_id_to_persist_for_api = session_id or last_response_object_id
+            print(
+                f"[DEBUG LOG] SSE: Event stream processing finished. session_id={session_id}, "
+                f"last_response_object_id={last_response_object_id}, chosen final_id_to_persist_for_api={final_id_to_persist_for_api}"
+            )
             print(f"[DEBUG LOG] SSE: Accumulated final assistant text: '{accumulated_assistant_text[:100]}...'")
 
         except Exception as e_main_loop:
@@ -803,7 +809,8 @@ def send_message():
             accumulated_assistant_text += f"\n[ERREUR SYSTÈME] Une erreur est survenue: {e_main_loop}"
             yield f"data: {json.dumps({'type': 'error', 'content': 'Une erreur est survenue lors du traitement de la réponse.'})}\n\n"
             # Ensure we still try to persist logs and potentially the last valid ID seen
-            final_id_to_persist_for_api = last_response_object_id # Persist the last ID seen before the crash
+            session_id = session.get("last_response_id")
+            final_id_to_persist_for_api = session_id or last_response_object_id
 
         finally:
             # --- Log Final Assistant Response (Text) ---
