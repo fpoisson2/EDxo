@@ -31,3 +31,4 @@ python-dotenv
 mistralai
 openai
 Flask
+flask-session

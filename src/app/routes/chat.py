@@ -372,31 +372,35 @@ def maybe_store_id(ev):
 # --- Safe Stream Wrapper ---
 # (safe_openai_stream reste majoritairement inchangé, mais on lira l'ID depuis current_user maintenant)
 def safe_openai_stream(**kwargs):
-    """Appelle l'API et, si erreur « No tool output », ré-essaye sans prev_id."""
-    # Note: La logique de pop session est enlevée ici car on gère via DB
+    """Appelle l'API et gère l'erreur « No tool output » avec un follow-up d'erreur."""
     print(f"[DEBUG LOG] safe_openai_stream: Attempting API call with kwargs (partial): model={kwargs.get('model')}, prev_id={kwargs.get('previous_response_id')}")
     try:
         client = OpenAI(api_key=current_user.openai_key)
         return client.responses.create(**kwargs, stream=True)
     except OpenAIError as e:
         print(f"[ERROR LOG] safe_openai_stream: Encountered OpenAIError: {e}")
-        # Gérer l'erreur spécifique en N'UTILISANT PAS l'ID fautif lors de la relance
         if "No tool output found for function call" in str(e) and kwargs.get("previous_response_id"):
-            faulty_id = kwargs.get('previous_response_id')
-            print(f"[DEBUG LOG] safe_openai_stream: Specific error matched for ID '{faulty_id}'. Retrying without previous_response_id.")
-            # Pas besoin de pop de la session, on relance juste sans l'ID
-            kwargs["previous_response_id"] = None
+            faulty_id = kwargs.get("previous_response_id")
+            print(f"[WARN LOG] safe_openai_stream: Missing tool output for previous_response_id={faulty_id}. Sending error follow-up with call_id='error'.")
             client = OpenAI(api_key=current_user.openai_key)
-            # ICI: Il pourrait être judicieux de mettre à jour la DB pour effacer l'ID fautif ?
-            # try:
-            #     if current_user.last_openai_response_id == faulty_id:
-            #         current_user.last_openai_response_id = None
-            #         db.session.commit()
-            #         print(f"[DB LOG] Cleared faulty response ID {faulty_id} from DB.")
-            # except Exception as db_err:
-            #     print(f"[ERROR LOG] Failed to clear faulty ID from DB: {db_err}")
-            #     db.session.rollback()
-            return client.responses.create(**kwargs, stream=True)
+            try:
+                err_follow = client.responses.create(
+                    model=kwargs.get("model"),
+                    previous_response_id=faulty_id,
+                    input=[{"type": "function_call_output", "call_id": "error", "output": json.dumps({"error": "tool failed"})}],
+                    stream=False,
+                )
+                new_id = getattr(err_follow, "id", None)
+                print(f"[DEBUG LOG] safe_openai_stream: Error follow-up completed. New response.id={new_id}")
+                kwargs["previous_response_id"] = new_id
+                print(f"[DEBUG LOG] safe_openai_stream: Retrying original request with model={kwargs.get('model')} prev_id={new_id}")
+                return client.responses.create(**kwargs, stream=True)
+            except Exception as follow_err:
+                print(f"[ERROR LOG] safe_openai_stream: Follow-up failed: {follow_err}. Starting new thread without previous_response_id.")
+                kwargs["previous_response_id"] = None
+                print("[WARN LOG] safe_openai_stream: Starting new conversation thread (previous_response_id cleared).")
+                print(f"[DEBUG LOG] safe_openai_stream: Retrying original request with model={kwargs.get('model')} prev_id=None")
+                return client.responses.create(**kwargs, stream=True)
         print(f"[ERROR LOG] safe_openai_stream: Error not handled by specific clause, re-raising.")
         raise
 @chat.route("/chat")
@@ -433,9 +437,11 @@ def send_message():
     client = OpenAI(api_key=current_user.openai_key)
     cfg = ChatModelConfig.get_current()
     chat_model = cfg.chat_model or "gpt-4.1-mini"
-    tool_model = cfg.tool_model or chat_model
+    # Tool calls must use the exact same model as the initial request
+    tool_model = chat_model
     reasoning_effort = cfg.reasoning_effort
     verbosity = cfg.verbosity
+    print(f"[DEBUG LOG] Models selected: chat_model={chat_model}, tool_model={tool_model}")
 
     # --- Fetch and Format History ---
     print("[DEBUG LOG] Fetching last 10 messages from ChatHistory.")
@@ -510,16 +516,14 @@ def send_message():
     prev_id = current_user.last_openai_response_id
     print(f"[DEBUG LOG] Constructing API input. prev_id={prev_id}. History items to add={len(history_input)}")
 
-    # Add system prompt ONLY if there's no previous ID (start of a conversation state)
-    # The Responses API relies primarily on prev_id for context continuity.
-    # Manually adding history might be supplementary or potentially ignored if prev_id exists.
+    # Add system prompt and history only if there is no previous_response_id
+    # Once prev_id exists, we rely on server-side state exclusively
     if prev_id is None:
-        print("[DEBUG LOG] No prev_id found, adding system prompt.")
-        inp.append({"type": "message", "role": "system", "content": [{"type": "input_text", "text": "Vous êtes EDxo, un assistant IA spécialisé dans les plans de cours et plans-cadres du Cégep Garneau. Répondez de manière concise et professionnelle en français québécois."}]}) # Customize your system prompt
-
-    # Add formatted history messages
-    # IMPORTANT: Test if the API actually uses these when prev_id is present.
-    inp.extend(history_input)
+        print("[DEBUG LOG] No prev_id found, adding system prompt and history.")
+        inp.append({"type": "message", "role": "system", "content": [{"type": "input_text", "text": "Vous êtes EDxo, un assistant IA spécialisé dans les plans de cours et plans-cadres du Cégep Garneau. Répondez de manière concise et professionnelle en français québécois."}]})
+        inp.extend(history_input)
+    else:
+        print("[DEBUG LOG] prev_id found, relying on server state without manual history.")
 
     # Add current user message LAST
     inp.append({"type": "message", "role": "user", "content": [{"type": "input_text", "text": user_msg}]})
@@ -611,6 +615,9 @@ def send_message():
                 response_id = getattr(getattr(ev, 'response', None), 'id', None)
                 if response_id:
                     last_response_object_id = response_id
+
+                if isinstance(ev, ResponseCompletedEvent) and response_id:
+                    print(f"[DEBUG LOG] SSE Loop: Observed ResponseCompletedEvent id={response_id}")
 
                 # Store the ID from ResponseCreatedEvent
                 if isinstance(ev, ResponseCreatedEvent) and response_id:
@@ -708,7 +715,7 @@ def send_message():
                         # Maybe try to recover or just end here? Ending is safer.
                         break # Exit the main loop
 
-                    print(f"[DEBUG LOG] SSE: Preparing follow_stream call. Using previous_response_id = {id_for_followup}")
+                    print(f"[DEBUG LOG] SSE: Preparing follow_stream call. model={tool_model}, previous_response_id={id_for_followup}, call_id={call_id}")
 
                     try:
                         print("[DEBUG LOG] SSE: Initiating follow_stream API call...")
@@ -728,7 +735,7 @@ def send_message():
                         if reasoning_effort in {"minimal", "low", "medium", "high"}:
                             follow_kwargs["reasoning"] = {"effort": reasoning_effort}
                         follow_stream = client.responses.create(**follow_kwargs)
-                        print("[DEBUG LOG] SSE: follow_stream call initiated.")
+                        print(f"[DEBUG LOG] SSE: follow_stream call initiated. model={follow_kwargs['model']} prev_id={follow_kwargs['previous_response_id']}")
 
                         # --- Process Follow-up Stream ---
                         print("[DEBUG LOG] SSE: Processing follow_stream...")
@@ -738,6 +745,10 @@ def send_message():
                             response_id2 = getattr(getattr(ev2, 'response', None), 'id', None)
                             if response_id2:
                                 last_response_object_id = response_id2 # Update with the newest ID
+                                if isinstance(ev2, ResponseCreatedEvent):
+                                    print(f"[DEBUG LOG] SSE Follow Loop: ResponseCreatedEvent id={response_id2}")
+                            if isinstance(ev2, ResponseCompletedEvent) and response_id2:
+                                print(f"[DEBUG LOG] SSE Follow Loop: Observed ResponseCompletedEvent id={response_id2}")
 
                             # Extract and accumulate text from the follow-up
                             txt = extract_text(ev2)
