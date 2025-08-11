@@ -3,7 +3,7 @@
 import requests
 from flask import current_app, url_for
 
-from app.models import MailgunConfig
+from ..app.models import MailgunConfig
 
 
 def send_reset_email(user_email: str, token: str) -> None:

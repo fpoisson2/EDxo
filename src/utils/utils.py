@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from docxtpl import DocxTemplate
 from flask import current_app
 
-from app.models import (
+from ..app.models import (
     db,
     User,
     Competence,
@@ -52,7 +52,7 @@ from app.models import (
 
 from pathlib import Path
 
-from utils.logging_config import get_logger
+from .logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -75,7 +75,7 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
     try:
         # Importer datetime ici pour s'assurer qu'il est disponible
         from datetime import datetime
-        from app.models import DBChange
+        from ..app.models import DBChange
         
         # Fonction pour créer manuellement des entrées DBChange
         def create_db_change(operation, table_name, record_id, changes_dict):

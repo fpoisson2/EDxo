@@ -21,7 +21,7 @@ from ..models import (
     ElementCompetenceParCours,
 )
 from .routes import main
-from utils.decorator import roles_required, ensure_profile_completed
+from ...utils.decorator import roles_required, ensure_profile_completed
 
 
 @main.route('/add_cours', methods=('GET', 'POST'))

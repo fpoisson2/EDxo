@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, request, flash
 from flask_login import login_required
 
 from .settings import settings_bp
-from utils.decorator import roles_required, ensure_profile_completed
+from ...utils.decorator import roles_required, ensure_profile_completed
 
 from ..forms import DepartmentForm, DepartmentRegleForm, DepartmentPIEAForm, DeleteForm
 from ..models import db, ListeCegep, Department, DepartmentRegles, DepartmentPIEA
@@ -212,4 +212,3 @@ def edit_piea(piea_id):
         form.contenu.data = piea.contenu
 
     return render_template('edit_piea.html', form=form, piea=piea, title='Modifier la Règle PIEA')
-

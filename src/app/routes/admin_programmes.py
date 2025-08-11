@@ -3,7 +3,7 @@ from flask import render_template, redirect, url_for, flash
 from ..models import db, ListeProgrammeMinisteriel
 from ..forms import ProgrammeMinisterielForm, ProgrammeForm
 from .routes import main
-from utils.decorator import roles_required
+from ...utils.decorator import roles_required
 from flask import request
 from ..models import Programme
 

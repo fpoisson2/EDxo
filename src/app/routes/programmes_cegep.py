@@ -3,8 +3,8 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 from ..forms import ProgrammeForm
 from ..models import db, Department, ListeProgrammeMinisteriel, Programme
 from .routes import main
-from utils.decorator import roles_required, role_required
-from utils import get_all_cegeps
+from ...utils.decorator import roles_required, role_required
+from ...utils import get_all_cegeps
 
 
 @main.route('/gestion_programmes_cegep', methods=['GET', 'POST'])
@@ -68,4 +68,3 @@ def get_cegep_details():
         'departments': [{'id': d.id, 'nom': d.nom} for d in departments],
         'programmes': [{'id': p.id, 'nom': p.nom} for p in programmes]
     })
-

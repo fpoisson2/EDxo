@@ -1,7 +1,7 @@
 # app/tasks/import_grille.py
 
 # Using the configured Celery app instance is crucial for correct broker connection
-from celery_app import celery
+from ...celery_app import celery
 from openai import OpenAI
 import logging
 

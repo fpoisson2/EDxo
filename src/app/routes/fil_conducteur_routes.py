@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, request
 from flask_login import current_user
-from utils.decorator import roles_required, ensure_profile_completed
+from ...utils.decorator import roles_required, ensure_profile_completed
 
 from ..forms import FilConducteurForm
 from ..models import db, Programme, FilConducteur
@@ -49,4 +49,3 @@ def add_fil_conducteur():
         return redirect(url_for('programme.view_programme', programme_id=programme_id))
 
     return render_template('add_fil_conducteur.html', form=form)
-

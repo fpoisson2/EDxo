@@ -56,16 +56,16 @@ from .routes.ocr_routes import ocr_bp
 from .routes.grilles import grille_bp
 
 # Import version
-from config.version import __version__
+from ..config.version import __version__
 # Import centralized extensions
-from src.extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
-from utils.db_tracking import init_change_tracking
-from utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
+from ..extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
+from ..utils.db_tracking import init_change_tracking
+from ..utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 
 from werkzeug.security import generate_password_hash
 
-from celery_app import celery, init_celery
-from config.env import (
+from ..celery_app import celery, init_celery
+from ..config.env import (
     SECRET_KEY,
     RECAPTCHA_PUBLIC_KEY,
     RECAPTCHA_PRIVATE_KEY,
@@ -80,7 +80,7 @@ from config.env import (
     validate,
 )
 
-from utils.logging_config import get_logger
+from ..utils.logging_config import get_logger
 
 # Initialize logger
 logger = get_logger(__name__)

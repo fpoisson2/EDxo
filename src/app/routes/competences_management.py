@@ -5,7 +5,7 @@ from flask_login import current_user
 from ..forms import CompetenceForm, ElementCompetenceForm
 from ..models import db, Programme, Competence, ElementCompetence, ElementCompetenceCriteria
 from .routes import main
-from utils.decorator import roles_required, ensure_profile_completed
+from ...utils.decorator import roles_required, ensure_profile_completed
 
 
 @main.route('/add_competence', methods=['GET', 'POST'])
@@ -134,4 +134,3 @@ def edit_element_competence(element_id):
             flash(f"Erreur lors de la mise à jour de l'élément : {e}", 'danger')
 
     return render_template('edit_element_competence.html', form=form)
-

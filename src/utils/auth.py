@@ -1,6 +1,6 @@
 from flask_login import LoginManager
 from flask import current_app
-from app.models import User, db
+from ..app.models import User, db
 
 login_manager = LoginManager()
 login_manager.login_message = "Veuillez vous connecter pour accéder à cette page."

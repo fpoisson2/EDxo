@@ -2,7 +2,7 @@ from flask_login import current_user
 from sqlalchemy import event
 from datetime import datetime, timezone
 import sqlalchemy.exc
-from src.extensions import db
+from ..extensions import db
 
 def process_changes(mapper, target, operation):
     changes = {}
@@ -48,7 +48,7 @@ def process_changes(mapper, target, operation):
     return changes
 
 def track_changes(mapper, connection, target, operation):
-    from app.models import DBChange
+    from ..app.models import DBChange
 
     from flask_login import current_user
     
@@ -93,7 +93,7 @@ def track_delete(mapper, connection, target):
     track_changes(mapper, connection, target, 'DELETE')
 
 def init_change_tracking(db):
-    from app.models import (
+    from ..app.models import (
         User, Cours, Programme, PlanCadre, PlanDeCours, Department,
         Competence, ElementCompetence, ElementCompetenceCriteria,
         FilConducteur, CoursPrealable, CoursCorequis,

@@ -27,7 +27,7 @@ from wtforms.validators import DataRequired, InputRequired, NumberRange, Optiona
 from wtforms.widgets import ListWidget, CheckboxInput
 
 from .models import User
-from utils.openai_pricing import get_all_models
+from ..utils.openai_pricing import get_all_models
 
 # Liste des régions disponibles
 REGIONS = [

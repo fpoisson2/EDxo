@@ -8,12 +8,12 @@ from flask import (
 from flask_login import login_required
 
 # --- Imports Projet ---
-from src.extensions import csrf
+from ...extensions import csrf
 from ..forms import OcrProgrammeSelectionForm
 from ..forms import AssociateDevisForm
 try:
-    from ocr_processing import web_utils
-    from config import constants
+    from ...ocr_processing import web_utils
+    from ...config import constants
     # NOTE: L'import de 'process_ocr_task' est déplacé plus bas
 except ImportError as e:
     logging.error(f"Erreur d'importation critique dans ocr_routes.py: {e}. Vérifiez la structure de votre projet et les chemins d'importation.")
@@ -33,7 +33,7 @@ from ..models import (
     Programme
 )
 
-from celery_app import celery
+from ...celery_app import celery
 # --- Fin Imports Projet ---
 
 ocr_bp = Blueprint('ocr', __name__, url_prefix='/ocr')

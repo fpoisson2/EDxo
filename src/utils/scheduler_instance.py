@@ -6,14 +6,14 @@ from typing import Any, Callable
 from flask import Flask
 from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED, JobExecutionEvent
 
-from utils.backup_utils import (
+from .backup_utils import (
     get_scheduler_instance,
     send_backup_email_with_context,
 )
-from utils.logging_config import get_logger
-from config.env import GUNICORN_WORKER_ID
+from .logging_config import get_logger
+from ..config.env import GUNICORN_WORKER_ID
 
-from app.models import BackupConfig
+from ..app.models import BackupConfig
 
 scheduler_lock = threading.Lock()
 scheduler = get_scheduler_instance()

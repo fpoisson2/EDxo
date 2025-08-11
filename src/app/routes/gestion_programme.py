@@ -15,8 +15,8 @@ from ..models import (
     Cours,
     AnalysePlanCoursPrompt
 )
-from utils.decorator import ensure_profile_completed
-from utils.logging_config import get_logger
+from ...utils.decorator import ensure_profile_completed
+from ...utils.logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -35,7 +35,7 @@ class PlanDeCoursAIResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Import de la nouvelle fonction de tarification
 # ---------------------------------------------------------------------------
-from utils.openai_pricing import calculate_call_cost
+from ...utils.openai_pricing import calculate_call_cost
 
 # ---------------------------------------------------------------------------
 # Blueprint et route de vérification

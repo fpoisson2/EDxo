@@ -16,28 +16,28 @@ from typing import Any, Dict
 # via ``__getattr__``.
 _LAZY_IMPORTS: Dict[str, str] = {
     # Email helpers
-    "send_reset_email": "utils.email_helpers",
+    "send_reset_email": ".email_helpers",
     # Google API helper
-    "build_gmail_service": "utils.google_api",
+    "build_gmail_service": ".google_api",
     # Backup utilities
-    "get_scheduler_instance": "utils.backup_utils",
-    "send_backup_email_with_context": "utils.backup_utils",
-    "send_backup_email": "utils.backup_utils",
+    "get_scheduler_instance": ".backup_utils",
+    "send_backup_email_with_context": ".backup_utils",
+    "send_backup_email": ".backup_utils",
     # Generic utilities
-    "save_grille_to_database": "utils.utils",
-    "normalize_text": "utils.utils",
-    "extract_code_from_title": "utils.utils",
-    "determine_base_filename": "utils.utils",
-    "is_teacher_in_programme": "utils.utils",
-    "get_programme_id_for_cours": "utils.utils",
-    "get_programme_ids_for_cours": "utils.utils",
-    "is_coordo_for_programme": "utils.utils",
-    "get_initials": "utils.utils",
-    "get_all_cegeps": "utils.utils",
-    "get_cegep_details_data": "utils.utils",
-    "get_plan_cadre_data": "utils.utils",
-    "replace_tags_jinja2": "utils.utils",
-    "generate_docx_with_template": "utils.utils",
+    "save_grille_to_database": ".utils",
+    "normalize_text": ".utils",
+    "extract_code_from_title": ".utils",
+    "determine_base_filename": ".utils",
+    "is_teacher_in_programme": ".utils",
+    "get_programme_id_for_cours": ".utils",
+    "get_programme_ids_for_cours": ".utils",
+    "is_coordo_for_programme": ".utils",
+    "get_initials": ".utils",
+    "get_all_cegeps": ".utils",
+    "get_cegep_details_data": ".utils",
+    "get_plan_cadre_data": ".utils",
+    "replace_tags_jinja2": ".utils",
+    "generate_docx_with_template": ".utils",
 }
 
 
@@ -53,7 +53,7 @@ def __getattr__(name: str) -> Any:
     """
 
     if name in _LAZY_IMPORTS:
-        module = import_module(_LAZY_IMPORTS[name])
+        module = import_module(_LAZY_IMPORTS[name], package=__name__)
         return getattr(module, name)
     raise AttributeError(f"module {__name__} has no attribute {name!r}")
 
@@ -62,4 +62,3 @@ def __dir__() -> list[str]:
     """Provide module attributes for ``dir()`` calls."""
 
     return sorted(__all__)
-

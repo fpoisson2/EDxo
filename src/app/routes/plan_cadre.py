@@ -36,12 +36,12 @@ from ..models import (
     PlanCadreCapaciteSavoirsFaire,
     PlanCadreCapaciteMoyensEvaluation
 )
-from utils.decorator import role_required, roles_required, ensure_profile_completed
-from utils import (
+from ...utils.decorator import role_required, roles_required, ensure_profile_completed
+from ...utils import (
     generate_docx_with_template,
     # Note: remove if no longer needed: get_db_connection
 )
-from utils.logging_config import get_logger
+from ...utils.logging_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -55,7 +55,7 @@ plan_cadre_bp = Blueprint('plan_cadre', __name__, url_prefix='/plan_cadre')
 @ensure_profile_completed
 def generate_plan_cadre_content(plan_id):
     from ..tasks.generation_plan_cadre import generate_plan_cadre_content_task
-    from celery_app import celery
+    from ...celery_app import celery
     from celery.result import AsyncResult
 
     plan = PlanCadre.query.get(plan_id)
@@ -115,7 +115,7 @@ def generate_plan_cadre_content(plan_id):
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def review_improvement(plan_id):
-    from celery_app import celery
+    from ...celery_app import celery
     from celery.result import AsyncResult
 
     task_id = request.args.get('task_id')
@@ -229,7 +229,7 @@ def review_improvement(plan_id):
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def apply_improvement(plan_id):
-    from celery_app import celery
+    from ...celery_app import celery
     from celery.result import AsyncResult
     plan = PlanCadre.query.get(plan_id)
     if not plan:

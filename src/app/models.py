@@ -7,7 +7,7 @@ from flask_login import UserMixin
 from sqlalchemy import UniqueConstraint, select
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from src.extensions import db
+from ..extensions import db
 
 # Alias to prevent duplicate imports when modules use ``app.models``
 sys.modules.setdefault("app.models", sys.modules[__name__])
@@ -1180,4 +1180,3 @@ class GlobalGenerationSettings(db.Model):
 
     def __repr__(self):
         return f"<GlobalGenerationSettings {self.section}>"
-

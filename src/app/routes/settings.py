@@ -16,8 +16,8 @@ from ..forms import (
     ChatSettingsForm,
 )
 from .evaluation import AISixLevelGridResponse
-from config.constants import SECTIONS  # Importer la liste des sections
-from utils.decorator import role_required, roles_required, ensure_profile_completed
+from ...config.constants import SECTIONS  # Importer la liste des sections
+from ...utils.decorator import role_required, roles_required, ensure_profile_completed
 
 csrf = CSRFProtect()
 

@@ -1,4 +1,4 @@
-from app.models import OpenAIModel
+from ..app.models import OpenAIModel
 
 def calculate_call_cost(usage_prompt, usage_completion, model):
     """

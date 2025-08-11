@@ -1,6 +1,6 @@
 """Utility script to generate a Gmail API token."""
 
-from utils.google_api import build_gmail_service
+from ..utils.google_api import build_gmail_service
 
 if __name__ == "__main__":
     build_gmail_service()

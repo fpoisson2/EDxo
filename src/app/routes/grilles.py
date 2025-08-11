@@ -6,7 +6,7 @@ from ..forms import FileUploadForm
 from ..tasks.import_grille import extract_grille_from_pdf_task
 import logging
 from celery.result import AsyncResult   
-from celery_app import celery
+from ...celery_app import celery
 from ..forms import (
     ConfirmationGrilleForm
 )
@@ -21,7 +21,7 @@ from ..models import db, BackupConfig, User, Competence, ElementCompetence, Elem
                    PlanDeCoursEvaluationsCapacites, Department, DepartmentRegles, DepartmentPIEA, \
                    ListeProgrammeMinisteriel, Programme, Cours, ListeCegep, GlobalGenerationSettings, user_programme, CoursCorequis, CoursPrealable
 
-from utils import save_grille_to_database
+from ...utils import save_grille_to_database
 
 import json
 

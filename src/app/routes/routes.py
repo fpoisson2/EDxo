@@ -59,15 +59,15 @@ from ..models import (
     CoursProgramme,
     ListeCegep
 )
-from src.extensions import limiter
-from utils.decorator import role_required, roles_required, ensure_profile_completed
-from utils.decorator import public_route
-from utils import (
+from ...extensions import limiter
+from ...utils.decorator import role_required, roles_required, ensure_profile_completed
+from ...utils.decorator import public_route
+from ...utils import (
     get_all_cegeps,
     get_cegep_details_data,
     send_reset_email,
 )
-from utils.recaptcha import verify_recaptcha
+from ...utils.recaptcha import verify_recaptcha
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ main = Blueprint('main', __name__)
 @main.route('/version')
 @public_route
 def version():
-    from config.version import __version__
+    from ...config.version import __version__
     return jsonify({'version': __version__})
 
 # Public: Health endpoint
@@ -151,7 +151,7 @@ def reset_password(token):
 
 @main.route('/task_status/<task_id>', methods=['GET'])
 def task_status(task_id):
-    from celery_app import celery
+    from ...celery_app import celery
     from celery.result import AsyncResult
 
     res = AsyncResult(task_id, app=celery)

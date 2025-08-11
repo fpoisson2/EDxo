@@ -6,7 +6,7 @@ import requests
 from PyPDF2 import PdfReader
 from bs4 import BeautifulSoup
 
-from utils.logging_config import setup_logging, get_logger
+from ..utils.logging_config import setup_logging, get_logger
 
 # ------------------------
 # Configuration et dossiers
