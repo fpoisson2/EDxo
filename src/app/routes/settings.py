@@ -6,17 +6,38 @@ from flask import send_from_directory, current_app
 from flask_login import login_required, current_user
 from flask_wtf.csrf import CSRFProtect
 
-from ..forms import GlobalGenerationSettingsForm, DeletePlanForm, UploadForm, ProfileEditForm, AnalysePromptForm, \
-    OpenAIModelForm
+from ..forms import (
+    GlobalGenerationSettingsForm,
+    DeletePlanForm,
+    UploadForm,
+    ProfileEditForm,
+    AnalysePromptForm,
+    OpenAIModelForm,
+    ChatSettingsForm,
+)
 from .evaluation import AISixLevelGridResponse
-from config.constants import SECTIONS  # Importer la liste des sections
-from utils.decorator import role_required, roles_required, ensure_profile_completed
+from ...config.constants import SECTIONS  # Importer la liste des sections
+from ...utils.decorator import role_required, roles_required, ensure_profile_completed
 
 csrf = CSRFProtect()
 
 
 # Importez bien sûr db, User et GlobalGenerationSettings depuis vos modèles
-from ..models import db, User, GlobalGenerationSettings, GrillePromptSettings, PlanDeCours, Cours, Programme, PlanDeCoursPromptSettings, AnalysePlanCoursPrompt, ListeCegep, Department, OpenAIModel
+from ..models import (
+    db,
+    User,
+    GlobalGenerationSettings,
+    GrillePromptSettings,
+    PlanDeCours,
+    Cours,
+    Programme,
+    PlanDeCoursPromptSettings,
+    AnalysePlanCoursPrompt,
+    ListeCegep,
+    Department,
+    OpenAIModel,
+    ChatModelConfig,
+)
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 
@@ -63,6 +84,28 @@ def delete_openai_model(model_id):
     else:
         flash("Modèle introuvable.", "danger")
     return redirect(url_for('settings.manage_openai_models'))
+
+
+@settings_bp.route('/chat_models', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def chat_model_settings():
+    """Configure les paramètres des modèles pour le chat."""
+    config = ChatModelConfig.get_current()
+    form = ChatSettingsForm(obj=config)
+
+    if form.validate_on_submit():
+        config.chat_model = form.chat_model.data
+        # Nouveau fonctionnement: tool_model = chat_model (toujours le même modèle)
+        config.tool_model = config.chat_model
+        config.reasoning_effort = form.reasoning_effort.data
+        config.verbosity = form.verbosity.data
+        db.session.commit()
+        flash('Paramètres du chat mis à jour.', 'success')
+        return redirect(url_for('settings.chat_model_settings'))
+    # Assurer l'affichage cohérent: refléter le couplage côté formulaire
+    form.tool_model.data = config.chat_model
+    return render_template('settings/chat_models.html', form=form)
 
 @settings_bp.route('/edit_profile', methods=['GET', 'POST'])
 @login_required

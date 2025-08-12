@@ -23,9 +23,9 @@ from ..models import (
     PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, Programme,
     PlanDeCoursPromptSettings
 )
-from utils.decorator import ensure_profile_completed
-from utils.openai_pricing import calculate_call_cost
-from utils.utils import get_initials, get_programme_id_for_cours, is_teacher_in_programme
+from ...utils.decorator import ensure_profile_completed
+from ...utils.openai_pricing import calculate_call_cost
+from ...utils import get_initials, get_programme_id_for_cours, is_teacher_in_programme
 
 # Définir le chemin de base de l'application
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -996,4 +996,3 @@ def export_docx(cours_id, session):
         download_name=filename,
         as_attachment=True
     )
-

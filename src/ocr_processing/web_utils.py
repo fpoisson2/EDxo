@@ -7,7 +7,7 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 # Assurez-vous que l'import de constants fonctionne ou passez MAIN_PAGE autrement
 try:
-    from config import constants
+    from ..config import constants
 except ImportError:
     logging.error("Impossible d'importer constants depuis config dans web_utils.py")
     class constants: # Placeholder

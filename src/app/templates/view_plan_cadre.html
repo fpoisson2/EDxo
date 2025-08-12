@@ -1,21 +1,66 @@
 {% extends 'base.html' %}
 
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/view_plan_cadre.css') }}">
+    <script src="{{ url_for('static', filename='js/view_plan_cadre.js') }}" defer></script>
+    <style>
+        html { scroll-behavior: smooth; }
+    </style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5">
+    <button class="btn btn-outline-primary d-md-none mb-3" type="button"
+            data-bs-toggle="offcanvas" data-bs-target="#sectionsOffcanvas" aria-controls="sectionsOffcanvas">
+        Sections
+    </button>
+    <!-- Desktop navigation: sticky horizontal pills -->
+    <nav id="sectionsNav" class="nav nav-pills d-none d-md-flex flex-wrap gap-2 sticky-top bg-white py-2 px-2 border rounded mb-3 shadow-sm" style="top: 70px; z-index: 1020; overflow-x: auto;">
+        <a class="nav-link" href="#partie-1">Partie 1&nbsp;-&nbsp;Identification du cours</a>
+        <a class="nav-link" href="#partie-2">Partie 2&nbsp;-&nbsp;Repères généraux</a>
+        <a class="nav-link" href="#partie-3">Partie 3&nbsp;-&nbsp;Résultats visés</a>
+        <a class="nav-link" href="#partie-4">Partie 4&nbsp;-&nbsp;Organisation de l'apprentissage</a>
+        <a class="nav-link" href="#partie-5">Partie 5&nbsp;-&nbsp;Évaluation des apprentissages</a>
+        <a class="nav-link" href="#partie-6">Partie 6&nbsp;-&nbsp;Éléments de compétence</a>
+    </nav>
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sectionsOffcanvas" aria-labelledby="sectionsOffcanvasLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sectionsOffcanvasLabel">Sections</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
+        </div>
+        <div class="offcanvas-body">
+            <nav class="nav flex-column">
+                <a class="nav-link" href="#partie-1">Partie 1&nbsp;-&nbsp;Identification du cours</a>
+                <a class="nav-link" href="#partie-2">Partie 2&nbsp;-&nbsp;Repères généraux</a>
+                <a class="nav-link" href="#partie-3">Partie 3&nbsp;-&nbsp;Résultats visés</a>
+                <a class="nav-link" href="#partie-4">Partie 4&nbsp;-&nbsp;Organisation de l'apprentissage</a>
+                <a class="nav-link" href="#partie-5">Partie 5&nbsp;-&nbsp;Évaluation des apprentissages</a>
+                <a class="nav-link" href="#partie-6">Partie 6&nbsp;-&nbsp;Éléments de compétence</a>
+            </nav>
+        </div>
+    </div>
     <!-- Titre du Cours -->
     <div class="mb-3 text-center">
         <h1>Plan-cadre pour le cours : {{ cours.code }} - {{ cours.nom }}</h1>
     </div>
 
     <!-- Boutons d'Action Supplémentaires -->
-    <div class="d-flex gap-3 mb-5 align-items-center">
-        <button type="button" class="btn btn-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
+    <div class="d-flex flex-column flex-sm-row gap-3 mb-5 align-items-center">
+        {% if current_user.role in ['admin', 'coordo'] %}
+        <button type="button" id="openGenerateBtn" class="btn btn-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
             <i class="bi bi-box-arrow-up-right me-2"></i>
             <span class="btn-text">Générer le plan-cadre</span>
             <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="loadingSpinner">
                 <span class="visually-hidden">Chargement...</span>
             </span>
         </button>
+
+        <button type="button" id="openImproveBtn" class="btn btn-outline-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
+            <i class="bi bi-magic me-2"></i>
+            <span>Améliorer le plan-cadre</span>
+        </button>
+        {% endif %}
 
         <a href="{{ url_for('plan_cadre.export_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary d-flex align-items-center">
             <i class="bi bi-file-earmark-word me-2"></i>
@@ -33,7 +78,7 @@
 
         <div class="accordion" id="planCadreAccordion">
             <!-- PARTIE 1: Identification du cours -->
-            <div class="accordion-item">
+            <div class="accordion-item" id="partie-1">
                 <h2 class="accordion-header" id="headingGeneralInfo">
                     <button class="accordion-button bg-light" type="button"
                             data-bs-toggle="collapse"
@@ -91,7 +136,7 @@
             </div>
 
             <!-- PARTIE 2: Repères généraux au sujet du cours -->
-            <div class="accordion-item">
+            <div class="accordion-item" id="partie-2">
                 <h2 class="accordion-header" id="headingIntroduction">
                     <button class="accordion-button bg-primary text-white" type="button"
                             data-bs-toggle="collapse"
@@ -107,7 +152,14 @@
                     <div class="accordion-body">
                         <!-- Place et rôle du cours dans le programme (avec Toast UI Editor) -->
                         <div class="mb-2">
-                            <label class="fw-bold"><strong>Place et rôle du cours dans le programme</strong></label>
+                            <label class="fw-bold d-flex align-items-center gap-2">
+                                <strong>Place et rôle du cours dans le programme</strong>
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="place_intro" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                {% endif %}
+                            </label>
                             {{ plan_form.place_intro(class="form-control border-0 auto-resize use-toast",
                                                      oninput="autoResize(this)",
                                                      style="overflow:hidden; resize:none;") }}
@@ -116,7 +168,13 @@
                         <!-- Compétences développées (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Compétences développées</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Compétences développées
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="competences_developpees" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-competence-developpee" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -154,7 +212,13 @@
                         <!-- Objets cibles (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Objets cibles</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Objets cibles
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objets_cibles" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-objet-cible" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -192,7 +256,13 @@
                         <!-- Compétences certifiées (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Compétences certifiées</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Compétences certifiées
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="competences_certifiees" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-competence-certifiee" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -230,7 +300,13 @@
                         <!-- Cours corequis (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Cours corequis</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Cours corequis
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_corequis" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-cours-corequis" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -268,7 +344,13 @@
                         <!-- Cours préalables (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Cours préalables</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Cours préalables
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_prealables" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-cours-prealable" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -306,7 +388,13 @@
                         <!-- Cours reliés (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h6 class="fw-bold">Cours reliés</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Cours reliés
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_relies" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-cours-relies" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -346,7 +434,7 @@
             </div>
 
             <!-- PARTIE 3: Résultats visés -->
-            <div class="accordion-item">
+            <div class="accordion-item" id="partie-3">
                 <h2 class="accordion-header" id="headingResultatsVises">
                     <button class="accordion-button bg-info text-white" type="button"
                             data-bs-toggle="collapse"
@@ -362,7 +450,14 @@
                     <div class="accordion-body">
                         <!-- Objectif Terminal (sans Toast UI Editor) -->
                         <div class="mb-3">
-                            <label class="fw-bold">Objectif terminal</label>
+                            <label class="fw-bold d-flex align-items-center gap-2">
+                                <span>Objectif terminal</span>
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objectif_terminal" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                {% endif %}
+                            </label>
                             {{ plan_form.objectif_terminal(class="form-control border-0 auto-resize",
                                              oninput="autoResize(this)",
                                              style="overflow:hidden; resize:none;") }}
@@ -371,7 +466,13 @@
                         <!-- Capacités -->
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="fw-bold">Capacités</h6>
+                                <h6 class="fw-bold d-flex align-items-center gap-2">Capacités
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="capacites" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </h6>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-capacite" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -535,7 +636,7 @@
             </div>
 
             <!-- PARTIE 4: Organisation de l'apprentissage et de l'enseignement -->
-            <div class="accordion-item">
+            <div class="accordion-item" id="partie-4">
                 <h2 class="accordion-header" id="headingOrganisation">
                     <button class="accordion-button bg-secondary text-white" type="button"
                             data-bs-toggle="collapse"
@@ -550,25 +651,53 @@
                      data-bs-parent="#planCadreAccordion">
                     <div class="accordion-body">
                         <div class="mb-2">
-                            <label class="fw-bold">Structure du cours</label>
+                            <label class="fw-bold d-flex align-items-center gap-2">
+                                <span>Structure du cours</span>
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_intro" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                {% endif %}
+                            </label>
                             {{ plan_form.structure_intro(class="form-control border-0 auto-resize use-toast",
                                                          oninput="autoResize(this)",
                                                          style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
-                            <label class="fw-bold">Activités théoriques</label>
+                            <label class="fw-bold d-flex align-items-center gap-2">
+                                <span>Activités théoriques</span>
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_theoriques" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                {% endif %}
+                            </label>
                             {{ plan_form.structure_activites_theoriques(class="form-control border-0 auto-resize use-toast",
                                                                        oninput="autoResize(this)",
                                                                        style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
-                            <label class="fw-bold">Activités pratiques</label>
+                            <label class="fw-bold d-flex align-items-center gap-2">
+                                <span>Activités pratiques</span>
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_pratiques" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                {% endif %}
+                            </label>
                             {{ plan_form.structure_activites_pratiques(class="form-control border-0 auto-resize use-toast",
                                                                       oninput="autoResize(this)",
                                                                       style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
-                            <label class="fw-bold">Organisation du cours (activités prévues)</label>
+                            <label class="fw-bold d-flex align-items-center gap-2">
+                                <span>Organisation du cours (activités prévues)</span>
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_prevues" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                {% endif %}
+                            </label>
                             {{ plan_form.structure_activites_prevues(class="form-control border-0 auto-resize use-toast",
                                                                      oninput="autoResize(this)",
                                                                      style="overflow:hidden; resize:none;") }}
@@ -578,7 +707,7 @@
             </div>
 
             <!-- PARTIE 5: Évaluation des apprentissages -->
-            <div class="accordion-item">
+            <div class="accordion-item" id="partie-5">
                 <h2 class="accordion-header" id="headingEvaluation">
                     <button class="accordion-button bg-warning text-dark" type="button"
                             data-bs-toggle="collapse"
@@ -593,25 +722,53 @@
                      data-bs-parent="#planCadreAccordion">
                     <div class="accordion-body">
                         <div class="mb-2">
-                            <label class="fw-bold">Évaluation sommative des apprentissages</label>
+                            <label class="fw-bold d-flex align-items-center gap-2">
+                                <span>Évaluation sommative des apprentissages</span>
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_sommative" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                {% endif %}
+                            </label>
                             {{ plan_form.eval_evaluation_sommative(class="form-control border-0 auto-resize use-toast",
                                                                    oninput="autoResize(this)",
                                                                    style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
-                            <label class="fw-bold">Nature des évaluations sommatives</label>
+                            <label class="fw-bold d-flex align-items-center gap-2">
+                                <span>Nature des évaluations sommatives</span>
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_nature_evaluations_sommatives" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                {% endif %}
+                            </label>
                             {{ plan_form.eval_nature_evaluations_sommatives(class="form-control border-0 auto-resize use-toast",
                                                                             oninput="autoResize(this)",
                                                                             style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
-                            <label class="fw-bold">Évaluation de la langue</label>
+                            <label class="fw-bold d-flex align-items-center gap-2">
+                                <span>Évaluation de la langue</span>
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_de_la_langue" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                {% endif %}
+                            </label>
                             {{ plan_form.eval_evaluation_de_la_langue(class="form-control border-0 auto-resize use-toast",
                                                                       oninput="autoResize(this)",
                                                                       style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
-                            <label class="fw-bold">Évaluation formative des apprentissages</label>
+                            <label class="fw-bold d-flex align-items-center gap-2">
+                                <span>Évaluation formative des apprentissages</span>
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_sommatives_apprentissages" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                {% endif %}
+                            </label>
                             {{ plan_form.eval_evaluation_sommatives_apprentissages(class="form-control border-0 auto-resize use-toast",
                                                                                    oninput="autoResize(this)",
                                                                                    style="overflow:hidden; resize:none;") }}
@@ -619,7 +776,14 @@
                         <!-- Savoir-être -->
                         <div class="mb-2">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="fw-bold">Savoir-être</label>
+                                <label class="fw-bold d-flex align-items-center gap-2">
+                                    <span>Savoir-être</span>
+                                    {% if current_user.role in ['admin','coordo'] %}
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="savoirs_etre" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                        <i class="bi bi-magic"></i>
+                                    </button>
+                                    {% endif %}
+                                </label>
                                 <button type="button" class="btn btn-success btn-sm add-item-btn" id="add-savoir-etre" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -655,7 +819,7 @@
 
 
             <!-- PARTIE 6: Éléments de compétence associés -->
-            <div class="accordion-item">
+            <div class="accordion-item" id="partie-6">
                 <h2 class="accordion-header" id="headingElementsCompetence">
                     <button class="accordion-button bg-primary text-white" type="button"
                             data-bs-toggle="collapse"
@@ -717,24 +881,32 @@
         </div>
     </div>
 
-    <!-- Bouton d'Enregistrement Flottant -->
-    {# Utilisation d'un bouton type="button" pour éviter une double soumission #}
-    <button type="button" 
-            id="floatingSaveBtn" 
-            class="btn btn-primary btn-lg rounded-circle shadow-lg d-none"
-            title="Enregistrer le Plan-cadre"
-            name="submit_plan"
-            value="submit_plan">
-        <i class="bi bi-save"></i>
-    </button>
-
-    <!-- Bouton Flottant "Annuler" -->
-    <button type="button" 
-            id="floatingCancelBtn" 
-            class="btn btn-danger btn-lg rounded-circle shadow-lg d-none"
-            title="Annuler les modifications">
-        <i class="bi bi-x-circle"></i>
-    </button>
+    <!-- Barre d'actions fixe en bas -->
+    <div id="actionBar" class="fixed-bottom bg-white border-top d-none shadow">
+        <div class="container py-2">
+            <div class="row g-2">
+                <div class="col">
+                    <button type="button"
+                            id="floatingSaveBtn"
+                            class="btn btn-primary w-100"
+                            name="submit_plan"
+                            value="submit_plan">
+                        <span class="btn-text">Enregistrer</span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="loadingSpinner">
+                            <span class="visually-hidden">Chargement...</span>
+                        </span>
+                    </button>
+                </div>
+                <div class="col">
+                    <button type="button"
+                            id="floatingCancelBtn"
+                            class="btn btn-danger w-100">
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Génération du Plan-cadre (Formulaire Séparé) -->
     <div class="modal fade" id="generateModal" tabindex="-1" aria-labelledby="generateModalLabel" aria-hidden="true">
@@ -742,17 +914,27 @@
             <div class="modal-content">
                 <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post" id="generateContentForm">
                     {{ generate_form.hidden_tag() }}
+                    <input type="hidden" name="mode" id="genMode" value="generate">
+                    <input type="hidden" name="target_columns" id="genTargetColumns" value="">
+                    <input type="hidden" name="stream" id="genStream" value="0">
                     <div class="modal-header">
                         <h5 class="modal-title" id="generateModalLabel">Générer le plan-cadre</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="mb-3">
+                        <!-- Groupe prompt général (génération/amélioration globale) -->
+                        <div class="mb-3" id="generalPromptGroup">
                             {{ generate_form.additional_info.label(class="form-label") }}
-                            {{ generate_form.additional_info(class="form-control border-0", rows="3") }}
+                            {{ generate_form.additional_info(class="form-control border-0", rows="3", placeholder="Décrivez brièvement le contexte de génération/amélioration globale.") }}
                             {% for error in generate_form.additional_info.errors %}
                                 <div class="text-danger">{{ error }}</div>
                             {% endfor %}
+                        </div>
+                        <!-- Groupe prompt simple (baguette magique) -->
+                        <div class="mb-3 d-none" id="wandPromptGroup">
+                            <label class="form-label">Instruction (baguette magique)</label>
+                            <textarea name="wand_instruction" class="form-control border-0" rows="3" placeholder="Ex.: Rendre ce texte plus clair, simple et concis, sans ajouter d'information."></textarea>
+                            <div class="form-text">Cette instruction courte est utilisée uniquement pour améliorer la section ciblée.</div>
                         </div>
                         <div class="mb-3">
                             {{ generate_form.ai_model.label(class="form-label") }}
@@ -760,6 +942,26 @@
                             {% for error in generate_form.ai_model.errors %}
                                 <div class="text-danger">{{ error }}</div>
                             {% endfor %}
+                        </div>
+                        <div class="mb-3">
+                            {{ generate_form.reasoning_effort.label(class="form-label") }}
+                            {{ generate_form.reasoning_effort(class="form-select border-0") }}
+                            {% for error in generate_form.reasoning_effort.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="mb-3">
+                            {{ generate_form.verbosity.label(class="form-label") }}
+                            {{ generate_form.verbosity(class="form-select border-0") }}
+                            {% for error in generate_form.verbosity.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {# Case à cocher supprimée (mode géré par les boutons) #}
+                        <div id="streamContainer" class="d-none">
+                            <label class="form-label">Aperçu en direct</label>
+                            <div class="small text-muted mb-1" id="streamStatus"></div>
+                            <pre id="streamOutput" class="form-control" style="height: 240px; overflow:auto; background:#f9f9f9"></pre>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -788,648 +990,4 @@
 <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js" defer></script>
 <script src="https://uicdn.toast.com/editor-plugin-autoheight/latest/toastui-editor-plugin-autoheight.js" defer></script>
 
-<style>
-/* Uniformiser les polices */
-.toastui-editor-contents,
-.toastui-editor-contents *,
-.toastui-editor .ProseMirror {
-    font-family: inherit !important;
-    font-size: inherit !important;
-}
-
-/* S'assurer que la couleur du texte est cohérente */
-.toastui-editor-contents p {
-    color: #212529 !important;
-}
-
-/* Styles divers */
-.accordion-body > div:not(:last-child) {
-    border-bottom: 1px solid #dee2e6;
-    padding-bottom: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-label.fw-bold {
-    color: black;
-    padding: 0.2rem;
-    border-bottom: 1px solid black;
-}
-h6 {
-    color: black;
-    padding: 0.2rem;
-    border-bottom: 1px solid black;
-}
-#floatingSaveBtn, #floatingCancelBtn {
-    position: fixed;
-    bottom: 20px;
-    z-index: 1000;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-#floatingSaveBtn {
-    right: 20px;
-    background-color: #0d6efd;
-    color: white;
-}
-#floatingCancelBtn {
-    right: 90px;
-    background-color: #dc3545;
-    color: white;
-}
-#floatingSaveBtn .bi, #floatingCancelBtn .bi {
-    font-size: 1.5rem;
-}
-#floatingSaveBtn, #floatingCancelBtn {
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-#floatingSaveBtn.d-none, #floatingCancelBtn.d-none {
-    opacity: 0;
-    visibility: hidden;
-}
-</style>
-
-<script>
-// --- Fonctions pour le Toast UI Editor ---
-// Vérifie si un élément est visible (utile pour les zones dans des accordéons masqués)
-function isVisible(el) {
-    return !!( el.offsetWidth || el.offsetHeight || el.getClientRects().length );
-}
-
-function initToastEditor(textarea) {
-    const container = document.createElement('div');
-    textarea.parentNode.insertBefore(container, textarea);
-    textarea.style.display = 'none';
-
-    const editor = new toastui.Editor({
-        el: container,
-        initialEditType: 'wysiwyg',
-        initialValue: textarea.value || '',
-        toolbarItems: [
-            ['bold', 'italic'],
-            ['ul', 'indent', 'outdent']
-        ],
-        usageStatistics: false,
-        hideModeSwitch: true,
-        autofocus: false,
-        height: 'auto',
-        minHeight: '100px',
-        toolbarVisibleWithoutEditor: false,
-        customKeyMap: {
-            Tab: (editor, ev) => {
-                ev.preventDefault();
-                editor.exec('indent');
-            },
-            'Shift-Tab': (editor, ev) => {
-                ev.preventDefault();
-                editor.exec('outdent');
-            }
-        }
-    });
-
-    editor.on('change', () => {
-        textarea.value = editor.getMarkdown();
-    });
-
-    textarea.classList.add('toast-initialized');
-    
-    const editorEl = container.querySelector('.toastui-editor');
-    if (editorEl) {
-        const observer = new ResizeObserver(() => {
-            editor.setHeight('auto');
-        });
-        observer.observe(editorEl);
-    }
-
-    const toolbar = container.querySelector('.toastui-editor-toolbar');
-    if (toolbar) {
-        toolbar.style.display = 'none';
-    }
-
-    container.addEventListener('focusin', () => {
-        if (toolbar) toolbar.style.display = 'block';
-    });
-
-    container.addEventListener('focusout', (e) => {
-        if (!container.contains(e.relatedTarget) && toolbar) {
-            const selection = window.getSelection();
-            if (!selection.toString()) {
-                toolbar.style.display = 'none';
-            }
-        }
-    });
-}
-
-function initToastEditorWhenVisible(textarea) {
-    // Si l'élément est déjà visible, l'initialiser immédiatement.
-    if (isVisible(textarea)) {
-         initToastEditor(textarea);
-         return;
-    }
-    // Sinon, utiliser un IntersectionObserver pour attendre qu'il devienne visible.
-    const observer = new IntersectionObserver((entries, observer) => {
-         entries.forEach(entry => {
-             if (entry.isIntersecting) {
-                 initToastEditor(textarea);
-                 observer.unobserve(textarea);
-             }
-         });
-    }, { rootMargin: '100px' });
-    observer.observe(textarea);
-}
-
-function initAllToastEditors() {
-    document.querySelectorAll('textarea.use-toast').forEach(function(tx) {
-        if (!tx.classList.contains('toast-initialized')) {
-            initToastEditorWhenVisible(tx);
-        }
-    });
-}
-
-// --- Autres Fonctions d'Aide ---
-function autoResize(element) {
-    if (element.tagName.toLowerCase() === 'textarea') {
-        element.style.height = 'auto';
-        element.style.height = element.scrollHeight + 'px';
-    }
-}
-
-function addItemWithDescription(containerId, fieldPrefix) {
-    let container = document.getElementById(containerId);
-    let index = container.querySelectorAll('.' + fieldPrefix + '-item').length;
-    let html = `
-        <div class="${fieldPrefix}-item mb-1">
-            <div class="d-flex align-items-start">
-                <div class="flex-fill me-2">
-                    <input id="${fieldPrefix}-${index}-texte" name="${fieldPrefix}-${index}-texte"
-                           class="form-control fw-bold mb-1 auto-resize border-0"
-                           oninput="autoResize(this)"
-                           style="overflow:hidden; resize:none;"
-                           placeholder="Titre"
-                           type="text">
-                    <textarea id="${fieldPrefix}-${index}-texte_description" name="${fieldPrefix}-${index}-texte_description"
-                              class="form-control auto-resize border-0"
-                              oninput="autoResize(this)"
-                              style="overflow:hidden; resize:none;"
-                              placeholder="Description"></textarea>
-                </div>
-                <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-auto"
-                        style="border: none;" title="Supprimer">
-                    <i class="bi bi-dash-circle"></i>
-                </button>
-            </div>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', html);
-    
-    const newTextArea = document.getElementById(`${fieldPrefix}-${index}-texte_description`);
-    if (newTextArea && !newTextArea.classList.contains('toast-initialized')) {
-        // Pour ces listes dynamiques, on ne souhaite PAS activer Toast UI Editor.
-    }
-    
-    showFloatingButtons();
-}
-
-function addSavoirEtre() {
-    let container = document.getElementById('savoir-etre-container');
-    let index = container.querySelectorAll('.savoir-etre-item').length;
-    let html = `
-        <div class="savoir-etre-item mb-1">
-            <div class="d-flex align-items-start">
-                <div class="flex-fill me-2">
-                    <input type="text" 
-                           id="savoir_etre-${index}-texte" 
-                           name="savoir_etre-${index}-texte" 
-                           class="form-control fw-bold auto-resize border-0"
-                           oninput="autoResize(this)"
-                           style="overflow:hidden; resize:none;"
-                           placeholder="Savoir-être (en gras)"
-                           value="">
-                </div>
-                <button type="button" class="btn btn-danger btn-sm remove-item-btn ms-auto"
-                        style="border: none;" title="Supprimer">
-                    <i class="bi bi-dash-circle"></i>
-                </button>
-            </div>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', html);
-    showFloatingButtons();
-}
-
-function addCapacite() {
-    const container = document.getElementById('capacites-container');
-    const index = container.querySelectorAll('.capacite-item').length + 1;
-    
-    const html = `
-        <div class="capacite-item mb-4">
-            <div class="accordion" id="capaciteAccordion${index}">
-                <div class="accordion-item">
-                    <h2 class="accordion-header d-flex justify-content-between align-items-center">
-                        <button class="accordion-button collapsed flex-grow-1" type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#collapseCapacite${index}"
-                                aria-expanded="false">
-                            Nouvelle capacité
-                        </button>
-                        <button type="button" class="btn btn-danger btn-sm remove-capacite ms-2"
-                                onclick="removeCapacite(this)" title="Supprimer cette capacité">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </h2>
-                    <div id="collapseCapacite${index}" class="accordion-collapse collapse"
-                         data-bs-parent="#capaciteAccordion${index}">
-                        <div class="accordion-body">
-                            <div class="mb-3">
-                                <label class="fw-bold">Énoncé de la capacité</label>
-                                <input type="text" name="capacites-${index}-capacite" 
-                                       class="form-control fw-bold auto-resize border-0"
-                                       oninput="autoResize(this)"
-                                       style="overflow:hidden; resize:none;"
-                                       placeholder="Capacité">
-                            </div>
-                            <div class="mb-3">
-                                <label class="fw-bold">Description</label>
-                                <textarea name="capacites-${index}-description_capacite" 
-                                          class="form-control auto-resize border-0 use-toast"
-                                          oninput="autoResize(this)"
-                                          style="overflow:hidden; resize:none;"
-                                          placeholder="Description"></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="fw-bold">Pondération</label>
-                                <div class="d-flex align-items-center">
-                                    <span class="me-1">(</span>
-                                    <input type="number" name="capacites-${index}-ponderation_min"
-                                           class="form-control border-0 me-2" style="width: 80px;" value="0">
-                                    <span class="me-2">-</span>
-                                    <input type="number" name="capacites-${index}-ponderation_max"
-                                           class="form-control border-0 me-2" style="width: 80px;" value="100">
-                                    <span>%)</span>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="fw-bold">Savoirs nécessaires</label>
-                                    <button type="button" class="btn btn-success btn-sm add-savoir"
-                                            onclick="addSavoir(${index}, 'necessaire')">
-                                        <i class="bi bi-plus-circle"></i>
-                                    </button>
-                                </div>
-                                <div id="savoirs-necessaires-${index}" class="savoirs-list"></div>
-                            </div>
-
-                            <div class="mb-4">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="fw-bold">Savoirs faire</label>
-                                    <button type="button" class="btn btn-success btn-sm add-savoir-faire"
-                                            onclick="addSavoirFaire(${index})">
-                                        <i class="bi bi-plus-circle"></i>
-                                    </button>
-                                </div>
-                                <div id="savoirs-faire-${index}" class="savoirs-faire-list"></div>
-                            </div>
-
-                            <div class="mb-4">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <label class="fw-bold">Moyens d'évaluation</label>
-                                    <button type="button" class="btn btn-success btn-sm add-moyen"
-                                            onclick="addMoyen(${index})">
-                                        <i class="bi bi-plus-circle"></i>
-                                    </button>
-                                </div>
-                                <div id="moyens-evaluation-${index}" class="moyens-list"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', html);
-    let newCapaciteItem = container.lastElementChild;
-    if (newCapaciteItem) {
-        newCapaciteItem.querySelectorAll('textarea.use-toast').forEach(function(tx) {
-            if (!tx.classList.contains('toast-initialized')) {
-                initToastEditorWhenVisible(tx);
-            }
-        });
-    }
-    showFloatingButtons();
-}
-
-function addSavoir(capaciteIndex, type) {
-    const container = document.getElementById(`savoirs-${type}s-${capaciteIndex}`);
-    if (!container) return;
-    const index = container.querySelectorAll('.savoir-item').length;
-    
-    const html = `
-        <div class="savoir-item d-flex align-items-center gap-2 mb-1">
-            <input type="text" name="capacites-${capaciteIndex}-savoirs_${type}s-${index}"
-                   class="form-control auto-resize border-0"
-                   oninput="autoResize(this)">
-            <button type="button" class="btn btn-danger btn-sm remove-item"
-                    onclick="removeItem(this)">
-                <i class="bi bi-dash-circle"></i>
-            </button>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', html);
-    showFloatingButtons();
-}
-
-function addSavoirFaire(capaciteIndex) {
-    const container = document.getElementById(`savoirs-faire-${capaciteIndex}`);
-    if (!container) return;
-    const index = container.querySelectorAll('.savoir-faire-item').length;
-    
-    const html = `
-        <div class="savoir-faire-item mb-4">
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="flex-grow-1 me-2">
-                    <input type="text" name="capacites-${capaciteIndex}-savoirs_faire-${index}-texte"
-                           class="form-control fw-bold mb-2 auto-resize border-0"
-                           placeholder="Savoir faire">
-                    <div class="row mb-2">
-                        <div class="col-6 mb-2">
-                            <label class="fw-bold text-dark px-2 rounded" style="background-color: #28a745;">
-                                Cible
-                            </label>
-                            <textarea name="capacites-${capaciteIndex}-savoirs_faire-${index}-cible"
-                                      class="form-control auto-resize border-0 mt-1"
-                                      oninput="autoResize(this)"
-                                      style="overflow:hidden; resize:none;"
-                                      placeholder="Cible"></textarea>
-                        </div>
-                        <div class="col-6 mb-2">
-                            <label class="fw-bold text-dark px-2 rounded" style="background-color: #ffc107;">
-                                Seuil de réussite
-                            </label>
-                            <textarea name="capacites-${capaciteIndex}-savoirs_faire-${index}-seuil_reussite"
-                                      class="form-control auto-resize border-0 mt-1"
-                                      oninput="autoResize(this)"
-                                      style="overflow:hidden; resize:none;"
-                                      placeholder="Seuil de réussite"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-danger btn-sm remove-item"
-                        onclick="removeItem(this)">
-                    <i class="bi bi-dash-circle"></i>
-                </button>
-            </div>
-            <hr>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', html);
-    showFloatingButtons();
-}
-
-function addMoyen(capaciteIndex) {
-    const container = document.getElementById(`moyens-evaluation-${capaciteIndex}`);
-    if (!container) return;
-    const index = container.querySelectorAll('.moyen-item').length;
-    
-    const html = `
-        <div class="moyen-item d-flex align-items-center gap-2 mb-1">
-            <input type="text" name="capacites-${capaciteIndex}-moyens_evaluation-${index}"
-                   class="form-control auto-resize border-0"
-                   oninput="autoResize(this)">
-            <button type="button" class="btn btn-danger btn-sm remove-item"
-                    onclick="removeItem(this)">
-                <i class="bi bi-dash-circle"></i>
-            </button>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', html);
-    showFloatingButtons();
-}
-
-function removeItem(button) {
-    const parentItem = button.closest('.savoir-item, .savoir-faire-item, .moyen-item, .competences_developpees-item, .objets_cibles-item, .competences_certifiees-item, .cours_corequis-item, .cours_prealables-item, .savoir-etre-item, .cours_relies-item');
-    if (parentItem) {
-        parentItem.remove();
-        showFloatingButtons();
-    }
-}
-
-function removeCapacite(button) {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette capacité ?')) {
-        const capaciteItem = button.closest('.capacite-item');
-        if (capaciteItem) {
-            capaciteItem.remove();
-            showFloatingButtons();
-        }
-    }
-}
-
-function showFloatingButtons() {
-    const floatingSaveBtn = document.getElementById('floatingSaveBtn');
-    const floatingCancelBtn = document.getElementById('floatingCancelBtn');
-    if (floatingSaveBtn && floatingCancelBtn) {
-        floatingSaveBtn.classList.remove('d-none');
-        floatingCancelBtn.classList.remove('d-none');
-    }
-}
-
-function hideFloatingButtons() {
-    const floatingSaveBtn = document.getElementById('floatingSaveBtn');
-    const floatingCancelBtn = document.getElementById('floatingCancelBtn');
-    if (floatingSaveBtn && floatingCancelBtn) {
-        floatingSaveBtn.classList.add('d-none');
-        floatingCancelBtn.classList.add('d-none');
-    }
-}
-
-function showFlashMessage(message, type) {
-    const flashMessage = document.getElementById('flashMessageSystem');
-    flashMessage.className = `alert alert-${type}`;
-    flashMessage.textContent = message;
-    flashMessage.classList.remove('d-none');
-
-    setTimeout(() => {
-        flashMessage.classList.add('d-none');
-    }, 5000);
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialisation des éditeurs Toast UI pour les textarea ciblés (ceux avec la classe use-toast)
-    initAllToastEditors();
-
-    // Ajout des écouteurs sur les boutons d'ajout des éléments de listes
-    const addCompetenceBtn = document.getElementById('add-competence-developpee');
-    if (addCompetenceBtn) {
-        addCompetenceBtn.addEventListener('click', function() {
-            addItemWithDescription('competences-developpees-container', 'competences_developpees');
-        });
-    }
-    const addObjetCibleBtn = document.getElementById('add-objet-cible');
-    if (addObjetCibleBtn) {
-        addObjetCibleBtn.addEventListener('click', function() {
-            addItemWithDescription('objets-cibles-container', 'objets_cibles');
-        });
-    }
-    const addCompetenceCertifieeBtn = document.getElementById('add-competence-certifiee');
-    if (addCompetenceCertifieeBtn) {
-        addCompetenceCertifieeBtn.addEventListener('click', function() {
-            addItemWithDescription('competences-certifiees-container', 'competences_certifiees');
-        });
-    }
-    const addCoursCorequisBtn = document.getElementById('add-cours-corequis');
-    if (addCoursCorequisBtn) {
-        addCoursCorequisBtn.addEventListener('click', function() {
-            addItemWithDescription('cours-corequis-container', 'cours_corequis');
-        });
-    }
-    const addCoursPrealableBtn = document.getElementById('add-cours-prealable');
-    if (addCoursPrealableBtn) {
-        addCoursPrealableBtn.addEventListener('click', function() {
-            addItemWithDescription('cours-prealables-container', 'cours_prealables');
-        });
-    }
-    const addCoursRelieBtn = document.getElementById('add-cours-relies');
-    if (addCoursRelieBtn) {
-        addCoursRelieBtn.addEventListener('click', function() {
-            addItemWithDescription('cours-relies-container', 'cours_relies');
-        });
-    }
-    const addSavoirEtreBtn = document.getElementById('add-savoir-etre');
-    if (addSavoirEtreBtn) {
-        addSavoirEtreBtn.addEventListener('click', addSavoirEtre);
-    }
-    const addCapaciteBtn = document.getElementById('add-capacite');
-    if (addCapaciteBtn) {
-        addCapaciteBtn.addEventListener('click', addCapacite);
-    }
-
-    const planCadreForm = document.getElementById('planCadreForm');
-    const floatingSaveBtn = document.getElementById('floatingSaveBtn');
-    const floatingCancelBtn = document.getElementById('floatingCancelBtn');
-
-    if (planCadreForm && floatingSaveBtn && floatingCancelBtn) {
-        planCadreForm.addEventListener('input', showFloatingButtons);
-        planCadreForm.addEventListener('change', showFloatingButtons);
-
-        planCadreForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const loadingSpinner = floatingSaveBtn.querySelector('#loadingSpinner');
-            const btnText = floatingSaveBtn.querySelector('.btn-text');
-            if (loadingSpinner && btnText) {
-                loadingSpinner.classList.remove('d-none');
-                btnText.classList.add('d-none');
-            }
-
-            const formData = new FormData(planCadreForm);
-            fetch(planCadreForm.action, {
-                method: planCadreForm.method,
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (loadingSpinner && btnText) {
-                    loadingSpinner.classList.add('d-none');
-                    btnText.classList.remove('d-none');
-                }
-                if (data.success) {
-                    hideFloatingButtons();
-                    showFlashMessage(data.message || 'Plan-cadre sauvegardé avec succès.', 'success');
-                } else {
-                    showFlashMessage(data.message || 'Erreur lors de la sauvegarde.', 'danger');
-                }
-            })
-            .catch(() => {
-                if (loadingSpinner && btnText) {
-                    loadingSpinner.classList.add('d-none');
-                    btnText.classList.remove('d-none');
-                }
-                showFlashMessage('Erreur lors de la sauvegarde du plan-cadre.', 'danger');
-            });
-        });
-
-        floatingSaveBtn.addEventListener('click', function() {
-            planCadreForm.requestSubmit();
-        });
-
-        floatingCancelBtn.addEventListener('click', function() {
-            if (confirm('Êtes-vous sûr de vouloir annuler les modifications ? Toutes les modifications non sauvegardées seront perdues.')) {
-                planCadreForm.reset();
-                hideFloatingButtons();
-                showFlashMessage('Modifications annulées.', 'warning');
-            }
-        });
-    }
-
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.remove-item-btn')) {
-            const parentItem = e.target.closest('.savoir-item, .savoir-faire-item, .moyen-item, .competences_developpees-item, .objets_cibles-item, .competences_certifiees-item, .cours_corequis-item, .cours_prealables-item, .savoir-etre-item, .cours_relies-item');
-            if (parentItem) {
-                parentItem.remove();
-                showFloatingButtons();
-            }
-        }
-    });
-
-    document.querySelectorAll('.auto-resize').forEach(autoResize);
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    const generateForm = document.getElementById('generateContentForm');
-    const confirmGenerateBtn = document.getElementById('confirmGenerateBtn');
-    const modalLoadingSpinner = document.getElementById('modalLoadingSpinner');
-
-    generateForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        confirmGenerateBtn.disabled = true;
-        modalLoadingSpinner.classList.remove('d-none');
-        confirmGenerateBtn.querySelector('.btn-text').textContent = 'Génération en cours...';
-
-        fetch(generateForm.action, {
-            method: generateForm.method,
-            body: new FormData(generateForm),
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            confirmGenerateBtn.disabled = false;
-            modalLoadingSpinner.classList.add('d-none');
-            confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer le plan-cadre';
-
-            const generateModalEl = document.getElementById('generateModal');
-            const modalInstance = bootstrap.Modal.getInstance(generateModalEl);
-            if (modalInstance) {
-                modalInstance.hide();
-            }
-
-            if (data.success) {
-                taskId = data.task_id;
-                sessionStorage.setItem('currentTaskId', taskId);
-                flashMessageSystem.info(data.message);
-            } else {
-                flashMessageSystem.error(data.message);
-            }
-        })
-        .catch(error => {
-            confirmGenerateBtn.disabled = false;
-            modalLoadingSpinner.classList.add('d-none');
-            confirmGenerateBtn.querySelector('.btn-text').textContent = 'Générer le plan-cadre';
-            flashMessageSystem.error('Erreur lors de la génération du plan-cadre.');
-            console.error("Erreur lors de la génération du plan-cadre:", error);
-        });
-    });
-});
-</script>
 {% endblock %}

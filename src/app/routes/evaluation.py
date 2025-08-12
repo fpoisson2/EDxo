@@ -45,8 +45,8 @@ from ..models import (
     GrillePromptSettings,
     User
 )
-from utils.decorator import roles_required, ensure_profile_completed
-from utils.openai_pricing import calculate_call_cost
+from ...utils.decorator import roles_required, ensure_profile_completed
+from ...utils.openai_pricing import calculate_call_cost
 
 
 class AISixLevelGridResponse(BaseModel):

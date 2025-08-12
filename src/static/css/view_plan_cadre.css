@@ -1,0 +1,51 @@
+/* Uniformiser les polices */
+.toastui-editor-contents,
+.toastui-editor-contents *,
+.toastui-editor .ProseMirror {
+    font-family: inherit !important;
+    font-size: inherit !important;
+}
+
+/* S'assurer que la couleur du texte est cohérente */
+.toastui-editor-contents p {
+    color: #212529 !important;
+}
+
+/* Styles divers */
+.accordion-body > div:not(:last-child) {
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+label.fw-bold {
+    color: black;
+    padding: 0.2rem;
+    border-bottom: 1px solid black;
+}
+h6 {
+    color: black;
+    padding: 0.2rem;
+    border-bottom: 1px solid black;
+}
+
+#actionBar {
+    z-index: 1000;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+body.with-action-bar {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
+
+/* Évite que la barre collante masque les sections ancrées */
+#planCadreAccordion .accordion-item {
+    scroll-margin-top: 140px; /* hauteur approx. header + nav collante */
+}
+
+@media (max-width: 768px) {
+    /* Sur mobile, seule la barre d'en-tête compte */
+    #planCadreAccordion .accordion-item {
+        scroll-margin-top: 80px;
+    }
+}

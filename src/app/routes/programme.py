@@ -32,7 +32,7 @@ from ..models import (
     ElementCompetenceParCours,
     PlanDeCours
 )
-from utils.decorator import role_required, ensure_profile_completed, roles_required
+from ...utils.decorator import role_required, ensure_profile_completed, roles_required
 
 # Utilities
 # Example of another blueprint import (unused here, just as in your snippet)

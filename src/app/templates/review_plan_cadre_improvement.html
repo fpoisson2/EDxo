@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Revoir les améliorations proposées — {{ cours.code }} - {{ cours.nom }}</h2>
+  <p class="text-muted">Comparez les changements avant de les appliquer définitivement.</p>
+
+  {% if changes|length == 0 %}
+    <div class="alert alert-info">Aucun changement proposé par rapport au contenu actuel.</div>
+  {% else %}
+    <form method="POST" action="{{ url_for('plan_cadre.apply_improvement', plan_id=plan_id) }}" id="reviewForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="task_id" value="{{ task_id }}">
+
+      <div class="list-group mb-4">
+        {% for key, change in changes.items() %}
+          <div class="list-group-item">
+            <div class="d-flex w-100 justify-content-between align-items-center">
+              <h5 class="mb-1">{{ change.label if change.label else key }}</h5>
+              {% if change.before is string %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="chk_{{ key }}" name="accept_fields_keys" value="{{ key }}" checked>
+                  <label class="form-check-label" for="chk_{{ key }}">Appliquer ce changement</label>
+                </div>
+              {% endif %}
+            </div>
+
+            {% if change.before is string %}
+              <div class="row">
+                <div class="col-md-6">
+                  <label class="fw-bold">Actuel</label>
+                  <div class="border rounded p-1 diff-before" data-before="{{ change.before|e }}" data-after="{{ change.after|e }}" style="white-space: pre-wrap;"></div>
+                </div>
+                <div class="col-md-6">
+                  <label class="fw-bold">Proposition</label>
+                  <div class="border rounded p-1 bg-light diff-after" data-before="{{ change.before|e }}" data-after="{{ change.after|e }}" style="white-space: pre-wrap;"></div>
+                </div>
+              </div>
+            {% else %}
+              {# Sections de liste #}
+              {% set section = key %}
+              <div class="mb-2">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="action[{{ section }}]" id="act_keep_{{ section }}" value="keep">
+                  <label class="form-check-label" for="act_keep_{{ section }}">Conserver</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="action[{{ section }}]" id="act_replace_{{ section }}" value="replace" checked>
+                  <label class="form-check-label" for="act_replace_{{ section }}">Remplacer</label>
+                </div>
+                {% if section in ['competences_developpees','competences_certifiees','cours_corequis','cours_prealables','objets_cibles','savoirs_etre','capacites'] %}
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="action[{{ section }}]" id="act_merge_{{ section }}" value="merge">
+                  <label class="form-check-label" for="act_merge_{{ section }}">Fusionner (ajouter sélection)</label>
+                </div>
+                {% endif %}
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <label class="fw-bold">Actuel</label>
+                  <div class="border rounded p-1 mb-0">
+                    {% if section == 'savoirs_etre' %}
+                      <ul class="ps-2">
+                        {% for item in change.before %}
+                          <li>{{ item.texte }}</li>
+                        {% endfor %}
+                      </ul>
+                    {% elif section == 'capacites' %}
+                      <div>
+                        {% for cap in change.before %}
+                          <div class="mb-2 pb-1 border-bottom">
+                            <div><strong>Capacité:</strong> {{ cap.capacite }}</div>
+                            {% if cap.description_capacite %}
+                              <div><strong>Description:</strong> {{ cap.description_capacite }}</div>
+                            {% endif %}
+                            <div><strong>Pondération:</strong> {{ cap.ponderation_min }} - {{ cap.ponderation_max }}%</div>
+                            {% if cap.savoirs_necessaires and cap.savoirs_necessaires|length %}
+                              <div class="mt-2"><strong>Savoirs nécessaires</strong>
+                                <ul class="ps-2">
+                                  {% for sn in cap.savoirs_necessaires %}
+                                    <li>{{ sn }}</li>
+                                  {% endfor %}
+                                </ul>
+                              </div>
+                            {% endif %}
+                            {% if cap.savoirs_faire and cap.savoirs_faire|length %}
+                              <div class="mt-2"><strong>Savoirs faire</strong>
+                                <ul class="ps-2">
+                                  {% for sf in cap.savoirs_faire %}
+                                    <li>
+                                      <div><strong>{{ sf.texte }}</strong></div>
+                                      {% if sf.cible %}<div class="small">Cible: {{ sf.cible }}</div>{% endif %}
+                                      {% if sf.seuil_reussite %}<div class="small">Seuil: {{ sf.seuil_reussite }}</div>{% endif %}
+                                    </li>
+                                  {% endfor %}
+                                </ul>
+                              </div>
+                            {% endif %}
+                            {% if cap.moyens_evaluation and cap.moyens_evaluation|length %}
+                              <div class="mt-2"><strong>Moyens d'évaluation</strong>
+                                <ul class="ps-2">
+                                  {% for me in cap.moyens_evaluation %}
+                                    <li>{{ me }}</li>
+                                  {% endfor %}
+                                </ul>
+                              </div>
+                            {% endif %}
+                          </div>
+                        {% endfor %}
+                      </div>
+                    {% else %}
+                      <ul class="ps-2">
+                        {% for item in change.before %}
+                          <li><strong>{{ item.texte }}</strong>{% if item.description %}<div class="small">{{ item.description }}</div>{% endif %}</li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="fw-bold">Proposition</label>
+                  <div class="border rounded p-1 mb-0 bg-light">
+                    {% if section == 'savoirs_etre' %}
+                      <ul class="ps-2">
+                        {% for item in change.after %}
+                          <li>
+                            <div class="form-check">
+                              <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[{{ section }}]" value="{{ loop.index0 }}" disabled>
+                              <label class="form-check-label">{{ item.texte }}</label>
+                            </div>
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    {% elif section == 'capacites' %}
+                      <div>
+                        {% for cap in change.after %}
+                          {% set cap_index = loop.index0 %}
+                          <div class="mb-2 pb-1 border-bottom">
+                            <div class="d-flex align-items-center justify-content-between">
+                              <div><strong>Capacité:</strong> {{ cap.capacite }}</div>
+                              <div class="form-check">
+                                <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites]" value="{{ cap_index }}" disabled>
+                                <label class="form-check-label">Ajouter cette capacité</label>
+                              </div>
+                            </div>
+                            {% if cap.description_capacite %}
+                              <div><strong>Description:</strong> {{ cap.description_capacite }}</div>
+                            {% endif %}
+                            <div><strong>Pondération:</strong> {{ cap.ponderation_min }} - {{ cap.ponderation_max }}%</div>
+                            {% if cap.savoirs_necessaires and cap.savoirs_necessaires|length %}
+                              <div class="mt-2"><strong>Savoirs nécessaires</strong>
+                                <ul class="ps-2">
+                                  {% for sn in cap.savoirs_necessaires %}
+                                    <li>
+                                      <div class="form-check">
+                                        <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites][{{ cap_index }}][savoirs_necessaires]" value="{{ loop.index0 }}" disabled>
+                                        <label class="form-check-label">{{ sn }}</label>
+                                      </div>
+                                    </li>
+                                  {% endfor %}
+                                </ul>
+                              </div>
+                            {% endif %}
+                            {% if cap.savoirs_faire and cap.savoirs_faire|length %}
+                              <div class="mt-2"><strong>Savoirs faire</strong>
+                                <ul class="ps-2">
+                                  {% for sf in cap.savoirs_faire %}
+                                    <li>
+                                      <div class="form-check">
+                                        <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites][{{ cap_index }}][savoirs_faire]" value="{{ loop.index0 }}" disabled>
+                                        <label class="form-check-label">
+                                          <strong>{{ sf.texte }}</strong>
+                                          {% if sf.cible %}<div class="small">Cible: {{ sf.cible }}</div>{% endif %}
+                                          {% if sf.seuil_reussite %}<div class="small">Seuil: {{ sf.seuil_reussite }}</div>{% endif %}
+                                        </label>
+                                      </div>
+                                    </li>
+                                  {% endfor %}
+                                </ul>
+                              </div>
+                            {% endif %}
+                            {% if cap.moyens_evaluation and cap.moyens_evaluation|length %}
+                              <div class="mt-2"><strong>Moyens d'évaluation</strong>
+                                <ul class="ps-2">
+                                  {% for me in cap.moyens_evaluation %}
+                                    <li>
+                                      <div class="form-check">
+                                        <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites][{{ cap_index }}][moyens_evaluation]" value="{{ loop.index0 }}" disabled>
+                                        <label class="form-check-label">{{ me }}</label>
+                                      </div>
+                                    </li>
+                                  {% endfor %}
+                                </ul>
+                              </div>
+                            {% endif %}
+                          </div>
+                        {% endfor %}
+                      </div>
+                    {% else %}
+                      <ul class="ps-2">
+                        {% for item in change.after %}
+                          <li>
+                            <div class="form-check">
+                              <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[{{ section }}]" value="{{ loop.index0 }}" disabled>
+                              <label class="form-check-label"><strong>{{ item.texte }}</strong>{% if item.description %}<div class="small">{{ item.description }}</div>{% endif %}</label>
+                            </div>
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="btn btn-success">Appliquer les modifications</button>
+      <a class="btn btn-secondary" href="{{ url_for('cours.view_plan_cadre', cours_id=cours.id, plan_id=plan_id) }}">Annuler</a>
+    </form>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<style>
+  .diff-add { background-color: #e6ffed; }
+  .diff-del { background-color: #ffeef0; text-decoration: line-through; }
+  .diff-same { }
+  /* Compactage spécifique à la page de revue */
+  .list-group-item { padding: 0.5rem 0.75rem; }
+  .form-check { margin-bottom: 0.25rem; }
+  .diff-before, .diff-after { line-height: 1.3; }
+  ul.ps-2 { margin-bottom: 0.25rem; }
+  .border-bottom { border-color: #eee !important; }
+  /* Éviter les retours à la ligne fantômes dans les sections listes */
+  .list-group .border ul, .list-group .border li { white-space: normal; }
+  .form-check-label .small { display: block; margin-top: 0; }
+</style>
+<script>
+// Simple word-level LCS diff, returns pairs with type: 'same'|'add'|'del'
+function diffWords(a, b) {
+  const aw = (a || '').split(/(\s+)/).filter(Boolean);
+  const bw = (b || '').split(/(\s+)/).filter(Boolean);
+  const n = aw.length, m = bw.length;
+  const dp = Array(n+1).fill(null).map(()=>Array(m+1).fill(0));
+  for (let i=1;i<=n;i++) {
+    for (let j=1;j<=m;j++) {
+      dp[i][j] = aw[i-1] === bw[j-1] ? dp[i-1][j-1]+1 : Math.max(dp[i-1][j], dp[i][j-1]);
+    }
+  }
+  // backtrack
+  let i=n, j=m; const res = [];
+  while (i>0 && j>0) {
+    if (aw[i-1] === bw[j-1]) { res.push({type:'same', text:aw[i-1]}); i--; j--; }
+    else if (dp[i-1][j] >= dp[i][j-1]) { res.push({type:'del', text:aw[i-1]}); i--; }
+    else { res.push({type:'add', text:bw[j-1]}); j--; }
+  }
+  while (i>0) { res.push({type:'del', text:aw[i-1]}); i--; }
+  while (j>0) { res.push({type:'add', text:bw[j-1]}); j--; }
+  return res.reverse();
+}
+
+function renderDiffBefore(el) {
+  const before = el.getAttribute('data-before') || '';
+  const after = el.getAttribute('data-after') || '';
+  const parts = diffWords(before, after);
+  el.innerHTML = parts.map(p => {
+    if (p.type === 'del') return '<span class="diff-del">' + escapeHtml(p.text) + '</span>';
+    if (p.type === 'same') return '<span class="diff-same">' + escapeHtml(p.text) + '</span>';
+    return ''; // don't show additions on before side
+  }).join('');
+}
+
+function renderDiffAfter(el) {
+  const before = el.getAttribute('data-before') || '';
+  const after = el.getAttribute('data-after') || '';
+  const parts = diffWords(before, after);
+  el.innerHTML = parts.map(p => {
+    if (p.type === 'add') return '<span class="diff-add">' + escapeHtml(p.text) + '</span>';
+    if (p.type === 'same') return '<span class="diff-same">' + escapeHtml(p.text) + '</span>';
+    return ''; // don't show deletions on after side
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, function (c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c];
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.diff-before').forEach(renderDiffBefore);
+  document.querySelectorAll('.diff-after').forEach(renderDiffAfter);
+
+  // Activer les cases à cocher de fusion quand "merge" est sélectionné
+  const sections = ['competences_developpees','competences_certifiees','cours_corequis','cours_prealables','objets_cibles','savoirs_etre','capacites'];
+  sections.forEach(sec => {
+    const keep = document.getElementById('act_keep_' + sec);
+    const replace = document.getElementById('act_replace_' + sec);
+    const merge = document.getElementById('act_merge_' + sec);
+    const checkboxes = document.querySelectorAll('.merge-item-' + sec);
+    function update() {
+      const enable = merge && merge.checked;
+      checkboxes.forEach(cb => { cb.disabled = !enable; if (!enable) cb.checked = false; });
+    }
+    if (keep) keep.addEventListener('change', update);
+    if (replace) replace.addEventListener('change', update);
+    if (merge) merge.addEventListener('change', update);
+    update();
+  });
+});
+</script>
+{% endblock %}

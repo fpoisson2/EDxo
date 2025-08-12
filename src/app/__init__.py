@@ -1,3 +1,10 @@
+"""Application factory and setup for the EDxo project."""
+
+import sys
+
+# Ensure consistent module imports whether using ``app`` or ``src.app``
+sys.modules.setdefault("app", sys.modules[__name__])
+
 # src/app/__init__.py
 
 # TODO: Ajouter un status au plan de cours (Brouillon, en révision, complété), Permettre l'édition seulement lorsqu'en brouillon pour le prof. Permettre l'édition lorsqu'il est en révision par le coordo.
@@ -10,15 +17,12 @@
 from .models import BackupConfig
 
 import atexit
-import logging
 import os
 from datetime import timedelta, datetime, timezone
 from pathlib import Path
 
 from flask_session import Session
 
-
-from dotenv import load_dotenv
 from flask import Flask, session, jsonify, redirect, url_for, request, current_app
 from flask_login import current_user, logout_user, UserMixin
 from flask_migrate import Migrate
@@ -29,6 +33,15 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 # Import models and routes
 from . import models
 from .routes import routes
+# Import route modules that extend the 'main' blueprint
+from .routes import admin_cegeps  # noqa: F401
+from .routes import admin_programmes  # noqa: F401
+from .routes import programmes_cegep  # noqa: F401
+from .routes import admin_users  # noqa: F401
+from .routes import courses_management  # noqa: F401
+from .routes import competences_management  # noqa: F401
+from .routes import fil_conducteur_routes  # noqa: F401
+from .routes import settings_departements  # noqa: F401
 from .routes.chat import chat
 # Import blueprints
 from .routes.cours import cours_bp
@@ -43,24 +56,34 @@ from .routes.ocr_routes import ocr_bp
 from .routes.grilles import grille_bp
 
 # Import version
-from config.version import __version__
+from ..config.version import __version__
 # Import centralized extensions
-from extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
-from utils.db_tracking import init_change_tracking
-from utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
+from ..extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
+from ..utils.db_tracking import init_change_tracking
+from ..utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 
 from werkzeug.security import generate_password_hash
 
-from dotenv import load_dotenv 
+from ..celery_app import celery, init_celery
+from ..config.env import (
+    SECRET_KEY,
+    RECAPTCHA_PUBLIC_KEY,
+    RECAPTCHA_PRIVATE_KEY,
+    MISTRAL_API_KEY,
+    OPENAI_API_KEY,
+    OPENAI_MODEL_SECTION,
+    OPENAI_MODEL_EXTRACTION,
+    CELERY_BROKER_URL,
+    CELERY_RESULT_BACKEND,
+    GUNICORN_WORKER_ID,
+    CELERY_WORKER,
+    validate,
+)
 
-from celery_app import celery, init_celery 
+from ..utils.logging_config import get_logger
 
 # Initialize logger
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Load environment variables
-load_dotenv()
+logger = get_logger(__name__)
 
 
 # Define TestConfig within the application code
@@ -80,8 +103,12 @@ class TestConfig:
 
 
 def create_app(testing=False):
-    load_dotenv()
-    print(f"--- DEBUG: SECRET_KEY lue depuis l'environnement: {os.getenv('SECRET_KEY')} ---")
+    if not testing:
+        validate()
+        if SECRET_KEY:
+            logger.debug("SECRET_KEY environment variable is set.")
+        else:
+            logger.warning("SECRET_KEY environment variable is not set.")
     base_path = os.path.dirname(os.path.dirname(__file__))
     app = Flask(
         __name__,
@@ -101,7 +128,7 @@ def create_app(testing=False):
             os.makedirs(DB_DIR)
         DB_PATH = os.path.join(DB_DIR, "programme.db")
 
-        print(f"🔍 Debug: Static folder -> {app.static_folder}")
+        # Static folder resolved via app.static_folder
 
         base_path = Path(__file__).parent.parent
 
@@ -113,14 +140,14 @@ def create_app(testing=False):
             SQLALCHEMY_TRACK_MODIFICATIONS=False,
             DB_PATH=DB_PATH,
             UPLOAD_FOLDER=os.path.join(base_path, 'static', 'docs'),
-            SECRET_KEY=os.getenv('SECRET_KEY'),
-            RECAPTCHA_SITE_KEY=os.getenv('RECAPTCHA_PUBLIC_KEY'),
-            RECAPTCHA_SECRET_KEY=os.getenv('RECAPTCHA_PRIVATE_KEY'),
-            MISTRAL_API_KEY=os.getenv('MISTRAL_API_KEY'),
-            OPENAI_API_KEY=os.getenv('OPENAI_API_KEY'),
+            SECRET_KEY=SECRET_KEY,
+            RECAPTCHA_SITE_KEY=RECAPTCHA_PUBLIC_KEY,
+            RECAPTCHA_SECRET_KEY=RECAPTCHA_PRIVATE_KEY,
+            MISTRAL_API_KEY=MISTRAL_API_KEY,
+            OPENAI_API_KEY=OPENAI_API_KEY,
             MISTRAL_MODEL_OCR="mistral-ocr-latest",
-            OPENAI_MODEL_SECTION = "gpt-4.1", # Modèle pour la détection de section
-            OPENAI_MODEL_EXTRACTION = "gpt-4.1-mini", # Modèle pour l'extraction de compétences
+            OPENAI_MODEL_SECTION=OPENAI_MODEL_SECTION,  # Modèle pour la détection de section
+            OPENAI_MODEL_EXTRACTION=OPENAI_MODEL_EXTRACTION,  # Modèle pour l'extraction de compétences
             WTF_CSRF_ENABLED=True,
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),
@@ -130,8 +157,8 @@ def create_app(testing=False):
             SESSION_TYPE='filesystem',
             SESSION_FILE_DIR=os.path.join(BASE_DIR, 'flask_sessions'),  # si filesystem
             SESSION_PERMANENT=False,
-            CELERY_BROKER_URL='redis://127.0.0.1:6379/0',
-            CELERY_RESULT_BACKEND='redis://127.0.0.1:6379/0',
+            CELERY_BROKER_URL=CELERY_BROKER_URL,
+            CELERY_RESULT_BACKEND=CELERY_RESULT_BACKEND,
             TXT_OUTPUT_DIR=os.path.join(BASE_DIR, 'txt_outputs')
         )
         Session(app)
@@ -178,7 +205,7 @@ def create_app(testing=False):
 
     if not testing:
         migrate = Migrate(app, db)
-        worker_id = os.getenv('GUNICORN_WORKER_ID')
+        worker_id = GUNICORN_WORKER_ID
         is_primary_worker = worker_id == '0' or worker_id is None
 
     init_celery(app)
@@ -205,17 +232,13 @@ def create_app(testing=False):
 
     @app.before_request
     def before_request():
-        # Define endpoints that do not require authentication
-        PUBLIC_ENDPOINTS = {
-            'static',
-            'main.login',
-            'main.get_credit_balance',
-            'version',
-            'main.forgot_password',
-            'main.reset_password'
-        }
-
-        if request.endpoint in PUBLIC_ENDPOINTS or request.path.startswith('/static/'):
+        # Allow static files and explicitly public routes to bypass auth redirect
+        view_func = app.view_functions.get(request.endpoint)
+        if (
+            request.endpoint == 'static' or
+            request.path.startswith('/static/') or
+            (view_func is not None and getattr(view_func, 'is_public', False))
+        ):
             return
 
         if not current_user.is_authenticated:
@@ -245,10 +268,22 @@ def create_app(testing=False):
             session['last_activity'] = now.isoformat()
 
             # Update 'last_login' at most once per minute
-            if (not current_user.last_login or
-                    (datetime.utcnow() - current_user.last_login).total_seconds() > 60):
-                current_user.last_login = datetime.utcnow()
+            if not current_user.last_login:
+                current_user.last_login = datetime.now(timezone.utc)
                 db.session.commit()
+            else:
+                try:
+                    last_login = current_user.last_login
+                    # Ensure timezone-aware comparison
+                    if getattr(last_login, 'tzinfo', None) is None:
+                        last_login = last_login.replace(tzinfo=timezone.utc)
+                    if (datetime.now(timezone.utc) - last_login).total_seconds() > 60:
+                        current_user.last_login = datetime.now(timezone.utc)
+                        db.session.commit()
+                except Exception:
+                    # Fallback: set last_login safely
+                    current_user.last_login = datetime.now(timezone.utc)
+                    db.session.commit()
 
         except SQLAlchemyError as e:
             logger.error(f"❌ Database error: {e}")
@@ -263,9 +298,7 @@ def create_app(testing=False):
             session.modified = True
         return response
 
-    @app.route('/version')
-    def version():
-        return jsonify(version=__version__)
+    # '/version' is now served by the main blueprint
 
     def checkpoint_wal():
         with app.app_context():
@@ -300,14 +333,14 @@ def create_app(testing=False):
     if not testing:
         # Production-only setup
         # Only start the scheduler if NOT running in a Celery worker
-        if not os.environ.get("CELERY_WORKER"):
+        if not CELERY_WORKER:
             with app.app_context():
                 # Set WAL journal mode
                 with db.engine.connect() as connection:
                     connection.execute(text('PRAGMA journal_mode=WAL;'))
 
                 # Determine if this is the primary worker
-                worker_id = os.getenv('GUNICORN_WORKER_ID')
+                worker_id = GUNICORN_WORKER_ID
                 is_primary_worker = worker_id == '0' or worker_id is None
 
                 if not scheduler.running and is_primary_worker:
@@ -337,14 +370,30 @@ def create_app(testing=False):
             db.create_all()
             from .models import User  # Ensure the User model is imported
 
-            # Check if an admin user exists; if not, create one.
-            if not User.query.filter_by(role='admin').first():
-                hashed_password = generate_password_hash('admin1234', method='scrypt') #add
-                admin_user = User(username='admin', password=hashed_password, role='admin')
-                db.session.add(admin_user)
-                db.session.commit()
-                logger.info("Admin user created with username 'admin' and default password 'admin'.")
-                logger.info("Please change the default password immediately after first login.")
+            try:
+                # Check if an admin user exists; if not, create one.
+                admin_user = User.query.filter_by(role='admin').first()
+            except SQLAlchemyError as err:
+                db.session.rollback()
+                logger.warning(
+                    "Skipping admin user creation due to database schema mismatch: %s", err
+                )
             else:
-                logger.info("Admin user already exists.")
+                if not admin_user:
+                    hashed_password = generate_password_hash('admin1234', method='scrypt')
+                    admin_user = User(
+                        username='admin',
+                        password=hashed_password,
+                        role='admin',
+                    )
+                    db.session.add(admin_user)
+                    db.session.commit()
+                    logger.info(
+                        "Admin user created with username 'admin' and default password 'admin'."
+                    )
+                    logger.info(
+                        "Please change the default password immediately after first login."
+                    )
+                else:
+                    logger.info("Admin user already exists.")
     return app

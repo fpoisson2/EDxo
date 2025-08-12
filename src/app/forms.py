@@ -27,7 +27,7 @@ from wtforms.validators import DataRequired, InputRequired, NumberRange, Optiona
 from wtforms.widgets import ListWidget, CheckboxInput
 
 from .models import User
-from utils.openai_pricing import get_all_models
+from ..utils.openai_pricing import get_all_models
 
 # Liste des régions disponibles
 REGIONS = [
@@ -129,6 +129,37 @@ class OpenAIModelForm(FlaskForm):
     input_price = DecimalField("Prix en input (par token)", validators=[DataRequired(), NumberRange(min=0)])
     output_price = DecimalField("Prix en output (par token)", validators=[DataRequired(), NumberRange(min=0)])
     submit = SubmitField("Ajouter")
+
+
+class ChatSettingsForm(FlaskForm):
+    chat_model = SelectField('Modèle pour le chat', validators=[DataRequired()])
+    tool_model = SelectField("Modèle pour l'appel d'outils", validators=[DataRequired()])
+    reasoning_effort = SelectField(
+        "Effort de raisonnement",
+        choices=[
+            ('minimal', 'Minimal'),
+            ('low', 'Faible'),
+            ('medium', 'Moyen'),
+            ('high', 'Élevé')
+        ],
+        default='medium'
+    )
+    verbosity = SelectField(
+        "Verbosité",
+        choices=[
+            ('low', 'Faible'),
+            ('medium', 'Moyenne'),
+            ('high', 'Élevée')
+        ],
+        default='medium'
+    )
+    submit = SubmitField('Enregistrer')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        models = get_all_models()
+        self.chat_model.choices = [(model.name, model.name) for model in models]
+        self.tool_model.choices = [(model.name, model.name) for model in models]
 
 class MultiCheckboxField(SelectMultipleField):
     widget = widgets.ListWidget(prefix_label=False)
@@ -356,6 +387,26 @@ class GenerateContentForm(FlaskForm):
         validators=[DataRequired()],
         default='gpt-4o'
     )
+    reasoning_effort = SelectField(
+        "Effort de raisonnement",
+        choices=[
+            ('minimal', 'Minimal'),
+            ('low', 'Faible'),
+            ('medium', 'Moyen'),
+            ('high', 'Élevé')
+        ],
+        default='medium'
+    )
+    verbosity = SelectField(
+        "Verbosité",
+        choices=[
+            ('low', 'Faible'),
+            ('medium', 'Moyenne'),
+            ('high', 'Élevée')
+        ],
+        default='medium'
+    )
+    improve_only = BooleanField('Améliorer le contenu existant', default=False)
     submit = SubmitField('Générer le plan-cadre')
 
     def __init__(self, *args, **kwargs):

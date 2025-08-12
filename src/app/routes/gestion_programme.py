@@ -1,7 +1,6 @@
 # gestion_programme.py
 
 import json
-import logging
 from typing import Optional
 
 from flask import Blueprint, jsonify, render_template
@@ -16,17 +15,10 @@ from ..models import (
     Cours,
     AnalysePlanCoursPrompt
 )
-from utils.decorator import ensure_profile_completed
+from ...utils.decorator import ensure_profile_completed
+from ...utils.logging_config import get_logger
 
-# ---------------------------------------------------------------------------
-# Configuration Logging
-# ---------------------------------------------------------------------------
-logging.basicConfig(
-    level=logging.ERROR,
-    filename='app_errors.log',
-    filemode='a',
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Modèle Pydantic pour la réponse de PlanDeCours
@@ -43,7 +35,7 @@ class PlanDeCoursAIResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Import de la nouvelle fonction de tarification
 # ---------------------------------------------------------------------------
-from utils.openai_pricing import calculate_call_cost
+from ...utils.openai_pricing import calculate_call_cost
 
 # ---------------------------------------------------------------------------
 # Blueprint et route de vérification
@@ -147,7 +139,7 @@ def update_verifier_plan_cours(plan_id):
             messages=[{"role": "user", "content": json.dumps(structured_request)}]
         )
     except Exception as e:
-        logging.error(f"OpenAI error (premier appel): {e}")
+        logger.error(f"OpenAI error (premier appel): {e}")
         return jsonify({'error': f"Erreur API OpenAI premier appel: {str(e)}"}), 500
 
     # Récupérer les tokens du premier appel
@@ -177,7 +169,7 @@ def update_verifier_plan_cours(plan_id):
             response_format=PlanDeCoursAIResponse,
         )
     except Exception as e:
-        logging.error(f"OpenAI error (second appel): {e}")
+        logger.error(f"OpenAI error (second appel): {e}")
         return jsonify({'error': f"Erreur API OpenAI second appel: {str(e)}"}), 500
 
     # Récupérer les tokens du deuxième appel
@@ -225,7 +217,7 @@ def update_verifier_plan_cours(plan_id):
         try:
             ai_response = PlanDeCoursAIResponse.parse_raw(second_response_content)
         except ValidationError as e:
-            logging.error(f"Validation Pydantic error: {e}")
+            logger.error(f"Validation Pydantic error: {e}")
             return jsonify({'error': "Erreur de structuration des données par l'IA."}), 500
 
     # Mise à jour du plan avec les données de l'IA
@@ -237,7 +229,7 @@ def update_verifier_plan_cours(plan_id):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        logging.error(f"Erreur lors de la mise à jour du plan après IA: {e}")
+        logger.error(f"Erreur lors de la mise à jour du plan après IA: {e}")
         return jsonify({'error': "Erreur lors de la mise à jour du plan après IA."}), 500
 
     return jsonify({

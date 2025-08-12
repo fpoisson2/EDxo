@@ -1,26 +1,31 @@
 # EDxo/src/celery_app.py
+import logging
 import os
-import logging # Ajouter l'import logging
-from celery import Celery
-# PAS d'import de create_app ici au niveau module
 
-logger = logging.getLogger(__name__) # Initialiser un logger pour ce module
+from .utils.logging_config import setup_logging, get_logger
+
+setup_logging(level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO")))
+logger = get_logger(__name__)
+
+from celery import Celery
+from .config.env import CELERY_BROKER_URL, CELERY_RESULT_BACKEND
+# PAS d'import de create_app ici au niveau module
 
 # Fonction pour créer l'instance Celery SANS dépendance immédiate à l'app Flask
 def make_celery_instance():
     """Crée et configure une instance Celery de base."""
-    redis_url = os.getenv('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
-    backend_url = os.getenv('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/0')
+    redis_url = CELERY_BROKER_URL
+    backend_url = CELERY_RESULT_BACKEND
 
     celery_instance = Celery(
-        # Utiliser un nom logique, par exemple basé sur le package principal si connu
-        # ou simplement 'tasks' si c'est le module principal des tâches.
-        # Éviter d'utiliser __name__ si ce fichier n'est pas le point d'entrée principal
-        # que Celery utilise pour découvrir les tâches.
-        'app.tasks', # Pointant vers le module où les tâches sont définies
+        # Nom logique de l'application Celery (à des fins de logs)
+        'app',
         broker=redis_url,
         backend=backend_url,
-        include=['app.tasks'] # Assurer la découverte explicite
+        # Importer le package des tâches tel qu'il est disponible lorsque
+        # vous lancez la commande depuis le dossier `src/` (guides du repo).
+        # Le nom de tâche effectif est figé via le décorateur `name=...`.
+        include=['src.app.tasks']
     )
 
     celery_instance.conf.update(
@@ -30,7 +35,7 @@ def make_celery_instance():
         timezone='America/New_York', # Adapter si nécessaire
         enable_utc=True,
         broker_connection_retry_on_startup=True,
-        # task_ignore_result=False # Décommenter si vous voulez que les résultats soient toujours stockés par défaut
+        task_ignore_result=False  # Stocker les états pour permettre le suivi depuis le frontend
     )
 
     # Définir la classe de tâche pour le contexte Flask
@@ -41,10 +46,7 @@ def make_celery_instance():
         def __call__(self, *args, **kwargs):
             if self._flask_app is None:
                 logger.info("Création du contexte Flask pour la tâche Celery...")
-                try:
-                    from app import create_app
-                except ImportError:
-                    from main import create_app
+                from .app import create_app
 
                 # --- CORRECTION ICI ---
                 # N'utilisez pas config_name si create_app ne l'accepte pas.

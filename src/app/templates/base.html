@@ -62,6 +62,9 @@
         padding: 0.5rem 0;
         border-bottom: 1px solid #e0e0e0;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        /* S'assurer que les menus (notifications, user) passent au-dessus des éléments sticky de la page */
+        position: relative;
+        z-index: 1100;
       }
       .navbar-nav .nav-link {
         margin-right: 1rem;
@@ -145,6 +148,17 @@
       }
       #notification-list li {
         white-space: normal;
+      }
+      /* Éviter que le menu notifications passe sous des éléments sticky (ex: nav de sections) */
+      .header-container .dropdown-menu {
+        z-index: 2000;
+      }
+      /* S'assurer que les modaux passent au-dessus du header et des menus */
+      .modal-backdrop {
+        z-index: 2050;
+      }
+      .modal {
+        z-index: 2060;
       }
       /* Flash Messages */
       .flash-message {
@@ -450,17 +464,34 @@
         .then(response => response.json())
         .then(data => {
           console.log("Task status:", data.state, data.result);
+          // Stream updates, if any
+          if (data && data.meta && typeof window.onTaskStreamUpdate === 'function') {
+            try { window.onTaskStreamUpdate(data.meta); } catch(e) { console.warn('onTaskStreamUpdate error', e); }
+          }
           if (data.state === 'SUCCESS') {
-            let coursId = data.result.cours_id;
-            let planId = data.result.plan_id;
-            let planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
-            addNotification("Génération terminée. Cliquez <a href='" + planCadreUrl + "'>ici</a> pour voir le plan-cadre.", "success", planCadreUrl);
+            const payload = data.result || data.meta || {};
+            if (payload.preview) {
+              const planId = payload.plan_id;
+              const reviewUrl = `/plan_cadre/${planId}/review?task_id=` + currentTaskId;
+              addNotification("Proposition d'amélioration prête. Cliquez pour comparer et appliquer.", "success", reviewUrl);
+            } else {
+              const coursId = payload.cours_id;
+              const planId = payload.plan_id;
+              if (coursId && planId) {
+                const planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
+                addNotification("Génération terminée. Cliquez pour voir le plan-cadre.", "success", planCadreUrl);
+              } else {
+                addNotification("Génération terminée.", "success");
+              }
+            }
             stopPolling();
             clearTaskId();
+            window.onTaskStreamUpdate = null;
           } else if (data.state === 'FAILURE') {
             addNotification("La génération a échoué : " + (data.result?.message || "Une erreur est survenue."), "error");
             stopPolling();
             clearTaskId();
+            window.onTaskStreamUpdate = null;
           } else if (data.state === 'PROGRESS') {
             addNotification(data.message || "Génération en cours...", "in-progress");
             setTimeout(checkTaskStatus, 3000);
@@ -627,7 +658,7 @@
         if (type === "in-progress") {
           const existingIndex = notifications.findIndex(notif => notif.type === "in-progress");
           if (existingIndex !== -1) {
-            if (notifications[existingIndex].message !== message) {
+            if (notifications[existingIndex].message !== message || notifications[existingIndex].link !== link) {
               notifications[existingIndex].message = message;
               notifications[existingIndex].link = link;
               notifications[existingIndex].timestamp = new Date().toISOString();
@@ -636,6 +667,8 @@
             }
             return;
           }
+        } else {
+          notifications = notifications.filter(n => n.type !== "in-progress");
         }
         const notif = {
           id: Date.now(),

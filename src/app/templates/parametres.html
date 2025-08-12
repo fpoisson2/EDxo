@@ -62,6 +62,9 @@
                       <a href="{{ url_for('settings.configure_analyse_prompt') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.configure_analyse_prompt' %}active{% endif %}">
                         <i class="bi bi-chat-text me-2"></i>Analyse des plans de cours
                       </a>
+                      <a href="{{ url_for('settings.chat_model_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.chat_model_settings' %}active{% endif %}">
+                        <i class="bi bi-chat-dots me-2"></i>Chat IA
+                      </a>
                       <a href="{{ url_for('settings.manage_openai_models') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.manage_openai_models' %}active{% endif %}">
                         <i class="bi bi-cpu me-2"></i>Modèles OpenAI
                       </a>
