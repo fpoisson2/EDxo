@@ -370,14 +370,30 @@ def create_app(testing=False):
             db.create_all()
             from .models import User  # Ensure the User model is imported
 
-            # Check if an admin user exists; if not, create one.
-            if not User.query.filter_by(role='admin').first():
-                hashed_password = generate_password_hash('admin1234', method='scrypt') #add
-                admin_user = User(username='admin', password=hashed_password, role='admin')
-                db.session.add(admin_user)
-                db.session.commit()
-                logger.info("Admin user created with username 'admin' and default password 'admin'.")
-                logger.info("Please change the default password immediately after first login.")
+            try:
+                # Check if an admin user exists; if not, create one.
+                admin_user = User.query.filter_by(role='admin').first()
+            except SQLAlchemyError as err:
+                db.session.rollback()
+                logger.warning(
+                    "Skipping admin user creation due to database schema mismatch: %s", err
+                )
             else:
-                logger.info("Admin user already exists.")
+                if not admin_user:
+                    hashed_password = generate_password_hash('admin1234', method='scrypt')
+                    admin_user = User(
+                        username='admin',
+                        password=hashed_password,
+                        role='admin',
+                    )
+                    db.session.add(admin_user)
+                    db.session.commit()
+                    logger.info(
+                        "Admin user created with username 'admin' and default password 'admin'."
+                    )
+                    logger.info(
+                        "Please change the default password immediately after first login."
+                    )
+                else:
+                    logger.info("Admin user already exists.")
     return app
