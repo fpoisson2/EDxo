@@ -122,7 +122,8 @@ La définition doit:
                 prompt = PlanDeCoursPromptSettings(
                     field_name=field_name,
                     prompt_template=settings['template'],
-                    context_variables=settings['context_variables']
+                    context_variables=settings['context_variables'],
+                    ai_model='gpt-4o'
                 )
                 db.session.add(prompt)
                 prompts_added += 1

@@ -380,6 +380,26 @@ class AnalysePromptForm(FlaskForm):
         self.ai_model.choices = [(model.name, model.name) for model in models]
 
 
+class PlanDeCoursPromptSettingsForm(FlaskForm):
+    prompt_template = TextAreaField(
+        'Template du prompt',
+        validators=[DataRequired()],
+        render_kw={"rows": 20, "class": "form-control font-monospace"}
+    )
+    ai_model = SelectField(
+        'Modèle d\'IA',
+        validators=[DataRequired()],
+        default='gpt-4o',
+        render_kw={"class": "form-control"}
+    )
+    submit = SubmitField('Sauvegarder', render_kw={"class": "btn btn-primary"})
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        models = get_all_models()
+        self.ai_model.choices = [(model.name, model.name) for model in models]
+
+
 class GenerateContentForm(FlaskForm):
     additional_info = TextAreaField('Informations complémentaires', validators=[DataRequired()])
     ai_model = SelectField(

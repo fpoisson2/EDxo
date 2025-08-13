@@ -103,6 +103,11 @@ class PlanDeCoursPromptSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     field_name = db.Column(db.String(100), nullable=False, unique=True)
     prompt_template = db.Column(db.Text, nullable=False)
+    ai_model = db.Column(
+        db.String(50),
+        nullable=False,
+        server_default='gpt-4o'
+    )
     context_variables = db.Column(db.JSON, default=list)  # Liste des variables contextuelles requises
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
