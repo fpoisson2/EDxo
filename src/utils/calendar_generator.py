@@ -42,10 +42,10 @@ def build_calendar_prompt(plan_cadre, session: str) -> str:
     sections.extend(
         [
             f"Objectif terminal: {plan_cadre.objectif_terminal or ''}",
-            f"Structure des activités théoriques: {plan_cadre.structure_activites_theoriques or ''}",
-            f"Structure des activités pratiques: {plan_cadre.structure_activites_pratiques or ''}",
+            f"Structure du cours: {plan_cadre.structure_intro or ''}",
+            f"Activités théoriques: {plan_cadre.structure_activites_theoriques or ''}",
+            f"Activités pratiques: {plan_cadre.structure_activites_pratiques or ''}",
             f"Activités prévues: {plan_cadre.structure_activites_prevues or ''}",
-            f"Évaluations sommatives: {plan_cadre.eval_evaluation_sommative or ''}",
         ]
     )
 
