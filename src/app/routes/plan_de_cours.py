@@ -223,7 +223,7 @@ def generate_content():
         response = client.responses.parse(
             model=ai_model,
             input=prompt,
-            response_format=AIPlandeCoursResponse,
+            text_format=AIPlandeCoursResponse,
         )
 
         usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
@@ -298,7 +298,7 @@ def generate_calendar():
         response = client.responses.parse(
             model=ai_model,
             input=prompt,
-            response_format=CalendarResponse,
+            text_format=CalendarResponse,
         )
 
         usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
