@@ -349,7 +349,10 @@
                                     </div>
                                 {% endfor %}
                             </div>
-                            <div class="d-flex justify-content-end">
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-primary btn-sm" id="generate-calendrier">
+                                    Générer le calendrier
+                                </button>
                                 <button type="button" class="btn btn-success btn-sm" id="add-calendrier" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -1227,6 +1230,61 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialiser le drag & drop au chargement
     initDragAndDrop();
+
+    // Génération automatique du calendrier via l'IA
+    document.getElementById('generate-calendrier')?.addEventListener('click', async function() {
+        const button = this;
+        button.disabled = true;
+        const container = document.getElementById('calendrier-container');
+        try {
+            const payload = {
+                cours_id: {{ cours.id }},
+                session: "{{ plan_de_cours.session }}"
+            };
+            const response = await fetch("{{ url_for('plan_de_cours.generate_calendar') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': "{{ csrf_token() }}"
+                },
+                body: JSON.stringify(payload),
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Erreur inconnue');
+            }
+
+            const data = await response.json();
+            container.innerHTML = '';
+            if (data.entries && data.entries.length > 0) {
+                container.style.display = 'block';
+                data.entries.forEach((entry, index) => {
+                    const newItem = document.createElement('div');
+                    newItem.className = `calendar-item border p-2 mb-2 ${index % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
+                    newItem.innerHTML = document.getElementById('calendrier-template').innerHTML.replace(/__index__/g, index);
+                    newItem.querySelector(`[name="calendriers-${index}-semaine"]`).value = entry.semaine ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-sujet"]`).value = entry.sujet ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-activites"]`).value = entry.activites ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-travaux_hors_classe"]`).value = entry.travaux_hors_classe ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-evaluations"]`).value = entry.evaluations ?? '';
+                    container.appendChild(newItem);
+                });
+                calendrierIndex = data.entries.length;
+                initDragAndDrop();
+                window.showFloatingButtons();
+                showToast('generateSuccessToast');
+            } else {
+                showToast('generateErrorToast');
+            }
+        } catch (error) {
+            console.error('Erreur lors de la génération du calendrier:', error);
+            showToast('generateErrorToast');
+        } finally {
+            button.disabled = false;
+        }
+    });
 
     // Gestion du bouton d'ajout de calendrier
     document.getElementById('add-calendrier')?.addEventListener('click', function() {

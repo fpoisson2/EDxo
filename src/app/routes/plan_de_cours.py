@@ -26,6 +26,10 @@ from ..models import (
 from ...utils.decorator import ensure_profile_completed
 from ...utils.openai_pricing import calculate_call_cost
 from ...utils import get_initials, get_programme_id_for_cours, is_teacher_in_programme
+from ...utils.calendar_generator import (
+    CalendarResponse,
+    build_calendar_prompt,
+)
 
 # Définir le chemin de base de l'application
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -207,29 +211,108 @@ def generate_content():
 
     try:
         client = OpenAI(api_key=current_user.openai_key)
-        
-        response = client.beta.chat.completions.parse(
+
+        response = client.responses.parse(
             model=ai_model,
-            messages=[{"role": "user", "content": prompt}],
+            input=prompt,
             response_format=AIPlandeCoursResponse,
         )
-        # Calculate usage and cost
-        usage_prompt = response.usage.prompt_tokens if hasattr(response, 'usage') else 0
-        usage_completion = response.usage.completion_tokens if hasattr(response, 'usage') else 0
+
+        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
+        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
         cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
 
-        # Check if user has enough credits for the operation
         if user.credits < cost:
             return jsonify({'error': 'Crédits insuffisants pour cette opération.'}), 403
 
-        # Update credits within the same transaction
         user.credits -= cost
         db.session.commit()
 
-        structured_data = response.choices[0].message.parsed
-        
+        structured_data = response.output[0].content[0].parsed
+
         return jsonify(structured_data.model_dump())
-    
+
+    except OpenAIError as e:
+        return jsonify({'error': f'Erreur API OpenAI: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': f'Erreur interne: {str(e)}'}), 500
+
+
+@plan_de_cours_bp.route('/generate_calendar', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def generate_calendar():
+    """Génère automatiquement le calendrier des activités pour un plan de cours."""
+    data = request.get_json() or {}
+    cours_id = data.get('cours_id')
+    session = data.get('session')
+
+    if not cours_id or not session:
+        return jsonify({'error': 'cours_id et session requis.'}), 400
+
+    plan_de_cours = PlanDeCours.query.filter_by(cours_id=cours_id, session=session).first()
+    if not plan_de_cours:
+        return jsonify({'error': 'Plan de cours non trouvé.'}), 404
+
+    cours = plan_de_cours.cours
+    plan_cadre = cours.plan_cadre if cours else None
+    if not plan_cadre:
+        return jsonify({'error': 'Plan cadre non trouvé pour ce cours.'}), 404
+
+    user = db.session.query(User).with_for_update().get(current_user.id)
+    if not user:
+        return jsonify({'error': 'Utilisateur non trouvé'}), 404
+
+    if not user.openai_key:
+        return jsonify({'error': 'Clé OpenAI non configurée'}), 400
+
+    if user.credits is None:
+        user.credits = 0.0
+        db.session.commit()
+
+    if user.credits <= 0:
+        return jsonify({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}), 403
+
+    ai_model = 'gpt-4o'
+    prompt = build_calendar_prompt(plan_cadre, session)
+
+    try:
+        client = OpenAI(api_key=current_user.openai_key)
+        response = client.responses.parse(
+            model=ai_model,
+            input=prompt,
+            response_format=CalendarResponse,
+        )
+
+        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
+        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
+        cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
+
+        if user.credits < cost:
+            return jsonify({'error': 'Crédits insuffisants pour cette opération.'}), 403
+
+        user.credits -= cost
+
+        # Supprimer les calendriers existants puis ajouter les nouveaux
+        for cal in plan_de_cours.calendriers:
+            db.session.delete(cal)
+
+        entries = response.output[0].content[0].parsed.calendriers
+        for entry in entries:
+            new_cal = PlanDeCoursCalendrier(
+                plan_de_cours_id=plan_de_cours.id,
+                semaine=entry.semaine,
+                sujet=entry.sujet,
+                activites=entry.activites,
+                travaux_hors_classe=entry.travaux_hors_classe,
+                evaluations=entry.evaluations,
+            )
+            db.session.add(new_cal)
+
+        db.session.commit()
+
+        return jsonify({'entries': [e.model_dump() for e in entries]})
+
     except OpenAIError as e:
         return jsonify({'error': f'Erreur API OpenAI: {str(e)}'}), 500
     except Exception as e:
