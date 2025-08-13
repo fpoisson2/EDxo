@@ -310,7 +310,12 @@
 
                         <!-- Calendrier -->
                         <div class="mb-3">
-                            <h4>Calendrier des activités</h4>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h4 class="mb-0">Calendrier des activités</h4>
+                                <button type="button" class="btn btn-secondary btn-sm generate-calendar" id="generate-calendar" title="Générer le calendrier">
+                                    <i class="bi bi-magic"></i>Générer le calendrier
+                                </button>
+                            </div>
                             <div id="calendrier-container" class="mb-3" {% if not form.calendriers %}style="display: none;"{% endif %}>
                                  {% for subform in form.calendriers %}
                                     <div class="calendar-item border p-2 mb-2 {% if loop.index0 is even %}bg-light{% else %}bg-secondary text-white{% endif %}" draggable="true">
@@ -349,10 +354,7 @@
                                     </div>
                                 {% endfor %}
                             </div>
-                            <div class="d-flex justify-content-end gap-2">
-                                <button type="button" class="btn btn-secondary btn-sm generate-calendar" id="generate-calendar" title="Générer le calendrier">
-                                    <i class="bi bi-magic"></i>Générer le calendrier
-                                </button>
+                            <div class="d-flex justify-content-end">
                                 <button type="button" class="btn btn-success btn-sm" id="add-calendrier" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
                                 </button>
@@ -1236,6 +1238,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('generate-calendar')?.addEventListener('click', async function() {
         const button = this;
         const container = document.getElementById('calendrier-container');
+        container.style.display = 'block';
 
         // Ajouter overlay de chargement
         const loadingOverlay = document.createElement('div');
