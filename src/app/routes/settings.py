@@ -12,6 +12,7 @@ from ..forms import (
     UploadForm,
     ProfileEditForm,
     AnalysePromptForm,
+    PlanDeCoursPromptSettingsForm,
     OpenAIModelForm,
     ChatSettingsForm,
 )
@@ -345,6 +346,29 @@ def test_plan_de_cours_prompt():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+
+
+@settings_bp.route('/plan-de-cours/prompt/<int:prompt_id>/edit', methods=['GET', 'POST'])
+@roles_required('admin')
+@login_required
+@ensure_profile_completed
+def edit_plan_de_cours_prompt(prompt_id):
+    """Affiche et met à jour la configuration d'un prompt de plan de cours."""
+    prompt = PlanDeCoursPromptSettings.query.get_or_404(prompt_id)
+    form = PlanDeCoursPromptSettingsForm(obj=prompt)
+
+    if form.validate_on_submit():
+        form.populate_obj(prompt)
+        try:
+            db.session.commit()
+            flash('Configuration sauvegardée avec succès', 'success')
+            return redirect(url_for('settings.edit_plan_de_cours_prompt', prompt_id=prompt.id))
+        except Exception as e:  # pylint: disable=broad-except
+            db.session.rollback()
+            flash('Erreur lors de la sauvegarde', 'error')
+            current_app.logger.error(f"Erreur sauvegarde prompt: {e}")
+
+    return render_template('settings/edit_plan_de_cours_prompt.html', form=form, prompt=prompt)
 
 
 @settings_bp.route('/parametres')

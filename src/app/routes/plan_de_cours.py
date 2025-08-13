@@ -186,7 +186,7 @@ def generate_content():
         print(f"Clé manquante dans le contexte : {e}")
         return jsonify({'error': f'Variable manquante dans le contexte: {str(e)}'}), 400
 
-    ai_model = "gpt-4o"
+    ai_model = prompt_settings.ai_model or "gpt-4o"
 
 
     user = db.session.query(User).with_for_update().get(current_user.id)
