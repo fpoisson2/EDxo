@@ -126,6 +126,14 @@ def generate_content():
     cours_id = data.get('cours_id')
     session = data.get('session')
 
+    current_app.logger.info(
+        "generate_content invoked by user %s for field %s (cours_id=%s, session=%s)",
+        current_user.id,
+        field_name,
+        cours_id,
+        session,
+    )
+
     if not field_name:
         return jsonify({'error': 'Nom du champ requis.'}), 400
 
@@ -187,7 +195,7 @@ def generate_content():
     try:
         prompt = prompt.format(**context)
     except KeyError as e:
-        print(f"Clé manquante dans le contexte : {e}")
+        current_app.logger.exception("generate_content missing key in context")
         return jsonify({'error': f'Variable manquante dans le contexte: {str(e)}'}), 400
 
     ai_model = prompt_settings.ai_model or "gpt-4o"
@@ -232,10 +240,12 @@ def generate_content():
 
         return jsonify(structured_data.model_dump())
 
-    except OpenAIError as e:
-        return jsonify({'error': f'Erreur API OpenAI: {str(e)}'}), 500
-    except Exception as e:
-        return jsonify({'error': f'Erreur interne: {str(e)}'}), 500
+    except OpenAIError:
+        current_app.logger.exception("OpenAI error in generate_content")
+        return jsonify({'error': 'Erreur API OpenAI'}), 500
+    except Exception:
+        current_app.logger.exception("Internal error in generate_content")
+        return jsonify({'error': 'Erreur interne'}), 500
 
 
 @plan_de_cours_bp.route('/generate_calendar', methods=['POST'])
@@ -246,6 +256,13 @@ def generate_calendar():
     data = request.get_json() or {}
     cours_id = data.get('cours_id')
     session = data.get('session')
+
+    current_app.logger.info(
+        "generate_calendar invoked by user %s (cours_id=%s, session=%s)",
+        current_user.id,
+        cours_id,
+        session,
+    )
 
     if not cours_id or not session:
         return jsonify({'error': 'cours_id et session requis.'}), 400
@@ -313,10 +330,12 @@ def generate_calendar():
 
         return jsonify({'entries': [e.model_dump() for e in entries]})
 
-    except OpenAIError as e:
-        return jsonify({'error': f'Erreur API OpenAI: {str(e)}'}), 500
-    except Exception as e:
-        return jsonify({'error': f'Erreur interne: {str(e)}'}), 500
+    except OpenAIError:
+        current_app.logger.exception("OpenAI error in generate_calendar")
+        return jsonify({'error': 'Erreur API OpenAI'}), 500
+    except Exception:
+        current_app.logger.exception("Internal error in generate_calendar")
+        return jsonify({'error': 'Erreur interne'}), 500
 
 
 @plan_de_cours_bp.route(
