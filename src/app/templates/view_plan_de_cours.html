@@ -350,8 +350,8 @@
                                 {% endfor %}
                             </div>
                             <div class="d-flex justify-content-end gap-2">
-                                <button type="button" class="btn btn-secondary btn-sm generate-calendar" id="generate-calendrier" title="Générer automatiquement">
-                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                <button type="button" class="btn btn-secondary btn-sm generate-calendar" id="generate-calendar" title="Générer le calendrier">
+                                    <i class="bi bi-magic"></i>Générer le calendrier
                                 </button>
                                 <button type="button" class="btn btn-success btn-sm" id="add-calendrier" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
@@ -1233,7 +1233,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initDragAndDrop();
 
     // Génération automatique du calendrier via l'IA
-    document.getElementById('generate-calendrier')?.addEventListener('click', async function() {
+    document.getElementById('generate-calendar')?.addEventListener('click', async function() {
         const button = this;
         const container = document.getElementById('calendrier-container');
 
