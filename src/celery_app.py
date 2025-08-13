@@ -2,13 +2,13 @@
 import logging
 import os
 
-from utils.logging_config import setup_logging, get_logger
+from src.utils.logging_config import setup_logging, get_logger
 
 setup_logging(level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO")))
 logger = get_logger(__name__)
 
 from celery import Celery
-from config.env import CELERY_BROKER_URL, CELERY_RESULT_BACKEND
+from src.config.env import CELERY_BROKER_URL, CELERY_RESULT_BACKEND
 # PAS d'import de create_app ici au niveau module
 
 # Fonction pour créer l'instance Celery SANS dépendance immédiate à l'app Flask
