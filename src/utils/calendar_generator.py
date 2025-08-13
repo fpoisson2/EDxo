@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
@@ -21,16 +19,29 @@ class CalendarResponse(BaseModel):
     calendriers: List[CalendarEntry] = Field(default_factory=list)
 
 
-def build_calendar_prompt(plan_cadre, session: str) -> str:
+DEFAULT_CALENDAR_TEMPLATE = (
+    "Tu es un assistant pédagogique. Génère un calendrier hebdomadaire "
+    "des activités pour la session {session}.\n"
+    "Base-toi sur les informations du plan-cadre ci-dessous pour proposer "
+    "un déroulement cohérent du cours.\n"
+    "Plan-cadre:\n{sections}\n\n"
+    "Le résultat doit être un JSON avec une liste 'calendriers'. Chaque "
+    "élément comporte les champs: semaine (int), sujet, activites, "
+    "travaux_hors_classe et evaluations."
+)
+
+
+def build_calendar_prompt(
+    plan_cadre, session: str, prompt_template: Optional[str] = None
+) -> str:
     """Construit le prompt d'appel à l'API OpenAI pour générer un calendrier.
 
-    Le prompt s'appuie sur diverses sections du plan cadre ainsi que sur la
-    session ciblée afin d'obtenir un calendrier hebdomadaire détaillé. Les
-    informations incluent les données du cours et les capacités avec leurs
-    composantes, jugées essentielles pour un découpage pertinent du calendrier.
+    Le prompt assemble les informations pertinentes du plan cadre ainsi que la
+    session visée. Un modèle de prompt peut être fourni; sinon, un modèle par
+    défaut est utilisé.
     """
 
-    sections = []
+    sections: List[str] = []
 
     # Informations générales sur le cours
     if getattr(plan_cadre, "cours", None):
@@ -68,22 +79,13 @@ def build_calendar_prompt(plan_cadre, session: str) -> str:
                 f"Pondération: {capacite.ponderation_min or ''}-{capacite.ponderation_max or ''}. "
                 f"Savoirs nécessaires: {savoirs_necessaires}. "
                 f"Savoirs faire: {savoirs_faire}. "
-                f"Moyens d'évaluation: {moyens_eval}."
+                f"Moyens d'évaluation: {moyens_eval}.",
             )
         )
 
     if cap_lines:
         sections.append("Capacités:\n" + "\n".join(cap_lines))
 
-    prompt = (
-        "Tu es un assistant pédagogique. Génère un calendrier hebdomadaire "
-        "des activités pour la session {session}.\n"
-        "Base-toi sur les informations du plan-cadre ci-dessous pour proposer "
-        "un déroulement cohérent du cours.\n"
-        "Plan-cadre:\n{sections}\n\n"
-        "Le résultat doit être un JSON avec une liste 'calendriers'. Chaque "
-        "élément comporte les champs: semaine (int), sujet, activites, "
-        "travaux_hors_classe et evaluations."
-    ).format(session=session, sections="\n".join(sections))
-
-    return prompt
+    template = prompt_template or DEFAULT_CALENDAR_TEMPLATE
+    sections_str = "\n".join(sections)
+    return template.format(session=session, sections=sections_str)

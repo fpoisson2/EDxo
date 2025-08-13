@@ -111,6 +111,10 @@ La définition doit:
 - Être alignée avec les politiques institutionnelles
 - Être formulée de manière claire et précise""",
                 'context_variables': ['current_value', 'cours_id']
+            },
+            'calendrier': {
+                'template': """Tu es un assistant pédagogique. Génère un calendrier hebdomadaire des activités pour la session {session} en te basant sur les informations suivantes du plan-cadre:\n{sections}\nLe résultat doit être un JSON avec une liste 'calendriers' contenant pour chaque semaine les champs semaine, sujet, activites, travaux_hors_classe et evaluations.""",
+                'context_variables': ['session', 'sections']
             }
         }
 

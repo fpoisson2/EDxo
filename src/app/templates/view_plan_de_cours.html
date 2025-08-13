@@ -350,8 +350,8 @@
                                 {% endfor %}
                             </div>
                             <div class="d-flex justify-content-end gap-2">
-                                <button type="button" class="btn btn-primary btn-sm" id="generate-calendrier">
-                                    Générer le calendrier
+                                <button type="button" class="btn btn-secondary btn-sm generate-calendar" id="generate-calendrier" title="Générer automatiquement">
+                                    <i class="bi bi-magic"></i>Générer automatiquement
                                 </button>
                                 <button type="button" class="btn btn-success btn-sm" id="add-calendrier" title="Ajouter">
                                     <i class="bi bi-plus-circle"></i>
@@ -775,7 +775,8 @@ textarea.toast-ui-target:not(.toast-initialized) {
     position: relative;
 }
 
-.generate-button.loading {
+.generate-button.loading,
+.generate-calendar.loading {
     pointer-events: none;
     opacity: 0.7;
 }
@@ -1234,8 +1235,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Génération automatique du calendrier via l'IA
     document.getElementById('generate-calendrier')?.addEventListener('click', async function() {
         const button = this;
-        button.disabled = true;
         const container = document.getElementById('calendrier-container');
+
+        // Ajouter overlay de chargement
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.className = 'loading-overlay';
+        loadingOverlay.innerHTML = `
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+                <div class="loading-text">Génération en cours...</div>
+            </div>
+        `;
+        container.style.position = 'relative';
+        container.appendChild(loadingOverlay);
+        button.classList.add('loading');
+        button.disabled = true;
         try {
             const payload = {
                 cours_id: {{ cours.id }},
@@ -1257,6 +1273,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const data = await response.json();
+            const overlay = container.querySelector('.loading-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
             container.innerHTML = '';
             if (data.entries && data.entries.length > 0) {
                 container.style.display = 'block';
@@ -1282,6 +1302,11 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erreur lors de la génération du calendrier:', error);
             showToast('generateErrorToast');
         } finally {
+            const overlay = container.querySelector('.loading-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+            button.classList.remove('loading');
             button.disabled = false;
         }
     });

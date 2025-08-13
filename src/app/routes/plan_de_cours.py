@@ -290,8 +290,16 @@ def generate_calendar():
     if user.credits <= 0:
         return jsonify({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}), 403
 
-    ai_model = 'gpt-4o'
-    prompt = build_calendar_prompt(plan_cadre, session)
+    prompt_settings = PlanDeCoursPromptSettings.query.filter_by(
+        field_name='calendrier'
+    ).first()
+    if not prompt_settings:
+        return jsonify({'error': 'Configuration de prompt manquante pour le calendrier.'}), 500
+
+    ai_model = prompt_settings.ai_model or 'gpt-4o'
+    prompt = build_calendar_prompt(
+        plan_cadre, session, prompt_settings.prompt_template
+    )
 
     try:
         client = OpenAI(api_key=current_user.openai_key)
