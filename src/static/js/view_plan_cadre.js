@@ -955,14 +955,25 @@ function escapeHtml(str) {
 function formatReasoningMarkdown(text) {
     if (!text) return '';
     let t = String(text).replace(/\r\n/g, '\n');
-    // 1) Normalize broken bold blocks: **Title\n** -> **Title**
+
+    // 1) Normalize broken bold blocks across lines: **Title\n** -> **Title**
     t = t.replace(/\*\*([\s\S]*?)\n+\*\*/g, '**$1**');
-    // 2) Convert standalone bold lines to headings with proper spacing
-    //    Match bold that stands alone on its line (optionally surrounded by spaces)
+
+    // 2) If a bold "title" appears right after text (no newline), force a blank line before it
+    //    Heuristic: a relatively short bold segment (<= 120 chars) starting with a letter/number
+    t = t.replace(/([^\n])\s*\*\*([A-Za-zÀ-ÿ0-9][^*]{0,118}?)\*\*(?=\s*(\n|$))/g, '$1\n\n**$2**');
+
+    // 3) Normalize any existing ATX headings (#, ##, ######) to level-3 and ensure blank lines around
+    t = t.replace(/(^|\n+)\s*#{1,6}\s+([^\n]+?)\s*(?=\n|$)/g, '$1\n\n### $2\n\n');
+
+    // 4) Convert standalone bold lines to level-3 headings with proper spacing
+    //    Match bold that stands alone on its own line (optionally surrounded by spaces)
     t = t.replace(/(^|\n+)\s*\*\*([^*\n][^*]*?)\*\*\s*(?=\n|$)/g, '$1\n\n### $2\n\n');
-    // 3) Prevent heading stacking by collapsing repeated blank lines
+
+    // 5) Collapse excessive blank lines
     t = t.replace(/\n{3,}/g, '\n\n');
-    // 4) Ensure the content starts with a line break so the first heading isn't glued to the top
+
+    // 6) Ensure leading newline so the first heading isn’t glued to top
     if (!t.startsWith('\n')) t = '\n' + t;
     return t;
 }

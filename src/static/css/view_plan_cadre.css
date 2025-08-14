@@ -63,9 +63,16 @@ body.with-action-bar {
     min-height: 120px;
 }
 
-/* Better spacing for headings in reasoning summary */
-#reasoningSummary h1, #reasoningSummary h2, #reasoningSummary h3 {
-    margin-top: .25rem;
+/* Normalize headings in reasoning summary */
+#reasoningSummary h1,
+#reasoningSummary h2,
+#reasoningSummary h3,
+#reasoningSummary h4,
+#reasoningSummary h5,
+#reasoningSummary h6 {
+    margin-top: .5rem;
+    margin-bottom: .25rem;
+    font-size: 1rem; /* uniform size to avoid oversized first title */
 }
 
 /* Streaming animations */
