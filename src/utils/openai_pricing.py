@@ -62,5 +62,16 @@ def get_model_pricing(model_name: str):
         )
         return DEFAULT_PRICING["gpt-4o-mini"]
 
+    # 4) Heuristique pour la famille gpt-5 (et variantes)
+    # Beaucoup de variantes (ex: gpt-5, gpt-5.1, gpt-5-preview) peuvent ne pas
+    # être encore enregistrées en base. On cale par défaut sur gpt-4o pour éviter
+    # une erreur 500 côté application, tout en journalisant le fallback.
+    if model_name.startswith("gpt-5") and "gpt-4o" in DEFAULT_PRICING:
+        logger.warning(
+            "Tarif du modèle '%s' introuvable. Fallback heuristique sur 'gpt-4o'.",
+            model_name,
+        )
+        return DEFAULT_PRICING["gpt-4o"]
+
     # Sinon: erreur explicite pour signaler un vrai manque de configuration
     raise ValueError(f"Modèle '{model_name}' non trouvé dans la base de données.")
