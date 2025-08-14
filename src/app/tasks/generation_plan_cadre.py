@@ -755,6 +755,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                         seq = 0
                         for event in stream:
                             etype = getattr(event, 'type', '') or ''
+                            # Handle text deltas for output text
                             if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
                                 delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
                                 if delta:
@@ -766,6 +767,19 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                         'stream_buffer': streamed_text,
                                         'seq': seq
                                     })
+                            # Newer event name for reasoning summary text delta
+                            elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                                # direct text string delta
+                                rs_delta = getattr(event, 'delta', '') or ''
+                                if rs_delta:
+                                    reasoning_summary_text += rs_delta
+                                reasoning_summary_text = reasoning_summary_text.strip()
+                                if reasoning_summary_text:
+                                    self.update_state(state='PROGRESS', meta={
+                                        'message': 'Résumé du raisonnement',
+                                        'reasoning_summary': reasoning_summary_text
+                                    })
+                            # Backward-compatible event name used by older SDKs
                             elif etype.endswith('reasoning.summary.delta') or etype == 'reasoning.summary.delta':
                                 reasoning_summary_text += _collect_summary(getattr(event, 'delta', None))
                                 reasoning_summary_text = reasoning_summary_text.strip()
@@ -774,6 +788,30 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                         'message': 'Résumé du raisonnement',
                                         'reasoning_summary': reasoning_summary_text
                                     })
+                            # Item added (can include messages and reasoning). Keep for completeness.
+                            elif etype.endswith('response.output_item.added') or etype == 'response.output_item.added':
+                                # Some SDKs emit item additions; we try to surface any text as progress.
+                                try:
+                                    item = getattr(event, 'item', None)
+                                    # If the item resembles a message with textual content, append
+                                    if item:
+                                        # common shapes: {'type': 'output_text', 'text': '...'} or nested message
+                                        text_val = ''
+                                        if isinstance(item, dict):
+                                            text_val = item.get('text') or ''
+                                        else:
+                                            text_val = getattr(item, 'text', '') or ''
+                                        if text_val:
+                                            streamed_text = (streamed_text or '') + text_val
+                                            seq += 1
+                                            self.update_state(state='PROGRESS', meta={
+                                                'message': 'Génération en cours...',
+                                                'stream_chunk': text_val,
+                                                'stream_buffer': streamed_text,
+                                                'seq': seq
+                                            })
+                                except Exception:
+                                    pass
                             elif getattr(event, 'summary', None):
                                 reasoning_summary_text += _collect_summary(event.summary)
                                 reasoning_summary_text = reasoning_summary_text.strip()

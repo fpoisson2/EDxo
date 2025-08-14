@@ -600,7 +600,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Vue: prompt global visible, prompt baguette caché
             if (generalPromptGroup) generalPromptGroup.classList.remove('d-none');
             if (wandPromptGroup) wandPromptGroup.classList.add('d-none');
-            if (streamHidden) streamHidden.value = '0';
+            // Activer le streaming pour la génération globale
+            if (streamHidden) streamHidden.value = '1';
         });
     }
 
@@ -691,9 +692,18 @@ document.addEventListener('DOMContentLoaded', function() {
                                 summary.classList.remove('d-none');
                             }
                             if (out) {
+                                let displayText = '';
                                 if (meta.stream_buffer) {
-                                    out.textContent = meta.stream_buffer;
+                                    // Try to pretty-print JSON if buffer contains valid JSON
+                                    try {
+                                        const obj = JSON.parse(meta.stream_buffer);
+                                        displayText = JSON.stringify(obj, null, 2);
+                                    } catch (_) {
+                                        displayText = meta.stream_buffer;
+                                    }
+                                    out.textContent = displayText;
                                 } else if (meta.stream_chunk) {
+                                    // Append raw chunk when buffer is not provided
                                     out.textContent += meta.stream_chunk;
                                 }
                                 out.scrollTop = out.scrollHeight;
