@@ -693,7 +693,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     // Tab switching
                     const tabsEl = document.getElementById('streamTabs');
-                    if (tabsEl) {
+                    if (tabsEl && !tabsEl.dataset.bound) {
+                        tabsEl.dataset.bound = '1';
                         tabsEl.addEventListener('click', (e) => {
                             const btn = e.target.closest('button[data-target]');
                             if (!btn) return;
@@ -707,7 +708,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 htmlPreview && htmlPreview.classList.remove('d-none');
                                 out && out.classList.add('d-none');
                             }
-                        }, { once: true });
+                        });
                     }
                     window.onTaskStreamUpdate = function(meta) {
                         try {
@@ -718,7 +719,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             const summary = document.getElementById('reasoningSummary');
                             if (status && meta.message) status.textContent = meta.message;
                             if (summary && meta.reasoning_summary) {
-                                summary.textContent = meta.reasoning_summary;
+                                try {
+                                    if (window.marked) {
+                                        summary.innerHTML = window.marked.parse(meta.reasoning_summary);
+                                    } else {
+                                        summary.textContent = meta.reasoning_summary;
+                                    }
+                                } catch(_) {
+                                    summary.textContent = meta.reasoning_summary;
+                                }
                                 summary.classList.remove('d-none');
                             }
                             if (out) {

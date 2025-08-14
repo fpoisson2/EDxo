@@ -45,7 +45,7 @@ body.with-action-bar {
 
 /* Aperçu en direct dans le modal */
 .stream-output {
-    height: 260px;
+    height: 50vh;
     overflow: auto;
     background: #f8f9fa;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -54,7 +54,7 @@ body.with-action-bar {
 }
 
 .stream-preview {
-    max-height: 320px;
+    max-height: 50vh;
     overflow: auto;
     background: #ffffff;
     border: 1px solid #e9ecef;
