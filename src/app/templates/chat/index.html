@@ -101,6 +101,23 @@
       margin-top: 4px;
       line-height: 1.6;
     }
+    /* Résumé du raisonnement dans les messages IA */
+    .reasoning-summary {
+      margin-top: .5rem;
+      background: #f1f3f5;
+      border: 1px solid #e0e0e0;
+      border-radius: .5rem;
+      padding: .5rem .75rem;
+      color: #212529;
+      display: none; /* rendu seulement quand dispo */
+    }
+    .reasoning-summary .title { font-weight: 600; margin-bottom: .25rem; }
+    .reasoning-summary-body h1,
+    .reasoning-summary-body h2,
+    .reasoning-summary-body h3,
+    .reasoning-summary-body h4,
+    .reasoning-summary-body h5,
+    .reasoning-summary-body h6 { margin-top: .5rem; margin-bottom: .25rem; font-size: 1rem; }
     /* Bulle de status pour les appels de fonction */
 .status-bubble {
   display: block;
@@ -268,10 +285,19 @@
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
     // Pour les messages utilisateur, texte brut ; pour EDxo, rendu Markdown
-    contentDiv.innerHTML = type === 'user' ? message : marked.parse(message);
+    contentDiv.innerHTML = type === 'user' ? message : marked.parse(message || '');
+
+    // Conteneur du résumé du raisonnement (affiché uniquement si des données existent)
+    let reasoningDiv = null;
+    if (type === 'ai') {
+      reasoningDiv = document.createElement('div');
+      reasoningDiv.className = 'reasoning-summary';
+      reasoningDiv.innerHTML = '<div class="title">Résumé du raisonnement</div><div class="reasoning-summary-body"></div>';
+    }
 
     messageDiv.appendChild(senderDiv);
     messageDiv.appendChild(contentDiv);
+    if (reasoningDiv) messageDiv.appendChild(reasoningDiv);
 
     messagesContainer.appendChild(messageDiv);
     scrollChat(true);
@@ -287,6 +313,8 @@
     const decoder = new TextDecoder();
     let accumulatedContent = '';
     const contentDiv = messageElement.querySelector('.message-content');
+    const reasoningBox = messageElement.querySelector('.reasoning-summary');
+    const reasoningBody = messageElement.querySelector('.reasoning-summary-body');
 
     // Création de la bulle de status avec un message d'attente par défaut
     let statusBubble = document.createElement('div');
@@ -315,6 +343,13 @@
                 contentDiv.innerHTML = marked.parse(accumulatedContent);
                 // Masquer la bulle dès que du contenu est affiché
                 statusBubble.style.display = 'none';
+              } else if (data.type === 'reasoning_summary') {
+                // Affichage/Mise à jour du résumé du raisonnement
+                if (reasoningBox && reasoningBody) {
+                  const md = formatReasoningMarkdown(String(data.content || ''));
+                  reasoningBody.innerHTML = marked.parse(md, { breaks: true, gfm: true });
+                  reasoningBox.style.display = 'block';
+                }
               } else if (data.type === 'processing' || data.type === 'function_call') {
                 // Mise à jour du message dans la bulle
                 statusBubble.innerHTML = `<span class="spinner">⟳</span> ${data.content || 'Appel de fonction en cours...'}`;
@@ -345,6 +380,24 @@
         accumulatedContent + '\n\n**Erreur de lecture du flux:** ' + error.message
       );
     }
+  }
+
+  // Mise en forme du résumé du raisonnement (espaces, titres)
+  function formatReasoningMarkdown(text) {
+    if (!text) return '';
+    let t = String(text).replace(/\r\n/g, '\n');
+    // Normaliser les blocs gras cassés: **Titre\n** -> **Titre**
+    t = t.replace(/\*\*([\s\S]*?)\n+\*\*/g, '**$1**');
+    // Insérer un saut avant un titre en gras collé au texte précédent
+    t = t.replace(/([^\n])\s*\*\*([A-Za-zÀ-ÿ0-9][^*]{0,118}?)\*\*(?=\s*(\n|$))/g, '$1\n\n**$2**');
+    // Normaliser les titres Markdown en niveau 3
+    t = t.replace(/(^|\n+)\s*#{1,6}\s+([^\n]+?)\s*(?=\n|$)/g, '$1\n\n### $2\n\n');
+    // Convertir une ligne en gras seule en titre
+    t = t.replace(/(^|\n+)\s*\*\*([^*\n][^*]*?)\*\*\s*(?=\n|$)/g, '$1\n\n### $2\n\n');
+    // Réduire les sauts multiples
+    t = t.replace(/\n{3,}/g, '\n\n');
+    if (!t.startsWith('\n')) t = '\n' + t;
+    return t;
   }
 
   // Ajustement de la hauteur du textarea en fonction du contenu

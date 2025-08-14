@@ -59,6 +59,18 @@ def extract_text(ev):
         return getattr(ev.item, "text", None)
     return None
 
+def _collect_summary(items):
+    """Concatenate summary_text blocks from Responses API event payloads."""
+    text = ""
+    if not items:
+        return text
+    if not isinstance(items, (list, tuple)):
+        items = [items]
+    for item in items:
+        if getattr(item, "type", "") == "summary_text":
+            text += getattr(item, "text", "")
+    return text
+
 
 # ─── token util ─────────────────────────────────────────────────
 def estimate_tokens_for_text(txt: str, model=None):
@@ -581,7 +593,7 @@ def send_message():
         max_output_tokens=2048,
     )
     if reasoning_effort in {"minimal", "low", "medium", "high"}:
-        request_kwargs["reasoning"] = {"effort": reasoning_effort}
+        request_kwargs["reasoning"] = {"effort": reasoning_effort, "summary": "auto"}
     try:
         print(f"[LOG] Initial call model={chat_model}, previous_response_id={prev_id}")
         raw_stream = safe_openai_stream(**request_kwargs)
@@ -624,6 +636,7 @@ def send_message():
 
         logs_to_add_db = []
         accumulated_assistant_text = ""
+        reasoning_summary_text = ""
 
 
         print("[DEBUG LOG] SSE: Yielding initial processing message.")
@@ -656,6 +669,23 @@ def send_message():
                 # Log completion events
                 if ResponseCompletedEvent is not None and isinstance(ev, ResponseCompletedEvent) and response_id:
                     print(f"[LOG] Completed initial response.id={response_id}")
+
+                # --- Surface reasoning summary if present on this event ---
+                try:
+                    etype = getattr(ev, 'type', '') or ''
+                    if etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(ev, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary_text += rs_delta
+                    elif etype.endswith('reasoning.summary.delta') or etype == 'reasoning.summary.delta':
+                        reasoning_summary_text += _collect_summary(getattr(ev, 'delta', None))
+                    elif getattr(ev, 'summary', None):
+                        reasoning_summary_text += _collect_summary(getattr(ev, 'summary', None))
+                    reasoning_summary_text = reasoning_summary_text.strip()
+                    if reasoning_summary_text:
+                        yield "data: " + json.dumps({"type": "reasoning_summary", "content": reasoning_summary_text}) + "\n\n"
+                except Exception:
+                    pass
 
                 # --- Tool Call Detection and Processing ---
                 if (isinstance(ev, ResponseOutputItemAddedEvent)
@@ -766,7 +796,7 @@ def send_message():
                             max_output_tokens=2048,
                         )
                         if reasoning_effort in {"minimal", "low", "medium", "high"}:
-                            follow_kwargs["reasoning"] = {"effort": reasoning_effort}
+                            follow_kwargs["reasoning"] = {"effort": reasoning_effort, "summary": "auto"}
                         follow_stream = client.responses.create(**follow_kwargs)
                         print("[DEBUG LOG] SSE: follow_stream call initiated.")
 
@@ -774,6 +804,22 @@ def send_message():
                         print("[DEBUG LOG] SSE: Processing follow_stream...")
                         for ev2_count, ev2 in enumerate(follow_stream):
                             print(f"[DEBUG LOG] SSE Follow Loop ({ev2_count}): Processing event type: {ev2.__class__.__name__}")
+                            # Surface reasoning summary during follow-up
+                            try:
+                                etype2 = getattr(ev2, 'type', '') or ''
+                                if etype2.endswith('response.reasoning_summary_text.delta') or etype2 == 'response.reasoning_summary_text.delta':
+                                    rs_delta2 = getattr(ev2, 'delta', '') or ''
+                                    if rs_delta2:
+                                        reasoning_summary_text += rs_delta2
+                                elif etype2.endswith('reasoning.summary.delta') or etype2 == 'reasoning.summary.delta':
+                                    reasoning_summary_text += _collect_summary(getattr(ev2, 'delta', None))
+                                elif getattr(ev2, 'summary', None):
+                                    reasoning_summary_text += _collect_summary(getattr(ev2, 'summary', None))
+                                reasoning_summary_text = reasoning_summary_text.strip()
+                                if reasoning_summary_text:
+                                    yield "data: " + json.dumps({"type": "reasoning_summary", "content": reasoning_summary_text}) + "\n\n"
+                            except Exception:
+                                pass
                             # Track the latest response ID seen (from the follow-up stream)
                             response_id2 = getattr(getattr(ev2, 'response', None), 'id', None)
                             if response_id2:
@@ -813,7 +859,7 @@ def send_message():
                                     max_output_tokens=2048,
                                 )
                                 if reasoning_effort in {"minimal", "low", "medium", "high"}:
-                                    retry_kwargs["reasoning"] = {"effort": reasoning_effort}
+                                    retry_kwargs["reasoning"] = {"effort": reasoning_effort, "summary": "auto"}
                                 retry_stream = client.responses.create(**retry_kwargs)
                                 for ev3_count, ev3 in enumerate(retry_stream):
                                     response_id3 = getattr(getattr(ev3, 'response', None), 'id', None)
@@ -825,6 +871,23 @@ def send_message():
                                         print(f"[LOG] Created follow-up(retry) response.id={response_id3} (model={tool_model}, prev_id={id_for_followup}, call_id={call_id})")
                                     if ResponseCompletedEvent is not None and isinstance(ev3, ResponseCompletedEvent) and response_id3:
                                         print(f"[LOG] Completed follow-up(retry) response.id={response_id3} (call_id={call_id})")
+                                    # Surface reasoning summary on retry
+                                    try:
+                                        etype3 = getattr(ev3, 'type', '') or ''
+                                        if etype3.endswith('response.reasoning_summary_text.delta') or etype3 == 'response.reasoning_summary_text.delta':
+                                            rs_delta3 = getattr(ev3, 'delta', '') or ''
+                                            if rs_delta3:
+                                                reasoning_summary_text += rs_delta3
+                                        elif etype3.endswith('reasoning.summary.delta') or etype3 == 'reasoning.summary.delta':
+                                            reasoning_summary_text += _collect_summary(getattr(ev3, 'delta', None))
+                                        elif getattr(ev3, 'summary', None):
+                                            reasoning_summary_text += _collect_summary(getattr(ev3, 'summary', None))
+                                        reasoning_summary_text = reasoning_summary_text.strip()
+                                        if reasoning_summary_text:
+                                            yield "data: " + json.dumps({"type": "reasoning_summary", "content": reasoning_summary_text}) + "\n\n"
+                                    except Exception:
+                                        pass
+
                                     txt3 = extract_text(ev3)
                                     if txt3:
                                         accumulated_assistant_text += txt3
@@ -857,6 +920,23 @@ def send_message():
                                             print(f"[LOG] Created new-thread response.id={response_id4} (model={tool_model})")
                                         if ResponseCompletedEvent is not None and isinstance(ev4, ResponseCompletedEvent) and response_id4:
                                             print(f"[LOG] Completed new-thread response.id={response_id4}")
+                                        # Surface reasoning summary in new thread stream
+                                        try:
+                                            etype4 = getattr(ev4, 'type', '') or ''
+                                            if etype4.endswith('response.reasoning_summary_text.delta') or etype4 == 'response.reasoning_summary_text.delta':
+                                                rs_delta4 = getattr(ev4, 'delta', '') or ''
+                                                if rs_delta4:
+                                                    reasoning_summary_text += rs_delta4
+                                            elif etype4.endswith('reasoning.summary.delta') or etype4 == 'reasoning.summary.delta':
+                                                reasoning_summary_text += _collect_summary(getattr(ev4, 'delta', None))
+                                            elif getattr(ev4, 'summary', None):
+                                                reasoning_summary_text += _collect_summary(getattr(ev4, 'summary', None))
+                                            reasoning_summary_text = reasoning_summary_text.strip()
+                                            if reasoning_summary_text:
+                                                yield "data: " + json.dumps({"type": "reasoning_summary", "content": reasoning_summary_text}) + "\n\n"
+                                        except Exception:
+                                            pass
+
                                         txt4 = extract_text(ev4)
                                         if txt4:
                                             accumulated_assistant_text += txt4
