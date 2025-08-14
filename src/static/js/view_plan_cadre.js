@@ -955,13 +955,15 @@ function escapeHtml(str) {
 function formatReasoningMarkdown(text) {
     if (!text) return '';
     let t = String(text).replace(/\r\n/g, '\n');
-    // Normalize broken bold blocks where closing ** is on a new line
+    // 1) Normalize broken bold: **Title\n** -> **Title**
     t = t.replace(/\*\*([\s\S]*?)\n+\*\*/g, '**$1**');
-    // Convert bold headings at line start into H2 markdown
-    t = t.replace(/(^|\n)\s*\*\*([^*]+)\*\*/g, '$1\n\n## $2\n\n');
-    // Collapse excessive blank lines
+    // 2) Ensure a blank line before any bold block used as a title
+    t = t.replace(/([^\n])\s*(\*\*[^*][\s\S]*?\*\*)/g, '$1\n\n$2');
+    // 3) Convert a line that is only bold text into a heading (H3 for consistent size)
+    t = t.replace(/(^|\n)\s*\*\*([^*\n][^*]*?)\*\*\s*(?=\n|$)/g, '$1\n### $2\n');
+    // 4) Collapse excessive blank lines
     t = t.replace(/\n{3,}/g, '\n\n');
-    // Ensure a leading break so first heading sits on its own line
+    // 5) Ensure initial break so first heading is separated
     if (!t.startsWith('\n')) t = '\n' + t;
     return t;
 }
