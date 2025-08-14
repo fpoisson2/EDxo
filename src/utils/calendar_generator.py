@@ -52,11 +52,17 @@ def build_calendar_prompt(
     # Champs principaux du plan cadre
     sections.extend(
         [
+            f"Place du cours: {plan_cadre.place_intro or ''}",
             f"Objectif terminal: {plan_cadre.objectif_terminal or ''}",
             f"Structure du cours: {plan_cadre.structure_intro or ''}",
             f"Activités théoriques: {plan_cadre.structure_activites_theoriques or ''}",
             f"Activités pratiques: {plan_cadre.structure_activites_pratiques or ''}",
             f"Activités prévues: {plan_cadre.structure_activites_prevues or ''}",
+            f"Évaluation sommative: {plan_cadre.eval_evaluation_sommative or ''}",
+            f"Nature des évaluations sommatives: {plan_cadre.eval_nature_evaluations_sommatives or ''}",
+            f"Évaluation de la langue: {plan_cadre.eval_evaluation_de_la_langue or ''}",
+            f"Évaluation sommative des apprentissages: {plan_cadre.eval_evaluation_sommatives_apprentissages or ''}",
+            f"Informations additionnelles: {plan_cadre.additional_info or ''}",
         ]
     )
 
@@ -74,13 +80,11 @@ def build_calendar_prompt(
         )
 
         cap_lines.append(
-            (
-                f"Capacité: {capacite.capacite or ''}. {capacite.description_capacite or ''}. "
-                f"Pondération: {capacite.ponderation_min or ''}-{capacite.ponderation_max or ''}. "
-                f"Savoirs nécessaires: {savoirs_necessaires}. "
-                f"Savoirs faire: {savoirs_faire}. "
-                f"Moyens d'évaluation: {moyens_eval}.",
-            )
+            f"Capacité: {capacite.capacite or ''}. {capacite.description_capacite or ''}. "
+            f"Pondération: {capacite.ponderation_min or ''}-{capacite.ponderation_max or ''}. "
+            f"Savoirs nécessaires: {savoirs_necessaires}. "
+            f"Savoirs faire: {savoirs_faire}. "
+            f"Moyens d'évaluation: {moyens_eval}."
         )
 
     if cap_lines:
