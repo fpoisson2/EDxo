@@ -910,7 +910,7 @@
 
     <!-- Modal Génération du Plan-cadre (Formulaire Séparé) -->
     <div class="modal fade" id="generateModal" tabindex="-1" aria-labelledby="generateModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post" id="generateContentForm">
                     {{ generate_form.hidden_tag() }}
@@ -959,10 +959,10 @@
                         </div>
                         {# Case à cocher supprimée (mode géré par les boutons) #}
                         <div id="streamContainer" class="d-none">
-                            <label class="form-label">Aperçu en direct</label>
+                            <label class="form-label d-flex align-items-center gap-2"><i class="bi bi-lightbulb"></i><span>Aperçu en direct</span></label>
+                            <div id="reasoningSummary" class="alert alert-secondary py-2 small mb-2 d-none"></div>
                             <div class="small text-muted mb-1" id="streamStatus"></div>
-                            <pre id="streamOutput" class="form-control" style="height: 240px; overflow:auto; background:#f9f9f9"></pre>
-                            <div class="small text-muted mt-2" id="reasoningSummary"></div>
+                            <pre id="streamOutput" class="form-control stream-output"></pre>
                         </div>
                     </div>
                     <div class="modal-footer">

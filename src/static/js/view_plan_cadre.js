@@ -584,7 +584,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Vue: prompt global visible, prompt baguette caché
             if (generalPromptGroup) generalPromptGroup.classList.remove('d-none');
             if (wandPromptGroup) wandPromptGroup.classList.add('d-none');
-            if (streamHidden) streamHidden.value = '0';
+            // Activer l'aperçu en direct pour l'amélioration globale
+            if (streamHidden) streamHidden.value = '1';
         });
     }
     if (openGenerateBtn && modalTitle) {
@@ -673,7 +674,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (container && out) {
                         out.textContent = '';
                         container.classList.remove('d-none');
-                        if (summary) summary.textContent = '';
+                        if (summary) {
+                            summary.textContent = '';
+                            summary.classList.add('d-none');
+                        }
                     }
                     window.onTaskStreamUpdate = function(meta) {
                         try {
@@ -682,7 +686,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             const status = document.getElementById('streamStatus');
                             const summary = document.getElementById('reasoningSummary');
                             if (status && meta.message) status.textContent = meta.message;
-                            if (summary && meta.reasoning_summary) summary.textContent = meta.reasoning_summary;
+                            if (summary && meta.reasoning_summary) {
+                                summary.textContent = meta.reasoning_summary;
+                                summary.classList.remove('d-none');
+                            }
                             if (out) {
                                 if (meta.stream_buffer) {
                                     out.textContent = meta.stream_buffer;

@@ -43,6 +43,16 @@ body.with-action-bar {
     scroll-margin-top: 140px; /* hauteur approx. header + nav collante */
 }
 
+/* Aperçu en direct dans le modal */
+.stream-output {
+    height: 260px;
+    overflow: auto;
+    background: #f8f9fa;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+}
+
 @media (max-width: 768px) {
     /* Sur mobile, seule la barre d'en-tête compte */
     #planCadreAccordion .accordion-item {
