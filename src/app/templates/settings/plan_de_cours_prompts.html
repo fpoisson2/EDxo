@@ -98,11 +98,15 @@
                                 <button class="btn btn-primary btn-sm save-prompt">
                                     Sauvegarder
                                 </button>
-                                <button class="btn btn-secondary btn-sm test-prompt" 
-                                        data-bs-toggle="modal" 
+                                <button class="btn btn-secondary btn-sm test-prompt"
+                                        data-bs-toggle="modal"
                                         data-bs-target="#testPromptModal">
                                     Tester
                                 </button>
+                                <a href="{{ url_for('settings.edit_plan_de_cours_prompt', prompt_id=prompt.id) }}"
+                                   class="btn btn-secondary btn-sm">
+                                    Configurer
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}

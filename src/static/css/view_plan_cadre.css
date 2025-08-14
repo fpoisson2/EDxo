@@ -43,6 +43,69 @@ body.with-action-bar {
     scroll-margin-top: 140px; /* hauteur approx. header + nav collante */
 }
 
+/* Aperçu en direct dans le modal */
+.stream-output {
+    height: 50vh;
+    overflow: auto;
+    background: #f8f9fa;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+}
+
+.stream-preview {
+    max-height: 50vh;
+    overflow: auto;
+    background: #f8f9fa; /* light grey to signal preview area */
+    border: 1px solid #e9ecef;
+    border-radius: .375rem;
+    padding: .75rem;
+    min-height: 120px;
+}
+
+/* Normalize headings in reasoning summary */
+#reasoningSummary h1,
+#reasoningSummary h2,
+#reasoningSummary h3,
+#reasoningSummary h4,
+#reasoningSummary h5,
+#reasoningSummary h6 {
+    margin-top: .5rem;
+    margin-bottom: .25rem;
+    font-size: 1rem; /* uniform size to avoid oversized first title */
+}
+
+/* Streaming animations */
+#streamContainer.streaming { position: relative; }
+#streamContainer.streaming::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #2a9d8f, #e9c46a, #e76f51);
+    background-size: 200% 100%;
+    animation: stream-bar 2s linear infinite;
+    border-top-left-radius: .375rem;
+    border-top-right-radius: .375rem;
+}
+
+@keyframes stream-bar {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+.stream-preview.completed, .stream-output.completed {
+    background: #e6ffed !important;
+    border-color: #a1e3b6 !important;
+    box-shadow: 0 0 0 2px rgba(161,227,182,0.4) inset;
+    transition: background-color .4s ease;
+}
+
+/* Ensure modal body is scrollable and usable */
+.modal-dialog.modal-lg.modal-dialog-scrollable .modal-body {
+    max-height: 75vh;
+    overflow-y: auto;
+}
+
 @media (max-width: 768px) {
     /* Sur mobile, seule la barre d'en-tête compte */
     #planCadreAccordion .accordion-item {

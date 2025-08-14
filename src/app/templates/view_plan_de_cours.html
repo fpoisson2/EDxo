@@ -310,7 +310,12 @@
 
                         <!-- Calendrier -->
                         <div class="mb-3">
-                            <h4>Calendrier des activités</h4>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h4 class="mb-0">Calendrier des activités</h4>
+                                <button type="button" class="btn btn-secondary btn-sm generate-calendar" id="generate-calendar" title="Générer le calendrier">
+                                    <i class="bi bi-magic"></i>Générer le calendrier
+                                </button>
+                            </div>
                             <div id="calendrier-container" class="mb-3" {% if not form.calendriers %}style="display: none;"{% endif %}>
                                  {% for subform in form.calendriers %}
                                     <div class="calendar-item border p-2 mb-2 {% if loop.index0 is even %}bg-light{% else %}bg-secondary text-white{% endif %}" draggable="true">
@@ -772,7 +777,8 @@ textarea.toast-ui-target:not(.toast-initialized) {
     position: relative;
 }
 
-.generate-button.loading {
+.generate-button.loading,
+.generate-calendar.loading {
     pointer-events: none;
     opacity: 0.7;
 }
@@ -1227,6 +1233,86 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialiser le drag & drop au chargement
     initDragAndDrop();
+
+    // Génération automatique du calendrier via l'IA
+    document.getElementById('generate-calendar')?.addEventListener('click', async function() {
+        const button = this;
+        const container = document.getElementById('calendrier-container');
+        container.style.display = 'block';
+
+        // Ajouter overlay de chargement
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.className = 'loading-overlay';
+        loadingOverlay.innerHTML = `
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+                <div class="loading-text">Génération en cours...</div>
+            </div>
+        `;
+        container.style.position = 'relative';
+        container.appendChild(loadingOverlay);
+        button.classList.add('loading');
+        button.disabled = true;
+        try {
+            const payload = {
+                cours_id: {{ cours.id }},
+                session: "{{ plan_de_cours.session }}"
+            };
+            const response = await fetch("{{ url_for('plan_de_cours.generate_calendar') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': "{{ csrf_token() }}"
+                },
+                body: JSON.stringify(payload),
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Erreur inconnue');
+            }
+
+            const data = await response.json();
+            const overlay = container.querySelector('.loading-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+            container.innerHTML = '';
+            if (data.entries && data.entries.length > 0) {
+                container.style.display = 'block';
+                data.entries.forEach((entry, index) => {
+                    const newItem = document.createElement('div');
+                    newItem.className = `calendar-item border p-2 mb-2 ${index % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
+                    newItem.innerHTML = document.getElementById('calendrier-template').innerHTML.replace(/__index__/g, index);
+                    newItem.querySelector(`[name="calendriers-${index}-semaine"]`).value = entry.semaine ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-sujet"]`).value = entry.sujet ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-activites"]`).value = entry.activites ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-travaux_hors_classe"]`).value = entry.travaux_hors_classe ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-evaluations"]`).value = entry.evaluations ?? '';
+                    container.appendChild(newItem);
+                });
+                calendrierIndex = data.entries.length;
+                initDragAndDrop();
+                window.showFloatingButtons();
+                showToast('generateSuccessToast');
+            } else {
+                showToast('generateErrorToast');
+            }
+        } catch (error) {
+            console.error('Erreur lors de la génération du calendrier:', error);
+            showToast('generateErrorToast');
+        } finally {
+            const overlay = container.querySelector('.loading-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+            button.classList.remove('loading');
+            button.disabled = false;
+        }
+    });
 
     // Gestion du bouton d'ajout de calendrier
     document.getElementById('add-calendrier')?.addEventListener('click', function() {

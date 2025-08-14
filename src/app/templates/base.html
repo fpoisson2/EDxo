@@ -474,14 +474,23 @@
               const planId = payload.plan_id;
               const reviewUrl = `/plan_cadre/${planId}/review?task_id=` + currentTaskId;
               addNotification("Proposition d'amélioration prête. Cliquez pour comparer et appliquer.", "success", reviewUrl);
+              if (typeof window.onTaskCompleted === 'function') {
+                try { window.onTaskCompleted({ ...payload, reviewUrl }); } catch (e) { console.warn('onTaskCompleted error', e); }
+              }
             } else {
               const coursId = payload.cours_id;
               const planId = payload.plan_id;
               if (coursId && planId) {
                 const planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
                 addNotification("Génération terminée. Cliquez pour voir le plan-cadre.", "success", planCadreUrl);
+                if (typeof window.onTaskCompleted === 'function') {
+                  try { window.onTaskCompleted({ ...payload, planCadreUrl }); } catch (e) { console.warn('onTaskCompleted error', e); }
+                }
               } else {
                 addNotification("Génération terminée.", "success");
+                if (typeof window.onTaskCompleted === 'function') {
+                  try { window.onTaskCompleted(payload); } catch (e) { console.warn('onTaskCompleted error', e); }
+                }
               }
             }
             stopPolling();
