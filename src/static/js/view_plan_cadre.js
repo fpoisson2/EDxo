@@ -687,21 +687,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             htmlPreview.innerHTML = '<div class="text-muted">En attente de données valides…</div>';
                             htmlPreview.classList.remove('d-none');
                         }
-                        // Choose default tab: for génération globale, prefer JSON to show progress early
+                        // Choisir l'onglet par défaut comme pour le mode "améliorer" (Structuré)
                         const tabs = document.querySelectorAll('#streamTabs button');
                         tabs.forEach(btn => btn.classList.remove('active'));
-                        const jsonBtn = document.querySelector('#streamTabs button[data-target="json"]');
                         const structuredBtn = document.querySelector('#streamTabs button[data-target="structured"]');
-                        const isGenerate = (modeHidden && modeHidden.value === 'generate');
-                        if (isGenerate) {
-                            if (jsonBtn) jsonBtn.classList.add('active');
-                            out && out.classList.remove('d-none');
-                            htmlPreview && htmlPreview.classList.add('d-none');
-                        } else {
-                            if (structuredBtn) structuredBtn.classList.add('active');
-                            out && out.classList.add('d-none');
-                            htmlPreview && htmlPreview.classList.remove('d-none');
-                        }
+                        if (structuredBtn) structuredBtn.classList.add('active');
+                        out && out.classList.add('d-none');
+                        htmlPreview && htmlPreview.classList.remove('d-none');
                     }
                     // Tab switching
                     const tabsEl = document.getElementById('streamTabs');

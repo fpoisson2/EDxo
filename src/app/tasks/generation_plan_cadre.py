@@ -821,6 +821,27 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                         'message': 'Résumé du raisonnement',
                                         'reasoning_summary': reasoning_summary_text
                                     })
+                            # Additional compatibility: some SDKs emit generic reasoning deltas
+                            elif etype.endswith('response.reasoning.delta') or etype == 'response.reasoning.delta' or \
+                                 etype.endswith('reasoning.delta') or etype == 'reasoning.delta':
+                                try:
+                                    delta_obj = getattr(event, 'delta', None)
+                                    # Try common shapes
+                                    if isinstance(delta_obj, str):
+                                        reasoning_summary_text += delta_obj
+                                    elif isinstance(delta_obj, dict):
+                                        reasoning_summary_text += (delta_obj.get('summary_text') or delta_obj.get('text') or '')
+                                    # Fallback: collect any summary structure
+                                    if not delta_obj:
+                                        reasoning_summary_text += _collect_summary(getattr(event, 'summary', None))
+                                    reasoning_summary_text = reasoning_summary_text.strip()
+                                    if reasoning_summary_text:
+                                        self.update_state(state='PROGRESS', meta={
+                                            'message': 'Résumé du raisonnement',
+                                            'reasoning_summary': reasoning_summary_text
+                                        })
+                                except Exception:
+                                    pass
                             # Item added (can include messages and reasoning). Keep for completeness.
                             elif etype.endswith('response.output_item.added') or etype == 'response.output_item.added':
                                 # Some SDKs emit item additions; we try to surface any text as progress.
