@@ -4,6 +4,10 @@
   <h2>Revoir les améliorations proposées — {{ cours.code }} - {{ cours.nom }}</h2>
   <p class="text-muted">Comparez les changements avant de les appliquer définitivement.</p>
 
+  {% if reasoning_summary %}
+    <div class="alert alert-secondary"><strong>Résumé du raisonnement :</strong> {{ reasoning_summary }}</div>
+  {% endif %}
+
   {% if changes|length == 0 %}
     <div class="alert alert-info">Aucun changement proposé par rapport au contenu actuel.</div>
   {% else %}
