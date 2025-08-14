@@ -83,12 +83,15 @@ def generate_plan_cadre_content(plan_id):
     wand_instruction = request.form.get('wand_instruction')
     if wand_instruction is not None:
         payload['wand_instruction'] = wand_instruction
-    # Propager un périmètre ciblé si présent
+    # Propager un périmètre ciblé si présent (nettoyer les valeurs vides)
     target_cols = request.form.getlist('target_columns') or []
+    # Nettoyage: retirer les chaînes vides/espaces qui peuvent provenir d'un champ hidden
+    target_cols = [s.strip() for s in target_cols if isinstance(s, str) and s.strip()]
     if not target_cols:
         raw = request.form.get('target_columns')
         if raw:
             target_cols = [s.strip() for s in raw.split(',') if s.strip()]
+    # N'inclure la clé que si des colonnes valides sont réellement ciblées
     if target_cols:
         payload['target_columns'] = target_cols
 
