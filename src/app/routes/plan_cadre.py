@@ -129,6 +129,7 @@ def review_improvement(plan_id):
         return redirect(url_for('cours.view_plan_cadre', cours_id=PlanCadre.query.get(plan_id).cours_id, plan_id=plan_id))
 
     proposed = res.result.get('proposed', {})
+    reasoning_summary = res.result.get('reasoning_summary')
     plan = PlanCadre.query.get(plan_id)
     if not plan:
         flash('Plan Cadre non trouvé.', 'danger')
@@ -218,7 +219,8 @@ def review_improvement(plan_id):
         cours=plan.cours,
         plan_id=plan_id,
         task_id=task_id,
-        changes=changes
+        changes=changes,
+        reasoning_summary=reasoning_summary
     )
 
 

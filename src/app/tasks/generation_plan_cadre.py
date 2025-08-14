@@ -712,13 +712,17 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 text=text_params,
                 store=True,
             )
+            reasoning_params = {"summary": "auto"}
             if reasoning_effort in {"minimal", "low", "medium", "high"}:
-                request_kwargs["reasoning"] = {"effort": reasoning_effort}
+                reasoning_params["effort"] = reasoning_effort
+            request_kwargs["reasoning"] = reasoning_params
 
             # Streaming if requested by client
             do_stream = str(form_data.get("stream") or "0").lower() in ("1", "true", "yes", "on")
             streamed_text = None
             response = None
+            reasoning_items = []
+            reasoning_summary_text = ""
             if do_stream:
                 try:
                     request_kwargs_stream = dict(request_kwargs)
@@ -740,8 +744,20 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                         'seq': seq
                                     })
                                     logger.info("Stream chunk %s: %s", seq, delta)
+                            elif etype.startswith('reasoning') and getattr(event, 'summary', None):
+                                reasoning_items.extend(event.summary)
                             elif etype.endswith('response.completed') or etype == 'response.completed':
                                 break
+                        if reasoning_items:
+                            for item in reasoning_items:
+                                if getattr(item, 'type', '') == 'summary_text':
+                                    reasoning_summary_text += getattr(item, 'text', '')
+                            reasoning_summary_text = reasoning_summary_text.strip()
+                            if reasoning_summary_text:
+                                self.update_state(state='PROGRESS', meta={
+                                    'message': 'Résumé du raisonnement',
+                                    'reasoning_summary': reasoning_summary_text
+                                })
                         response = stream.get_final_response()
                 except Exception as se:
                     logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
@@ -751,6 +767,22 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             # Non-stream or fallback: perform standard request
             if streamed_text is None:
                 response = client.responses.create(**request_kwargs)
+                if hasattr(response, 'reasoning') and response.reasoning:
+                    reasoning_items = []
+                    for r in response.reasoning:
+                        summary = getattr(r, 'summary', None)
+                        if summary:
+                            reasoning_items.extend(summary)
+                    if reasoning_items:
+                        for item in reasoning_items:
+                            if getattr(item, 'type', '') == 'summary_text':
+                                reasoning_summary_text += getattr(item, 'text', '')
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text
+                            })
         except Exception as e:
             logging.error(f"OpenAI error: {e}")
             result_meta = {"status": "error", "message": f"Erreur API OpenAI: {str(e)}"}
@@ -957,6 +989,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             }
             if streamed_text:
                 result["stream_buffer"] = streamed_text
+            if reasoning_summary_text:
+                result["reasoning_summary"] = reasoning_summary_text
             self.update_state(state="SUCCESS", meta=result)
             return result
         else:
@@ -969,6 +1003,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             }
             if streamed_text:
                 result["stream_buffer"] = streamed_text
+            if reasoning_summary_text:
+                result["reasoning_summary"] = reasoning_summary_text
             self.update_state(state="SUCCESS", meta=result)
             return result
 
