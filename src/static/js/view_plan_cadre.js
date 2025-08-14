@@ -954,10 +954,14 @@ function escapeHtml(str) {
 // Ensure headings/titles in reasoning have breaks before them
 function formatReasoningMarkdown(text) {
     if (!text) return '';
-    let t = String(text);
-    // Insert blank lines before any bold title sequences like **Title** when not at line start
-    t = t.replace(/([^\n])\s*(\*\*[^*]+\*\*)/g, '$1\n\n$2');
-    // Ensure leading break for the very first title
+    let t = String(text).replace(/\r\n/g, '\n');
+    // Normalize broken bold blocks where closing ** is on a new line
+    t = t.replace(/\*\*([\s\S]*?)\n+\*\*/g, '**$1**');
+    // Convert bold headings at line start into H2 markdown
+    t = t.replace(/(^|\n)\s*\*\*([^*]+)\*\*/g, '$1\n\n## $2\n\n');
+    // Collapse excessive blank lines
+    t = t.replace(/\n{3,}/g, '\n\n');
+    // Ensure a leading break so first heading sits on its own line
     if (!t.startsWith('\n')) t = '\n' + t;
     return t;
 }

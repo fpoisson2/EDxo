@@ -63,6 +63,11 @@ body.with-action-bar {
     min-height: 120px;
 }
 
+/* Better spacing for headings in reasoning summary */
+#reasoningSummary h1, #reasoningSummary h2, #reasoningSummary h3 {
+    margin-top: .25rem;
+}
+
 /* Streaming animations */
 #streamContainer.streaming { position: relative; }
 #streamContainer.streaming::before {

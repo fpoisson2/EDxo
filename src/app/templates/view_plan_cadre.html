@@ -5,6 +5,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/view_plan_cadre.css') }}">
     <script src="{{ url_for('static', filename='js/view_plan_cadre.js') }}" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+      window.addEventListener('DOMContentLoaded', function() {
+        if (window.marked && window.marked.setOptions) {
+          window.marked.setOptions({ breaks: true, gfm: true });
+        }
+      });
+    </script>
     <style>
         html { scroll-behavior: smooth; }
     </style>
