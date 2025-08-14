@@ -93,6 +93,27 @@ def parse_markdown_nested(md_text):
     
     return nested_structure
 
+
+def _extract_first_parsed(response):
+    """Compat: robustly fetch the first parsed item from Responses API.
+
+    Some models (e.g., reasoning/gpt-5 family) may prepend a reasoning block
+    without a 'content' attribute. This scans output items and returns the
+    first content element that exposes a 'parsed' attribute.
+    """
+    try:
+        outputs = getattr(response, 'output', None) or []
+        for item in outputs:
+            contents = getattr(item, 'content', None) or []
+            for c in contents:
+                parsed = getattr(c, 'parsed', None)
+                if parsed is not None:
+                    return parsed
+    except Exception:
+        # Let caller handle logging
+        pass
+    return None
+
 @plan_de_cours_bp.route("/api/cours/<int:cours_id>/plans")
 @login_required
 @ensure_profile_completed
@@ -236,7 +257,13 @@ def generate_content():
         user.credits -= cost
         db.session.commit()
 
-        structured_data = response.output[0].content[0].parsed
+        structured_data = _extract_first_parsed(response)
+        if structured_data is None:
+            current_app.logger.error(
+                "No parsed content found in OpenAI response for field %s",
+                field_name,
+            )
+            return jsonify({'error': "Aucune donnée structurée n'a été renvoyée par le modèle."}), 502
 
         return jsonify(structured_data.model_dump())
 
@@ -322,7 +349,16 @@ def generate_calendar():
         for cal in plan_de_cours.calendriers:
             db.session.delete(cal)
 
-        entries = response.output[0].content[0].parsed.calendriers
+        parsed = _extract_first_parsed(response)
+        if parsed is None:
+            current_app.logger.error(
+                "No parsed calendar content found in OpenAI response (cours_id=%s, session=%s)",
+                cours_id,
+                session,
+            )
+            return jsonify({'error': "Aucune donnée de calendrier n'a été renvoyée par le modèle."}), 502
+
+        entries = parsed.calendriers
         for entry in entries:
             new_cal = PlanDeCoursCalendrier(
                 plan_de_cours_id=plan_de_cours.id,
