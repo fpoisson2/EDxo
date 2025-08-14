@@ -721,7 +721,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             do_stream = str(form_data.get("stream") or "0").lower() in ("1", "true", "yes", "on")
             streamed_text = None
             response = None
-            reasoning_items = []
+            reasoning_summary_parts = []
             reasoning_summary_text = ""
             if do_stream:
                 try:
@@ -743,37 +743,32 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                         'stream_buffer': streamed_text,
                                         'seq': seq
                                     })
-                            elif getattr(event, 'summary', None):
-                                reasoning_items.extend(event.summary)
+                            elif etype.endswith('reasoning.summary.delta'):
+                                delta = getattr(event, 'delta', '') or ''
+                                if delta:
+                                    reasoning_summary_parts.append(delta)
+                                    reasoning_summary_text = ''.join(reasoning_summary_parts).strip()
+                                    self.update_state(state='PROGRESS', meta={
+                                        'message': 'Résumé du raisonnement',
+                                        'reasoning_summary': reasoning_summary_text
+                                    })
                             elif etype.endswith('response.completed') or etype == 'response.completed':
                                 break
-                        if reasoning_items:
-                            for item in reasoning_items:
-                                if getattr(item, 'type', '') == 'summary_text':
-                                    reasoning_summary_text += getattr(item, 'text', '')
+                        response = stream.get_final_response()
+                        if not reasoning_summary_text:
+                            reasoning_summary_text = ''.join(reasoning_summary_parts).strip()
+                        if not reasoning_summary_text and hasattr(response, 'output'):
+                            for item in getattr(response, 'output', []):
+                                if getattr(item, 'type', '') == 'reasoning':
+                                    for summary in getattr(item, 'summary', []) or []:
+                                        if getattr(summary, 'type', '') == 'summary_text':
+                                            reasoning_summary_text += getattr(summary, 'text', '')
                             reasoning_summary_text = reasoning_summary_text.strip()
                             if reasoning_summary_text:
                                 self.update_state(state='PROGRESS', meta={
                                     'message': 'Résumé du raisonnement',
                                     'reasoning_summary': reasoning_summary_text
                                 })
-                        response = stream.get_final_response()
-                        if not reasoning_summary_text and hasattr(response, 'reasoning') and response.reasoning:
-                            reasoning_items = []
-                            for r in response.reasoning:
-                                summary = getattr(r, 'summary', None)
-                                if summary:
-                                    reasoning_items.extend(summary)
-                            if reasoning_items:
-                                for item in reasoning_items:
-                                    if getattr(item, 'type', '') == 'summary_text':
-                                        reasoning_summary_text += getattr(item, 'text', '')
-                                reasoning_summary_text = reasoning_summary_text.strip()
-                                if reasoning_summary_text:
-                                    self.update_state(state='PROGRESS', meta={
-                                        'message': 'Résumé du raisonnement',
-                                        'reasoning_summary': reasoning_summary_text
-                                    })
                 except Exception as se:
                     logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
                     streamed_text = None
@@ -782,22 +777,18 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             # Non-stream or fallback: perform standard request
             if streamed_text is None:
                 response = client.responses.create(**request_kwargs)
-                if hasattr(response, 'reasoning') and response.reasoning:
-                    reasoning_items = []
-                    for r in response.reasoning:
-                        summary = getattr(r, 'summary', None)
-                        if summary:
-                            reasoning_items.extend(summary)
-                    if reasoning_items:
-                        for item in reasoning_items:
-                            if getattr(item, 'type', '') == 'summary_text':
-                                reasoning_summary_text += getattr(item, 'text', '')
-                        reasoning_summary_text = reasoning_summary_text.strip()
-                        if reasoning_summary_text:
-                            self.update_state(state='PROGRESS', meta={
-                                'message': 'Résumé du raisonnement',
-                                'reasoning_summary': reasoning_summary_text
-                            })
+                if hasattr(response, 'output'):
+                    for item in getattr(response, 'output', []):
+                        if getattr(item, 'type', '') == 'reasoning':
+                            for summary in getattr(item, 'summary', []) or []:
+                                if getattr(summary, 'type', '') == 'summary_text':
+                                    reasoning_summary_text += getattr(summary, 'text', '')
+                    reasoning_summary_text = reasoning_summary_text.strip()
+                    if reasoning_summary_text:
+                        self.update_state(state='PROGRESS', meta={
+                            'message': 'Résumé du raisonnement',
+                            'reasoning_summary': reasoning_summary_text
+                        })
         except Exception as e:
             logging.error(f"OpenAI error: {e}")
             result_meta = {"status": "error", "message": f"Erreur API OpenAI: {str(e)}"}
@@ -833,10 +824,14 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         if streamed_text is not None and streamed_text.strip():
             self.update_state(state='PROGRESS', meta={'message': "Réponse reçue (stream), analyse des résultats..."})
             logger.info("OpenAI full output: %s", streamed_text)
+            if reasoning_summary_text:
+                logger.info("OpenAI reasoning summary: %s", reasoning_summary_text)
             parsed_json = json.loads(streamed_text)
         else:
             self.update_state(state='PROGRESS', meta={'message': "Réponse reçue, analyse des résultats..."})
             logger.info("OpenAI full output: %s", getattr(response, 'output_text', ''))
+            if reasoning_summary_text:
+                logger.info("OpenAI reasoning summary: %s", reasoning_summary_text)
             parsed_json = json.loads(response.output_text)
         parsed_data = PlanCadreAIResponse(**parsed_json)
 
