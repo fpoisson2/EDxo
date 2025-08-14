@@ -38,6 +38,31 @@ from celery import chord
 
 logger = logging.getLogger(__name__)
 
+def _collect_summary(items):
+    """Return concatenated summary_text from items."""
+    text = ""
+    if not items:
+        return text
+    if not isinstance(items, (list, tuple)):
+        items = [items]
+    for item in items:
+        if getattr(item, "type", "") == "summary_text":
+            text += getattr(item, "text", "")
+    return text
+
+
+def _extract_reasoning_summary_from_response(response):
+    """Extract reasoning summary from a Responses API result."""
+    summary = ""
+    if hasattr(response, "reasoning") and response.reasoning:
+        for r in response.reasoning:
+            summary += _collect_summary(getattr(r, "summary", None))
+    if not summary and hasattr(response, "output"):
+        for item in getattr(response, "output", []):
+            if getattr(item, "type", "") == "reasoning":
+                summary += _collect_summary(getattr(item, "summary", None))
+    return summary.strip()
+
 ###############################################################################
 # Schemas Pydantic pour IA
 ###############################################################################
@@ -730,7 +755,6 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                         seq = 0
                         for event in stream:
                             etype = getattr(event, 'type', '') or ''
-                            # Primary text delta event
                             if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
                                 delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
                                 if delta:
@@ -742,10 +766,16 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                         'stream_buffer': streamed_text,
                                         'seq': seq
                                     })
+                            elif etype.endswith('reasoning.summary.delta') or etype == 'reasoning.summary.delta':
+                                reasoning_summary_text += _collect_summary(getattr(event, 'delta', None))
+                                reasoning_summary_text = reasoning_summary_text.strip()
+                                if reasoning_summary_text:
+                                    self.update_state(state='PROGRESS', meta={
+                                        'message': 'Résumé du raisonnement',
+                                        'reasoning_summary': reasoning_summary_text
+                                    })
                             elif getattr(event, 'summary', None):
-                                for item in event.summary:
-                                    if getattr(item, 'type', '') == 'summary_text':
-                                        reasoning_summary_text += getattr(item, 'text', '')
+                                reasoning_summary_text += _collect_summary(event.summary)
                                 reasoning_summary_text = reasoning_summary_text.strip()
                                 if reasoning_summary_text:
                                     self.update_state(state='PROGRESS', meta={
@@ -755,14 +785,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                             elif etype.endswith('response.completed') or etype == 'response.completed':
                                 break
                         response = stream.get_final_response()
-                        if not reasoning_summary_text and hasattr(response, 'reasoning') and response.reasoning:
-                            for r in response.reasoning:
-                                summary = getattr(r, 'summary', None)
-                                if summary:
-                                    for item in summary:
-                                        if getattr(item, 'type', '') == 'summary_text':
-                                            reasoning_summary_text += getattr(item, 'text', '')
-                            reasoning_summary_text = reasoning_summary_text.strip()
+                        if not reasoning_summary_text:
+                            reasoning_summary_text = _extract_reasoning_summary_from_response(response)
                             if reasoning_summary_text:
                                 self.update_state(state='PROGRESS', meta={
                                     'message': 'Résumé du raisonnement',
@@ -776,19 +800,12 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             # Non-stream or fallback: perform standard request
             if streamed_text is None:
                 response = client.responses.create(**request_kwargs)
-                if hasattr(response, 'reasoning') and response.reasoning:
-                    for r in response.reasoning:
-                        summary = getattr(r, 'summary', None)
-                        if summary:
-                            for item in summary:
-                                if getattr(item, 'type', '') == 'summary_text':
-                                    reasoning_summary_text += getattr(item, 'text', '')
-                    reasoning_summary_text = reasoning_summary_text.strip()
-                    if reasoning_summary_text:
-                        self.update_state(state='PROGRESS', meta={
-                            'message': 'Résumé du raisonnement',
-                            'reasoning_summary': reasoning_summary_text
-                        })
+                reasoning_summary_text = _extract_reasoning_summary_from_response(response)
+                if reasoning_summary_text:
+                    self.update_state(state='PROGRESS', meta={
+                        'message': 'Résumé du raisonnement',
+                        'reasoning_summary': reasoning_summary_text
+                    })
         except Exception as e:
             logging.error(f"OpenAI error: {e}")
             result_meta = {"status": "error", "message": f"Erreur API OpenAI: {str(e)}"}
