@@ -744,7 +744,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                         'seq': seq
                                     })
                                     logger.info("Stream chunk %s: %s", seq, delta)
-                            elif etype.startswith('reasoning') and getattr(event, 'summary', None):
+                            elif getattr(event, 'summary', None):
                                 reasoning_items.extend(event.summary)
                             elif etype.endswith('response.completed') or etype == 'response.completed':
                                 break
@@ -759,6 +759,22 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                     'reasoning_summary': reasoning_summary_text
                                 })
                         response = stream.get_final_response()
+                        if not reasoning_summary_text and hasattr(response, 'reasoning') and response.reasoning:
+                            reasoning_items = []
+                            for r in response.reasoning:
+                                summary = getattr(r, 'summary', None)
+                                if summary:
+                                    reasoning_items.extend(summary)
+                            if reasoning_items:
+                                for item in reasoning_items:
+                                    if getattr(item, 'type', '') == 'summary_text':
+                                        reasoning_summary_text += getattr(item, 'text', '')
+                                reasoning_summary_text = reasoning_summary_text.strip()
+                                if reasoning_summary_text:
+                                    self.update_state(state='PROGRESS', meta={
+                                        'message': 'Résumé du raisonnement',
+                                        'reasoning_summary': reasoning_summary_text
+                                    })
                 except Exception as se:
                     logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
                     streamed_text = None
