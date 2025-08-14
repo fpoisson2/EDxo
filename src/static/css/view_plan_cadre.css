@@ -53,6 +53,21 @@ body.with-action-bar {
     white-space: pre-wrap;
 }
 
+.stream-preview {
+    max-height: 320px;
+    overflow: auto;
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: .375rem;
+    padding: .75rem;
+}
+
+/* Ensure modal body is scrollable and usable */
+.modal-dialog.modal-lg.modal-dialog-scrollable .modal-body {
+    max-height: 75vh;
+    overflow-y: auto;
+}
+
 @media (max-width: 768px) {
     /* Sur mobile, seule la barre d'en-tête compte */
     #planCadreAccordion .accordion-item {
