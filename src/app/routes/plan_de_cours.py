@@ -16,7 +16,7 @@ from openai import OpenAIError
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 
-from ..forms import PlanDeCoursForm
+from ..forms import PlanDeCoursForm, GenerateContentForm
 from ..models import (
     db, Cours, PlanCadre, User,
     PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
@@ -29,7 +29,11 @@ from ...utils import get_initials, get_programme_id_for_cours, is_teacher_in_pro
 from ...utils.calendar_generator import (
     CalendarResponse,
     build_calendar_prompt,
+    CalendarEntry,
 )
+from typing import List
+from ...celery_app import celery
+from celery.result import AsyncResult
 
 # Définir le chemin de base de l'application
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -131,6 +135,80 @@ class AIPlandeCoursResponse(BaseModel):
     champ_description: Optional[str] = Field(
         None,
         description="Niveau 1 - Aucun travail réalisé"
+    )
+
+
+class BulkPlanDeCoursResponse(BaseModel):
+    """Réponse structurée pour la génération d'un bloc complet de plan de cours."""
+    presentation_du_cours: Optional[str] = None
+    objectif_terminal_du_cours: Optional[str] = None
+    organisation_et_methodes: Optional[str] = None
+    accomodement: Optional[str] = None
+    evaluation_formative_apprentissages: Optional[str] = None
+    evaluation_expression_francais: Optional[str] = None
+    materiel: Optional[str] = None
+    calendriers: List[CalendarEntry] = Field(default_factory=list)
+
+
+DEFAULT_ALL_PROMPT = (
+    "Tu es un assistant pédagogique. En te basant sur le plan-cadre et les "
+    "informations du cours ci-dessous, génère le contenu des sections du plan "
+    "de cours pour la session {session}.\n\n"
+    "Inclure et retourner un JSON strictement au format suivant (clés exactes):\n"
+    "{\n"
+    "  'presentation_du_cours': str,\n"
+    "  'objectif_terminal_du_cours': str,\n"
+    "  'organisation_et_methodes': str,\n"
+    "  'accomodement': str,\n"
+    "  'evaluation_formative_apprentissages': str,\n"
+    "  'evaluation_expression_francais': str,\n"
+    "  'materiel': str,\n"
+    "  'calendriers': [\n"
+    "    { 'semaine': int, 'sujet': str, 'activites': str, 'travaux_hors_classe': str, 'evaluations': str }\n"
+    "  ]\n"
+    "}\n\n"
+    "Contexte cours: code={cours_code}, nom={cours_nom}.\n"
+    "Plan-cadre (extraits):\n{sections}\n"
+)
+
+
+def build_all_prompt(plan_cadre, cours, session: str, prompt_template: Optional[str] = None, additional_info: Optional[str] = None) -> str:
+    """Assemble un prompt combinant les infos nécessaires pour générer toutes les sections."""
+    sections: List[str] = []
+    if plan_cadre:
+        sections.extend([
+            f"Place du cours: {plan_cadre.place_intro or ''}",
+            f"Objectif terminal: {plan_cadre.objectif_terminal or ''}",
+            f"Structure du cours: {plan_cadre.structure_intro or ''}",
+            f"Activités théoriques: {plan_cadre.structure_activites_theoriques or ''}",
+            f"Activités pratiques: {plan_cadre.structure_activites_pratiques or ''}",
+            f"Activités prévues: {plan_cadre.structure_activites_prevues or ''}",
+            f"Évaluation sommative: {plan_cadre.eval_evaluation_sommative or ''}",
+            f"Nature des évaluations sommatives: {plan_cadre.eval_nature_evaluations_sommatives or ''}",
+            f"Évaluation de la langue: {plan_cadre.eval_evaluation_de_la_langue or ''}",
+            f"Évaluation sommative des apprentissages: {plan_cadre.eval_evaluation_sommatives_apprentissages or ''}",
+        ])
+        cap_lines: List[str] = []
+        for capacite in getattr(plan_cadre, 'capacites', []) or []:
+            sn = ", ".join(x.texte for x in getattr(capacite, 'savoirs_necessaires', []) if x.texte)
+            sf = ", ".join(x.texte for x in getattr(capacite, 'savoirs_faire', []) if x.texte)
+            me = ", ".join(x.texte for x in getattr(capacite, 'moyens_evaluation', []) if x.texte)
+            cap_lines.append(
+                f"Capacité: {capacite.capacite or ''}. {capacite.description_capacite or ''}. "
+                f"Pondération: {capacite.ponderation_min or ''}-{capacite.ponderation_max or ''}. "
+                f"Savoirs nécessaires: {sn}. Savoirs faire: {sf}. Moyens d'évaluation: {me}."
+            )
+        if cap_lines:
+            sections.append("Capacités:\n" + "\n".join(cap_lines))
+
+    if additional_info:
+        sections.append(f"Informations complémentaires: {additional_info}")
+    template = prompt_template or DEFAULT_ALL_PROMPT
+    return template.format(
+        session=session,
+        cours_code=getattr(cours, 'code', '') or '',
+        cours_nom=getattr(cours, 'nom', '') or '',
+        sections="\n".join(sections)
     )
 
 @plan_de_cours_bp.route('/generate_content', methods=['POST'])
@@ -380,6 +458,179 @@ def generate_calendar():
     except Exception:
         current_app.logger.exception("Internal error in generate_calendar")
         return jsonify({'error': 'Erreur interne'}), 500
+
+
+@plan_de_cours_bp.route('/generate_all', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def generate_all():
+    """Génère toutes les sections textuelles et le calendrier en un seul appel."""
+    data = request.get_json() or {}
+    cours_id = data.get('cours_id')
+    session = data.get('session')
+    additional_info = data.get('additional_info')
+    ai_model_override = data.get('ai_model')
+
+    if not cours_id or not session:
+        return jsonify({'error': 'cours_id et session requis.'}), 400
+
+    plan_de_cours = PlanDeCours.query.filter_by(cours_id=cours_id, session=session).first()
+    if not plan_de_cours:
+        return jsonify({'error': 'Plan de cours non trouvé.'}), 404
+
+    cours = plan_de_cours.cours
+    plan_cadre = cours.plan_cadre if cours else None
+    if not plan_cadre:
+        return jsonify({'error': 'Plan cadre non trouvé pour ce cours.'}), 404
+
+    user = db.session.query(User).with_for_update().get(current_user.id)
+    if not user:
+        return jsonify({'error': 'Utilisateur non trouvé'}), 404
+    if not user.openai_key:
+        return jsonify({'error': 'Clé OpenAI non configurée'}), 400
+    if user.credits is None:
+        user.credits = 0.0
+        db.session.commit()
+    if user.credits <= 0:
+        return jsonify({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}), 403
+
+    prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
+    ai_model = (ai_model_override or (prompt_settings.ai_model if prompt_settings else None)) or 'gpt-4o'
+    prompt_template = prompt_settings.prompt_template if prompt_settings else None
+    prompt = build_all_prompt(plan_cadre, cours, session, prompt_template, additional_info=additional_info)
+
+    try:
+        client = OpenAI(api_key=current_user.openai_key)
+        response = client.responses.parse(
+            model=ai_model,
+            input=prompt,
+            text_format=BulkPlanDeCoursResponse,
+        )
+
+        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
+        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
+        cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
+
+        if user.credits < cost:
+            return jsonify({'error': 'Crédits insuffisants pour cette opération.'}), 403
+
+        user.credits -= cost
+
+        parsed = _extract_first_parsed(response)
+        if parsed is None:
+            current_app.logger.error("No parsed bulk content found for cours_id=%s session=%s", cours_id, session)
+            return jsonify({'error': "Aucune donnée n'a été renvoyée par le modèle."}), 502
+
+        # Mettre à jour les champs texte
+        plan_de_cours.presentation_du_cours = parsed.presentation_du_cours or plan_de_cours.presentation_du_cours
+        plan_de_cours.objectif_terminal_du_cours = parsed.objectif_terminal_du_cours or plan_de_cours.objectif_terminal_du_cours
+        plan_de_cours.organisation_et_methodes = parsed.organisation_et_methodes or plan_de_cours.organisation_et_methodes
+        plan_de_cours.accomodement = parsed.accomodement or plan_de_cours.accomodement
+        plan_de_cours.evaluation_formative_apprentissages = parsed.evaluation_formative_apprentissages or plan_de_cours.evaluation_formative_apprentissages
+        plan_de_cours.evaluation_expression_francais = parsed.evaluation_expression_francais or plan_de_cours.evaluation_expression_francais
+        plan_de_cours.materiel = parsed.materiel or plan_de_cours.materiel
+
+        # Mettre à jour le calendrier si présent
+        if parsed.calendriers:
+            for cal in plan_de_cours.calendriers:
+                db.session.delete(cal)
+            for entry in parsed.calendriers:
+                db.session.add(PlanDeCoursCalendrier(
+                    plan_de_cours_id=plan_de_cours.id,
+                    semaine=entry.semaine,
+                    sujet=entry.sujet,
+                    activites=entry.activites,
+                    travaux_hors_classe=entry.travaux_hors_classe,
+                    evaluations=entry.evaluations,
+                ))
+
+        plan_de_cours.modified_at = datetime.utcnow()
+        plan_de_cours.modified_by_id = current_user.id
+        db.session.commit()
+
+        return jsonify({
+            'fields': {
+                'presentation_du_cours': plan_de_cours.presentation_du_cours,
+                'objectif_terminal_du_cours': plan_de_cours.objectif_terminal_du_cours,
+                'organisation_et_methodes': plan_de_cours.organisation_et_methodes,
+                'accomodement': plan_de_cours.accomodement,
+                'evaluation_formative_apprentissages': plan_de_cours.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': plan_de_cours.evaluation_expression_francais,
+                'materiel': plan_de_cours.materiel,
+            },
+            'calendriers': [
+                {
+                    'semaine': c.semaine,
+                    'sujet': c.sujet,
+                    'activites': c.activites,
+                    'travaux_hors_classe': c.travaux_hors_classe,
+                    'evaluations': c.evaluations,
+                } for c in plan_de_cours.calendriers
+            ]
+        })
+
+    except OpenAIError:
+        current_app.logger.exception("OpenAI error in generate_all")
+        return jsonify({'error': 'Erreur API OpenAI'}), 500
+    except Exception:
+        current_app.logger.exception("Internal error in generate_all")
+        return jsonify({'error': 'Erreur interne'}), 500
+
+
+@plan_de_cours_bp.route('/generate_all_start', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def generate_all_start():
+    """Démarre la génération globale en tâche Celery et retourne un task_id."""
+    from ..tasks.generation_plan_de_cours import generate_plan_de_cours_all_task
+
+    data = request.form or request.get_json() or {}
+    cours_id = int(data.get('cours_id')) if data.get('cours_id') else None
+    session = data.get('session')
+    additional_info = data.get('additional_info')
+    ai_model_override = data.get('ai_model')
+
+    if not cours_id or not session:
+        return jsonify({'success': False, 'message': 'cours_id et session requis.'}), 400
+
+    plan_de_cours = PlanDeCours.query.filter_by(cours_id=cours_id, session=session).first()
+    if not plan_de_cours:
+        return jsonify({'success': False, 'message': 'Plan de cours non trouvé.'}), 404
+
+    cours = plan_de_cours.cours
+    plan_cadre = cours.plan_cadre if cours else None
+    if not plan_cadre:
+        return jsonify({'success': False, 'message': 'Plan cadre non trouvé pour ce cours.'}), 404
+
+    prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
+    ai_model = (ai_model_override or (prompt_settings.ai_model if prompt_settings else None)) or 'gpt-4o'
+    prompt_template = prompt_settings.prompt_template if prompt_settings else None
+    prompt = build_all_prompt(plan_cadre, cours, session, prompt_template, additional_info=additional_info)
+
+    task = generate_plan_de_cours_all_task.delay(plan_de_cours.id, prompt, ai_model, current_user.id)
+    return jsonify({'success': True, 'task_id': task.id})
+
+
+@plan_de_cours_bp.route('/generate_all_status', methods=['GET'])
+@login_required
+@ensure_profile_completed
+def generate_all_status():
+    task_id = request.args.get('task_id')
+    if not task_id:
+        return jsonify({'success': False, 'message': 'task_id requis.'}), 400
+    res = AsyncResult(task_id, app=celery)
+    if res.state == 'PENDING':
+        return jsonify({'success': True, 'state': res.state})
+    if res.state == 'PROGRESS':
+        meta = res.info or {}
+        return jsonify({'success': True, 'state': res.state, 'meta': meta})
+    if res.state == 'SUCCESS':
+        data = res.result or {}
+        return jsonify({'success': True, 'state': 'SUCCESS', 'result': data})
+    if res.state == 'FAILURE':
+        return jsonify({'success': False, 'state': 'FAILURE', 'message': str(res.info)})
+    # Fallback
+    return jsonify({'success': True, 'state': res.state})
 
 
 @plan_de_cours_bp.route(
@@ -724,11 +975,13 @@ def view_plan_de_cours(cours_id, session=None):
                 }), 400
 
     # 6. Rendre la page
+    generate_form = GenerateContentForm()
     return render_template("view_plan_de_cours.html",
                                         cours=cours, 
                                         plan_cadre=plan_cadre,
                                         plan_de_cours=plan_de_cours,
                                         form=form,
+                                        generate_form=generate_form,
                                         departement=departement,
                                         regles_departementales=regles_departementales,
                                         regles_piea=regles_piea)
