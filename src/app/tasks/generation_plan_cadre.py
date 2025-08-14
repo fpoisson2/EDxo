@@ -288,7 +288,12 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         for section_name, conf_data in parametres_dict.items():
             raw_text = str(conf_data.get('text_content', "") or "")
             replaced_text = replace_jinja(raw_text)
-            is_ai = (conf_data.get('use_ai', 0) == 1)
+            # Rendre l'évaluation du drapeau IA robuste (True/1/"true"/"1"/etc.)
+            _val = conf_data.get('use_ai', False)
+            if isinstance(_val, str):
+                is_ai = _val.strip().lower() in ('1', 'true', 't', 'yes', 'on')
+            else:
+                is_ai = bool(_val)
 
             if section_name in field_to_plan_cadre_column:
                 col_name = field_to_plan_cadre_column[section_name]
