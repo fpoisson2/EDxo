@@ -666,7 +666,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                    "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
             )
             system_message = (
-                f"Assistant de rédaction concis. Améliore uniquement la section ciblée. Instruction: {additional_info}"
+                f"Assistant de rédaction concis. Améliore uniquement la section ciblée. Instruction: {additional_info}. "
+                "Rédige les résumés de raisonnement et tout texte explicatif en français."
             )
         else:
             improve_clause = (
@@ -693,7 +694,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                    "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
             )
             system_message = (
-                f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. Informations importantes: {additional_info}"
+                f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. Informations importantes: {additional_info}. "
+                "Rédige les résumés de raisonnement et tout texte explicatif en français."
             )
         # combined_instruction can be large; avoid noisy stdout
         logger.debug(combined_instruction)

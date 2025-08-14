@@ -650,7 +650,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            confirmGenerateBtn.disabled = false;
+            // Do not re-enable the button if streaming; keep it disabled until completion
             modalLoadingSpinner.classList.add('d-none');
             // Rétablir le texte selon le mode actuel
             if (modeHidden && (modeHidden.value === 'improve' || modeHidden.value === 'wand')) {
@@ -676,6 +676,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (container && out) {
                         out.textContent = '';
                         container.classList.remove('d-none');
+                        container.classList.add('streaming');
                         if (summary) {
                             // Show a placeholder so the box is visible from the start
                             summary.innerHTML = '<em>Raisonnement en cours…</em>';
@@ -723,9 +724,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (summary && meta.reasoning_summary) {
                                 try {
                                     if (window.marked) {
-                                        // Ensure a paragraph break before the first bold title
-                                        const mdText = '\n' + meta.reasoning_summary;
-                                        summary.innerHTML = window.marked.parse(mdText);
+                                        // Ensure paragraph breaks before bold titles and render
+                                        const mdText = formatReasoningMarkdown(meta.reasoning_summary);
+                                        summary.innerHTML = window.marked.parse(mdText, { breaks: true });
                                     } else {
                                         summary.textContent = meta.reasoning_summary;
                                     }
@@ -758,11 +759,41 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         } catch (e) { console.warn('stream update error', e); }
                     };
+                    // Completed callback: highlight, link, and re-enable button
+                    window.onTaskCompleted = function(payload) {
+                        try {
+                            const container = document.getElementById('streamContainer');
+                            const out = document.getElementById('streamOutput');
+                            const htmlPreview = document.getElementById('streamPreviewHtml');
+                            if (container) container.classList.remove('streaming');
+                            if (htmlPreview) htmlPreview.classList.add('completed');
+                            if (out) out.classList.add('completed');
+
+                            // Add review link if provided
+                            if (container && (payload.reviewUrl || (payload.preview && payload.plan_id))) {
+                                const linkUrl = payload.reviewUrl || (`/plan_cadre/${payload.plan_id}/review?task_id=` + (sessionStorage.getItem('currentTaskId') || ''));
+                                let linkEl = document.getElementById('streamDoneLink');
+                                if (!linkEl) {
+                                    linkEl = document.createElement('div');
+                                    linkEl.id = 'streamDoneLink';
+                                    linkEl.className = 'mt-2';
+                                    container.appendChild(linkEl);
+                                }
+                                linkEl.innerHTML = `<a href="${linkUrl}" class="btn btn-success btn-sm"><i class="bi bi-check2-circle me-1"></i>Voir la proposition</a>`;
+                            }
+                        } catch (e) { console.warn('onTaskCompleted error', e); }
+                        // Re-enable the generate/confirm button
+                        try { confirmGenerateBtn.disabled = false; } catch(_) {}
+                        try { confirmGenerateBtn.querySelector('.btn-text').textContent = (modeHidden && (modeHidden.value === 'improve' || modeHidden.value === 'wand')) ? 'Générer la proposition' : 'Générer le plan-cadre'; } catch(_) {}
+                    };
+
                 } else {
                     window.onTaskStreamUpdate = null;
                     if (modalInstance) {
                         modalInstance.hide();
                     }
+                    // Non-stream: allow clicking again
+                    confirmGenerateBtn.disabled = false;
                 }
                 // Démarrer le polling uniquement après la configuration du streaming
                 if (typeof startTaskPolling === 'function') {
@@ -771,6 +802,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 flashMessageSystem.info(data.message);
             } else {
                 flashMessageSystem.error(data.message || 'Action non autorisée.');
+                // Error: allow retry
+                confirmGenerateBtn.disabled = false;
             }
         })
         .catch(error => {
@@ -916,4 +949,15 @@ function escapeHtml(str) {
             default: return m;
         }
     });
+}
+
+// Ensure headings/titles in reasoning have breaks before them
+function formatReasoningMarkdown(text) {
+    if (!text) return '';
+    let t = String(text);
+    // Insert blank lines before any bold title sequences like **Title** when not at line start
+    t = t.replace(/([^\n])\s*(\*\*[^*]+\*\*)/g, '$1\n\n$2');
+    // Ensure leading break for the very first title
+    if (!t.startsWith('\n')) t = '\n' + t;
+    return t;
 }
