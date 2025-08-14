@@ -677,8 +677,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         out.textContent = '';
                         container.classList.remove('d-none');
                         if (summary) {
-                            summary.textContent = '';
-                            summary.classList.add('d-none');
+                            // Show a placeholder so the box is visible from the start
+                            summary.innerHTML = '<em>Raisonnement en cours…</em>';
+                            summary.classList.remove('d-none');
                         }
                         if (htmlPreview) {
                             // Show a placeholder right away so users see the panel
