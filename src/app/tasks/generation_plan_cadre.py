@@ -667,7 +667,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             )
             system_message = (
                 f"Assistant de rédaction concis. Améliore uniquement la section ciblée. Instruction: {additional_info}. "
-                "Rédige les résumés de raisonnement et tout texte explicatif en français."
+                "Fais ton raisonnement en français."
             )
         else:
             improve_clause = (
@@ -695,7 +695,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             )
             system_message = (
                 f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. Informations importantes: {additional_info}. "
-                "Rédige les résumés de raisonnement et tout texte explicatif en français."
+                "Fais ton raisonnement en français."
             )
         # combined_instruction can be large; avoid noisy stdout
         logger.debug(combined_instruction)
