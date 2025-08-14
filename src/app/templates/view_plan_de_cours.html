@@ -198,6 +198,11 @@
             </h2>
             <div id="collapseEdition" class="accordion-collapse collapse" aria-labelledby="headingEdition">
                 <div class="accordion-body">
+                    <div class="d-flex justify-content-end mb-3">
+                        <button type="button" class="btn btn-primary btn-sm" id="generate-all" title="Générer toutes les sections">
+                            <i class="bi bi-magic me-2"></i>Tout générer
+                        </button>
+                    </div>
                     <form method="POST" action="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=cours.id) }}" id="planDeCoursForm">
                         {{ form.hidden_tag() }}
                         <!-- Informations Principales -->
@@ -779,6 +784,11 @@ textarea.toast-ui-target:not(.toast-initialized) {
 
 .generate-button.loading,
 .generate-calendar.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+#generate-all.loading {
     pointer-events: none;
     opacity: 0.7;
 }
@@ -1561,6 +1571,116 @@ document.addEventListener('click', function(e) {
         if (container && container.children.length === 0) {
             container.style.display = 'none';
         }
+    });
+
+    // Génération de toutes les sections (texte + calendrier)
+    document.getElementById('generate-all')?.addEventListener('click', async function() {
+        const btn = this;
+        btn.classList.add('loading');
+        btn.disabled = true;
+
+        const csrfToken = "{{ csrf_token() }}";
+        const basePayload = {
+            cours_id: {{ cours.id }},
+            session: "{{ plan_de_cours.session }}"
+        };
+
+        // Récupérer dynamiquement tous les champs générables individuels
+        const fieldNames = Array.from(document.querySelectorAll('.generate-button'))
+            .map(b => b.getAttribute('data-field'))
+            .filter(Boolean);
+
+        let hadError = false;
+
+        // Générer séquentiellement chaque champ
+        for (const fieldName of fieldNames) {
+            const fieldElement = document.getElementById(fieldName);
+            if (!fieldElement) continue;
+            try {
+                const payload = Object.assign({
+                    field_name: fieldName,
+                    current_value: fieldElement.value || ''
+                }, basePayload);
+
+                const resp = await fetch("{{ url_for('plan_de_cours.generate_content') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify(payload),
+                    credentials: 'same-origin'
+                });
+
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                if (data.champ_description) {
+                    fieldElement.value = data.champ_description;
+                    if (fieldElement.toastEditor) {
+                        fieldElement.toastEditor.setMarkdown(data.champ_description);
+                    }
+                } else {
+                    throw new Error('Contenu manquant');
+                }
+            } catch (e) {
+                console.error('Erreur génération champ', fieldName, e);
+                hadError = true;
+            }
+        }
+
+        // Générer le calendrier
+        try {
+            const container = document.getElementById('calendrier-container');
+            if (container) {
+                container.style.display = 'block';
+                const calResp = await fetch("{{ url_for('plan_de_cours.generate_calendar') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify(basePayload),
+                    credentials: 'same-origin'
+                });
+                if (!calResp.ok) throw new Error('HTTP ' + calResp.status);
+                const calData = await calResp.json();
+                container.innerHTML = '';
+                if (calData.entries && calData.entries.length > 0) {
+                    container.style.display = 'block';
+                    calData.entries.forEach((entry, index) => {
+                        const newItem = document.createElement('div');
+                        newItem.className = `calendar-item border p-2 mb-2 ${index % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
+                        newItem.innerHTML = document.getElementById('calendrier-template').innerHTML.replace(/__index__/g, index);
+                        newItem.querySelector(`[name="calendriers-${index}-semaine"]`).value = entry.semaine ?? '';
+                        newItem.querySelector(`[name="calendriers-${index}-sujet"]`).value = entry.sujet ?? '';
+                        newItem.querySelector(`[name="calendriers-${index}-activites"]`).value = entry.activites ?? '';
+                        newItem.querySelector(`[name="calendriers-${index}-travaux_hors_classe"]`).value = entry.travaux_hors_classe ?? '';
+                        newItem.querySelector(`[name="calendriers-${index}-evaluations"]`).value = entry.evaluations ?? '';
+                        container.appendChild(newItem);
+                    });
+                    calendrierIndex = calData.entries.length;
+                    initDragAndDrop();
+                    if (window.showFloatingButtons) window.showFloatingButtons();
+                } else {
+                    hadError = true;
+                }
+            }
+        } catch (e) {
+            console.error('Erreur génération calendrier', e);
+            hadError = true;
+        }
+
+        // Feedback
+        if (hadError) {
+            const toast = document.getElementById('generateErrorToast');
+            if (toast) new bootstrap.Toast(toast).show();
+        } else {
+            const toast = document.getElementById('generateSuccessToast');
+            if (toast) new bootstrap.Toast(toast).show();
+        }
+
+        btn.classList.remove('loading');
+        btn.disabled = false;
     });
 });
 </script>
