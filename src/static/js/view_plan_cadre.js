@@ -681,7 +681,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             summary.classList.add('d-none');
                         }
                         if (htmlPreview) {
-                            htmlPreview.innerHTML = '';
+                            // Show a placeholder right away so users see the panel
+                            htmlPreview.innerHTML = '<div class="text-muted">En attente de données valides…</div>';
                             htmlPreview.classList.remove('d-none');
                         }
                         // Default to structured view
@@ -721,7 +722,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (summary && meta.reasoning_summary) {
                                 try {
                                     if (window.marked) {
-                                        summary.innerHTML = window.marked.parse(meta.reasoning_summary);
+                                        // Ensure a paragraph break before the first bold title
+                                        const mdText = '\n' + meta.reasoning_summary;
+                                        summary.innerHTML = window.marked.parse(mdText);
                                     } else {
                                         summary.textContent = meta.reasoning_summary;
                                     }

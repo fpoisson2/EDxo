@@ -56,10 +56,11 @@ body.with-action-bar {
 .stream-preview {
     max-height: 50vh;
     overflow: auto;
-    background: #ffffff;
+    background: #f8f9fa; /* light grey to signal preview area */
     border: 1px solid #e9ecef;
     border-radius: .375rem;
     padding: .75rem;
+    min-height: 120px;
 }
 
 /* Ensure modal body is scrollable and usable */
