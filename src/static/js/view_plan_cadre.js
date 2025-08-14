@@ -584,7 +584,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Vue: prompt global visible, prompt baguette caché
             if (generalPromptGroup) generalPromptGroup.classList.remove('d-none');
             if (wandPromptGroup) wandPromptGroup.classList.add('d-none');
-            if (streamHidden) streamHidden.value = '0';
+            // Activer l'aperçu en direct pour l'amélioration globale
+            if (streamHidden) streamHidden.value = '1';
         });
     }
     if (openGenerateBtn && modalTitle) {
@@ -599,7 +600,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Vue: prompt global visible, prompt baguette caché
             if (generalPromptGroup) generalPromptGroup.classList.remove('d-none');
             if (wandPromptGroup) wandPromptGroup.classList.add('d-none');
-            if (streamHidden) streamHidden.value = '0';
+            // Activer le streaming pour la génération globale
+            if (streamHidden) streamHidden.value = '1';
         });
     }
 
@@ -648,7 +650,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            confirmGenerateBtn.disabled = false;
+            // Do not re-enable the button if streaming; keep it disabled until completion
             modalLoadingSpinner.classList.add('d-none');
             // Rétablir le texte selon le mode actuel
             if (modeHidden && (modeHidden.value === 'improve' || modeHidden.value === 'wand')) {
@@ -668,32 +670,130 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (doStream) {
                     const container = document.getElementById('streamContainer');
                     const out = document.getElementById('streamOutput');
+                    const htmlPreview = document.getElementById('streamPreviewHtml');
                     const status = document.getElementById('streamStatus');
+                    const summary = document.getElementById('reasoningSummary');
                     if (container && out) {
                         out.textContent = '';
                         container.classList.remove('d-none');
+                        container.classList.add('streaming');
+                        if (summary) {
+                            // Show a placeholder so the box is visible from the start
+                            summary.innerHTML = '<em>Raisonnement en cours…</em>';
+                            summary.classList.remove('d-none');
+                        }
+                        if (htmlPreview) {
+                            // Show a placeholder right away so users see the panel
+                            htmlPreview.innerHTML = '<div class="text-muted">En attente de données valides…</div>';
+                            htmlPreview.classList.remove('d-none');
+                        }
+                        // Default to structured view
+                        const tabs = document.querySelectorAll('#streamTabs button');
+                        tabs.forEach(btn => btn.classList.remove('active'));
+                        const structuredBtn = document.querySelector('#streamTabs button[data-target="structured"]');
+                        if (structuredBtn) structuredBtn.classList.add('active');
+                        if (out) out.classList.add('d-none');
+                    }
+                    // Tab switching
+                    const tabsEl = document.getElementById('streamTabs');
+                    if (tabsEl && !tabsEl.dataset.bound) {
+                        tabsEl.dataset.bound = '1';
+                        tabsEl.addEventListener('click', (e) => {
+                            const btn = e.target.closest('button[data-target]');
+                            if (!btn) return;
+                            tabsEl.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+                            const target = btn.getAttribute('data-target');
+                            if (target === 'json') {
+                                out && out.classList.remove('d-none');
+                                htmlPreview && htmlPreview.classList.add('d-none');
+                            } else {
+                                htmlPreview && htmlPreview.classList.remove('d-none');
+                                out && out.classList.add('d-none');
+                            }
+                        });
                     }
                     window.onTaskStreamUpdate = function(meta) {
                         try {
                             if (!meta) return;
                             const out = document.getElementById('streamOutput');
+                            const htmlPreview = document.getElementById('streamPreviewHtml');
                             const status = document.getElementById('streamStatus');
+                            const summary = document.getElementById('reasoningSummary');
                             if (status && meta.message) status.textContent = meta.message;
+                            if (summary && meta.reasoning_summary) {
+                                try {
+                                    if (window.marked) {
+                                        // Ensure paragraph breaks before bold titles and render
+                                        const mdText = formatReasoningMarkdown(meta.reasoning_summary);
+                                        summary.innerHTML = window.marked.parse(mdText, { breaks: true });
+                                    } else {
+                                        summary.textContent = meta.reasoning_summary;
+                                    }
+                                } catch(_) {
+                                    summary.textContent = meta.reasoning_summary;
+                                }
+                                summary.classList.remove('d-none');
+                            }
                             if (out) {
+                                let displayText = '';
                                 if (meta.stream_buffer) {
-                                    out.textContent = meta.stream_buffer;
+                                    // Try to pretty-print JSON if buffer contains valid JSON
+                                    try {
+                                        const obj = JSON.parse(meta.stream_buffer);
+                                        displayText = JSON.stringify(obj, null, 2);
+                                        // Also update the structured HTML preview
+                                        if (htmlPreview) {
+                                            htmlPreview.innerHTML = buildHumanPreviewFromPlanCadreJSON(obj);
+                                        }
+                                    } catch (_) {
+                                        displayText = meta.stream_buffer;
+                                    }
+                                    out.textContent = displayText;
                                 } else if (meta.stream_chunk) {
+                                    // Append raw chunk when buffer is not provided
                                     out.textContent += meta.stream_chunk;
                                 }
                                 out.scrollTop = out.scrollHeight;
+                                if (htmlPreview) htmlPreview.scrollTop = htmlPreview.scrollHeight;
                             }
                         } catch (e) { console.warn('stream update error', e); }
                     };
+                    // Completed callback: highlight, link, and re-enable button
+                    window.onTaskCompleted = function(payload) {
+                        try {
+                            const container = document.getElementById('streamContainer');
+                            const out = document.getElementById('streamOutput');
+                            const htmlPreview = document.getElementById('streamPreviewHtml');
+                            if (container) container.classList.remove('streaming');
+                            if (htmlPreview) htmlPreview.classList.add('completed');
+                            if (out) out.classList.add('completed');
+
+                            // Add review link if provided
+                            if (container && (payload.reviewUrl || (payload.preview && payload.plan_id))) {
+                                const linkUrl = payload.reviewUrl || (`/plan_cadre/${payload.plan_id}/review?task_id=` + (sessionStorage.getItem('currentTaskId') || ''));
+                                let linkEl = document.getElementById('streamDoneLink');
+                                if (!linkEl) {
+                                    linkEl = document.createElement('div');
+                                    linkEl.id = 'streamDoneLink';
+                                    linkEl.className = 'mt-2';
+                                    container.appendChild(linkEl);
+                                }
+                                linkEl.innerHTML = `<a href="${linkUrl}" class="btn btn-success btn-sm"><i class="bi bi-check2-circle me-1"></i>Voir la proposition</a>`;
+                            }
+                        } catch (e) { console.warn('onTaskCompleted error', e); }
+                        // Re-enable the generate/confirm button
+                        try { confirmGenerateBtn.disabled = false; } catch(_) {}
+                        try { confirmGenerateBtn.querySelector('.btn-text').textContent = (modeHidden && (modeHidden.value === 'improve' || modeHidden.value === 'wand')) ? 'Générer la proposition' : 'Générer le plan-cadre'; } catch(_) {}
+                    };
+
                 } else {
                     window.onTaskStreamUpdate = null;
                     if (modalInstance) {
                         modalInstance.hide();
                     }
+                    // Non-stream: allow clicking again
+                    confirmGenerateBtn.disabled = false;
                 }
                 // Démarrer le polling uniquement après la configuration du streaming
                 if (typeof startTaskPolling === 'function') {
@@ -702,6 +802,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 flashMessageSystem.info(data.message);
             } else {
                 flashMessageSystem.error(data.message || 'Action non autorisée.');
+                // Error: allow retry
+                confirmGenerateBtn.disabled = false;
             }
         })
         .catch(error => {
@@ -762,3 +864,116 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Build a human-readable preview from the AI JSON shape
+function buildHumanPreviewFromPlanCadreJSON(obj) {
+    if (!obj || typeof obj !== 'object') return '';
+    const parts = [];
+    const md = (txt) => {
+        try { return window.marked ? window.marked.parse(txt || '') : (txt || ''); }
+        catch (_) { return txt || ''; }
+    };
+
+    if (Array.isArray(obj.fields) && obj.fields.length) {
+        parts.push('<h6 class="mb-2">Champs textuels</h6>');
+        obj.fields.forEach(f => {
+            const name = (f && (f.field_name || '')).trim();
+            const content = (f && (f.content || '')).trim();
+            if (!name && !content) return;
+            parts.push(`<div class="mb-3"><div class="fw-bold">${escapeHtml(name)}</div><div class="mt-1">${md(content)}</div></div>`);
+        });
+    }
+    if (Array.isArray(obj.fields_with_description) && obj.fields_with_description.length) {
+        parts.push('<h6 class="mb-2">Listes avec descriptions</h6>');
+        obj.fields_with_description.forEach(sec => {
+            const name = (sec && sec.field_name) || '';
+            const items = (sec && Array.isArray(sec.content)) ? sec.content : [];
+            if (!items.length) return;
+            parts.push(`<div class="mb-2"><div class="fw-bold">${escapeHtml(name)}</div><ul class="ps-3 mt-1">`);
+            items.forEach(it => {
+                const t = (it && it.texte) || '';
+                const d = (it && it.description) || '';
+                parts.push(`<li class="mb-1"><div class="fw-bold">${escapeHtml(t)}</div>${d ? `<div class="small text-muted">${escapeHtml(d)}</div>` : ''}</li>`);
+            });
+            parts.push('</ul></div>');
+        });
+    }
+    if (Array.isArray(obj.savoir_etre) && obj.savoir_etre.length) {
+        parts.push('<h6 class="mb-2">Savoir-être</h6><ul class="ps-3">');
+        obj.savoir_etre.forEach(t => parts.push(`<li>${escapeHtml(t)}</li>`));
+        parts.push('</ul>');
+    }
+    if (Array.isArray(obj.capacites) && obj.capacites.length) {
+        parts.push('<h6 class="mb-2">Capacités</h6>');
+        obj.capacites.forEach(c => {
+            parts.push('<div class="mb-3 p-2 border rounded">');
+            if (c.capacite) parts.push(`<div><strong>Capacité:</strong> ${escapeHtml(c.capacite)}</div>`);
+            if (c.description_capacite) parts.push(`<div class="mt-1"><strong>Description:</strong> ${md(c.description_capacite)}</div>`);
+            if (c.ponderation_min != null || c.ponderation_max != null) parts.push(`<div class="mt-1"><strong>Pondération:</strong> ${Number(c.ponderation_min||0)} – ${Number(c.ponderation_max||0)}%</div>`);
+            if (Array.isArray(c.savoirs_necessaires) && c.savoirs_necessaires.length) {
+                parts.push('<div class="mt-2"><strong>Savoirs nécessaires</strong><ul class="ps-3">');
+                c.savoirs_necessaires.forEach(sn => parts.push(`<li>${escapeHtml(sn)}</li>`));
+                parts.push('</ul></div>');
+            }
+            if (Array.isArray(c.savoirs_faire) && c.savoirs_faire.length) {
+                parts.push('<div class="mt-2"><strong>Savoirs faire</strong><ul class="ps-3">');
+                c.savoirs_faire.forEach(sf => {
+                    parts.push('<li>');
+                    if (sf.texte) parts.push(`<div class="fw-bold">${escapeHtml(sf.texte)}</div>`);
+                    if (sf.cible) parts.push(`<div class="small">Cible: ${escapeHtml(sf.cible)}</div>`);
+                    if (sf.seuil_reussite) parts.push(`<div class="small">Seuil: ${escapeHtml(sf.seuil_reussite)}</div>`);
+                    parts.push('</li>');
+                });
+                parts.push('</ul></div>');
+            }
+            if (Array.isArray(c.moyens_evaluation) && c.moyens_evaluation.length) {
+                parts.push('<div class="mt-2"><strong>Moyens d\'évaluation</strong><ul class="ps-3">');
+                c.moyens_evaluation.forEach(me => parts.push(`<li>${escapeHtml(me)}</li>`));
+                parts.push('</ul></div>');
+            }
+            parts.push('</div>');
+        });
+    }
+    if (!parts.length) return '<div class="text-muted">En attente de données valides…</div>';
+    return parts.join('');
+}
+
+function escapeHtml(str) {
+    return (str || '').replace(/[&<>"']/g, function(m) {
+        switch (m) {
+            case '&': return '&amp;';
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '"': return '&quot;';
+            case "'": return '&#39;';
+            default: return m;
+        }
+    });
+}
+
+// Ensure headings/titles in reasoning have breaks before them
+function formatReasoningMarkdown(text) {
+    if (!text) return '';
+    let t = String(text).replace(/\r\n/g, '\n');
+
+    // 1) Normalize broken bold blocks across lines: **Title\n** -> **Title**
+    t = t.replace(/\*\*([\s\S]*?)\n+\*\*/g, '**$1**');
+
+    // 2) If a bold "title" appears right after text (no newline), force a blank line before it
+    //    Heuristic: a relatively short bold segment (<= 120 chars) starting with a letter/number
+    t = t.replace(/([^\n])\s*\*\*([A-Za-zÀ-ÿ0-9][^*]{0,118}?)\*\*(?=\s*(\n|$))/g, '$1\n\n**$2**');
+
+    // 3) Normalize any existing ATX headings (#, ##, ######) to level-3 and ensure blank lines around
+    t = t.replace(/(^|\n+)\s*#{1,6}\s+([^\n]+?)\s*(?=\n|$)/g, '$1\n\n### $2\n\n');
+
+    // 4) Convert standalone bold lines to level-3 headings with proper spacing
+    //    Match bold that stands alone on its own line (optionally surrounded by spaces)
+    t = t.replace(/(^|\n+)\s*\*\*([^*\n][^*]*?)\*\*\s*(?=\n|$)/g, '$1\n\n### $2\n\n');
+
+    // 5) Collapse excessive blank lines
+    t = t.replace(/\n{3,}/g, '\n\n');
+
+    // 6) Ensure leading newline so the first heading isn’t glued to top
+    if (!t.startsWith('\n')) t = '\n' + t;
+    return t;
+}

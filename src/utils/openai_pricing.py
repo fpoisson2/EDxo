@@ -1,5 +1,5 @@
 import logging
-from ..app.models import OpenAIModel
+from app.models import OpenAIModel
 
 # Barèmes par défaut (USD / 1M tokens) utilisés en secours
 # lorsqu'un modèle n'est pas encore enregistré en base.

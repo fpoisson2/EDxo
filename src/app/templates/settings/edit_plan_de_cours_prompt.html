@@ -1,0 +1,44 @@
+{% extends "parametres.html" %}
+{% block parametres_content %}
+<div class="container">
+    <h2 class="mb-4">Configuration du prompt {{ prompt.field_name }}</h2>
+
+    <form method="POST" class="needs-validation" novalidate>
+        {{ form.csrf_token }}
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="mb-0">Template du prompt</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    {{ form.prompt_template.label }}
+                    {{ form.prompt_template }}
+                    {% for error in form.prompt_template.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="mb-0">Sélection du modèle d'IA</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    {{ form.ai_model.label }}
+                    {{ form.ai_model }}
+                    {% for error in form.ai_model.errors %}
+                        <div class="text-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end">
+            {{ form.submit }}
+        </div>
+    </form>
+</div>
+{% endblock %}

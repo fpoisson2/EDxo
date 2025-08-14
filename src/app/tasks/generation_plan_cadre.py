@@ -20,23 +20,48 @@ from ..models import (
 )
 
 from celery import shared_task, group, signature
-from ...celery_app import celery  # Your Celery instance (configured with your Flask app)
-from ...extensions import db  # Your SQLAlchemy instance
-from ...utils.openai_pricing import calculate_call_cost
+from src.celery_app import celery  # Your Celery instance (configured with your Flask app)
+from src.extensions import db  # Your SQLAlchemy instance
+from src.utils.openai_pricing import calculate_call_cost
 # Import any helper functions used in your logic
-from ...utils import (
+from src.utils import (
     replace_tags_jinja2,
     get_plan_cadre_data,
     determine_base_filename,
     extract_code_from_title,
 )
-from ...ocr_processing import api_clients, pdf_tools, web_utils
-from ...config.constants import *
+from src.ocr_processing import api_clients, pdf_tools, web_utils
+from src.config.constants import *
 from flask import current_app 
 from celery.exceptions import Ignore
 from celery import chord
 
 logger = logging.getLogger(__name__)
+
+def _collect_summary(items):
+    """Return concatenated summary_text from items."""
+    text = ""
+    if not items:
+        return text
+    if not isinstance(items, (list, tuple)):
+        items = [items]
+    for item in items:
+        if getattr(item, "type", "") == "summary_text":
+            text += getattr(item, "text", "")
+    return text
+
+
+def _extract_reasoning_summary_from_response(response):
+    """Extract reasoning summary from a Responses API result."""
+    summary = ""
+    if hasattr(response, "reasoning") and response.reasoning:
+        for r in response.reasoning:
+            summary += _collect_summary(getattr(r, "summary", None))
+    if not summary and hasattr(response, "output"):
+        for item in getattr(response, "output", []):
+            if getattr(item, "type", "") == "reasoning":
+                summary += _collect_summary(getattr(item, "summary", None))
+    return summary.strip()
 
 ###############################################################################
 # Schemas Pydantic pour IA
@@ -641,7 +666,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                    "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
             )
             system_message = (
-                f"Assistant de rédaction concis. Améliore uniquement la section ciblée. Instruction: {additional_info}"
+                f"Assistant de rédaction concis. Améliore uniquement la section ciblée. Instruction: {additional_info}. "
+                "Fais ton raisonnement en français."
             )
         else:
             improve_clause = (
@@ -668,7 +694,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                    "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
             )
             system_message = (
-                f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. Informations importantes: {additional_info}"
+                f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. Informations importantes: {additional_info}. "
+                "Fais ton raisonnement en français."
             )
         # combined_instruction can be large; avoid noisy stdout
         logger.debug(combined_instruction)
@@ -712,13 +739,16 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 text=text_params,
                 store=True,
             )
+            reasoning_params = {"summary": "auto"}
             if reasoning_effort in {"minimal", "low", "medium", "high"}:
-                request_kwargs["reasoning"] = {"effort": reasoning_effort}
+                reasoning_params["effort"] = reasoning_effort
+            request_kwargs["reasoning"] = reasoning_params
 
             # Streaming if requested by client
             do_stream = str(form_data.get("stream") or "0").lower() in ("1", "true", "yes", "on")
             streamed_text = None
             response = None
+            reasoning_summary_text = ""
             if do_stream:
                 try:
                     request_kwargs_stream = dict(request_kwargs)
@@ -727,7 +757,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                         seq = 0
                         for event in stream:
                             etype = getattr(event, 'type', '') or ''
-                            # Primary text delta event
+                            # Handle text deltas for output text
                             if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
                                 delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
                                 if delta:
@@ -739,10 +769,69 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                         'stream_buffer': streamed_text,
                                         'seq': seq
                                     })
-                                    logger.info("Stream chunk %s: %s", seq, delta)
+                            # Newer event name for reasoning summary text delta
+                            elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                                # direct text string delta
+                                rs_delta = getattr(event, 'delta', '') or ''
+                                if rs_delta:
+                                    reasoning_summary_text += rs_delta
+                                reasoning_summary_text = reasoning_summary_text.strip()
+                                if reasoning_summary_text:
+                                    self.update_state(state='PROGRESS', meta={
+                                        'message': 'Résumé du raisonnement',
+                                        'reasoning_summary': reasoning_summary_text
+                                    })
+                            # Backward-compatible event name used by older SDKs
+                            elif etype.endswith('reasoning.summary.delta') or etype == 'reasoning.summary.delta':
+                                reasoning_summary_text += _collect_summary(getattr(event, 'delta', None))
+                                reasoning_summary_text = reasoning_summary_text.strip()
+                                if reasoning_summary_text:
+                                    self.update_state(state='PROGRESS', meta={
+                                        'message': 'Résumé du raisonnement',
+                                        'reasoning_summary': reasoning_summary_text
+                                    })
+                            # Item added (can include messages and reasoning). Keep for completeness.
+                            elif etype.endswith('response.output_item.added') or etype == 'response.output_item.added':
+                                # Some SDKs emit item additions; we try to surface any text as progress.
+                                try:
+                                    item = getattr(event, 'item', None)
+                                    # If the item resembles a message with textual content, append
+                                    if item:
+                                        # common shapes: {'type': 'output_text', 'text': '...'} or nested message
+                                        text_val = ''
+                                        if isinstance(item, dict):
+                                            text_val = item.get('text') or ''
+                                        else:
+                                            text_val = getattr(item, 'text', '') or ''
+                                        if text_val:
+                                            streamed_text = (streamed_text or '') + text_val
+                                            seq += 1
+                                            self.update_state(state='PROGRESS', meta={
+                                                'message': 'Génération en cours...',
+                                                'stream_chunk': text_val,
+                                                'stream_buffer': streamed_text,
+                                                'seq': seq
+                                            })
+                                except Exception:
+                                    pass
+                            elif getattr(event, 'summary', None):
+                                reasoning_summary_text += _collect_summary(event.summary)
+                                reasoning_summary_text = reasoning_summary_text.strip()
+                                if reasoning_summary_text:
+                                    self.update_state(state='PROGRESS', meta={
+                                        'message': 'Résumé du raisonnement',
+                                        'reasoning_summary': reasoning_summary_text
+                                    })
                             elif etype.endswith('response.completed') or etype == 'response.completed':
                                 break
                         response = stream.get_final_response()
+                        if not reasoning_summary_text:
+                            reasoning_summary_text = _extract_reasoning_summary_from_response(response)
+                            if reasoning_summary_text:
+                                self.update_state(state='PROGRESS', meta={
+                                    'message': 'Résumé du raisonnement',
+                                    'reasoning_summary': reasoning_summary_text
+                                })
                 except Exception as se:
                     logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
                     streamed_text = None
@@ -751,6 +840,12 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             # Non-stream or fallback: perform standard request
             if streamed_text is None:
                 response = client.responses.create(**request_kwargs)
+                reasoning_summary_text = _extract_reasoning_summary_from_response(response)
+                if reasoning_summary_text:
+                    self.update_state(state='PROGRESS', meta={
+                        'message': 'Résumé du raisonnement',
+                        'reasoning_summary': reasoning_summary_text
+                    })
         except Exception as e:
             logging.error(f"OpenAI error: {e}")
             result_meta = {"status": "error", "message": f"Erreur API OpenAI: {str(e)}"}
@@ -785,10 +880,14 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # ----------------------------------------------------------------
         if streamed_text is not None and streamed_text.strip():
             self.update_state(state='PROGRESS', meta={'message': "Réponse reçue (stream), analyse des résultats..."})
+            logger.info("OpenAI full output: %s", streamed_text)
             parsed_json = json.loads(streamed_text)
         else:
             self.update_state(state='PROGRESS', meta={'message': "Réponse reçue, analyse des résultats..."})
+            logger.info("OpenAI full output: %s", getattr(response, 'output_text', ''))
             parsed_json = json.loads(response.output_text)
+        if reasoning_summary_text:
+            logger.info("OpenAI reasoning summary: %s", reasoning_summary_text)
         parsed_data = PlanCadreAIResponse(**parsed_json)
 
         def clean_text(val):
@@ -957,6 +1056,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             }
             if streamed_text:
                 result["stream_buffer"] = streamed_text
+            if reasoning_summary_text:
+                result["reasoning_summary"] = reasoning_summary_text
             self.update_state(state="SUCCESS", meta=result)
             return result
         else:
@@ -969,6 +1070,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             }
             if streamed_text:
                 result["stream_buffer"] = streamed_text
+            if reasoning_summary_text:
+                result["reasoning_summary"] = reasoning_summary_text
             self.update_state(state="SUCCESS", meta=result)
             return result
 

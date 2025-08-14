@@ -4,6 +4,13 @@
   <h2>Revoir les améliorations proposées — {{ cours.code }} - {{ cours.nom }}</h2>
   <p class="text-muted">Comparez les changements avant de les appliquer définitivement.</p>
 
+  {% if reasoning_summary %}
+    <div id="reasoningSummary" class="alert alert-secondary py-2">
+      <div class="fw-bold mb-1">Résumé du raisonnement</div>
+      <div id="reasoningSummaryBody" class="small text-body"></div>
+    </div>
+  {% endif %}
+
   {% if changes|length == 0 %}
     <div class="alert alert-info">Aucun changement proposé par rapport au contenu actuel.</div>
   {% else %}
@@ -236,8 +243,41 @@
   /* Éviter les retours à la ligne fantômes dans les sections listes */
   .list-group .border ul, .list-group .border li { white-space: normal; }
   .form-check-label .small { display: block; margin-top: 0; }
+
+  /* Mise en page du résumé du raisonnement */
+  #reasoningSummary h1,
+  #reasoningSummary h2,
+  #reasoningSummary h3,
+  #reasoningSummary h4,
+  #reasoningSummary h5,
+  #reasoningSummary h6 {
+    margin-top: .5rem;
+    margin-bottom: .25rem;
+    font-size: 1rem;
+  }
 </style>
+<!-- Markdown renderer for reasoning summary -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
+// Ensure headings/titles in reasoning have breaks before them (same heuristic as modal)
+function formatReasoningMarkdown(text) {
+  if (!text) return '';
+  let t = String(text).replace(/\r\n/g, '\n');
+  // 1) Normalize broken bold blocks: **Title\n** -> **Title**
+  t = t.replace(/\*\*([\s\S]*?)\n+\*\*/g, '**$1**');
+  // 2) If a bold title appears right after text, force a blank line before it
+  t = t.replace(/([^\n])\s*\*\*([A-Za-zÀ-ÿ0-9][^*]{0,118}?)\*\*(?=\s*(\n|$))/g, '$1\n\n**$2**');
+  // 3) Normalize any ATX headings to level-3 with spacing
+  t = t.replace(/(^|\n+)\s*#{1,6}\s+([^\n]+?)\s*(?=\n|$)/g, '$1\n\n### $2\n\n');
+  // 4) Convert standalone bold lines to level-3 headings
+  t = t.replace(/(^|\n+)\s*\*\*([^*\n][^*]*?)\*\*\s*(?=\n|$)/g, '$1\n\n### $2\n\n');
+  // 5) Collapse excessive blank lines
+  t = t.replace(/\n{3,}/g, '\n\n');
+  // 6) Ensure leading newline to avoid tight top
+  if (!t.startsWith('\n')) t = '\n' + t;
+  return t;
+}
+
 // Simple word-level LCS diff, returns pairs with type: 'same'|'add'|'del'
 function diffWords(a, b) {
   const aw = (a || '').split(/(\s+)/).filter(Boolean);
@@ -292,6 +332,23 @@ function escapeHtml(s) {
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.diff-before').forEach(renderDiffBefore);
   document.querySelectorAll('.diff-after').forEach(renderDiffAfter);
+
+  // Render reasoning summary if present
+  const container = document.getElementById('reasoningSummaryBody');
+  if (container) {
+    try {
+      const raw = {{ reasoning_summary|tojson }};
+      const md = formatReasoningMarkdown(raw);
+      if (window.marked) {
+        container.innerHTML = window.marked.parse(md, { breaks: true, gfm: true });
+      } else {
+        container.textContent = raw || '';
+      }
+    } catch (_) {
+      // Fallback plain text
+      container.textContent = ({{ reasoning_summary|tojson }} || '');
+    }
+  }
 
   // Activer les cases à cocher de fusion quand "merge" est sélectionné
   const sections = ['competences_developpees','competences_certifiees','cours_corequis','cours_prealables','objets_cibles','savoirs_etre','capacites'];
