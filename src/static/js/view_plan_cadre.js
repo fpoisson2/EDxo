@@ -669,16 +669,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     const container = document.getElementById('streamContainer');
                     const out = document.getElementById('streamOutput');
                     const status = document.getElementById('streamStatus');
+                    const summary = document.getElementById('reasoningSummary');
                     if (container && out) {
                         out.textContent = '';
                         container.classList.remove('d-none');
+                        if (summary) {
+                            summary.textContent = '';
+                            summary.classList.add('d-none');
+                        }
                     }
                     window.onTaskStreamUpdate = function(meta) {
                         try {
                             if (!meta) return;
                             const out = document.getElementById('streamOutput');
                             const status = document.getElementById('streamStatus');
+                            const summary = document.getElementById('reasoningSummary');
                             if (status && meta.message) status.textContent = meta.message;
+                            if (summary && meta.reasoning_summary) {
+                                summary.textContent = meta.reasoning_summary;
+                                summary.classList.remove('d-none');
+                            }
                             if (out) {
                                 if (meta.stream_buffer) {
                                     out.textContent = meta.stream_buffer;
