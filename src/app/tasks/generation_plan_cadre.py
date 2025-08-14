@@ -743,7 +743,6 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                         'stream_buffer': streamed_text,
                                         'seq': seq
                                     })
-                                    logger.info("Stream chunk %s: %s", seq, delta)
                             elif getattr(event, 'summary', None):
                                 reasoning_items.extend(event.summary)
                             elif etype.endswith('response.completed') or etype == 'response.completed':
@@ -833,9 +832,11 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # ----------------------------------------------------------------
         if streamed_text is not None and streamed_text.strip():
             self.update_state(state='PROGRESS', meta={'message': "Réponse reçue (stream), analyse des résultats..."})
+            logger.info("OpenAI full output: %s", streamed_text)
             parsed_json = json.loads(streamed_text)
         else:
             self.update_state(state='PROGRESS', meta={'message': "Réponse reçue, analyse des résultats..."})
+            logger.info("OpenAI full output: %s", getattr(response, 'output_text', ''))
             parsed_json = json.loads(response.output_text)
         parsed_data = PlanCadreAIResponse(**parsed_json)
 
