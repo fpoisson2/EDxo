@@ -315,6 +315,7 @@
     const contentDiv = messageElement.querySelector('.message-content');
     const reasoningBox = messageElement.querySelector('.reasoning-summary');
     const reasoningBody = messageElement.querySelector('.reasoning-summary-body');
+    let hasReasoning = false;
 
     // Création de la bulle de status avec un message d'attente par défaut
     let statusBubble = document.createElement('div');
@@ -340,7 +341,8 @@
               console.log('SSE data reçue:', data);
               if (data.type === 'content') {
                 accumulatedContent += data.content;
-                contentDiv.innerHTML = marked.parse(accumulatedContent);
+                const filtered = sanitizeAssistantContent(accumulatedContent, hasReasoning);
+                contentDiv.innerHTML = marked.parse(filtered);
                 // Masquer la bulle dès que du contenu est affiché
                 statusBubble.style.display = 'none';
               } else if (data.type === 'reasoning_summary') {
@@ -349,6 +351,7 @@
                   const md = formatReasoningMarkdown(String(data.content || ''));
                   reasoningBody.innerHTML = marked.parse(md, { breaks: true, gfm: true });
                   reasoningBox.style.display = 'block';
+                  hasReasoning = true;
                 }
               } else if (data.type === 'processing' || data.type === 'function_call') {
                 // Mise à jour du message dans la bulle
@@ -397,6 +400,19 @@
     // Réduire les sauts multiples
     t = t.replace(/\n{3,}/g, '\n\n');
     if (!t.startsWith('\n')) t = '\n' + t;
+    return t;
+  }
+
+  // Supprime les sections de raisonnement du contenu principal lorsqu'un résumé dédié est affiché
+  function sanitizeAssistantContent(text, hasReasoning) {
+    if (!text || !hasReasoning) return text || '';
+    let t = String(text);
+    // 1) En-têtes Markdown ou gras: "Résumé du raisonnement", "Raisonnement", "Reasoning (summary)"
+    const headingBlock = /(^|\n)\s*(?:#{1,6}\s*)?(?:\*\*)?\s*(Résumé du raisonnement|Raisonnement|Reasoning(?: summary)?)\s*:?\s*(?:\*\*)?\s*\n[\s\S]*?(?=(\n\s*#{1,6}\s+\S|\n\s*\*\*|\n\s*$))/gi;
+    t = t.replace(headingBlock, '$1');
+    // 2) Variante simple: ligne étiquette suivie d'un paragraphe
+    const labelBlock = /(^|\n)\s*\[?(?:Reasoning|Raisonnement)\]?\s*:?\s*\n[\s\S]*?(?=(\n\s*#{1,6}\s+\S|\n\s*$))/gi;
+    t = t.replace(labelBlock, '$1');
     return t;
   }
 
