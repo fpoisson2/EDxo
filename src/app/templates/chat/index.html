@@ -289,7 +289,13 @@
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
     // Pour les messages utilisateur, texte brut ; pour EDxo, rendu Markdown
-    contentDiv.innerHTML = type === 'user' ? message : marked.parse(message || '');
+    if (type === 'user') {
+      contentDiv.innerHTML = message;
+    } else {
+      // Par défaut, on retire tout bloc de raisonnement nommé dans la réponse non-stream
+      const base = sanitizeAssistantContent(message || '', true);
+      contentDiv.innerHTML = marked.parse(base);
+    }
 
     // Conteneur du résumé du raisonnement (affiché uniquement si des données existent)
     let reasoningDiv = null;
@@ -389,7 +395,8 @@
           }
         }
       }
-      contentDiv.innerHTML = marked.parse(accumulatedContent);
+      const filteredFinal = sanitizeAssistantContent(accumulatedContent, hasReasoning);
+      contentDiv.innerHTML = marked.parse(filteredFinal);
       document.querySelectorAll('pre code').forEach((block) => {
         hljs.highlightElement(block);
       });

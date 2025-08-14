@@ -52,11 +52,31 @@ from ...utils.openai_pricing import calculate_call_cost
 chat = Blueprint("chat", __name__)
 
 def extract_text(ev):
-    """Renvoie le texte s’il existe, sinon None."""
-    if hasattr(ev, "delta") and isinstance(ev.delta, str):
-        return ev.delta
-    if getattr(ev, "item", None) and isinstance(ev.item, object):
-        return getattr(ev.item, "text", None)
+    """Return ONLY assistant output_text, never reasoning text.
+
+    We filter by event type to avoid treating reasoning summary deltas as normal content.
+    """
+    etype = getattr(ev, 'type', '') or ''
+    # Ignore any reasoning-related events
+    if 'reasoning' in etype:
+        return None
+
+    # Output text delta events (Responses API)
+    if hasattr(ev, 'delta') and isinstance(ev.delta, str):
+        # Only accept if the event type clearly indicates output text delta
+        if 'output_text.delta' in etype:
+            return ev.delta
+        # Otherwise ignore (likely a non-text or reasoning delta)
+        return None
+
+    # Some SDKs emit items with a type; only accept output_text items
+    item = getattr(ev, 'item', None)
+    if item is not None:
+        itype = getattr(item, 'type', '') or ''
+        if itype == 'output_text':
+            return getattr(item, 'text', None)
+        return None
+
     return None
 
 def _collect_summary(items):
