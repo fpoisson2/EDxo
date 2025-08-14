@@ -687,12 +687,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             htmlPreview.innerHTML = '<div class="text-muted">En attente de données valides…</div>';
                             htmlPreview.classList.remove('d-none');
                         }
-                        // Default to structured view
+                        // Choisir l'onglet par défaut comme pour le mode "améliorer" (Structuré)
                         const tabs = document.querySelectorAll('#streamTabs button');
                         tabs.forEach(btn => btn.classList.remove('active'));
                         const structuredBtn = document.querySelector('#streamTabs button[data-target="structured"]');
                         if (structuredBtn) structuredBtn.classList.add('active');
-                        if (out) out.classList.add('d-none');
+                        out && out.classList.add('d-none');
+                        htmlPreview && htmlPreview.classList.remove('d-none');
                     }
                     // Tab switching
                     const tabsEl = document.getElementById('streamTabs');

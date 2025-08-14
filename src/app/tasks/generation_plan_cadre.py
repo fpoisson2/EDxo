@@ -209,13 +209,29 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             GlobalGenerationSettings.text_content
         ).all()
 
-        parametres_dict = {
-            row.section: {
-                'use_ai': row.use_ai,
-                'text_content': row.text_content
-            }
-            for row in parametres_generation
-        }
+        # Journaliser quelques métadonnées et normaliser les noms de section
+        try:
+            logger.info(
+                "[PlanCadreAI] start plan_id=%s user_id=%s mode=%s improve_only=%s target_columns=%s ai_model=%s",
+                plan_id, user_id, mode, improve_only, target_columns, ai_model
+            )
+        except Exception:
+            pass
+
+        parametres_dict = {}
+        for row in parametres_generation:
+            try:
+                section_key = (row.section or "").strip()
+                parametres_dict[section_key] = {
+                    'use_ai': row.use_ai,
+                    'text_content': row.text_content
+                }
+                logger.debug(
+                    "[PlanCadreAI] settings section='%s' raw_use_ai=%r text_len=%s",
+                    section_key, row.use_ai, len(row.text_content or "")
+                )
+            except Exception as _:
+                logger.warning("[PlanCadreAI] unable to read settings row: %r", row)
 
         plan_cadre_data = get_plan_cadre_data(plan.cours_id)
 
@@ -288,14 +304,23 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         for section_name, conf_data in parametres_dict.items():
             raw_text = str(conf_data.get('text_content', "") or "")
             replaced_text = replace_jinja(raw_text)
-            is_ai = (conf_data.get('use_ai', 0) == 1)
+            # Rendre l'évaluation du drapeau IA robuste (True/1/"true"/"1"/etc.)
+            _val = conf_data.get('use_ai', False)
+            if isinstance(_val, str):
+                is_ai = _val.strip().lower() in ('1', 'true', 't', 'yes', 'on')
+            else:
+                is_ai = bool(_val)
+            # Fallback: si la valeur est absente/None mais un prompt est fourni, activer IA
+            if not is_ai and _val is None and (raw_text.strip() != ""):
+                is_ai = True
 
-            if section_name in field_to_plan_cadre_column:
-                col_name = field_to_plan_cadre_column[section_name]
+            normalized_name = (section_name or "").strip()
+            if normalized_name in field_to_plan_cadre_column:
+                col_name = field_to_plan_cadre_column[normalized_name]
                 if not include_section(section_name, col_name):
                     continue
                 if is_ai:
-                    entry = {"field_name": section_name, "prompt": replaced_text}
+                    entry = {"field_name": normalized_name, "prompt": replaced_text}
                     if improve_only:
                         entry["current_content"] = getattr(plan, col_name) or ""
                     ai_fields.append(entry)
@@ -308,19 +333,19 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                             non_ai_updates_plan_cadre.append((col_name, replaced_text))
                         else:
                             non_ai_updates_plan_cadre.append((col_name, replaced_text))
-            elif section_name in field_to_table_insert:
-                table_name = field_to_table_insert[section_name]
+            elif normalized_name in field_to_table_insert:
+                table_name = field_to_table_insert[normalized_name]
                 if not include_section(section_name):
                     continue
-                if section_name == "Objets cibles" and is_ai:
-                    entry = {"field_name": section_name, "prompt": replaced_text}
+                if normalized_name == "Objets cibles" and is_ai:
+                    entry = {"field_name": normalized_name, "prompt": replaced_text}
                     if improve_only:
                         entry["current_content"] = [
                             {"texte": oc.texte, "description": oc.description}
                             for oc in plan.objets_cibles
                         ]
                     ai_fields_with_description.append(entry)
-                if section_name == "Description des compétences développées" and is_ai:
+                if normalized_name == "Description des compétences développées" and is_ai:
                     competences = (
                         db.session.query(Competence.code, Competence.nom)
                         .join(ElementCompetence, ElementCompetence.competence_id == Competence.id)
@@ -341,14 +366,14 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     else:
                         competences_text = "\n(Aucune compétence de type 'developpee' trouvée)\n"
                     replaced_text += f"\n\n{competences_text}"
-                    entry = {"field_name": section_name, "prompt": replaced_text}
+                    entry = {"field_name": normalized_name, "prompt": replaced_text}
                     if improve_only:
                         entry["current_content"] = [
                             {"texte": cd.texte, "description": cd.description}
                             for cd in plan.competences_developpees
                         ]
                     ai_fields_with_description.append(entry)
-                if section_name == "Description des Compétences certifiées" and is_ai:
+                if normalized_name == "Description des Compétences certifiées" and is_ai:
                     competences = (
                         db.session.query(Competence.code, Competence.nom)
                         .join(ElementCompetence, ElementCompetence.competence_id == Competence.id)
@@ -369,14 +394,14 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     else:
                         competences_text = "\n(Aucune compétence 'certifiée' trouvée)\n"
                     replaced_text += f"\n\n{competences_text}"
-                    entry = {"field_name": section_name, "prompt": replaced_text}
+                    entry = {"field_name": normalized_name, "prompt": replaced_text}
                     if improve_only:
                         entry["current_content"] = [
                             {"texte": cc.texte, "description": cc.description}
                             for cc in plan.competences_certifiees
                         ]
                     ai_fields_with_description.append(entry)
-                if section_name == "Description des cours corequis" and is_ai:
+                if normalized_name == "Description des cours corequis" and is_ai:
                     corequis_data = (
                         db.session.query(CoursCorequis.id, Cours.code, Cours.nom)
                         .join(Cours, CoursCorequis.cours_corequis_id == Cours.id)
@@ -391,14 +416,14 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     else:
                         cours_text = "\n(Aucun cours corequis)\n"
                     replaced_text += f"\n\n{cours_text}"
-                    entry = {"field_name": section_name, "prompt": replaced_text}
+                    entry = {"field_name": normalized_name, "prompt": replaced_text}
                     if improve_only:
                         entry["current_content"] = [
                             {"texte": cc.texte, "description": cc.description}
                             for cc in plan.cours_corequis
                         ]
                     ai_fields_with_description.append(entry)
-                if section_name == "Description des cours préalables" and is_ai:
+                if normalized_name == "Description des cours préalables" and is_ai:
                     prealables_data = (
                         db.session.query(CoursPrealable.id, Cours.code, Cours.nom, CoursPrealable.note_necessaire)
                         .join(Cours, CoursPrealable.cours_id == Cours.id)
@@ -414,7 +439,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     else:
                         cours_text = "\n(Ce cours n'est prérequis pour aucun autre cours)\n"
                     replaced_text += f"\n\n{cours_text}"
-                    entry = {"field_name": section_name, "prompt": replaced_text}
+                    entry = {"field_name": normalized_name, "prompt": replaced_text}
                     if improve_only:
                         entry["current_content"] = [
                             {"texte": cp.texte, "description": cp.description}
@@ -436,7 +461,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     "Savoirs faire d'une capacité",
                     "Moyen d'évaluation d'une capacité"
                 ]
-                if section_name == 'Savoir-être':
+                if normalized_name == 'Savoir-être':
                     if not include_section(section_name):
                         continue
                     if is_ai:
@@ -450,12 +475,14 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                             for line in lines:
                                 se_obj = PlanCadreSavoirEtre(plan_cadre_id=plan.id, texte=line)
                                 db.session.add(se_obj)
-                elif section_name in target_sections:
+                elif normalized_name in target_sections:
                     if not include_section(section_name):
                         continue
                     if is_ai:
                         section_formatted = f"### {section_name}\n{replaced_text}"
                         ai_capacites_prompt.append(section_formatted)
+                else:
+                    logger.debug("[PlanCadreAI] section non reconnue (ignorée): '%s' (use_ai=%s)", normalized_name, is_ai)
         # Préparer un instantané concis des capacités actuelles (utile en mode amélioration)
         if improve_only and (not target_columns or 'capacites' in target_columns):
             for cap in (plan.capacites or [])[:4]:  # limiter à 4 capacités pour rester concis
@@ -488,6 +515,10 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
 
         # Si aucune génération AI n'est requise, retourner tôt
         if not ai_fields and not ai_savoir_etre and not ai_capacites_prompt and not ai_fields_with_description:
+            logger.info(
+                "[PlanCadreAI] No AI sections selected. ai_fields=%d, ai_fields_with_description=%d, ai_savoir_etre=%s, ai_capacites_prompt=%d",
+                len(ai_fields), len(ai_fields_with_description), bool(ai_savoir_etre), len(ai_capacites_prompt)
+            )
             return {"status": "success", "message": "Aucune génération IA requise (tous champs sont en mode non-AI)."}
 
         # ----------------------------------------------------------------
@@ -790,6 +821,27 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                         'message': 'Résumé du raisonnement',
                                         'reasoning_summary': reasoning_summary_text
                                     })
+                            # Additional compatibility: some SDKs emit generic reasoning deltas
+                            elif etype.endswith('response.reasoning.delta') or etype == 'response.reasoning.delta' or \
+                                 etype.endswith('reasoning.delta') or etype == 'reasoning.delta':
+                                try:
+                                    delta_obj = getattr(event, 'delta', None)
+                                    # Try common shapes
+                                    if isinstance(delta_obj, str):
+                                        reasoning_summary_text += delta_obj
+                                    elif isinstance(delta_obj, dict):
+                                        reasoning_summary_text += (delta_obj.get('summary_text') or delta_obj.get('text') or '')
+                                    # Fallback: collect any summary structure
+                                    if not delta_obj:
+                                        reasoning_summary_text += _collect_summary(getattr(event, 'summary', None))
+                                    reasoning_summary_text = reasoning_summary_text.strip()
+                                    if reasoning_summary_text:
+                                        self.update_state(state='PROGRESS', meta={
+                                            'message': 'Résumé du raisonnement',
+                                            'reasoning_summary': reasoning_summary_text
+                                        })
+                                except Exception:
+                                    pass
                             # Item added (can include messages and reasoning). Keep for completeness.
                             elif etype.endswith('response.output_item.added') or etype == 'response.output_item.added':
                                 # Some SDKs emit item additions; we try to surface any text as progress.
