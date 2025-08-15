@@ -20,6 +20,32 @@
 - Tests: `pytest -q`.
 - Production: `gunicorn -w 4 "src.app.__init__:create_app()" --bind 0.0.0.0:5000`.
 
+## Voix (Quickstart)
+- Dépendances: `pip install 'openai-agents[voice]' numpy sounddevice`.
+- Variable d’environnement: configurez `OPENAI_API_KEY` dans `.env` (ou dans votre environnement shell).
+- Exécuter (micro 3s): `python -m src.scripts.voice_agent --seconds 3`.
+  - Option `--silence`: envoie un buffer silencieux (utile pour tester l’audio de sortie).
+  - Option `--samplerate`: par défaut `24000` (mono, `int16`).
+- Flux: STT (transcription) → agent EDxo (handoffs/outils) → TTS (audio).
+- Dépannage audio:
+  - Assurez-vous d’avoir un périphérique d’entrée/sortie par défaut configuré.
+  - Sous Linux, l’utilisateur doit appartenir au groupe audio; sous macOS, accordez l’accès micro.
+  - Si la lecture est hachée, baissez `--samplerate` ou augmentez `--seconds`.
+
+## Realtime (conversation continue, FR)
+- Prérequis: `export OPENAI_API_KEY=...` (ou utilisez `--api-key`).
+- Lancer (sans micro): `python -m src.scripts.realtime_voice_agent`.
+- Lancer (avec micro local): `python -m src.scripts.realtime_voice_agent --mic`.
+  - Options utiles:
+    - `--model gpt-4o-realtime-preview` (par défaut)
+    - `--voice alloy` (autres: `echo`, `fable`, `onyx`, `nova`, `shimmer`)
+    - `--vad-threshold 0.5`, `--silence-ms 200`, `--prefix-padding-ms 300`
+    - `--no-greeting` pour ne pas envoyer le message d’accueil
+- Fonctionnement: ouvre une session Realtime avec VAD serveur; le modèle parle en temps réel et les transcriptions sont affichées dans le terminal (FR).
+- Remarques:
+  - L’audio d’E/S est géré par la session Realtime; pour un contrôle audio local (micro/haut-parleur) côté Python, utilisez `src/scripts/voice_agent.py`.
+  - Le flag `--mic` tente de diffuser le PCM16 du micro vers la session Realtime via l’API du SDK. Si votre version du SDK ne fournit pas cette méthode, un avertissement s’affiche et la session reste text→audio uniquement.
+
 ## Style de code et conventions de nommage
 - Python 3.x, PEP 8, indentation 4 espaces.
 - Fichiers/modules/fonctions: `snake_case`; classes: `PascalCase`; constantes: `UPPER_SNAKE_CASE`.

@@ -32,4 +32,6 @@ mistralai
 openai
 Flask
 Flask-Session
-openai-agents
+openai-agents[voice]
+numpy
+sounddevice
