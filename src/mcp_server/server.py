@@ -1,6 +1,8 @@
-"""MCP server exposing programme and course resources."""
+"""MCP server exposing programme and course resources with OAuth protection."""
 
+from functools import wraps
 from fastmcp import FastMCP
+from fastmcp.server.auth import AccessToken, TokenVerifier
 
 from src.app.models import (
     Programme,
@@ -8,16 +10,64 @@ from src.app.models import (
     Competence,
     PlanCadre,
     PlanDeCours,
+    OAuthToken,
 )
 
-mcp = FastMCP(name="EDxoMCP")
+# ---------------------------------------------------------------------------
+# Flask application binding
+# ---------------------------------------------------------------------------
+flask_app = None
 
 
+def init_app(app):
+    """Store a reference to the Flask app for DB access inside MCP callbacks."""
+    global flask_app
+    flask_app = app
+
+
+def with_app_context(func):
+    """Ensure the wrapped function runs within the Flask application context."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from flask import current_app
+
+        app = flask_app or current_app._get_current_object()
+        with app.app_context():
+            return func(*args, **kwargs)
+
+    return wrapper
+
+
+class DBTokenVerifier(TokenVerifier):
+    """Validate bearer tokens against the application's OAuthToken table."""
+
+    async def verify_token(self, token: str) -> AccessToken | None:  # pragma: no cover - async
+        from flask import current_app
+
+        app = flask_app or current_app._get_current_object()
+        with app.app_context():
+            oauth = OAuthToken.query.filter_by(token=token).first()
+            if oauth and oauth.is_valid():
+                return AccessToken(
+                    token=token,
+                    client_id=oauth.client_id,
+                    scopes=[],
+                    expires_at=int(oauth.expires_at.timestamp()),
+                )
+            return None
+
+
+mcp = FastMCP(name="EDxoMCP", auth=DBTokenVerifier())
+
+
+@with_app_context
 def programmes():
     """Retourne la liste des programmes."""
     return [{"id": p.id, "nom": p.nom} for p in Programme.query.all()]
 
 
+@with_app_context
 def programme_courses(programme_id: int):
     """Cours associés à un programme."""
     programme = Programme.query.get(programme_id)
@@ -26,12 +76,14 @@ def programme_courses(programme_id: int):
     return [{"id": c.id, "code": c.code, "nom": c.nom} for c in programme.cours]
 
 
+@with_app_context
 def programme_competences(programme_id: int):
     """Compétences ministérielles d'un programme."""
     comps = Competence.query.filter_by(programme_id=programme_id).order_by(Competence.code).all()
     return [{"id": c.id, "code": c.code, "nom": c.nom} for c in comps]
 
 
+@with_app_context
 def competence_details(competence_id: int):
     """Détails d'une compétence."""
     comp = Competence.query.get(competence_id)
@@ -52,11 +104,13 @@ def competence_details(competence_id: int):
     }
 
 
+@with_app_context
 def cours():
     """Liste de tous les cours."""
     return [{"id": c.id, "code": c.code, "nom": c.nom} for c in Cours.query.all()]
 
 
+@with_app_context
 def cours_details(cours_id: int):
     """Informations sur un cours."""
     cours_obj = Cours.query.get(cours_id)
@@ -65,18 +119,21 @@ def cours_details(cours_id: int):
     return {"id": cours_obj.id, "code": cours_obj.code, "nom": cours_obj.nom}
 
 
+@with_app_context
 def cours_plan_cadre(cours_id: int):
     """Plan cadre lié à un cours."""
     plan = PlanCadre.query.filter_by(cours_id=cours_id).first()
     return plan.to_dict() if plan else {}
 
 
+@with_app_context
 def cours_plans_de_cours(cours_id: int):
     """Plans de cours associés à un cours."""
     plans = PlanDeCours.query.filter_by(cours_id=cours_id).all()
     return [p.to_dict() for p in plans]
 
 
+@with_app_context
 def plan_cadre_section(plan_id: int, section: str):
     """Récupère une section spécifique d'un plan cadre."""
     plan = PlanCadre.query.get(plan_id)
@@ -97,6 +154,7 @@ mcp.resource("api://cours/{cours_id}/plans_de_cours")(cours_plans_de_cours)
 mcp.resource("api://plan_cadre/{plan_id}/section/{section}")(plan_cadre_section)
 
 
+@with_app_context
 def search(query: str):
     """Recherche des programmes et cours par nom."""
     results = []
@@ -117,6 +175,7 @@ def search(query: str):
     return results
 
 
+@with_app_context
 def fetch(item_id: str):
     """Récupère le contenu complet d'un résultat de recherche."""
     try:

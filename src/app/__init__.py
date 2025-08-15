@@ -56,6 +56,7 @@ from .routes.ocr_routes import ocr_bp
 from .routes.grilles import grille_bp
 from .routes.api import api_bp
 from .routes.oauth import oauth_bp
+from ..mcp_server.server import init_app as init_mcp_server
 
 # Import version
 from ..config.version import __version__
@@ -204,6 +205,9 @@ def create_app(testing=False):
     ckeditor.init_app(app)
     csrf.init_app(app)
     init_change_tracking(db)
+
+    # Bind Flask app to MCP server for OAuth verification
+    init_mcp_server(app)
 
     if not testing:
         migrate = Migrate(app, db)
