@@ -434,9 +434,13 @@ def change_password():
     return render_template('change_password.html', form=form)
 
 @main.route('/')
-@login_required
+@public_route
 @ensure_profile_completed
 def index():
+    if not current_user.is_authenticated:
+        form = LoginForm()
+        return render_template('login.html', form=form)
+
     # Récupérer l'utilisateur connecté
     user = current_user
     
