@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from src.app import db
 from src.app.models import OAuthToken
-from src.mcp_server.server import DBTokenVerifier, init_app as init_mcp_app
+from src.mcp_server.server import DBTokenVerifier, init_app as init_mcp_app, mcp
 
 
 def test_db_token_verifier(app):
@@ -16,3 +16,7 @@ def test_db_token_verifier(app):
         access = asyncio.run(verifier.verify_token("tok"))
         assert access is not None and access.client_id == "cli"
         assert asyncio.run(verifier.verify_token("bad")) is None
+
+
+def test_mcp_server_uses_oauth_verifier():
+    assert isinstance(mcp.auth, DBTokenVerifier)
