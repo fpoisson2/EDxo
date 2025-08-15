@@ -39,6 +39,8 @@ def api_auth_required(f):
             oauth = OAuthToken.query.filter_by(token=bearer).first()
             if oauth and oauth.is_valid():
                 g.api_client = oauth.client_id
+                if oauth.user:
+                    g.api_user = oauth.user
                 return f(*args, **kwargs)
             return jsonify({'error': 'Unauthorized'}), 401
         if current_user.is_authenticated:

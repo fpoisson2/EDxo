@@ -301,10 +301,28 @@ class OAuthToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     token = db.Column(db.String(64), unique=True, nullable=False)
     client_id = db.Column(db.String(64), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=True)
     expires_at = db.Column(db.DateTime, nullable=False)
+
+    user = db.relationship('User')
 
     def is_valid(self):
         return self.expires_at > datetime.utcnow()
+
+
+class OAuthAuthorizationCode(db.Model):
+    """Code d'autorisation temporaire pour le flux Authorization Code."""
+
+    __tablename__ = 'oauth_authorization_code'
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(64), unique=True, nullable=False)
+    client_id = db.Column(db.String(64), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=False)
+    code_challenge = db.Column(db.String(128), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    user = db.relationship('User')
+
 
 # ------------------------------------------------------------------------------
 # Modèles liés aux compétences et éléments de compétences

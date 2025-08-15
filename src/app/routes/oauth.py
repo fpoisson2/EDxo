@@ -2,10 +2,18 @@
 
 from datetime import datetime, timedelta
 import secrets
+import hashlib
+import base64
 
-from flask import Blueprint, jsonify, request, url_for
+from flask import Blueprint, jsonify, request, url_for, redirect, render_template
+from flask_login import login_required, current_user
 
-from ..models import OAuthClient, OAuthToken, db
+from ..models import (
+    OAuthClient,
+    OAuthToken,
+    OAuthAuthorizationCode,
+    db,
+)
 
 oauth_bp = Blueprint('oauth', __name__)
 
@@ -53,10 +61,64 @@ def issue_token():
     client = OAuthClient.query.filter_by(client_id=client_id, client_secret=client_secret).first()
     if not client:
         return jsonify({'error': 'invalid_client'}), 401
+
+    grant_type = data.get('grant_type', 'client_credentials')
     ttl = data.get('ttl', 3600)
+
+    if grant_type == 'authorization_code':
+        code = data.get('code')
+        code_verifier = data.get('code_verifier')
+        if not code or not code_verifier:
+            return jsonify({'error': 'invalid_request'}), 400
+        auth_code = OAuthAuthorizationCode.query.filter_by(code=code, client_id=client_id).first()
+        if not auth_code or auth_code.expires_at <= datetime.utcnow():
+            return jsonify({'error': 'invalid_grant'}), 400
+        expected = base64.urlsafe_b64encode(
+            hashlib.sha256(code_verifier.encode()).digest()
+        ).rstrip(b'=').decode()
+        if auth_code.code_challenge != expected:
+            return jsonify({'error': 'invalid_grant'}), 400
+        user_id = auth_code.user_id
+        db.session.delete(auth_code)
+    else:
+        user_id = None
+
     token = secrets.token_hex(16)
     expires_at = datetime.utcnow() + timedelta(seconds=ttl)
-    oauth_token = OAuthToken(token=token, client_id=client_id, expires_at=expires_at)
+    oauth_token = OAuthToken(
+        token=token,
+        client_id=client_id,
+        user_id=user_id,
+        expires_at=expires_at,
+    )
     db.session.add(oauth_token)
     db.session.commit()
     return jsonify({'access_token': token, 'token_type': 'bearer', 'expires_in': ttl}), 200
+
+
+@oauth_bp.route('/authorize', methods=['GET', 'POST'])
+@login_required
+def authorize():
+    """Display a consent page and issue an authorization code."""
+    client_id = request.args.get('client_id')
+    redirect_uri = request.args.get('redirect_uri')
+    code_challenge = request.values.get('code_challenge')
+    client = OAuthClient.query.filter_by(client_id=client_id).first()
+    if not client or (client.redirect_uri and client.redirect_uri != redirect_uri):
+        return jsonify({'error': 'invalid_client'}), 400
+
+    if request.method == 'POST' and request.form.get('confirm') == 'yes':
+        code = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(minutes=10)
+        auth_code = OAuthAuthorizationCode(
+            code=code,
+            client_id=client_id,
+            user_id=current_user.id,
+            code_challenge=code_challenge,
+            expires_at=expires_at,
+        )
+        db.session.add(auth_code)
+        db.session.commit()
+        return redirect(f"{redirect_uri}?code={code}")
+
+    return render_template('oauth/authorize.html', client=client, code_challenge=code_challenge)
