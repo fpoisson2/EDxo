@@ -3,11 +3,26 @@
 from datetime import datetime, timedelta
 import secrets
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, url_for
 
 from ..models import OAuthClient, OAuthToken, db
 
-oauth_bp = Blueprint('oauth', __name__, url_prefix='/oauth')
+oauth_bp = Blueprint('oauth', __name__)
+
+
+@oauth_bp.get('/.well-known/oauth-authorization-server')
+def oauth_metadata():
+    """Expose OAuth server metadata for discovery."""
+    return (
+        jsonify(
+            {
+                'issuer': request.url_root.rstrip('/'),
+                'token_endpoint': url_for('oauth.issue_token', _external=True),
+                'registration_endpoint': url_for('oauth.register_client', _external=True),
+            }
+        ),
+        200,
+    )
 
 
 @oauth_bp.post('/register')

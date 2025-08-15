@@ -16,13 +16,13 @@ def setup_data(app):
 def test_oauth_registration_and_access(app, client):
     prog_id = setup_data(app)
 
-    resp = client.post('/oauth/register', json={'name': 'client'})
+    resp = client.post('/register', json={'name': 'client'})
     assert resp.status_code == 201
     creds = resp.get_json()
     client_id = creds['client_id']
     client_secret = creds['client_secret']
 
-    resp = client.post('/oauth/token', json={'client_id': client_id, 'client_secret': client_secret, 'ttl': 3600})
+    resp = client.post('/token', json={'client_id': client_id, 'client_secret': client_secret, 'ttl': 3600})
     assert resp.status_code == 200
     token = resp.get_json()['access_token']
 
@@ -33,3 +33,9 @@ def test_oauth_registration_and_access(app, client):
 
     bad = {'Authorization': 'Bearer wrong'}
     assert client.get('/api/programmes', headers=bad).status_code == 401
+
+    meta = client.get('/.well-known/oauth-authorization-server')
+    assert meta.status_code == 200
+    data = meta.get_json()
+    assert data['token_endpoint'].endswith('/token')
+    assert data['registration_endpoint'].endswith('/register')

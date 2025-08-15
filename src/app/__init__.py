@@ -246,7 +246,8 @@ def create_app(testing=False):
             request.endpoint == 'static' or
             request.path.startswith('/static/') or
             request.path.startswith('/api/') or
-            request.path.startswith('/oauth/') or
+            request.path in ('/token', '/register') or
+            request.path.startswith('/.well-known/') or
             (view_func is not None and getattr(view_func, 'is_public', False))
         ):
             return
