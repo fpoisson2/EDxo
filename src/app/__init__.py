@@ -54,6 +54,7 @@ from .routes.settings import settings_bp
 from .routes.system import system_bp
 from .routes.ocr_routes import ocr_bp
 from .routes.grilles import grille_bp
+from .routes.api import api_bp
 
 # Import version
 from ..config.version import __version__
@@ -224,6 +225,7 @@ def create_app(testing=False):
     app.register_blueprint(gestion_programme_bp)
     app.register_blueprint(ocr_bp)
     app.register_blueprint(grille_bp)
+    app.register_blueprint(api_bp)
 
     # Register helpers and handlers
     @app.context_processor
