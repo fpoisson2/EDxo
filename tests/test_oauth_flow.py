@@ -106,3 +106,16 @@ def test_authorization_code_flow(app, client):
     resp = client.get('/api/programmes', headers=headers)
     assert resp.status_code == 200
     assert any(p['id'] == prog_id for p in resp.get_json())
+
+
+def test_oauth_metadata_respects_prefix(client):
+    """Issuer and endpoints include the forwarded prefix."""
+    resp = client.get(
+        '/.well-known/oauth-authorization-server',
+        headers={'X-Forwarded-Prefix': '/mcp'},
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data['issuer'].endswith('/mcp')
+    assert '/mcp' in data['token_endpoint']
+    assert '/mcp' in data['registration_endpoint']

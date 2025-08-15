@@ -119,7 +119,8 @@ def create_app(testing=False):
         static_folder=os.path.join(base_path, "static")
     )
 
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+    # Respect reverse proxy headers for scheme, host and path prefix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_prefix=1)
 
     # Configuration based on environment
     if testing:
