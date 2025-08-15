@@ -277,9 +277,34 @@ class User(UserMixin, db.Model):
     )
 
     # Relations
-    programmes = db.relationship('Programme', 
+    programmes = db.relationship('Programme',
                                secondary=user_programme,
                                backref=db.backref('users', lazy='dynamic'))
+
+
+class OAuthClient(db.Model):
+    """Client OAuth enregistré dynamiquement."""
+
+    __tablename__ = 'oauth_client'
+    id = db.Column(db.Integer, primary_key=True)
+    client_id = db.Column(db.String(64), unique=True, nullable=False)
+    client_secret = db.Column(db.String(64), nullable=False)
+    name = db.Column(db.String(120), nullable=True)
+    redirect_uri = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class OAuthToken(db.Model):
+    """Jeton d'accès OAuth simple."""
+
+    __tablename__ = 'oauth_token'
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(64), unique=True, nullable=False)
+    client_id = db.Column(db.String(64), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    def is_valid(self):
+        return self.expires_at > datetime.utcnow()
 
 # ------------------------------------------------------------------------------
 # Modèles liés aux compétences et éléments de compétences

@@ -14,6 +14,7 @@ from ..models import (
     PlanCadre,
     PlanDeCours,
     User,
+    OAuthToken,
     db,
 )
 
@@ -30,6 +31,14 @@ def api_auth_required(f):
             user = User.query.filter_by(api_token=token).first()
             if user and user.api_token_expires_at and user.api_token_expires_at > datetime.utcnow():
                 g.api_user = user
+                return f(*args, **kwargs)
+            return jsonify({'error': 'Unauthorized'}), 401
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            bearer = auth_header.split(' ', 1)[1]
+            oauth = OAuthToken.query.filter_by(token=bearer).first()
+            if oauth and oauth.is_valid():
+                g.api_client = oauth.client_id
                 return f(*args, **kwargs)
             return jsonify({'error': 'Unauthorized'}), 401
         if current_user.is_authenticated:

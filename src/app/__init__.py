@@ -55,6 +55,7 @@ from .routes.system import system_bp
 from .routes.ocr_routes import ocr_bp
 from .routes.grilles import grille_bp
 from .routes.api import api_bp
+from .routes.oauth import oauth_bp
 
 # Import version
 from ..config.version import __version__
@@ -226,6 +227,7 @@ def create_app(testing=False):
     app.register_blueprint(ocr_bp)
     app.register_blueprint(grille_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(oauth_bp)
 
     # Register helpers and handlers
     @app.context_processor
@@ -240,6 +242,7 @@ def create_app(testing=False):
             request.endpoint == 'static' or
             request.path.startswith('/static/') or
             request.path.startswith('/api/') or
+            request.path.startswith('/oauth/') or
             (view_func is not None and getattr(view_func, 'is_public', False))
         ):
             return

@@ -95,3 +95,58 @@ mcp.resource("api://cours/{cours_id}")(cours_details)
 mcp.resource("api://cours/{cours_id}/plan_cadre")(cours_plan_cadre)
 mcp.resource("api://cours/{cours_id}/plans_de_cours")(cours_plans_de_cours)
 mcp.resource("api://plan_cadre/{plan_id}/section/{section}")(plan_cadre_section)
+
+
+def search(query: str):
+    """Recherche des programmes et cours par nom."""
+    results = []
+    for p in Programme.query.filter(Programme.nom.ilike(f"%{query}%")).all():
+        results.append({
+            "id": f"programme:{p.id}",
+            "title": p.nom,
+            "text": p.nom,
+            "url": f"/api/programmes/{p.id}",
+        })
+    for c in Cours.query.filter(Cours.nom.ilike(f"%{query}%")).all():
+        results.append({
+            "id": f"cours:{c.id}",
+            "title": c.nom,
+            "text": c.nom,
+            "url": f"/api/cours/{c.id}",
+        })
+    return results
+
+
+def fetch(item_id: str):
+    """Récupère le contenu complet d'un résultat de recherche."""
+    try:
+        kind, _id = item_id.split(":", 1)
+        _id = int(_id)
+    except ValueError:
+        raise ValueError("identifiant invalide")
+    if kind == "programme":
+        p = Programme.query.get(_id)
+        if not p:
+            raise ValueError("programme introuvable")
+        return {
+            "id": item_id,
+            "title": p.nom,
+            "text": p.nom,
+            "url": f"/api/programmes/{p.id}",
+        }
+    if kind == "cours":
+        c = Cours.query.get(_id)
+        if not c:
+            raise ValueError("cours introuvable")
+        return {
+            "id": item_id,
+            "title": c.nom,
+            "text": c.nom,
+            "url": f"/api/cours/{c.id}",
+        }
+    raise ValueError("type inconnu")
+
+
+# Enregistrement des outils
+mcp.tool(search)
+mcp.tool(fetch)

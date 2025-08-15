@@ -18,6 +18,8 @@ from src.mcp_server.server import (
     cours_plan_cadre,
     cours_plans_de_cours,
     plan_cadre_section,
+    search,
+    fetch,
 )
 
 
@@ -66,3 +68,12 @@ def test_mcp_resources(app):
         assert cours_plan_cadre(cours_id)["id"] == plan_cadre_id
         assert cours_plans_de_cours(cours_id)[0]["id"] == plan_de_cours_id
         assert "place_intro" in plan_cadre_section(plan_cadre_id, "place_intro")
+
+
+def test_search_and_fetch(app):
+    prog_id, cours_id, _, _, _ = setup_data(app)
+    with app.app_context():
+        results = search("Prog")
+        assert any(r["id"] == f"programme:{prog_id}" for r in results)
+        item = fetch(f"programme:{prog_id}")
+        assert item["title"] == "Prog"
