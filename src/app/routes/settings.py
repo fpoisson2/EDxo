@@ -15,6 +15,7 @@ from ..forms import (
     PlanDeCoursPromptSettingsForm,
     OpenAIModelForm,
     ChatSettingsForm,
+    APITokenForm,
 )
 from .evaluation import AISixLevelGridResponse
 from ...config.constants import SECTIONS  # Importer la liste des sections
@@ -107,6 +108,23 @@ def chat_model_settings():
     # Assurer l'affichage cohérent: refléter le couplage côté formulaire
     form.tool_model.data = config.chat_model
     return render_template('settings/chat_models.html', form=form)
+
+
+@settings_bp.route('/developer', methods=['GET', 'POST'])
+@login_required
+def developer():
+    form = APITokenForm()
+    if form.validate_on_submit():
+        days = form.ttl.data or 30
+        current_user.generate_api_token(expires_in=days * 24 * 3600)
+        flash('Jeton API généré.', 'success')
+        return redirect(url_for('settings.developer'))
+    return render_template(
+        'settings/developer.html',
+        form=form,
+        token=current_user.api_token,
+        expires_at=current_user.api_token_expires_at,
+    )
 
 @settings_bp.route('/edit_profile', methods=['GET', 'POST'])
 @login_required

@@ -92,6 +92,12 @@ def health():
     except Exception:
         return jsonify({'status': 'degraded'}), 200
 
+
+@main.route('/help/api')
+@login_required
+def api_help_page():
+    return render_template('help/api.html')
+
 @main.route('/forgot-password', methods=['GET', 'POST'])
 @public_route
 def forgot_password():

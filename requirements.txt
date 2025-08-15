@@ -32,3 +32,4 @@ mistralai
 openai
 Flask
 Flask-Session
+fastmcp

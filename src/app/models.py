@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+import secrets
 
 import sys
 
@@ -234,6 +235,8 @@ class User(UserMixin, db.Model):
     credits = db.Column(db.Float, nullable=False, default=0.0)
     email = db.Column(db.String(120), nullable=True)
     last_login = db.Column(db.DateTime, nullable=True)
+    api_token = db.Column(db.String(64), unique=True, nullable=True)
+    api_token_expires_at = db.Column(db.DateTime, nullable=True)
 
     reset_version = db.Column(db.Integer, default=0)  # Champ pour invalider les anciens tokens
 
@@ -262,6 +265,12 @@ class User(UserMixin, db.Model):
         if user and user.reset_version == token_reset_version:
             return user
         return None
+
+    def generate_api_token(self, expires_in=30 * 24 * 3600):
+        self.api_token = secrets.token_hex(16)
+        self.api_token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+        db.session.commit()
+        return self.api_token
     
     __table_args__ = (
         UniqueConstraint('email', name='uq_user_email'),

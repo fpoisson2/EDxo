@@ -1,0 +1,22 @@
+{% extends "parametres.html" %}
+{% block parametres_content %}
+<h1>Espace développeur</h1>
+<p>Générez ici un jeton personnel pour accéder à l'API. Le jeton doit être inclus dans l'en-tête <code>X-API-Token</code> de vos requêtes.</p>
+{% if token %}
+<p><strong>Jeton actuel :</strong> <code>{{ token }}</code></p>
+{% if expires_at %}
+<p><strong>Expire le :</strong> {{ expires_at }}</p>
+{% endif %}
+{% else %}
+<p>Aucun jeton généré pour l'instant.</p>
+{% endif %}
+<form method="post">
+  {{ form.hidden_tag() }}
+  <div class="mb-3">
+    {{ form.ttl.label }}
+    {{ form.ttl(class="form-control", placeholder="30") }}
+    <small class="form-text text-muted">Durée en jours (par défaut 30).</small>
+  </div>
+  {{ form.submit(class="btn btn-primary") }}
+</form>
+{% endblock %}
