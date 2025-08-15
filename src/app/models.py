@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+import secrets
 
 import sys
 
@@ -234,6 +235,8 @@ class User(UserMixin, db.Model):
     credits = db.Column(db.Float, nullable=False, default=0.0)
     email = db.Column(db.String(120), nullable=True)
     last_login = db.Column(db.DateTime, nullable=True)
+    api_token = db.Column(db.String(64), unique=True, nullable=True)
+    api_token_expires_at = db.Column(db.DateTime, nullable=True)
 
     reset_version = db.Column(db.Integer, default=0)  # Champ pour invalider les anciens tokens
 
@@ -262,15 +265,64 @@ class User(UserMixin, db.Model):
         if user and user.reset_version == token_reset_version:
             return user
         return None
+
+    def generate_api_token(self, expires_in=30 * 24 * 3600):
+        self.api_token = secrets.token_hex(16)
+        self.api_token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+        db.session.commit()
+        return self.api_token
     
     __table_args__ = (
         UniqueConstraint('email', name='uq_user_email'),
     )
 
     # Relations
-    programmes = db.relationship('Programme', 
+    programmes = db.relationship('Programme',
                                secondary=user_programme,
                                backref=db.backref('users', lazy='dynamic'))
+
+
+class OAuthClient(db.Model):
+    """Client OAuth enregistré dynamiquement."""
+
+    __tablename__ = 'oauth_client'
+    id = db.Column(db.Integer, primary_key=True)
+    client_id = db.Column(db.String(64), unique=True, nullable=False)
+    client_secret = db.Column(db.String(64), nullable=False)
+    name = db.Column(db.String(120), nullable=True)
+    redirect_uri = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class OAuthToken(db.Model):
+    """Jeton d'accès OAuth simple."""
+
+    __tablename__ = 'oauth_token'
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(64), unique=True, nullable=False)
+    client_id = db.Column(db.String(64), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=True)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    user = db.relationship('User')
+
+    def is_valid(self):
+        return self.expires_at > datetime.utcnow()
+
+
+class OAuthAuthorizationCode(db.Model):
+    """Code d'autorisation temporaire pour le flux Authorization Code."""
+
+    __tablename__ = 'oauth_authorization_code'
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(64), unique=True, nullable=False)
+    client_id = db.Column(db.String(64), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=False)
+    code_challenge = db.Column(db.String(128), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    user = db.relationship('User')
+
 
 # ------------------------------------------------------------------------------
 # Modèles liés aux compétences et éléments de compétences

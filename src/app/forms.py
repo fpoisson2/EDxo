@@ -746,6 +746,10 @@ class DeleteForm(FlaskForm):
     """Simple form for CSRF protection on delete operations"""
     pass
 
+class APITokenForm(FlaskForm):
+    ttl = IntegerField('Durée de vie (jours)', validators=[Optional()])
+    submit = SubmitField('Générer un jeton')
+
 class OcrTriggerForm(FlaskForm):
     pdf_url = URLField('URL du PDF', validators=[DataRequired(), URL()])
     pdf_title = StringField('Titre (Optionnel)', validators=[Optional(), Length(max=100)])

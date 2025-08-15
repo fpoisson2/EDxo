@@ -14,7 +14,8 @@ Ceci est une application web Flask. L'application est structurée de manière mo
 6. [Tests](#tests)
 7. [Déploiement](#déploiement)
 8. [Structure-du-projet](#structure-du-projet)
-9. [Licence](#licence)
+9. [API et OAuth](#api-et-oauth)
+10. [Licence](#licence)
 
 ## 1. Fonctionnalités
 
@@ -24,6 +25,7 @@ Ceci est une application web Flask. L'application est structurée de manière mo
 - **Planification des sauvegardes** : Planification automatique des sauvegardes de la base de données grâce à APScheduler.
 - **Gestion des sessions** : Expiration automatique des sessions en fonction de l'activité.
 - **Outils supplémentaires** : limitation du débit avec Flask-Limiter, et bien d'autres.
+- **API REST sécurisée** : Accès aux programmes, cours et plans via un jeton personnel ou un flux OAuth 2.1 (PKCE, enregistrement dynamique). Un serveur MCP fournit également ces données via le protocole Model Context Protocol.
 
 ## 2. Prérequis
 
@@ -232,7 +234,7 @@ sudo systemctl start edxo-celery.service
 ```
 
 
-## 10. Structure du projet
+## Structure du projet
 ```
 edxo/
 ├── src/
@@ -249,7 +251,34 @@ edxo/
 └── README.md                   # Ce fichier
 ```
 
-## 11. Licence
+## API et OAuth
+
+### Jeton personnel
+
+Depuis l'interface web, ouvrez <em>Paramètres → Espace développeur</em> pour générer un jeton lié à votre compte. Ce jeton peut recevoir une durée de vie personnalisée et doit être envoyé dans l'en-tête <code>X-API-Token</code> de chaque requête.
+
+```bash
+curl -H "X-API-Token: VOTRE_TOKEN" https://example.com/api/programmes
+```
+
+La page <code>/help/api</code> liste l'ensemble des points d'accès disponibles.
+
+### Flux OAuth 2.1
+
+Pour les applications externes, l'API prend en charge le flux Authorization Code avec PKCE et l'enregistrement dynamique des clients.
+
+- Métadonnées : <code>GET /.well-known/oauth-authorization-server</code>
+- Inscription client : <code>POST /register</code>
+- Autorisation utilisateur : <code>GET /authorize</code>
+- Échange de code : <code>POST /token</code>
+
+Les jetons émis sont liés à l'utilisateur qui a accordé l'accès et peuvent être présentés à l'API via <code>Authorization: Bearer &lt;token&gt;</code>.
+
+### Serveur MCP
+
+Le serveur FastMCP (« <code>src/mcp_server/server.py</code> ») expose les mêmes données via le protocole Model Context Protocol. Il accepte les jetons personnels ou OAuth dans l'en-tête <code>Authorization</code>.
+
+## Licence
 Ce projet est sous licence MIT.
 
 N'hésitez pas à contribuer en ouvrant des issues ou en soumettant des pull requests. Pour toute question, veuillez contacter francis.poisson2@gmail.com.
