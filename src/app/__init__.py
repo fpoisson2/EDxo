@@ -306,6 +306,12 @@ def create_app(testing=False):
 
     @app.after_request
     def after_request(response):
+        if response.status_code == 401:
+            response.headers[
+                'WWW-Authenticate'
+            ] = (
+                f'Bearer resource_metadata="{request.url_root.rstrip('/')}/.well-known/oauth-protected-resource"'
+            )
         if current_user.is_authenticated and session.modified:
             session.modified = True
         return response

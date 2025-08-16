@@ -28,6 +28,26 @@ def oauth_metadata():
                 'authorization_endpoint': url_for('oauth.authorize', _external=True),
                 'token_endpoint': url_for('oauth.issue_token', _external=True),
                 'registration_endpoint': url_for('oauth.register_client', _external=True),
+                'response_types_supported': ['code'],
+                'grant_types_supported': ['authorization_code', 'refresh_token'],
+                'code_challenge_methods_supported': ['S256'],
+                'token_endpoint_auth_methods_supported': ['none'],
+            }
+        ),
+        200,
+    )
+
+
+@oauth_bp.get('/.well-known/oauth-protected-resource')
+def resource_metadata():
+    """Expose metadata for the protected resource."""
+    resource = request.url_root.rstrip('/')
+    return (
+        jsonify(
+            {
+                'resource': resource,
+                'authorization_servers': [resource],
+                'scopes_supported': ['mcp:read', 'mcp:write'],
             }
         ),
         200,

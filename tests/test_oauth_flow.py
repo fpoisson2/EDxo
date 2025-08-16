@@ -32,7 +32,11 @@ def test_oauth_registration_and_access(app, client):
     assert any(p['id'] == prog_id for p in resp.get_json())
 
     bad = {'Authorization': 'Bearer wrong'}
-    assert client.get('/api/programmes', headers=bad).status_code == 401
+    unauthorized = client.get('/api/programmes', headers=bad)
+    assert unauthorized.status_code == 401
+    assert (
+        'resource_metadata' in unauthorized.headers.get('WWW-Authenticate', '')
+    )
 
     meta = client.get('/.well-known/oauth-authorization-server')
     assert meta.status_code == 200
@@ -40,6 +44,16 @@ def test_oauth_registration_and_access(app, client):
     assert data['token_endpoint'].endswith('/token')
     assert data['registration_endpoint'].endswith('/register')
     assert data['authorization_endpoint'].endswith('/authorize')
+    assert data['response_types_supported'] == ['code']
+    assert data['grant_types_supported'] == ['authorization_code', 'refresh_token']
+    assert data['code_challenge_methods_supported'] == ['S256']
+    assert data['token_endpoint_auth_methods_supported'] == ['none']
+
+    res_meta = client.get('/.well-known/oauth-protected-resource')
+    assert res_meta.status_code == 200
+    res_data = res_meta.get_json()
+    assert res_data['resource']
+    assert res_data['authorization_servers'] == [res_data['resource']]
 
 
 def test_authorization_code_flow(app, client):
