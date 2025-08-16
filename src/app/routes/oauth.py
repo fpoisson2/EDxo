@@ -25,6 +25,7 @@ def oauth_metadata():
         jsonify(
             {
                 'issuer': request.url_root.rstrip('/'),
+                'authorization_endpoint': url_for('oauth.authorize', _external=True),
                 'token_endpoint': url_for('oauth.issue_token', _external=True),
                 'registration_endpoint': url_for('oauth.register_client', _external=True),
             }
@@ -103,6 +104,7 @@ def authorize():
     client_id = request.args.get('client_id')
     redirect_uri = request.args.get('redirect_uri')
     code_challenge = request.values.get('code_challenge')
+    state = request.values.get('state')
     client = OAuthClient.query.filter_by(client_id=client_id).first()
     if not client or (client.redirect_uri and client.redirect_uri != redirect_uri):
         return jsonify({'error': 'invalid_client'}), 400
@@ -119,6 +121,14 @@ def authorize():
         )
         db.session.add(auth_code)
         db.session.commit()
-        return redirect(f"{redirect_uri}?code={code}")
+        redirect_url = f"{redirect_uri}?code={code}"
+        if state:
+            redirect_url += f"&state={state}"
+        return redirect(redirect_url)
 
-    return render_template('oauth/authorize.html', client=client, code_challenge=code_challenge)
+    return render_template(
+        'oauth/authorize.html',
+        client=client,
+        code_challenge=code_challenge,
+        state=state,
+    )

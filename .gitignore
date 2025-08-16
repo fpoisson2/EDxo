@@ -22,5 +22,4 @@ src/scripts/extraction.log
 /src/txt_outputs
 /src/txt_outputs
 /src/static/docs
-/src/flask_sessions
-/src/flask_sessions
+/src/flask_sessions/
