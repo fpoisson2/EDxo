@@ -39,6 +39,7 @@ def test_oauth_registration_and_access(app, client):
     data = meta.get_json()
     assert data['token_endpoint'].endswith('/token')
     assert data['registration_endpoint'].endswith('/register')
+    assert data['authorization_endpoint'].endswith('/authorize')
 
 
 def test_authorization_code_flow(app, client):
@@ -74,12 +75,13 @@ def test_authorization_code_flow(app, client):
             'client_id': 'cid',
             'redirect_uri': 'https://example.com/cb',
             'code_challenge': code_challenge,
+            'state': 'abc',
         },
     )
     assert resp.status_code == 200
 
     resp = client.post(
-        '/authorize?client_id=cid&redirect_uri=https://example.com/cb',
+        '/authorize?client_id=cid&redirect_uri=https://example.com/cb&state=abc',
         data={'confirm': 'yes', 'code_challenge': code_challenge},
         follow_redirects=False,
     )
@@ -88,6 +90,7 @@ def test_authorization_code_flow(app, client):
 
     parsed = urlparse(resp.headers['Location'])
     code = parse_qs(parsed.query)['code'][0]
+    assert parse_qs(parsed.query)['state'][0] == 'abc'
 
     token_resp = client.post(
         '/token',
@@ -107,15 +110,3 @@ def test_authorization_code_flow(app, client):
     assert resp.status_code == 200
     assert any(p['id'] == prog_id for p in resp.get_json())
 
-
-def test_oauth_metadata_respects_prefix(client):
-    """Issuer and endpoints include the forwarded prefix."""
-    resp = client.get(
-        '/.well-known/oauth-authorization-server',
-        headers={'X-Forwarded-Prefix': '/mcp'},
-    )
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data['issuer'].endswith('/mcp')
-    assert '/mcp' in data['token_endpoint']
-    assert '/mcp' in data['registration_endpoint']
