@@ -205,6 +205,8 @@ def create_app(testing=False):
     db.init_app(app)
     ckeditor.init_app(app)
     csrf.init_app(app)
+    app.config.setdefault("WTF_CSRF_CHECK_DEFAULT", True)
+    app.config.setdefault("WTF_CSRF_TIME_LIMIT", None)
     init_change_tracking(db)
 
     # Bind Flask app to MCP server for OAuth verification

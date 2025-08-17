@@ -14,11 +14,13 @@ from ..models import (
     OAuthAuthorizationCode,
     db,
 )
+from ...extensions import csrf
 
 oauth_bp = Blueprint('oauth', __name__)
 
 
 @oauth_bp.get('/.well-known/oauth-authorization-server')
+@csrf.exempt
 def oauth_metadata():
     """Expose OAuth server metadata for discovery."""
     return (
@@ -39,6 +41,7 @@ def oauth_metadata():
 
 
 @oauth_bp.get('/.well-known/oauth-protected-resource')
+@csrf.exempt
 def resource_metadata():
     """Expose metadata for the protected resource."""
     resource = request.url_root.rstrip('/')
@@ -55,6 +58,7 @@ def resource_metadata():
 
 
 @oauth_bp.post('/register')
+@csrf.exempt
 def register_client():
     """Register a new OAuth client and return credentials."""
     data = request.get_json() or {}
@@ -74,6 +78,7 @@ def register_client():
 
 
 @oauth_bp.post('/token')
+@csrf.exempt
 def issue_token():
     """Issue an access token for a registered client."""
     data = request.get_json() or {}
