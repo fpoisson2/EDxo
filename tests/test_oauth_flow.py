@@ -127,6 +127,7 @@ def test_authorization_code_flow(app, client):
             'code_verifier': code_verifier,
             'client_id': 'cid',
             'client_secret': 'secret',
+            'redirect_uri': 'https://example.com/cb',
         },
     )
     assert token_resp.status_code == 200

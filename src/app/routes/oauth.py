@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import secrets
 import hashlib
 import base64
+from typing import Dict
 
 from flask import Blueprint, jsonify, request, url_for, redirect, render_template
 from flask_login import login_required, current_user
@@ -11,12 +12,44 @@ from flask_login import login_required, current_user
 from ..models import (
     OAuthClient,
     OAuthToken,
-    OAuthAuthorizationCode,
     db,
 )
 from ...extensions import csrf
 
 oauth_bp = Blueprint('oauth', __name__)
+
+
+AUTH_CODES: Dict[str, Dict[str, object]] = {}
+
+
+def b64url_no_pad(data: bytes) -> str:
+    """Return URL-safe base64 without padding."""
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+
+def issue_auth_code(client_id: str, redirect_uri: str, code_challenge: str, scope: str, user_id: int) -> str:
+    """Generate and store a short-lived authorization code."""
+    code = secrets.token_urlsafe(32)
+    AUTH_CODES[code] = {
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "code_challenge": code_challenge,
+        "scope": scope,
+        "user_id": user_id,
+        "expires_at": datetime.utcnow() + timedelta(minutes=5),
+    }
+    return code
+
+
+def _json_error(status: int, error: str, description: str):
+    resp = jsonify(error=error, error_description=description)
+    resp.status_code = status
+    resp.headers[
+        "WWW-Authenticate"
+    ] = (
+        f'Bearer resource_metadata="{request.url_root.rstrip("/")}/.well-known/oauth-protected-resource"'
+    )
+    return resp
 
 
 @oauth_bp.get('/.well-known/oauth-authorization-server')
@@ -94,7 +127,7 @@ def issue_token():
     client_secret = data.get('client_secret')
     client = OAuthClient.query.filter_by(client_id=client_id).first()
     if not client or (client_secret and client.client_secret != client_secret):
-        return jsonify({'error': 'invalid_client'}), 401
+        return _json_error(401, 'invalid_client', 'Client authentication failed')
 
     grant_type = data.get('grant_type', 'client_credentials')
     ttl = int(data.get('ttl', 3600))
@@ -102,18 +135,21 @@ def issue_token():
     if grant_type == 'authorization_code':
         code = data.get('code')
         code_verifier = data.get('code_verifier')
-        if not code or not code_verifier:
-            return jsonify({'error': 'invalid_request'}), 400
-        auth_code = OAuthAuthorizationCode.query.filter_by(code=code, client_id=client_id).first()
-        if not auth_code or auth_code.expires_at <= datetime.utcnow():
-            return jsonify({'error': 'invalid_grant'}), 400
-        expected = base64.urlsafe_b64encode(
-            hashlib.sha256(code_verifier.encode()).digest()
-        ).rstrip(b'=').decode()
-        if auth_code.code_challenge != expected:
-            return jsonify({'error': 'invalid_grant'}), 400
-        user_id = auth_code.user_id
-        db.session.delete(auth_code)
+        redirect_uri = data.get('redirect_uri')
+        if not code or not code_verifier or not redirect_uri:
+            return _json_error(401, 'unauthorized', 'Invalid code')
+        record = AUTH_CODES.pop(code, None)
+        if (
+            not record
+            or record['client_id'] != client_id
+            or record['redirect_uri'] != redirect_uri
+            or record['expires_at'] <= datetime.utcnow()
+        ):
+            return _json_error(401, 'unauthorized', 'Invalid code')
+        calc_challenge = b64url_no_pad(hashlib.sha256(code_verifier.encode()).digest())
+        if calc_challenge != record['code_challenge']:
+            return _json_error(401, 'unauthorized', 'Bad PKCE verifier')
+        user_id = record['user_id']
     else:
         user_id = None
 
@@ -138,22 +174,19 @@ def authorize():
     redirect_uri = request.args.get('redirect_uri')
     code_challenge = request.values.get('code_challenge')
     state = request.values.get('state')
+    scope = request.values.get('scope')
     client = OAuthClient.query.filter_by(client_id=client_id).first()
     if not client or (client.redirect_uri and client.redirect_uri != redirect_uri):
         return jsonify({'error': 'invalid_client'}), 400
 
     if request.method == 'POST' and request.form.get('confirm') == 'yes':
-        code = secrets.token_urlsafe(32)
-        expires_at = datetime.utcnow() + timedelta(minutes=10)
-        auth_code = OAuthAuthorizationCode(
-            code=code,
+        code = issue_auth_code(
             client_id=client_id,
-            user_id=current_user.id,
+            redirect_uri=redirect_uri,
             code_challenge=code_challenge,
-            expires_at=expires_at,
+            scope=scope,
+            user_id=current_user.id,
         )
-        db.session.add(auth_code)
-        db.session.commit()
         redirect_url = f"{redirect_uri}?code={code}"
         if state:
             redirect_url += f"&state={state}"
