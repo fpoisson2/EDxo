@@ -80,16 +80,24 @@ def register_client():
 @oauth_bp.post('/token')
 @csrf.exempt
 def issue_token():
-    """Issue an access token for a registered client."""
-    data = request.get_json() or {}
+    """Issue an access token for a registered client.
+
+    OAuth token requests are ``application/x-www-form-urlencoded``. To remain
+    compatible with tests and legacy clients we also accept JSON payloads, but
+    the form body takes precedence.
+    """
+    data = request.form.to_dict()
+    if not data:
+        data = request.get_json(silent=True) or {}
+
     client_id = data.get('client_id')
     client_secret = data.get('client_secret')
-    client = OAuthClient.query.filter_by(client_id=client_id, client_secret=client_secret).first()
-    if not client:
+    client = OAuthClient.query.filter_by(client_id=client_id).first()
+    if not client or (client_secret and client.client_secret != client_secret):
         return jsonify({'error': 'invalid_client'}), 401
 
     grant_type = data.get('grant_type', 'client_credentials')
-    ttl = data.get('ttl', 3600)
+    ttl = int(data.get('ttl', 3600))
 
     if grant_type == 'authorization_code':
         code = data.get('code')

@@ -22,7 +22,15 @@ def test_oauth_registration_and_access(app, client):
     client_id = creds['client_id']
     client_secret = creds['client_secret']
 
-    resp = client.post('/token', json={'client_id': client_id, 'client_secret': client_secret, 'ttl': 3600})
+    resp = client.post(
+        '/token',
+        data={
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'grant_type': 'client_credentials',
+            'ttl': 3600,
+        },
+    )
     assert resp.status_code == 200
     token = resp.get_json()['access_token']
 
@@ -113,7 +121,7 @@ def test_authorization_code_flow(app, client):
 
     token_resp = client.post(
         '/token',
-        json={
+        data={
             'grant_type': 'authorization_code',
             'code': code,
             'code_verifier': code_verifier,
