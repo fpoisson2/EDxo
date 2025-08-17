@@ -76,6 +76,8 @@ def test_authorization_code_flow(app, client):
         sess['_user_id'] = str(user_id)
         sess['_fresh'] = True
 
+    app.config['WTF_CSRF_ENABLED'] = True
+
     import hashlib, base64
     code_verifier = 'verifier123'
     code_challenge = base64.urlsafe_b64encode(
@@ -93,10 +95,13 @@ def test_authorization_code_flow(app, client):
         },
     )
     assert resp.status_code == 200
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(resp.data, 'html.parser')
+    token = soup.find('input', {'name': 'csrf_token'})['value']
 
     resp = client.post(
         '/authorize?client_id=cid&redirect_uri=https://example.com/cb&state=abc',
-        data={'confirm': 'yes', 'code_challenge': code_challenge},
+        data={'confirm': 'yes', 'code_challenge': code_challenge, 'csrf_token': token},
         follow_redirects=False,
     )
     assert resp.status_code == 302
