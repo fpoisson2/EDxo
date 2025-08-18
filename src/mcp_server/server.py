@@ -517,11 +517,19 @@ def fetch(id: str):
     raise ValueError("type inconnu")
 
 
+# Alias 'read' for clients expecting this action name (e.g., Deep Research)
+def read(id: str):
+    """Alias de compatibilité: renvoie le même contenu que fetch(id)."""
+    return fetch(id)
+
+
 # Enregistrement des outils (si dispo)
 if mcp:
     # Expose only the two tools required by ChatGPT MCP spec
     mcp.tool(search); TOOL_NAMES.append("search")
     mcp.tool(fetch); TOOL_NAMES.append("fetch")
+    # Expose 'read' as an alias to improve compatibility across clients
+    mcp.tool(read);  TOOL_NAMES.append("read")
     try:
         logger.info("MCP: tools registered", extra={"tools": TOOL_NAMES})
     except Exception:
