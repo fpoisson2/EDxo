@@ -391,11 +391,15 @@ def plan_cadre_section(plan_id: int, section: str):
 
 @with_app_context
 def search(query: str):
-    """Search programmes and courses and return a list of result ids.
+    """Recherche multi-ressources et renvoie des identifiants.
 
-    Returns a list of objects: [{"id": "programme:1"}, {"id": "cours:2"}, ...]
-    This matches tests and legacy callers; ChatGPT MCP can map these to ids.
+    - Entrée: chaîne libre (mots-clés, codes, noms, session, etc.).
+    - Couvre: Programmes, Cours, Compétences, Plans Cadre, Plans de Cours.
+    - Sortie: liste d'objets {"id": "<type>:<id>"}.
+    - Les clients MCP utilisent ensuite fetch(id) pour le contenu complet.
     """
+    from sqlalchemy import or_
+
     q = (query or "").strip()
     ids: list[str] = []
 
@@ -405,26 +409,78 @@ def search(query: str):
         prog_q = prog_q.filter(Programme.nom.ilike(f"%{q}%"))
     else:
         prog_q = prog_q.limit(50)
-    for p in prog_q.all():
-        ids.append(f"programme:{p.id}")
+    ids.extend([f"programme:{p.id}" for p in prog_q.all()])
 
     # Cours: par nom OU code
     cours_q = Cours.query
     if q and q != "*":
-        cours_q = cours_q.filter(
-            (Cours.nom.ilike(f"%{q}%")) | (Cours.code.ilike(f"%{q}%"))
-        )
+        cours_q = cours_q.filter(or_(Cours.nom.ilike(f"%{q}%"), Cours.code.ilike(f"%{q}%")))
     else:
         cours_q = cours_q.limit(100)
-    for c in cours_q.all():
-        ids.append(f"cours:{c.id}")
+    ids.extend([f"cours:{c.id}" for c in cours_q.all()])
+
+    # Compétences: par code ou nom
+    comp_q = Competence.query
+    if q and q != "*":
+        comp_q = comp_q.filter(or_(Competence.code.ilike(f"%{q}%"), Competence.nom.ilike(f"%{q}%")))
+    else:
+        comp_q = comp_q.limit(100)
+    ids.extend([f"competence:{c.id}" for c in comp_q.all()])
+
+    # Plans Cadre: recherche dans quelques champs textuels clés
+    pc_q = PlanCadre.query
+    if q and q != "*":
+        like = f"%{q}%"
+        pc_q = pc_q.filter(
+            or_(
+                PlanCadre.objectif_terminal.ilike(like),
+                PlanCadre.structure_intro.ilike(like),
+                PlanCadre.structure_activites_theoriques.ilike(like),
+                PlanCadre.structure_activites_pratiques.ilike(like),
+                PlanCadre.structure_activites_prevues.ilike(like),
+                PlanCadre.eval_evaluation_sommative.ilike(like),
+                PlanCadre.eval_nature_evaluations_sommatives.ilike(like),
+                PlanCadre.eval_evaluation_de_la_langue.ilike(like),
+                PlanCadre.eval_evaluation_sommatives_apprentissages.ilike(like),
+                PlanCadre.place_intro.ilike(like),
+            )
+        )
+    else:
+        pc_q = pc_q.limit(50)
+    ids.extend([f"plan_cadre:{p.id}" for p in pc_q.all()])
+
+    # Plans de Cours: session, présentation, objectif terminal, organisation
+    pdc_q = PlanDeCours.query
+    if q and q != "*":
+        like = f"%{q}%"
+        pdc_q = pdc_q.filter(
+            or_(
+                PlanDeCours.session.ilike(like),
+                PlanDeCours.presentation_du_cours.ilike(like),
+                PlanDeCours.objectif_terminal_du_cours.ilike(like),
+                PlanDeCours.organisation_et_methodes.ilike(like),
+                PlanDeCours.place_et_role_du_cours.ilike(like),
+                PlanDeCours.materiel.ilike(like),
+            )
+        )
+    else:
+        pdc_q = pdc_q.limit(50)
+    ids.extend([f"plan_de_cours:{p.id}" for p in pdc_q.all()])
 
     return [{"id": _id} for _id in ids]
 
 
 @with_app_context
 def fetch(id: str):
-    """Récupère le contenu complet d'un résultat de recherche."""
+    """Récupère le contenu complet d'un résultat de recherche.
+
+    Accepte des identifiants de la forme:
+    - programme:<id>
+    - cours:<id>
+    - competence:<id>
+    - plan_cadre:<id>
+    - plan_de_cours:<id>
+    """
     try:
         kind, _id = id.split(":", 1)
         _id = int(_id)
@@ -434,22 +490,90 @@ def fetch(id: str):
         p = Programme.query.get(_id)
         if not p:
             raise ValueError("programme introuvable")
+        # Cours rattachés
+        cours_list = [{"id": c.id, "code": c.code, "nom": c.nom} for c in p.cours]
+        # Compétences associées (si relation via competence_programme existe)
+        try:
+            comps = [{"id": c.id, "code": c.code, "nom": c.nom} for c in p.competences]  # type: ignore[attr-defined]
+        except Exception:
+            comps = []
         return {
             "id": id,
             "title": p.nom,
             "text": p.nom,
             "url": f"/api/programmes/{p.id}",
+            "metadata": {
+                "type": "programme",
+                "programme_id": p.id,
+                "cours": cours_list,
+                "competences": comps,
+            },
         }
     if kind == "cours":
         c = Cours.query.get(_id)
         if not c:
             raise ValueError("cours introuvable")
+        # Plan cadre et plans de cours
+        plan_cadre = PlanCadre.query.filter_by(cours_id=c.id).first()
+        plans = PlanDeCours.query.filter_by(cours_id=c.id).all()
         return {
             "id": id,
             "title": c.nom,
             "text": f"{c.code} — {c.nom}",
             "url": f"/api/cours/{c.id}",
-            "metadata": {"code": c.code, "nom": c.nom}
+            "metadata": {
+                "type": "cours",
+                "code": c.code,
+                "nom": c.nom,
+                "plan_cadre_id": plan_cadre.id if plan_cadre else None,
+                "plans_de_cours_ids": [p.id for p in plans],
+            },
+        }
+    if kind == "competence":
+        comp = Competence.query.get(_id)
+        if not comp:
+            raise ValueError("compétence introuvable")
+        elements = [
+            {"id": e.id, "nom": e.nom, "criteres": [c.criteria for c in e.criteria]}
+            for e in comp.elements
+        ]
+        return {
+            "id": id,
+            "title": f"{comp.code} — {comp.nom}",
+            "text": (comp.criteria_de_performance or "") or comp.nom,
+            "url": f"/api/competences/{comp.id}",
+            "metadata": {
+                "type": "competence",
+                "programme_id": comp.programme_id,
+                "code": comp.code,
+                "nom": comp.nom,
+                "contexte_de_realisation": comp.contexte_de_realisation,
+                "elements": elements,
+            },
+        }
+    if kind == "plan_cadre":
+        pc = PlanCadre.query.get(_id)
+        if not pc:
+            raise ValueError("plan cadre introuvable")
+        data = pc.to_dict()
+        return {
+            "id": id,
+            "title": f"Plan cadre du cours {data.get('cours_info', {}).get('code')}",
+            "text": (data.get("objectif_terminal") or data.get("structure_intro") or "Plan cadre"),
+            "url": f"/api/cours/{pc.cours_id}/plan_cadre",
+            "metadata": {"type": "plan_cadre", **data},
+        }
+    if kind == "plan_de_cours":
+        pdc = PlanDeCours.query.get(_id)
+        if not pdc:
+            raise ValueError("plan de cours introuvable")
+        data = pdc.to_dict()
+        return {
+            "id": id,
+            "title": f"Plan de cours {data.get('session')} — {data.get('cours_info', {}).get('code')}",
+            "text": (data.get("presentation_du_cours") or data.get("objectif_terminal_du_cours") or "Plan de cours"),
+            "url": f"/api/cours/{pdc.cours_id}",
+            "metadata": {"type": "plan_de_cours", **data},
         }
     raise ValueError("type inconnu")
 
@@ -458,10 +582,12 @@ def fetch(id: str):
 if mcp:
     try:
         async def _search_tool(query: str):
-            """Search across programmes and courses; return matching IDs.
+            """Semantic search across the academic database; returns IDs only.
 
-            Input: free-form query string (keywords, codes, names).
-            Output: {"ids": ["programme:<id>", "cours:<id>", ...]} to be used with fetch(id).
+            - Input: free-form query (keywords, course codes, programme names, sessions, etc.).
+            - Scope: Programmes, Cours, Compétences, Plan Cadre, Plans de Cours.
+            - Output: {"ids": ["programme:<id>", "cours:<id>", "competence:<id>", "plan_cadre:<id>", "plan_de_cours:<id>"]}
+            - Follow-up: Call `fetch(id)` on selected IDs for complete records (title/text/metadata/url).
             """
             results = search(query)
             return {"ids": [r["id"] for r in results]}
@@ -470,7 +596,12 @@ if mcp:
         mcp.tool(_search_tool); TOOL_NAMES.append("search")
 
         async def _fetch_tool(id: str):
-            """Fetch a record by ID; returns full content for analysis and citation."""
+            """Fetch a record by ID for full content and citation.
+
+            - Accepts IDs returned by `search` (programme, cours, competence, plan_cadre, plan_de_cours).
+            - Returns a dict with keys: {id, title, text, url, metadata}.
+            - `metadata` includes rich structured fields to support detailed analysis.
+            """
             return fetch(id)
 
         _fetch_tool.__name__ = "fetch"
