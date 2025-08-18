@@ -1,8 +1,41 @@
 import logging
+import json
 from typing import Optional, Mapping, Dict, Any
 
 _LOGGING_CONFIGURED = False
 LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
+
+
+_DEFAULT_RECORD_KEYS = set(logging.makeLogRecord({}).__dict__.keys())
+
+
+class ContextFormatter(logging.Formatter):
+    """Formatter that appends any custom LogRecord attributes as JSON context.
+
+    This ensures that fields passed via ``extra={...}`` appear in logs even if
+    the base format string doesn't include them explicitly.
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        base = super().format(record)
+        # Collect non-standard attributes from the record
+        context: Dict[str, Any] = {}
+        for k, v in record.__dict__.items():
+            if k in _DEFAULT_RECORD_KEYS:
+                continue
+            if k.startswith("_"):
+                continue
+            if k in {"exc_text", "stack_info"}:
+                continue
+            context[k] = v
+        if context:
+            try:
+                ctx = json.dumps(context, ensure_ascii=False, default=str)
+                return f"{base} | {ctx}"
+            except Exception:
+                # Fallback: show a best-effort repr
+                return f"{base} | context={context}"
+        return base
 
 def setup_logging(level: int = logging.INFO) -> None:
     """Configure root logger with a standard format once."""
@@ -10,7 +43,7 @@ def setup_logging(level: int = logging.INFO) -> None:
     if _LOGGING_CONFIGURED:
         return
     handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    handler.setFormatter(ContextFormatter(LOG_FORMAT))
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
     root_logger.handlers.clear()

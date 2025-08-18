@@ -622,6 +622,7 @@ def search(query: str):
                 "competence": len(_comp),
                 "total": len(ids),
                 "code_token": code_token,
+                "ids_preview": ids[:5],
             },
         )
     except Exception:
