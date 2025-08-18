@@ -66,6 +66,93 @@ server_instructions = (
 )
 
 
+def _safe_join(parts):
+    return "\n".join([p for p in parts if p])
+
+
+def _render_plan_cadre_text(plan: PlanCadre) -> str:
+    """Build a comprehensive plaintext for a PlanCadre object."""
+    try:
+        cours_info = None
+        if getattr(plan, "cours", None):
+            cours_info = f"{plan.cours.code} — {plan.cours.nom}"
+        header = f"Plan-cadre{(' — ' + cours_info) if cours_info else ''}".strip()
+
+        sections = []
+        sections.append(header)
+        sections.append("")
+        sections.append("Objectif terminal:")
+        sections.append(plan.objectif_terminal or "")
+        sections.append("")
+        sections.append("Place et structure:")
+        sections.append(_safe_join([
+            plan.place_intro or "",
+            plan.structure_intro or "",
+            plan.structure_activites_theoriques or "",
+            plan.structure_activites_pratiques or "",
+            plan.structure_activites_prevues or "",
+        ]))
+        sections.append("")
+        sections.append("Évaluation:")
+        sections.append(_safe_join([
+            plan.eval_evaluation_sommative or "",
+            plan.eval_nature_evaluations_sommatives or "",
+            plan.eval_evaluation_de_la_langue or "",
+            plan.eval_evaluation_sommatives_apprentissages or "",
+        ]))
+
+        # Capacités
+        if getattr(plan, "capacites", None):
+            sections.append("")
+            sections.append("Capacités:")
+            for cap in plan.capacites:
+                sections.append(f"- {cap.capacite or ''}")
+                if cap.description_capacite:
+                    sections.append(f"  Description: {cap.description_capacite}")
+                if getattr(cap, "savoirs_necessaires", None):
+                    for sn in cap.savoirs_necessaires:
+                        sections.append(f"  Savoir nécessaire: {sn.texte}")
+                if getattr(cap, "savoirs_faire", None):
+                    for sf in cap.savoirs_faire:
+                        sf_line = f"  Savoir-faire: {sf.texte}"
+                        if sf.seuil_reussite:
+                            sf_line += f" (Seuil: {sf.seuil_reussite})"
+                        if sf.cible:
+                            sf_line += f" (Cible: {sf.cible})"
+                        sections.append(sf_line)
+                if getattr(cap, "moyens_evaluation", None):
+                    for me in cap.moyens_evaluation:
+                        sections.append(f"  Moyen d'évaluation: {me.texte}")
+
+        # Savoirs être, objets cibles, préalables/corequis, compétences
+        def add_list(title, items, attr):
+            if items:
+                sections.append("")
+                sections.append(f"{title}:")
+                for it in items:
+                    val = getattr(it, attr, None)
+                    if val:
+                        sections.append(f"- {val}")
+
+        add_list("Savoirs être", getattr(plan, "savoirs_etre", None), "texte")
+        add_list("Objets cibles", getattr(plan, "objets_cibles", None), "texte")
+        add_list("Cours préalables", getattr(plan, "cours_prealables", None), "texte")
+        add_list("Cours corequis", getattr(plan, "cours_corequis", None), "texte")
+        add_list("Compétences certifiées", getattr(plan, "competences_certifiees", None), "texte")
+        add_list("Compétences développées", getattr(plan, "competences_developpees", None), "texte")
+
+        txt = "\n".join([s for s in sections if s is not None])
+        return txt.strip() or header
+    except Exception:
+        # Fallback to key sections only
+        summary_parts = []
+        for attr in ("objectif_terminal", "structure_intro", "structure_activites_prevues"):
+            val = getattr(plan, attr, None)
+            if val:
+                summary_parts.append(f"{attr}: {val}")
+        return "\n\n".join(summary_parts) or "Plan-cadre"
+
+
 def init_app(app):
     """Bind Flask app, and mount the MCP SSE endpoint under ``/sse/``.
 
@@ -729,6 +816,7 @@ def fetch(id: str):
     """Récupère le contenu complet d'un résultat de recherche."""
     try:
         kind, _id = id.split(":", 1)
+        kind = kind.replace("-", "_")  # accept 'plan-cadre:10' as alias
         _id = int(_id)
     except ValueError:
         logger.warning("MCP: fetch bad id format", extra={"id": id})
@@ -785,13 +873,8 @@ def fetch(id: str):
             logger.info("MCP: plan_cadre introuvable", extra={"id": id})
             raise ValueError("plan_cadre introuvable")
         cours_info = f"{pc.cours.code} — {pc.cours.nom}" if getattr(pc, "cours", None) else ""
-        # Texte concis: objectif + quelques sections si présentes
-        summary_parts = []
-        for attr in ("objectif_terminal", "structure_intro", "structure_activites_prevues"):
-            val = getattr(pc, attr, None)
-            if val:
-                summary_parts.append(f"{attr}: {val}")
-        text = "\n\n".join(summary_parts) or f"Plan-cadre du cours {cours_info}".strip()
+        # Texte complet basé sur le modèle
+        text = _render_plan_cadre_text(pc)
         return {
             "id": id,
             "title": f"Plan-cadre — {cours_info}".strip(" — "),
