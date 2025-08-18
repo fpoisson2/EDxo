@@ -590,13 +590,27 @@ def search(query: str):
     for p in _prog:
         ids.append(f"programme:{p.id}")
 
-    # Cours: par nom OU code
+    # Cours: par nom OU code, et prise en charge de "tous les cours" (avec option de filtrer par code programme)
     cours_q = (
         Cours.query
         .outerjoin(Cours.programmes)
         .outerjoin(ListeProgrammeMinisteriel, Programme.liste_programme_ministeriel_id == ListeProgrammeMinisteriel.id)
     )
-    if q and q != "*":
+    want_all_cours = (
+        ("tous les cours" in ql)
+        or (ql.strip() in {"cours", "courses"})
+        or ("all courses" in ql)
+    )
+    if want_all_cours:
+        if code_token:
+            cours_q = cours_q.filter(
+                _or(
+                    ListeProgrammeMinisteriel.code.ilike(f"%{code_token}%"),
+                    Cours.code.ilike(f"%{code_token}%"),
+                )
+            )
+        cours_q = cours_q.order_by(Cours.code).limit(300)
+    elif q and q != "*":
         filters = [
             Cours.nom.ilike(f"%{q}%"),
             Cours.code.ilike(f"%{q}%"),
@@ -613,14 +627,25 @@ def search(query: str):
     for c in _cours:
         ids.append(f"cours:{c.id}")
 
-    # Plan-cadres: associer au cours et champs principaux
+    # Plan-cadres: associer au cours et champs principaux, avec prise en charge de "tous les plan-cadre"
     pc_q = (
         PlanCadre.query
         .join(Cours, PlanCadre.cours_id == Cours.id)
         .outerjoin(Cours.programmes)
         .outerjoin(ListeProgrammeMinisteriel, Programme.liste_programme_ministeriel_id == ListeProgrammeMinisteriel.id)
     )
-    if q and q != "*":
+    want_all_plan_cadre = (
+        ("tous les plan-cadre" in ql)
+        or ("tous les plans-cadres" in ql)
+        or ("tous les plans cadre" in ql)
+        or (ql.strip() in {"plan-cadre", "plans-cadres", "plan cadre", "plans cadre"})
+        or ("all course frameworks" in ql)
+    )
+    if want_all_plan_cadre:
+        if code_token:
+            pc_q = pc_q.filter(ListeProgrammeMinisteriel.code.ilike(f"%{code_token}%"))
+        pc_q = pc_q.limit(200)
+    elif q and q != "*":
         pc_filters = [Cours.nom.ilike(f"%{q}%"), Cours.code.ilike(f"%{q}%")]
         # Recherche sommaire dans quelques champs textuels du plan-cadre
         for col in (
@@ -836,8 +861,16 @@ if mcp:
                 pass
             ids = [r["id"] for r in search(q)]
             # Build MCP-compliant items; limit to a reasonable preview size
-            # If the user asked for all programmes, show a larger preview
-            preview_cap = 50 if any(s in q.lower() for s in ["tous les programmes", "liste des programmes", "all programs"]) or q.strip() in {"programmes", "programs", "*"} else 10
+            # Show a larger preview for broad listings (all programmes/cours/plan-cadre)
+            ql = q.lower()
+            broad_terms = [
+                "tous les programmes", "liste des programmes", "all programs", "programmes", "programs",
+                "tous les cours", "all courses", "cours", "courses",
+                "tous les plan-cadre", "tous les plans-cadres", "tous les plans cadre",
+                "plan-cadre", "plans-cadres", "plan cadre", "plans cadre",
+                "*",
+            ]
+            preview_cap = 50 if any(s in ql for s in broad_terms) else 10
             items = []
             for rid in ids[:preview_cap]:
                 try:
