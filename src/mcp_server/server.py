@@ -1,8 +1,8 @@
-"""MCP server exposing programme and course resources with OAuth protection.
+"""MCP server exposing two Deep Research tools with Bearer auth.
 
-Mounts an SSE endpoint under ``/sse/`` for ChatGPT/Deep Research.
-If ``fastmcp`` isn't available (e.g., during tests), this module degrades
-gracefully: resources/tools are not registered, but imports still succeed.
+- Exactly two tools are registered: ``search(query: str)`` and ``fetch(id: str)``.
+- Bearer Authorization accepts either OAuth tokens or user API tokens.
+- SSE/ASGI mounting kept minimal; degrades gracefully without fastmcp.
 """
 
 from functools import wraps
@@ -65,104 +65,36 @@ server_instructions = (
 
 
 def init_app(app):
-    """Bind Flask app, and mount the MCP SSE endpoint under ``/sse/``.
-
-    - Keeps OAuth verification via DBTokenVerifier (Bearer token).
-    - If FastMCP is unavailable, logs a warning and skips mounting.
-    """
+    """Bind Flask app, and mount the MCP SSE endpoint under ``/sse/`` if possible."""
     global flask_app
     flask_app = app
-    if not _FASTMCP_AVAILABLE:
-        logger.warning("fastmcp is not installed; MCP SSE endpoint not mounted.")
-        # Continue to register /sse/debug route for diagnostics below
-
-    # Allow disabling SSE mounting via env flag (ops control)
     if str(os.getenv("EDXO_MCP_SSE_DISABLE", "")).lower() in {"1", "true", "yes", "on"}:
         logger.info("MCP SSE mounting disabled by EDXO_MCP_SSE_DISABLE")
-        _register_debug_route(app)
         return
-
-    # Try to expose SSE via a Flask blueprint or helper
-    if _FASTMCP_AVAILABLE:
-        try:
-            import importlib.util as _util
-            has_bp = bool(
-                _util.find_spec("fastmcp.integrations.flask") or _util.find_spec("fastmcp.flask")
-            )
-
-            if has_bp:
-                try:
-                    # Preferred: explicit blueprint factory (newer fastmcp)
-                    from fastmcp.integrations.flask import create_blueprint  # type: ignore
-                except Exception:
-                    # Alternate path used by some releases
-                    from fastmcp.flask import create_blueprint  # type: ignore
-
-                try:
-                    bp = create_blueprint(mcp, url_prefix="/sse")  # type: ignore[misc]
-                    app.register_blueprint(bp)
-                except TypeError:
-                    # Older/newer versions without url_prefix in factory
-                    bp = create_blueprint(mcp)
-                    app.register_blueprint(bp, url_prefix="/sse")
-                logger.info("MCP SSE endpoint mounted at /sse/", extra={"tools": TOOL_NAMES})
-            elif hasattr(mcp, "mount_flask"):
-                mcp.mount_flask(app, url_prefix="/sse")  # type: ignore[attr-defined]
-                logger.info("MCP SSE endpoint mounted via mcp.mount_flask at /sse/", extra={"tools": TOOL_NAMES})
-            else:
-                # No Flask integration available in fastmcp; log informative message and continue quietly
-                version: Optional[str] = None
-                try:
-                    import importlib.metadata as _md
-                    version = _md.version("fastmcp")
-                except Exception:
-                    try:
-                        import fastmcp as _fm  # type: ignore
-                        version = getattr(_fm, "__version__", None)
-                    except Exception:
-                        version = None
-                logger.info(
-                    "MCP SSE not mounted: no Flask integration in fastmcp (version=%s). Set EDXO_MCP_SSE_DISABLE=1 to silence.",
-                    version or "unknown",
-                )
-        except Exception as e:  # pragma: no cover - best effort
-            # Missing integration modules are expected in some deployments → info
-            msg = str(e)
-            level = logger.warning
-            if (
-                isinstance(e, ModuleNotFoundError)
-                or "No module named 'fastmcp.integrations'" in msg
-                or "No module named 'fastmcp.flask'" in msg
-            ):
-                level = logger.info
-            version: Optional[str] = None
-            try:
-                import importlib.metadata as _md
-                version = _md.version("fastmcp")
-            except Exception:
-                version = None
-            level(
-                "Failed to evaluate MCP Flask integration (fastmcp=%s): %s",
-                version or "unknown",
-                e,
-            )
-    _register_debug_route(app)
-
-
-def _register_debug_route(app):
-    """Register a small debug endpoint at /sse/debug regardless of mounting status."""
+    if not _FASTMCP_AVAILABLE:
+        logger.warning("fastmcp is not installed; MCP SSE endpoint not mounted.")
+        return
+    # Minimal mounting via FastMCP's Flask integration if available
     try:
-        from flask import jsonify
-
-        def _sse_debug():
-            return jsonify({
-                "fastmcp": _FASTMCP_AVAILABLE,
-                "tools": TOOL_NAMES,
-            }), 200
-
-        # Mark as public (bypass auth redirect)
-        _sse_debug.is_public = True  # type: ignore[attr-defined]
-        app.add_url_rule("/sse/debug", "sse_debug", _sse_debug, methods=["GET"])  # type: ignore[arg-type]
+        try:
+            from fastmcp.integrations.flask import create_blueprint  # type: ignore
+        except Exception:
+            from fastmcp.flask import create_blueprint  # type: ignore
+        try:
+            bp = create_blueprint(mcp, url_prefix="/sse")  # type: ignore[misc]
+            app.register_blueprint(bp)
+        except TypeError:
+            bp = create_blueprint(mcp)
+            app.register_blueprint(bp, url_prefix="/sse")
+        logger.info("MCP SSE endpoint mounted at /sse/", extra={"tools": TOOL_NAMES})
+        return
+    except Exception:
+        pass
+    # Fallback to instance method if provided
+    try:
+        if hasattr(mcp, "mount_flask"):
+            mcp.mount_flask(app, url_prefix="/sse")  # type: ignore[attr-defined]
+            logger.info("MCP SSE endpoint mounted via mcp.mount_flask at /sse/", extra={"tools": TOOL_NAMES})
     except Exception:
         pass
 
@@ -200,7 +132,6 @@ def get_mcp_asgi_app() -> Any:
             return _create_app(mcp=mcp)  # type: ignore[misc]
     except Exception:
         pass
-
     try:
         from fastmcp.asgi import create_app as _create_app2  # type: ignore
         try:
@@ -209,22 +140,6 @@ def get_mcp_asgi_app() -> Any:
             return _create_app2(mcp=mcp)  # type: ignore[misc]
     except Exception:
         pass
-
-    # Try instance-provided attributes
-    for attr in ("asgi_app", "asgi", "app", "router"):
-        try:
-            candidate = getattr(mcp, attr, None)
-            if candidate is None:
-                continue
-            if callable(candidate):
-                app = candidate()
-            else:
-                app = candidate
-            # rudimentary check that it looks like an ASGI callable
-            if callable(app):
-                return app
-        except Exception:
-            continue
 
     # Last resort: provide a tiny Starlette app with a debug route
     return _fallback_asgi()
@@ -247,10 +162,7 @@ def _fallback_asgi() -> Any:
                 "asgi_fallback": True,
             })
 
-        app = Starlette(routes=[
-            Route("/", not_enabled),
-            Route("/debug", debug),
-        ])
+        app = Starlette(routes=[Route("/", not_enabled), Route("/debug", debug)])
         # Mark this as fallback so the hub can log accordingly
         setattr(app, "edxo_mcp_fallback", True)
         return app
@@ -475,17 +387,7 @@ def plan_cadre_section(plan_id: int, section: str):
     return {section: getattr(plan, section)}
 
 
-# Enregistrement des ressources auprès du serveur MCP (si dispo)
-if mcp:
-    mcp.resource("api://programmes")(programmes)
-    mcp.resource("api://programmes/{programme_id}/cours")(programme_courses)
-    mcp.resource("api://programmes/{programme_id}/competences")(programme_competences)
-    mcp.resource("api://competences/{competence_id}")(competence_details)
-    mcp.resource("api://cours")(cours)
-    mcp.resource("api://cours/{cours_id}")(cours_details)
-    mcp.resource("api://cours/{cours_id}/plan_cadre")(cours_plan_cadre)
-    mcp.resource("api://cours/{cours_id}/plans_de_cours")(cours_plans_de_cours)
-    mcp.resource("api://plan_cadre/{plan_id}/section/{section}")(plan_cadre_section)
+# Intentionally not registering resources on MCP; Deep Research only needs tools.
 
 @with_app_context
 def search(query: str):
@@ -552,18 +454,14 @@ def fetch(id: str):
     raise ValueError("type inconnu")
 
 
-# Enregistrement des outils (si dispo)
+"""MCP tool registration: exactly 'search' and 'fetch'."""
 if mcp:
-    # Deep Research requires exactly two tools: search(query) and fetch(id)
-    # Keep internal sync functions for app/tests, and expose async wrappers for MCP.
     try:
         async def _search_tool(query: str):
-            """Search programmes and courses and return matching record IDs.
+            """Search across programmes and courses; return matching IDs.
 
-            - Input: a free-form `query` string (keywords, codes, names).
-            - Behavior: matches across programme names, course names and codes.
-            - Output: a dict with `ids`, e.g. {"ids": ["programme:1", "cours:2", ...]}.
-            - Next step: ChatGPT should call `fetch(id)` for selected IDs to retrieve full content.
+            Input: free-form query string (keywords, codes, names).
+            Output: {"ids": ["programme:<id>", "cours:<id>", ...]} to be used with fetch(id).
             """
             results = search(query)
             return {"ids": [r["id"] for r in results]}
@@ -572,12 +470,7 @@ if mcp:
         mcp.tool(_search_tool); TOOL_NAMES.append("search")
 
         async def _fetch_tool(id: str):
-            """Fetch a record by ID and return its complete content.
-
-            - Input: an `id` previously returned by `search`, like "programme:123" or "cours:456".
-            - Behavior: resolves the ID, loads the corresponding record from the database.
-            - Output: a dict with fields like {id, title, text, url, metadata} for citation and analysis.
-            """
+            """Fetch a record by ID; returns full content for analysis and citation."""
             return fetch(id)
 
         _fetch_tool.__name__ = "fetch"
@@ -587,26 +480,5 @@ if mcp:
             logger.info("MCP: tools registered", extra={"tools": TOOL_NAMES})
         except Exception:
             pass
-        # Add small health/debug endpoints on the MCP ASGI app if supported
-        try:
-            if hasattr(mcp, "custom_route"):
-                from starlette.responses import JSONResponse
-
-                @mcp.custom_route("/health", methods=["GET"])  # type: ignore[attr-defined]
-                async def _health(_request):
-                    return JSONResponse({"status": "healthy", "tools": TOOL_NAMES})
-
-                @mcp.custom_route("/debug", methods=["GET"])  # type: ignore[attr-defined]
-                async def _debug(_request):
-                    return JSONResponse({
-                        "fastmcp": _FASTMCP_AVAILABLE,
-                        "tools": TOOL_NAMES,
-                        "server": "asgi",
-                    })
-        except Exception:
-            pass
-    except Exception as _e:  # pragma: no cover - defensive
-        try:
-            logger.warning("MCP: failed to register tools: %s", _e)
-        except Exception:
-            pass
+    except Exception:
+        pass
