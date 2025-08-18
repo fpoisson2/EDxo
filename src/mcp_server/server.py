@@ -744,6 +744,7 @@ def search(query: str):
             pc_filters.append(col.ilike(f"%{q}%"))
         if code_token:
             pc_filters.append(ListeProgrammeMinisteriel.code.ilike(f"%{code_token}%"))
+            pc_filters.append(Cours.code.ilike(f"%{code_token}%"))
         pc_q = pc_q.filter(_or(*pc_filters))
     else:
         pc_q = pc_q.limit(100)
@@ -774,6 +775,18 @@ def search(query: str):
     _pdc = pdc_q.all()
     for pdc in _pdc:
         ids.append(f"plan_de_cours:{pdc.id}")
+
+    # Si la requête mentionne explicitement un plan-cadre avec un code de cours,
+    # remonter le plan-cadre correspondant en tête des résultats.
+    try:
+        if code_token and any(s in q.lower() for s in ["plan-cadre", "plans-cadres", "plan cadre", "plans cadre"]):
+            c_match = Cours.query.filter(Cours.code.ilike(f"%{code_token}%")).first()
+            if c_match and getattr(c_match, "plan_cadre", None):
+                pid = f"plan_cadre:{c_match.plan_cadre.id}"
+                ids = [i for i in ids if i != pid]
+                ids.insert(0, pid)
+    except Exception:
+        pass
 
     # Compétences: par code, nom, ou nom du programme
     comp_q = Competence.query
