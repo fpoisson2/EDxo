@@ -652,7 +652,8 @@ def fetch(id: str):
 """MCP tool registration: exactly 'search' and 'fetch'."""
 if mcp:
     try:
-        async def _search_tool(query: str):
+        @mcp.tool()
+        async def search_tool(query: str):
             """Semantic search across the academic database; returns IDs only.
 
             - Input: free-form query (keywords, course codes, programme names, sessions, etc.).
@@ -663,10 +664,15 @@ if mcp:
             results = search(query)
             return {"ids": [r["id"] for r in results]}
 
-        _search_tool.__name__ = "search"
-        mcp.tool(_search_tool); TOOL_NAMES.append("search")
+        # Ensure tool is named 'search' for Deep Research
+        try:
+            search_tool.__name__ = "search"  # type: ignore[attr-defined]
+        except Exception:
+            pass
+        TOOL_NAMES.append("search")
 
-        async def _fetch_tool(id: str):
+        @mcp.tool()
+        async def fetch_tool(id: str):
             """Fetch a record by ID for full content and citation.
 
             - Accepts IDs returned by `search` (programme, cours, competence, plan_cadre, plan_de_cours).
@@ -675,12 +681,18 @@ if mcp:
             """
             return fetch(id)
 
-        _fetch_tool.__name__ = "fetch"
-        mcp.tool(_fetch_tool); TOOL_NAMES.append("fetch")
+        try:
+            fetch_tool.__name__ = "fetch"  # type: ignore[attr-defined]
+        except Exception:
+            pass
+        TOOL_NAMES.append("fetch")
 
         try:
             logger.info("MCP: tools registered", extra={"tools": TOOL_NAMES})
         except Exception:
             pass
-    except Exception:
-        pass
+    except Exception as e:  # pragma: no cover
+        try:
+            logger.warning("MCP tool registration failed: %s", e)
+        except Exception:
+            pass
