@@ -207,18 +207,11 @@ def get_mcp_asgi_app() -> Any:
     # Prefer FastMCP's first-party ASGI factories when available
     try:
         if hasattr(mcp, "http_app"):
-            # Try without explicit path first so the mount point defines the base.
             try:
-                return mcp.http_app(transport="sse", path="")  # type: ignore[attr-defined]
-            except TypeError:
-                try:
-                    return mcp.http_app("sse", "")  # type: ignore[misc]
-                except Exception:
-                    pass
-            # Fallback to '/' if empty path is unsupported
-            try:
+                # Use legacy SSE transport and explicit '/' path; this matched previous working config.
                 return mcp.http_app(transport="sse", path="/")  # type: ignore[attr-defined]
             except TypeError:
+                # Older signatures without keyword args
                 return mcp.http_app("sse", "/")  # type: ignore[misc]
     except Exception:
         pass
