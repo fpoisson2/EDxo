@@ -698,7 +698,12 @@ if mcp:
             return {"ids": [r["id"] for r in results]}
 
         _search_tool.__name__ = "search"
-        mcp.tool(_search_tool); TOOL_NAMES.append("search")
+        try:
+            mcp.tool(_search_tool, name="search")
+        except TypeError:
+            # Fallback for older FastMCP signatures
+            mcp.tool(_search_tool)
+        TOOL_NAMES.append("search")
 
         async def _fetch_tool(id: str):
             """Fetch a record by ID and return its complete content.
@@ -710,7 +715,11 @@ if mcp:
             return fetch(id)
 
         _fetch_tool.__name__ = "fetch"
-        mcp.tool(_fetch_tool); TOOL_NAMES.append("fetch")
+        try:
+            mcp.tool(_fetch_tool, name="fetch")
+        except TypeError:
+            mcp.tool(_fetch_tool)
+        TOOL_NAMES.append("fetch")
 
         try:
             logger.info("MCP: tools registered", extra={"tools": TOOL_NAMES})
