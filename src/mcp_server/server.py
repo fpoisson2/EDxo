@@ -753,7 +753,7 @@ if mcp:
     # Deep Research requires exactly two tools: search(query) and fetch(id)
     # Keep internal sync functions for app/tests, and expose async wrappers for MCP.
     try:
-async def _search_tool(query: str):
+        async def _search_tool(query: str):
             """Search programmes and courses and return matching record IDs.
 
             - Input: a free-form `query` string (keywords, codes, names).
@@ -781,7 +781,7 @@ async def _search_tool(query: str):
             mcp.tool(_search_tool)
         TOOL_NAMES.append("search")
 
-async def _fetch_tool(id: str):
+        async def _fetch_tool(id: str):
             """Fetch a record by ID and return its complete content.
 
             - Input: an `id` previously returned by `search`, like "programme:123" or "cours:456".
