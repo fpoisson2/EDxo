@@ -361,19 +361,9 @@ def fetch(item_id: str):
 
 # Enregistrement des outils (si dispo)
 if mcp:
+    # Expose only the two tools required by ChatGPT MCP spec
     mcp.tool(search); TOOL_NAMES.append("search")
     mcp.tool(fetch); TOOL_NAMES.append("fetch")
-
-    # Fournir aussi des outils explicites pour le listing et les détails,
-    # car certains clients MCP n'explorent pas les resources.
-    mcp.tool(programmes); TOOL_NAMES.append("programmes")
-    mcp.tool(cours); TOOL_NAMES.append("cours")
-    mcp.tool(programme_courses); TOOL_NAMES.append("programme_courses")
-    mcp.tool(competence_details); TOOL_NAMES.append("competence_details")
-    mcp.tool(cours_details); TOOL_NAMES.append("cours_details")
-    mcp.tool(cours_plan_cadre); TOOL_NAMES.append("cours_plan_cadre")
-    mcp.tool(cours_plans_de_cours); TOOL_NAMES.append("cours_plans_de_cours")
-    mcp.tool(plan_cadre_section); TOOL_NAMES.append("plan_cadre_section")
     try:
         logger.info("MCP: tools registered", extra={"tools": TOOL_NAMES})
     except Exception:
