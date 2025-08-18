@@ -38,7 +38,7 @@ def canonical_mcp_resource() -> str:
     by the MCP Authorization spec (RFC 8707 alignment).
     """
     base = request.url_root.rstrip('/')
-    resource = f"{base}/sse"
+    resource = f"{base}/sse/"
     logger.info("OAuth: canonical MCP resource resolved", extra={
         "resource": resource,
         "host": request.host,

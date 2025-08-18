@@ -55,6 +55,11 @@ from src.utils.logging_config import get_logger, redact_headers
 
 logger = get_logger(__name__)
 
+server_instructions = (
+    "This MCP server provides search and document retrieval capabilities for ChatGPT. "
+    "Use the search tool to find relevant items, then fetch to retrieve full content."
+)
+
 
 def init_app(app):
     """Bind Flask app, and mount the MCP SSE endpoint under ``/sse/``.
@@ -149,7 +154,10 @@ class DBTokenVerifier(TokenVerifier):
             oauth = OAuthToken.query.filter_by(token=token).first()
             if oauth and oauth.is_valid():
                 stored_resource = TOKEN_RESOURCES.get(token)
-                if stored_resource and presented_resource and stored_resource != presented_resource:
+                # Normalize trailing slashes for audience comparison
+                norm_stored = stored_resource.rstrip('/') if stored_resource else None
+                norm_presented = presented_resource.rstrip('/') if presented_resource else None
+                if norm_stored and norm_presented and norm_stored != norm_presented:
                     logger.info(
                         "MCP: audience mismatch",
                         extra={
@@ -191,7 +199,7 @@ class DBTokenVerifier(TokenVerifier):
 
 
 TOOL_NAMES = []  # simple registry for debug visibility
-mcp = FastMCP(name="EDxoMCP", auth=DBTokenVerifier()) if _FASTMCP_AVAILABLE else _DummyMCP(auth=DBTokenVerifier())
+mcp = FastMCP(name="EDxoMCP", auth=DBTokenVerifier(), instructions=server_instructions) if _FASTMCP_AVAILABLE else _DummyMCP(auth=DBTokenVerifier())
 
 
 @with_app_context
@@ -324,7 +332,7 @@ def search(query: str):
             "text": f"{c.code} — {c.nom}",
             "url": f"/api/cours/{c.id}",
         })
-    return results
+    return {"results": results}
 
 
 @with_app_context
