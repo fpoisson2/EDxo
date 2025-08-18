@@ -332,7 +332,7 @@ def search(query: str):
             "text": f"{c.code} — {c.nom}",
             "url": f"/api/cours/{c.id}",
         })
-    return {"results": results}
+    return results
 
 
 @with_app_context
