@@ -20,6 +20,18 @@ oauth_bp = Blueprint('oauth', __name__)
 
 
 AUTH_CODES: Dict[str, Dict[str, object]] = {}
+TOKEN_RESOURCES: Dict[str, str] = {}
+
+
+def canonical_mcp_resource() -> str:
+    """Return the canonical MCP server URI (without trailing slash).
+
+    We expose the MCP server over SSE under '/sse/'. The canonical resource
+    is the absolute URI to that path without a trailing slash, as recommended
+    by the MCP Authorization spec (RFC 8707 alignment).
+    """
+    base = request.url_root.rstrip('/')
+    return f"{base}/sse"
 
 
 def b64url_no_pad(data: bytes) -> str:
@@ -77,12 +89,14 @@ def oauth_metadata():
 @csrf.exempt
 def resource_metadata():
     """Expose metadata for the protected resource."""
-    resource = request.url_root.rstrip('/')
+    resource = canonical_mcp_resource()
     return (
         jsonify(
             {
                 'resource': resource,
-                'authorization_servers': [resource],
+                # The AS lives at the same origin; clients will fetch
+                # '/.well-known/oauth-authorization-server' under it.
+                'authorization_servers': [request.url_root.rstrip('/')],
                 'scopes_supported': ['mcp:read', 'mcp:write'],
             }
         ),
@@ -155,6 +169,9 @@ def issue_token():
         return _json_error(401, 'invalid_client', 'Client authentication failed')
 
     grant_type = data.get('grant_type', 'client_credentials')
+    resource = data.get('resource')
+    if not resource:
+        return _json_error(400, 'invalid_request', 'resource parameter required')
     ttl = int(data.get('ttl', 3600))
 
     if grant_type == 'authorization_code':
@@ -174,6 +191,9 @@ def issue_token():
         calc_challenge = b64url_no_pad(hashlib.sha256(code_verifier.encode()).digest())
         if calc_challenge != record['code_challenge']:
             return _json_error(401, 'unauthorized', 'Bad PKCE verifier')
+        # Enforce audience binding by matching the resource
+        if record.get('resource') and record['resource'] != resource:
+            return _json_error(401, 'unauthorized', 'Bad resource audience')
         user_id = record['user_id']
     else:
         user_id = None
@@ -188,6 +208,8 @@ def issue_token():
     )
     db.session.add(oauth_token)
     db.session.commit()
+    # Cache the resource audience in-memory for verifier binding checks
+    TOKEN_RESOURCES[token] = resource
     return jsonify({'access_token': token, 'token_type': 'bearer', 'expires_in': ttl}), 200
 
 
@@ -200,6 +222,7 @@ def authorize():
     code_challenge = request.values.get('code_challenge')
     state = request.values.get('state')
     scope = request.values.get('scope')
+    resource = request.values.get('resource')
     client = OAuthClient.query.filter_by(client_id=client_id).first()
     if not client or (client.redirect_uri and client.redirect_uri != redirect_uri):
         return jsonify({'error': 'invalid_client'}), 400
@@ -212,6 +235,9 @@ def authorize():
             scope=scope,
             user_id=current_user.id,
         )
+        # Also persist the resource for this short-lived code
+        if resource:
+            AUTH_CODES[code]['resource'] = resource
         redirect_url = f"{redirect_uri}?code={code}"
         if state:
             redirect_url += f"&state={state}"
@@ -222,4 +248,5 @@ def authorize():
         client=client,
         code_challenge=code_challenge,
         state=state,
+        resource=resource,
     )

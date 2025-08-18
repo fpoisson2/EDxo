@@ -4,6 +4,7 @@
 <p>Pour utiliser l'API, générez un jeton personnel depuis l'<a href="{{ url_for('settings.developer') }}">espace développeur</a>.
 Incluez ce jeton dans l'en-tête <code>X-API-Token</code> de chaque requête.</p>
 <p>Le serveur MCP accepte également ce jeton via <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+<p>MCP (ChatGPT/Deep Research) : l'endpoint SSE est exposé sous <code>/sse/</code>. Configurez votre serveur MCP dans ChatGPT avec <code>server_url</code> pointant vers <code>{{ request.url_root.rstrip('/') }}/sse/</code> et autorisez les outils <code>search</code> et <code>fetch</code>. L'authentification se fait via OAuth (flux PKCE) ou un jeton Bearer valide.</p>
 <table class="table">
   <thead>
     <tr><th>Méthode</th><th>Endpoint</th><th>Description</th></tr>

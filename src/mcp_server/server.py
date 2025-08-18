@@ -1,8 +1,41 @@
-"""MCP server exposing programme and course resources with OAuth protection."""
+"""MCP server exposing programme and course resources with OAuth protection.
+
+Mounts an SSE endpoint under ``/sse/`` for ChatGPT/Deep Research.
+If ``fastmcp`` isn't available (e.g., during tests), this module degrades
+gracefully: resources/tools are not registered, but imports still succeed.
+"""
 
 from functools import wraps
-from fastmcp import FastMCP
-from fastmcp.server.auth import AccessToken, TokenVerifier
+import logging
+
+try:  # FastMCP may not be available in some environments (tests)
+    from fastmcp import FastMCP
+    from fastmcp.server.auth import AccessToken, TokenVerifier
+    _FASTMCP_AVAILABLE = True
+except Exception:  # pragma: no cover - best effort fallback
+    FastMCP = None  # type: ignore
+    AccessToken = None  # type: ignore
+
+    class TokenVerifier:  # minimal placeholder
+        async def verify_token(self, token: str):
+            return None
+
+    _FASTMCP_AVAILABLE = False
+
+    class _DummyMCP:  # minimal stub for tests without fastmcp installed
+        def __init__(self, auth=None):
+            self.auth = auth
+
+        def resource(self, *_args, **_kwargs):
+            def decorator(func):
+                return func
+            return decorator
+
+        def tool(self, func):  # no-op
+            return func
+
+        def mount_flask(self, *_args, **_kwargs):  # no-op
+            return None
 
 from src.app.models import (
     Programme,
@@ -12,17 +45,50 @@ from src.app.models import (
     PlanDeCours,
     OAuthToken,
 )
+from src.app.routes.oauth import TOKEN_RESOURCES
 
 # ---------------------------------------------------------------------------
 # Flask application binding
 # ---------------------------------------------------------------------------
 flask_app = None
+logger = logging.getLogger(__name__)
 
 
 def init_app(app):
-    """Store a reference to the Flask app for DB access inside MCP callbacks."""
+    """Bind Flask app, and mount the MCP SSE endpoint under ``/sse/``.
+
+    - Keeps OAuth verification via DBTokenVerifier (Bearer token).
+    - If FastMCP is unavailable, logs a warning and skips mounting.
+    """
     global flask_app
     flask_app = app
+    if not _FASTMCP_AVAILABLE:
+        logger.warning("fastmcp is not installed; MCP SSE endpoint not mounted.")
+        return
+
+    # Try to expose SSE via a Flask blueprint or helper
+    try:
+        try:
+            # Preferred: explicit blueprint factory
+            from fastmcp.integrations.flask import create_blueprint  # type: ignore
+            try:
+                bp = create_blueprint(mcp, url_prefix="/sse")  # some versions accept this
+                app.register_blueprint(bp)
+            except TypeError:
+                # Older/newer versions without url_prefix in factory
+                bp = create_blueprint(mcp)
+                app.register_blueprint(bp, url_prefix="/sse")
+            logger.info("MCP SSE endpoint mounted at /sse/")
+            return
+        except Exception:
+            # Fallback: direct mount helper on the MCP instance
+            if hasattr(mcp, "mount_flask"):
+                mcp.mount_flask(app, url_prefix="/sse")  # type: ignore[attr-defined]
+                logger.info("MCP SSE endpoint mounted via mcp.mount_flask at /sse/")
+                return
+            raise
+    except Exception as e:  # pragma: no cover - best effort
+        logger.warning("Failed to mount MCP SSE endpoint: %s", e)
 
 
 def with_app_context(func):
@@ -42,13 +108,28 @@ def with_app_context(func):
 class DBTokenVerifier(TokenVerifier):
     """Validate bearer tokens against the application's OAuthToken table."""
 
-    async def verify_token(self, token: str) -> AccessToken | None:  # pragma: no cover - async
-        from flask import current_app
+    async def verify_token(self, token: str):  # pragma: no cover - async
+        from flask import current_app, has_request_context, request
 
         app = flask_app or current_app._get_current_object()
         with app.app_context():
+            # Optional audience binding check based on resource parameter
+            presented_resource = None
+            if has_request_context():
+                base = request.url_root.rstrip('/')
+                presented_resource = f"{base}/sse"
             oauth = OAuthToken.query.filter_by(token=token).first()
             if oauth and oauth.is_valid():
+                stored_resource = TOKEN_RESOURCES.get(token)
+                if stored_resource and presented_resource and stored_resource != presented_resource:
+                    return None
+                if AccessToken is None:  # fastmcp not available (tests)
+                    return {
+                        "token": token,
+                        "client_id": oauth.client_id,
+                        "scopes": [],
+                        "expires_at": int(oauth.expires_at.timestamp()),
+                    }
                 return AccessToken(
                     token=token,
                     client_id=oauth.client_id,
@@ -58,7 +139,7 @@ class DBTokenVerifier(TokenVerifier):
             return None
 
 
-mcp = FastMCP(name="EDxoMCP", auth=DBTokenVerifier())
+mcp = FastMCP(name="EDxoMCP", auth=DBTokenVerifier()) if _FASTMCP_AVAILABLE else _DummyMCP(auth=DBTokenVerifier())
 
 
 @with_app_context
@@ -142,34 +223,53 @@ def plan_cadre_section(plan_id: int, section: str):
     return {section: getattr(plan, section)}
 
 
-# Enregistrement des ressources auprès du serveur MCP
-mcp.resource("api://programmes")(programmes)
-mcp.resource("api://programmes/{programme_id}/cours")(programme_courses)
-mcp.resource("api://programmes/{programme_id}/competences")(programme_competences)
-mcp.resource("api://competences/{competence_id}")(competence_details)
-mcp.resource("api://cours")(cours)
-mcp.resource("api://cours/{cours_id}")(cours_details)
-mcp.resource("api://cours/{cours_id}/plan_cadre")(cours_plan_cadre)
-mcp.resource("api://cours/{cours_id}/plans_de_cours")(cours_plans_de_cours)
-mcp.resource("api://plan_cadre/{plan_id}/section/{section}")(plan_cadre_section)
+# Enregistrement des ressources auprès du serveur MCP (si dispo)
+if mcp:
+    mcp.resource("api://programmes")(programmes)
+    mcp.resource("api://programmes/{programme_id}/cours")(programme_courses)
+    mcp.resource("api://programmes/{programme_id}/competences")(programme_competences)
+    mcp.resource("api://competences/{competence_id}")(competence_details)
+    mcp.resource("api://cours")(cours)
+    mcp.resource("api://cours/{cours_id}")(cours_details)
+    mcp.resource("api://cours/{cours_id}/plan_cadre")(cours_plan_cadre)
+    mcp.resource("api://cours/{cours_id}/plans_de_cours")(cours_plans_de_cours)
+    mcp.resource("api://plan_cadre/{plan_id}/section/{section}")(plan_cadre_section)
 
 
 @with_app_context
 def search(query: str):
     """Recherche des programmes et cours par nom."""
+    # Normaliser la requête et offrir quelques comportements utiles:
+    # - Supporter recherche par code de cours (ex: "243-2J5")
+    # - Si la requête est vide ou '*', retourner un échantillon utile
+    q = (query or "").strip()
     results = []
-    for p in Programme.query.filter(Programme.nom.ilike(f"%{query}%")).all():
+
+    # Programmes: recherche sur le nom
+    prog_q = Programme.query
+    if q and q != "*":
+        prog_q = prog_q.filter(Programme.nom.ilike(f"%{q}%"))
+    else:
+        prog_q = prog_q.limit(50)
+    for p in prog_q.all():
         results.append({
             "id": f"programme:{p.id}",
             "title": p.nom,
             "text": p.nom,
             "url": f"/api/programmes/{p.id}",
         })
-    for c in Cours.query.filter(Cours.nom.ilike(f"%{query}%")).all():
+
+    # Cours: recherche sur le nom OU le code
+    cours_q = Cours.query
+    if q and q != "*":
+        cours_q = cours_q.filter((Cours.nom.ilike(f"%{q}%")) | (Cours.code.ilike(f"%{q}%")))
+    else:
+        cours_q = cours_q.limit(100)
+    for c in cours_q.all():
         results.append({
             "id": f"cours:{c.id}",
             "title": c.nom,
-            "text": c.nom,
+            "text": f"{c.code} — {c.nom}",
             "url": f"/api/cours/{c.id}",
         })
     return results
@@ -200,12 +300,25 @@ def fetch(item_id: str):
         return {
             "id": item_id,
             "title": c.nom,
-            "text": c.nom,
+            "text": f"{c.code} — {c.nom}",
             "url": f"/api/cours/{c.id}",
+            "metadata": {"code": c.code, "nom": c.nom}
         }
     raise ValueError("type inconnu")
 
 
-# Enregistrement des outils
-mcp.tool(search)
-mcp.tool(fetch)
+# Enregistrement des outils (si dispo)
+if mcp:
+    mcp.tool(search)
+    mcp.tool(fetch)
+
+    # Fournir aussi des outils explicites pour le listing et les détails,
+    # car certains clients MCP n'explorent pas les resources.
+    mcp.tool(programmes)  # -> liste des programmes
+    mcp.tool(cours)  # -> liste de tous les cours
+    mcp.tool(programme_courses)  # -> cours d'un programme donné
+    mcp.tool(competence_details)
+    mcp.tool(cours_details)
+    mcp.tool(cours_plan_cadre)
+    mcp.tool(cours_plans_de_cours)
+    mcp.tool(plan_cadre_section)
