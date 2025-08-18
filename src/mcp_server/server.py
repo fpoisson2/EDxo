@@ -517,6 +517,58 @@ def search(query: str):
     for c in cours_q.all():
         ids.append(f"cours:{c.id}")
 
+    # Plan-cadres: associer au cours et champs principaux
+    pc_q = PlanCadre.query.join(Cours, PlanCadre.cours_id == Cours.id)
+    if q and q != "*":
+        pc_filters = [Cours.nom.ilike(f"%{q}%"), Cours.code.ilike(f"%{q}%")]
+        # Recherche sommaire dans quelques champs textuels du plan-cadre
+        for col in (
+            PlanCadre.objectif_terminal,
+            PlanCadre.structure_intro,
+            PlanCadre.structure_activites_prevues,
+            PlanCadre.eval_nature_evaluations_sommatives,
+        ):
+            pc_filters.append(col.ilike(f"%{q}%"))
+        from sqlalchemy import or_ as _or
+        pc_q = pc_q.filter(_or(*pc_filters))
+    else:
+        pc_q = pc_q.limit(100)
+    for pc in pc_q.all():
+        ids.append(f"plan_cadre:{pc.id}")
+
+    # Plans de cours: associer au cours et quelques champs clés
+    pdc_q = PlanDeCours.query.join(Cours, PlanDeCours.cours_id == Cours.id)
+    if q and q != "*":
+        from sqlalchemy import or_ as _or
+        pdc_q = pdc_q.filter(
+            _or(
+                Cours.nom.ilike(f"%{q}%"),
+                Cours.code.ilike(f"%{q}%"),
+                PlanDeCours.session.ilike(f"%{q}%"),
+                PlanDeCours.nom_enseignant.ilike(f"%{q}%"),
+            )
+        )
+    else:
+        pdc_q = pdc_q.limit(100)
+    for pdc in pdc_q.all():
+        ids.append(f"plan_de_cours:{pdc.id}")
+
+    # Compétences: par code, nom, ou nom du programme
+    comp_q = Competence.query
+    if q and q != "*":
+        from sqlalchemy import or_ as _or
+        # Jointure facultative vers Programme via 'programme_id' simple
+        comp_q = comp_q.filter(
+            _or(
+                Competence.code.ilike(f"%{q}%"),
+                Competence.nom.ilike(f"%{q}%"),
+            )
+        )
+    else:
+        comp_q = comp_q.limit(100)
+    for comp in comp_q.all():
+        ids.append(f"competence:{comp.id}")
+
     return [{"id": _id} for _id in ids]
 
 
@@ -532,22 +584,99 @@ def fetch(id: str):
         p = Programme.query.get(_id)
         if not p:
             raise ValueError("programme introuvable")
+        # Inclure un bref aperçu des cours et compétences dans les métadonnées
+        meta = {
+            "cours": [{"id": c.id, "code": c.code, "nom": c.nom} for c in p.cours],
+        }
+        try:
+            comps = Competence.query.filter_by(programme_id=p.id).order_by(Competence.code).all()
+            meta["competences"] = [{"id": c.id, "code": c.code, "nom": c.nom} for c in comps]
+        except Exception:
+            pass
         return {
             "id": id,
             "title": p.nom,
             "text": p.nom,
             "url": f"/api/programmes/{p.id}",
+            "metadata": meta,
         }
     if kind == "cours":
         c = Cours.query.get(_id)
         if not c:
             raise ValueError("cours introuvable")
+        # Ajouter liens vers plan-cadre et plans de cours dans metadata
+        meta = {}
+        try:
+            if getattr(c, "plan_cadre", None):
+                meta["plan_cadre_id"] = c.plan_cadre.id
+            if getattr(c, "plans_de_cours", None):
+                meta["plans_de_cours_ids"] = [p.id for p in c.plans_de_cours]
+        except Exception:
+            pass
         return {
             "id": id,
             "title": c.nom,
             "text": f"{c.code} — {c.nom}",
             "url": f"/api/cours/{c.id}",
-            "metadata": {"code": c.code, "nom": c.nom}
+            "metadata": {"code": c.code, "nom": c.nom, **meta}
+        }
+    if kind == "plan_cadre":
+        pc = PlanCadre.query.get(_id)
+        if not pc:
+            raise ValueError("plan_cadre introuvable")
+        cours_info = f"{pc.cours.code} — {pc.cours.nom}" if getattr(pc, "cours", None) else ""
+        # Texte concis: objectif + quelques sections si présentes
+        summary_parts = []
+        for attr in ("objectif_terminal", "structure_intro", "structure_activites_prevues"):
+            val = getattr(pc, attr, None)
+            if val:
+                summary_parts.append(f"{attr}: {val}")
+        text = "\n\n".join(summary_parts) or f"Plan-cadre du cours {cours_info}".strip()
+        return {
+            "id": id,
+            "title": f"Plan-cadre — {cours_info}".strip(" — "),
+            "text": text,
+            "url": f"/api/cours/{pc.cours_id}/plan_cadre",
+            "metadata": pc.to_dict() if hasattr(pc, "to_dict") else {"id": pc.id, "cours_id": pc.cours_id},
+        }
+    if kind == "plan_de_cours":
+        pdc = PlanDeCours.query.get(_id)
+        if not pdc:
+            raise ValueError("plan_de_cours introuvable")
+        cours_info = f"{pdc.cours.code} — {pdc.cours.nom}" if getattr(pdc, "cours", None) else ""
+        summary_parts = []
+        for attr in ("presentation_du_cours", "objectif_terminal_du_cours", "organisation_et_methodes"):
+            val = getattr(pdc, attr, None)
+            if val:
+                summary_parts.append(f"{attr}: {val}")
+        text = "\n\n".join(summary_parts) or f"Plan de cours {pdc.session} — {cours_info}".strip()
+        return {
+            "id": id,
+            "title": f"Plan de cours {pdc.session} — {cours_info}".strip(" — "),
+            "text": text,
+            "url": f"/api/cours/{pdc.cours_id}/plans_de_cours",
+            "metadata": pdc.to_dict() if hasattr(pdc, "to_dict") else {"id": pdc.id, "cours_id": pdc.cours_id},
+        }
+    if kind == "competence":
+        comp = Competence.query.get(_id)
+        if not comp:
+            raise ValueError("compétence introuvable")
+        # Réutilise la logique de l'endpoint competence_details pour la métadonnée
+        details = competence_details(comp.id)
+        title = f"Compétence {comp.code} — {comp.nom}"
+        text = "\n".join(
+            part for part in [
+                f"Critères: {comp.criteria_de_performance}" if comp.criteria_de_performance else None,
+                f"Contexte: {comp.contexte_de_realisation}" if comp.contexte_de_realisation else None,
+            ]
+            if part
+        ) or title
+        return {
+            "id": id,
+            "title": title,
+            "text": text,
+            "url": f"/api/programmes/{comp.programme_id}/competences",
+            "metadata": details,
         }
     raise ValueError("type inconnu")
 
