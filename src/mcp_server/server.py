@@ -47,6 +47,7 @@ from src.app.models import (
     PlanDeCours,
     User,
     OAuthToken,
+    ListeProgrammeMinisteriel,
 )
 from src.app.routes.oauth import TOKEN_RESOURCES
 
@@ -398,15 +399,41 @@ def search(query: str):
     - Sortie: liste d'objets {"id": "<type>:<id>"}.
     - Les clients MCP utilisent ensuite fetch(id) pour le contenu complet.
     """
-    from sqlalchemy import or_
+    from sqlalchemy import or_, func
+    import re
 
     q = (query or "").strip()
     ids: list[str] = []
 
-    # Programmes: par nom
-    prog_q = Programme.query
+    # Prétraitement du code éventuel (ex: "243-2J5", "243 2J5", "cours-243-2J5-LI")
+    # On extrait des segments alphanumériques et on détecte les motifs cours.
+    toks = [t for t in re.split(r"[^0-9A-Za-z]+", q.lower()) if t]
+    # Exemple: ["cours", "243", "2j5", "li"]
+    norm_candidates = set()
+    if toks:
+        # Combine premiers segments type "243" + "2j5" → "2432j5"
+        for i, t in enumerate(toks):
+            if i + 1 < len(toks) and toks[i].isdigit():
+                norm_candidates.add(toks[i] + toks[i + 1])
+        # Ajouter chaque token seul également
+        norm_candidates.update(toks)
+
+    # Programmes: par nom, par code ministériel ou nom ministériel
+    prog_q = Programme.query.outerjoin(
+        ListeProgrammeMinisteriel,
+        Programme.liste_programme_ministeriel,
+    )
     if q and q != "*":
-        prog_q = prog_q.filter(Programme.nom.ilike(f"%{q}%"))
+        like = f"%{q}%"
+        prog_filters = [Programme.nom.ilike(like)]
+        try:
+            prog_filters += [
+                ListeProgrammeMinisteriel.code.ilike(like),
+                ListeProgrammeMinisteriel.nom.ilike(like),
+            ]
+        except Exception:
+            pass
+        prog_q = prog_q.filter(or_(*prog_filters))
     else:
         prog_q = prog_q.limit(50)
     ids.extend([f"programme:{p.id}" for p in prog_q.all()])
@@ -414,7 +441,23 @@ def search(query: str):
     # Cours: par nom OU code
     cours_q = Cours.query
     if q and q != "*":
-        cours_q = cours_q.filter(or_(Cours.nom.ilike(f"%{q}%"), Cours.code.ilike(f"%{q}%")))
+        like = f"%{q}%"
+        filters = [Cours.nom.ilike(like), Cours.code.ilike(like)]
+        # Tentatives de normalisation: comparer code sans '-' ni espaces
+        if norm_candidates:
+            for norm in norm_candidates:
+                filters.append(
+                    func.lower(
+                        func.replace(
+                            func.replace(Cours.code, "-", ""),
+                            " ",
+                            "",
+                        )
+                    ).like(f"%{norm}%")
+                )
+                # startswith pour capturer 243-2J5-LI lorsqu'on cherche 243-2J5
+                filters.append(Cours.code.ilike(f"{norm}%"))
+        cours_q = cours_q.filter(or_(*filters))
     else:
         cours_q = cours_q.limit(100)
     ids.extend([f"cours:{c.id}" for c in cours_q.all()])
@@ -461,6 +504,7 @@ def search(query: str):
                 PlanDeCours.organisation_et_methodes.ilike(like),
                 PlanDeCours.place_et_role_du_cours.ilike(like),
                 PlanDeCours.materiel.ilike(like),
+                PlanDeCours.campus.ilike(like),
             )
         )
     else:
@@ -516,6 +560,25 @@ def fetch(id: str):
         # Plan cadre et plans de cours
         plan_cadre = PlanCadre.query.filter_by(cours_id=c.id).first()
         plans = PlanDeCours.query.filter_by(cours_id=c.id).all()
+        # Programmes associés avec codes ministériels (si dispo)
+        try:
+            progs = c.programmes.all()  # type: ignore[attr-defined]
+        except Exception:
+            progs = list(getattr(c, "programmes", []) or [])
+        programmes_meta = []
+        for p in progs:
+            try:
+                lpm = getattr(p, "liste_programme_ministeriel", None)
+                programmes_meta.append({
+                    "id": p.id,
+                    "nom": p.nom,
+                    "ministeriel": {
+                        "code": getattr(lpm, "code", None),
+                        "nom": getattr(lpm, "nom", None),
+                    } if lpm else None,
+                })
+            except Exception:
+                programmes_meta.append({"id": p.id, "nom": getattr(p, "nom", None)})
         return {
             "id": id,
             "title": c.nom,
@@ -527,6 +590,14 @@ def fetch(id: str):
                 "nom": c.nom,
                 "plan_cadre_id": plan_cadre.id if plan_cadre else None,
                 "plans_de_cours_ids": [p.id for p in plans],
+                "heures": {
+                    "theorie": c.heures_theorie,
+                    "laboratoire": c.heures_laboratoire,
+                    "travail_maison": c.heures_travail_maison,
+                },
+                "unites": c.nombre_unites,
+                "programmes": programmes_meta,
+                "sessions": getattr(c, "sessions_map", {}),
             },
         }
     if kind == "competence":
