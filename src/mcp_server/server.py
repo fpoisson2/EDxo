@@ -552,38 +552,61 @@ def fetch(id: str):
     raise ValueError("type inconnu")
 
 
-# Alias 'read' for clients expecting this action name (e.g., Deep Research)
-def read(id: str):
-    """Alias de compatibilité: renvoie le même contenu que fetch(id)."""
-    return fetch(id)
-
-
 # Enregistrement des outils (si dispo)
 if mcp:
-    # Expose only the two tools required by ChatGPT MCP spec
-    mcp.tool(search); TOOL_NAMES.append("search")
-    mcp.tool(fetch); TOOL_NAMES.append("fetch")
-    # Expose 'read' as an alias to improve compatibility across clients
-    mcp.tool(read);  TOOL_NAMES.append("read")
+    # Deep Research requires exactly two tools: search(query) and fetch(id)
+    # Keep internal sync functions for app/tests, and expose async wrappers for MCP.
     try:
-        logger.info("MCP: tools registered", extra={"tools": TOOL_NAMES})
-    except Exception:
-        pass
-    # Add small health/debug endpoints on the MCP ASGI app if supported
-    try:
-        if hasattr(mcp, "custom_route"):
-            from starlette.responses import JSONResponse
+        async def _search_tool(query: str):
+            """Search programmes and courses and return matching record IDs.
 
-            @mcp.custom_route("/health", methods=["GET"])  # type: ignore[attr-defined]
-            async def _health(_request):
-                return JSONResponse({"status": "healthy", "tools": TOOL_NAMES})
+            - Input: a free-form `query` string (keywords, codes, names).
+            - Behavior: matches across programme names, course names and codes.
+            - Output: a dict with `ids`, e.g. {"ids": ["programme:1", "cours:2", ...]}.
+            - Next step: ChatGPT should call `fetch(id)` for selected IDs to retrieve full content.
+            """
+            results = search(query)
+            return {"ids": [r["id"] for r in results]}
 
-            @mcp.custom_route("/debug", methods=["GET"])  # type: ignore[attr-defined]
-            async def _debug(_request):
-                return JSONResponse({
-                    "fastmcp": _FASTMCP_AVAILABLE,
-                    "tools": TOOL_NAMES,
-                    "server": "asgi",
-                })
-    except Exception:
-        pass
+        _search_tool.__name__ = "search"
+        mcp.tool(_search_tool); TOOL_NAMES.append("search")
+
+        async def _fetch_tool(id: str):
+            """Fetch a record by ID and return its complete content.
+
+            - Input: an `id` previously returned by `search`, like "programme:123" or "cours:456".
+            - Behavior: resolves the ID, loads the corresponding record from the database.
+            - Output: a dict with fields like {id, title, text, url, metadata} for citation and analysis.
+            """
+            return fetch(id)
+
+        _fetch_tool.__name__ = "fetch"
+        mcp.tool(_fetch_tool); TOOL_NAMES.append("fetch")
+
+        try:
+            logger.info("MCP: tools registered", extra={"tools": TOOL_NAMES})
+        except Exception:
+            pass
+        # Add small health/debug endpoints on the MCP ASGI app if supported
+        try:
+            if hasattr(mcp, "custom_route"):
+                from starlette.responses import JSONResponse
+
+                @mcp.custom_route("/health", methods=["GET"])  # type: ignore[attr-defined]
+                async def _health(_request):
+                    return JSONResponse({"status": "healthy", "tools": TOOL_NAMES})
+
+                @mcp.custom_route("/debug", methods=["GET"])  # type: ignore[attr-defined]
+                async def _debug(_request):
+                    return JSONResponse({
+                        "fastmcp": _FASTMCP_AVAILABLE,
+                        "tools": TOOL_NAMES,
+                        "server": "asgi",
+                    })
+        except Exception:
+            pass
+    except Exception as _e:  # pragma: no cover - defensive
+        try:
+            logger.warning("MCP: failed to register tools: %s", _e)
+        except Exception:
+            pass
