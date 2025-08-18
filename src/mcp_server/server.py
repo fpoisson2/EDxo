@@ -165,6 +165,30 @@ def _register_debug_route(app):
         # Mark as public (bypass auth redirect)
         _sse_debug.is_public = True  # type: ignore[attr-defined]
         app.add_url_rule("/sse/debug", "sse_debug", _sse_debug, methods=["GET"])  # type: ignore[arg-type]
+
+        def _sse_test_search():
+            q = request.args.get("q", "")  # type: ignore[name-defined]
+            try:
+                out = search(q)
+                return jsonify({"ids": [o.get("id") for o in out]}), 200
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        _sse_test_search.is_public = True  # type: ignore[attr-defined]
+        app.add_url_rule("/sse/test_search", "sse_test_search", _sse_test_search, methods=["GET"])  # type: ignore[arg-type]
+
+        def _sse_test_fetch():
+            _id = request.args.get("id")  # type: ignore[name-defined]
+            if not _id:
+                return jsonify({"error": "id param required"}), 400
+            try:
+                out = fetch(_id)
+                return jsonify(out), 200
+            except Exception as e:
+                return jsonify({"error": str(e)}), 400
+
+        _sse_test_fetch.is_public = True  # type: ignore[attr-defined]
+        app.add_url_rule("/sse/test_fetch", "sse_test_fetch", _sse_test_fetch, methods=["GET"])  # type: ignore[arg-type]
     except Exception:
         pass
 

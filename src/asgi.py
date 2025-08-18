@@ -18,7 +18,20 @@ flask_app = create_app(testing=False)
 flask_asgi = WsgiToAsgi(flask_app)
 
 # Obtain the MCP ASGI app (robust to missing integrations)
-mcp_asgi_app = get_mcp_asgi_app()
+def _normalize_root_path(app):
+    async def _app(scope, receive, send):
+        if scope.get("type") == "http":
+            path = scope.get("path") or ""
+            if path == "":
+                # Some clients hit the mount root without a trailing slash.
+                # Normalize empty path to '/' so sub-apps don't 404.
+                scope = dict(scope)
+                scope["path"] = "/"
+        return await app(scope, receive, send)
+
+    return _app
+
+mcp_asgi_app = _normalize_root_path(get_mcp_asgi_app())
 
 logger = get_logger(__name__)
 try:
