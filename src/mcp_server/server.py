@@ -336,10 +336,10 @@ def search(query: str):
 
 
 @with_app_context
-def fetch(item_id: str):
+def fetch(id: str):
     """Récupère le contenu complet d'un résultat de recherche."""
     try:
-        kind, _id = item_id.split(":", 1)
+        kind, _id = id.split(":", 1)
         _id = int(_id)
     except ValueError:
         raise ValueError("identifiant invalide")
@@ -348,7 +348,7 @@ def fetch(item_id: str):
         if not p:
             raise ValueError("programme introuvable")
         return {
-            "id": item_id,
+            "id": id,
             "title": p.nom,
             "text": p.nom,
             "url": f"/api/programmes/{p.id}",
@@ -358,7 +358,7 @@ def fetch(item_id: str):
         if not c:
             raise ValueError("cours introuvable")
         return {
-            "id": item_id,
+            "id": id,
             "title": c.nom,
             "text": f"{c.code} — {c.nom}",
             "url": f"/api/cours/{c.id}",
