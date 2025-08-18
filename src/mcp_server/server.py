@@ -766,6 +766,7 @@ def search(query: str):
                 PlanDeCours.session.ilike(f"%{q}%"),
                 PlanDeCours.nom_enseignant.ilike(f"%{q}%"),
                 ListeProgrammeMinisteriel.code.ilike(f"%{code_token}%") if code_token else False,
+                Cours.code.ilike(f"%{code_token}%") if code_token else False,
             )
         )
     else:
