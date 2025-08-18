@@ -345,7 +345,8 @@ def debug_headers():
     data = {
         "meta": meta,
         "headers": redact_headers(request.headers),
-        "args": request.args.to_dict(flat=True),
+        # Avoid reserved LogRecord key name 'args'
+        "query": request.args.to_dict(flat=True),
     }
     logger.info("Debug headers", extra=data)
     return jsonify(data), 200
