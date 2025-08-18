@@ -66,31 +66,46 @@ def init_app(app):
     flask_app = app
     if not _FASTMCP_AVAILABLE:
         logger.warning("fastmcp is not installed; MCP SSE endpoint not mounted.")
-        return
+        # Continue to register /sse/debug route for diagnostics below
 
     # Try to expose SSE via a Flask blueprint or helper
-    try:
+    if _FASTMCP_AVAILABLE:
         try:
-            # Preferred: explicit blueprint factory
-            from fastmcp.integrations.flask import create_blueprint  # type: ignore
             try:
-                bp = create_blueprint(mcp, url_prefix="/sse")  # some versions accept this
-                app.register_blueprint(bp)
-            except TypeError:
-                # Older/newer versions without url_prefix in factory
-                bp = create_blueprint(mcp)
-                app.register_blueprint(bp, url_prefix="/sse")
-            logger.info("MCP SSE endpoint mounted at /sse/")
-            return
-        except Exception:
-            # Fallback: direct mount helper on the MCP instance
-            if hasattr(mcp, "mount_flask"):
-                mcp.mount_flask(app, url_prefix="/sse")  # type: ignore[attr-defined]
-                logger.info("MCP SSE endpoint mounted via mcp.mount_flask at /sse/")
-                return
-            raise
-    except Exception as e:  # pragma: no cover - best effort
-        logger.warning("Failed to mount MCP SSE endpoint: %s", e)
+                # Preferred: explicit blueprint factory
+                from fastmcp.integrations.flask import create_blueprint  # type: ignore
+                try:
+                    bp = create_blueprint(mcp, url_prefix="/sse")  # some versions accept this
+                    app.register_blueprint(bp)
+                except TypeError:
+                    # Older/newer versions without url_prefix in factory
+                    bp = create_blueprint(mcp)
+                    app.register_blueprint(bp, url_prefix="/sse")
+                logger.info("MCP SSE endpoint mounted at /sse/", extra={"tools": TOOL_NAMES})
+            except Exception:
+                # Fallback: direct mount helper on the MCP instance
+                if hasattr(mcp, "mount_flask"):
+                    mcp.mount_flask(app, url_prefix="/sse")  # type: ignore[attr-defined]
+                    logger.info("MCP SSE endpoint mounted via mcp.mount_flask at /sse/", extra={"tools": TOOL_NAMES})
+                else:
+                    raise
+        except Exception as e:  # pragma: no cover - best effort
+            logger.warning("Failed to mount MCP SSE endpoint: %s", e)
+    # Always expose a tiny debug route to show tool availability
+    try:
+        from flask import jsonify
+
+        def _sse_debug():
+            return jsonify({
+                "fastmcp": _FASTMCP_AVAILABLE,
+                "tools": TOOL_NAMES,
+            }), 200
+
+        # Mark as public (bypass auth redirect)
+        _sse_debug.is_public = True  # type: ignore[attr-defined]
+        app.add_url_rule("/sse/debug", "sse_debug", _sse_debug, methods=["GET"])  # type: ignore[arg-type]
+    except Exception:
+        pass
 
 
 def with_app_context(func):
@@ -175,6 +190,7 @@ class DBTokenVerifier(TokenVerifier):
             return None
 
 
+TOOL_NAMES = []  # simple registry for debug visibility
 mcp = FastMCP(name="EDxoMCP", auth=DBTokenVerifier()) if _FASTMCP_AVAILABLE else _DummyMCP(auth=DBTokenVerifier())
 
 
@@ -345,16 +361,20 @@ def fetch(item_id: str):
 
 # Enregistrement des outils (si dispo)
 if mcp:
-    mcp.tool(search)
-    mcp.tool(fetch)
+    mcp.tool(search); TOOL_NAMES.append("search")
+    mcp.tool(fetch); TOOL_NAMES.append("fetch")
 
     # Fournir aussi des outils explicites pour le listing et les détails,
     # car certains clients MCP n'explorent pas les resources.
-    mcp.tool(programmes)  # -> liste des programmes
-    mcp.tool(cours)  # -> liste de tous les cours
-    mcp.tool(programme_courses)  # -> cours d'un programme donné
-    mcp.tool(competence_details)
-    mcp.tool(cours_details)
-    mcp.tool(cours_plan_cadre)
-    mcp.tool(cours_plans_de_cours)
-    mcp.tool(plan_cadre_section)
+    mcp.tool(programmes); TOOL_NAMES.append("programmes")
+    mcp.tool(cours); TOOL_NAMES.append("cours")
+    mcp.tool(programme_courses); TOOL_NAMES.append("programme_courses")
+    mcp.tool(competence_details); TOOL_NAMES.append("competence_details")
+    mcp.tool(cours_details); TOOL_NAMES.append("cours_details")
+    mcp.tool(cours_plan_cadre); TOOL_NAMES.append("cours_plan_cadre")
+    mcp.tool(cours_plans_de_cours); TOOL_NAMES.append("cours_plans_de_cours")
+    mcp.tool(plan_cadre_section); TOOL_NAMES.append("plan_cadre_section")
+    try:
+        logger.info("MCP: tools registered", extra={"tools": TOOL_NAMES})
+    except Exception:
+        pass
