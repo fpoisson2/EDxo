@@ -1,5 +1,7 @@
 """ASGI hub: mounts MCP under /sse and Flask under /."""
 
+import os
+
 from asgiref.wsgi import WsgiToAsgi
 from starlette.applications import Starlette
 from starlette.routing import Mount
@@ -7,6 +9,9 @@ from starlette.routing import Mount
 from src.app.__init__ import create_app
 from src.mcp_server.server import get_mcp_asgi_app
 
+
+# Ensure Flask side does not try to mount SSE endpoints; ASGI handles /sse
+os.environ.setdefault("EDXO_MCP_SSE_DISABLE", "1")
 
 # Create the Flask WSGI app and wrap it for ASGI
 flask_app = create_app(testing=False)
@@ -24,4 +29,3 @@ app = Starlette(
         Mount("/", app=flask_asgi),
     ]
 )
-
