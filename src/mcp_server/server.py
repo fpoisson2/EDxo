@@ -61,8 +61,10 @@ from src.utils.logging_config import get_logger, redact_headers
 logger = get_logger(__name__)
 
 server_instructions = (
-    "This MCP server provides search and document retrieval capabilities for ChatGPT. "
-    "Use the search tool to find relevant items, then fetch to retrieve full content."
+    "This MCP server provides search and document retrieval capabilities. "
+    "Call search(query) to receive a list of ids. "
+    "Then call fetch with an 'ids' array containing those ids to retrieve documents. "
+    "If only a single id is needed, fetch also accepts an 'id' field."
 )
 
 
@@ -810,23 +812,28 @@ if mcp:
             mcp.tool(_search_tool)
         TOOL_NAMES.append("search")
 
-        async def _fetch_tool(id: str):
-            """Fetch a record by ID and return its complete content.
+        async def _fetch_tool(ids: list[str] | None = None, id: str | None = None):
+            """Fetch one or multiple records and return their content.
 
-            - Input: an `id` previously returned by `search`, like "programme:123" or "cours:456".
-            - Behavior: resolves the ID, loads the corresponding record from the database.
-            - Output: a dict with fields like {id, title, text, url, metadata} for citation and analysis.
+            - Preferred input: `ids` as a list like ["programme:1", "cours:2"].
+            - Compatibility: also accepts a single `id` string.
+            - Output: an object with `documents` (list) and `items` (alias) of records.
             """
             try:
-                logger.info("MCP tool: fetch called", extra={"id": id})
+                logger.info("MCP tool: fetch called", extra={"ids": ids, "id": id})
             except Exception:
                 pass
-            result = fetch(id)
+            id_list: list[str] = []
+            if ids and isinstance(ids, list):
+                id_list = [str(x) for x in ids]
+            elif id:
+                id_list = [id]
+            results = [fetch(x) for x in id_list]
             try:
-                logger.info("MCP tool: fetch returned", extra={"id": id, "title": result.get("title")})
+                logger.info("MCP tool: fetch returned", extra={"count": len(results)})
             except Exception:
                 pass
-            return result
+            return {"documents": results, "items": results}
 
         _fetch_tool.__name__ = "fetch"
         try:
