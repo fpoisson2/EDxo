@@ -295,44 +295,38 @@ if mcp:
     mcp.resource("api://cours/{cours_id}/plans_de_cours")(cours_plans_de_cours)
     mcp.resource("api://plan_cadre/{plan_id}/section/{section}")(plan_cadre_section)
 
-
 @with_app_context
 def search(query: str):
-    """Recherche des programmes et cours par nom."""
-    # Normaliser la requête et offrir quelques comportements utiles:
-    # - Supporter recherche par code de cours (ex: "243-2J5")
-    # - Si la requête est vide ou '*', retourner un échantillon utile
+    """
+    ChatGPT Deep Research requires:
+      input : query: str
+      output: {"ids": [string, ...]}
+    Then ChatGPT will call fetch(id) for each id to get full content.
+    """
     q = (query or "").strip()
-    results = []
+    ids: list[str] = []
 
-    # Programmes: recherche sur le nom
+    # Programmes: par nom
     prog_q = Programme.query
     if q and q != "*":
         prog_q = prog_q.filter(Programme.nom.ilike(f"%{q}%"))
     else:
         prog_q = prog_q.limit(50)
     for p in prog_q.all():
-        results.append({
-            "id": f"programme:{p.id}",
-            "title": p.nom,
-            "text": p.nom,
-            "url": f"/api/programmes/{p.id}",
-        })
+        ids.append(f"programme:{p.id}")
 
-    # Cours: recherche sur le nom OU le code
+    # Cours: par nom OU code
     cours_q = Cours.query
     if q and q != "*":
-        cours_q = cours_q.filter((Cours.nom.ilike(f"%{q}%")) | (Cours.code.ilike(f"%{q}%")))
+        cours_q = cours_q.filter(
+            (Cours.nom.ilike(f"%{q}%")) | (Cours.code.ilike(f"%{q}%"))
+        )
     else:
         cours_q = cours_q.limit(100)
     for c in cours_q.all():
-        results.append({
-            "id": f"cours:{c.id}",
-            "title": c.nom,
-            "text": f"{c.code} — {c.nom}",
-            "url": f"/api/cours/{c.id}",
-        })
-    return results
+        ids.append(f"cours:{c.id}")
+
+    return {"ids": ids}
 
 
 @with_app_context
