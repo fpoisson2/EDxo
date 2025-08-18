@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, Mapping, Dict, Any
 
 _LOGGING_CONFIGURED = False
 LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
@@ -22,3 +22,51 @@ def get_logger(name: Optional[str] = None) -> logging.Logger:
     if not _LOGGING_CONFIGURED:
         setup_logging()
     return logging.getLogger(name)
+
+
+# ---- Debug helpers (safe logging) ----
+SENSITIVE_HEADERS = {"authorization", "cookie", "set-cookie", "x-api-key"}
+
+
+def redact_headers(headers: Mapping[str, str]) -> Dict[str, str]:
+    """Return a copy of headers with sensitive values redacted.
+
+    Only used for temporary debugging; avoid long-term logging of full headers.
+    """
+    out: Dict[str, str] = {}
+    for k, v in headers.items():
+        lk = k.lower()
+        if lk in SENSITIVE_HEADERS:
+            if not v:
+                out[k] = "<empty>"
+            elif lk == "authorization":
+                # Keep scheme and last 6 chars for correlation
+                parts = v.split(" ", 1)
+                if len(parts) == 2:
+                    scheme, token = parts
+                    out[k] = f"{scheme} ****{token[-6:]}"
+                else:
+                    out[k] = "****"
+            else:
+                out[k] = "<redacted>"
+        else:
+            out[k] = v
+    return out
+
+
+def dump_request_meta(environ: Mapping[str, Any]) -> Dict[str, Any]:
+    """Extract forwarding-related request metadata from the WSGI environ."""
+    keys = [
+        "REQUEST_METHOD",
+        "PATH_INFO",
+        "QUERY_STRING",
+        "HTTP_HOST",
+        "REMOTE_ADDR",
+        "HTTP_X_FORWARDED_PROTO",
+        "HTTP_X_FORWARDED_HOST",
+        "HTTP_X_FORWARDED_PORT",
+        "HTTP_X_FORWARDED_PREFIX",
+        "SCRIPT_NAME",
+        "wsgi.url_scheme",
+    ]
+    return {k: environ.get(k) for k in keys}

@@ -51,7 +51,9 @@ from src.app.routes.oauth import TOKEN_RESOURCES
 # Flask application binding
 # ---------------------------------------------------------------------------
 flask_app = None
-logger = logging.getLogger(__name__)
+from src.utils.logging_config import get_logger, redact_headers
+
+logger = get_logger(__name__)
 
 
 def init_app(app):
@@ -118,24 +120,58 @@ class DBTokenVerifier(TokenVerifier):
             if has_request_context():
                 base = request.url_root.rstrip('/')
                 presented_resource = f"{base}/sse"
+                try:
+                    logger.info(
+                        "MCP: token verification started",
+                        extra={
+                            "path": request.path,
+                            "presented_resource": presented_resource,
+                            "headers": redact_headers(request.headers),
+                        },
+                    )
+                except Exception:
+                    pass
             oauth = OAuthToken.query.filter_by(token=token).first()
             if oauth and oauth.is_valid():
                 stored_resource = TOKEN_RESOURCES.get(token)
                 if stored_resource and presented_resource and stored_resource != presented_resource:
+                    logger.info(
+                        "MCP: audience mismatch",
+                        extra={
+                            "client_id": oauth.client_id,
+                            "stored_resource": stored_resource,
+                            "presented_resource": presented_resource,
+                        },
+                    )
                     return None
                 if AccessToken is None:  # fastmcp not available (tests)
+                    logger.info(
+                        "MCP: token accepted (fallback)",
+                        extra={
+                            "client_id": oauth.client_id,
+                            "exp": int(oauth.expires_at.timestamp()),
+                        },
+                    )
                     return {
                         "token": token,
                         "client_id": oauth.client_id,
                         "scopes": [],
                         "expires_at": int(oauth.expires_at.timestamp()),
                     }
+                logger.info(
+                    "MCP: token accepted",
+                    extra={
+                        "client_id": oauth.client_id,
+                        "exp": int(oauth.expires_at.timestamp()),
+                    },
+                )
                 return AccessToken(
                     token=token,
                     client_id=oauth.client_id,
                     scopes=[],
                     expires_at=int(oauth.expires_at.timestamp()),
                 )
+            logger.info("MCP: token rejected or expired")
             return None
 
 

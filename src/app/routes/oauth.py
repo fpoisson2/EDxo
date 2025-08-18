@@ -1,10 +1,15 @@
-"""OAuth endpoints for dynamic client registration and token issuance."""
+"""OAuth endpoints for dynamic client registration and token issuance.
+
+Adds INFO logs to help diagnose OAuth/MCP integration behind Nginx.
+Sensitive headers are redacted.
+"""
 
 from datetime import datetime, timedelta
 import secrets
 import hashlib
 import base64
 from typing import Dict
+import logging
 
 from flask import Blueprint, jsonify, request, url_for, redirect, render_template
 from flask_login import login_required, current_user
@@ -15,8 +20,10 @@ from ..models import (
     db,
 )
 from ...extensions import csrf
+from ...utils.logging_config import get_logger, redact_headers
 
 oauth_bp = Blueprint('oauth', __name__)
+logger = get_logger(__name__)
 
 
 AUTH_CODES: Dict[str, Dict[str, object]] = {}
@@ -31,7 +38,13 @@ def canonical_mcp_resource() -> str:
     by the MCP Authorization spec (RFC 8707 alignment).
     """
     base = request.url_root.rstrip('/')
-    return f"{base}/sse"
+    resource = f"{base}/sse"
+    logger.info("OAuth: canonical MCP resource resolved", extra={
+        "resource": resource,
+        "host": request.host,
+        "scheme": request.scheme,
+    })
+    return resource
 
 
 def b64url_no_pad(data: bytes) -> str:
@@ -68,19 +81,23 @@ def _json_error(status: int, error: str, description: str):
 @csrf.exempt
 def oauth_metadata():
     """Expose OAuth server metadata for discovery."""
+    payload = {
+        'issuer': request.url_root.rstrip('/'),
+        'authorization_endpoint': url_for('oauth.authorize', _external=True),
+        'token_endpoint': url_for('oauth.issue_token', _external=True),
+        'registration_endpoint': url_for('oauth.register_client', _external=True),
+        'response_types_supported': ['code'],
+        'grant_types_supported': ['authorization_code', 'refresh_token'],
+        'code_challenge_methods_supported': ['S256'],
+        'token_endpoint_auth_methods_supported': ['none'],
+    }
+    logger.info("OAuth: served authorization server metadata", extra={
+        "host": request.host,
+        "scheme": request.scheme,
+        "headers": redact_headers(request.headers),
+    })
     return (
-        jsonify(
-            {
-                'issuer': request.url_root.rstrip('/'),
-                'authorization_endpoint': url_for('oauth.authorize', _external=True),
-                'token_endpoint': url_for('oauth.issue_token', _external=True),
-                'registration_endpoint': url_for('oauth.register_client', _external=True),
-                'response_types_supported': ['code'],
-                'grant_types_supported': ['authorization_code', 'refresh_token'],
-                'code_challenge_methods_supported': ['S256'],
-                'token_endpoint_auth_methods_supported': ['none'],
-            }
-        ),
+        jsonify(payload),
         200,
     )
 
@@ -90,18 +107,20 @@ def oauth_metadata():
 def resource_metadata():
     """Expose metadata for the protected resource."""
     resource = canonical_mcp_resource()
-    return (
-        jsonify(
-            {
-                'resource': resource,
-                # The AS lives at the same origin; clients will fetch
-                # '/.well-known/oauth-authorization-server' under it.
-                'authorization_servers': [request.url_root.rstrip('/')],
-                'scopes_supported': ['mcp:read', 'mcp:write'],
-            }
-        ),
-        200,
-    )
+    payload = {
+        'resource': resource,
+        # The AS lives at the same origin; clients will fetch
+        # '/.well-known/oauth-authorization-server' under it.
+        'authorization_servers': [request.url_root.rstrip('/')],
+        'scopes_supported': ['mcp:read', 'mcp:write'],
+    }
+    logger.info("OAuth: served protected-resource metadata", extra={
+        "resource": resource,
+        "host": request.host,
+        "scheme": request.scheme,
+        "headers": redact_headers(request.headers),
+    })
+    return (jsonify(payload), 200)
 
 
 @oauth_bp.post('/register')
@@ -130,6 +149,13 @@ def register_client():
     )
     db.session.add(client)
     db.session.commit()
+    logger.info("OAuth: client registered", extra={
+        "client_id": client_id,
+        "client_name": client_name,
+        "redirect_uris": redirect_uris,
+        "remote_addr": request.remote_addr,
+        "headers": redact_headers(request.headers),
+    })
 
     import time
 
@@ -166,12 +192,26 @@ def issue_token():
     client_secret = data.get('client_secret')
     client = OAuthClient.query.filter_by(client_id=client_id).first()
     if not client or (client_secret and client.client_secret != client_secret):
+        logger.info("OAuth: invalid_client at token endpoint", extra={
+            "client_id": client_id,
+            "has_secret": bool(client_secret),
+            "remote_addr": request.remote_addr,
+        })
         return _json_error(401, 'invalid_client', 'Client authentication failed')
 
     grant_type = data.get('grant_type', 'client_credentials')
     resource = data.get('resource')
     if not resource:
-        return _json_error(400, 'invalid_request', 'resource parameter required')
+        # Backward compatibility: default to canonical MCP resource when missing
+        resource = canonical_mcp_resource()
+        logger.info(
+            "OAuth: token request missing resource → defaulted",
+            extra={
+                "client_id": client_id,
+                "grant_type": grant_type,
+                "resource": resource,
+            },
+        )
     ttl = int(data.get('ttl', 3600))
 
     if grant_type == 'authorization_code':
@@ -179,6 +219,12 @@ def issue_token():
         code_verifier = data.get('code_verifier')
         redirect_uri = data.get('redirect_uri')
         if not code or not code_verifier or not redirect_uri:
+            logger.info("OAuth: authorization_code missing fields", extra={
+                "client_id": client_id,
+                "has_code": bool(code),
+                "has_verifier": bool(code_verifier),
+                "has_redirect": bool(redirect_uri),
+            })
             return _json_error(401, 'unauthorized', 'Invalid code')
         record = AUTH_CODES.pop(code, None)
         if (
@@ -187,12 +233,24 @@ def issue_token():
             or record['redirect_uri'] != redirect_uri
             or record['expires_at'] <= datetime.utcnow()
         ):
+            logger.info("OAuth: invalid or expired code", extra={
+                "client_id": client_id,
+                "redirect_uri": redirect_uri,
+            })
             return _json_error(401, 'unauthorized', 'Invalid code')
         calc_challenge = b64url_no_pad(hashlib.sha256(code_verifier.encode()).digest())
         if calc_challenge != record['code_challenge']:
+            logger.info("OAuth: PKCE verifier mismatch", extra={
+                "client_id": client_id,
+            })
             return _json_error(401, 'unauthorized', 'Bad PKCE verifier')
         # Enforce audience binding by matching the resource
         if record.get('resource') and record['resource'] != resource:
+            logger.info("OAuth: audience mismatch", extra={
+                "client_id": client_id,
+                "requested_resource": resource,
+                "bound_resource": record.get('resource'),
+            })
             return _json_error(401, 'unauthorized', 'Bad resource audience')
         user_id = record['user_id']
     else:
@@ -210,6 +268,13 @@ def issue_token():
     db.session.commit()
     # Cache the resource audience in-memory for verifier binding checks
     TOKEN_RESOURCES[token] = resource
+    logger.info("OAuth: access token issued", extra={
+        "client_id": client_id,
+        "grant_type": grant_type,
+        "resource": resource,
+        "ttl": ttl,
+        "user_bound": bool(user_id),
+    })
     return jsonify({'access_token': token, 'token_type': 'bearer', 'expires_in': ttl}), 200
 
 
@@ -225,6 +290,10 @@ def authorize():
     resource = request.values.get('resource')
     client = OAuthClient.query.filter_by(client_id=client_id).first()
     if not client or (client.redirect_uri and client.redirect_uri != redirect_uri):
+        logger.info("OAuth: authorize invalid_client or redirect mismatch", extra={
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+        })
         return jsonify({'error': 'invalid_client'}), 400
 
     if request.method == 'POST' and request.form.get('confirm') == 'yes':
@@ -238,6 +307,11 @@ def authorize():
         # Also persist the resource for this short-lived code
         if resource:
             AUTH_CODES[code]['resource'] = resource
+        logger.info("OAuth: authorization code issued", extra={
+            "client_id": client_id,
+            "has_state": bool(state),
+            "resource": resource,
+        })
         redirect_url = f"{redirect_uri}?code={code}"
         if state:
             redirect_url += f"&state={state}"
@@ -250,3 +324,31 @@ def authorize():
         state=state,
         resource=resource,
     )
+
+
+@oauth_bp.get('/debug/headers')
+@csrf.exempt
+def debug_headers():
+    """Return a sanitized view of request headers and forwarding info.
+
+    Marked public to ease reverse-proxy debugging. Remove after diagnosis.
+    """
+    meta = {
+        "method": request.method,
+        "url": request.url,
+        "base_url": request.base_url,
+        "url_root": request.url_root,
+        "remote_addr": request.remote_addr,
+        "scheme": request.scheme,
+        "path": request.path,
+    }
+    data = {
+        "meta": meta,
+        "headers": redact_headers(request.headers),
+        "args": request.args.to_dict(flat=True),
+    }
+    logger.info("Debug headers", extra=data)
+    return jsonify(data), 200
+
+# Mark route as public for the app.before_request guard
+debug_headers.is_public = True  # type: ignore[attr-defined]
