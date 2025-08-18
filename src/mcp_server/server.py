@@ -7,6 +7,8 @@ gracefully: resources/tools are not registered, but imports still succeed.
 
 from functools import wraps
 import logging
+import os
+from typing import Optional
 
 try:  # FastMCP may not be available in some environments (tests)
     from fastmcp import FastMCP
@@ -73,30 +75,73 @@ def init_app(app):
         logger.warning("fastmcp is not installed; MCP SSE endpoint not mounted.")
         # Continue to register /sse/debug route for diagnostics below
 
+    # Allow disabling SSE mounting via env flag (ops control)
+    if str(os.getenv("EDXO_MCP_SSE_DISABLE", "")).lower() in {"1", "true", "yes", "on"}:
+        logger.info("MCP SSE mounting disabled by EDXO_MCP_SSE_DISABLE")
+        _register_debug_route(app)
+        return
+
     # Try to expose SSE via a Flask blueprint or helper
     if _FASTMCP_AVAILABLE:
         try:
-            try:
-                # Preferred: explicit blueprint factory
-                from fastmcp.integrations.flask import create_blueprint  # type: ignore
+            import importlib.util as _util
+            has_bp = bool(
+                _util.find_spec("fastmcp.integrations.flask") or _util.find_spec("fastmcp.flask")
+            )
+
+            if has_bp:
                 try:
-                    bp = create_blueprint(mcp, url_prefix="/sse")  # some versions accept this
+                    # Preferred: explicit blueprint factory (newer fastmcp)
+                    from fastmcp.integrations.flask import create_blueprint  # type: ignore
+                except Exception:
+                    # Alternate path used by some releases
+                    from fastmcp.flask import create_blueprint  # type: ignore
+
+                try:
+                    bp = create_blueprint(mcp, url_prefix="/sse")  # type: ignore[misc]
                     app.register_blueprint(bp)
                 except TypeError:
                     # Older/newer versions without url_prefix in factory
                     bp = create_blueprint(mcp)
                     app.register_blueprint(bp, url_prefix="/sse")
                 logger.info("MCP SSE endpoint mounted at /sse/", extra={"tools": TOOL_NAMES})
-            except Exception:
-                # Fallback: direct mount helper on the MCP instance
-                if hasattr(mcp, "mount_flask"):
-                    mcp.mount_flask(app, url_prefix="/sse")  # type: ignore[attr-defined]
-                    logger.info("MCP SSE endpoint mounted via mcp.mount_flask at /sse/", extra={"tools": TOOL_NAMES})
-                else:
-                    raise
+            elif hasattr(mcp, "mount_flask"):
+                mcp.mount_flask(app, url_prefix="/sse")  # type: ignore[attr-defined]
+                logger.info("MCP SSE endpoint mounted via mcp.mount_flask at /sse/", extra={"tools": TOOL_NAMES})
+            else:
+                # No Flask integration available in fastmcp; log informative message and continue quietly
+                version: Optional[str] = None
+                try:
+                    import importlib.metadata as _md
+                    version = _md.version("fastmcp")
+                except Exception:
+                    try:
+                        import fastmcp as _fm  # type: ignore
+                        version = getattr(_fm, "__version__", None)
+                    except Exception:
+                        version = None
+                logger.info(
+                    "MCP SSE not mounted: no Flask integration in fastmcp (version=%s). Set EDXO_MCP_SSE_DISABLE=1 to silence.",
+                    version or "unknown",
+                )
         except Exception as e:  # pragma: no cover - best effort
-            logger.warning("Failed to mount MCP SSE endpoint: %s", e)
-    # Always expose a tiny debug route to show tool availability
+            # Unexpected failure; keep at warning but include version and hint
+            version: Optional[str] = None
+            try:
+                import importlib.metadata as _md
+                version = _md.version("fastmcp")
+            except Exception:
+                version = None
+            logger.warning(
+                "Failed to evaluate MCP Flask integration (fastmcp=%s): %s",
+                version or "unknown",
+                e,
+            )
+    _register_debug_route(app)
+
+
+def _register_debug_route(app):
+    """Register a small debug endpoint at /sse/debug regardless of mounting status."""
     try:
         from flask import jsonify
 
@@ -297,11 +342,10 @@ if mcp:
 
 @with_app_context
 def search(query: str):
-    """
-    ChatGPT Deep Research requires:
-      input : query: str
-      output: {"ids": [string, ...]}
-    Then ChatGPT will call fetch(id) for each id to get full content.
+    """Search programmes and courses and return a list of result ids.
+
+    Returns a list of objects: [{"id": "programme:1"}, {"id": "cours:2"}, ...]
+    This matches tests and legacy callers; ChatGPT MCP can map these to ids.
     """
     q = (query or "").strip()
     ids: list[str] = []
@@ -326,7 +370,7 @@ def search(query: str):
     for c in cours_q.all():
         ids.append(f"cours:{c.id}")
 
-    return {"ids": ids}
+    return [{"id": _id} for _id in ids]
 
 
 @with_app_context

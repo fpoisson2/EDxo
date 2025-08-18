@@ -109,9 +109,9 @@ def resource_metadata():
     resource = canonical_mcp_resource()
     payload = {
         'resource': resource,
-        # The AS lives at the same origin; clients will fetch
-        # '/.well-known/oauth-authorization-server' under it.
-        'authorization_servers': [request.url_root.rstrip('/')],
+        # Per tests and audience-binding, set AS to the resource value
+        # so that authorization_servers == [resource].
+        'authorization_servers': [resource],
         'scopes_supported': ['mcp:read', 'mcp:write'],
     }
     logger.info("OAuth: served protected-resource metadata", extra={
