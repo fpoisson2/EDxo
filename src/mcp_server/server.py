@@ -45,6 +45,7 @@ from src.app.models import (
     Competence,
     PlanCadre,
     PlanDeCours,
+    User,
     OAuthToken,
 )
 from src.app.routes.oauth import TOKEN_RESOURCES
@@ -308,6 +309,7 @@ class DBTokenVerifier(TokenVerifier):
                     )
                 except Exception:
                     pass
+            # 1) OAuth token path (Authorization: Bearer <oauth_token>)
             oauth = OAuthToken.query.filter_by(token=token).first()
             if oauth and oauth.is_valid():
                 stored_resource = TOKEN_RESOURCES.get(token)
@@ -350,6 +352,39 @@ class DBTokenVerifier(TokenVerifier):
                     client_id=oauth.client_id,
                     scopes=[],
                     expires_at=int(oauth.expires_at.timestamp()),
+                )
+            # 2) User API token path (Authorization: Bearer <user_api_token>)
+            user = User.query.filter_by(api_token=token).first()
+            if user and user.api_token_expires_at and user.api_token_expires_at > __import__("datetime").datetime.utcnow():
+                # For user tokens, we do not enforce audience binding; these are first-party keys
+                client_id = f"user:{user.id}"
+                exp_ts = int(user.api_token_expires_at.timestamp()) if user.api_token_expires_at else None
+                if AccessToken is None:  # fastmcp not available (tests)
+                    logger.info(
+                        "MCP: user API token accepted (fallback)",
+                        extra={
+                            "client_id": client_id,
+                            "exp": exp_ts,
+                        },
+                    )
+                    return {
+                        "token": token,
+                        "client_id": client_id,
+                        "scopes": [],
+                        "expires_at": exp_ts,
+                    }
+                logger.info(
+                    "MCP: user API token accepted",
+                    extra={
+                        "client_id": client_id,
+                        "exp": exp_ts,
+                    },
+                )
+                return AccessToken(
+                    token=token,
+                    client_id=client_id,
+                    scopes=[],
+                    expires_at=exp_ts,
                 )
             logger.info("MCP: token rejected or expired")
             return None
