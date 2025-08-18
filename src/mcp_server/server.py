@@ -510,6 +510,10 @@ def search(query: str):
     """
     q = (query or "").strip()
     ids: list[str] = []
+    try:
+        logger.info("MCP: search start", extra={"query": q})
+    except Exception:
+        pass
 
     # Programmes: par nom
     prog_q = Programme.query
@@ -517,7 +521,8 @@ def search(query: str):
         prog_q = prog_q.filter(Programme.nom.ilike(f"%{q}%"))
     else:
         prog_q = prog_q.limit(50)
-    for p in prog_q.all():
+    _prog = prog_q.all()
+    for p in _prog:
         ids.append(f"programme:{p.id}")
 
     # Cours: par nom OU code
@@ -528,7 +533,26 @@ def search(query: str):
         )
     else:
         cours_q = cours_q.limit(100)
-    for c in cours_q.all():
+    # If the query looks like a course code embedded in natural text (e.g. "détails du cours 243-2J5"),
+    # try to extract a code-like token and include it in matching.
+    import re as _re
+    code_token = None
+    if q and q != "*":
+        m = _re.search(r"\b\d{3}-[0-9A-Za-z]{2,}\b", q, _re.IGNORECASE)
+        if m:
+            code_token = m.group(0)
+            try:
+                from sqlalchemy import or_ as _or
+                cours_q = Cours.query.filter(
+                    _or(
+                        (Cours.nom.ilike(f"%{q}%")) | (Cours.code.ilike(f"%{q}%")),
+                        Cours.code.ilike(f"%{code_token}%"),
+                    )
+                )
+            except Exception:
+                pass
+    _cours = cours_q.all()
+    for c in _cours:
         ids.append(f"cours:{c.id}")
 
     # Plan-cadres: associer au cours et champs principaux
@@ -547,7 +571,8 @@ def search(query: str):
         pc_q = pc_q.filter(_or(*pc_filters))
     else:
         pc_q = pc_q.limit(100)
-    for pc in pc_q.all():
+    _pc = pc_q.all()
+    for pc in _pc:
         ids.append(f"plan_cadre:{pc.id}")
 
     # Plans de cours: associer au cours et quelques champs clés
@@ -564,7 +589,8 @@ def search(query: str):
         )
     else:
         pdc_q = pdc_q.limit(100)
-    for pdc in pdc_q.all():
+    _pdc = pdc_q.all()
+    for pdc in _pdc:
         ids.append(f"plan_de_cours:{pdc.id}")
 
     # Compétences: par code, nom, ou nom du programme
@@ -580,9 +606,26 @@ def search(query: str):
         )
     else:
         comp_q = comp_q.limit(100)
-    for comp in comp_q.all():
+    _comp = comp_q.all()
+    for comp in _comp:
         ids.append(f"competence:{comp.id}")
 
+    try:
+        logger.info(
+            "MCP: search summary",
+            extra={
+                "query": q,
+                "programme": len(_prog),
+                "cours": len(_cours),
+                "plan_cadre": len(_pc),
+                "plan_de_cours": len(_pdc),
+                "competence": len(_comp),
+                "total": len(ids),
+                "code_token": code_token,
+            },
+        )
+    except Exception:
+        pass
     return [{"id": _id} for _id in ids]
 
 
@@ -593,10 +636,16 @@ def fetch(id: str):
         kind, _id = id.split(":", 1)
         _id = int(_id)
     except ValueError:
+        logger.warning("MCP: fetch bad id format", extra={"id": id})
         raise ValueError("identifiant invalide")
+    try:
+        logger.info("MCP: fetch start", extra={"id": id, "kind": kind})
+    except Exception:
+        pass
     if kind == "programme":
         p = Programme.query.get(_id)
         if not p:
+            logger.info("MCP: programme introuvable", extra={"id": id})
             raise ValueError("programme introuvable")
         # Inclure un bref aperçu des cours et compétences dans les métadonnées
         meta = {
@@ -617,6 +666,7 @@ def fetch(id: str):
     if kind == "cours":
         c = Cours.query.get(_id)
         if not c:
+            logger.info("MCP: cours introuvable", extra={"id": id})
             raise ValueError("cours introuvable")
         # Ajouter liens vers plan-cadre et plans de cours dans metadata
         meta = {}
@@ -637,6 +687,7 @@ def fetch(id: str):
     if kind == "plan_cadre":
         pc = PlanCadre.query.get(_id)
         if not pc:
+            logger.info("MCP: plan_cadre introuvable", extra={"id": id})
             raise ValueError("plan_cadre introuvable")
         cours_info = f"{pc.cours.code} — {pc.cours.nom}" if getattr(pc, "cours", None) else ""
         # Texte concis: objectif + quelques sections si présentes
@@ -656,6 +707,7 @@ def fetch(id: str):
     if kind == "plan_de_cours":
         pdc = PlanDeCours.query.get(_id)
         if not pdc:
+            logger.info("MCP: plan_de_cours introuvable", extra={"id": id})
             raise ValueError("plan_de_cours introuvable")
         cours_info = f"{pdc.cours.code} — {pdc.cours.nom}" if getattr(pdc, "cours", None) else ""
         summary_parts = []
@@ -674,6 +726,7 @@ def fetch(id: str):
     if kind == "competence":
         comp = Competence.query.get(_id)
         if not comp:
+            logger.info("MCP: competence introuvable", extra={"id": id})
             raise ValueError("compétence introuvable")
         # Réutilise la logique de l'endpoint competence_details pour la métadonnée
         details = competence_details(comp.id)
@@ -700,7 +753,7 @@ if mcp:
     # Deep Research requires exactly two tools: search(query) and fetch(id)
     # Keep internal sync functions for app/tests, and expose async wrappers for MCP.
     try:
-        async def _search_tool(query: str):
+async def _search_tool(query: str):
             """Search programmes and courses and return matching record IDs.
 
             - Input: a free-form `query` string (keywords, codes, names).
@@ -708,8 +761,17 @@ if mcp:
             - Output: a dict with `ids`, e.g. {"ids": ["programme:1", "cours:2", ...]}.
             - Next step: ChatGPT should call `fetch(id)` for selected IDs to retrieve full content.
             """
+            try:
+                logger.info("MCP tool: search called", extra={"query": (query or "").strip()})
+            except Exception:
+                pass
             results = search(query)
-            return {"ids": [r["id"] for r in results]}
+            ids = [r["id"] for r in results]
+            try:
+                logger.info("MCP tool: search results", extra={"count": len(ids)})
+            except Exception:
+                pass
+            return {"ids": ids}
 
         _search_tool.__name__ = "search"
         try:
@@ -719,14 +781,23 @@ if mcp:
             mcp.tool(_search_tool)
         TOOL_NAMES.append("search")
 
-        async def _fetch_tool(id: str):
+async def _fetch_tool(id: str):
             """Fetch a record by ID and return its complete content.
 
             - Input: an `id` previously returned by `search`, like "programme:123" or "cours:456".
             - Behavior: resolves the ID, loads the corresponding record from the database.
             - Output: a dict with fields like {id, title, text, url, metadata} for citation and analysis.
             """
-            return fetch(id)
+            try:
+                logger.info("MCP tool: fetch called", extra={"id": id})
+            except Exception:
+                pass
+            result = fetch(id)
+            try:
+                logger.info("MCP tool: fetch returned", extra={"id": id, "title": result.get("title")})
+            except Exception:
+                pass
+            return result
 
         _fetch_tool.__name__ = "fetch"
         try:
