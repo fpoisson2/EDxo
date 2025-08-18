@@ -207,12 +207,18 @@ def get_mcp_asgi_app() -> Any:
     # Prefer FastMCP's first-party ASGI factories when available
     try:
         if hasattr(mcp, "http_app"):
+            # Try without explicit path first so the mount point defines the base.
             try:
-                # Use legacy SSE transport to match /sse/ expectations, but mount at '/sse'
-                # by setting path to '/' so the hub's Mount('/sse', ...) yields '/sse/'.
+                return mcp.http_app(transport="sse", path="")  # type: ignore[attr-defined]
+            except TypeError:
+                try:
+                    return mcp.http_app("sse", "")  # type: ignore[misc]
+                except Exception:
+                    pass
+            # Fallback to '/' if empty path is unsupported
+            try:
                 return mcp.http_app(transport="sse", path="/")  # type: ignore[attr-defined]
             except TypeError:
-                # Older signatures without keyword args
                 return mcp.http_app("sse", "/")  # type: ignore[misc]
     except Exception:
         pass
@@ -809,24 +815,38 @@ if mcp:
     # Keep internal sync functions for app/tests, and expose async wrappers for MCP.
     try:
         async def _search_tool(query: str):
-            """Search programmes and courses and return matching record IDs.
+            """Search and return a list of result objects.
 
-            - Input: a free-form `query` string (keywords, codes, names).
-            - Behavior: matches across programme names, course names and codes.
-            - Output: a dict with `ids`, e.g. {"ids": ["programme:1", "cours:2", ...]}.
-            - Next step: ChatGPT should call `fetch(id)` for selected IDs to retrieve full content.
+            Input: a free-form `query` string.
+            Returns: an array of objects with {id, title, text, url} as per MCP spec.
             """
+            q = (query or "").strip()
             try:
-                logger.info("MCP tool: search called", extra={"query": (query or "").strip()})
+                logger.info("MCP tool: search called", extra={"query": q})
             except Exception:
                 pass
-            results = search(query)
-            ids = [r["id"] for r in results]
+            ids = [r["id"] for r in search(q)]
+            # Build MCP-compliant items; limit to a reasonable preview size
+            items = []
+            for rid in ids[:10]:
+                try:
+                    doc = fetch(rid)
+                    items.append({
+                        "id": doc.get("id", rid),
+                        "title": doc.get("title") or "",
+                        "text": doc.get("text") or "",
+                        "url": doc.get("url") or "",
+                    })
+                except Exception as _e:
+                    try:
+                        logger.info("MCP tool: search item fetch failed", extra={"id": rid, "err": str(_e)})
+                    except Exception:
+                        pass
             try:
-                logger.info("MCP tool: search results", extra={"count": len(ids)})
+                logger.info("MCP tool: search results", extra={"count": len(items)})
             except Exception:
                 pass
-            return {"ids": ids}
+            return items
 
         _search_tool.__name__ = "search"
         try:
@@ -839,8 +859,8 @@ if mcp:
         async def _fetch_tool(id: str):
             """Fetch a record by ID and return its complete content.
 
-            - Input: an `id` previously returned by `search`, like "programme:123" or "cours:456".
-            - Output: a dict with fields like {id, title, text, url, metadata} for citation and analysis.
+            Input: an `id` previously returned by `search`.
+            Returns: a single object with {id, title, text, url, metadata}.
             """
             try:
                 logger.info("MCP tool: fetch called", extra={"id": id})
