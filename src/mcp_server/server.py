@@ -177,6 +177,19 @@ def get_mcp_asgi_app() -> Any:
     if not _FASTMCP_AVAILABLE:
         return _fallback_asgi()
 
+    # Prefer FastMCP's first-party ASGI factories when available
+    try:
+        if hasattr(mcp, "http_app"):
+            try:
+                # Use legacy SSE transport to match /sse/ expectations, but mount at '/sse'
+                # by setting path to '/' so the hub's Mount('/sse', ...) yields '/sse/'.
+                return mcp.http_app(transport="sse", path="/")  # type: ignore[attr-defined]
+            except TypeError:
+                # Older signatures without keyword args
+                return mcp.http_app("sse", "/")  # type: ignore[misc]
+    except Exception:
+        pass
+
     # Try known integration modules with a create function
     try:
         from fastmcp.integrations.asgi import create_app as _create_app  # type: ignore
@@ -233,10 +246,13 @@ def _fallback_asgi() -> Any:
                 "asgi_fallback": True,
             })
 
-        return Starlette(routes=[
+        app = Starlette(routes=[
             Route("/", not_enabled),
             Route("/debug", debug),
         ])
+        # Mark this as fallback so the hub can log accordingly
+        setattr(app, "edxo_mcp_fallback", True)
+        return app
     except Exception:
         # If Starlette is missing, return a no-op ASGI app
         async def app(scope, receive, send):  # type: ignore[no-redef]
@@ -508,5 +524,23 @@ if mcp:
     mcp.tool(fetch); TOOL_NAMES.append("fetch")
     try:
         logger.info("MCP: tools registered", extra={"tools": TOOL_NAMES})
+    except Exception:
+        pass
+    # Add small health/debug endpoints on the MCP ASGI app if supported
+    try:
+        if hasattr(mcp, "custom_route"):
+            from starlette.responses import JSONResponse
+
+            @mcp.custom_route("/health", methods=["GET"])  # type: ignore[attr-defined]
+            async def _health(_request):
+                return JSONResponse({"status": "healthy", "tools": TOOL_NAMES})
+
+            @mcp.custom_route("/debug", methods=["GET"])  # type: ignore[attr-defined]
+            async def _debug(_request):
+                return JSONResponse({
+                    "fastmcp": _FASTMCP_AVAILABLE,
+                    "tools": TOOL_NAMES,
+                    "server": "asgi",
+                })
     except Exception:
         pass
