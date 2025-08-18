@@ -846,7 +846,8 @@ if mcp:
                 logger.info("MCP tool: search results", extra={"count": len(items)})
             except Exception:
                 pass
-            return items
+            # Align with common examples: return an object with a 'results' array
+            return {"results": items}
 
         _search_tool.__name__ = "search"
         try:
