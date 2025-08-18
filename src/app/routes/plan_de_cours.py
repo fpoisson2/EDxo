@@ -1,7 +1,7 @@
 import io
 import os
 import zipfile
-from datetime import datetime
+from src.utils.datetime_utils import now_utc
 from pathlib import Path
 from typing import Optional
 
@@ -544,7 +544,7 @@ def generate_all():
                     evaluations=entry.evaluations,
                 ))
 
-        plan_de_cours.modified_at = datetime.utcnow()
+        plan_de_cours.modified_at = now_utc()
         plan_de_cours.modified_by_id = current_user.id
         db.session.commit()
 
@@ -939,7 +939,7 @@ def view_plan_de_cours(cours_id, session=None):
                                 )
                                 new_ev.capacites.append(cap_link)
 
-                plan_de_cours.modified_at = datetime.utcnow()
+                plan_de_cours.modified_at = now_utc()
                 plan_de_cours.modified_by_id = current_user.id
 
                 # 5.4. Commit des Changements

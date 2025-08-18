@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from src.utils.datetime_utils import now_utc
 from io import BytesIO
 
 import re
@@ -80,7 +80,7 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
         # Fonction pour créer manuellement des entrées DBChange
         def create_db_change(operation, table_name, record_id, changes_dict):
             new_change = DBChange(
-                timestamp=datetime.utcnow(),  # Utiliser l'objet datetime directement, pas sa représentation en chaîne
+                timestamp=now_utc(),  # Utiliser l'objet datetime directement, pas sa représentation en chaîne
                 user_id=user_id,
                 operation=operation,
                 table_name=table_name,

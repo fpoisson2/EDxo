@@ -1,7 +1,8 @@
 """API endpoints for core operations."""
 
 from functools import wraps
-from datetime import datetime, timedelta
+from datetime import timedelta
+from src.utils.datetime_utils import now_utc, ensure_aware_utc
 import secrets
 
 from flask import Blueprint, jsonify, send_file, request, g
@@ -31,7 +32,7 @@ def api_auth_required(f):
         token = request.headers.get('X-API-Token')
         if token is not None:
             user = User.query.filter_by(api_token=token).first()
-            if user and user.api_token_expires_at and user.api_token_expires_at > datetime.utcnow():
+            if user and user.api_token_expires_at and ensure_aware_utc(user.api_token_expires_at) > now_utc():
                 g.api_user = user
                 return f(*args, **kwargs)
             return _json_error(401, 'invalid_token', 'Authentication required')
@@ -63,7 +64,7 @@ def api_token():
         expires_in = ttl if ttl is not None else 30 * 24 * 3600
         user.generate_api_token(expires_in=expires_in)
         status = 201
-    elif not user.api_token or not user.api_token_expires_at or user.api_token_expires_at <= datetime.utcnow():
+    elif not user.api_token or not user.api_token_expires_at or ensure_aware_utc(user.api_token_expires_at) <= now_utc():
         user.generate_api_token(expires_in=30 * 24 * 3600)
         status = 201
     else:

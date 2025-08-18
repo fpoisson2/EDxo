@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
+from src.utils.datetime_utils import now_utc, ensure_aware_utc
 import secrets
 
 import sys
@@ -74,7 +75,7 @@ class ChatModelConfig(db.Model):
     tool_model = db.Column(db.String(64), nullable=False, default='gpt-4.1-mini')
     reasoning_effort = db.Column(db.String(16))
     verbosity = db.Column(db.String(16))
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
 
     @classmethod
     def get_current(cls):
@@ -95,8 +96,8 @@ class AnalysePlanCoursPrompt(db.Model):
         nullable=False, 
         server_default='gpt-4o'  # Utiliser server_default au lieu de default
     )
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_utc)
+    updated_at = db.Column(db.DateTime, onupdate=now_utc)
 
 
 class PlanDeCoursPromptSettings(db.Model):
@@ -110,8 +111,8 @@ class PlanDeCoursPromptSettings(db.Model):
         server_default='gpt-4o'
     )
     context_variables = db.Column(db.JSON, default=list)  # Liste des variables contextuelles requises
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_utc)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
 
     def __repr__(self):
         return f'<PlanDeCoursPromptSettings {self.field_name}>'
@@ -129,7 +130,7 @@ class GrillePromptSettings(db.Model):
     level4_description = db.Column(db.Text, nullable=False)
     level5_description = db.Column(db.Text, nullable=False)
     level6_description = db.Column(db.Text, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
     
     @classmethod
     def get_current(cls):
@@ -199,7 +200,7 @@ class EvaluationSavoirFaire(db.Model):
 class DBChange(db.Model):
     __tablename__ = "DBChange"
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=now_utc)
     user_id = db.Column(db.Integer, db.ForeignKey('User.id', name='fk_dbchange_user_id'))
     operation = db.Column(db.String(10))
     table_name = db.Column(db.String(50))
@@ -268,7 +269,7 @@ class User(UserMixin, db.Model):
 
     def generate_api_token(self, expires_in=30 * 24 * 3600):
         self.api_token = secrets.token_hex(16)
-        self.api_token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+        self.api_token_expires_at = now_utc() + timedelta(seconds=expires_in)
         db.session.commit()
         return self.api_token
     
@@ -291,7 +292,7 @@ class OAuthClient(db.Model):
     client_secret = db.Column(db.String(64), nullable=False)
     name = db.Column(db.String(120), nullable=True)
     redirect_uri = db.Column(db.String(255), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_utc)
 
 
 class OAuthToken(db.Model):
@@ -307,7 +308,8 @@ class OAuthToken(db.Model):
     user = db.relationship('User')
 
     def is_valid(self):
-        return self.expires_at > datetime.utcnow()
+        exp = ensure_aware_utc(self.expires_at)
+        return bool(exp and exp > now_utc())
 
 
 class OAuthAuthorizationCode(db.Model):
@@ -953,7 +955,7 @@ class ChatHistory(db.Model):
     # *** NOUVEAU CHAMP: Arguments (JSON) demandés par role='assistant' ***
     function_call_args = db.Column(db.Text, nullable=True)
 
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, server_default=db.func.current_timestamp()) # Amélioré
+    timestamp = db.Column(db.DateTime, default=now_utc, server_default=db.func.current_timestamp()) # Amélioré
 
     # Assurez-vous que le nom de la classe User est correct ('User')
     user = db.relationship('User',

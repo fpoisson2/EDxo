@@ -370,11 +370,13 @@ class DBTokenVerifier(TokenVerifier):
                     expires_at=int(oauth.expires_at.timestamp()),
                 )
             # 2) User API token path (Authorization: Bearer <user_api_token>)
+            from src.utils.datetime_utils import now_utc, ensure_aware_utc
             user = User.query.filter_by(api_token=token).first()
-            if user and user.api_token_expires_at and user.api_token_expires_at > __import__("datetime").datetime.utcnow():
+            if user and user.api_token_expires_at and ensure_aware_utc(user.api_token_expires_at) > now_utc():
                 # For user tokens, we do not enforce audience binding; these are first-party keys
                 client_id = f"user:{user.id}"
-                exp_ts = int(user.api_token_expires_at.timestamp()) if user.api_token_expires_at else None
+                exp_norm = ensure_aware_utc(user.api_token_expires_at)
+                exp_ts = int(exp_norm.timestamp()) if exp_norm else None
                 if AccessToken is None:  # fastmcp not available (tests)
                     logger.info(
                         "MCP: user API token accepted (fallback)",

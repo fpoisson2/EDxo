@@ -4,7 +4,8 @@ Adds INFO logs to help diagnose OAuth/MCP integration behind Nginx.
 Sensitive headers are redacted.
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
+from src.utils.datetime_utils import now_utc, ensure_aware_utc
 import secrets
 import hashlib
 import base64
@@ -60,7 +61,7 @@ def issue_auth_code(client_id: str, redirect_uri: str, code_challenge: str, scop
         "code_challenge": code_challenge,
         "scope": scope,
         "user_id": user_id,
-        "expires_at": datetime.utcnow() + timedelta(minutes=5),
+        "expires_at": now_utc() + timedelta(minutes=5),
     }
     return code
 
@@ -232,7 +233,7 @@ def issue_token():
             not record
             or record['client_id'] != client_id
             or record['redirect_uri'] != redirect_uri
-            or record['expires_at'] <= datetime.utcnow()
+            or ensure_aware_utc(record['expires_at']) <= now_utc()
         ):
             logger.info("OAuth: invalid or expired code", extra={
                 "client_id": client_id,
@@ -258,7 +259,7 @@ def issue_token():
         user_id = None
 
     token = secrets.token_hex(16)
-    expires_at = datetime.utcnow() + timedelta(seconds=ttl)
+    expires_at = now_utc() + timedelta(seconds=ttl)
     oauth_token = OAuthToken(
         token=token,
         client_id=client_id,
