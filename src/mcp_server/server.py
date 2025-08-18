@@ -47,6 +47,8 @@ from src.app.models import (
     PlanDeCours,
     User,
     OAuthToken,
+    ListeProgrammeMinisteriel,
+    Department,
 )
 from src.app.routes.oauth import TOKEN_RESOURCES
 
@@ -515,10 +517,32 @@ def search(query: str):
     except Exception:
         pass
 
-    # Programmes: par nom
-    prog_q = Programme.query
+    # Extraire un éventuel code (cours ou programme) inclus dans la phrase
+    import re as _re
+    code_token = None
     if q and q != "*":
-        prog_q = prog_q.filter(Programme.nom.ilike(f"%{q}%"))
+        m = _re.search(r"\b\d{3}[-\.]\w{2,}\b", q, _re.IGNORECASE)
+        if m:
+            code_token = m.group(0)
+
+    # Programmes: par nom/variante, LPM (code/nom) ou département
+    from sqlalchemy import or_ as _or
+    prog_q = (
+        Programme.query
+        .outerjoin(ListeProgrammeMinisteriel, Programme.liste_programme_ministeriel_id == ListeProgrammeMinisteriel.id)
+        .outerjoin(Department, Programme.department_id == Department.id)
+    )
+    if q and q != "*":
+        filters = [
+            Programme.nom.ilike(f"%{q}%"),
+            Programme.variante.ilike(f"%{q}%"),
+            ListeProgrammeMinisteriel.nom.ilike(f"%{q}%"),
+            ListeProgrammeMinisteriel.code.ilike(f"%{q}%"),
+            Department.nom.ilike(f"%{q}%"),
+        ]
+        if code_token:
+            filters.append(ListeProgrammeMinisteriel.code.ilike(f"%{code_token}%"))
+        prog_q = prog_q.filter(_or(*filters))
     else:
         prog_q = prog_q.limit(50)
     _prog = prog_q.all()
@@ -526,37 +550,35 @@ def search(query: str):
         ids.append(f"programme:{p.id}")
 
     # Cours: par nom OU code
-    cours_q = Cours.query
+    cours_q = (
+        Cours.query
+        .outerjoin(Cours.programmes)
+        .outerjoin(ListeProgrammeMinisteriel, Programme.liste_programme_ministeriel_id == ListeProgrammeMinisteriel.id)
+    )
     if q and q != "*":
-        cours_q = cours_q.filter(
-            (Cours.nom.ilike(f"%{q}%")) | (Cours.code.ilike(f"%{q}%"))
-        )
+        filters = [
+            Cours.nom.ilike(f"%{q}%"),
+            Cours.code.ilike(f"%{q}%"),
+        ]
+        if code_token:
+            filters.extend([
+                Cours.code.ilike(f"%{code_token}%"),
+                ListeProgrammeMinisteriel.code.ilike(f"%{code_token}%"),
+            ])
+        cours_q = cours_q.filter(_or(*filters))
     else:
         cours_q = cours_q.limit(100)
-    # If the query looks like a course code embedded in natural text (e.g. "détails du cours 243-2J5"),
-    # try to extract a code-like token and include it in matching.
-    import re as _re
-    code_token = None
-    if q and q != "*":
-        m = _re.search(r"\b\d{3}-[0-9A-Za-z]{2,}\b", q, _re.IGNORECASE)
-        if m:
-            code_token = m.group(0)
-            try:
-                from sqlalchemy import or_ as _or
-                cours_q = Cours.query.filter(
-                    _or(
-                        (Cours.nom.ilike(f"%{q}%")) | (Cours.code.ilike(f"%{q}%")),
-                        Cours.code.ilike(f"%{code_token}%"),
-                    )
-                )
-            except Exception:
-                pass
     _cours = cours_q.all()
     for c in _cours:
         ids.append(f"cours:{c.id}")
 
     # Plan-cadres: associer au cours et champs principaux
-    pc_q = PlanCadre.query.join(Cours, PlanCadre.cours_id == Cours.id)
+    pc_q = (
+        PlanCadre.query
+        .join(Cours, PlanCadre.cours_id == Cours.id)
+        .outerjoin(Cours.programmes)
+        .outerjoin(ListeProgrammeMinisteriel, Programme.liste_programme_ministeriel_id == ListeProgrammeMinisteriel.id)
+    )
     if q and q != "*":
         pc_filters = [Cours.nom.ilike(f"%{q}%"), Cours.code.ilike(f"%{q}%")]
         # Recherche sommaire dans quelques champs textuels du plan-cadre
@@ -567,7 +589,8 @@ def search(query: str):
             PlanCadre.eval_nature_evaluations_sommatives,
         ):
             pc_filters.append(col.ilike(f"%{q}%"))
-        from sqlalchemy import or_ as _or
+        if code_token:
+            pc_filters.append(ListeProgrammeMinisteriel.code.ilike(f"%{code_token}%"))
         pc_q = pc_q.filter(_or(*pc_filters))
     else:
         pc_q = pc_q.limit(100)
@@ -576,15 +599,20 @@ def search(query: str):
         ids.append(f"plan_cadre:{pc.id}")
 
     # Plans de cours: associer au cours et quelques champs clés
-    pdc_q = PlanDeCours.query.join(Cours, PlanDeCours.cours_id == Cours.id)
+    pdc_q = (
+        PlanDeCours.query
+        .join(Cours, PlanDeCours.cours_id == Cours.id)
+        .outerjoin(Cours.programmes)
+        .outerjoin(ListeProgrammeMinisteriel, Programme.liste_programme_ministeriel_id == ListeProgrammeMinisteriel.id)
+    )
     if q and q != "*":
-        from sqlalchemy import or_ as _or
         pdc_q = pdc_q.filter(
             _or(
                 Cours.nom.ilike(f"%{q}%"),
                 Cours.code.ilike(f"%{q}%"),
                 PlanDeCours.session.ilike(f"%{q}%"),
                 PlanDeCours.nom_enseignant.ilike(f"%{q}%"),
+                ListeProgrammeMinisteriel.code.ilike(f"%{code_token}%") if code_token else False,
             )
         )
     else:
