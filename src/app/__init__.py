@@ -22,6 +22,7 @@ from datetime import timedelta, datetime, timezone
 from pathlib import Path
 
 from flask_session import Session
+from cachelib import FileSystemCache
 
 from flask import Flask, session, jsonify, redirect, url_for, request, current_app
 from flask_login import current_user, logout_user, UserMixin
@@ -137,7 +138,7 @@ def create_app(testing=False):
         base_path = Path(__file__).parent.parent
 
         SESS_DIR = os.path.join(BASE_DIR, "flask_sessions")
-        os.makedirs(SESS_DIR, exist_ok=True)      # ← avant Session(app)
+        os.makedirs(SESS_DIR, exist_ok=True)      # ensure dir exists for FileSystemCache
         app.config.update(
             PREFERRED_URL_SCHEME='https',
             SQLALCHEMY_DATABASE_URI=f"sqlite:///{DB_PATH}?timeout=30",
@@ -158,9 +159,12 @@ def create_app(testing=False):
             SESSION_COOKIE_SECURE = False,
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Lax',
-            SESSION_TYPE='filesystem',
-            SESSION_FILE_DIR=os.path.join(BASE_DIR, 'flask_sessions'),  # si filesystem
+            # Use CacheLib backend to avoid Flask-Session deprecation warnings
+            SESSION_TYPE='cachelib',
+            SESSION_CACHELIB=FileSystemCache(SESS_DIR, threshold=500, mode=0o700),
             SESSION_PERMANENT=False,
+            # Configure limiter storage explicitly to avoid in-memory warning; override via env
+            RATELIMIT_STORAGE_URI=os.getenv('RATELIMIT_STORAGE_URI', 'memory://'),
             CELERY_BROKER_URL=CELERY_BROKER_URL,
             CELERY_RESULT_BACKEND=CELERY_RESULT_BACKEND,
             TXT_OUTPUT_DIR=os.path.join(BASE_DIR, 'txt_outputs')

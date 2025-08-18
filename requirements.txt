@@ -10,6 +10,9 @@ openai
 markdown
 bleach
 gunicorn
+uvicorn
+starlette
+asgiref
 flask_sqlalchemy
 tiktoken
 flask-migrate
@@ -33,3 +36,4 @@ openai
 Flask
 Flask-Session
 fastmcp
+cachelib

@@ -8,7 +8,7 @@ gracefully: resources/tools are not registered, but imports still succeed.
 from functools import wraps
 import logging
 import os
-from typing import Optional
+from typing import Optional, Any
 
 try:  # FastMCP may not be available in some environments (tests)
     from fastmcp import FastMCP
@@ -125,14 +125,22 @@ def init_app(app):
                     version or "unknown",
                 )
         except Exception as e:  # pragma: no cover - best effort
-            # Unexpected failure; keep at warning but include version and hint
+            # Missing integration modules are expected in some deployments → info
+            msg = str(e)
+            level = logger.warning
+            if (
+                isinstance(e, ModuleNotFoundError)
+                or "No module named 'fastmcp.integrations'" in msg
+                or "No module named 'fastmcp.flask'" in msg
+            ):
+                level = logger.info
             version: Optional[str] = None
             try:
                 import importlib.metadata as _md
                 version = _md.version("fastmcp")
             except Exception:
                 version = None
-            logger.warning(
+            level(
                 "Failed to evaluate MCP Flask integration (fastmcp=%s): %s",
                 version or "unknown",
                 e,
@@ -156,6 +164,94 @@ def _register_debug_route(app):
         app.add_url_rule("/sse/debug", "sse_debug", _sse_debug, methods=["GET"])  # type: ignore[arg-type]
     except Exception:
         pass
+
+
+def get_mcp_asgi_app() -> Any:
+    """Return an ASGI app for MCP if available, otherwise a tiny fallback.
+
+    Tries FastMCP ASGI integration via multiple import paths or object methods.
+    Falls back to a minimal Starlette app that exposes a debug endpoint.
+    """
+    # If FastMCP is unavailable entirely, we return a minimal ASGI app
+    # that provides a debug route only, to avoid breaking the hub.
+    if not _FASTMCP_AVAILABLE:
+        return _fallback_asgi()
+
+    # Try known integration modules with a create function
+    try:
+        from fastmcp.integrations.asgi import create_app as _create_app  # type: ignore
+        try:
+            return _create_app(mcp)  # type: ignore[misc]
+        except TypeError:
+            return _create_app(mcp=mcp)  # type: ignore[misc]
+    except Exception:
+        pass
+
+    try:
+        from fastmcp.asgi import create_app as _create_app2  # type: ignore
+        try:
+            return _create_app2(mcp)  # type: ignore[misc]
+        except TypeError:
+            return _create_app2(mcp=mcp)  # type: ignore[misc]
+    except Exception:
+        pass
+
+    # Try instance-provided attributes
+    for attr in ("asgi_app", "asgi", "app", "router"):
+        try:
+            candidate = getattr(mcp, attr, None)
+            if candidate is None:
+                continue
+            if callable(candidate):
+                app = candidate()
+            else:
+                app = candidate
+            # rudimentary check that it looks like an ASGI callable
+            if callable(app):
+                return app
+        except Exception:
+            continue
+
+    # Last resort: provide a tiny Starlette app with a debug route
+    return _fallback_asgi()
+
+
+def _fallback_asgi() -> Any:
+    """Minimal ASGI app for environments without FastMCP ASGI integration."""
+    try:
+        from starlette.applications import Starlette
+        from starlette.responses import JSONResponse, PlainTextResponse
+        from starlette.routing import Route
+
+        async def not_enabled(_request):
+            return PlainTextResponse("MCP SSE is not enabled on this server", status_code=501)
+
+        async def debug(_request):
+            return JSONResponse({
+                "fastmcp": _FASTMCP_AVAILABLE,
+                "tools": TOOL_NAMES,
+                "asgi_fallback": True,
+            })
+
+        return Starlette(routes=[
+            Route("/", not_enabled),
+            Route("/debug", debug),
+        ])
+    except Exception:
+        # If Starlette is missing, return a no-op ASGI app
+        async def app(scope, receive, send):  # type: ignore[no-redef]
+            if scope["type"] != "http":
+                return
+            await send({
+                "type": "http.response.start",
+                "status": 501,
+                "headers": [(b"content-type", b"text/plain")],
+            })
+            await send({
+                "type": "http.response.body",
+                "body": b"MCP SSE is not enabled",
+            })
+        return app
 
 
 def with_app_context(func):
