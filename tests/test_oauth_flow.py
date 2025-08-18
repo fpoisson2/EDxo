@@ -16,17 +16,22 @@ def setup_data(app):
 def test_oauth_registration_and_access(app, client):
     prog_id = setup_data(app)
 
-    resp = client.post('/register', json={'name': 'client'})
+    resp = client.post(
+        '/register',
+        json={
+            'client_name': 'client',
+            'redirect_uris': ['https://example.com/cb'],
+            'token_endpoint_auth_method': 'none',
+        },
+    )
     assert resp.status_code == 201
     creds = resp.get_json()
     client_id = creds['client_id']
-    client_secret = creds['client_secret']
 
     resp = client.post(
         '/token',
         data={
             'client_id': client_id,
-            'client_secret': client_secret,
             'grant_type': 'client_credentials',
             'ttl': 3600,
         },

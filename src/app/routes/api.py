@@ -7,6 +7,8 @@ import secrets
 from flask import Blueprint, jsonify, send_file, request, g
 from flask_login import current_user, login_required
 
+from .oauth import _json_error
+
 from ..models import (
     Programme,
     Cours,
@@ -32,7 +34,7 @@ def api_auth_required(f):
             if user and user.api_token_expires_at and user.api_token_expires_at > datetime.utcnow():
                 g.api_user = user
                 return f(*args, **kwargs)
-            return jsonify({'error': 'Unauthorized'}), 401
+            return _json_error(401, 'invalid_token', 'Authentication required')
         auth_header = request.headers.get('Authorization')
         if auth_header and auth_header.startswith('Bearer '):
             bearer = auth_header.split(' ', 1)[1]
@@ -42,11 +44,11 @@ def api_auth_required(f):
                 if oauth.user:
                     g.api_user = oauth.user
                 return f(*args, **kwargs)
-            return jsonify({'error': 'Unauthorized'}), 401
+            return _json_error(401, 'invalid_token', 'Authentication required')
         if current_user.is_authenticated:
             g.api_user = current_user
             return f(*args, **kwargs)
-        return jsonify({'error': 'Unauthorized'}), 401
+        return _json_error(401, 'invalid_token', 'Authentication required')
 
     return decorated
 

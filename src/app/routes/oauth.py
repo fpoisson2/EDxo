@@ -93,21 +93,46 @@ def resource_metadata():
 @oauth_bp.post('/register')
 @csrf.exempt
 def register_client():
-    """Register a new OAuth client and return credentials."""
-    data = request.get_json() or {}
-    name = data.get('name')
-    redirect_uri = data.get('redirect_uri')
-    client_id = secrets.token_hex(16)
-    client_secret = secrets.token_hex(32)
+    """Register a public OAuth client using dynamic client registration."""
+    data = request.get_json(force=True, silent=True) or {}
+    redirect_uris = data.get('redirect_uris') or []
+    if not isinstance(redirect_uris, list) or not redirect_uris:
+        return (
+            jsonify(
+                error='invalid_client_metadata',
+                error_description='redirect_uris required',
+            ),
+            400,
+        )
+
+    client_name = data.get('client_name')
+    client_id = secrets.token_urlsafe(24)
+    # store only the first redirect URI since the model supports a single value
     client = OAuthClient(
         client_id=client_id,
-        client_secret=client_secret,
-        name=name,
-        redirect_uri=redirect_uri,
+        client_secret='',
+        name=client_name,
+        redirect_uri=redirect_uris[0],
     )
     db.session.add(client)
     db.session.commit()
-    return jsonify({'client_id': client_id, 'client_secret': client_secret}), 201
+
+    import time
+
+    return (
+        jsonify(
+            {
+                'client_id': client_id,
+                'client_id_issued_at': int(time.time()),
+                'token_endpoint_auth_method': 'none',
+                'redirect_uris': redirect_uris,
+                'grant_types': ['authorization_code', 'refresh_token'],
+                'response_types': ['code'],
+                'application_type': 'web',
+            }
+        ),
+        201,
+    )
 
 
 @oauth_bp.post('/token')
