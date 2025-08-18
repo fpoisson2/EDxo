@@ -7,7 +7,8 @@ from starlette.applications import Starlette
 from starlette.routing import Mount
 
 from src.app.__init__ import create_app
-from src.mcp_server.server import get_mcp_asgi_app
+from src.mcp_server.server import get_mcp_asgi_app, TOOL_NAMES
+from src.utils.logging_config import get_logger
 
 
 # Ensure Flask side does not try to mount SSE endpoints; ASGI handles /sse
@@ -19,6 +20,13 @@ flask_asgi = WsgiToAsgi(flask_app)
 
 # Obtain the MCP ASGI app (robust to missing integrations)
 mcp_asgi_app = get_mcp_asgi_app()
+
+# Log a clear mount message for operational visibility
+logger = get_logger(__name__)
+try:
+    logger.info("MCP ASGI endpoint mounted at /sse/", extra={"tools": TOOL_NAMES})
+except Exception:
+    pass
 
 # Compose the ASGI hub
 app = Starlette(
