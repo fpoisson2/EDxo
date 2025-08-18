@@ -12,7 +12,7 @@ from src.utils.logging_config import get_logger
 
 
 # Ensure Flask side does not try to mount SSE endpoints; ASGI handles /sse
-os.environ.setdefault("EDXO_MCP_SSE_DISABLE", "1")
+os.environ.setdefault("EDXO_MCP_SSE_DISABLE", "0")
 
 # Create the Flask WSGI app and wrap it for ASGI
 flask_app = create_app(testing=False)
