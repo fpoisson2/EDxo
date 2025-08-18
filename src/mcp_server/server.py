@@ -316,16 +316,30 @@ class DBTokenVerifier(TokenVerifier):
                 # Normalize trailing slashes for audience comparison
                 norm_stored = stored_resource.rstrip('/') if stored_resource else None
                 norm_presented = presented_resource.rstrip('/') if presented_resource else None
-                if norm_stored and norm_presented and norm_stored != norm_presented:
-                    logger.info(
-                        "MCP: audience mismatch",
+                # Allow bypass if audience is absent or feature-flagged to ignore
+                ignore_aud = str(os.getenv("EDXO_MCP_IGNORE_AUDIENCE", "")).lower() in {"1", "true", "yes", "on"}
+                mismatch = (
+                    bool(norm_stored) and bool(norm_presented) and norm_stored != norm_presented
+                )
+                if mismatch and not ignore_aud:
+                    logger.warning(
+                        "MCP: OAuth token rejected (aud mismatch)",
                         extra={
                             "client_id": oauth.client_id,
-                            "stored_resource": stored_resource,
-                            "presented_resource": presented_resource,
+                            "stored": stored_resource,
+                            "presented": presented_resource,
                         },
                     )
                     return None
+                if mismatch and ignore_aud:
+                    logger.info(
+                        "MCP: audience mismatch ignored by flag",
+                        extra={
+                            "client_id": oauth.client_id,
+                            "stored": stored_resource,
+                            "presented": presented_resource,
+                        },
+                    )
                 if AccessToken is None:  # fastmcp not available (tests)
                     logger.info(
                         "MCP: token accepted (fallback)",

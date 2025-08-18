@@ -31,14 +31,13 @@ TOKEN_RESOURCES: Dict[str, str] = {}
 
 
 def canonical_mcp_resource() -> str:
-    """Return the canonical MCP server URI (without trailing slash).
+    """Return the canonical MCP server URI (no trailing slash).
 
-    We expose the MCP server over SSE under '/sse/'. The canonical resource
-    is the absolute URI to that path without a trailing slash, as recommended
-    by the MCP Authorization spec (RFC 8707 alignment).
+    We expose the MCP server over SSE under '/sse'. The canonical resource
+    must match what the verifier reconstructs, e.g. 'https://host/sse'.
     """
     base = request.url_root.rstrip('/')
-    resource = f"{base}/sse/"
+    resource = f"{base}/sse"
     logger.info("OAuth: canonical MCP resource resolved", extra={
         "resource": resource,
         "host": request.host,
@@ -212,6 +211,8 @@ def issue_token():
                 "resource": resource,
             },
         )
+    # Normalize resource to avoid trailing-slash mismatches
+    resource = (resource or "").rstrip('/')
     ttl = int(data.get('ttl', 3600))
 
     if grant_type == 'authorization_code':
@@ -306,7 +307,7 @@ def authorize():
         )
         # Also persist the resource for this short-lived code
         if resource:
-            AUTH_CODES[code]['resource'] = resource
+            AUTH_CODES[code]['resource'] = resource.rstrip('/')
         logger.info("OAuth: authorization code issued", extra={
             "client_id": client_id,
             "has_state": bool(state),
