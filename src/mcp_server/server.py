@@ -557,7 +557,23 @@ def search(query: str):
         .outerjoin(ListeProgrammeMinisteriel, Programme.liste_programme_ministeriel_id == ListeProgrammeMinisteriel.id)
         .outerjoin(Department, Programme.department_id == Department.id)
     )
-    if q and q != "*":
+    # Support natural-language requests like "tous les programmes"
+    want_all_programmes = False
+    try:
+        ql = q.lower()
+        want_all_programmes = (
+            (q == "*")
+            or ("tous les programmes" in ql)
+            or ("liste des programmes" in ql)
+            or (ql.strip() in {"programmes", "programs"})
+            or ("all programs" in ql)
+        )
+    except Exception:
+        want_all_programmes = (q == "*")
+
+    if want_all_programmes:
+        prog_q = prog_q.order_by(Programme.nom).limit(200)
+    elif q and q != "*":
         filters = [
             Programme.nom.ilike(f"%{q}%"),
             Programme.variante.ilike(f"%{q}%"),
@@ -820,8 +836,10 @@ if mcp:
                 pass
             ids = [r["id"] for r in search(q)]
             # Build MCP-compliant items; limit to a reasonable preview size
+            # If the user asked for all programmes, show a larger preview
+            preview_cap = 50 if any(s in q.lower() for s in ["tous les programmes", "liste des programmes", "all programs"]) or q.strip() in {"programmes", "programs", "*"} else 10
             items = []
-            for rid in ids[:10]:
+            for rid in ids[:preview_cap]:
                 try:
                     doc = fetch(rid)
                     items.append({
