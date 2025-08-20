@@ -4,6 +4,8 @@ import zipfile
 from src.utils.datetime_utils import now_utc
 from pathlib import Path
 from typing import Optional
+import re
+import unicodedata
 
 import markdown
 from bs4 import BeautifulSoup
@@ -265,7 +267,7 @@ class ImportPlanDeCoursResponse(BaseModel):
 DEFAULT_IMPORT_PROMPT = (
     "Tu es un assistant pédagogique. Analyse le plan de cours fourni (texte brut extrait d'un DOCX) "
     "et retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes):\n"
-    "{\n"
+    "{{\n"
     "  'presentation_du_cours': str | null,\n"
     "  'objectif_terminal_du_cours': str | null,\n"
     "  'organisation_et_methodes': str | null,\n"
@@ -273,42 +275,172 @@ DEFAULT_IMPORT_PROMPT = (
     "  'evaluation_formative_apprentissages': str | null,\n"
     "  'evaluation_expression_francais': str | null,\n"
     "  'materiel': str | null,\n"
-    "  'calendriers': [ { 'semaine': int | null, 'sujet': str | null, 'activites': str | null, 'travaux_hors_classe': str | null, 'evaluations': str | null } ],\n"
+    "  'calendriers': [ {{ 'semaine': int | null, 'sujet': str | null, 'activites': str | null, 'travaux_hors_classe': str | null, 'evaluations': str | null }} ],\n"
     "  'nom_enseignant': str | null,\n"
     "  'telephone_enseignant': str | null,\n"
     "  'courriel_enseignant': str | null,\n"
     "  'bureau_enseignant': str | null,\n"
-    "  'disponibilites': [ { 'jour_semaine': str | null, 'plage_horaire': str | null, 'lieu': str | null } ],\n"
-    "  'mediagraphies': [ { 'reference_bibliographique': str | null } ],\n"
-    "  'evaluations': [ { 'titre_evaluation': str | null, 'description': str | null, 'semaine': int | null, 'capacites': [ { 'capacite': str | null, 'ponderation': str | null } ] } ]\n"
-    "}\n\n"
+    "  'disponibilites': [ {{ 'jour_semaine': str | null, 'plage_horaire': str | null, 'lieu': str | null }} ],\n"
+    "  'mediagraphies': [ {{ 'reference_bibliographique': str | null }} ],\n"
+    "  'evaluations': [ {{ 'titre_evaluation': str | null, 'description': str | null, 'semaine': int | null, 'capacites': [ {{ 'capacite': str | null, 'ponderation': str | null }} ] }} ]\n"
+    "}}\n\n"
     "Si certaines données sont introuvables dans le texte, mets la valeur à null. \n"
-    "Important: Renvoie uniquement le JSON, sans texte avant ou après.\n\n"
+    "Important: Renvoie uniquement le JSON, sans texte avant ou après.\n"
+    "Consignes d'extraction précises: \n"
+    "- Repère les sections intitulées 'ÉVALUATION(S) SOMMATIVE(S)', 'Évaluations sommatives', 'Évaluation sommative des apprentissages', 'MODALITÉS D’ÉVALUATION DES APPRENTISSAGES'.\n"
+    "- Pour chaque évaluation (ex.: 'Rapport de laboratoire #1', 'Examen pratique #1', 'Projet'), extrais: titre_evaluation, description si présente, semaine si indiquée (sinon null).\n"
+    "- Si un tableau ou une ligne indique des pondérations par capacité (ex.: Capacité 1, 2, 3), crée 'capacites' avec des objets {{ 'capacite': 'Capacité X', 'ponderation': 'NN%' }}.\n"
+    "- Si la semaine de tenue est uniquement mentionnée dans le calendrier (rubrique 'Calendrier des activités'), recoupe pour remplir le champ 'semaine' lorsque possible.\n"
+    "- Conserve la casse et le libellé exacts des titres d’évaluations lorsqu’ils apparaissent explicitement.\n\n"
     "Contexte: cours {cours_code} - {cours_nom}, session {session}.\n"
     "Texte du plan de cours:\n---\n{doc_text}\n---\n"
 )
 
 
 def _read_docx_text(file_storage) -> str:
-    """Extract raw paragraph text from a .docx file without extra deps.
+    """Extraction améliorée du texte d'un DOCX avec structure légère.
 
-    Reads word/document.xml and concatenates paragraph/run text. Best-effort.
+    - Conserve un saut de ligne entre les paragraphes ("\n\n").
+    - Préfixe les titres (Heading1..6) avec des dièses Markdown (#).
+    - Préfixe les listes (paragraphe avec numPr) avec "- ".
     """
-    file_storage.stream.seek(0)
-    with zipfile.ZipFile(file_storage.stream) as z:
+    try:
+        file_storage.stream.seek(0)
+    except Exception:
+        pass
+    with zipfile.ZipFile(file_storage.stream if hasattr(file_storage, 'stream') else file_storage) as z:
         try:
             data = z.read('word/document.xml')
         except KeyError:
             return ''
-    # Very simple XML-to-text: strip tags and keep paragraph breaks
     soup = BeautifulSoup(data, 'xml')
-    parts: List[str] = []
+    lines: List[str] = []
+
     for p in soup.find_all('w:p'):
         texts = [t.get_text(strip=True) for t in p.find_all('w:t')]
-        line = ' '.join([t for t in texts if t])
-        if line:
-            parts.append(line)
-    return '\n'.join(parts)
+        text = ' '.join([t for t in texts if t]).strip()
+        if not text:
+            continue
+
+        prefix = ''
+        ppr = p.find('w:pPr')
+        if ppr:
+            pstyle = ppr.find('w:pStyle')
+            if pstyle:
+                val = pstyle.get('w:val') or pstyle.get('val') or ''
+                lvl = None
+                if isinstance(val, str) and val.lower().startswith('heading'):
+                    try:
+                        lvl = int(''.join(ch for ch in val if ch.isdigit()) or '1')
+                    except Exception:
+                        lvl = 1
+                if lvl:
+                    prefix = '#' * max(1, min(lvl, 6)) + ' '
+            if ppr.find('w:numPr') is not None and not prefix:
+                prefix = '- '
+
+        lines.append(f"{prefix}{text}")
+
+    return '\n\n'.join(lines)
+
+
+def _normalize_text(s: Optional[str]) -> str:
+    if not s:
+        return ''
+    s = unicodedata.normalize('NFKD', s)
+    s = ''.join(c for c in s if not unicodedata.combining(c))
+    s = re.sub(r'[^\w\s]', ' ', s, flags=re.UNICODE)
+    s = re.sub(r'\s+', ' ', s).strip().lower()
+    return s
+
+
+def _build_capacity_index(plan_cadre) -> Dict[str, int]:
+    """Build a normalized text->id map for capacities.
+
+    Includes multiple keys per capacity to improve matching robustness:
+    - Normalized title (capacite)
+    - Normalized description (description_capacite)
+    - Concatenation of title + description
+    - Numeric hint key like "capacite 1" if a number is present
+    """
+    name_map: Dict[str, int] = {}
+    if not plan_cadre or not getattr(plan_cadre, 'capacites', None):
+        return name_map
+    for cap in plan_cadre.capacites:
+        if not cap:
+            continue
+        title = _normalize_text(getattr(cap, 'capacite', '') or '')
+        desc = _normalize_text(getattr(cap, 'description_capacite', '') or '')
+        # Title only
+        if title:
+            name_map.setdefault(title, cap.id)
+        # Description only
+        if desc:
+            name_map.setdefault(desc, cap.id)
+        # Title + description combo
+        if title and desc:
+            name_map.setdefault(f"{title} {desc}", cap.id)
+
+        # If text contains an ordinal number like "1" try indexing alt keys
+        raw_title = getattr(cap, 'capacite', '') or ''
+        m = re.search(r'(?:\b|^)(\d{1,2})(?:\b|$)', raw_title)
+        if m:
+            name_map.setdefault(f'capacite {m.group(1)}', cap.id)
+            name_map.setdefault(f'cap {m.group(1)}', cap.id)
+            name_map.setdefault(f'c {m.group(1)}', cap.id)
+    return name_map
+
+
+def _resolve_capacity_id(name: Optional[str], plan_cadre) -> Optional[int]:
+    if not name:
+        return None
+    norm = _normalize_text(name)
+    index = _build_capacity_index(plan_cadre)
+    if not norm or not index:
+        return None
+
+    # 1) Direct key match
+    if norm in index:
+        return index[norm]
+
+    # 2) Try number hint like "capacite 1"
+    m = re.search(r'(\d{1,2})', norm)
+    if m:
+        for prefix in ("capacite", "cap", "c"):
+            key = f'{prefix} {m.group(1)}'
+            if key in index:
+                return index[key]
+
+    # 3) Substring match on any indexed key (title/desc/combined)
+    for k, cap_id in index.items():
+        if norm and (norm in k or k in norm):
+            return cap_id
+
+    # 4) Token-overlap fuzzy match (simple Jaccard)
+    def tokens(s: str) -> set:
+        return set(s.split())
+
+    q_tokens = tokens(norm)
+    if not q_tokens:
+        return None
+    best_id = None
+    best_score = 0.0
+    for k, cap_id in index.items():
+        k_tokens = tokens(k)
+        if not k_tokens:
+            continue
+        inter = len(q_tokens & k_tokens)
+        union = len(q_tokens | k_tokens)
+        if union == 0:
+            continue
+        score = inter / union
+        if score > best_score:
+            best_score = score
+            best_id = cap_id
+    # Use a conservative threshold to avoid wrong links
+    if best_score >= 0.5:
+        return best_id
+    return None
 
 
 @plan_de_cours_bp.route('/import_docx', methods=['POST'])
@@ -361,9 +493,12 @@ def import_docx():
         doc_text=doc_text[:120000]  # guardrail to avoid excessive tokens
     )
 
-    # Choose model (reuse 'all' settings if present)
-    prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
-    ai_model = (prompt_settings.ai_model if prompt_settings and prompt_settings.ai_model else None) or 'gpt-4o'
+    # Choose model (prefer explicit from form, fallback to saved settings)
+    chosen_model = (request.form.get('ai_model') or '').strip()
+    if not chosen_model:
+        prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
+        chosen_model = (prompt_settings.ai_model if prompt_settings and prompt_settings.ai_model else None) or 'gpt-5'
+    ai_model = chosen_model
 
     try:
         client = OpenAI(api_key=current_user.openai_key)
@@ -438,13 +573,6 @@ def import_docx():
                     ))
 
         # Evaluations (replace)
-        # Build capacity name -> id map from plan_cadre
-        cap_name_to_id: Dict[str, int] = {}
-        if plan_cadre and getattr(plan_cadre, 'capacites', None):
-            for cap in plan_cadre.capacites:
-                if cap.capacite:
-                    cap_name_to_id[cap.capacite.strip().lower()] = cap.id
-
         if parsed.evaluations is not None:
             for ev in plan_de_cours.evaluations:
                 # cascade delete of capacites
@@ -458,15 +586,14 @@ def import_docx():
                     description=ev.description,
                     semaine=ev.semaine,
                 )
-                # Map capacities by name
+                # Map capacities by name or number hint
                 for cap_in in ev.capacites or []:
-                    cap_id = None
-                    if cap_in.capacite:
-                        cap_id = cap_name_to_id.get(cap_in.capacite.strip().lower())
-                    new_ev.capacites.append(PlanDeCoursEvaluationsCapacites(
-                        capacite_id=cap_id,
-                        ponderation=cap_in.ponderation,
-                    ))
+                    cap_id = _resolve_capacity_id(cap_in.capacite, plan_cadre)
+                    if cap_id is not None:
+                        new_ev.capacites.append(PlanDeCoursEvaluationsCapacites(
+                            capacite_id=cap_id,
+                            ponderation=cap_in.ponderation,
+                        ))
                 db.session.add(new_ev)
 
         plan_de_cours.modified_at = now_utc()
@@ -531,6 +658,49 @@ def import_docx():
     except Exception:
         current_app.logger.exception("Internal error in import_docx")
         return jsonify({'success': False, 'message': 'Erreur interne'}), 500
+
+
+@plan_de_cours_bp.route('/import_docx_start', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def import_docx_start():
+    """Démarre l'import DOCX en tâche Celery et retourne un task_id pour les notifications."""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'Aucun fichier fourni.'}), 400
+    file = request.files['file']
+    if not file or not file.filename.lower().endswith('.docx'):
+        return jsonify({'success': False, 'message': 'Veuillez fournir un fichier .docx.'}), 400
+
+    cours_id = request.form.get('cours_id', type=int)
+    session = request.form.get('session')
+    if not cours_id or not session:
+        return jsonify({'success': False, 'message': 'cours_id et session requis.'}), 400
+
+    plan_de_cours = PlanDeCours.query.filter_by(cours_id=cours_id, session=session).first()
+    if not plan_de_cours:
+        return jsonify({'success': False, 'message': 'Plan de cours non trouvé.'}), 404
+
+    try:
+        doc_text = _read_docx_text(file)
+    except Exception:
+        current_app.logger.exception('Erreur lecture DOCX (start)')
+        return jsonify({'success': False, 'message': 'Impossible de lire le DOCX.'}), 400
+
+    # Choose model (reuse 'all' settings if present)
+    prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
+    ai_model = (prompt_settings.ai_model if prompt_settings and prompt_settings.ai_model else None) or 'gpt-5'
+
+    try:
+        from ..tasks.import_plan_de_cours import import_plan_de_cours_task
+        task = import_plan_de_cours_task.delay(plan_de_cours.id, doc_text, ai_model, current_user.id)
+        return jsonify({'success': True, 'task_id': task.id})
+    except KombuOperationalError as e:
+        current_app.logger.error(
+            f"Celery broker unreachable when enqueuing import task: {e}. Broker URL: {getattr(celery.conf, 'broker_url', 'unknown')}")
+        return jsonify({
+            'success': False,
+            'message': "File d'attente indisponible. Vérifiez le broker Celery (Redis) et la configuration."
+        }), 503
 
 @plan_de_cours_bp.route('/generate_content', methods=['POST'])
 @login_required
@@ -618,7 +788,7 @@ def generate_content():
         current_app.logger.exception("generate_content missing key in context")
         return jsonify({'error': f'Variable manquante dans le contexte: {str(e)}'}), 400
 
-    ai_model = prompt_settings.ai_model or "gpt-4o"
+    ai_model = prompt_settings.ai_model or "gpt-5"
 
 
     user = db.session.query(User).with_for_update().get(current_user.id)
@@ -722,7 +892,7 @@ def generate_calendar():
     if not prompt_settings:
         return jsonify({'error': 'Configuration de prompt manquante pour le calendrier.'}), 500
 
-    ai_model = prompt_settings.ai_model or 'gpt-4o'
+    ai_model = prompt_settings.ai_model or 'gpt-5'
     prompt = build_calendar_prompt(
         plan_cadre, session, prompt_settings.prompt_template
     )
@@ -816,7 +986,7 @@ def generate_all():
         return jsonify({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}), 403
 
     prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
-    ai_model = (ai_model_override or (prompt_settings.ai_model if prompt_settings else None)) or 'gpt-4o'
+    ai_model = (ai_model_override or (prompt_settings.ai_model if prompt_settings else None)) or 'gpt-5'
     prompt_template = prompt_settings.prompt_template if prompt_settings else None
     prompt = build_all_prompt(plan_cadre, cours, session, prompt_template, additional_info=additional_info)
 
@@ -924,7 +1094,7 @@ def generate_all_start():
         return jsonify({'success': False, 'message': 'Plan cadre non trouvé pour ce cours.'}), 404
 
     prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
-    ai_model = (ai_model_override or (prompt_settings.ai_model if prompt_settings else None)) or 'gpt-4o'
+    ai_model = (ai_model_override or (prompt_settings.ai_model if prompt_settings else None)) or 'gpt-5'
     prompt_template = prompt_settings.prompt_template if prompt_settings else None
     prompt = build_all_prompt(plan_cadre, cours, session, prompt_template, additional_info=additional_info)
 

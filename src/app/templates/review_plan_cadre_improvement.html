@@ -33,13 +33,15 @@
 
             {% if change.before is string %}
               <div class="row">
+                {# Transmettre les textes via JSON pour préserver les retours de ligne #}
+                <script type="application/json" class="diff-data">{{ {'before': change.before, 'after': change.after} | tojson }}</script>
                 <div class="col-md-6">
                   <label class="fw-bold">Actuel</label>
-                  <div class="border rounded p-1 diff-before" data-before="{{ change.before|e }}" data-after="{{ change.after|e }}" style="white-space: pre-wrap;"></div>
+                  <div class="border rounded p-1 diff-before" style="white-space: pre-wrap;"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="fw-bold">Proposition</label>
-                  <div class="border rounded p-1 bg-light diff-after" data-before="{{ change.before|e }}" data-after="{{ change.after|e }}" style="white-space: pre-wrap;"></div>
+                  <div class="border rounded p-1 bg-light diff-after" style="white-space: pre-wrap;"></div>
                 </div>
               </div>
             {% else %}
@@ -301,25 +303,32 @@ function diffWords(a, b) {
   return res.reverse();
 }
 
+function getDiffPayload(el) {
+  const row = el.closest('.row');
+  const script = row ? row.querySelector('.diff-data') : null;
+  if (script) {
+    try { return JSON.parse(script.textContent || '{}'); } catch (_) {}
+  }
+  return { before: el.getAttribute('data-before') || '', after: el.getAttribute('data-after') || '' };
+}
+
 function renderDiffBefore(el) {
-  const before = el.getAttribute('data-before') || '';
-  const after = el.getAttribute('data-after') || '';
+  const { before = '', after = '' } = getDiffPayload(el);
   const parts = diffWords(before, after);
   el.innerHTML = parts.map(p => {
     if (p.type === 'del') return '<span class="diff-del">' + escapeHtml(p.text) + '</span>';
     if (p.type === 'same') return '<span class="diff-same">' + escapeHtml(p.text) + '</span>';
-    return ''; // don't show additions on before side
+    return '';
   }).join('');
 }
 
 function renderDiffAfter(el) {
-  const before = el.getAttribute('data-before') || '';
-  const after = el.getAttribute('data-after') || '';
+  const { before = '', after = '' } = getDiffPayload(el);
   const parts = diffWords(before, after);
   el.innerHTML = parts.map(p => {
     if (p.type === 'add') return '<span class="diff-add">' + escapeHtml(p.text) + '</span>';
     if (p.type === 'same') return '<span class="diff-same">' + escapeHtml(p.text) + '</span>';
-    return ''; // don't show deletions on after side
+    return '';
   }).join('');
 }
 

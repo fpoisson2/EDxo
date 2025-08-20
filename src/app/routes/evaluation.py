@@ -460,7 +460,7 @@ def generate_six_level_grid():
     if not user or not user.openai_key:
         return jsonify({'error': 'Clé OpenAI non configurée'}), 400
 
-    ai_model = "gpt-4o"
+    ai_model = "gpt-5"
 
     user_credits = user.credits
     user_id = current_user.id

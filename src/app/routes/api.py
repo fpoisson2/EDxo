@@ -170,7 +170,7 @@ def generate_plan_cadre(plan_id):
 @api_auth_required
 def generate_plan_de_cours(plan_id):
     from ..tasks.generation_plan_de_cours import generate_plan_de_cours_all_task
-    task = generate_plan_de_cours_all_task.delay(plan_id, '', 'gpt-4o', g.api_user.id)
+    task = generate_plan_de_cours_all_task.delay(plan_id, '', 'gpt-5', g.api_user.id)
     return jsonify({'task_id': task.id}), 202
 
 

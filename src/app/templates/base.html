@@ -470,6 +470,14 @@
           }
           if (data.state === 'SUCCESS') {
             const payload = data.result || data.meta || {};
+            // Certains workers retournent {status:"error"} tout en ayant l'état SUCCESS côté Celery
+            if (payload && payload.status === 'error') {
+              addNotification("La génération a échoué : " + (payload.message || "Une erreur est survenue."), "error");
+              stopPolling();
+              clearTaskId();
+              window.onTaskStreamUpdate = null;
+              return;
+            }
             if (payload.preview) {
               const planId = payload.plan_id;
               const reviewUrl = `/plan_cadre/${planId}/review?task_id=` + currentTaskId;
@@ -480,7 +488,15 @@
             } else {
               const coursId = payload.cours_id;
               const planId = payload.plan_id;
-              if (coursId && planId) {
+              // Cas import/génération Plan de Cours: si une URL directe est fournie, l'utiliser
+              if (payload.plan_de_cours_url) {
+                addNotification("Importation terminée. Cliquez pour voir le plan de cours.", "success", payload.plan_de_cours_url);
+                if (typeof window.onTaskCompleted === 'function') {
+                  try { window.onTaskCompleted({ ...payload, planDeCoursUrl: payload.plan_de_cours_url }); } catch (e) { console.warn('onTaskCompleted error', e); }
+                }
+              }
+              // Cas Plan-Cadre existant (lien plan-cadre)
+              else if (coursId && planId) {
                 const planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
                 addNotification("Génération terminée. Cliquez pour voir le plan-cadre.", "success", planCadreUrl);
                 if (typeof window.onTaskCompleted === 'function') {

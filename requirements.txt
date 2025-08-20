@@ -37,3 +37,4 @@ Flask
 Flask-Session
 fastmcp
 cachelib
+watchfiles

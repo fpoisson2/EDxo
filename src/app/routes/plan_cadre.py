@@ -42,6 +42,9 @@ from ...utils import (
     # Note: remove if no longer needed: get_db_connection
 )
 from ...utils.logging_config import get_logger
+from bs4 import BeautifulSoup
+import zipfile
+from io import BytesIO
 
 logger = get_logger(__name__)
 
@@ -49,6 +52,58 @@ logger = get_logger(__name__)
 # Blueprint
 ###############################################################################
 plan_cadre_bp = Blueprint('plan_cadre', __name__, url_prefix='/plan_cadre')
+
+
+def _read_docx_text(file_storage) -> str:
+    """Extraction améliorée du texte d'un DOCX avec structure légère.
+
+    - Conserve un saut de ligne entre les paragraphes ("\n\n").
+    - Préfixe les titres (Heading1..6) avec des dièses Markdown (#).
+    - Préfixe les listes (paragraphe avec numPr) avec "- ".
+    """
+    try:
+        file_storage.stream.seek(0)
+    except Exception:
+        pass
+    with zipfile.ZipFile(file_storage.stream if hasattr(file_storage, 'stream') else file_storage) as z:
+        try:
+            data = z.read('word/document.xml')
+        except KeyError:
+            return ''
+    soup = BeautifulSoup(data, 'xml')
+    lines = []
+
+    for p in soup.find_all('w:p'):
+        texts = [t.get_text(strip=True) for t in p.find_all('w:t')]
+        text = ' '.join([t for t in texts if t]).strip()
+        if not text:
+            continue
+
+        prefix = ''
+        # Détecter les styles de paragraphe (titres)
+        ppr = p.find('w:pPr')
+        if ppr:
+            # Titres
+            pstyle = ppr.find('w:pStyle')
+            if pstyle:
+                val = pstyle.get('w:val') or pstyle.get('val') or ''
+                lvl = None
+                if isinstance(val, str) and val.lower().startswith('heading'):
+                    # Heading1..Heading6
+                    try:
+                        lvl = int(''.join(ch for ch in val if ch.isdigit()) or '1')
+                    except Exception:
+                        lvl = 1
+                if lvl:
+                    prefix = '#' * max(1, min(lvl, 6)) + ' '
+            # Listes (numérotation/puces)
+            if ppr.find('w:numPr') is not None and not prefix:
+                prefix = '- '
+
+        lines.append(f"{prefix}{text}")
+
+    # Laisser une ligne vide entre les paragraphes pour aider la détection de sections
+    return '\n\n'.join(lines)
 
 @plan_cadre_bp.route('/<int:plan_id>/generate_content', methods=['POST'])
 @roles_required('admin', 'coordo')
@@ -109,6 +164,48 @@ def generate_plan_cadre_content(plan_id):
 
     # Retourner le task id dans la réponse AJAX
     return jsonify(success=True, message='La génération est en cours. Vous serez notifié une fois terminée.', task_id=task.id)
+
+
+###############################################################################
+# Importation DOCX du plan-cadre (asynchrone via Celery)
+###############################################################################
+@plan_cadre_bp.route('/<int:plan_id>/import_docx_start', methods=['POST'])
+@roles_required('admin', 'coordo')
+@ensure_profile_completed
+def import_plan_cadre_docx_start(plan_id):
+    from ...celery_app import celery
+    from celery.result import AsyncResult
+    # Utilise la tâche en mode "aperçu" pour permettre une comparaison avant application
+    from ..tasks.import_plan_cadre import import_plan_cadre_preview_task
+
+    plan = PlanCadre.query.get(plan_id)
+    if not plan:
+        return jsonify(success=False, message='Plan-cadre non trouvé.'), 404
+
+    if 'file' not in request.files:
+        return jsonify(success=False, message='Aucun fichier fourni.'), 400
+    file = request.files['file']
+    if not file or not file.filename.lower().endswith('.docx'):
+        return jsonify(success=False, message='Veuillez fournir un fichier .docx.'), 400
+
+    try:
+        doc_text = _read_docx_text(file)
+    except Exception:
+        current_app.logger.exception('Erreur lecture DOCX (plan-cadre)')
+        return jsonify(success=False, message='Impossible de lire le DOCX.'), 400
+
+    # Choisir le modèle (préfère la valeur du formulaire, sinon modèle du plan ou défaut)
+    ai_model = (request.form.get('ai_model') or '').strip() or (plan.ai_model or 'gpt-5')
+
+    try:
+        # Lancer la tâche d'import en mode APERÇU (ne modifie pas la BD)
+        task = import_plan_cadre_preview_task.delay(plan.id, doc_text, ai_model, current_user.id)
+        # Mémoriser pour le polling global
+        session['task_id'] = task.id
+        return jsonify(success=True, task_id=task.id)
+    except Exception as e:
+        current_app.logger.exception('Erreur lors du lancement de la tâche import_plan_cadre')
+        return jsonify(success=False, message='Erreur interne lors du lancement de la tâche.'), 500
 
 
 ###############################################################################

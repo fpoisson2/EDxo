@@ -94,7 +94,7 @@ class AnalysePlanCoursPrompt(db.Model):
     ai_model = db.Column(
         db.String(50), 
         nullable=False, 
-        server_default='gpt-4o'  # Utiliser server_default au lieu de default
+        server_default='gpt-5'  # Utiliser server_default au lieu de default
     )
     created_at = db.Column(db.DateTime, default=now_utc)
     updated_at = db.Column(db.DateTime, onupdate=now_utc)
@@ -108,7 +108,7 @@ class PlanDeCoursPromptSettings(db.Model):
     ai_model = db.Column(
         db.String(50),
         nullable=False,
-        server_default='gpt-4o'
+        server_default='gpt-5'
     )
     context_variables = db.Column(db.JSON, default=list)  # Liste des variables contextuelles requises
     created_at = db.Column(db.DateTime, default=now_utc)
@@ -467,7 +467,7 @@ class PlanCadre(db.Model):
     eval_evaluation_de_la_langue = db.Column(db.Text, nullable=True)
     eval_evaluation_sommatives_apprentissages = db.Column(db.Text, nullable=True)
     additional_info = db.Column(db.Text, nullable=True)
-    ai_model = db.Column(db.Text, nullable=True, server_default="gpt-4o")
+    ai_model = db.Column(db.Text, nullable=True, server_default="gpt-5")
     modified_by_id = db.Column(db.Integer, 
                              db.ForeignKey("User.id", name="fk_plan_cadre_modified_by"),
                              nullable=True)
