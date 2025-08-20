@@ -34,6 +34,7 @@ from ...utils.calendar_generator import (
 from typing import List, Dict
 from ...celery_app import celery
 from celery.result import AsyncResult
+from kombu.exceptions import OperationalError as KombuOperationalError
 
 # Définir le chemin de base de l'application
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -927,8 +928,22 @@ def generate_all_start():
     prompt_template = prompt_settings.prompt_template if prompt_settings else None
     prompt = build_all_prompt(plan_cadre, cours, session, prompt_template, additional_info=additional_info)
 
-    task = generate_plan_de_cours_all_task.delay(plan_de_cours.id, prompt, ai_model, current_user.id)
-    return jsonify({'success': True, 'task_id': task.id})
+    try:
+        task = generate_plan_de_cours_all_task.delay(plan_de_cours.id, prompt, ai_model, current_user.id)
+        return jsonify({'success': True, 'task_id': task.id})
+    except KombuOperationalError as e:
+        current_app.logger.error(
+            f"Celery broker unreachable when enqueuing task: {e}. Broker URL: {getattr(celery.conf, 'broker_url', 'unknown')}")
+        return (
+            jsonify({
+                'success': False,
+                'message': 'File d\'attente des tâches indisponible. Vérifiez le broker Celery (ex: Redis) et la configuration CELERY_BROKER_URL/CELERY_RESULT_BACKEND.'
+            }),
+            503,
+        )
+    except Exception as e:
+        current_app.logger.exception("Unexpected error when enqueuing Celery task")
+        return jsonify({'success': False, 'message': 'Erreur interne'}), 500
 
 
 @plan_de_cours_bp.route('/generate_all_status', methods=['GET'])
