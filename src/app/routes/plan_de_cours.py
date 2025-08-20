@@ -31,7 +31,7 @@ from ...utils.calendar_generator import (
     build_calendar_prompt,
     CalendarEntry,
 )
-from typing import List
+from typing import List, Dict
 from ...celery_app import celery
 from celery.result import AsyncResult
 
@@ -210,6 +210,326 @@ def build_all_prompt(plan_cadre, cours, session: str, prompt_template: Optional[
         cours_nom=getattr(cours, 'nom', '') or '',
         sections="\n".join(sections)
     )
+
+
+# -------------------- IMPORT DOCX SUPPORT --------------------
+
+class ImportDisponibiliteItem(BaseModel):
+    jour_semaine: Optional[str] = None
+    plage_horaire: Optional[str] = None
+    lieu: Optional[str] = None
+
+
+class ImportMediagraphieItem(BaseModel):
+    reference_bibliographique: Optional[str] = None
+
+
+class ImportEvaluationCapacite(BaseModel):
+    capacite: Optional[str] = Field(default=None, description="Nom exact de la capacité du plan-cadre")
+    ponderation: Optional[str] = None
+
+
+class ImportEvaluationItem(BaseModel):
+    titre_evaluation: Optional[str] = None
+    description: Optional[str] = None
+    semaine: Optional[int] = None
+    capacites: List[ImportEvaluationCapacite] = Field(default_factory=list)
+
+
+class ImportPlanDeCoursResponse(BaseModel):
+    # Text sections
+    presentation_du_cours: Optional[str] = None
+    objectif_terminal_du_cours: Optional[str] = None
+    organisation_et_methodes: Optional[str] = None
+    accomodement: Optional[str] = None
+    evaluation_formative_apprentissages: Optional[str] = None
+    evaluation_expression_francais: Optional[str] = None
+    materiel: Optional[str] = None
+
+    # Calendrier
+    calendriers: List[CalendarEntry] = Field(default_factory=list)
+
+    # Enseignant
+    nom_enseignant: Optional[str] = None
+    telephone_enseignant: Optional[str] = None
+    courriel_enseignant: Optional[str] = None
+    bureau_enseignant: Optional[str] = None
+
+    # List sections
+    disponibilites: List[ImportDisponibiliteItem] = Field(default_factory=list)
+    mediagraphies: List[ImportMediagraphieItem] = Field(default_factory=list)
+    evaluations: List[ImportEvaluationItem] = Field(default_factory=list)
+
+
+DEFAULT_IMPORT_PROMPT = (
+    "Tu es un assistant pédagogique. Analyse le plan de cours fourni (texte brut extrait d'un DOCX) "
+    "et retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes):\n"
+    "{\n"
+    "  'presentation_du_cours': str | null,\n"
+    "  'objectif_terminal_du_cours': str | null,\n"
+    "  'organisation_et_methodes': str | null,\n"
+    "  'accomodement': str | null,\n"
+    "  'evaluation_formative_apprentissages': str | null,\n"
+    "  'evaluation_expression_francais': str | null,\n"
+    "  'materiel': str | null,\n"
+    "  'calendriers': [ { 'semaine': int | null, 'sujet': str | null, 'activites': str | null, 'travaux_hors_classe': str | null, 'evaluations': str | null } ],\n"
+    "  'nom_enseignant': str | null,\n"
+    "  'telephone_enseignant': str | null,\n"
+    "  'courriel_enseignant': str | null,\n"
+    "  'bureau_enseignant': str | null,\n"
+    "  'disponibilites': [ { 'jour_semaine': str | null, 'plage_horaire': str | null, 'lieu': str | null } ],\n"
+    "  'mediagraphies': [ { 'reference_bibliographique': str | null } ],\n"
+    "  'evaluations': [ { 'titre_evaluation': str | null, 'description': str | null, 'semaine': int | null, 'capacites': [ { 'capacite': str | null, 'ponderation': str | null } ] } ]\n"
+    "}\n\n"
+    "Si certaines données sont introuvables dans le texte, mets la valeur à null. \n"
+    "Important: Renvoie uniquement le JSON, sans texte avant ou après.\n\n"
+    "Contexte: cours {cours_code} - {cours_nom}, session {session}.\n"
+    "Texte du plan de cours:\n---\n{doc_text}\n---\n"
+)
+
+
+def _read_docx_text(file_storage) -> str:
+    """Extract raw paragraph text from a .docx file without extra deps.
+
+    Reads word/document.xml and concatenates paragraph/run text. Best-effort.
+    """
+    file_storage.stream.seek(0)
+    with zipfile.ZipFile(file_storage.stream) as z:
+        try:
+            data = z.read('word/document.xml')
+        except KeyError:
+            return ''
+    # Very simple XML-to-text: strip tags and keep paragraph breaks
+    soup = BeautifulSoup(data, 'xml')
+    parts: List[str] = []
+    for p in soup.find_all('w:p'):
+        texts = [t.get_text(strip=True) for t in p.find_all('w:t')]
+        line = ' '.join([t for t in texts if t])
+        if line:
+            parts.append(line)
+    return '\n'.join(parts)
+
+
+@plan_de_cours_bp.route('/import_docx', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def import_docx():
+    """Importe un plan de cours depuis un DOCX, l'analyse via OpenAI et met à jour le plan."""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'Aucun fichier fourni.'}), 400
+    file = request.files['file']
+    if not file or not file.filename.lower().endswith('.docx'):
+        return jsonify({'success': False, 'message': 'Veuillez fournir un fichier .docx.'}), 400
+
+    cours_id = request.form.get('cours_id', type=int)
+    session = request.form.get('session')
+    if not cours_id or not session:
+        return jsonify({'success': False, 'message': 'cours_id et session requis.'}), 400
+
+    plan_de_cours = PlanDeCours.query.filter_by(cours_id=cours_id, session=session).first()
+    if not plan_de_cours:
+        return jsonify({'success': False, 'message': 'Plan de cours non trouvé.'}), 404
+
+    cours = plan_de_cours.cours
+    plan_cadre = cours.plan_cadre if cours else None
+
+    # Credits and key checks
+    user = db.session.query(User).with_for_update().get(current_user.id)
+    if not user:
+        return jsonify({'success': False, 'message': 'Utilisateur non trouvé'}), 404
+    if not user.openai_key:
+        return jsonify({'success': False, 'message': 'Clé OpenAI non configurée'}), 400
+    if user.credits is None:
+        user.credits = 0.0
+        db.session.commit()
+    if user.credits <= 0:
+        return jsonify({'success': False, 'message': 'Crédits insuffisants.'}), 403
+
+    # Read docx text
+    try:
+        doc_text = _read_docx_text(file)
+    except Exception:
+        current_app.logger.exception('Erreur lecture DOCX')
+        return jsonify({'success': False, 'message': 'Impossible de lire le DOCX.'}), 400
+
+    # Build prompt
+    prompt = DEFAULT_IMPORT_PROMPT.format(
+        cours_code=getattr(cours, 'code', '') or '',
+        cours_nom=getattr(cours, 'nom', '') or '',
+        session=session,
+        doc_text=doc_text[:120000]  # guardrail to avoid excessive tokens
+    )
+
+    # Choose model (reuse 'all' settings if present)
+    prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
+    ai_model = (prompt_settings.ai_model if prompt_settings and prompt_settings.ai_model else None) or 'gpt-4o'
+
+    try:
+        client = OpenAI(api_key=current_user.openai_key)
+        response = client.responses.parse(
+            model=ai_model,
+            input=prompt,
+            text_format=ImportPlanDeCoursResponse,
+        )
+
+        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
+        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
+        cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
+        if user.credits < cost:
+            return jsonify({'success': False, 'message': 'Crédits insuffisants pour cette opération.'}), 403
+        user.credits -= cost
+
+        parsed = _extract_first_parsed(response)
+        if parsed is None:
+            return jsonify({'success': False, 'message': "Aucune donnée n'a été renvoyée par le modèle."}), 502
+
+        # Update text fields
+        plan_de_cours.presentation_du_cours = parsed.presentation_du_cours or plan_de_cours.presentation_du_cours
+        plan_de_cours.objectif_terminal_du_cours = parsed.objectif_terminal_du_cours or plan_de_cours.objectif_terminal_du_cours
+        plan_de_cours.organisation_et_methodes = parsed.organisation_et_methodes or plan_de_cours.organisation_et_methodes
+        plan_de_cours.accomodement = parsed.accomodement or plan_de_cours.accomodement
+        plan_de_cours.evaluation_formative_apprentissages = parsed.evaluation_formative_apprentissages or plan_de_cours.evaluation_formative_apprentissages
+        plan_de_cours.evaluation_expression_francais = parsed.evaluation_expression_francais or plan_de_cours.evaluation_expression_francais
+        plan_de_cours.materiel = parsed.materiel or plan_de_cours.materiel
+
+        # Teacher
+        plan_de_cours.nom_enseignant = parsed.nom_enseignant or plan_de_cours.nom_enseignant
+        plan_de_cours.telephone_enseignant = parsed.telephone_enseignant or plan_de_cours.telephone_enseignant
+        plan_de_cours.courriel_enseignant = parsed.courriel_enseignant or plan_de_cours.courriel_enseignant
+        plan_de_cours.bureau_enseignant = parsed.bureau_enseignant or plan_de_cours.bureau_enseignant
+
+        # Calendars (replace)
+        if parsed.calendriers is not None:
+            for cal in plan_de_cours.calendriers:
+                db.session.delete(cal)
+            for entry in parsed.calendriers:
+                db.session.add(PlanDeCoursCalendrier(
+                    plan_de_cours_id=plan_de_cours.id,
+                    semaine=entry.semaine,
+                    sujet=entry.sujet,
+                    activites=entry.activites,
+                    travaux_hors_classe=entry.travaux_hors_classe,
+                    evaluations=entry.evaluations,
+                ))
+
+        # Mediagraphies (replace)
+        if parsed.mediagraphies is not None:
+            for m in plan_de_cours.mediagraphies:
+                db.session.delete(m)
+            for itm in parsed.mediagraphies:
+                if itm.reference_bibliographique:
+                    db.session.add(PlanDeCoursMediagraphie(
+                        plan_de_cours_id=plan_de_cours.id,
+                        reference_bibliographique=itm.reference_bibliographique,
+                    ))
+
+        # Disponibilites (replace)
+        if parsed.disponibilites is not None:
+            for d in plan_de_cours.disponibilites:
+                db.session.delete(d)
+            for disp in parsed.disponibilites:
+                if disp.jour_semaine or disp.plage_horaire or disp.lieu:
+                    db.session.add(PlanDeCoursDisponibiliteEnseignant(
+                        plan_de_cours_id=plan_de_cours.id,
+                        jour_semaine=disp.jour_semaine,
+                        plage_horaire=disp.plage_horaire,
+                        lieu=disp.lieu,
+                    ))
+
+        # Evaluations (replace)
+        # Build capacity name -> id map from plan_cadre
+        cap_name_to_id: Dict[str, int] = {}
+        if plan_cadre and getattr(plan_cadre, 'capacites', None):
+            for cap in plan_cadre.capacites:
+                if cap.capacite:
+                    cap_name_to_id[cap.capacite.strip().lower()] = cap.id
+
+        if parsed.evaluations is not None:
+            for ev in plan_de_cours.evaluations:
+                # cascade delete of capacites
+                db.session.delete(ev)
+            for ev in parsed.evaluations:
+                if not (ev.titre_evaluation or ev.description or ev.semaine or ev.capacites):
+                    continue
+                new_ev = PlanDeCoursEvaluations(
+                    plan_de_cours_id=plan_de_cours.id,
+                    titre_evaluation=ev.titre_evaluation,
+                    description=ev.description,
+                    semaine=ev.semaine,
+                )
+                # Map capacities by name
+                for cap_in in ev.capacites or []:
+                    cap_id = None
+                    if cap_in.capacite:
+                        cap_id = cap_name_to_id.get(cap_in.capacite.strip().lower())
+                    new_ev.capacites.append(PlanDeCoursEvaluationsCapacites(
+                        capacite_id=cap_id,
+                        ponderation=cap_in.ponderation,
+                    ))
+                db.session.add(new_ev)
+
+        plan_de_cours.modified_at = now_utc()
+        plan_de_cours.modified_by_id = current_user.id
+        db.session.commit()
+
+        # Build response payload used by UI to populate fields
+        result = {
+            'success': True,
+            'fields': {
+                'presentation_du_cours': plan_de_cours.presentation_du_cours,
+                'objectif_terminal_du_cours': plan_de_cours.objectif_terminal_du_cours,
+                'organisation_et_methodes': plan_de_cours.organisation_et_methodes,
+                'accomodement': plan_de_cours.accomodement,
+                'evaluation_formative_apprentissages': plan_de_cours.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': plan_de_cours.evaluation_expression_francais,
+                'materiel': plan_de_cours.materiel,
+                'nom_enseignant': plan_de_cours.nom_enseignant,
+                'telephone_enseignant': plan_de_cours.telephone_enseignant,
+                'courriel_enseignant': plan_de_cours.courriel_enseignant,
+                'bureau_enseignant': plan_de_cours.bureau_enseignant,
+            },
+            'calendriers': [
+                {
+                    'semaine': c.semaine,
+                    'sujet': c.sujet,
+                    'activites': c.activites,
+                    'travaux_hors_classe': c.travaux_hors_classe,
+                    'evaluations': c.evaluations,
+                } for c in plan_de_cours.calendriers
+            ],
+            'mediagraphies': [
+                {'reference_bibliographique': m.reference_bibliographique} for m in plan_de_cours.mediagraphies
+            ],
+            'disponibilites': [
+                {
+                    'jour_semaine': d.jour_semaine,
+                    'plage_horaire': d.plage_horaire,
+                    'lieu': d.lieu,
+                } for d in plan_de_cours.disponibilites
+            ],
+            'evaluations': [
+                {
+                    'titre_evaluation': e.titre_evaluation,
+                    'description': e.description,
+                    'semaine': e.semaine,
+                    'capacites': [
+                        {
+                            'capacite_id': c.capacite_id,
+                            'capacite_nom': (c.capacite.capacite if c.capacite else None),
+                            'ponderation': c.ponderation,
+                        } for c in e.capacites
+                    ]
+                } for e in plan_de_cours.evaluations
+            ],
+        }
+        return jsonify(result)
+
+    except OpenAIError:
+        current_app.logger.exception("OpenAI error in import_docx")
+        return jsonify({'success': False, 'message': 'Erreur API OpenAI'}), 500
+    except Exception:
+        current_app.logger.exception("Internal error in import_docx")
+        return jsonify({'success': False, 'message': 'Erreur interne'}), 500
 
 @plan_de_cours_bp.route('/generate_content', methods=['POST'])
 @login_required
