@@ -23,3 +23,4 @@ src/scripts/extraction.log
 /src/txt_outputs
 /src/static/docs
 /src/flask_sessions/
+docker-compose.override.yml
