@@ -1,0 +1,58 @@
+/* Container and layout */
+.graph-container {
+  width: 100%;
+  height: calc(100vh - 220px);
+  border-radius: 10px;
+  background: #fafafa;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.05);
+  position: relative;
+}
+.graph-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Legend */
+.legend { color: #555; display: flex; gap: 16px; align-items: center; }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.legend-comp { background: #6c63ff; }
+.legend-s1 { background: #00bcd4; }
+.legend-s2 { background: #009688; }
+.legend-line { width: 24px; height: 0; border-top: 3px solid #999; display: inline-block; }
+.legend-dev { border-color: #0d6efd; }
+.legend-att { border-color: #198754; }
+.legend-rei { border-color: #6c757d; }
+
+/* Nodes */
+.node-label { font: 12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; fill: #222; }
+.node { cursor: ns-resize; }
+.node:active { cursor: ns-resize; }
+.node.comp circle { fill: #6c63ff; }
+.node .shadow { filter: drop-shadow(0 1px 2px rgba(0,0,0,.15)); }
+
+/* Links */
+.link { fill: none; stroke-width: 2.5px; opacity: 0.85; }
+.link.developpe { stroke: #0d6efd; }
+.link.atteint { stroke: #198754; }
+.link.reinvesti { stroke: #6c757d; }
+.link.dim { opacity: 0.15; }
+
+/* Hover/Focus */
+.node.highlight circle,
+.node.highlight rect { stroke: #111; stroke-width: 2px; }
+.node.dim { opacity: 0.25; }
+
+/* Column guides */
+.col-guide { stroke: rgba(0,0,0,.07); stroke-dasharray: 4 4; }
+.col-title { font: 12px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; fill: #666; }
+
+/* Hide in-page SVG legend, but it will appear in exported SVG/PNG (style not embedded) */
+.svg-legend { display: none; }
+
+/* Info panel sizing (smaller, lighter) */
+#infoPanel { font-size: 12px; padding: 6px !important; min-width: 200px !important; max-width: 260px; max-height: 140px !important; overflow: hidden; }
+#infoPanel .btn { padding: 2px 6px; font-size: 11px; }
+#infoPanel strong { font-weight: 600; }
+/* Scroll inside the body to keep panel short */
+#infoBody { max-height: 96px !important; overflow: auto; }

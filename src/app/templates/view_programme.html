@@ -15,6 +15,9 @@
           <a href="{{ url_for('programme.view_competences_programme', programme_id=programme.id) }}" class="btn btn-sm btn-outline-info">
             <i class="fas fa-list-ul"></i> Voir les compétences
           </a>
+          <a href="{{ url_for('programme.competence_logigramme', programme_id=programme.id) }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-graph-up"></i> Logigramme compétences
+          </a>
           {% if current_user.role in ['admin', 'coordo'] %}
           <a href="{{ url_for('grille_bp.import_grille') }}" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-file-import"></i> Importer une grille

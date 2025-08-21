@@ -1,0 +1,71 @@
+{% extends 'index.html' %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/competence_logigramme.css') }}">
+{% endblock %}
+
+{% block programmes_specific %}
+<div class="container-fluid mt-3">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <h4 class="mb-0">Logigramme des compétences — {{ programme.nom }}</h4>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <!-- Mode timeline retiré pour le moment -->
+      <div class="btn-group btn-group-sm" role="group" aria-label="Filtrer les liens">
+        <input type="checkbox" class="btn-check" id="toggleDeveloppee" checked>
+        <label class="btn btn-outline-primary" for="toggleDeveloppee">Développé signif.</label>
+
+        <input type="checkbox" class="btn-check" id="toggleAtteinte" checked>
+        <label class="btn btn-outline-success" for="toggleAtteinte">Atteinte</label>
+
+        <input type="checkbox" class="btn-check" id="toggleReinvesti" checked>
+        <label class="btn btn-outline-secondary" for="toggleReinvesti">Réinvesti</label>
+      </div>
+      <div class="input-group input-group-sm" style="width: 280px;">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input id="searchBox" type="search" class="form-control" placeholder="Rechercher compétence ou cours">
+      </div>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Zoom">
+        <button id="zoomInBtn" class="btn btn-outline-secondary" title="Zoom avant"><i class="bi bi-zoom-in"></i></button>
+        <button id="zoomOutBtn" class="btn btn-outline-secondary" title="Zoom arrière"><i class="bi bi-zoom-out"></i></button>
+        <button id="resetViewBtn" class="btn btn-outline-secondary" title="Réinitialiser la vue"><i class="bi bi-aspect-ratio"></i></button>
+      </div>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Export">
+        <button id="exportSvgBtn" class="btn btn-outline-secondary"><i class="bi bi-filetype-svg"></i> SVG</button>
+        <button id="exportPngBtn" class="btn btn-outline-secondary"><i class="bi bi-filetype-png"></i> PNG</button>
+      </div>
+      <a href="{{ url_for('programme.view_programme', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Programme
+      </a>
+    </div>
+  </div>
+
+  <div class="legend small mb-2" id="legendBar">
+    <span class="legend-item"><span class="legend-dot legend-comp"></span> Compétence</span>
+    <span class="legend-item"><span class="legend-line legend-dev"></span> Dév. signif.</span>
+    <span class="legend-item"><span class="legend-line legend-att"></span> Atteint</span>
+    <span class="legend-item"><span class="legend-line legend-rei"></span> Réinvesti</span>
+    <span class="legend-item">Fils:</span>
+    <span id="filLegend"></span>
+  </div>
+
+  <div id="graphContainer" class="graph-container">
+    <svg id="competenceGraph" class="graph-svg" preserveAspectRatio="xMinYMin meet"></svg>
+  </div>
+
+  <div id="infoPanel" class="card shadow-sm p-2" style="display:none; z-index:1200;">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+      <strong id="infoTitle">Détails</strong>
+      <button id="infoClose" class="btn btn-sm btn-outline-secondary">Fermer</button>
+    </div>
+    <div id="infoBody" class="small"></div>
+  </div>
+</div>
+
+<script>
+  window.COMPETENCE_MAP_DATA = {{ data|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/competence_logigramme.js') }}"></script>
+{% endblock %}

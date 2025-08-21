@@ -40,6 +40,149 @@ logger = logging.getLogger(__name__)
 
 programme_bp = Blueprint('programme', __name__, url_prefix='/programme')
 
+@programme_bp.route('/<int:programme_id>/competences/logigramme')
+@login_required
+@ensure_profile_completed
+def competence_logigramme(programme_id):
+    """
+    Vue interactive: logigramme des compétences reliées aux cours d'un programme,
+    visualisant la progression par session et les liens développée/atteinte.
+    """
+    logger.debug(f"Accessing competence logigramme for programme ID: {programme_id}")
+    programme = Programme.query.get_or_404(programme_id)
+
+    # Vérifier l’accès
+    if programme not in current_user.programmes and current_user.role != 'admin':
+        flash("Vous n'avez pas accès à ce programme.", 'danger')
+        return redirect(url_for('main.index'))
+
+    # Collecte des cours + sessions via l'objet d'association CoursProgramme
+    course_items = []
+    course_ids = []
+    for assoc in programme.cours_assocs:
+        c = assoc.cours
+        if not c:
+            continue
+        course_ids.append(c.id)
+        course_items.append({
+            'id': c.id,
+            'code': c.code,
+            'nom': c.nom,
+            'session': assoc.session or 0,
+            'fil_color': (c.fil_conducteur.couleur if getattr(c, 'fil_conducteur', None) and c.fil_conducteur.couleur else None),
+            'fil_id': (c.fil_conducteur.id if getattr(c, 'fil_conducteur', None) else None),
+            'fil_desc': (c.fil_conducteur.description if getattr(c, 'fil_conducteur', None) else None),
+        })
+
+    # Compétences associées au programme
+    competences = (
+        programme
+        .competences
+        .order_by(Competence.code)
+        .all()
+    )
+    comp_items = [{'id': comp.id, 'code': comp.code, 'nom': comp.nom} for comp in competences]
+    comp_ids = {c['id'] for c in comp_items}
+
+    # Liens Compétence ↔ Cours
+    # 1) Basé sur les éléments de compétence par cours et leur statut
+    #    Statuts possibles: "Réinvesti", "Atteint", "Développé significativement"
+    #    On agrège par (cours_id, competence_id) et on retient le statut dominant
+    #    selon la priorité: Développé significativement > Atteint > Réinvesti.
+    links = []
+    if course_ids:
+        from ..models import CompetenceParCours, ElementCompetenceParCours, ElementCompetence  # import local pour éviter cycles
+
+        # Agrégation par (cours_id, competence_id)
+        agg = {}
+        q = (
+            db.session.query(ElementCompetenceParCours.cours_id,
+                             ElementCompetence.competence_id,
+                             ElementCompetenceParCours.status)
+            .join(ElementCompetence, ElementCompetenceParCours.element_competence_id == ElementCompetence.id)
+            .filter(ElementCompetenceParCours.cours_id.in_(course_ids))
+        )
+        for cours_id, competence_id, status in q.all():
+            if competence_id not in comp_ids:
+                continue
+            key = (cours_id, competence_id)
+            d = agg.setdefault(key, {"reinvesti": 0, "atteint": 0, "developpe": 0, "total": 0})
+            s = (status or '').strip().lower()
+            if 'significativement' in s or 'développ' in s or 'developpe' in s:
+                d['developpe'] += 1
+            elif 'atteint' in s:
+                d['atteint'] += 1
+            elif 'réinvesti' in s or 'reinvesti' in s:
+                d['reinvesti'] += 1
+            d['total'] += 1
+
+        # Construire les liens à partir de l'agrégation
+        for (cours_id, competence_id), counts in agg.items():
+            if counts['developpe'] > 0:
+                ltype = 'developpe'
+            elif counts['atteint'] > 0:
+                ltype = 'atteint'
+            elif counts['reinvesti'] > 0:
+                ltype = 'reinvesti'
+            else:
+                continue
+            links.append({
+                'competence_id': competence_id,
+                'cours_id': cours_id,
+                'type': ltype,
+                'weight': counts['total'],
+                'counts': counts,
+            })
+
+        # 2) Compléter avec CompetenceParCours si aucun élément détaillé (fallback)
+        rows = CompetenceParCours.query.filter(CompetenceParCours.cours_id.in_(course_ids)).all()
+        seen = {(l['cours_id'], l['competence_id']) for l in links}
+        for r in rows:
+            if r.competence_developpee_id and r.competence_developpee_id in comp_ids:
+                key = (r.cours_id, r.competence_developpee_id)
+                if key not in seen:
+                    links.append({
+                        'competence_id': r.competence_developpee_id,
+                        'cours_id': r.cours_id,
+                        'type': 'developpe',
+                        'weight': 1,
+                        'counts': {'developpe': 1, 'atteint': 0, 'reinvesti': 0, 'total': 1}
+                    })
+            if r.competence_atteinte_id and r.competence_atteinte_id in comp_ids:
+                key = (r.cours_id, r.competence_atteinte_id)
+                if key not in seen:
+                    links.append({
+                        'competence_id': r.competence_atteinte_id,
+                        'cours_id': r.cours_id,
+                        'type': 'atteint',
+                        'weight': 1,
+                        'counts': {'developpe': 0, 'atteint': 1, 'reinvesti': 0, 'total': 1}
+                    })
+
+    # Sessions présentes (pour colonnes)
+    sessions = sorted({int(c['session']) for c in course_items if c['session'] is not None})
+    if not sessions:
+        sessions = [0]
+
+    # Dictionnaire des fils conducteurs présents
+    fils = {}
+    for c in course_items:
+        if c.get('fil_id'):
+            fid = c['fil_id']
+            if fid not in fils:
+                fils[fid] = {'id': fid, 'description': c.get('fil_desc'), 'couleur': c.get('fil_color')}
+
+    data = {
+        'programme': {'id': programme.id, 'nom': programme.nom},
+        'competences': comp_items,
+        'cours': course_items,
+        'links': links,
+        'sessions': sessions,
+        'fils': list(fils.values())
+    }
+
+    return render_template('programme/competence_logigramme.html', programme=programme, data=data)
+
 @programme_bp.route('/<int:programme_id>/competences')
 @login_required
 @ensure_profile_completed
