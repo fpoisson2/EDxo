@@ -525,7 +525,7 @@ def view_programme(programme_id):
     logger.debug(f"User programmes: {[p.id for p in current_user.programmes]}")
     
     # Récupérer le programme
-    programme = Programme.query.get(programme_id)
+    programme = db.session.get(Programme, programme_id)
     if not programme:
         flash('Programme non trouvé.', 'danger')
         return redirect(url_for('main.index'))
@@ -567,7 +567,7 @@ def view_programme(programme_id):
             # Récupérer le username de l'utilisateur si modified_by_id existe
             modified_username = None
             if dernier_plan.modified_by_id:
-                user = User.query.get(dernier_plan.modified_by_id)
+                user = db.session.get(User, dernier_plan.modified_by_id)
                 modified_username = user.username if user else None
 
             cours.dernier_plan = {
@@ -705,7 +705,7 @@ def delete_competence(competence_id):
     delete_form = DeleteForm(prefix=f"competence-{competence_id}")
 
     if delete_form.validate_on_submit():
-        competence = Competence.query.get(competence_id)
+        competence = db.session.get(Competence, competence_id)
         if not competence:
             flash('Compétence non trouvée.', 'danger')
             return redirect(url_for('main.index'))
@@ -744,7 +744,7 @@ def view_competence_by_code(competence_code):
 @ensure_profile_completed
 def view_competence(competence_id):
     # Récupération de la compétence + programme lié
-    competence = Competence.query.get(competence_id)
+    competence = db.session.get(Competence, competence_id)
     if not competence:
         flash('Compétence non trouvée.', 'danger')
         return redirect(url_for('main.index'))

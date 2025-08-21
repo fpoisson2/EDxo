@@ -307,7 +307,20 @@ function getDiffPayload(el) {
   const row = el.closest('.row');
   const script = row ? row.querySelector('.diff-data') : null;
   if (script) {
-    try { return JSON.parse(script.textContent || '{}'); } catch (_) {}
+    try {
+      const obj = JSON.parse(script.textContent || '{}');
+      // Normalize escaped sequences from upstream (e.g., literal "\n" in strings)
+      const normalize = (v) => {
+        if (v == null) return '';
+        if (typeof v !== 'string') return v;
+        // Convert two-character sequences to actual control chars
+        return v
+          .replace(/\\r\\n/g, '\n')
+          .replace(/\\n/g, '\n')
+          .replace(/\\t/g, '\t');
+      };
+      return { before: normalize(obj.before), after: normalize(obj.after) };
+    } catch (_) {}
   }
   return { before: el.getAttribute('data-before') || '', after: el.getAttribute('data-after') || '' };
 }

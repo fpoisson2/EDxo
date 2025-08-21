@@ -265,8 +265,10 @@ class ImportPlanDeCoursResponse(BaseModel):
 
 
 DEFAULT_IMPORT_PROMPT = (
-    "Tu es un assistant pédagogique. Analyse le plan de cours fourni (texte brut extrait d'un DOCX) "
-    "et retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes):\n"
+    "Tu es un assistant pédagogique. Analyse le plan de cours fourni (texte brut extrait d'un DOCX). "
+    "Le texte peut contenir des tableaux rendus en Markdown, encadrés par ‘TABLE n:’ et ‘ENDTABLE’. "
+    "TIENS ABSOLUMENT COMPTE du contenu des tableaux (ils prévalent sur le texte libre en cas de doublon). "
+    "Retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes):\n"
     "{{\n"
     "  'presentation_du_cours': str | null,\n"
     "  'objectif_terminal_du_cours': str | null,\n"
@@ -287,10 +289,10 @@ DEFAULT_IMPORT_PROMPT = (
     "Si certaines données sont introuvables dans le texte, mets la valeur à null. \n"
     "Important: Renvoie uniquement le JSON, sans texte avant ou après.\n"
     "Consignes d'extraction précises: \n"
-    "- Repère les sections intitulées 'ÉVALUATION(S) SOMMATIVE(S)', 'Évaluations sommatives', 'Évaluation sommative des apprentissages', 'MODALITÉS D’ÉVALUATION DES APPRENTISSAGES'.\n"
-    "- Pour chaque évaluation (ex.: 'Rapport de laboratoire #1', 'Examen pratique #1', 'Projet'), extrais: titre_evaluation, description si présente, semaine si indiquée (sinon null).\n"
-    "- Si un tableau ou une ligne indique des pondérations par capacité (ex.: Capacité 1, 2, 3), crée 'capacites' avec des objets {{ 'capacite': 'Capacité X', 'ponderation': 'NN%' }}.\n"
-    "- Si la semaine de tenue est uniquement mentionnée dans le calendrier (rubrique 'Calendrier des activités'), recoupe pour remplir le champ 'semaine' lorsque possible.\n"
+    "- Les tableaux (Markdown) peuvent décrire le calendrier: colonnes typiques ‘Semaine’, ‘Sujet’, ‘Activités’, ‘Travaux hors classe’, ‘Évaluations’. Mappe chaque ligne vers 'calendriers'.\n"
+    "- Pour les évaluations, repère les sections intitulées 'ÉVALUATION(S) SOMMATIVE(S)', 'Évaluations sommatives', 'Évaluation sommative des apprentissages', 'MODALITÉS D’ÉVALUATION DES APPRENTISSAGES'.\n"
+    "  Les tableaux d’évaluation peuvent indiquer ‘Titre’, ‘Description’, ‘Semaine’, et des pondérations par ‘Capacité’. Crée les objets 'evaluations' et leurs 'capacites' avec les pondérations correspondantes.\n"
+    "- Si la semaine est uniquement mentionnée dans le calendrier, recoupe pour remplir 'semaine' lorsque possible.\n"
     "- Conserve la casse et le libellé exacts des titres d’évaluations lorsqu’ils apparaissent explicitement.\n\n"
     "Contexte: cours {cours_code} - {cours_nom}, session {session}.\n"
     "Texte du plan de cours:\n---\n{doc_text}\n---\n"
@@ -298,30 +300,48 @@ DEFAULT_IMPORT_PROMPT = (
 
 
 def _read_docx_text(file_storage) -> str:
-    """Extraction améliorée du texte d'un DOCX avec structure légère.
+    """Extraction enrichie du texte d'un DOCX avec tables.
 
     - Conserve un saut de ligne entre les paragraphes ("\n\n").
     - Préfixe les titres (Heading1..6) avec des dièses Markdown (#).
     - Préfixe les listes (paragraphe avec numPr) avec "- ".
+    - Extrait les tableaux (w:tbl) dans l'ordre du document et les rend en Markdown
+      avec un séparateur d'entête, pour aider les modèles à lire les colonnes.
     """
+    # Sécuriser l'accès au flux
     try:
-        file_storage.stream.seek(0)
+        if hasattr(file_storage, 'stream'):
+            try:
+                file_storage.stream.seek(0)
+            except Exception:
+                pass
+            zf = zipfile.ZipFile(file_storage.stream)
+        else:
+            try:
+                file_storage.seek(0)
+            except Exception:
+                pass
+            zf = zipfile.ZipFile(file_storage)
     except Exception:
-        pass
-    with zipfile.ZipFile(file_storage.stream if hasattr(file_storage, 'stream') else file_storage) as z:
-        try:
-            data = z.read('word/document.xml')
-        except KeyError:
-            return ''
-    soup = BeautifulSoup(data, 'xml')
-    lines: List[str] = []
+        return ''
 
-    for p in soup.find_all('w:p'):
+    try:
+        data = zf.read('word/document.xml')
+    except KeyError:
+        return ''
+    finally:
+        try:
+            zf.close()
+        except Exception:
+            pass
+
+    soup = BeautifulSoup(data, 'xml')
+
+    def para_to_text(p) -> str:
         texts = [t.get_text(strip=True) for t in p.find_all('w:t')]
         text = ' '.join([t for t in texts if t]).strip()
         if not text:
-            continue
-
+            return ''
         prefix = ''
         ppr = p.find('w:pPr')
         if ppr:
@@ -338,8 +358,56 @@ def _read_docx_text(file_storage) -> str:
                     prefix = '#' * max(1, min(lvl, 6)) + ' '
             if ppr.find('w:numPr') is not None and not prefix:
                 prefix = '- '
+        return f"{prefix}{text}" if text else ''
 
-        lines.append(f"{prefix}{text}")
+    def cell_text(tc) -> str:
+        texts = [t.get_text(strip=True) for t in tc.find_all('w:t')]
+        return ' '.join([t for t in texts if t]).strip()
+
+    def table_to_markdown(tbl, idx: int) -> str:
+        rows = []
+        for tr in tbl.find_all('w:tr', recursive=False):
+            row = []
+            for tc in tr.find_all('w:tc', recursive=False):
+                row.append(cell_text(tc))
+            # Skip empty trailing rows
+            if any(cell.strip() for cell in row):
+                rows.append(row)
+        if not rows:
+            return ''
+        # Normalize width
+        width = max((len(r) for r in rows), default=0)
+        rows = [r + [''] * (width - len(r)) for r in rows]
+        out = []
+        out.append(f"TABLE {idx}:")
+        # Assume first row header if it looks like labels
+        header = rows[0]
+        out.append('| ' + ' | '.join(h or '' for h in header) + ' |')
+        out.append('|' + '|'.join([' --- ' for _ in header]) + '|')
+        for r in rows[1:]:
+            out.append('| ' + ' | '.join(c or '' for c in r) + ' |')
+        out.append('ENDTABLE')
+        return '\n'.join(out)
+
+    # Parcourir le corps pour conserver l'ordre p/tbl
+    body = soup.find('w:body')
+    if not body:
+        return ''
+    lines: List[str] = []
+    table_count = 0
+    for el in body.children:
+        if getattr(el, 'name', None) == 'w:p':
+            t = para_to_text(el)
+            if t:
+                lines.append(t)
+        elif getattr(el, 'name', None) == 'w:tbl':
+            table_count += 1
+            md = table_to_markdown(el, table_count)
+            if md:
+                # Encadrer par des sauts de ligne pour séparation claire
+                lines.append(md)
+        else:
+            continue
 
     return '\n\n'.join(lines)
 
@@ -738,7 +806,7 @@ def generate_content():
         }), 400
 
     # Récupérer le cours
-    cours = Cours.query.get(cours_id)
+    cours = db.session.get(Cours, cours_id)
     if not cours:
         return jsonify({'error': 'Cours non trouvé.'}), 404
 
@@ -1165,7 +1233,7 @@ def view_plan_de_cours(cours_id, session=None):
     copy_from_id = request.args.get('copy_from')
     source_plan = None
     if copy_from_id:
-        source_plan = PlanDeCours.query.get(copy_from_id)
+        source_plan = db.session.get(PlanDeCours, copy_from_id)
         if not source_plan:
             flash("Plan de cours source introuvable.", "error")
             return redirect(url_for('programme.view_programme', programme_id=cours.programme_id))

@@ -531,7 +531,7 @@ def programmes():
 @with_app_context
 def programme_courses(programme_id: int):
     """Cours associés à un programme."""
-    programme = Programme.query.get(programme_id)
+    programme = db.session.get(Programme, programme_id)
     if not programme:
         raise ValueError("Programme introuvable")
     return [{"id": c.id, "code": c.code, "nom": c.nom} for c in programme.cours]
@@ -547,7 +547,7 @@ def programme_competences(programme_id: int):
 @with_app_context
 def competence_details(competence_id: int):
     """Détails d'une compétence."""
-    comp = Competence.query.get(competence_id)
+    comp = db.session.get(Competence, competence_id)
     if not comp:
         raise ValueError("Compétence introuvable")
     elements = [
@@ -574,7 +574,7 @@ def cours():
 @with_app_context
 def cours_details(cours_id: int):
     """Informations sur un cours."""
-    cours_obj = Cours.query.get(cours_id)
+    cours_obj = db.session.get(Cours, cours_id)
     if not cours_obj:
         raise ValueError("Cours introuvable")
     return {"id": cours_obj.id, "code": cours_obj.code, "nom": cours_obj.nom}
@@ -597,7 +597,7 @@ def cours_plans_de_cours(cours_id: int):
 @with_app_context
 def plan_cadre_section(plan_id: int, section: str):
     """Récupère une section spécifique d'un plan cadre."""
-    plan = PlanCadre.query.get(plan_id)
+    plan = db.session.get(PlanCadre, plan_id)
     if not plan or not hasattr(plan, section):
         raise ValueError("Section inconnue")
     return {section: getattr(plan, section)}
@@ -840,7 +840,7 @@ def fetch(id: str):
     except Exception:
         pass
     if kind == "programme":
-        p = Programme.query.get(_id)
+        p = db.session.get(Programme, _id)
         if not p:
             logger.info("MCP: programme introuvable", extra={"id": id})
             raise ValueError("programme introuvable")
@@ -861,7 +861,7 @@ def fetch(id: str):
             "metadata": meta,
         }
     if kind == "cours":
-        c = Cours.query.get(_id)
+        c = db.session.get(Cours, _id)
         if not c:
             logger.info("MCP: cours introuvable", extra={"id": id})
             raise ValueError("cours introuvable")
@@ -882,7 +882,7 @@ def fetch(id: str):
             "metadata": {"code": c.code, "nom": c.nom, **meta}
         }
     if kind == "plan_cadre":
-        pc = PlanCadre.query.get(_id)
+        pc = db.session.get(PlanCadre, _id)
         if not pc:
             logger.info("MCP: plan_cadre introuvable", extra={"id": id})
             raise ValueError("plan_cadre introuvable")
@@ -897,7 +897,7 @@ def fetch(id: str):
             "metadata": pc.to_dict() if hasattr(pc, "to_dict") else {"id": pc.id, "cours_id": pc.cours_id},
         }
     if kind == "plan_de_cours":
-        pdc = PlanDeCours.query.get(_id)
+        pdc = db.session.get(PlanDeCours, _id)
         if not pdc:
             logger.info("MCP: plan_de_cours introuvable", extra={"id": id})
             raise ValueError("plan_de_cours introuvable")
@@ -916,7 +916,7 @@ def fetch(id: str):
             "metadata": pdc.to_dict() if hasattr(pdc, "to_dict") else {"id": pdc.id, "cours_id": pdc.cours_id},
         }
     if kind == "competence":
-        comp = Competence.query.get(_id)
+        comp = db.session.get(Competence, _id)
         if not comp:
             logger.info("MCP: competence introuvable", extra={"id": id})
             raise ValueError("compétence introuvable")

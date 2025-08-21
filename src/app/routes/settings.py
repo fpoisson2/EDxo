@@ -78,7 +78,7 @@ def manage_openai_models():
 @role_required('admin')
 def delete_openai_model(model_id):
     """Supprime un modèle OpenAI."""
-    model = OpenAIModel.query.get(model_id)
+    model = db.session.get(OpenAIModel, model_id)
     if model:
         db.session.delete(model)
         db.session.commit()
@@ -169,9 +169,9 @@ def edit_profile():
                 # Gérer les programmes
                 selected_ids = form.programmes.data
                 current_user.programmes = [
-                    Programme.query.get(int(pid)) 
+                    db.session.get(Programme, int(pid)) 
                     for pid in selected_ids 
-                    if Programme.query.get(int(pid))
+                    if db.session.get(Programme, int(pid))
                 ]
                 
                 db.session.commit()
@@ -485,7 +485,7 @@ def edit_global_generation_settings():
 
     if request.method == 'GET':
         # Récupérer la clé OpenAI de l'utilisateur connecté via SQLAlchemy
-        user = User.query.get(current_user.id)
+        user = db.session.get(User, current_user.id)
         if user:
             form.openai_key.data = user.openai_key
 

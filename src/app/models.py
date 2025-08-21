@@ -261,7 +261,7 @@ class User(UserMixin, db.Model):
             token_reset_version = data.get('reset_version')
         except Exception:
             return None
-        user = User.query.get(user_id)
+        user = db.session.get(User, user_id)
         # Vérifier que la version du token correspond à celle de l'utilisateur
         if user and user.reset_version == token_reset_version:
             return user

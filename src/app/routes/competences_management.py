@@ -97,7 +97,7 @@ def add_element_competence():
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_element_competence(element_id):
-    element = ElementCompetence.query.get(element_id)
+    element = db.session.get(ElementCompetence, element_id)
     if not element:
         flash('Élément de compétence non trouvé.', 'danger')
         return redirect(url_for('main.index'))

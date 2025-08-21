@@ -198,7 +198,7 @@ def _extract_first_parsed(response):
 def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_model: str, user_id: int):
     """Celery task: parse DOCX text via OpenAI, update PlanDeCours and return UI payload."""
     try:
-        plan = PlanDeCours.query.get(plan_de_cours_id)
+        plan = db.session.get(PlanDeCours, plan_de_cours_id)
         if not plan:
             return {"status": "error", "message": "Plan de cours non trouvé."}
 
@@ -219,8 +219,10 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
         # Note: escape all literal braces in the JSON example ({{ and }})
         # so that .format only processes our named placeholders below.
         prompt = (
-            "Tu es un assistant pédagogique. Analyse le plan de cours fourni (texte brut extrait d'un DOCX) "
-            "et retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes):\n"
+            "Tu es un assistant pédagogique. Analyse le plan de cours fourni (texte brut extrait d'un DOCX). "
+            "Le texte peut contenir des tableaux rendus en Markdown, encadrés par ‘TABLE n:’ et ‘ENDTABLE’. "
+            "TIENS ABSOLUMENT COMPTE du contenu des tableaux (ils prévalent sur le texte libre en cas de doublon). "
+            "Retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes):\n"
             "{{\n"
             "  'presentation_du_cours': str | null,\n"
             "  'objectif_terminal_du_cours': str | null,\n"
@@ -238,6 +240,11 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
             "  'mediagraphies': [ {{ 'reference_bibliographique': str | null }} ],\n"
             "  'evaluations': [ {{ 'titre_evaluation': str | null, 'description': str | null, 'semaine': int | null, 'capacites': [ {{ 'capacite': str | null, 'ponderation': str | null }} ] }} ]\n"
             "}}\n\n"
+            "Consignes spécifiques aux tableaux:\n"
+            "- Les tableaux (Markdown) peuvent décrire le calendrier: colonnes typiques ‘Semaine’, ‘Sujet’, ‘Activités’, ‘Travaux hors classe’, ‘Évaluations’. Mappe chaque ligne vers un objet dans 'calendriers'.\n"
+            "- Les tableaux d’évaluation peuvent indiquer des ‘Titre’, ‘Description’, ‘Semaine’, et des pondérations par ‘Capacité’.\n"
+            "  Dans ce cas, crée des objets 'evaluations' et, pour chaque capacité, ajoute {{ 'capacite': libellé exact, 'ponderation': valeur }}.\n"
+            "- Si une information n’est pas trouvée, mets null. Si conflit tableau/texte, privilégie le tableau.\n\n"
             "Contexte: cours {cours_code} - {cours_nom}, session {session}.\n"
             "Texte du plan de cours:\n---\n{doc_text}\n---\n"
         ).format(

@@ -55,55 +55,131 @@ plan_cadre_bp = Blueprint('plan_cadre', __name__, url_prefix='/plan_cadre')
 
 
 def _read_docx_text(file_storage) -> str:
-    """Extraction améliorée du texte d'un DOCX avec structure légère.
+    """Extraction robuste du texte d'un DOCX avec tables Markdown.
 
-    - Conserve un saut de ligne entre les paragraphes ("\n\n").
-    - Préfixe les titres (Heading1..6) avec des dièses Markdown (#).
-    - Préfixe les listes (paragraphe avec numPr) avec "- ".
+    - Lit le document de manière sûre (BytesIO si nécessaire).
+    - Rend les paragraphes avec titres/listes.
+    - Rend les tableaux en Markdown avec une ligne d'entête et un séparateur.
     """
+    # Lire les octets du fichier de façon sûre
     try:
-        file_storage.stream.seek(0)
+        if hasattr(file_storage, 'stream'):
+            try:
+                file_storage.stream.seek(0)
+            except Exception:
+                pass
+            data_bytes = file_storage.stream.read()
+        else:
+            try:
+                file_storage.seek(0)
+            except Exception:
+                pass
+            data_bytes = file_storage.read()
     except Exception:
-        pass
-    with zipfile.ZipFile(file_storage.stream if hasattr(file_storage, 'stream') else file_storage) as z:
-        try:
+        return ''
+
+    if not data_bytes:
+        return ''
+
+    # Ouvrir le zip à partir d'un buffer mémoire
+    try:
+        with zipfile.ZipFile(BytesIO(data_bytes)) as z:
             data = z.read('word/document.xml')
-        except KeyError:
-            return ''
+    except Exception:
+        return ''
+
     soup = BeautifulSoup(data, 'xml')
-    lines = []
 
-    for p in soup.find_all('w:p'):
-        texts = [t.get_text(strip=True) for t in p.find_all('w:t')]
-        text = ' '.join([t for t in texts if t]).strip()
+    def _with_soft_breaks(node) -> str:
+        parts = []
+        # Walk only relevant descendants in order to preserve soft line breaks
+        for el in node.descendants:
+            name = getattr(el, 'name', None)
+            if name == 'w:t':
+                parts.append(el.get_text())
+            elif name in ('w:br', 'w:cr'):  # explicit line breaks inside a paragraph/cell
+                parts.append('\n')
+        # Join while preserving explicit newlines, then normalize whitespace around
+        s = ''.join(parts)
+        # Collapse spaces around newlines but keep the line breaks
+        s = '\n'.join([' '.join(line.split()) for line in s.splitlines()])
+        return s.strip()
+
+    def para_to_text(p) -> str:
+        text = _with_soft_breaks(p)
         if not text:
-            continue
-
+            return ''
         prefix = ''
-        # Détecter les styles de paragraphe (titres)
         ppr = p.find('w:pPr')
         if ppr:
-            # Titres
             pstyle = ppr.find('w:pStyle')
             if pstyle:
                 val = pstyle.get('w:val') or pstyle.get('val') or ''
                 lvl = None
                 if isinstance(val, str) and val.lower().startswith('heading'):
-                    # Heading1..Heading6
                     try:
                         lvl = int(''.join(ch for ch in val if ch.isdigit()) or '1')
                     except Exception:
                         lvl = 1
                 if lvl:
                     prefix = '#' * max(1, min(lvl, 6)) + ' '
-            # Listes (numérotation/puces)
             if ppr.find('w:numPr') is not None and not prefix:
                 prefix = '- '
+        return f"{prefix}{text}" if text else ''
 
-        lines.append(f"{prefix}{text}")
+    def cell_text(tc) -> str:
+        # Preserve in-cell soft breaks as actual newlines
+        return _with_soft_breaks(tc)
 
-    # Laisser une ligne vide entre les paragraphes pour aider la détection de sections
-    return '\n\n'.join(lines)
+    def table_to_markdown(tbl, idx: int) -> str:
+        rows = []
+        for tr in tbl.find_all('w:tr', recursive=False):
+            row = []
+            for tc in tr.find_all('w:tc', recursive=False):
+                row.append(cell_text(tc))
+            if any(cell.strip() for cell in row):
+                rows.append(row)
+        if not rows:
+            return ''
+        width = max((len(r) for r in rows), default=0)
+        rows = [r + [''] * (width - len(r)) for r in rows]
+        out = []
+        out.append(f"TABLE {idx}:")
+        header = rows[0]
+        out.append('| ' + ' | '.join(h or '' for h in header) + ' |')
+        out.append('|' + '|'.join([' --- ' for _ in header]) + '|')
+        for r in rows[1:]:
+            out.append('| ' + ' | '.join(c or '' for c in r) + ' |')
+        out.append('ENDTABLE')
+        return '\n'.join(out)
+
+    body = soup.find('w:body')
+    if not body:
+        # Fallback: return a simple concatenation of all text nodes
+        all_texts = [t.get_text(strip=True) for t in soup.find_all('w:t')]
+        simple = '\n'.join([t for t in all_texts if t])
+        return simple
+    lines = []
+    table_count = 0
+    for el in body.children:
+        if getattr(el, 'name', None) == 'w:p':
+            t = para_to_text(el)
+            if t:
+                lines.append(t)
+        elif getattr(el, 'name', None) == 'w:tbl':
+            table_count += 1
+            md = table_to_markdown(el, table_count)
+            if md:
+                lines.append(md)
+
+    out = '\n\n'.join(lines)
+    if not out.strip():
+        # Ultimate fallback: join every text run if structured parsing yielded nothing
+        all_texts = [t.get_text(strip=True) for t in soup.find_all('w:t')]
+        out = '\n'.join([t for t in all_texts if t])
+    # Normalize line ending variants
+    out = out.replace('\r\n', '\n').replace('\r', '\n')
+    return out
 
 @plan_cadre_bp.route('/<int:plan_id>/generate_content', methods=['POST'])
 @roles_required('admin', 'coordo')
@@ -113,7 +189,7 @@ def generate_plan_cadre_content(plan_id):
     from ...celery_app import celery
     from celery.result import AsyncResult
 
-    plan = PlanCadre.query.get(plan_id)
+    plan = db.session.get(PlanCadre, plan_id)
     if not plan:
         return jsonify(success=False, message='Plan Cadre non trouvé.')
 
@@ -178,7 +254,7 @@ def import_plan_cadre_docx_start(plan_id):
     # Utilise la tâche en mode "aperçu" pour permettre une comparaison avant application
     from ..tasks.import_plan_cadre import import_plan_cadre_preview_task
 
-    plan = PlanCadre.query.get(plan_id)
+    plan = db.session.get(PlanCadre, plan_id)
     if not plan:
         return jsonify(success=False, message='Plan-cadre non trouvé.'), 404
 
@@ -193,6 +269,11 @@ def import_plan_cadre_docx_start(plan_id):
     except Exception:
         current_app.logger.exception('Erreur lecture DOCX (plan-cadre)')
         return jsonify(success=False, message='Impossible de lire le DOCX.'), 400
+
+    # Refuser de lancer l'IA si le document semble vide/illisible
+    if not doc_text or not doc_text.strip():
+        current_app.logger.warning('Import DOCX plan-cadre: texte extrait vide (fichier=%s)', getattr(file, 'filename', '?'))
+        return jsonify(success=False, message='Le fichier .docx semble vide ou illisible.'), 400
 
     # Choisir le modèle (préfère la valeur du formulaire, sinon modèle du plan ou défaut)
     ai_model = (request.form.get('ai_model') or '').strip() or (plan.ai_model or 'gpt-5')
@@ -221,16 +302,16 @@ def review_improvement(plan_id):
     task_id = request.args.get('task_id')
     if not task_id:
         flash("Identifiant de tâche manquant.", 'danger')
-        return redirect(url_for('cours.view_plan_cadre', cours_id=PlanCadre.query.get(plan_id).cours_id, plan_id=plan_id))
+        return redirect(url_for('cours.view_plan_cadre', cours_id=db.session.get(PlanCadre, plan_id).cours_id, plan_id=plan_id))
 
     res = AsyncResult(task_id, app=celery)
     if res.state != 'SUCCESS' or not res.result or not res.result.get('preview'):
         flash("Aucune proposition d'amélioration trouvée pour cette tâche.", 'warning')
-        return redirect(url_for('cours.view_plan_cadre', cours_id=PlanCadre.query.get(plan_id).cours_id, plan_id=plan_id))
+        return redirect(url_for('cours.view_plan_cadre', cours_id=db.session.get(PlanCadre, plan_id).cours_id, plan_id=plan_id))
 
     proposed = res.result.get('proposed', {})
     reasoning_summary = res.result.get('reasoning_summary')
-    plan = PlanCadre.query.get(plan_id)
+    plan = db.session.get(PlanCadre, plan_id)
     if not plan:
         flash('Plan Cadre non trouvé.', 'danger')
         return redirect(url_for('main.index'))
@@ -259,6 +340,7 @@ def review_improvement(plan_id):
         'Description des Compétences certifiées': 'competences_certifiees',
         'Description des cours corequis': 'cours_corequis',
         'Description des cours préalables': 'cours_prealables',
+        'Description des cours reliés': 'cours_relies',
         'Objets cibles': 'objets_cibles'
     }
     for display_name, rel_attr in list_mappings.items():
@@ -333,7 +415,7 @@ def review_improvement(plan_id):
 def apply_improvement(plan_id):
     from ...celery_app import celery
     from celery.result import AsyncResult
-    plan = PlanCadre.query.get(plan_id)
+    plan = db.session.get(PlanCadre, plan_id)
     if not plan:
         flash('Plan Cadre non trouvé.', 'danger')
         return redirect(url_for('main.index'))
@@ -371,6 +453,7 @@ def apply_improvement(plan_id):
             'competences_certifiees': PlanCadreCompetencesCertifiees,
             'cours_corequis': PlanCadreCoursCorequis,
             'cours_prealables': PlanCadreCoursPrealables,
+            'cours_relies': PlanCadreCoursRelies,
             'objets_cibles': PlanCadreObjetsCibles
         }
         reverse_map = {
@@ -378,6 +461,7 @@ def apply_improvement(plan_id):
             'Description des Compétences certifiées': 'competences_certifiees',
             'Description des cours corequis': 'cours_corequis',
             'Description des cours préalables': 'cours_prealables',
+            'Description des cours reliés': 'cours_relies',
             'Objets cibles': 'objets_cibles'
         }
         # Actions possibles: keep | replace | merge (pour listes simples)
@@ -564,7 +648,7 @@ def apply_improvement(plan_id):
 @login_required
 @ensure_profile_completed
 def export_plan_cadre(plan_id):
-    plan_cadre = PlanCadre.query.get(plan_id)
+    plan_cadre = db.session.get(PlanCadre, plan_id)
     if not plan_cadre:
         flash('Plan Cadre non trouvé', 'danger')
         return redirect(url_for('main.index'))
@@ -592,7 +676,7 @@ def export_plan_cadre(plan_id):
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_plan_cadre(plan_id):
-    plan_cadre = PlanCadre.query.get(plan_id)
+    plan_cadre = db.session.get(PlanCadre, plan_id)
     if not plan_cadre:
         flash('Plan Cadre non trouvé.', 'danger')
         return redirect(url_for('main.index'))

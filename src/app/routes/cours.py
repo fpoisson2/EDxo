@@ -476,7 +476,7 @@ def view_plan_cadre(cours_id, plan_id):
                     # On cherche si cap_id dans les existants
                     if cap_id and cap_id.isdigit() and int(cap_id) in existing_cap_ids:
                         # Mettre à jour la cap existante
-                        existing_cap = PlanCadreCapacites.query.get(int(cap_id))
+                        existing_cap = db.session.get(PlanCadreCapacites, int(cap_id))
                         existing_cap.capacite = capacite_value
                         existing_cap.description_capacite = description_value
                         existing_cap.ponderation_min = pmin_int
@@ -591,7 +591,7 @@ def view_plan_cadre(cours_id, plan_id):
                 to_delete_ids = existing_cap_ids - new_cap_ids_handled
                 if to_delete_ids:
                     for cid in to_delete_ids:
-                        cap_to_del = PlanCadreCapacites.query.get(cid)
+                        cap_to_del = db.session.get(PlanCadreCapacites, cid)
                         if cap_to_del:
                             db.session.delete(cap_to_del)
 

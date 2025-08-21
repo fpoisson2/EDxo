@@ -219,7 +219,7 @@ def get_credit_balance():
         return jsonify({'error': 'Not authenticated'}), 401
         
     try:
-        user = User.query.get(current_user.id)
+        user = db.session.get(User, current_user.id)
         if user is None:
             return jsonify({'error': 'User not found'}), 404
             

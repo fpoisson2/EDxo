@@ -90,7 +90,7 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
             db.session.add(new_change)
         
         # Vérifier que le programme existe
-        programme = Programme.query.get(programme_id)
+        programme = db.session.get(Programme, programme_id)
         if not programme:
             logger.error(f"Programme avec ID {programme_id} introuvable")
             return False
@@ -270,7 +270,7 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
         all_prerequisites = CoursPrealable.query.filter_by(cours_prealable_id=0).all()
         for prereq in all_prerequisites:
             # Trouver le cours parent
-            parent_cours = Cours.query.get(prereq.cours_id)
+            parent_cours = db.session.get(Cours, prereq.cours_id)
             if parent_cours:
                 # Rechercher le code du cours préalable dans la grille JSON
                 for session_data in grille_data.get('sessions', []):
@@ -338,7 +338,7 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
         all_corequisites = CoursCorequis.query.filter_by(cours_corequis_id=0).all()
         for coreq in all_corequisites:
             # Trouver le cours parent
-            parent_cours = Cours.query.get(coreq.cours_id)
+            parent_cours = db.session.get(Cours, coreq.cours_id)
             if parent_cours:
                 # Rechercher le code du cours corequis dans la grille JSON
                 for session_data in grille_data.get('sessions', []):

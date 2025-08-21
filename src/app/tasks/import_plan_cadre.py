@@ -77,6 +77,22 @@ class ImportPlanCadreResponse(BaseModel):
     capacites: List[AICapacite] = Field(default_factory=list)
 
 
+def _sanitize_str(s: Optional[str]) -> Optional[str]:
+    """Convert literal escape sequences to real control chars and normalize EOLs.
+    - "\\n" or "\\r\\n" -> newline, "\\t" -> tab
+    - Normalize CRLF/CR to LF
+    - Trim trailing spaces on lines and outer whitespace
+    """
+    if s is None:
+        return None
+    if not isinstance(s, str):
+        s = str(s)
+    s = s.replace('\\r\\n', '\n').replace('\\n', '\n').replace('\\t', '\t')
+    s = s.replace('\r\n', '\n').replace('\r', '\n')
+    s = '\n'.join(line.rstrip() for line in s.split('\n'))
+    return s.strip()
+
+
 def _normalize_text(s: Optional[str]) -> str:
     if not s:
         return ''
@@ -222,11 +238,74 @@ def _fallback_fill_cible_seuil(doc_text: str, parsed: ImportPlanCadreResponse) -
                 sf.seuil_reussite = seuils[i]
 
 
+def _heuristic_extract_basic_fields(doc_text: str) -> dict:
+    """Extract minimal fields from raw text when AI returns nothing.
+
+    Searches for common French headings and captures paragraphs until the next
+    heading-like line. Returns a dict shaped like the preview 'proposed'.
+    """
+    if not doc_text or not isinstance(doc_text, str):
+        return {}
+
+    text = doc_text
+    # Common headings -> target keys
+    patterns = [
+        (r"(?im)^\s*#*\s*Place\s+du\s+cours.*$", 'place_intro'),
+        (r"(?im)^\s*#*\s*Objectif\s+terminal.*$", 'objectif_terminal'),
+        (r"(?im)^\s*#*\s*Structure.*intro.*$", 'structure_intro'),
+        (r"(?im)^\s*#*\s*(Activit[eé]s|Activites)\s+th[eé]oriques.*$", 'structure_activites_theoriques'),
+        (r"(?im)^\s*#*\s*(Activit[eé]s|Activites)\s+pratiques.*$", 'structure_activites_pratiques'),
+        (r"(?im)^\s*#*\s*(Activit[eé]s|Activites)\s+pr[eé]vues.*$", 'structure_activites_prevues'),
+        (r"(?im)^\s*#*\s*[ÉE]valuation\s+sommative.*$", 'eval_evaluation_sommative'),
+        (r"(?im)^\s*#*\s*Nature\s+des\s+[eé]valuations?\s+sommatives?.*$", 'eval_nature_evaluations_sommatives'),
+        (r"(?im)^\s*#*\s*[ÉE]valuation\s+de\s+la\s+langue.*$", 'eval_evaluation_de_la_langue'),
+        (r"(?im)^\s*#*\s*[ÉE]valuations?\s+sommatives?\s+des\s+apprentissages.*$", 'eval_evaluation_sommatives_apprentissages'),
+        (r"(?im)^\s*#*\s*Savoir[-\s]?être.*$", 'savoir_etre__list'),
+        (r"(?im)^\s*#*\s*Objets?\s+cibles?.*$", 'objets_cibles__list'),
+    ]
+
+    matches = []
+    for pat, key in patterns:
+        for m in re.finditer(pat, text):
+            matches.append((m.start(), m.end(), key))
+    if not matches:
+        return {}
+    matches.sort(key=lambda t: t[0])
+
+    out: dict = {}
+    for i, (start, end, key) in enumerate(matches):
+        next_start = matches[i + 1][0] if i + 1 < len(matches) else len(text)
+        body = text[end:next_start].strip()
+        if not body:
+            continue
+        if key.endswith('__list'):
+            items = []
+            for line in body.splitlines():
+                li = line.strip().lstrip('-•').strip()
+                if len(li) >= 3:
+                    items.append(li)
+            if items:
+                if key == 'savoir_etre__list':
+                    out['savoir_etre'] = items
+                elif key == 'objets_cibles__list':
+                    out.setdefault('fields_with_description', {})
+                    out['fields_with_description']['Objets cibles'] = [
+                        {'texte': it, 'description': ''} for it in items
+                    ]
+        else:
+            para = body.split('\n\n', 1)[0].strip()
+            if para:
+                out.setdefault('fields', {})
+                out['fields'][key] = para
+
+    return out
+
+
 @shared_task(bind=True, name='src.app.tasks.import_plan_cadre.import_plan_cadre_task')
 def import_plan_cadre_task(self, plan_cadre_id: int, doc_text: str, ai_model: str, user_id: int):
     """Celery task: analyse un DOCX (texte brut) et met à jour le PlanCadre."""
     try:
-        plan = PlanCadre.query.get(plan_cadre_id)
+        plan = db.session.get(PlanCadre, plan_cadre_id)
         if not plan:
             return {"status": "error", "message": "Plan-cadre non trouvé."}
 
@@ -243,10 +322,16 @@ def import_plan_cadre_task(self, plan_cadre_id: int, doc_text: str, ai_model: st
 
         # Prompt d'analyse du plan-cadre
         prompt = (
-            "Tu es un assistant pédagogique. Analyse le plan-cadre fourni (texte brut extrait d'un DOCX) "
-            "et retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes). "
-            "Si le document contient un tableau/section des paramètres de l’évaluation avec des colonnes/sections 'Cible' et 'Seuil', "
-            "associe chaque entrée aux 'savoirs_faire' correspondants de la même capacité (même ordre, 1:1) et renseigne 'cible' et 'seuil_reussite' (ne pas laisser null si l’information est présente).\n"
+            "Tu es un assistant pédagogique. Analyse le plan-cadre fourni (texte brut extrait d'un DOCX). "
+            "Le texte peut contenir des tableaux rendus en Markdown, encadrés par ‘TABLE n:’ et ‘ENDTABLE’. "
+            "TIENS ABSOLUMENT COMPTE du contenu des tableaux (ils prévalent sur le texte libre en cas de doublon). "
+            "Retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes). "
+            "Quand tu utilises des guillemets, emploie les guillemets français « » uniquement. "
+            'Conserve les paragraphes et retours de ligne réels; n\'insère PAS de littéraux "\\n" dans les champs texte (utilise de vrais sauts de ligne). '
+            "Si un tableau/section d’évaluation comporte des colonnes comme ‘Savoirs faire’, ‘Cible’, ‘Seuil’, ‘Pondération’, ou ‘Capacité’, "
+            "alors: (1) aligne chaque ligne sur un élément de 'savoirs_faire' de la même capacité (même ordre, 1:1), "
+            "(2) renseigne 'cible' et 'seuil_reussite' depuis les colonnes correspondantes si elles existent, "
+            "(3) déduis 'ponderation_min' et 'ponderation_max' de la plage ou des pourcentages indiqués pour la capacité.\n"
             "{{\n"
             "  'place_intro': str | null,\n"
             "  'objectif_terminal': str | null,\n"
@@ -275,6 +360,11 @@ def import_plan_cadre_task(self, plan_cadre_id: int, doc_text: str, ai_model: st
             "      'moyens_evaluation': [ str ]\n"
             "  }} ]\n"
             "}}\n\n"
+            "Règles:\n"
+            "- Si une information n’est pas trouvée, mets null.\n"
+            "- Si la même information apparaît à la fois en tableau et en texte libre, privilégie le tableau.\n"
+            "- Les tableaux sont de la forme Markdown:\nTABLE 1:\n| Col1 | Col2 | ... |\n| --- | --- | ... |\n| v11 | v12 | ... |\nENDTABLE\n"
+            "- Si tu restitues plusieurs paragraphes dans un même champ, sépare-les par un simple saut de ligne (ou une ligne vide si nécessaire).\n"
             "Renvoie uniquement le JSON, sans texte avant ni après.\n"
             "Texte du plan-cadre:\n---\n{doc_text}\n---\n"
         ).format(doc_text=doc_text[:150000])
@@ -302,17 +392,17 @@ def import_plan_cadre_task(self, plan_cadre_id: int, doc_text: str, ai_model: st
         except Exception:
             logger.debug("Fallback cible/seuil non appliqué")
 
-        # Mettre à jour les champs simples
-        plan.place_intro = parsed.place_intro or plan.place_intro
-        plan.objectif_terminal = parsed.objectif_terminal or plan.objectif_terminal
-        plan.structure_intro = parsed.structure_intro or plan.structure_intro
-        plan.structure_activites_theoriques = parsed.structure_activites_theoriques or plan.structure_activites_theoriques
-        plan.structure_activites_pratiques = parsed.structure_activites_pratiques or plan.structure_activites_pratiques
-        plan.structure_activites_prevues = parsed.structure_activites_prevues or plan.structure_activites_prevues
-        plan.eval_evaluation_sommative = parsed.eval_evaluation_sommative or plan.eval_evaluation_sommative
-        plan.eval_nature_evaluations_sommatives = parsed.eval_nature_evaluations_sommatives or plan.eval_nature_evaluations_sommatives
-        plan.eval_evaluation_de_la_langue = parsed.eval_evaluation_de_la_langue or plan.eval_evaluation_de_la_langue
-        plan.eval_evaluation_sommatives_apprentissages = parsed.eval_evaluation_sommatives_apprentissages or plan.eval_evaluation_sommatives_apprentissages
+        # Mettre à jour les champs simples (normalisés)
+        plan.place_intro = _sanitize_str(parsed.place_intro) or plan.place_intro
+        plan.objectif_terminal = _sanitize_str(parsed.objectif_terminal) or plan.objectif_terminal
+        plan.structure_intro = _sanitize_str(parsed.structure_intro) or plan.structure_intro
+        plan.structure_activites_theoriques = _sanitize_str(parsed.structure_activites_theoriques) or plan.structure_activites_theoriques
+        plan.structure_activites_pratiques = _sanitize_str(parsed.structure_activites_pratiques) or plan.structure_activites_pratiques
+        plan.structure_activites_prevues = _sanitize_str(parsed.structure_activites_prevues) or plan.structure_activites_prevues
+        plan.eval_evaluation_sommative = _sanitize_str(parsed.eval_evaluation_sommative) or plan.eval_evaluation_sommative
+        plan.eval_nature_evaluations_sommatives = _sanitize_str(parsed.eval_nature_evaluations_sommatives) or plan.eval_nature_evaluations_sommatives
+        plan.eval_evaluation_de_la_langue = _sanitize_str(parsed.eval_evaluation_de_la_langue) or plan.eval_evaluation_de_la_langue
+        plan.eval_evaluation_sommatives_apprentissages = _sanitize_str(parsed.eval_evaluation_sommatives_apprentissages) or plan.eval_evaluation_sommatives_apprentissages
 
         # Listes avec description (remplacement)
         def replace_list(current_rel, items, model_cls):
@@ -320,8 +410,8 @@ def import_plan_cadre_task(self, plan_cadre_id: int, doc_text: str, ai_model: st
             for it in (items or []):
                 if not it:
                     continue
-                texte = getattr(it, 'texte', None) or ''
-                desc = getattr(it, 'description', None) or ''
+                texte = _sanitize_str(getattr(it, 'texte', None)) or ''
+                desc = _sanitize_str(getattr(it, 'description', None)) or ''
                 current_rel.append(model_cls(texte=texte, description=desc))
 
         replace_list(plan.competences_developpees, parsed.competences_developpees, PlanCadreCompetencesDeveloppees)
@@ -334,8 +424,9 @@ def import_plan_cadre_task(self, plan_cadre_id: int, doc_text: str, ai_model: st
         # Savoir-être (remplacement)
         plan.savoirs_etre.clear()
         for se in (parsed.savoir_etre or []):
-            if (se or '').strip():
-                plan.savoirs_etre.append(PlanCadreSavoirEtre(texte=se.strip()))
+            se_clean = _sanitize_str(se)
+            if (se_clean or '').strip():
+                plan.savoirs_etre.append(PlanCadreSavoirEtre(texte=se_clean.strip()))
 
         # Capacités (remplacement)
         plan.capacites.clear()
@@ -343,16 +434,17 @@ def import_plan_cadre_task(self, plan_cadre_id: int, doc_text: str, ai_model: st
             if not cap:
                 continue
             new_cap = PlanCadreCapacites(
-                capacite=(cap.capacite or ''),
-                description_capacite=(cap.description_capacite or ''),
+                capacite=_sanitize_str(cap.capacite) or '',
+                description_capacite=_sanitize_str(cap.description_capacite) or '',
                 ponderation_min=int(cap.ponderation_min or 0),
                 ponderation_max=int(cap.ponderation_max or 0),
             )
             # Savoirs nécessaires
             for sn in (cap.savoirs_necessaires or []):
-                if (sn or '').strip():
+                sn_clean = _sanitize_str(sn)
+                if (sn_clean or '').strip():
                     new_cap.savoirs_necessaires.append(
-                        PlanCadreCapaciteSavoirsNecessaires(texte=sn.strip())
+                        PlanCadreCapaciteSavoirsNecessaires(texte=sn_clean.strip())
                     )
             # Savoirs faire
             for sf in (cap.savoirs_faire or []):
@@ -360,16 +452,17 @@ def import_plan_cadre_task(self, plan_cadre_id: int, doc_text: str, ai_model: st
                     continue
                 new_cap.savoirs_faire.append(
                     PlanCadreCapaciteSavoirsFaire(
-                        texte=(sf.texte or ''),
-                        cible=(sf.cible or ''),
-                        seuil_reussite=(sf.seuil_reussite or ''),
+                        texte=_sanitize_str(sf.texte) or '',
+                        cible=_sanitize_str(sf.cible) or '',
+                        seuil_reussite=_sanitize_str(sf.seuil_reussite) or '',
                     )
                 )
             # Moyens d'évaluation
             for me in (cap.moyens_evaluation or []):
-                if (me or '').strip():
+                me_clean = _sanitize_str(me)
+                if (me_clean or '').strip():
                     new_cap.moyens_evaluation.append(
-                        PlanCadreCapaciteMoyensEvaluation(texte=me.strip())
+                        PlanCadreCapaciteMoyensEvaluation(texte=me_clean.strip())
                     )
             plan.capacites.append(new_cap)
 
@@ -395,7 +488,7 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
     sans appliquer directement sur la base de données, pour permettre une comparaison.
     """
     try:
-        plan = PlanCadre.query.get(plan_cadre_id)
+        plan = db.session.get(PlanCadre, plan_cadre_id)
         if not plan:
             return {"status": "error", "message": "Plan-cadre non trouvé."}
 
@@ -413,6 +506,8 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
         prompt = (
             "Tu es un assistant pédagogique. Analyse le plan-cadre fourni (texte brut extrait d'un DOCX) "
             "et retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes). "
+            "Quand tu utilises des guillemets, emploie les guillemets français « » uniquement. "
+            'Conserve les paragraphes et retours de ligne réels; n\'insère PAS de littéraux "\\n" (utilise de vrais sauts de ligne). '
             "Si le document contient un tableau/section des paramètres de l’évaluation avec des colonnes/sections 'Cible' et 'Seuil', "
             "associe chaque entrée aux 'savoirs_faire' correspondants de la même capacité (même ordre, 1:1) et renseigne 'cible' et 'seuil_reussite' (ne pas laisser null si l’information est présente).\n"
             "{{\n"
@@ -443,6 +538,7 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             "      'moyens_evaluation': [ str ]\n"
             "  }} ]\n"
             "}}\n\n"
+            "- Si tu restitues plusieurs paragraphes dans un même champ, sépare-les par un simple saut de ligne (ou une ligne vide si nécessaire).\n"
             "Renvoie uniquement le JSON, sans texte avant ni après.\n"
             "Texte du plan-cadre:\n---\n{doc_text}\n---\n"
         ).format(doc_text=doc_text[:150000])
@@ -479,7 +575,7 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             'eval_nature_evaluations_sommatives', 'eval_evaluation_de_la_langue',
             'eval_evaluation_sommatives_apprentissages'
         ]:
-            val = getattr(parsed, key, None)
+            val = _sanitize_str(getattr(parsed, key, None))
             if val is not None:
                 fields[key] = val
 
@@ -488,8 +584,8 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             for it in (items or []):
                 if it is None:
                     continue
-                texte = getattr(it, 'texte', None)
-                description = getattr(it, 'description', None)
+                texte = _sanitize_str(getattr(it, 'texte', None))
+                description = _sanitize_str(getattr(it, 'description', None))
                 out.append({
                     'texte': texte or '',
                     'description': description or ''
@@ -502,6 +598,7 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             'Description des Compétences certifiées': parsed.competences_certifiees,
             'Description des cours corequis': parsed.cours_corequis,
             'Description des cours préalables': parsed.cours_prealables,
+            'Description des cours reliés': parsed.cours_relies,
             'Objets cibles': parsed.objets_cibles,
         }
         for display_name, items in mapping.items():
@@ -514,19 +611,19 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             if not cap:
                 continue
             capacites.append({
-                'capacite': cap.capacite or '',
-                'description_capacite': cap.description_capacite or '',
+                'capacite': _sanitize_str(cap.capacite) or '',
+                'description_capacite': _sanitize_str(cap.description_capacite) or '',
                 'ponderation_min': int(cap.ponderation_min or 0) if cap.ponderation_min is not None else 0,
                 'ponderation_max': int(cap.ponderation_max or 0) if cap.ponderation_max is not None else 0,
-                'savoirs_necessaires': [ (sn or '') for sn in (cap.savoirs_necessaires or []) if (sn or '').strip() ],
+                'savoirs_necessaires': [ (_sanitize_str(sn) or '') for sn in (cap.savoirs_necessaires or []) if (_sanitize_str(sn) or '').strip() ],
                 'savoirs_faire': [
                     {
-                        'texte': (sf.texte or '') if sf else '',
-                        'cible': (sf.cible or '') if sf else '',
-                        'seuil_reussite': (sf.seuil_reussite or '') if sf else ''
+                        'texte': _sanitize_str(sf.texte) if sf else '',
+                        'cible': _sanitize_str(sf.cible) if sf else '',
+                        'seuil_reussite': _sanitize_str(sf.seuil_reussite) if sf else ''
                     } for sf in (cap.savoirs_faire or []) if sf
                 ],
-                'moyens_evaluation': [ (me or '') for me in (cap.moyens_evaluation or []) if (me or '').strip() ]
+                'moyens_evaluation': [ (_sanitize_str(me) or '') for me in (cap.moyens_evaluation or []) if (_sanitize_str(me) or '').strip() ]
             })
 
         proposed = {}
@@ -538,6 +635,15 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             proposed['savoir_etre'] = [se for se in parsed.savoir_etre if (se or '').strip()]
         if capacites:
             proposed['capacites'] = capacites
+
+        # Heuristic fallback when AI returns nothing usable
+        if not proposed:
+            try:
+                heuristic = _heuristic_extract_basic_fields(doc_text)
+                if heuristic:
+                    proposed = heuristic
+            except Exception:
+                logger.debug("Heuristic basic extraction failed (preview)")
 
         # Indiquer le mode APERÇU pour déclencher l'écran de comparaison côté UI
         result = {
