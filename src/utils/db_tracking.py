@@ -6,45 +6,63 @@ from ..extensions import db
 
 def process_changes(mapper, target, operation):
     changes = {}
-    
+
+    # Helper to sanitize a single scalar value
+    def sanitize_scalar(value):
+        if isinstance(value, datetime):
+            return value.isoformat()
+        # SQLAlchemy model instance: prefer its primary key if available
+        if hasattr(value, "id"):
+            try:
+                return getattr(value, "id")
+            except Exception:
+                return str(value)
+        # Instrumented collections will be handled by the list/dict paths elsewhere
+        return value
+
     if operation == 'INSERT':
-        # Pour les INSERT, capturez les nouvelles valeurs
+        # Pour les INSERT, capturez les nouvelles valeurs (colonnes simples) en tant que chaînes
         changes['new_values'] = {
             column.key: str(getattr(target, column.key))
             for column in mapper.columns
             if hasattr(target, column.key) and getattr(target, column.key) is not None
         }
     elif operation == 'UPDATE':
-        # Pour les UPDATE, capturez les anciennes et nouvelles valeurs
+        # Pour les UPDATE, capturez les anciennes et nouvelles valeurs (colonnes uniquement)
         state = db.inspect(target)
         changes['old_values'] = {}
         changes['new_values'] = {}
-        for attr in state.attrs:
-            if attr.history.has_changes():
-                changes['old_values'][attr.key] = attr.history.deleted[0] if attr.history.deleted else None
-                changes['new_values'][attr.key] = attr.history.added[0] if attr.history.added else None
+        for column in mapper.columns:
+            try:
+                history = state.attrs[column.key].history
+            except Exception:
+                continue
+            if history.has_changes():
+                old_val = history.deleted[0] if history.deleted else None
+                new_val = history.added[0] if history.added else None
+                changes['old_values'][column.key] = sanitize_scalar(old_val)
+                changes['new_values'][column.key] = sanitize_scalar(new_val)
     elif operation == 'DELETE':
-        # Pour les DELETE, capturez les anciennes valeurs
+        # Pour les DELETE, capturez les anciennes valeurs (colonnes simples) en tant que chaînes
         changes['deleted_values'] = {
             column.key: str(getattr(target, column.key))
             for column in mapper.columns
             if hasattr(target, column.key) and getattr(target, column.key) is not None
         }
-    
-    # Gestion des relations si nécessaire
+
+    # Gestion des relations si nécessaire (en enregistrant seulement des identifiants)
     for relationship in mapper.relationships:
         if hasattr(target, relationship.key):
             rel_value = getattr(target, relationship.key)
             if rel_value is not None:
                 if hasattr(rel_value, 'id'):
                     if operation == 'UPDATE':
-                        changes[f"{relationship.key}_id_new"] = str(rel_value.id)
-                        # Vous pourriez vouloir capturer l'ancien ID si pertinent
+                        changes[f"{relationship.key}_id_new"] = sanitize_scalar(rel_value)
                     else:
-                        changes[f"{relationship.key}_id"] = str(rel_value.id)
-                elif isinstance(rel_value, list):
-                    changes[relationship.key] = [str(item.id) for item in rel_value if hasattr(item, 'id')]
-    
+                        changes[f"{relationship.key}_id"] = sanitize_scalar(rel_value)
+                elif isinstance(rel_value, (list, tuple, set)):
+                    changes[relationship.key] = [sanitize_scalar(item) for item in rel_value]
+
     return changes
 
 def track_changes(mapper, connection, target, operation):
@@ -58,14 +76,20 @@ def track_changes(mapper, connection, target, operation):
             
         changes = process_changes(mapper, target, operation)
         
-        # Sanitize changes: convert any datetime in changes to ISO strings
+        # Sanitize changes: convert any non-JSON types to serializable forms
         def sanitize(obj):
             if isinstance(obj, dict):
                 return {k: sanitize(v) for k, v in obj.items()}
-            if isinstance(obj, list):
+            if isinstance(obj, (list, tuple, set)):
                 return [sanitize(item) for item in obj]
             if isinstance(obj, datetime):
                 return obj.isoformat()
+            # SQLAlchemy model instance → use its id if available, else string
+            if hasattr(obj, 'id'):
+                try:
+                    return getattr(obj, 'id')
+                except Exception:
+                    return str(obj)
             return obj
         clean_changes = sanitize(changes)
         connection.execute(

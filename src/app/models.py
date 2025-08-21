@@ -1116,14 +1116,15 @@ class Programme(db.Model):
         'Cours',
         secondary=cours_programme,
         back_populates='programmes',
-        lazy='dynamic'
+        lazy='dynamic',
+        overlaps="programme,cours,programme_assocs"
     )
     @property
     def cours(self):
         return list(self.cours_associes)
     
     # Association object pour Cours-Programme, incluant la session par programme
-    cours_assocs = db.relationship('CoursProgramme', back_populates='programme', cascade='all, delete-orphan')
+    cours_assocs = db.relationship('CoursProgramme', back_populates='programme', cascade='all, delete-orphan', overlaps="cours_associes")
 
     def __repr__(self):
         return f"<Programme {self.nom}>"
@@ -1157,14 +1158,16 @@ class Cours(db.Model):
     programme_assocs = db.relationship(
         'CoursProgramme',
         back_populates='cours',
-        cascade='all, delete-orphan'
+        cascade='all, delete-orphan',
+        overlaps="cours_associes"
     )
     # Relation many-to-many vers Programme (facilitant les jointures)
     programmes = db.relationship(
         'Programme',
         secondary=cours_programme,
         back_populates='cours_associes',
-        lazy='dynamic'
+        lazy='dynamic',
+        overlaps="cours,programme_assocs,programme,cours_assocs"
     )
 
     plan_cadre = db.relationship("PlanCadre", back_populates="cours", uselist=False)

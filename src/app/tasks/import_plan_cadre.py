@@ -309,7 +309,8 @@ def import_plan_cadre_task(self, plan_cadre_id: int, doc_text: str, ai_model: st
         if not plan:
             return {"status": "error", "message": "Plan-cadre non trouvé."}
 
-        user = db.session.query(User).with_for_update().get(user_id)
+        # SQLite ne supporte pas réellement FOR UPDATE; et Query.get est obsolète en SA 2.x
+        user = db.session.get(User, user_id)
         if not user:
             return {"status": "error", "message": "Utilisateur introuvable."}
         if not user.openai_key:
