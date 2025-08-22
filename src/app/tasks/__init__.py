@@ -4,3 +4,4 @@ from .generation_plan_de_cours import generate_plan_de_cours_all_task
 from .import_grille import extract_grille_from_pdf_task
 from .import_plan_de_cours import import_plan_de_cours_task
 from .import_plan_cadre import import_plan_cadre_task
+from .generation_logigramme import generate_programme_logigramme_task

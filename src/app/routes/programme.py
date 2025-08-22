@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 
 import bleach
-from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, jsonify
 
 import os
 
@@ -23,6 +23,7 @@ from ..models import (
     User,
     Programme,
     Competence,
+    ElementCompetence,
     FilConducteur,
     Cours,
     CoursPrealable,
@@ -33,6 +34,7 @@ from ..models import (
     PlanDeCours
 )
 from ...utils.decorator import role_required, ensure_profile_completed, roles_required
+from openai import OpenAI
 
 # Utilities
 # Example of another blueprint import (unused here, just as in your snippet)
@@ -181,7 +183,170 @@ def competence_logigramme(programme_id):
         'fils': list(fils.values())
     }
 
-    return render_template('programme/competence_logigramme.html', programme=programme, data=data)
+    # Génération IA: formulaire des modèles dispo
+    try:
+        from ..forms import GenerateContentForm
+        generate_form = GenerateContentForm()
+    except Exception:
+        generate_form = None
+
+    return render_template('programme/competence_logigramme.html', programme=programme, data=data, generate_form=generate_form)
+
+@programme_bp.route('/<int:programme_id>/links', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def save_programme_links(programme_id):
+    """Persist edited links into ElementCompetenceParCours rows.
+    For each provided link {cours_id, competence_id, type, weight}, we set the
+    status of ElementCompetenceParCours rows for that (cours, competence)'s elements
+    to the selected type. If no rows exist, we create rows for the competence's
+    elements for this course. Weight is not strictly enforced at DB level because
+    the number of elements is authoritative; all rows are set to the given type.
+    """
+    from flask import jsonify
+    programme = Programme.query.get_or_404(programme_id)
+    # Restrict to admin/coordo only
+    if current_user.role not in ('admin', 'coordo'):
+        return jsonify({'error': "Accès restreint (admin/coordo)"}), 403
+    # If not admin, ensure membership to programme
+    if current_user.role != 'admin' and programme not in current_user.programmes:
+        return jsonify({'error': "Accès refusé"}), 403
+
+    try:
+        payload = (request.get_json(silent=True) or [])
+        assert isinstance(payload, list)
+    except Exception:
+        return jsonify({'error': 'Format JSON invalide'}), 400
+
+    # Build quick lookups for validation
+    course_ids = {assoc.cours_id for assoc in programme.cours_assocs}
+    comp_ids = {c.id for c in programme.competences}
+    allowed_types = {'developpe': 'Développé significativement', 'atteint': 'Atteint', 'reinvesti': 'Réinvesti'}
+
+    # Build competence elements index for this programme
+    comp_ids = {c.id for c in programme.competences}
+    # Map competence_id -> [element ids]
+    comp_to_elem_ids = {}
+    all_elem_ids = []
+    for cid in comp_ids:
+      ids = [e.id for e in ElementCompetence.query.filter_by(competence_id=cid).all()]
+      comp_to_elem_ids[cid] = ids
+      all_elem_ids.extend(ids)
+
+    # Build payload pairs set
+    payload_pairs = set()
+    updated = 0
+    for item in payload:
+        try:
+            cours_id = int(item.get('cours_id'))
+            competence_id = int(item.get('competence_id'))
+            ltype = str(item.get('type'))
+        except Exception:
+            continue
+        if cours_id not in course_ids or competence_id not in comp_ids:
+            continue
+        if ltype not in allowed_types:
+            continue
+        payload_pairs.add((cours_id, competence_id))
+        status_value = allowed_types[ltype]
+
+        # Fetch elements for this competence
+        elements = ElementCompetence.query.filter_by(competence_id=competence_id).order_by(ElementCompetence.id).all()
+        if not elements:
+            # No elements defined; skip silently
+            continue
+
+        # Ensure one EPC row per element for this course
+        existing = { (epc.element_competence_id): epc for epc in ElementCompetenceParCours.query
+                     .filter_by(cours_id=cours_id)
+                     .filter(ElementCompetenceParCours.element_competence_id.in_([e.id for e in elements]))
+                     .all() }
+        for e in elements:
+            epc = existing.get(e.id)
+            if not epc:
+                epc = ElementCompetenceParCours(cours_id=cours_id, element_competence_id=e.id, status=status_value)
+                db.session.add(epc)
+            else:
+                epc.status = status_value
+        updated += 1
+
+    # Handle deletions: remove EPC rows for pairs not present in payload
+    if all_elem_ids:
+        # Fetch all EPC rows for programme courses and competence elements
+        rows = (ElementCompetenceParCours.query
+                .filter(ElementCompetenceParCours.cours_id.in_(course_ids))
+                .filter(ElementCompetenceParCours.element_competence_id.in_(all_elem_ids))
+                .all())
+        # Build element->competence map
+        elem_to_comp = {}
+        for cid, eids in comp_to_elem_ids.items():
+            for eid in eids:
+                elem_to_comp[eid] = cid
+        for r in rows:
+            comp_id = elem_to_comp.get(r.element_competence_id)
+            if comp_id is None:
+                continue
+            if (r.cours_id, comp_id) not in payload_pairs:
+                db.session.delete(r)
+
+    try:
+        db.session.commit()
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.exception("Error saving links")
+        return jsonify({'error': "Erreur lors de l'enregistrement"}), 500
+
+    return jsonify({'ok': True, 'updated': updated, 'message': f'{updated} liens appliqués'}), 200
+
+
+@programme_bp.route('/<int:programme_id>/logigramme/generate', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def generate_competence_logigramme(programme_id):
+    """Start Celery task to generate suggested links; returns task_id for polling."""
+    programme = Programme.query.get_or_404(programme_id)
+    if current_user.role not in ('admin', 'coordo'):
+        return jsonify({'error': 'Accès restreint (admin/coordo)'}), 403
+    if current_user.role != 'admin' and programme not in current_user.programmes:
+        return jsonify({'error': 'Accès refusé'}), 403
+    user = current_user
+    if not user.openai_key:
+        return jsonify({'error': 'Aucune clé OpenAI configurée dans votre profil.'}), 400
+    if not user.credits or user.credits <= 0:
+        return jsonify({'error': "Crédits insuffisants pour effectuer l'appel."}), 400
+    form = request.get_json(silent=True) or {}
+
+    # Enqueue task
+    from ..tasks.generation_logigramme import generate_programme_logigramme_task
+    task = generate_programme_logigramme_task.delay(programme_id, user.id, form)
+    return jsonify({'task_id': task.id}), 202
+
+
+@programme_bp.route('/api/task_status/<task_id>')
+@login_required
+def programme_task_status(task_id):
+    from ...celery_app import celery
+    from celery.result import AsyncResult
+    try:
+        task_result = AsyncResult(task_id, app=celery)
+        state = task_result.state
+        result = task_result.result
+        resp = { 'task_id': task_id, 'state': state }
+        if state == 'PROGRESS':
+            info = task_result.info or {}
+            if isinstance(info, dict):
+                resp.update(info)
+        elif state == 'SUCCESS':
+            if isinstance(result, dict):
+                resp.update(result)
+            else:
+                resp.update({ 'status': 'success', 'result': result })
+        elif state == 'FAILURE':
+            resp.update({ 'status': 'error', 'message': str(result) if result else 'Echec de la tâche' })
+        return jsonify(resp)
+    except Exception as e:
+        current_app.logger.exception('Erreur statut de tâche')
+        return jsonify({ 'task_id': task_id, 'state': 'ERROR', 'status': 'error', 'message': str(e) }), 500
 
 @programme_bp.route('/<int:programme_id>/competences')
 @login_required

@@ -112,13 +112,13 @@
   const nodesG = make('g', { id: 'nodes' }, rootG);
 
   // Draw links
-  const maxWeight = links.reduce((m, l) => Math.max(m, l.weight || 1), 1);
+  // Weight removed; constant stroke width
   const typeColor = { developpe: '#0d6efd', atteint: '#198754', reinvesti: '#6c757d' };
   const linkEls = links.map(l => {
     const path = make('path', {
       d: cubicPath(l.source.x + 20, l.source.y, l.target.x - 40, l.target.y),
       class: `link ${l.type}`,
-      'stroke-width': String(1.5 + 2.5 * ((l.weight || 1) / maxWeight)),
+      // Constant stroke-width; weight removed
       stroke: typeColor[l.type] || '#999',
       fill: 'none',
       'data-source': `comp:${String(l.source.id)}`,
@@ -143,6 +143,10 @@
     title.textContent = `${c.code} — ${c.nom}`;
     g.dataset.id = `comp:${String(c.id)}`;
     g.dataset.kind = 'competence';
+    g.setAttribute('data-node-id', g.dataset.id);
+    g.setAttribute('data-node-kind', g.dataset.kind);
+    g.setAttribute('data-node-id', g.dataset.id);
+    g.setAttribute('data-node-kind', g.dataset.kind);
     nodeEls.push({ el: g, node: c });
   });
 
@@ -171,6 +175,10 @@
     title.textContent = `${c.code} — ${c.nom}`;
     g.dataset.id = `course:${String(c.id)}`;
     g.dataset.kind = 'course';
+    g.setAttribute('data-node-id', g.dataset.id);
+    g.setAttribute('data-node-kind', g.dataset.kind);
+    g.setAttribute('data-node-id', g.dataset.id);
+    g.setAttribute('data-node-kind', g.dataset.kind);
     nodeEls.push({ el: g, node: c });
   });
 
@@ -181,8 +189,15 @@
       const src = el.getAttribute('data-source');
       const tgt = el.getAttribute('data-target');
       const isActive = activeIds.has(src) && activeIds.has(tgt);
-      el.classList.toggle('dim', !isActive);
-      el.style.display = isActive ? '' : 'none';
+      // Respect persistent type filter when showing
+      const t = el.getAttribute('data-type');
+      const showDev = toggleDeveloppee ? toggleDeveloppee.checked : true;
+      const showAtt = toggleAtteinte ? toggleAtteinte.checked : true;
+      const showRei = toggleReinvesti ? toggleReinvesti.checked : true;
+      const typeAllowed = (t === 'developpe' && showDev) || (t === 'atteint' && showAtt) || (t === 'reinvesti' && showRei);
+      const show = isActive && typeAllowed;
+      el.classList.toggle('dim', !show);
+      el.style.display = show ? '' : 'none';
     });
     // Highlight nodes in the set, dim others
     nodeEls.forEach(({ el }) => {
@@ -194,6 +209,8 @@
   }
   function clearDim() {
     linkEls.forEach(({ el }) => { el.classList.remove('dim'); el.style.display = ''; });
+    // Re-apply persistent type filters on clear
+    if (typeof applyTypeFilters === 'function') applyTypeFilters();
     nodeEls.forEach(({ el }) => { el.classList.remove('highlight'); el.classList.remove('dim'); });
   }
 
@@ -213,17 +230,13 @@
     setDimState(connected);
   }
   nodeEls.forEach(({ el }) => {
-    el.addEventListener('mouseenter', () => { if (pinnedId === null) highlightNode(el); });
-    el.addEventListener('mouseleave', () => { if (pinnedId === null) clearDim(); });
+    el.addEventListener('mouseenter', () => { if (document.body.classList.contains('edit-mode')) return; if (pinnedId === null) highlightNode(el); });
+    el.addEventListener('mouseleave', () => { if (document.body.classList.contains('edit-mode')) return; if (pinnedId === null) clearDim(); });
     el.addEventListener('click', () => {
+      if (document.body.classList.contains('edit-mode')) return;
       const id = el.dataset.id;
-      if (pinnedId === id) {
-        pinnedId = null;
-        clearDim();
-      } else {
-        pinnedId = id;
-        highlightNode(el);
-      }
+      if (pinnedId === id) { pinnedId = null; clearDim(); }
+      else { pinnedId = id; highlightNode(el); }
     });
   });
 
@@ -240,6 +253,7 @@
     let startYw = 0; // start y in world coords
     let nodeStartY = 0;
     el.addEventListener('mousedown', (e) => {
+      if (document.body.classList.contains('edit-mode')) return;
       dragging = true;
       el.classList.add('dragging');
       const wp = svgPoint(e);
@@ -249,6 +263,7 @@
       e.stopPropagation(); // prevent panning start
     });
     window.addEventListener('mousemove', (e) => {
+      if (document.body.classList.contains('edit-mode')) return;
       if (!dragging) return;
       const wp = svgPoint(e);
       const dy = wp.y - startYw;
@@ -263,7 +278,7 @@
         }
       });
     });
-    window.addEventListener('mouseup', () => { dragging = false; el.classList.remove('dragging'); });
+    window.addEventListener('mouseup', () => { if (document.body.classList.contains('edit-mode')) return; dragging = false; el.classList.remove('dragging'); });
   });
 
   // Filtering by type
@@ -276,13 +291,22 @@
     const showRei = toggleReinvesti ? toggleReinvesti.checked : true;
     linkEls.forEach(({ el, link }) => {
       const show = (link.type === 'developpe' && showDev) || (link.type === 'atteint' && showAtt) || (link.type === 'reinvesti' && showRei);
-      el.style.display = show ? '' : 'none';
+      // Only hide by filter; if other logic hid it, keep it hidden
+      if (show) {
+        // Only show if not otherwise hidden by other logic
+        if (el.dataset.hiddenByOther !== '1') el.style.display = '';
+      } else {
+        el.style.display = 'none';
+      }
     });
+    try { document.dispatchEvent(new CustomEvent('competenceTypeFiltersApplied')); } catch (_) {}
   }
   if (toggleDeveloppee) toggleDeveloppee.addEventListener('change', applyTypeFilters);
   if (toggleAtteinte) toggleAtteinte.addEventListener('change', applyTypeFilters);
   if (toggleReinvesti) toggleReinvesti.addEventListener('change', applyTypeFilters);
   applyTypeFilters();
+  // Expose for external callers (link editor)
+  window.applyCompetenceTypeFilters = applyTypeFilters;
 
   // Search highlight
   const searchBox = document.getElementById('searchBox');
@@ -560,13 +584,13 @@
   const nodesG = make('g', { id: 'nodes' }, rootG);
 
   // Dessin des liens
-  const maxWeight = links.reduce((m, l) => Math.max(m, l.weight || 1), 1);
+  // Weight removed; use constant stroke width
   const typeColor = { developpe: '#0d6efd', atteint: '#198754', reinvesti: '#6c757d' };
   const linkEls = links.map(l => {
     const path = make('path', {
       d: cubicPath(l.source.x + 20, l.source.y, l.target.x - 40, l.target.y),
       class: `link ${l.type}`,
-      'stroke-width': String(1.5 + 2.5 * ((l.weight || 1) / maxWeight)),
+      // Constant stroke-width; weight removed
       stroke: typeColor[l.type] || '#999',
       fill: 'none',
       'data-source': `comp:${String(l.source.id)}`,
@@ -620,8 +644,17 @@
       const src = el.getAttribute('data-source');
       const tgt = el.getAttribute('data-target');
       const isActive = activeIds.has(src) && activeIds.has(tgt);
-      el.classList.toggle('dim', !isActive);
-      el.style.display = isActive ? '' : 'none';
+      // Respect persistent type filter when showing
+      const t = el.getAttribute('data-type');
+      const showDev = toggleDeveloppee ? toggleDeveloppee.checked : true;
+      const showAtt = toggleAtteinte ? toggleAtteinte.checked : true;
+      const showRei = toggleReinvesti ? toggleReinvesti.checked : true;
+      const typeAllowed = (t === 'developpe' && showDev) || (t === 'atteint' && showAtt) || (t === 'reinvesti' && showRei);
+      const show = isActive && typeAllowed;
+      el.classList.toggle('dim', !show);
+      el.style.display = show ? '' : 'none';
+      // Track other-hide to preserve type filter persistence
+      el.dataset.hiddenByOther = show ? '0' : '1';
     });
     nodeEls.forEach(({ el }) => {
       const id = el.dataset.id;
@@ -637,7 +670,9 @@
     });
   }
   function clearDim() {
-    linkEls.forEach(({ el }) => { el.classList.remove('dim'); el.style.display = ''; });
+    linkEls.forEach(({ el }) => { el.classList.remove('dim'); el.style.display = ''; delete el.dataset.hiddenByOther; });
+    // Re-apply persistent type filters
+    if (typeof applyTypeFilters === 'function') applyTypeFilters();
     nodeEls.forEach(({ el }) => { el.classList.remove('highlight'); el.classList.remove('dim'); el.style.display = ''; });
   }
 
@@ -655,10 +690,11 @@
 
   // Survol = aperçu (dim), clic = pin + cacher le reste, double-clic = popup
   nodeEls.forEach(({ el, node }) => {
-    el.addEventListener('mouseenter', () => { if (pinnedId === null) highlightNode(el, { hideOthers: false }); });
-    el.addEventListener('mouseleave', () => { if (pinnedId === null) clearDim(); });
+    el.addEventListener('mouseenter', () => { if (document.body.classList.contains('edit-mode')) return; if (pinnedId === null) highlightNode(el, { hideOthers: false }); });
+    el.addEventListener('mouseleave', () => { if (document.body.classList.contains('edit-mode')) return; if (pinnedId === null) clearDim(); });
     let clickTimer = null;
     el.addEventListener('click', () => {
+      if (document.body.classList.contains('edit-mode')) return;
       if (clickTimer) return;
       clickTimer = setTimeout(() => {
         clickTimer = null;
@@ -668,6 +704,7 @@
       }, 220);
     });
     el.addEventListener('dblclick', (e) => {
+      if (document.body.classList.contains('edit-mode')) return;
       if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
       showInfoForNode(el, node, e);
     });
@@ -681,11 +718,13 @@
   nodeEls.forEach(({ el, node }) => {
     let dragging = false; let startYw = 0; let nodeStartY = 0;
     el.addEventListener('mousedown', (e) => {
+      if (document.body.classList.contains('edit-mode')) return;
       dragging = true; el.classList.add('dragging');
       const wp = svgPoint(e); startYw = wp.y; nodeStartY = node.y;
       e.preventDefault(); e.stopPropagation();
     });
     window.addEventListener('mousemove', (e) => {
+      if (document.body.classList.contains('edit-mode')) return;
       if (!dragging) return;
       const wp = svgPoint(e); const dy = wp.y - startYw;
       node.y = Math.max(margin.top + 16, Math.min(HEIGHT - margin.bottom - 16, nodeStartY + dy));
@@ -696,7 +735,7 @@
         }
       });
     });
-    window.addEventListener('mouseup', () => { dragging = false; el.classList.remove('dragging'); });
+    window.addEventListener('mouseup', () => { if (document.body.classList.contains('edit-mode')) return; dragging = false; el.classList.remove('dragging'); });
   });
 
   // Filtrage par type
@@ -709,13 +748,19 @@
     const showRei = toggleReinvesti ? toggleReinvesti.checked : true;
     linkEls.forEach(({ el, link }) => {
       const show = (link.type === 'developpe' && showDev) || (link.type === 'atteint' && showAtt) || (link.type === 'reinvesti' && showRei);
-      el.style.display = show ? '' : 'none';
+      if (show) {
+        if (el.dataset.hiddenByOther !== '1') el.style.display = '';
+      } else {
+        el.style.display = 'none';
+      }
     });
   }
   if (toggleDeveloppee) toggleDeveloppee.addEventListener('change', applyTypeFilters);
   if (toggleAtteinte) toggleAtteinte.addEventListener('change', applyTypeFilters);
   if (toggleReinvesti) toggleReinvesti.addEventListener('change', applyTypeFilters);
   applyTypeFilters();
+  // Expose for external callers
+  window.applyCompetenceTypeFilters = applyTypeFilters;
 
   // Recherche
   const searchBox = document.getElementById('searchBox');

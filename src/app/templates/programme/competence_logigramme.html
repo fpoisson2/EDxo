@@ -36,6 +36,18 @@
         <button id="exportSvgBtn" class="btn btn-outline-secondary"><i class="bi bi-filetype-svg"></i> SVG</button>
         <button id="exportPngBtn" class="btn btn-outline-secondary"><i class="bi bi-filetype-png"></i> PNG</button>
       </div>
+      {% if current_user.role in ['admin','coordo'] %}
+        <div class="vr d-none d-md-block"></div>
+        <button id="openGenerateLogigramBtn" class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#generateLogigramModal">
+          <i class="bi bi-stars"></i> Générer
+        </button>
+        <button id="editModeToggle" class="btn btn-sm btn-outline-danger" type="button" aria-pressed="false">
+          <i class="bi bi-pencil-square"></i> Mode édition
+        </button>
+        <button id="saveLinksBtn" class="btn btn-sm btn-success d-none" type="button">
+          <i class="bi bi-save2"></i> Enregistrer
+        </button>
+      {% endif %}
       <a href="{{ url_for('programme.view_programme', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-left"></i> Programme
       </a>
@@ -53,6 +65,7 @@
 
   <div id="graphContainer" class="graph-container">
     <svg id="competenceGraph" class="graph-svg" preserveAspectRatio="xMinYMin meet"></svg>
+    <div id="editModeBadge" class="edit-mode-badge d-none">Édition</div>
   </div>
 
   <div id="infoPanel" class="card shadow-sm p-2" style="display:none; z-index:1200;">
@@ -68,4 +81,192 @@
   window.COMPETENCE_MAP_DATA = {{ data|tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/competence_logigramme.js') }}"></script>
+<script src="{{ url_for('static', filename='js/link_editor.js') }}"></script>
+
+{% if current_user.role in ['admin','coordo'] %}
+<!-- Modal Génération Logigramme -->
+<div class="modal fade" id="generateLogigramModal" tabindex="-1" aria-labelledby="generateLogigramLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <form id="generateLogigramForm">
+        {% if generate_form %}{{ generate_form.hidden_tag() }}{% endif %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="generateLogigramLabel">Générer le logigramme de compétences</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Informations complémentaires (facultatif)</label>
+            {% if generate_form %}
+              {{ generate_form.additional_info(class="form-control border-0", rows="3", placeholder="Contexte, priorités, contraintes…") }}
+            {% else %}
+              <textarea id="gl-additional" class="form-control" rows="3" placeholder="Contexte, priorités, contraintes…"></textarea>
+            {% endif %}
+          </div>
+          <div class="row g-3">
+            <div class="col-sm-4">
+              <label class="form-label">Modèle d'IA</label>
+              {% if generate_form %}
+                {{ generate_form.ai_model(class="form-select border-0", id="gl-ai-model") }}
+              {% else %}
+                <select id="gl-ai-model" class="form-select"><option value="gpt-5">gpt-5</option></select>
+              {% endif %}
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label">Effort de raisonnement</label>
+              {% if generate_form %}
+                {{ generate_form.reasoning_effort(class="form-select border-0", id="gl-reasoning") }}
+              {% else %}
+                <select id="gl-reasoning" class="form-select"><option value="medium">Moyen</option></select>
+              {% endif %}
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label">Verbosité</label>
+              {% if generate_form %}
+                {{ generate_form.verbosity(class="form-select border-0", id="gl-verbosity") }}
+              {% else %}
+                <select id="gl-verbosity" class="form-select"><option value="medium">Moyenne</option></select>
+              {% endif %}
+            </div>
+          </div>
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" id="gl-replace">
+            <label class="form-check-label" for="gl-replace">Remplacer les liens existants</label>
+          </div>
+          <div class="form-text mt-2">Les cours, compétences et le nom du programme seront envoyés automatiquement. Aucun plan de cours/plan‑cadre n'est inclus.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary" id="confirmGenerateLogigramBtn">
+            <span class="btn-text">Générer</span>
+            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="glSpinner">
+              <span class="visually-hidden">Chargement...</span>
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Script direct (réponse immédiate) supprimé: remplacé par la version avec polling de tâche -->
+{% endif %}
+
+{% if current_user.role in ['admin','coordo'] %}
+<script id="gl-celery-overrides">
+document.addEventListener('DOMContentLoaded', function(){
+  const oldForm = document.getElementById('generateLogigramForm');
+  if (!oldForm) return;
+  const newForm = oldForm.cloneNode(true);
+  oldForm.parentNode.replaceChild(newForm, oldForm);
+  const btn = document.getElementById('confirmGenerateLogigramBtn');
+  const spinner = document.getElementById('glSpinner');
+
+  function getVal(id, fallbackId) {
+    const el = document.getElementById(id) || document.getElementById(fallbackId);
+    return el ? (el.value || '').trim() : '';
+  }
+
+  newForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      btn.disabled = true; spinner.classList.remove('d-none');
+      const ai_model = getVal('gl-ai-model', 'generate_form-ai_model');
+      const reasoning_effort = getVal('gl-reasoning', 'generate_form-reasoning_effort') || 'medium';
+      const verbosity = getVal('gl-verbosity', 'generate_form-verbosity') || 'medium';
+      const additional_info = (document.getElementById('generate_form-additional_info')?.value || document.getElementById('gl-additional')?.value || '').trim();
+      const replaceExisting = document.getElementById('gl-replace')?.checked || false;
+      const url = "{{ url_for('programme.generate_competence_logigramme', programme_id=programme.id) }}";
+      const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+      const start = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf}, body: JSON.stringify({ ai_model, reasoning_effort, verbosity, additional_info })});
+      const startOut = await start.json();
+      if (!start.ok) throw new Error(startOut.error || ('HTTP '+start.status));
+      const taskId = startOut.task_id;
+      const statusUrl = "{{ url_for('programme.programme_task_status', task_id='__TASK__') }}".replace('__TASK__', taskId);
+
+      // Progress box in modal
+      let progressBox = document.getElementById('gl-progress');
+      if (!progressBox) {
+        progressBox = document.createElement('div');
+        progressBox.id = 'gl-progress';
+        progressBox.className = 'border rounded p-2 small mt-2';
+        progressBox.style.maxHeight = '180px'; progressBox.style.overflow='auto';
+        newForm.querySelector('.modal-body').appendChild(progressBox);
+      }
+      progressBox.innerHTML = '<div class="text-muted">Tâche lancée…</div>';
+
+      async function applyLinks(result){
+        const links = (result && result.result && result.result.links) || [];
+        const data = window.COMPETENCE_MAP_DATA || {};
+        const normalize = (s) => String(s||'').trim().replace(/[\u00A0\u200b\u200c\u200d\ufeff]/g, '');
+        const compByCode = new Map((data.competences||[]).map(c => [normalize(c.code), c]));
+        const courseByCode = new Map((data.cours||[]).map(c => [normalize(c.code), c]));
+        const payload = [];
+        const unknownCourses = new Set();
+        const unknownComps = new Set();
+        for (const l of links) {
+          const c = courseByCode.get(normalize(l.cours_code));
+          const k = compByCode.get(normalize(l.competence_code));
+          if (!c) { unknownCourses.add(normalize(l.cours_code)); continue; }
+          if (!k) { unknownComps.add(normalize(l.competence_code)); continue; }
+          payload.push({ cours_id: c.id, competence_id: k.id, type: String(l.type||'').toLowerCase() });
+        }
+        const programmeId = (data.programme && data.programme.id) ? String(data.programme.id) : '';
+        const url = `/programme/${encodeURIComponent(programmeId)}/links`;
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }, body: JSON.stringify(payload) });
+        const out = await resp.json().catch(() => ({}));
+        const main = document.querySelector('main.container') || document.body;
+        const modalEl = document.getElementById('generateLogigrammeModal') || document.getElementById('generateLogigramModal');
+        if (modalEl) try { bootstrap.Modal.getInstance(modalEl)?.hide(); } catch(_) {}
+        const alert = document.createElement('div');
+        if (!resp.ok) {
+          alert.className = 'alert alert-danger alert-dismissible fade show';
+          alert.role = 'alert';
+          alert.innerHTML = (out.error || ('Erreur HTTP '+resp.status)) + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+          main.prepend(alert);
+          return;
+        }
+        alert.className = 'alert alert-success alert-dismissible fade show';
+        alert.role = 'alert';
+        const uc = Array.from(unknownCourses).slice(0,5);
+        const uk = Array.from(unknownComps).slice(0,5);
+        const ucTxt = uc.length ? `<div class="mt-1 small">Cours inconnus: ${uc.join(', ')}${unknownCourses.size>uc.length?'…':''}</div>` : '';
+        const ukTxt = uk.length ? `<div class="mt-1 small">Compétences inconnues: ${uk.join(', ')}${unknownComps.size>uk.length?'…':''}</div>` : '';
+        alert.innerHTML = (out.message || 'Liens enregistrés') + ucTxt + ukTxt + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+        main.prepend(alert);
+        setTimeout(() => { window.location.reload(); }, 500);
+      }
+
+      await new Promise((resolve, reject) => {
+        const interval = setInterval(async () => {
+          try {
+            const r = await fetch(statusUrl);
+            const s = await r.json();
+            if (s.state === 'PROGRESS') {
+              const msg = s.message || '…'; const rs = s.reasoning_summary || ''; const buf = s.stream_buffer || '';
+              progressBox.innerHTML = `<div>${msg}</div>` + (rs ? `<div class=\"text-muted\">${rs}</div>` : '') + (buf ? `<pre class=\"mt-1\">${buf}</pre>` : '');
+            } else if (s.state === 'SUCCESS') {
+              clearInterval(interval); resolve(s);
+            } else if (s.state === 'FAILURE' || s.status === 'error' || s.state === 'ERROR') {
+              clearInterval(interval); reject(new Error(s.message || 'Échec de la tâche'));
+            }
+          } catch (e) { clearInterval(interval); reject(e); }
+        }, 1200);
+      }).then(applyLinks);
+    } catch (err) {
+      console.error('Erreur génération logigramme', err);
+      const main = document.querySelector('main.container') || document.body;
+      const alert = document.createElement('div');
+      alert.className = 'alert alert-danger alert-dismissible fade show';
+      alert.role = 'alert';
+      alert.innerHTML = (err && err.message ? err.message : 'Erreur lors de la génération') + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+      main.prepend(alert);
+    } finally {
+      btn.disabled = false; spinner.classList.add('d-none');
+    }
+  });
+});
+</script>
+{% endif %}
 {% endblock %}
