@@ -38,3 +38,4 @@ Flask-Session
 fastmcp
 cachelib
 watchfiles
+openpyxl

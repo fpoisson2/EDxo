@@ -33,6 +33,14 @@ from ..models import (
     ElementCompetenceParCours,
     PlanDeCours
 )
+from flask import send_file
+import io
+
+try:
+    import openpyxl
+    from openpyxl.styles import Alignment
+except Exception:
+    openpyxl = None
 from ...utils.decorator import role_required, ensure_profile_completed, roles_required
 from openai import OpenAI
 
@@ -191,6 +199,113 @@ def competence_logigramme(programme_id):
         generate_form = None
 
     return render_template('programme/competence_logigramme.html', programme=programme, data=data, generate_form=generate_form)
+
+
+@programme_bp.route('/<int:programme_id>/competences/logigramme/export.xlsx')
+@login_required
+@ensure_profile_completed
+def export_competence_logigramme_xlsx(programme_id):
+    """Export cours×compétences (statut) en XLSX.
+    Lignes: cours (triés par session puis code). Colonnes: compétences (par code).
+    Cellules: symbole selon statut agrégé pour (cours, compétence).
+    """
+    if openpyxl is None:
+        return jsonify({'error': "Dépendance 'openpyxl' manquante côté serveur."}), 500
+    programme = Programme.query.get_or_404(programme_id)
+    if programme not in current_user.programmes and current_user.role != 'admin':
+        flash("Vous n'avez pas accès à ce programme.", 'danger')
+        return redirect(url_for('main.index'))
+
+    # Collect cours (with session ordering)
+    cours_list = []
+    for assoc in programme.cours_assocs:
+        if assoc.cours:
+            cours_list.append((int(assoc.session or 0), assoc.cours.code or '', assoc.cours))
+    cours_list.sort(key=lambda t: (t[0], t[1]))
+
+    # Competences
+    competences = programme.competences.order_by(Competence.code).all()
+    comp_ids = {c.id for c in competences}
+
+    # Aggregate statuses for each (cours, competence)
+    from ..models import CompetenceParCours, ElementCompetenceParCours, ElementCompetence
+    course_ids = [c.id for _,__, c in cours_list]
+    agg = {}
+    if course_ids:
+        q = (
+            db.session.query(ElementCompetenceParCours.cours_id,
+                             ElementCompetence.competence_id,
+                             ElementCompetenceParCours.status)
+            .join(ElementCompetence, ElementCompetenceParCours.element_competence_id == ElementCompetence.id)
+            .filter(ElementCompetenceParCours.cours_id.in_(course_ids))
+        )
+        for cours_id, competence_id, status in q.all():
+            if competence_id not in comp_ids:
+                continue
+            key = (cours_id, competence_id)
+            d = agg.setdefault(key, {"reinvesti": 0, "atteint": 0, "developpe": 0, "total": 0})
+            s = (status or '').strip().lower()
+            if 'significativement' in s or 'développ' in s or 'developpe' in s:
+                d['developpe'] += 1
+            elif 'atteint' in s:
+                d['atteint'] += 1
+            elif 'réinvesti' in s or 'reinvesti' in s:
+                d['reinvesti'] += 1
+            d['total'] += 1
+        # Fallback CompetenceParCours
+        rows = CompetenceParCours.query.filter(CompetenceParCours.cours_id.in_(course_ids)).all()
+        seen = set(agg.keys())
+        for r in rows:
+            if r.competence_developpee_id and r.competence_developpee_id in comp_ids and (r.cours_id, r.competence_developpee_id) not in seen:
+                agg[(r.cours_id, r.competence_developpee_id)] = {"developpe": 1, "atteint": 0, "reinvesti": 0, "total": 1}
+            if r.competence_atteinte_id and r.competence_atteinte_id in comp_ids and (r.cours_id, r.competence_atteinte_id) not in seen:
+                agg[(r.cours_id, r.competence_atteinte_id)] = {"developpe": 0, "atteint": 1, "reinvesti": 0, "total": 1}
+
+    # Build workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Logigramme'
+    # Header row
+    ws.cell(row=1, column=1, value='Cours\\Compétences')
+    for j, comp in enumerate(competences, start=2):
+        ws.cell(row=1, column=j, value=comp.code)
+    # Symbols map
+    sym_map = { 'developpe': '•', 'atteint': '✓', 'reinvesti': '↺' }
+    # Fill rows
+    for i, (_, __, cours) in enumerate(cours_list, start=2):
+        ws.cell(row=i, column=1, value=cours.code)
+        for j, comp in enumerate(competences, start=2):
+            d = agg.get((cours.id, comp.id))
+            if not d:
+                continue
+            if d['developpe'] > 0:
+                t = 'developpe'
+            elif d['atteint'] > 0:
+                t = 'atteint'
+            else:
+                t = 'reinvesti'
+            ws.cell(row=i, column=j, value=sym_map.get(t, ''))
+    # Align center
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+        for cell in row:
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+    # Autosize columns (rough)
+    for col in ws.columns:
+        maxlen = 10
+        for cell in col:
+            try:
+                v = str(cell.value) if cell.value is not None else ''
+                if len(v) > maxlen:
+                    maxlen = len(v)
+            except Exception:
+                pass
+        ws.column_dimensions[col[0].column_letter].width = maxlen + 2
+
+    bio = io.BytesIO()
+    wb.save(bio)
+    bio.seek(0)
+    filename = f"logigramme_{programme_id}.xlsx"
+    return send_file(bio, as_attachment=True, download_name=filename, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 @programme_bp.route('/<int:programme_id>/links', methods=['POST'])
 @login_required

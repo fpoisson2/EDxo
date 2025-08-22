@@ -35,6 +35,9 @@
       <div class="btn-group btn-group-sm" role="group" aria-label="Export">
         <button id="exportSvgBtn" class="btn btn-outline-secondary"><i class="bi bi-filetype-svg"></i> SVG</button>
         <button id="exportPngBtn" class="btn btn-outline-secondary"><i class="bi bi-filetype-png"></i> PNG</button>
+        <a id="exportXlsxBtn" class="btn btn-outline-secondary" href="{{ url_for('programme.export_competence_logigramme_xlsx', programme_id=programme.id) }}">
+          <i class="bi bi-file-earmark-excel"></i> XLSX
+        </a>
       </div>
       {% if current_user.role in ['admin','coordo'] %}
         <div class="vr d-none d-md-block"></div>
