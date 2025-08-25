@@ -538,7 +538,7 @@ def review_competencies_import():
     except Exception as e:
         logger.error(f"Erreur lors de la lecture OCR {ocr_file_path}: {e}", exc_info=True)
     
-    # Lecture du fichier JSON de compétences
+    # Lecture du fichier JSON de compétences (avec stratégie de repli si le fichier exact n'existe pas)
     competencies_data = None
     has_competencies_file = False
     try:
@@ -548,8 +548,44 @@ def review_competencies_import():
             raise ValueError("Structure JSON invalide: clé 'competences' manquante.")
         has_competencies_file = True
     except Exception as e:
-        logger.error(f"Erreur lors du parsing JSON {competencies_file_path}: {e}", exc_info=True)
-        flash(f"Erreur lors de la lecture ou du parsing du fichier JSON des compétences: {e}", "warning")
+        logger.warning(f"Lecture initiale échouée pour {competencies_file_path}: {e}")
+        # Tentative de repli: rechercher un fichier _competences.json correspondant dans le dossier
+        try:
+            candidates = []
+            if os.path.isdir(txt_output_dir):
+                base_lower = base_filename.lower()
+                for fname in os.listdir(txt_output_dir):
+                    if not fname.endswith('_competences.json'):
+                        continue
+                    f_lower = fname.lower()
+                    # Correspondances permissives: préfixe identique ou inclusion du code de programme
+                    if f_lower.startswith(base_lower) or base_lower.startswith(f_lower.replace('_competences.json','')):
+                        candidates.append(os.path.join(txt_output_dir, fname))
+                # Si aucune correspondance stricte, tenter une correspondance contenant le code (avant le premier '_')
+                if not candidates and '_' in base_lower:
+                    code_prefix = base_lower.split('_', 1)[0]
+                    for fname in os.listdir(txt_output_dir):
+                        if fname.lower().endswith('_competences.json') and fname.lower().startswith(code_prefix):
+                            candidates.append(os.path.join(txt_output_dir, fname))
+            if len(candidates) == 1:
+                fallback_path = candidates[0]
+                logger.info(f"Utilisation du JSON de repli détecté: {fallback_path}")
+                competencies_file_path = fallback_path
+                with open(competencies_file_path, 'r', encoding='utf-8') as f:
+                    competencies_data = json.load(f)
+                if not isinstance(competencies_data, dict) or 'competences' not in competencies_data:
+                    raise ValueError("Structure JSON invalide dans le fichier de repli: clé 'competences' manquante.")
+                has_competencies_file = True
+                flash("Fichier des compétences introuvable sous le nom attendu; utilisation d'une correspondance trouvée.", "info")
+            elif len(candidates) > 1:
+                logger.warning(f"Plusieurs fichiers candidats trouvés pour base '{base_filename}': {candidates}")
+                flash("Plusieurs fichiers de compétences possibles trouvés. Merci de relancer en sélectionnant le bon devis.", "warning")
+            else:
+                logger.error(f"Aucun fichier JSON correspondant trouvé dans {txt_output_dir} pour base '{base_filename}'.")
+                flash(f"Erreur lors de la lecture ou du parsing du fichier JSON des compétences: {e}", "warning")
+        except Exception as e2:
+            logger.error(f"Erreur lors de la recherche/sélection d'un fichier JSON de repli: {e2}", exc_info=True)
+            flash(f"Erreur lors de la lecture ou du parsing du fichier JSON des compétences: {e}", "warning")
     
     # Construction du comparatif pour chaque compétence
     comparisons = []

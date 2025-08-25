@@ -9,13 +9,16 @@ services:
       # Assure que Flask/Celery parlent au conteneur Redis
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - txt_outputs:/app/src/txt_outputs
+      - pdfs:/app/src/pdfs_downloaded
     depends_on:
       - redis
     restart: unless-stopped
   redis:
     image: redis:alpine
     ports:
-      - "6340:6340"
+      - "6379:6379"
   celery:
     build: .
     command: celery -A src.celery_app:celery worker --loglevel=info --hostname=worker2@%h
@@ -24,6 +27,13 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - txt_outputs:/app/src/txt_outputs
+      - pdfs:/app/src/pdfs_downloaded
     depends_on:
       - redis
     restart: unless-stopped
+
+volumes:
+  txt_outputs: {}
+  pdfs: {}
