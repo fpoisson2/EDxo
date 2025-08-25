@@ -42,7 +42,8 @@ logger = logging.getLogger(__name__)
 # Tâche d'Extraction JSON par Compétence (avec logging ajouté)
 ###############################################################################
 @shared_task(bind=True, name='app.tasks.ocr.extract_json_competence')
-def extract_json_competence(self, competence, download_path_local, txt_output_dir, base_filename_local, model=None):
+def extract_json_competence(self, competence, download_path_local, txt_output_dir,
+                            base_filename_local, openai_key, model=None):
     """
     Tâche de traitement pour une compétence.
     Extrait et analyse une compétence spécifique à partir d'un PDF.
@@ -104,7 +105,9 @@ def extract_json_competence(self, competence, download_path_local, txt_output_di
         logger.info(f"[{task_id}/{code_comp}] Appel OpenAI ({model}) pour extraction -> {output_json_filename}")
         
         try:
-            extraction_output = api_clients.extraire_competences_depuis_txt(competence_text, output_json_filename)
+            extraction_output = api_clients.extraire_competences_depuis_txt(
+                competence_text, output_json_filename
+            )
         except Exception as api_err:
             logger.error(f"[{task_id}/{code_comp}] Erreur API OpenAI: {api_err}", exc_info=True)
             raise SkillExtractionError(f"Erreur API OpenAI (extraction comp {code_comp}): {api_err}") from api_err
@@ -743,7 +746,12 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id):
             
             extraction_tasks_signatures = [
                 extract_json_competence.s(
-                    comp, download_path_local, txt_output_dir, base_filename_local, model_extraction
+                    comp,
+                    download_path_local,
+                    txt_output_dir,
+                    base_filename_local,
+                    openai_key,
+                    model_extraction,
                 )
                 for comp in competences_pages if comp.get('code') and comp.get('page_debut') is not None
             ]
