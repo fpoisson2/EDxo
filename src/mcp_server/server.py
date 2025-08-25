@@ -51,6 +51,7 @@ from src.app.models import (
     Department,
 )
 from src.app.routes.oauth import TOKEN_RESOURCES
+from src.extensions import db
 
 # ---------------------------------------------------------------------------
 # Flask application binding

@@ -7,11 +7,11 @@
 
 {% block programmes_specific %}
 <div class="container-fluid mt-3">
-  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
-    <div class="d-flex align-items-center gap-2">
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3 gap-2">
+    <div class="d-flex align-items-center gap-2 mb-2 mb-md-0">
       <h4 class="mb-0">Logigramme des compétences — {{ programme.nom }}</h4>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex flex-wrap align-items-center gap-2">
       <!-- Mode timeline retiré pour le moment -->
       <div class="btn-group btn-group-sm" role="group" aria-label="Filtrer les liens">
         <input type="checkbox" class="btn-check" id="toggleDeveloppee" checked>
@@ -23,7 +23,7 @@
         <input type="checkbox" class="btn-check" id="toggleReinvesti" checked>
         <label class="btn btn-outline-secondary" for="toggleReinvesti">Réinvesti</label>
       </div>
-      <div class="input-group input-group-sm" style="width: 280px;">
+      <div class="input-group input-group-sm flex-grow-1" style="min-width: 180px; max-width: 280px;">
         <span class="input-group-text"><i class="bi bi-search"></i></span>
         <input id="searchBox" type="search" class="form-control" placeholder="Rechercher compétence ou cours">
       </div>

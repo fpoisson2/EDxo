@@ -27,7 +27,7 @@
 }
 
 /* Legend */
-.legend { color: #555; display: flex; gap: 16px; align-items: center; }
+.legend { color: #555; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .legend-item { display: inline-flex; align-items: center; gap: 6px; }
 .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 .legend-comp { background: #6c63ff; }
