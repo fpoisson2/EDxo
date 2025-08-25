@@ -9,6 +9,9 @@ def process_changes(mapper, target, operation):
 
     # Helper to sanitize a single scalar value
     def sanitize_scalar(value):
+        # Preserve JSON-native scalars
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return value
         if isinstance(value, datetime):
             return value.isoformat()
         # SQLAlchemy model instance: prefer its primary key if available
@@ -17,8 +20,8 @@ def process_changes(mapper, target, operation):
                 return getattr(value, "id")
             except Exception:
                 return str(value)
-        # Instrumented collections will be handled by the list/dict paths elsewhere
-        return value
+        # Fallback to string for anything non-serializable
+        return str(value)
 
     if operation == 'INSERT':
         # Pour les INSERT, capturez les nouvelles valeurs (colonnes simples) en tant que chaînes
@@ -61,6 +64,7 @@ def process_changes(mapper, target, operation):
                     else:
                         changes[f"{relationship.key}_id"] = sanitize_scalar(rel_value)
                 elif isinstance(rel_value, (list, tuple, set)):
+                    # Only include compact representations for collections
                     changes[relationship.key] = [sanitize_scalar(item) for item in rel_value]
 
     return changes
@@ -78,19 +82,22 @@ def track_changes(mapper, connection, target, operation):
         
         # Sanitize changes: convert any non-JSON types to serializable forms
         def sanitize(obj):
+            if obj is None or isinstance(obj, (str, int, float, bool)):
+                return obj
+            if isinstance(obj, datetime):
+                return obj.isoformat()
             if isinstance(obj, dict):
                 return {k: sanitize(v) for k, v in obj.items()}
             if isinstance(obj, (list, tuple, set)):
                 return [sanitize(item) for item in obj]
-            if isinstance(obj, datetime):
-                return obj.isoformat()
             # SQLAlchemy model instance → use its id if available, else string
             if hasattr(obj, 'id'):
                 try:
                     return getattr(obj, 'id')
                 except Exception:
                     return str(obj)
-            return obj
+            # Fallback for any other non-serializable type
+            return str(obj)
         clean_changes = sanitize(changes)
         connection.execute(
             DBChange.__table__.insert(),
