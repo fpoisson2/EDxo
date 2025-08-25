@@ -638,6 +638,9 @@ Ton objectif principal est d'analyser le document PDF fourni (potentiellement br
 4. Les `Critères de performance pour l’ensemble de la compétence` : extrais les lignes descriptives textuelles trouvées sous ce titre exact sous forme de liste de chaînes de caractères. Si la section est absente ou marquée comme non applicable (ex: "S. O."), la valeur du champ doit être `null` ou une liste vide.
 5. Les `Éléments` : Identifie chaque élément spécifique de la compétence (souvent numéroté `1.`, `2.`, etc., ou précédé d'une puce). Pour chaque élément, crée un objet contenant deux champs: `element` (la description textuelle de l'élément de compétence spécifique) et `criteres` (une liste de chaînes de caractères contenant les critères de performance associés spécifiquement à cet élément). Si aucun critère n'est listé pour un élément, `criteres` doit être `null` ou une liste vide. Si la section "Éléments" entière est absente, sa valeur doit être `null`.
 
+ATTENTION : Le document peut contenir plusieurs types de compétences (formation générale, formation spécifique, formation complémentaire).
+Tu dois EXTRAIRE UNIQUEMENT les compétences de la formation spécifique reliée au programme, et IGNORER celles de la formation générale ou complémentaire.
+
 Nettoie le texte: retire les puces/marqueurs de liste redondants (e, °, +, o, *, - en tête de ligne si déjà listé), les pieds de page récurrents ("Ministère...", "Code de programme XXX"), les numéros de page isolés, et les marqueurs de saut de page. Utilise exclusivement le schéma JSON fourni et ne renvoie aucun texte hors JSON.
 """
     )
