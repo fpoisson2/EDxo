@@ -153,11 +153,11 @@ def update_verifier_plan_cours(plan_id):
 
     print(o1_response_content)
     # ----------------------------------------------------------
-    # 2) Deuxième appel : model = "gpt-4o"
+    # 2) Deuxième appel : model = "gpt-5"
     # ----------------------------------------------------------
     try:
         completion = client.beta.chat.completions.parse(
-            model="gpt-4o",
+            model="gpt-5",
             messages=[
                 {
                     "role": "user",
@@ -186,13 +186,13 @@ def update_verifier_plan_cours(plan_id):
 
     usage_2_prompt = completion.usage.prompt_tokens if hasattr(completion, 'usage') else 0
     usage_2_completion = completion.usage.completion_tokens if hasattr(completion, 'usage') else 0
-    cost_second_call = calculate_call_cost(usage_2_prompt, usage_2_completion, "gpt-4o")
+    cost_second_call = calculate_call_cost(usage_2_prompt, usage_2_completion, "gpt-5")
 
     total_cost = cost_first_call + cost_second_call
 
     print(f"Premier appel ({ai_model}): {cost_first_call:.6f}$ "
           f"({usage_1_prompt} prompt, {usage_1_completion} completion)")
-    print(f"Second appel (gpt-4o): {cost_second_call:.6f}$ "
+    print(f"Second appel (gpt-5): {cost_second_call:.6f}$ "
           f"({usage_2_prompt} prompt, {usage_2_completion} completion)")
     print(f"Coût total: {total_cost:.6f}$")
 

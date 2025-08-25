@@ -6,12 +6,16 @@
     <hr>
 
     <!-- Export Button - Aligned Right -->
-    <div class="d-flex justify-content-start mb-4">
+    <div class="d-flex justify-content-start gap-2 mb-4">
         <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" 
            class="btn btn-success d-flex align-items-center">
             <i class="bi bi-file-earmark-word me-2"></i>
             <span>Exporter en .docx</span>
         </a>
+        <button type="button" class="btn btn-outline-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#importDocxModal">
+            <i class="bi bi-file-earmark-arrow-up me-2"></i>
+            <span>Importer .docx</span>
+        </button>
     </div>
 
     <div class="accordion" id="accordionPlanCours">
@@ -510,6 +514,8 @@
                             </a>
                         </div>
                     </form>
+
+                    <!-- Modal Import DOCX moved below to avoid collapse visibility issues -->
 
                     <!-- Modèles cachés pour clonage -->
 <div id="calendrier-template" class="calendar-item border p-2 mb-2" draggable="true" style="display: none;">
@@ -1551,6 +1557,176 @@ document.addEventListener('click', function(e) {
     }
 });
 
+    // Import DOCX handling (Celery-based)
+    function applyImportPayloadToUI(data) {
+        if (data?.fields) {
+            for (const [key, val] of Object.entries(data.fields)) {
+                const el = document.getElementById(key);
+                if (!el) continue;
+                el.value = val ?? '';
+                if (el.toastEditor) el.toastEditor.setMarkdown(val ?? '');
+            }
+        }
+        // Calendrier
+        const calCont = document.getElementById('calendrier-container');
+        if (calCont) {
+            calCont.innerHTML = '';
+            const entries = data?.calendriers || [];
+            if (entries.length > 0) {
+                calCont.style.display = 'block';
+                entries.forEach((entry, index) => {
+                    const newItem = document.createElement('div');
+                    newItem.className = `calendar-item border p-2 mb-2 ${index % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
+                    newItem.innerHTML = document.getElementById('calendrier-template').innerHTML.replace(/__index__/g, index);
+                    newItem.querySelector(`[name="calendriers-${index}-semaine"]`).value = entry.semaine ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-sujet"]`).value = entry.sujet ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-activites"]`).value = entry.activites ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-travaux_hors_classe"]`).value = entry.travaux_hors_classe ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-evaluations"]`).value = entry.evaluations ?? '';
+                    calCont.appendChild(newItem);
+                });
+                calendrierIndex = entries.length;
+                if (typeof initDragAndDrop === 'function') initDragAndDrop();
+            } else {
+                calCont.style.display = 'none';
+            }
+        }
+        // Médiagraphies
+        const medCont = document.getElementById('mediagraphie-container');
+        if (medCont) {
+            medCont.innerHTML = '';
+            const list = data?.mediagraphies || [];
+            if (list.length > 0) {
+                medCont.style.display = 'block';
+                list.forEach((m, index) => {
+                    const newItem = document.createElement('div');
+                    newItem.className = 'mediagraphie-item mb-2';
+                    newItem.innerHTML = document.getElementById('mediagraphie-template').innerHTML.replace(/__index__/g, index);
+                    newItem.querySelector(`[name="mediagraphies-${index}-reference_bibliographique"]`).value = m.reference_bibliographique ?? '';
+                    medCont.appendChild(newItem);
+                });
+                mediagraphieIndex = list.length;
+            } else {
+                medCont.style.display = 'none';
+            }
+        }
+        // Disponibilités
+        const dispCont = document.getElementById('disponibilites-container');
+        if (dispCont) {
+            dispCont.innerHTML = '';
+            const list = data?.disponibilites || [];
+            if (list.length > 0) {
+                dispCont.style.display = 'block';
+                list.forEach((d, index) => {
+                    const newItem = document.createElement('div');
+                    newItem.className = 'disponibilite-item mb-2';
+                    newItem.innerHTML = document.getElementById('disponibilite-template').innerHTML.replace(/__index__/g, index);
+                    newItem.querySelector(`[name="disponibilites-${index}-jour_semaine"]`).value = d.jour_semaine ?? '';
+                    newItem.querySelector(`[name="disponibilites-${index}-plage_horaire"]`).value = d.plage_horaire ?? '';
+                    newItem.querySelector(`[name="disponibilites-${index}-lieu"]`).value = d.lieu ?? '';
+                    dispCont.appendChild(newItem);
+                });
+                disponibiliteIndex = list.length;
+            } else {
+                dispCont.style.display = 'none';
+            }
+        }
+        // Évaluations
+        const evalCont = document.getElementById('evaluations-container');
+        const hiddenCaps = document.getElementById('capacites-hidden');
+        if (evalCont) {
+            evalCont.innerHTML = '';
+            const list = data?.evaluations || [];
+            if (list.length > 0) {
+                evalCont.style.display = 'block';
+                list.forEach((ev, evalIndex) => {
+                    const newItem = document.createElement('div');
+                    newItem.className = `card mb-3 evaluation-item ${evalIndex % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
+                    newItem.setAttribute('data-eval-index', String(evalIndex));
+                    newItem.innerHTML = document.getElementById('evaluation-template').innerHTML.replace(/__index__/g, evalIndex);
+                    newItem.querySelector(`[name="evaluations-${evalIndex}-titre_evaluation"]`).value = ev.titre_evaluation ?? '';
+                    newItem.querySelector(`[name="evaluations-${evalIndex}-semaine"]`).value = ev.semaine ?? '';
+                    newItem.querySelector(`[name="evaluations-${evalIndex}-texte_description"]`).value = ev.description ?? '';
+                    const capsContainer = newItem.querySelector('.capacites-container');
+                    capsContainer.innerHTML = '';
+                    (ev.capacites || []).forEach((cap, capIndex) => {
+                        const capItem = document.createElement('div');
+                        capItem.className = 'capacite-item mb-2 border p-2';
+                        capItem.innerHTML = document.getElementById('evaluation-capacite-template').innerHTML
+                            .replace(/__eval_index__/g, evalIndex)
+                            .replace(/__cap_index__/g, capIndex);
+                        const select = capItem.querySelector('select');
+                        if (hiddenCaps) select.innerHTML = hiddenCaps.innerHTML;
+                        if (cap.capacite_id) {
+                            select.value = String(cap.capacite_id);
+                        } else if (cap.capacite_nom) {
+                            const opt = Array.from(select.options).find(o => o.text === cap.capacite_nom);
+                            if (opt) select.value = opt.value;
+                        }
+                        capItem.querySelector(`[name="evaluations-${evalIndex}-capacites-${capIndex}-ponderation"]`).value = cap.ponderation ?? '';
+                        capsContainer.appendChild(capItem);
+                    });
+                    evalCont.appendChild(newItem);
+                });
+                evaluationIndex = list.length;
+            } else {
+                evalCont.style.display = 'none';
+            }
+        }
+        if (window.showFloatingButtons) window.showFloatingButtons();
+    }
+
+    const importForm = document.getElementById('importDocxForm');
+    const importBtn = document.getElementById('confirmImportDocxBtn');
+    if (importForm) {
+      importForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById('docxFile');
+        if (!fileInput?.files?.length) return;
+        importBtn?.setAttribute('disabled', 'disabled');
+        importBtn?.classList.add('disabled');
+        try {
+            // Define completion handler so base polling updates UI when task finishes
+            window.onTaskCompleted = function(payload) {
+                try { applyImportPayloadToUI(payload); } catch (e) { console.error('applyImportPayloadToUI error', e); }
+                const toast = document.getElementById('generateSuccessToast');
+                if (toast) new bootstrap.Toast(toast).show();
+            };
+
+            const fd = new FormData();
+            fd.append('file', fileInput.files[0]);
+            fd.append('cours_id', String({{ cours.id }}));
+            fd.append('session', "{{ plan_de_cours.session }}");
+            const aiModelEl = document.getElementById('importDocxAiModel');
+            if (aiModelEl && aiModelEl.value) {
+                fd.append('ai_model', aiModelEl.value);
+            }
+            const resp = await fetch("{{ url_for('plan_de_cours.import_docx_start') }}", {
+                method: 'POST',
+                body: fd,
+                credentials: 'same-origin',
+                headers: { 'X-CSRFToken': "{{ csrf_token() }}" }
+            });
+            const data = await resp.json();
+            if (!resp.ok || data.success === false || !data.task_id) throw new Error(data.message || 'Échec lancement import');
+
+            const modalEl = document.getElementById('importDocxModal');
+            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modal.hide();
+            if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('currentTaskId', data.task_id);
+            if (typeof startTaskPolling === 'function') startTaskPolling(data.task_id);
+        } catch (err) {
+            console.error('Erreur import DOCX (start)', err);
+            const toast = document.getElementById('generateErrorToast');
+            if (toast) new bootstrap.Toast(toast).show();
+        } finally {
+            importBtn?.removeAttribute('disabled');
+            importBtn?.classList.remove('disabled');
+            importForm.reset();
+        }
+      });
+    }
+
     // Gestion de la sauvegarde
     if (floatingSaveBtn && planDeCoursForm) {
         floatingSaveBtn.addEventListener('click', async function(e) {
@@ -1757,6 +1933,35 @@ document.addEventListener('click', function(e) {
     });
 });
 </script>
+
+<!-- Modal Import DOCX (moved outside accordion to avoid collapse visibility issues) -->
+<div class="modal fade" id="importDocxModal" tabindex="-1" aria-labelledby="importDocxModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="importDocxModalLabel">Importer un plan de cours (.docx)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="importDocxForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="docxFile" class="form-label">Fichier .docx</label>
+            <input class="form-control" type="file" id="docxFile" name="file" accept=".docx" required>
+          </div>
+          <div class="mb-3">
+            <label for="importDocxAiModel" class="form-label">Modèle d'IA</label>
+            {{ generate_form.ai_model(class="form-select border-0", id="importDocxAiModel") }}
+          </div>
+          <div class="small text-muted">Le contenu sera analysé pour remplir les sections, y compris évaluations, informations prof, disponibilités et médiagraphie.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" id="confirmImportDocxBtn" class="btn btn-primary">Importer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  </div>
 
 <!-- Modal Génération du Plan de Cours (similaire au plan-cadre) -->
 <div class="modal fade" id="generatePlanCoursModal" tabindex="-1" aria-labelledby="generatePlanCoursLabel" aria-hidden="true">

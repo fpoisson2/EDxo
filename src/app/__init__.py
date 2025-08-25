@@ -22,6 +22,7 @@ from datetime import timedelta, datetime, timezone
 from pathlib import Path
 
 from flask_session import Session
+from cachelib import FileSystemCache
 
 from flask import Flask, session, jsonify, redirect, url_for, request, current_app
 from flask_login import current_user, logout_user, UserMixin
@@ -54,6 +55,9 @@ from .routes.settings import settings_bp
 from .routes.system import system_bp
 from .routes.ocr_routes import ocr_bp
 from .routes.grilles import grille_bp
+from .routes.api import api_bp
+from .routes.oauth import oauth_bp
+from ..mcp_server.server import init_app as init_mcp_server
 
 # Import version
 from ..config.version import __version__
@@ -116,7 +120,8 @@ def create_app(testing=False):
         static_folder=os.path.join(base_path, "static")
     )
 
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+    # Respect reverse proxy headers for scheme, host and path prefix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_prefix=1)
 
     # Configuration based on environment
     if testing:
@@ -133,7 +138,7 @@ def create_app(testing=False):
         base_path = Path(__file__).parent.parent
 
         SESS_DIR = os.path.join(BASE_DIR, "flask_sessions")
-        os.makedirs(SESS_DIR, exist_ok=True)      # ← avant Session(app)
+        os.makedirs(SESS_DIR, exist_ok=True)      # ensure dir exists for FileSystemCache
         app.config.update(
             PREFERRED_URL_SCHEME='https',
             SQLALCHEMY_DATABASE_URI=f"sqlite:///{DB_PATH}?timeout=30",
@@ -154,9 +159,12 @@ def create_app(testing=False):
             SESSION_COOKIE_SECURE = False,
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Lax',
-            SESSION_TYPE='filesystem',
-            SESSION_FILE_DIR=os.path.join(BASE_DIR, 'flask_sessions'),  # si filesystem
+            # Use CacheLib backend to avoid Flask-Session deprecation warnings
+            SESSION_TYPE='cachelib',
+            SESSION_CACHELIB=FileSystemCache(SESS_DIR, threshold=500, mode=0o700),
             SESSION_PERMANENT=False,
+            # Configure limiter storage explicitly to avoid in-memory warning; override via env
+            RATELIMIT_STORAGE_URI=os.getenv('RATELIMIT_STORAGE_URI', 'memory://'),
             CELERY_BROKER_URL=CELERY_BROKER_URL,
             CELERY_RESULT_BACKEND=CELERY_RESULT_BACKEND,
             TXT_OUTPUT_DIR=os.path.join(BASE_DIR, 'txt_outputs')
@@ -190,7 +198,7 @@ def create_app(testing=False):
     @login_manager.user_loader
     def load_user(user_id):
         try:
-            return User.query.get(int(user_id))
+            return db.session.get(User, int(user_id))
         except Exception:
             return None
 
@@ -201,7 +209,12 @@ def create_app(testing=False):
     db.init_app(app)
     ckeditor.init_app(app)
     csrf.init_app(app)
+    app.config.setdefault("WTF_CSRF_CHECK_DEFAULT", True)
+    app.config.setdefault("WTF_CSRF_TIME_LIMIT", None)
     init_change_tracking(db)
+
+    # Bind Flask app to MCP server for OAuth verification
+    init_mcp_server(app)
 
     if not testing:
         migrate = Migrate(app, db)
@@ -224,6 +237,8 @@ def create_app(testing=False):
     app.register_blueprint(gestion_programme_bp)
     app.register_blueprint(ocr_bp)
     app.register_blueprint(grille_bp)
+    app.register_blueprint(api_bp)
+    app.register_blueprint(oauth_bp)
 
     # Register helpers and handlers
     @app.context_processor
@@ -237,6 +252,10 @@ def create_app(testing=False):
         if (
             request.endpoint == 'static' or
             request.path.startswith('/static/') or
+            request.path.startswith('/api/') or
+            request.path.startswith('/sse/') or  # MCP SSE endpoint is public (uses Bearer token)
+            request.path in ('/token', '/register') or
+            request.path.startswith('/.well-known/') or
             (view_func is not None and getattr(view_func, 'is_public', False))
         ):
             return
@@ -294,6 +313,12 @@ def create_app(testing=False):
 
     @app.after_request
     def after_request(response):
+        if response.status_code == 401:
+            response.headers[
+                'WWW-Authenticate'
+            ] = (
+                f'Bearer resource_metadata="{request.url_root.rstrip('/')}/.well-known/oauth-protected-resource"'
+            )
         if current_user.is_authenticated and session.modified:
             session.modified = True
         return response

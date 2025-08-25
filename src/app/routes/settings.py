@@ -15,6 +15,7 @@ from ..forms import (
     PlanDeCoursPromptSettingsForm,
     OpenAIModelForm,
     ChatSettingsForm,
+    APITokenForm,
 )
 from .evaluation import AISixLevelGridResponse
 from ...config.constants import SECTIONS  # Importer la liste des sections
@@ -77,7 +78,7 @@ def manage_openai_models():
 @role_required('admin')
 def delete_openai_model(model_id):
     """Supprime un modèle OpenAI."""
-    model = OpenAIModel.query.get(model_id)
+    model = db.session.get(OpenAIModel, model_id)
     if model:
         db.session.delete(model)
         db.session.commit()
@@ -107,6 +108,23 @@ def chat_model_settings():
     # Assurer l'affichage cohérent: refléter le couplage côté formulaire
     form.tool_model.data = config.chat_model
     return render_template('settings/chat_models.html', form=form)
+
+
+@settings_bp.route('/developer', methods=['GET', 'POST'])
+@login_required
+def developer():
+    form = APITokenForm()
+    if form.validate_on_submit():
+        days = form.ttl.data or 30
+        current_user.generate_api_token(expires_in=days * 24 * 3600)
+        flash('Jeton API généré.', 'success')
+        return redirect(url_for('settings.developer'))
+    return render_template(
+        'settings/developer.html',
+        form=form,
+        token=current_user.api_token,
+        expires_at=current_user.api_token_expires_at,
+    )
 
 @settings_bp.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
@@ -151,9 +169,9 @@ def edit_profile():
                 # Gérer les programmes
                 selected_ids = form.programmes.data
                 current_user.programmes = [
-                    Programme.query.get(int(pid)) 
+                    db.session.get(Programme, int(pid)) 
                     for pid in selected_ids 
-                    if Programme.query.get(int(pid))
+                    if db.session.get(Programme, int(pid))
                 ]
                 
                 db.session.commit()
@@ -467,7 +485,7 @@ def edit_global_generation_settings():
 
     if request.method == 'GET':
         # Récupérer la clé OpenAI de l'utilisateur connecté via SQLAlchemy
-        user = User.query.get(current_user.id)
+        user = db.session.get(User, current_user.id)
         if user:
             form.openai_key.data = user.openai_key
 

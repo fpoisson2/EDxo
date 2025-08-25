@@ -1,5 +1,6 @@
 from flask import render_template, redirect, url_for, request, flash
 from flask_login import current_user
+from collections import OrderedDict
 
 from ..forms import (
     CoursForm,
@@ -19,6 +20,7 @@ from ..models import (
     CoursCorequis,
     CompetenceParCours,
     ElementCompetenceParCours,
+    FilConducteur,
 )
 from .routes import main
 from ...utils.decorator import roles_required, ensure_profile_completed

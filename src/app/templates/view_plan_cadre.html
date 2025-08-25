@@ -56,6 +56,12 @@
     <!-- Boutons d'Action Supplémentaires -->
     <div class="d-flex flex-column flex-sm-row gap-3 mb-5 align-items-center">
         {% if current_user.role in ['admin', 'coordo'] %}
+        <!-- Import .docx (déclenche le modal) -->
+        <button type="button" class="btn btn-outline-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#importPlanCadreModal">
+            <i class="bi bi-file-earmark-arrow-up me-2"></i>
+            <span>Importer .docx</span>
+        </button>
+
         <button type="button" id="openGenerateBtn" class="btn btn-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
             <i class="bi bi-box-arrow-up-right me-2"></i>
             <span class="btn-text">Générer le plan-cadre</span>
@@ -882,7 +888,16 @@
             <div id="collapseGestionFichiers" class="accordion-collapse collapse show" aria-labelledby="headingGestionFichiers" data-bs-parent="#gestionFichiersAccordion">
                 <div class="accordion-body">
                     <div class="d-flex flex-wrap gap-2 mb-3">
-                        <a href="{{ url_for('plan_cadre.export_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary">Exporter en DOCX</a>
+                        <a href="{{ url_for('plan_cadre.export_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary d-flex align-items-center">
+                            <i class="bi bi-file-earmark-word me-2"></i>
+                            Exporter en DOCX
+                        </a>
+                        {% if current_user.role in ['admin','coordo'] %}
+                        <button type="button" class="btn btn-outline-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#importPlanCadreModal">
+                            <i class="bi bi-file-earmark-arrow-up me-2"></i>
+                            Importer .docx
+                        </button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -996,6 +1011,95 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Import DOCX Plan-cadre -->
+    <div class="modal fade" id="importPlanCadreModal" tabindex="-1" aria-labelledby="importPlanCadreModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="importPlanCadreModalLabel">Importer un plan-cadre (.docx)</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+          </div>
+          <form id="importPlanCadreForm">
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="planCadreDocxFile" class="form-label">Fichier .docx</label>
+                <input class="form-control" type="file" id="planCadreDocxFile" name="file" accept=".docx" required>
+              </div>
+              <div class="mb-3">
+                <label for="importPlanCadreAiModel" class="form-label">Modèle d'IA</label>
+                {{ generate_form.ai_model(class="form-select border-0", id="importPlanCadreAiModel") }}
+              </div>
+              <div class="small text-muted">Le contenu sera analysé pour remplir les sections du plan-cadre (sections textuelles, listes, savoir-être et capacités).</div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+              <button type="submit" id="confirmImportPlanCadreBtn" class="btn btn-primary">Importer</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const importForm = document.getElementById('importPlanCadreForm');
+        const importBtn = document.getElementById('confirmImportPlanCadreBtn');
+        if (!importForm) return;
+        importForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          const fileInput = document.getElementById('planCadreDocxFile');
+          if (!fileInput || !fileInput.files || !fileInput.files.length) return;
+          importBtn?.setAttribute('disabled', 'disabled');
+          importBtn?.classList.add('disabled');
+          try {
+            // Une fois la tâche terminée
+            window.onTaskCompleted = function(payload) {
+              try {
+                const toast = document.getElementById('saveSuccessToast') || document.getElementById('generateSuccessToast');
+                if (toast && window.bootstrap) new bootstrap.Toast(toast).show();
+              } catch (_) {}
+              // Si une prévisualisation est disponible, ouvrir l'écran de revue
+              if (payload && payload.preview && payload.reviewUrl) {
+                window.location.href = payload.reviewUrl;
+              } else {
+                // Sinon, recharger pour voir les modifications appliquées
+                window.location.reload();
+              }
+            };
+
+            const fd = new FormData();
+            fd.append('file', fileInput.files[0]);
+            const aiModelEl = document.getElementById('importPlanCadreAiModel');
+            if (aiModelEl && aiModelEl.value) {
+              fd.append('ai_model', aiModelEl.value);
+            }
+            const resp = await fetch("{{ url_for('plan_cadre.import_plan_cadre_docx_start', plan_id=plan.id) }}", {
+              method: 'POST',
+              body: fd,
+              credentials: 'same-origin',
+              headers: { 'X-CSRFToken': "{{ csrf_token() }}" }
+            });
+            const data = await resp.json();
+            if (!resp.ok || data.success === false || !data.task_id) throw new Error(data.message || 'Échec du lancement');
+
+            const modalEl = document.getElementById('importPlanCadreModal');
+            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modal.hide();
+            if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('currentTaskId', data.task_id);
+            if (typeof startTaskPolling === 'function') startTaskPolling(data.task_id);
+          } catch (err) {
+            console.error('Erreur import DOCX (plan-cadre)', err);
+            const toast = document.getElementById('generateErrorToast');
+            if (toast && window.bootstrap) new bootstrap.Toast(toast).show();
+          } finally {
+            importBtn?.removeAttribute('disabled');
+            importBtn?.classList.remove('disabled');
+            importForm.reset();
+          }
+        });
+      });
+    </script>
 
 </div>
 {% endblock %}

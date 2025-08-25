@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Documentation de l'API</h1>
+<p>Pour utiliser l'API, générez un jeton personnel depuis l'<a href="{{ url_for('settings.developer') }}">espace développeur</a>.
+Incluez ce jeton dans l'en-tête <code>X-API-Token</code> de chaque requête.</p>
+<p>Le serveur MCP accepte également ce jeton via <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+<p>MCP (ChatGPT/Deep Research) : l'endpoint SSE est exposé sous <code>/sse/</code>. Configurez votre serveur MCP dans ChatGPT avec <code>server_url</code> pointant vers <code>{{ request.url_root.rstrip('/') }}/sse/</code> et autorisez les outils <code>search</code> et <code>fetch</code>. L'authentification se fait via OAuth (flux PKCE) ou un jeton Bearer valide.</p>
+<table class="table">
+  <thead>
+    <tr><th>Méthode</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>GET</td><td>/api/programmes</td><td>Liste des programmes</td></tr>
+    <tr><td>GET</td><td>/api/programmes/&lt;id&gt;/cours</td><td>Cours d'un programme</td></tr>
+    <tr><td>GET</td><td>/api/programmes/&lt;id&gt;/competences</td><td>Compétences ministérielles du programme</td></tr>
+    <tr><td>GET</td><td>/api/competences/&lt;id&gt;</td><td>Détails d'une compétence</td></tr>
+    <tr><td>GET</td><td>/api/cours</td><td>Liste de tous les cours</td></tr>
+    <tr><td>GET</td><td>/api/cours/&lt;id&gt;</td><td>Détails d'un cours</td></tr>
+    <tr><td>GET</td><td>/api/cours/&lt;id&gt;/plan_cadre</td><td>Plan cadre d'un cours</td></tr>
+    <tr><td>GET</td><td>/api/cours/&lt;id&gt;/plans_de_cours</td><td>Plans de cours d'un cours</td></tr>
+    <tr><td>POST</td><td>/api/plan_cadre/&lt;id&gt;/generate</td><td>Générer un plan cadre</td></tr>
+    <tr><td>POST</td><td>/api/plan_de_cours/&lt;id&gt;/generate</td><td>Générer un plan de cours</td></tr>
+    <tr><td>POST</td><td>/api/plan_cadre/&lt;id&gt;/improve</td><td>Améliorer un plan cadre</td></tr>
+    <tr><td>POST</td><td>/api/plan_cadre/&lt;id&gt;/improve/&lt;section&gt;</td><td>Améliorer une section du plan cadre</td></tr>
+    <tr><td>GET</td><td>/api/plan_cadre/&lt;id&gt;/section/&lt;section&gt;</td><td>Récupérer une section du plan cadre</td></tr>
+    <tr><td>GET</td><td>/api/plan_cadre/&lt;id&gt;/export_docx</td><td>Exporter un plan cadre en DOCX</td></tr>
+    <tr><td>GET</td><td>/api/plan_de_cours/&lt;id&gt;/export_docx</td><td>Exporter un plan de cours en DOCX</td></tr>
+  </tbody>
+</table>
+
+<h2>Exemples d'utilisation</h2>
+<p>Les requêtes ci-dessous utilisent <code>curl</code>. Remplacez <code>VOTRE_TOKEN</code> par le jeton obtenu et adaptez les identifiants.</p>
+
+<h3>Liste des programmes</h3>
+<pre><code>curl -H "X-API-Token: VOTRE_TOKEN" {{ url_for('api.list_programmes', _external=True) }}</code></pre>
+
+<h3>Détails d'un cours</h3>
+<pre><code>curl -H "X-API-Token: VOTRE_TOKEN" {{ url_for('api.course_details', cours_id=1, _external=True) }}</code></pre>
+
+<h3>Générer un plan cadre</h3>
+<pre><code>curl -X POST -H "X-API-Token: VOTRE_TOKEN" {{ url_for('api.generate_plan_cadre', plan_id=1, _external=True) }}</code></pre>
+
+<p>Les points d'accès de génération retournent un identifiant de tâche Celery. Utilisez l'interface de l'application pour suivre leur progression.</p>
+{% endblock %}

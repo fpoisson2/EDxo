@@ -51,7 +51,7 @@ def _extract_first_parsed(response):
 def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai_model: str, user_id: int):
     """Celery task qui génère toutes les sections du plan de cours et met à jour la BD."""
     try:
-        plan = PlanDeCours.query.get(plan_de_cours_id)
+        plan = db.session.get(PlanDeCours, plan_de_cours_id)
         if not plan:
             return {"status": "error", "message": "Plan de cours non trouvé."}
 
@@ -138,4 +138,3 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
     except Exception as e:
         logger.exception("Erreur dans la tâche generate_plan_de_cours_all_task")
         return {"status": "error", "message": str(e)}
-

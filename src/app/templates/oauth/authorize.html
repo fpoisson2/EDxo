@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Autoriser {{ client.name or client.client_id }}</h1>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <input type="hidden" name="code_challenge" value="{{ code_challenge }}" />
+  {% if resource %}<input type="hidden" name="resource" value="{{ resource }}" />{% endif %}
+  {% if state %}<input type="hidden" name="state" value="{{ state }}" />{% endif %}
+  <p>Cette application demande l'accès à votre compte.</p>
+  <button type="submit" name="confirm" value="yes" class="btn btn-primary">Autoriser</button>
+</form>
+{% endblock %}

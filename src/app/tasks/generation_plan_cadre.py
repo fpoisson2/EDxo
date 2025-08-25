@@ -139,7 +139,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
     try:
         logging.info("Starting task for plan_id %s by user_id %s", plan_id, user_id)
         # Retrieve the plan
-        plan = PlanCadre.query.get(plan_id)
+        plan = db.session.get(PlanCadre, plan_id)
         if not plan:
             return {"status": "error", "message": "Plan Cadre non trouvé."}
 

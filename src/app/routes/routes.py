@@ -92,6 +92,12 @@ def health():
     except Exception:
         return jsonify({'status': 'degraded'}), 200
 
+
+@main.route('/help/api')
+@login_required
+def api_help_page():
+    return render_template('help/api.html')
+
 @main.route('/forgot-password', methods=['GET', 'POST'])
 @public_route
 def forgot_password():
@@ -213,7 +219,7 @@ def get_credit_balance():
         return jsonify({'error': 'Not authenticated'}), 401
         
     try:
-        user = User.query.get(current_user.id)
+        user = db.session.get(User, current_user.id)
         if user is None:
             return jsonify({'error': 'User not found'}), 404
             
@@ -428,9 +434,13 @@ def change_password():
     return render_template('change_password.html', form=form)
 
 @main.route('/')
-@login_required
+@public_route
 @ensure_profile_completed
 def index():
+    if not current_user.is_authenticated:
+        form = LoginForm()
+        return render_template('login.html', form=form)
+
     # Récupérer l'utilisateur connecté
     user = current_user
     

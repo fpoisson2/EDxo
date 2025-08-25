@@ -23,18 +23,14 @@ def test_version_endpoint(client):
     assert 'version' in data, "Response JSON should contain a 'version' key."
     assert data['version'] == __version__, f"Version should be {__version__}."
 
-def test_public_endpoint_redirection(client):
+def test_root_shows_login_page(client):
     """
-    Checks that an attempt to access a protected endpoint redirects to the login page.
-    (Here we assume that the '/' route is protected.)
+    The root path should be publicly accessible and display the login form
+    when no user is authenticated.
     """
     response = client.get('/')
-    # In testing mode, if the user is not authenticated a redirection should occur.
-    assert response.status_code in (301, 302), "A redirection is expected for protected endpoints."
-
-    location = response.headers.get("Location")
-    assert location is not None, "A 'Location' header must be present upon redirection."
-    assert "login" in location, "The redirection should point to the login page."
+    assert response.status_code == 200, "Root should return 200 for unauthenticated users."
+    assert b"Se connecter" in response.data, "Login page should be rendered at root."
 
 def test_static_files_access(client):
     """

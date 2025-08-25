@@ -366,7 +366,7 @@ class AnalysePromptForm(FlaskForm):
     ai_model = SelectField(
         'Modèle d\'IA',
         validators=[DataRequired()],
-        default='gpt-4o',
+        default='gpt-5',
         render_kw={"class": "form-control"}
     )
     submit = SubmitField('Sauvegarder', render_kw={"class": "btn btn-primary"})
@@ -389,7 +389,7 @@ class PlanDeCoursPromptSettingsForm(FlaskForm):
     ai_model = SelectField(
         'Modèle d\'IA',
         validators=[DataRequired()],
-        default='gpt-4o',
+        default='gpt-5',
         render_kw={"class": "form-control"}
     )
     submit = SubmitField('Sauvegarder', render_kw={"class": "btn btn-primary"})
@@ -405,7 +405,7 @@ class GenerateContentForm(FlaskForm):
     ai_model = SelectField(
         'Modèle d\'IA',
         validators=[DataRequired()],
-        default='gpt-4o'
+        default='gpt-5'
     )
     reasoning_effort = SelectField(
         "Effort de raisonnement",
@@ -745,6 +745,10 @@ class DepartmentPIEAForm(FlaskForm):
 class DeleteForm(FlaskForm):
     """Simple form for CSRF protection on delete operations"""
     pass
+
+class APITokenForm(FlaskForm):
+    ttl = IntegerField('Durée de vie (jours)', validators=[Optional()])
+    submit = SubmitField('Générer un jeton')
 
 class OcrTriggerForm(FlaskForm):
     pdf_url = URLField('URL du PDF', validators=[DataRequired(), URL()])

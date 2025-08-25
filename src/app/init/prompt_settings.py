@@ -127,7 +127,7 @@ La définition doit:
                     field_name=field_name,
                     prompt_template=settings['template'],
                     context_variables=settings['context_variables'],
-                    ai_model='gpt-4o'
+                    ai_model='gpt-5'
                 )
                 db.session.add(prompt)
                 prompts_added += 1

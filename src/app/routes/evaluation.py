@@ -180,14 +180,14 @@ def select_evaluation(plan_id):
     # Ajout du champ description
     selected_evaluation = None
     if request.method == 'GET' and request.args.get('evaluation_id'):
-        selected_evaluation = PlanDeCoursEvaluations.query.get(request.args.get('evaluation_id'))
+        selected_evaluation = db.session.get(PlanDeCoursEvaluations, request.args.get('evaluation_id'))
     
     if form.validate_on_submit():
         selected_evaluation_id = form.evaluation.data
         description = request.form.get('description', '')
         
         # Mise à jour de la description
-        evaluation = PlanDeCoursEvaluations.query.get(selected_evaluation_id)
+        evaluation = db.session.get(PlanDeCoursEvaluations, selected_evaluation_id)
         if evaluation:
             evaluation.description = description
             db.session.commit()
@@ -416,7 +416,7 @@ def generate_six_level_grid():
     evaluation_description = ""
     if evaluation_id:
         try:
-            evaluation = PlanDeCoursEvaluations.query.get(evaluation_id)
+            evaluation = db.session.get(PlanDeCoursEvaluations, evaluation_id)
             if evaluation:
                 evaluation_description = evaluation.description or ""
         except Exception as e:
@@ -429,7 +429,7 @@ def generate_six_level_grid():
     if savoir_faire_id:
         try:
             savoir_faire_id = int(savoir_faire_id)
-            sf_info = PlanCadreCapaciteSavoirsFaire.query.get(savoir_faire_id)
+            sf_info = db.session.get(PlanCadreCapaciteSavoirsFaire, savoir_faire_id)
             cible = sf_info.cible if sf_info and sf_info.cible else "Réalisation complète et autonome de la tâche"
             seuil = sf_info.seuil_reussite if sf_info and sf_info.seuil_reussite else "Réalisation minimale acceptable de la tâche"
         except (ValueError, TypeError):
@@ -460,7 +460,7 @@ def generate_six_level_grid():
     if not user or not user.openai_key:
         return jsonify({'error': 'Clé OpenAI non configurée'}), 400
 
-    ai_model = "gpt-4o"
+    ai_model = "gpt-5"
 
     user_credits = user.credits
     user_id = current_user.id
@@ -755,7 +755,7 @@ def save_grid():
         except ValueError:
             raise ValueError("ID d'évaluation invalide.")
         
-        evaluation = PlanDeCoursEvaluations.query.get(evaluation_id)
+        evaluation = db.session.get(PlanDeCoursEvaluations, evaluation_id)
         if not evaluation:
             raise ValueError("Évaluation non trouvée.")
         
