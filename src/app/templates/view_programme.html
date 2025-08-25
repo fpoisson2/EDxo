@@ -26,6 +26,9 @@
             <i class="fas fa-wand-magic-sparkles"></i> Générer (IA)
           </button>
           {% endif %}
+          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
+          </a>
           <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#vp-fil-bar" aria-expanded="false" aria-controls="vp-fil-bar">
             <i class="bi bi-tags"></i> Fils
           </button>
@@ -43,6 +46,9 @@
           {% if current_user.role in ['admin', 'coordo'] %}
             <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-xs btn-primary ms-2">Ajouter</a>
           {% endif %}
+          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
+          </a>
         </div>
       </div>
     </div>
@@ -130,6 +136,9 @@
                             {% else %}
                               <span class="vp-empty">Aucune</span>
                             {% endif %}
+          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
+          </a>
                           </div>
                         </div>
                         <div class="mb-2">
@@ -142,6 +151,9 @@
                             {% else %}
                               <span class="vp-empty">Aucun</span>
                             {% endif %}
+          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
+          </a>
                           </div>
                         </div>
                         <div>
@@ -152,6 +164,9 @@
                             {% else %}
                               <span class="vp-empty">Aucun</span>
                             {% endif %}
+          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
+          </a>
                           </div>
                         </div>
                       </div>
@@ -634,6 +649,9 @@ function handlePlanCoursAction() {
               {% else %}
                 <option value="gpt-5">gpt-5</option>
               {% endif %}
+          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
+          </a>
             </select>
           </div>
           <div class="col-sm-6">
@@ -660,6 +678,9 @@ function handlePlanCoursAction() {
                 <option value="high">Élevé</option>
               </select>
             {% endif %}
+          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
+          </a>
           </div>
           <div class="col-sm-6">
             <label for="ai_verbosity" class="form-label">Verbosité</label>
@@ -672,6 +693,9 @@ function handlePlanCoursAction() {
                 <option value="high">Élevée</option>
               </select>
             {% endif %}
+          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
+          </a>
           </div>
           <div class="col-12">
             <label class="form-label">Mode d'application</label>

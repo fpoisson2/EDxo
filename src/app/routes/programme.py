@@ -36,6 +36,7 @@ from ..models import (
 )
 from flask import send_file
 import io
+from ...utils import generate_programme_grille_pdf
 
 try:
     import openpyxl
@@ -1299,6 +1300,24 @@ def apply_programme_grille(programme_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f"Erreur lors de l\'application de la grille: {e}"}), 500
+
+@programme_bp.route('/<int:programme_id>/grille/pdf')
+@login_required
+def export_programme_grille_pdf(programme_id):
+    """Exporte la grille de cours du programme en PDF."""
+    programme = Programme.query.get_or_404(programme_id)
+    if programme not in current_user.programmes and current_user.role != 'admin':
+        flash("Vous n'avez pas accès à ce programme.", 'danger')
+        return redirect(url_for('main.index'))
+
+    pdf_bytes = generate_programme_grille_pdf(programme)
+    filename = f"grille_{programme.nom}.pdf"
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=filename
+    )
 
 @programme_bp.route('/competence/<int:competence_id>/edit', methods=['GET', 'POST'])
 @roles_required('admin', 'coordo')

@@ -39,3 +39,4 @@ fastmcp
 cachelib
 watchfiles
 openpyxl
+reportlab
