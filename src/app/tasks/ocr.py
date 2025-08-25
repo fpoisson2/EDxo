@@ -41,8 +41,8 @@ logger = logging.getLogger(__name__)
 ###############################################################################
 # Tâche d'Extraction JSON par Compétence (avec logging ajouté)
 ###############################################################################
-@shared_task(bind=True)
-def extract_json_competence(self, competence, download_path_local, txt_output_dir, base_filename_local, openai_key, model=None):
+@shared_task(bind=True, name='app.tasks.ocr.extract_json_competence')
+def extract_json_competence(self, competence, download_path_local, txt_output_dir, base_filename_local, model=None):
     """
     Tâche de traitement pour une compétence.
     Extrait et analyse une compétence spécifique à partir d'un PDF.
@@ -104,7 +104,7 @@ def extract_json_competence(self, competence, download_path_local, txt_output_di
         logger.info(f"[{task_id}/{code_comp}] Appel OpenAI ({model}) pour extraction -> {output_json_filename}")
         
         try:
-            extraction_output = api_clients.extraire_competences_depuis_txt(competence_text, output_json_filename, openai_key)
+            extraction_output = api_clients.extraire_competences_depuis_txt(competence_text, output_json_filename)
         except Exception as api_err:
             logger.error(f"[{task_id}/{code_comp}] Erreur API OpenAI: {api_err}", exc_info=True)
             raise SkillExtractionError(f"Erreur API OpenAI (extraction comp {code_comp}): {api_err}") from api_err
@@ -186,7 +186,7 @@ def extract_json_competence(self, competence, download_path_local, txt_output_di
 ###############################################################################
 # NOUVELLE Tâche de Callback pour l'Agrégation
 ###############################################################################
-@shared_task(bind=True)
+@shared_task(bind=True, name='app.tasks.ocr.aggregate_ocr_results_task')
 def aggregate_ocr_results_task(self, results_list, original_task_id, json_output_path, base_filename, user_id, user_credits_initial, model_section, model_extraction, segmentation_usage_dict):
     """
     Tâche de callback pour agréger les résultats de l'extraction OCR,
@@ -393,8 +393,8 @@ def aggregate_ocr_results_task(self, results_list, original_task_id, json_output
 ###############################################################################
 # Tâche Principale OCR (Refactorisée avec Callback)
 ###############################################################################
-@shared_task(bind=True)
-def process_ocr_task(self, pdf_source, pdf_title, user_id, openai_key_ignored):
+@shared_task(bind=True, name='app.tasks.ocr.process_ocr_task')
+def process_ocr_task(self, pdf_source, pdf_title, user_id):
     """
     Tâche principale pour l'OCR :
      - Vérifie utilisateur, configure chemins.
@@ -518,6 +518,80 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id, openai_key_ignored):
             'download_path': download_path_local
         })
         
+        # Extraction directe: envoyer le PDF complet à OpenAI pour obtenir le JSON des compétences
+        update_progress("Extraction IA", "Analyse du PDF complet via OpenAI...", 40)
+        logger.info(f"[{task_id}] Appel extraire_competences_depuis_pdf (model: {current_app.config.get('OPENAI_MODEL_EXTRACTION')})")
+        json_output_path = os.path.join(txt_output_dir, f"{base_filename_local}_competences.json")
+        try:
+            # Passer aussi l'URL directe si disponible pour éviter l'upload
+            pdf_url_arg = pdf_source if (isinstance(pdf_source, str) and (pdf_source.startswith('http://') or pdf_source.startswith('https://'))) else None
+            extraction_output = api_clients.extraire_competences_depuis_pdf(download_path_local, json_output_path, openai_key, pdf_url=pdf_url_arg)
+        except Exception as e:
+            logger.error(f"[{task_id}] Échec extraction depuis PDF: {e}", exc_info=True)
+            final_meta = {
+                'task_id': task_id,
+                'final_status': 'FAILURE',
+                'message': f"Erreur extraction PDF: {e}",
+                'progress': 100,
+                'step': 'Erreur Extraction',
+                'pdf_source': pdf_source,
+                'pdf_title': pdf_title,
+                'base_filename': base_filename_local,
+                'download_path': download_path_local
+            }
+            # Marquer SUCCESS côté Celery pour éviter les soucis de sérialisation d'exception,
+            # mais indiquer 'final_status' = 'FAILURE' dans le meta
+            self.update_state(state='SUCCESS', meta=final_meta)
+            return final_meta
+
+        # Compter les compétences
+        competences_count = 0
+        try:
+            parsed = json.loads(extraction_output.get('result', '{}'))
+            if isinstance(parsed, dict):
+                competences_count = len(parsed.get('competences', []) or [])
+        except Exception:
+            pass
+
+        # Calcul du coût (si usage présent)
+        usage = extraction_output.get('usage') if isinstance(extraction_output, dict) else None
+        prompt_tokens = getattr(usage, 'input_tokens', 0) if usage else 0
+        completion_tokens = getattr(usage, 'output_tokens', 0) if usage else 0
+        model_extraction = current_app.config.get('OPENAI_MODEL_EXTRACTION')
+        try:
+            total_cost = calculate_call_cost(prompt_tokens, completion_tokens, model_extraction)
+        except Exception:
+            total_cost = 0.0
+
+        # Mettre à jour crédits utilisateur si possible
+        try:
+            current_user_credits = db.session.query(User.credits).filter_by(id=user_id).scalar()
+            if current_user_credits is not None and total_cost > 0 and current_user_credits >= total_cost:
+                new_credits = current_user_credits - total_cost
+                db.session.execute(text("UPDATE User SET credits = :credits WHERE id = :uid"), {"credits": new_credits, "uid": user_id})
+                db.session.commit()
+        except Exception as credit_err:
+            logger.warning(f"[{task_id}] Échec MAJ crédits: {credit_err}")
+
+        # Final
+        final_meta = {
+            'task_id': task_id,
+            'final_status': 'SUCCESS',
+            'message': f"Traitement OCR terminé. {competences_count} compétence(s) extraite(s).",
+            'competences_count': competences_count,
+            'progress': 100,
+            'step': 'Terminé (Extraction Directe)',
+            'pdf_source': pdf_source,
+            'pdf_title': pdf_title,
+            'base_filename': base_filename_local,
+            'download_path': download_path_local,
+            'json_output_path': json_output_path
+        }
+        self.update_state(state='SUCCESS', meta=final_meta)
+        return final_meta
+
+        # --- L'ancienne chaîne OCR + segmentation + sous-tâches est désormais court-circuitée ---
+
         update_progress("OCR", "Étape 2/5 - OCR en cours...", 30)
         logger.info(f"[{task_id}] Étape 2: Lancement OCR...")
         ocr_markdown_path_local = os.path.join(txt_output_dir, f"{base_filename_local}_ocr.md")
@@ -557,8 +631,8 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id, openai_key_ignored):
             raise RuntimeError(f"Erreur lecture fichier OCR: {read_err}")
             
         try:
-            logger.info(f"[{task_id}] Appel find_competences_pages ({model_section})...")
-            segmentation_output = api_clients.find_competences_pages(markdown_content, openai_key)
+            logger.info(f"[{task_id}] Appel find_competences_pages ({model_section}) avec PDF natif + markdown...")
+            segmentation_output = api_clients.find_competences_pages(markdown_content, pdf_path=download_path_local)
             logger.debug(f"[{task_id}] Réponse brute de find_competences_pages: {segmentation_output}")
             
             if isinstance(segmentation_output, dict):
@@ -623,7 +697,7 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id, openai_key_ignored):
             
             extraction_tasks_signatures = [
                 extract_json_competence.s(
-                    comp, download_path_local, txt_output_dir, base_filename_local, openai_key, model_extraction
+                    comp, download_path_local, txt_output_dir, base_filename_local, model_extraction
                 )
                 for comp in competences_pages if comp.get('code') and comp.get('page_debut') is not None
             ]

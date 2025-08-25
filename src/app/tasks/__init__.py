@@ -5,3 +5,4 @@ from .import_grille import extract_grille_from_pdf_task
 from .import_plan_de_cours import import_plan_de_cours_task
 from .import_plan_cadre import import_plan_cadre_task
 from .generation_logigramme import generate_programme_logigramme_task
+from .generation_grille import generate_programme_grille_task

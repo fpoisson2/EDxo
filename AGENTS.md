@@ -35,3 +35,13 @@
 - Commits: concis, au présent. L’historique favorise des résumés courts en français (p. ex. `M2M cours-programme`, `Update programme.py`). Groupez les changements liés.
 - Pull Requests: description claire, issues liées, étapes de test, et mention de toute migration BD. Ajoutez des captures d’écran/GIF pour les changements UI. Assurez-vous que `pytest` passe.
 - Limitez la portée des PR et mettez à jour la documentation lors de modifications des commandes, routes ou de la structure.
+
+## Tâches asynchrones (Celery) et notifications UI
+- Pattern standard pour les opérations longues (plans-cadres, génération de grille, import):
+  - Backend: déclencher une tâche Celery et retourner `task_id` (ex: `POST /programme/<id>/grille/generate`). Exposer un endpoint de statut JSON (ex: `GET /programme/api/task_status/<task_id>`), incluant `state` (`PENDING|PROGRESS|SUCCESS|FAILURE`) et un payload `{status,message,result}`.
+  - Frontend: au clic sur l’action, désactiver le bouton, afficher un spinner et créer une notification « in-progress » via `addNotification('…', 'in-progress')`. Ensuite, poller l’endpoint de statut jusqu’à `SUCCESS`/`FAILURE`.
+  - Succès: remplacer la notification par un message `success`, réactiver le bouton, mettre à jour l’UI (aperçu, lien d’application, etc.).
+  - Échec: afficher une notification `error`, réactiver le bouton, laisser l’utilisateur relancer.
+- Composants réutilisables:
+  - Système de notifications global (menu cloche) dans `base.html` avec `addNotification(type='in-progress'|'success'|'error')`.
+  - Exemple d’implémentation: générateur de plans-cadres et modal « Générer une grille (IA) » dans `view_programme.html` (désactivation du bouton + spinner, polling, notifications, prévisualisation, bouton « Appliquer »).

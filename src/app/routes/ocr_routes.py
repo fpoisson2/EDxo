@@ -170,9 +170,9 @@ def start_ocr_processing():
             logger.info(f"Configuration Celery utilisée: BROKER='{celery.conf.broker_url}', BACKEND='{celery.conf.result_backend}'")
 
             task = celery.send_task(
-                'app.tasks.ocr.process_ocr_task', # Nom de la tâche à exécuter
-                args=[programme_url, pdf_title, current_user.id, current_user.openai_key],  # Arguments positionnels de la tâche
-                kwargs={}                    # Arguments nommés (aucun dans ce cas)
+                'app.tasks.ocr.process_ocr_task',
+                args=[programme_url, pdf_title, current_user.id],
+                kwargs={}
             )
             logger.info(f"Tâche Celery démarrée pour OCR: {task.id} pour l'URL: {programme_url} (Titre: {pdf_title})")
             return redirect(url_for('ocr.task_status_page', task_id=task.id))

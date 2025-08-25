@@ -25,7 +25,7 @@ def make_celery_instance():
         # Importer le package des tâches tel qu'il est disponible lorsque
         # vous lancez la commande depuis le dossier `src/` (guides du repo).
         # Le nom de tâche effectif est figé via le décorateur `name=...`.
-        include=['src.app.tasks']
+        include=['src.app.tasks', 'app.tasks']
     )
 
     celery_instance.conf.update(

@@ -4,7 +4,6 @@ from flask import current_app
 import logging
 import json
 
-from mistralai import Mistral
 from openai import OpenAI
 import os # Ajout de os pour manipuler les chemins
 
@@ -26,55 +25,58 @@ class SkillExtractionError(Exception):
 
 
 # --- Fonction perform_ocr_and_save (Garder `print` pour debug console si désiré) ---
-def perform_ocr_and_save(pdf_url, output_markdown_filename):
-    """Appelle l'API OCR de Mistral et sauvegarde le résultat en Markdown."""
-    # --- Initialize client inside the function ---
-    api_key = current_app.config.get('MISTRAL_API_KEY')
-    if not api_key:
-        logging.error("Clé API Mistral non trouvée dans la configuration. Impossible d'effectuer l'OCR.")
-        print("Erreur: Clé API Mistral non configurée.")
-        return False
-    try:
-        mistral_client = Mistral(api_key=api_key)
-        logging.info("Client Mistral initialisé pour perform_ocr_and_save.")
-    except Exception as e:
-        logging.error(f"Erreur initialisation client Mistral dans perform_ocr_and_save: {e}")
-        return False
-    # --- End initialization ---
+def perform_ocr_and_save(pdf_url_or_path, output_markdown_filename):
+    """
+    Convertit un PDF en markdown simple page-par-page sans dépendre d'un service OCR externe.
+    - Si une URL est fournie, télécharge le PDF d'abord.
+    - Écrit un fichier avec des sections '## --- Page N ---' suivies du texte extrait.
 
-    logging.info(f"Appel de l'API OCR Mistral pour l'URL: {pdf_url}")
-    print("Appel de l'API OCR Mistral...") # Pour console serveur
+    Remarque: Pour les PDF scannés (images), PyPDF2 peut extraire peu de texte.
+    """
     try:
-        ocr_response = mistral_client.ocr.process(
-            model=current_app.config.get('MISTRAL_MODEL_OCR'),
-            document={"type": "document_url", "document_url": pdf_url},
-            # timeout=180 # Optionnel
-        )
+        from PyPDF2 import PdfReader
+        from . import web_utils
+    except Exception as imp_err:
+        logging.error(f"Dépendances manquantes pour la conversion PDF->markdown: {imp_err}")
+        return False
 
-        if ocr_response and hasattr(ocr_response, 'pages') and ocr_response.pages:
-            logging.info(f"OCR réussi. {len(ocr_response.pages)} pages traitées.")
-            with open(output_markdown_filename, "wt", encoding="utf-8") as f:
-                for i, page in enumerate(ocr_response.pages):
-                    page_num = i + 1
-                    f.write(f"## --- Page {page_num} ---\n\n")
-                    if hasattr(page, 'markdown') and page.markdown:
-                        f.write(page.markdown.strip() + "\n\n")
-                    else:
-                        f.write(f"*[Contenu Markdown non trouvé pour la page {page_num}]*\n\n")
-                        logging.warning(f"Contenu Markdown vide pour la page {page_num}.")
-            logging.info(f"Résultat OCR sauvegardé dans {output_markdown_filename}")
-            print(f"Résultat OCR sauvegardé dans {output_markdown_filename}") # Pour console serveur
-            return True
-        else:
-            logging.error("Réponse OCR invalide ou vide reçue de l'API Mistral.")
-            print("Erreur: Réponse OCR invalide ou vide.") # Pour console serveur
+    try:
+        # Déterminer le chemin local du PDF
+        local_pdf_path = pdf_url_or_path
+        if isinstance(pdf_url_or_path, str) and pdf_url_or_path.startswith('http'):
+            out_dir = os.path.dirname(output_markdown_filename) or '.'
+            os.makedirs(out_dir, exist_ok=True)
+            downloaded = web_utils.telecharger_pdf(pdf_url_or_path, out_dir)
+            if not downloaded:
+                logging.error(f"Échec du téléchargement du PDF depuis {pdf_url_or_path}")
+                return False
+            local_pdf_path = downloaded
+
+        if not os.path.exists(local_pdf_path):
+            logging.error(f"Fichier PDF introuvable: {local_pdf_path}")
             return False
+
+        logging.info(f"Conversion PDF->markdown local: {local_pdf_path} -> {output_markdown_filename}")
+        reader = PdfReader(local_pdf_path)
+        with open(output_markdown_filename, 'w', encoding='utf-8') as out:
+            for i, page in enumerate(reader.pages, start=1):
+                out.write(f"## --- Page {i} ---\n\n")
+                try:
+                    text = page.extract_text() or ''
+                except Exception as e:
+                    logging.warning(f"Erreur d'extraction texte page {i}: {e}")
+                    text = ''
+                if text.strip():
+                    out.write(text.strip() + "\n\n")
+                else:
+                    out.write("*[Texte non extrait pour cette page]*\n\n")
+        logging.info(f"Markdown OCR-like généré: {output_markdown_filename}")
+        return True
     except Exception as e:
-        logging.error(f"Erreur lors de l'appel à l'API OCR Mistral: {e}", exc_info=True)
-        print(f"Erreur lors de l'appel OCR: {e}") # Pour console serveur
+        logging.error(f"Erreur lors de la conversion PDF->markdown: {e}", exc_info=True)
         return False
 
-def find_competences_pages(markdown_content, openai_key=None):
+def find_competences_pages(markdown_content, openai_key=None, pdf_path: str | None = None):
     """
     Utilise l'API OpenAI pour identifier la section 'Formation spécifique'
     et segmenter cette section en plusieurs blocs correspondant à chaque compétence.
@@ -146,46 +148,102 @@ def find_competences_pages(markdown_content, openai_key=None):
     }
     
     try:
-        openai_client = OpenAI(api_key=openai_key)
+        # Fallback à la config si non fourni
+        api_key = openai_key or current_app.config.get('OPENAI_API_KEY')
+        openai_client = OpenAI(api_key=api_key)
     except Exception as e:
         raise Exception(f"Erreur lors de l'initialisation d'OpenAI : {e}")
-    
-    try:
-        response = openai_client.responses.create(
-            model=current_app.config.get('OPENAI_MODEL_SECTION'),
-            input=messages,
-            text={
-                "format": {
-                    "type": "json_schema",
-                    "name": "CompetencePages",
-                    "strict": True,
-                    "schema": json_schema
-                }
-            },
-            reasoning={},
-            tools=[],
-            tool_choice="none",
-            temperature=0,
-            max_output_tokens=1000,
-            top_p=1,
-            store=True
-        )
-        json_response_str = response.output[0].content[0].text
-        pages_info = json.loads(json_response_str)
-        usage_info = None
-        if hasattr(response, 'usage'):
-            usage_info = response.usage
-        elif hasattr(response, 'input_tokens'):
-            usage_info = {"input_tokens": response.input_tokens, "output_tokens": response.output_tokens}
-        else:
-            # Chercher dans d'autres attributs
-            for attr_name in dir(response):
-                if 'token' in attr_name.lower() or 'usage' in attr_name.lower():
-                    logging.debug(f"Attribut potentiellement utile trouvé: {attr_name}")
 
+    # Si un chemin PDF est fourni et existe, préférer une analyse du document natif
+    file_id = None
+    try:
+        if pdf_path and os.path.exists(pdf_path):
+            with open(pdf_path, 'rb') as f:
+                up = openai_client.files.create(file=f, purpose='user_data')
+                file_id = getattr(up, 'id', None)
+                logging.info(f"PDF uploadé pour segmentation (file_id={file_id})")
+    except Exception as up_err:
+        logging.warning(f"Échec upload PDF pour segmentation, fallback markdown: {up_err}")
+        file_id = None
+
+    try:
+        if file_id:
+            # Utiliser le fichier et une instruction compacte
+            response = openai_client.responses.create(
+                model=current_app.config.get('OPENAI_MODEL_SECTION'),
+                input=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "input_file", "file_id": file_id},
+                        {"type": "input_text", "text": system_prompt}
+                    ]
+                }],
+                text={
+                    "format": {
+                        "type": "json_schema",
+                        "name": "CompetencePages",
+                        "strict": True,
+                        "schema": json_schema
+                    }
+                },
+                reasoning={}, tools=[], tool_choice="none",
+                max_output_tokens=1200, store=True
+            )
+        else:
+            # Fallback: utiliser le markdown OCR
+            response = openai_client.responses.create(
+                model=current_app.config.get('OPENAI_MODEL_SECTION'),
+                input=messages,
+                text={
+                    "format": {
+                        "type": "json_schema",
+                        "name": "CompetencePages",
+                        "strict": True,
+                        "schema": json_schema
+                    }
+                },
+                reasoning={}, tools=[], tool_choice="none",
+                max_output_tokens=1000, store=True
+            )
+
+        # Récupération robuste du texte de sortie (différents SDK peuvent structurer différemment)
+        json_response_str = None
+        try:
+            json_response_str = response.output[0].content[0].text  # chemin habituel
+        except Exception:
+            pass
+        if not json_response_str:
+            json_response_str = getattr(response, 'output_text', None)
+        if not json_response_str:
+            # Essayer d'agréger les items de sortie
+            try:
+                parts = []
+                for item in getattr(response, 'output', []) or []:
+                    content_list = getattr(item, 'content', None)
+                    if isinstance(content_list, list):
+                        for c in content_list:
+                            t = getattr(c, 'text', None)
+                            if t:
+                                parts.append(t)
+                if parts:
+                    json_response_str = "".join(parts)
+            except Exception:
+                pass
+        if not json_response_str:
+            raise ValueError("Réponse OpenAI sans texte de sortie exploitable pour la segmentation.")
+
+        pages_info = json.loads(json_response_str)
+        usage_info = getattr(response, 'usage', None)
         return {"result": pages_info, "usage": usage_info}
     except Exception as e:
         raise Exception(f"Erreur lors de l'appel à OpenAI pour segmentation des compétences : {e}")
+    finally:
+        # Nettoyer le fichier uploadé côté OpenAI
+        try:
+            if file_id:
+                openai_client.files.delete(file_id)
+        except Exception as del_err:
+            logging.warning(f"Échec suppression fichier OpenAI (file_id={file_id}): {del_err}")
 
 def extraire_text_competence(markdown_content, page_debut, page_fin):
     """
@@ -344,7 +402,7 @@ def extraire_competences_depuis_txt(text_content, output_json_filename, openai_k
     Lève SkillExtractionError en cas d'échec.
     """
     # --- Initialisation du client ---
-    api_key = openai_key
+    api_key = openai_key or current_app.config.get('OPENAI_API_KEY')
     if not api_key:
         msg = "Clé API OpenAI non trouvée dans la configuration. Impossible d'extraire les compétences."
         logging.error(msg)
@@ -451,15 +509,37 @@ Tu **dois impérativement** utiliser l'outil/fonction `extraire_competences_en_j
                 {"role": "user", "content": [{"type": "input_text", "text": text_content}]}
             ],
             text={"format": {"type": "json_schema", "name": "extraire_competences_en_json", "strict": True, "schema": json_schema}},
-            reasoning={}, tools=[], tool_choice="none", temperature=0.5, top_p=1, store=True,
+            reasoning={}, tools=[], tool_choice="none", store=True,
             stream=False  # Mode synchrone
         )
 
 
         logging.info("Test extraction usage: %s", getattr(response, "usage", None))
 
-        # Récupération du JSON complet via response.output[0].content[0].text
-        full_json_string = response.output[0].content[0].text
+        # Récupération robuste du JSON
+        full_json_string = None
+        try:
+            full_json_string = response.output[0].content[0].text
+        except Exception:
+            pass
+        if not full_json_string:
+            full_json_string = getattr(response, 'output_text', None)
+        if not full_json_string:
+            try:
+                parts = []
+                for item in getattr(response, 'output', []) or []:
+                    content_list = getattr(item, 'content', None)
+                    if isinstance(content_list, list):
+                        for c in content_list:
+                            t = getattr(c, 'text', None)
+                            if t:
+                                parts.append(t)
+                if parts:
+                    full_json_string = "".join(parts)
+            except Exception:
+                pass
+        if not full_json_string:
+            raise SkillExtractionError("Réponse OpenAI sans texte de sortie exploitable (extraction compétences).")
         # Récupération de l'usage, s'il est fourni dans la réponse
         usage_info = getattr(response, "usage", None)
 
@@ -497,3 +577,171 @@ Tu **dois impérativement** utiliser l'outil/fonction `extraire_competences_en_j
         if callback:
             callback({"type": "error", "message": f"Erreur majeure : {e}", "step": "skill_extract_error"})
         raise SkillExtractionError(msg, original_exception=e) from e
+
+def extraire_competences_depuis_pdf(pdf_path, output_json_filename, openai_key=None, callback=None, pdf_url: str | None = None):
+    """
+    Extrait toutes les compétences directement à partir d'un PDF via OpenAI Responses.
+    Retourne {"result": json_string, "usage": usage_obj}.
+    """
+    api_key = openai_key or current_app.config.get('OPENAI_API_KEY')
+    if not api_key:
+        msg = "Clé API OpenAI non trouvée dans la configuration."
+        logging.error(msg)
+        raise SkillExtractionError(msg)
+    try:
+        client = OpenAI(api_key=api_key)
+    except Exception as e:
+        msg = f"Erreur initialisation client OpenAI (PDF): {e}"
+        logging.error(msg, exc_info=True)
+        raise SkillExtractionError(msg) from e
+
+    if not pdf_url:
+        if not pdf_path or not os.path.exists(pdf_path):
+            raise SkillExtractionError(f"PDF introuvable: {pdf_path}")
+
+    # Prompt et schéma (alignés avec la version texte)
+    system_prompt_inline = (
+        "Tu es un assistant expert pour extraire des compétences à partir de PDF de programmes d'études québécois.\n"
+        "Analyse le document fourni (fichier), identifie chaque compétence et retourne un JSON strict."
+    )
+    json_schema = {
+        "type": "object",
+        "required": ["competences"],
+        "properties": {
+            "competences": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": [
+                        "Code",
+                        "Nom de la compétence",
+                        "Contexte de réalisation",
+                        "Critères de performance pour l’ensemble de la compétence",
+                        "Éléments"
+                    ],
+                    "properties": {
+                        "Code": {"type": "string"},
+                        "Nom de la compétence": {"type": "string"},
+                        "Contexte de réalisation": {
+                            "type": ["null", "object"],
+                            "properties": {
+                                "APartir": {"type": ["null", "array"], "items": {"type": "string"}},
+                                "ALaide": {"type": ["null", "array"], "items": {"type": "string"}},
+                                "details_generaux": {"type": ["null", "array"], "items": {"type": "string"}}
+                            },
+                            "required": ["APartir", "ALaide", "details_generaux"],
+                            "additionalProperties": False
+                        },
+                        "Critères de performance pour l’ensemble de la compétence": {
+                            "type": ["null", "array"],
+                            "items": {"type": "string"}
+                        },
+                        "Éléments": {
+                            "type": ["null", "array"],
+                            "items": {
+                                "type": "object",
+                                "required": ["element", "criteres"],
+                                "properties": {
+                                    "element": {"type": "string"},
+                                    "criteres": {"type": ["null", "array"], "items": {"type": "string"}}
+                                },
+                                "additionalProperties": False
+                            }
+                        }
+                    },
+                    "additionalProperties": False
+                }
+            }
+        },
+        "additionalProperties": False
+    }
+
+    file_id = None
+    try:
+        if pdf_url:
+            try:
+                # Préférer l'usage de file_url dans input content (compat SDK)
+                response = client.responses.create(
+                    model=current_app.config.get('OPENAI_MODEL_EXTRACTION'),
+                    input=[
+                        {"role": "system", "content": [{"type": "input_text", "text": system_prompt_inline}]},
+                        {"role": "user", "content": [
+                            {"type": "input_file", "file_url": pdf_url},
+                            {"type": "input_text", "text": "Extrais et retourne le JSON strict 'competences'."}
+                        ]}
+                    ],
+                    text={"format": {"type": "json_schema", "name": "extraire_competences_en_json", "strict": True, "schema": json_schema}},
+                    reasoning={}, tools=[], tool_choice="none", store=True
+                )
+            except Exception as e:
+                logging.info(f"file_url non supporté ({e}). Fallback upload de fichier.")
+                pdf_url = None
+        if not pdf_url:
+            with open(pdf_path, 'rb') as f:
+                up = client.files.create(file=f, purpose='user_data')
+                file_id = getattr(up, 'id', None)
+
+            response = client.responses.create(
+                model=current_app.config.get('OPENAI_MODEL_EXTRACTION'),
+                input=[
+                    {"role": "system", "content": [{"type": "input_text", "text": system_prompt_inline}]},
+                    {"role": "user", "content": [
+                        {"type": "input_file", "file_id": file_id},
+                        {"type": "input_text", "text": "Extrais et retourne le JSON strict 'competences'."}
+                    ]}
+                ],
+                text={"format": {"type": "json_schema", "name": "extraire_competences_en_json", "strict": True, "schema": json_schema}},
+                reasoning={}, tools=[], tool_choice="none", store=True
+            )
+
+        # Récupération robuste du JSON
+        full_json_string = None
+        try:
+            full_json_string = response.output[0].content[0].text
+        except Exception:
+            pass
+        if not full_json_string:
+            full_json_string = getattr(response, 'output_text', None)
+        if not full_json_string:
+            try:
+                parts = []
+                for item in getattr(response, 'output', []) or []:
+                    content_list = getattr(item, 'content', None)
+                    if isinstance(content_list, list):
+                        for c in content_list:
+                            t = getattr(c, 'text', None)
+                            if t:
+                                parts.append(t)
+                if parts:
+                    full_json_string = "".join(parts)
+            except Exception:
+                pass
+        if not full_json_string:
+            raise SkillExtractionError("Réponse OpenAI sans texte de sortie exploitable (PDF).")
+
+        # Sauvegarde du résultat
+        try:
+            with open(output_json_filename, 'w', encoding='utf-8') as f:
+                try:
+                    parsed_json = json.loads(full_json_string)
+                    json.dump(parsed_json, f, ensure_ascii=False, indent=4)
+                except json.JSONDecodeError:
+                    logging.warning(f"JSON invalide lors du formatage. Sauvegarde brute dans {output_json_filename}.")
+                    f.write(full_json_string)
+        except Exception as io_err:
+            raise SkillExtractionError(f"Erreur écriture JSON: {io_err}") from io_err
+
+        usage_info = getattr(response, 'usage', None)
+        return {"result": full_json_string, "usage": usage_info}
+    except SkillExtractionError:
+        raise
+    except Exception as e:
+        msg = f"Erreur lors de l'appel OpenAI (PDF): {e}"
+        logging.error(msg, exc_info=True)
+        raise SkillExtractionError(msg, original_exception=e) from e
+    finally:
+        try:
+            if file_id:
+                client.files.delete(file_id)
+        except Exception:
+            pass
