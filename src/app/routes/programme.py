@@ -439,6 +439,9 @@ def generate_competence_logigramme(programme_id):
     return jsonify({'task_id': task.id}), 202
 
 
+    
+
+
 @programme_bp.route('/api/task_status/<task_id>')
 @login_required
 def programme_task_status(task_id):
@@ -1136,6 +1139,7 @@ def apply_programme_grille(programme_id):
     mode = (payload.get('mode') or 'append').lower()
     grid = payload.get('grid') or {}
     sessions = grid.get('sessions') or []
+    fils = grid.get('fils_conducteurs') or []
 
     # Option overwrite: supprimer les associations Cours↔Programme (pas les cours)
     if mode == 'overwrite':
@@ -1294,6 +1298,49 @@ def apply_programme_grille(programme_id):
                 continue
             seen_pairs_c.add(key)
             db.session.add(CoursCorequis(cours_id=cid, cours_corequis_id=coid))
+
+        # Appliquer les fils conducteurs (facultatif)
+        try:
+            from ..models import FilConducteur
+            # Index existants par (description lower) pour éviter doublons
+            existing_fils = { (f.description or '').strip().lower(): f for f in FilConducteur.query.filter_by(programme_id=programme.id).all() }
+            for f in (fils if isinstance(fils, list) else []):
+                try:
+                    desc = str(f.get('description') or '').strip()
+                    if not desc:
+                        continue
+                    color = str(f.get('couleur') or '').strip() or None
+                    course_names = f.get('cours') or []
+                    if isinstance(course_names, str):
+                        course_names = [course_names]
+                    # Trouver ou créer le fil
+                    key = desc.lower()
+                    fil = existing_fils.get(key)
+                    if not fil:
+                        fil = FilConducteur(programme_id=programme.id, description=desc, couleur=color)
+                        db.session.add(fil)
+                        db.session.flush()
+                        existing_fils[key] = fil
+                    elif color and (fil.couleur or '').strip() != color:
+                        fil.couleur = color
+                    # Associer les cours par nom
+                    for cname in course_names:
+                        try:
+                            n = str(cname).strip()
+                        except Exception:
+                            continue
+                        ref = name_to_course.get(n)
+                        if not ref:
+                            continue
+                        cid, _ = ref
+                        cobj = db.session.get(Cours, cid)
+                        if cobj:
+                            cobj.fil_conducteur_id = fil.id
+                except Exception:
+                    continue
+        except Exception as e:
+            # On n'interrompt pas l'application de la grille si la section fils échoue
+            current_app.logger.warning(f"Application partielle: erreur sur fils conducteurs: {e}")
 
         db.session.commit()
         return jsonify({'ok': True, 'created': created}), 200

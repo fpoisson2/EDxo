@@ -46,9 +46,6 @@
           {% if current_user.role in ['admin', 'coordo'] %}
             <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-xs btn-primary ms-2">Ajouter</a>
           {% endif %}
-          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
-          </a>
         </div>
       </div>
     </div>
@@ -136,9 +133,6 @@
                             {% else %}
                               <span class="vp-empty">Aucune</span>
                             {% endif %}
-          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
-          </a>
                           </div>
                         </div>
                         <div class="mb-2">
@@ -151,9 +145,6 @@
                             {% else %}
                               <span class="vp-empty">Aucun</span>
                             {% endif %}
-          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
-          </a>
                           </div>
                         </div>
                         <div>
@@ -164,9 +155,6 @@
                             {% else %}
                               <span class="vp-empty">Aucun</span>
                             {% endif %}
-          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
-          </a>
                           </div>
                         </div>
                       </div>
@@ -649,9 +637,6 @@ function handlePlanCoursAction() {
               {% else %}
                 <option value="gpt-5">gpt-5</option>
               {% endif %}
-          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
-          </a>
             </select>
           </div>
           <div class="col-sm-6">
@@ -678,9 +663,6 @@ function handlePlanCoursAction() {
                 <option value="high">Élevé</option>
               </select>
             {% endif %}
-          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
-          </a>
           </div>
           <div class="col-sm-6">
             <label for="ai_verbosity" class="form-label">Verbosité</label>
@@ -693,9 +675,6 @@ function handlePlanCoursAction() {
                 <option value="high">Élevée</option>
               </select>
             {% endif %}
-          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
-          </a>
           </div>
           <div class="col-12">
             <label class="form-label">Mode d'application</label>
@@ -829,7 +808,8 @@ function handlePlanCoursAction() {
   function renderAiGrillePreview(data) {
     const wrap = document.getElementById('ai-grille-preview');
     const sessions = (data && data.sessions) || [];
-    if (!sessions.length) { wrap.innerHTML = '<div class="text-muted">Aucune donnée.</div>'; return; }
+    const fils = (data && data.fils_conducteurs) || [];
+    if (!sessions.length && !fils.length) { wrap.innerHTML = '<div class="text-muted">Aucune donnée.</div>'; return; }
     let html = '';
     sessions.sort((a,b)=> (a.session||0)-(b.session||0));
     for (const s of sessions) {
@@ -851,6 +831,20 @@ function handlePlanCoursAction() {
                 `</li>`;
       }
       html += '</ul></div>';
+    }
+    if (fils.length) {
+      html += '<div class="mb-2 mt-3"><h6 class="mb-2">Fils conducteurs</h6>';
+      html += '<div class="d-flex flex-wrap gap-2">';
+      for (const f of fils) {
+        const color = (typeof f.couleur === 'string' && /^#([0-9a-fA-F]{6})$/.test(f.couleur)) ? f.couleur : '#888888';
+        const desc = (f.description||'').replace(/</g,'&lt;');
+        const assoc = (Array.isArray(f.cours) ? f.cours : (f.cours?[String(f.cours)]:[])).map(x=>String(x).replace(/</g,'&lt;'));
+        html += `<div class="border rounded p-2" style="border-left:6px solid ${color};">
+                    <div class="fw-semibold" style="color:${color}">${desc}</div>
+                    ${assoc.length? `<div class="small text-muted">${assoc.join(', ')}</div>` : ''}
+                  </div>`;
+      }
+      html += '</div></div>';
     }
     wrap.innerHTML = html;
   }

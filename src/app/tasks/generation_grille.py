@@ -86,7 +86,12 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
             "  - Limite au maximum le nombre de préalable et corequis, on doit se limiter à l'essentiel qui permet le développement des compétences. \n"
             "  - Les 'corequis' doivent référencer des cours de la même session.\n"
             "  - Assure une cohérence avec le développement/progression des compétences.\n"
-            "- Retourne STRICTEMENT du JSON valide de la forme: {\"sessions\":[{\"session\":1,\"courses\":[{\"nom\":\"...\",\"heures_theorie\":3,\"heures_laboratoire\":2,\"heures_travail_maison\":2,\"nombre_unites\":7,\"prealables\":[\"Nom cours A\",\"Nom cours B\"],\"corequis\":[\"Nom cours C\"]}]}]}\n"
+            "- Génère EN PLUS des 'fils_conducteurs' (thématiques transversales) avec:\n"
+            "  - 'description' (phrase courte),\n"
+            "  - 'couleur' (code hex ex: #1F77B4),\n"
+            "  - 'cours' (liste des noms exacts des cours concernés).\n"
+            "  - 3 à 6 fils max; chaque cours peut appartenir à 0 ou 1 fil.\n"
+            "- Retourne STRICTEMENT du JSON valide de la forme: {\"sessions\":[{\"session\":1,\"courses\":[{\"nom\":\"...\",\"heures_theorie\":3,\"heures_laboratoire\":2,\"heures_travail_maison\":2,\"nombre_unites\":7,\"prealables\":[\"Nom cours A\",\"Nom cours B\"],\"corequis\":[\"Nom cours C\"]}]}],\"fils_conducteurs\":[{\"description\":\"...\",\"couleur\":\"#AABBCC\",\"cours\":[\"Nom cours ...\"]}]}\n"
             f"Programme: {programme.nom}\n"
             f"Heures totales à répartir: {total_hours}\n"
             f"Nombre de sessions: {nb_sessions}\n"
@@ -195,6 +200,63 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
                     continue
             cleaned.append({'session': sn, 'courses': courses})
 
+        # Extraire/assainir les fils conducteurs (facultatif)
+        raw_fils = data.get('fils_conducteurs') or []
+        fils_conducteurs = []
+        # Construire l'ensemble des noms de cours générés pour validation des associations
+        generated_course_names = set()
+        for s in cleaned:
+            for c in s['courses']:
+                generated_course_names.add(c['nom'])
+
+        def _valid_hex(color: str) -> bool:
+            if not isinstance(color, str) or len(color) != 7 or not color.startswith('#'):
+                return False
+            try:
+                int(color[1:], 16)
+                return True
+            except Exception:
+                return False
+
+        used_colors = set()
+        for f in (raw_fils if isinstance(raw_fils, list) else []):
+            try:
+                desc = str(f.get('description') or '').strip()
+                col = str(f.get('couleur') or '').strip()
+                cours_list = f.get('cours') or []
+                if isinstance(cours_list, str):
+                    cours_list = [cours_list]
+                # Filtrer les cours inconnus
+                assoc = []
+                seen = set()
+                for name in cours_list:
+                    try:
+                        n = str(name).strip()
+                    except Exception:
+                        continue
+                    if not n or n in seen:
+                        continue
+                    if n in generated_course_names:
+                        assoc.append(n)
+                        seen.add(n)
+                if not assoc or not desc:
+                    continue
+                # Assainir la couleur ou générer une couleur par défaut
+                if not _valid_hex(col) or col.upper() in used_colors:
+                    # Palette simple de secours
+                    fallback = [
+                        '#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD',
+                        '#8C564B', '#E377C2', '#7F7F7F', '#BCBD22', '#17BECF'
+                    ]
+                    for cand in fallback:
+                        if cand not in used_colors:
+                            col = cand
+                            break
+                used_colors.add(col.upper())
+                fils_conducteurs.append({'description': desc[:200], 'couleur': col, 'cours': assoc})
+            except Exception:
+                continue
+
         try:
             cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
         except Exception as e:
@@ -208,7 +270,10 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
 
         return {
             'status': 'success',
-            'result': { 'sessions': cleaned },
+            'result': {
+                'sessions': cleaned,
+                'fils_conducteurs': fils_conducteurs
+            },
             'usage': { 'prompt_tokens': usage_prompt, 'completion_tokens': usage_completion, 'cost': cost }
         }
     except Exception as e:
