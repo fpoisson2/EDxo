@@ -17,8 +17,7 @@ services:
     restart: unless-stopped
   redis:
     image: redis:alpine
-    ports:
-      - "6379:6379"
+    # No host port mapping needed; used only on internal network
   celery:
     build: .
     command: celery -A src.celery_app:celery worker --loglevel=info --hostname=worker2@%h
