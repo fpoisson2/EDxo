@@ -12,7 +12,7 @@
           Ajouter un Nouveau Département
         </div>
         <div class="card-body">
-          <form method="POST" action="{{ url_for('main.gestion_departements') }}">
+          <form method="POST" action="{{ url_for('settings.gestion_departements') }}">
             {{ department_form.hidden_tag() }}
             <div class="mb-3">
               {{ department_form.nom.label(class="form-label") }}
@@ -53,7 +53,7 @@
                 Modifier
               </button>
               <!-- Bouton de suppression -->
-              <form method="POST" action="{{ url_for('main.supprimer_departement', departement_id=department.id) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce département ? Toutes les règles associées seront également supprimées.');">
+              <form method="POST" action="{{ url_for('settings.supprimer_departement', departement_id=department.id) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce département ? Toutes les règles associées seront également supprimées.');">
                 {{ delete_department_form.hidden_tag() }}
                 <button type="submit" class="btn btn-danger btn-sm">
                   Supprimer
@@ -67,7 +67,7 @@
             <!-- Formulaire d'édition inline -->
             <div class="collapse mb-4" id="editForm{{ department.id }}">
               <div class="card card-body">
-                <form method="POST" action="{{ url_for('main.gestion_departements') }}">
+                <form method="POST" action="{{ url_for('settings.gestion_departements') }}">
                   {{ department_form.hidden_tag() }}
                   <input type="hidden" name="department_id" value="{{ department.id }}">
                   <div class="mb-3">
@@ -109,10 +109,10 @@
                       {{ regle.contenu | replace('- ', '• ') }}
                     </div>
                     <div class="text-end">
-                      <a href="{{ url_for('main.edit_regle', regle_id=regle.id) }}" class="btn btn-warning btn-sm me-2">
+                      <a href="{{ url_for('settings.edit_regle', regle_id=regle.id) }}" class="btn btn-warning btn-sm me-2">
                         Modifier
                       </a>
-                      <form method="POST" action="{{ url_for('main.supprimer_regle', regle_id=regle.id) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette règle ?');">
+                      <form method="POST" action="{{ url_for('settings.supprimer_regle', regle_id=regle.id) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette règle ?');">
                         {{ delete_rule_form.hidden_tag() }}
                         <button type="submit" class="btn btn-danger btn-sm">
                           Supprimer
@@ -124,7 +124,7 @@
               </ul>
               <!-- Formulaire d'ajout d'une règle -->
               <div class="mt-3">
-                <form method="POST" action="{{ url_for('main.gestion_departements') }}">
+                <form method="POST" action="{{ url_for('settings.gestion_departements') }}">
                   {{ regle_form.csrf_token }}
                   <input type="hidden" name="department_id" value="{{ department.id }}">
                   <div class="mb-3">
@@ -157,10 +157,10 @@
                       <div>{{ piea.contenu | markdown | safe }}</div>
                     </div>
                     <div>
-                      <a href="{{ url_for('main.edit_piea', piea_id=piea.id) }}" class="btn btn-warning btn-sm me-2">
+                      <a href="{{ url_for('settings.edit_piea', piea_id=piea.id) }}" class="btn btn-warning btn-sm me-2">
                         Modifier
                       </a>
-                      <form method="POST" action="{{ url_for('main.supprimer_piea', piea_id=piea.id) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette règle de PIEA ?');">
+                      <form method="POST" action="{{ url_for('settings.supprimer_piea', piea_id=piea.id) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette règle de PIEA ?');">
                         {{ delete_piea_form.hidden_tag() }}
                         <button type="submit" class="btn btn-danger btn-sm">
                           Supprimer
