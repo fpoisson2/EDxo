@@ -165,6 +165,7 @@ def stream_task_events(task_id):
         last_message = None
         last_progress = None
         last_step = None
+        last_details = None
         # cadence de polling interne (en secondes)
         interval = 1.0
 
@@ -178,8 +179,13 @@ def stream_task_events(task_id):
                 message = meta.get('message') if isinstance(meta, dict) else None
                 progress = meta.get('progress') if isinstance(meta, dict) else None
                 step = meta.get('step') if isinstance(meta, dict) else None
+                details = meta.get('details') if isinstance(meta, dict) else None
 
-                changed = (state != last_state) or (message != last_message) or (progress != last_progress) or (step != last_step)
+                changed = (
+                    (state != last_state) or (message != last_message) or
+                    (progress != last_progress) or (step != last_step) or
+                    (details != last_details)
+                )
                 if changed:
                     payload = {
                         'state': state,
@@ -189,7 +195,7 @@ def stream_task_events(task_id):
                         'meta': meta
                     }
                     yield f"event: progress\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
-                    last_state, last_message, last_progress, last_step = state, message, progress, step
+                    last_state, last_message, last_progress, last_step, last_details = state, message, progress, step, details
 
                 if state in ('SUCCESS', 'FAILURE'):
                     # Inclure le résultat final si dispo

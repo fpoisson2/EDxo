@@ -305,6 +305,7 @@ def task_status_events(task_id):
         last_msg = None
         last_step = None
         last_progress = None
+        last_details = None
         interval = 1.0
 
         yield "event: open\ndata: {}\n\n"
@@ -317,12 +318,17 @@ def task_status_events(task_id):
                 msg = meta.get('message') if isinstance(meta, dict) else None
                 step = meta.get('step') if isinstance(meta, dict) else None
                 prog = meta.get('progress') if isinstance(meta, dict) else None
+                details = meta.get('details') if isinstance(meta, dict) else None
 
-                changed = (state != last_state) or (msg != last_msg) or (step != last_step) or (prog != last_progress)
+                # Déclencher aussi sur modification des 'details' pour refléter le streaming fin
+                changed = (
+                    (state != last_state) or (msg != last_msg) or (step != last_step) or
+                    (prog != last_progress) or (details != last_details)
+                )
                 if changed:
                     payload = {'state': state, 'message': msg, 'step': step, 'progress': prog, 'meta': meta}
                     yield f"event: progress\ndata: {_json.dumps(payload, ensure_ascii=False)}\n\n"
-                    last_state, last_msg, last_step, last_progress = state, msg, step, prog
+                    last_state, last_msg, last_step, last_progress, last_details = state, msg, step, prog, details
 
                 if state in ('SUCCESS', 'FAILURE'):
                     final_payload = {'state': state, 'result': res.result if state == 'SUCCESS' else None, 'meta': meta}

@@ -529,11 +529,33 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id):
             # Callback de streaming pour exposer les événements côté UI (SSE)
             def stream_callback(msg: str):
                 try:
+                    # Extraire un compteur cumulatif du message de log, p.ex. "total=50903"
+                    total_chars = None
+                    try:
+                        m = re.search(r"total=(\d+)", str(msg))
+                        if m:
+                            total_chars = int(m.group(1))
+                    except Exception:
+                        total_chars = None
+
+                    # Base: 50% au démarrage du streaming, puis progression jusqu'à ~95%
+                    progress_val = 50
+                    if isinstance(total_chars, int):
+                        # Approximation: considérer terminé à 80 000 (caractères ≈ tokens)
+                        target = 80000
+                        pct = min(1.0, max(0.0, total_chars / float(target)))
+                        progress_val = int(50 + pct * 45)  # 50% -> 95%
+
+                    # Rendre le message variant pour déclencher l'SSE
+                    dyn_message = (
+                        f"Streaming ({total_chars} chars)" if isinstance(total_chars, int) else "Streaming..."
+                    )
+
                     self.update_state(state='PROGRESS', meta={
                         'step': 'Extraction IA',
-                        'message': 'Streaming...',
+                        'message': dyn_message,
                         'details': str(msg)[:5000],
-                        'progress': 50,
+                        'progress': progress_val,
                         'task_id': task_id,
                         'pdf_source': pdf_source,
                         'pdf_title': pdf_title,
@@ -541,6 +563,7 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id):
                         'download_path': download_path_local
                     })
                 except Exception:
+                    # Ne pas interrompre la tâche si un update_state échoue
                     pass
 
             # Passer aussi l'URL directe si disponible pour éviter l'upload
