@@ -74,12 +74,19 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
             "Contraintes et format (respect strict):\n"
             "- Base-toi sur la liste des compétences du programme (ci-dessous).\n"
             "- Pour chaque cours, fournis un 'nom' (sans code), et une ventilation en 'heures_theorie', 'heures_laboratoire', 'heures_travail_maison'.\n"
-            "- Calcule et inclus 'nombre_unites' = (heures_theorie + heures_laboratoire + heures_travail_maison).\n"
+            "- Un cours ne peut jamais comporter plus de 4h de théorie et 4h de labo. \n"
+            "- Calcule et inclus 'nombre_unites' = (heures_theorie + heures_laboratoire + heures_travail_maison)/3.\n"
             "- Définition des heures totales d'un cours (pour le contrôle des heures): h_cours = (heures_theorie + heures_laboratoire) * 15.\n"
             "- Somme stricte heures: la somme de tous les h_cours sur toutes les sessions DOIT être égale (pas proche) aux 'Heures totales à répartir'. Ajuste les 3 valeurs au besoin pour obtenir l'égalité exacte.\n"
             + ("- Somme stricte unités: la somme de tous les 'nombre_unites' DOIT être égale aux 'Unités totales à répartir'.\n" if total_units > 0 else "") +
             "- Répartis les heures et les unités sur les sessions de manière équilibrée et cohérente avec les compétences.\n"
-            "- Retourne strictement du JSON valide de la forme: {\"sessions\":[{\"session\":1,\"courses\":[{\"nom\":\"...\",\"heures_theorie\":3,\"heures_laboratoire\":2,\"heures_travail_maison\":2,\"nombre_unites\":7}]}]}\n"
+            "- Génère aussi les relations 'prealables' (cours antérieurs requis) et 'corequis' (cours à suivre simultanément).\n"
+            "  - Règle stricte: ne JAMAIS avoir plus de 2 cours dans 'prealables' pour un même cours.\n"
+            "  - Les 'prealables' doivent référencer des cours placés dans des sessions antérieures uniquement.\n"
+            "  - Limite au maximum le nombre de préalable et corequis, on doit se limiter à l'essentiel qui permet le développement des compétences. \n"
+            "  - Les 'corequis' doivent référencer des cours de la même session.\n"
+            "  - Assure une cohérence avec le développement/progression des compétences.\n"
+            "- Retourne STRICTEMENT du JSON valide de la forme: {\"sessions\":[{\"session\":1,\"courses\":[{\"nom\":\"...\",\"heures_theorie\":3,\"heures_laboratoire\":2,\"heures_travail_maison\":2,\"nombre_unites\":7,\"prealables\":[\"Nom cours A\",\"Nom cours B\"],\"corequis\":[\"Nom cours C\"]}]}]}\n"
             f"Programme: {programme.nom}\n"
             f"Heures totales à répartir: {total_hours}\n"
             f"Nombre de sessions: {nb_sessions}\n"
@@ -119,7 +126,7 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
         self.update_state(state='PROGRESS', meta={'message': 'Analyse de la réponse…'})
         data = json.loads(output_text) if output_text else {}
         sessions = data.get('sessions') or []
-        # Nettoyage minimal
+        # Nettoyage minimal + extraction des préalables/corequis
         cleaned = []
         for s in sessions:
             try:
@@ -139,12 +146,50 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
                         nu = None
                     if not nu or nu <= 0:
                         nu = float(ht + hl + hm)
+                    # Préparer listes préalables/corequis (strings uniques)
+                    raw_prealables = cr.get('prealables') or cr.get('prerequis') or []
+                    if isinstance(raw_prealables, str):
+                        raw_prealables = [raw_prealables]
+                    prealables = []
+                    seen_p = set()
+                    for p in raw_prealables:
+                        try:
+                            name = str(p).strip()
+                        except Exception:
+                            continue
+                        if not name:
+                            continue
+                        if name.lower() in seen_p:
+                            continue
+                        prealables.append(name)
+                        seen_p.add(name.lower())
+                        if len(prealables) >= 2:
+                            break  # Ne jamais dépasser 2 préalables
+
+                    raw_corequis = cr.get('corequis') or []
+                    if isinstance(raw_corequis, str):
+                        raw_corequis = [raw_corequis]
+                    corequis = []
+                    seen_c = set()
+                    for c in raw_corequis:
+                        try:
+                            namec = str(c).strip()
+                        except Exception:
+                            continue
+                        if not namec:
+                            continue
+                        if namec.lower() in seen_c:
+                            continue
+                        corequis.append(namec)
+                        seen_c.add(namec.lower())
                     courses.append({
                         'nom': str(cr.get('nom') or 'Cours généré').strip()[:120],
                         'heures_theorie': ht,
                         'heures_laboratoire': hl,
                         'heures_travail_maison': hm,
                         'nombre_unites': round(nu, 2),
+                        'prealables': prealables,
+                        'corequis': corequis,
                     })
                 except Exception:
                     continue

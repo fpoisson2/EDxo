@@ -1148,7 +1148,7 @@ def apply_programme_grille(programme_id):
             return jsonify({'error': f"Erreur lors de l\'effacement de la grille: {e}"}), 500
 
     import random, string, re
-    from ..models import Cours, CoursProgramme as CP
+    from ..models import Cours, CoursProgramme as CP, CoursPrealable, CoursCorequis
 
     def gen_unique_code():
         """Génère un code de cours unique préfixé par le code du programme.
@@ -1184,6 +1184,8 @@ def apply_programme_grille(programme_id):
         return f"{prefix}-{random.randint(1000,9999)}"
 
     created = []
+    # Mapping temporaire: nom du cours -> (id, session)
+    name_to_course = {}
     try:
         for sess_obj in sessions:
             sess_num = int(sess_obj.get('session') or 0)
@@ -1213,6 +1215,84 @@ def apply_programme_grille(programme_id):
                 assoc.session = sess_num
                 db.session.add(assoc)
                 created.append({'id': c.id, 'code': c.code, 'nom': c.nom, 'session': sess_num})
+                # Conserver le mapping sur le nom pour les liens (préalables/corequis)
+                # Si doublon de nom, on garde le premier rencontré pour la session correspondante
+                name_key = c.nom.strip()
+                name_to_course.setdefault(name_key, (c.id, sess_num))
+
+        # Deuxième passe: appliquer préalables et co‑requis
+        # Éviter doublons exacts en mémoire avant commit
+        prealables_to_add = []  # tuples (cours_id, prealable_id)
+        corequis_to_add = []    # tuples (cours_id, corequis_id)
+
+        for sess_obj in sessions:
+            sess_num = int(sess_obj.get('session') or 0)
+            for course in (sess_obj.get('courses') or []):
+                nom = (course.get('nom') or '').strip()
+                if not nom or nom not in name_to_course:
+                    continue
+                cours_id, cours_session = name_to_course[nom]
+                # Sanity: on attend que cours_session == sess_num
+                # Gérer préalables (max 2, sessions antérieures seulement)
+                raw_p = course.get('prealables') or course.get('prerequis') or []
+                if isinstance(raw_p, str):
+                    raw_p = [raw_p]
+                added = 0
+                seen = set()
+                for p in raw_p:
+                    pname = str(p).strip()
+                    if not pname or pname.lower() in seen:
+                        continue
+                    seen.add(pname.lower())
+                    ref = name_to_course.get(pname)
+                    if not ref:
+                        continue
+                    ref_id, ref_session = ref
+                    if ref_id == cours_id:
+                        continue  # pas d'auto-référence
+                    if ref_session >= cours_session:
+                        continue  # préalables doivent être dans une session antérieure
+                    prealables_to_add.append((cours_id, ref_id))
+                    added += 1
+                    if added >= 2:
+                        break  # ne jamais dépasser 2 préalables
+
+                # Gérer co‑requis (même session uniquement)
+                raw_c = course.get('corequis') or []
+                if isinstance(raw_c, str):
+                    raw_c = [raw_c]
+                seen_c = set()
+                for co in raw_c:
+                    cname = str(co).strip()
+                    if not cname or cname.lower() in seen_c:
+                        continue
+                    seen_c.add(cname.lower())
+                    ref = name_to_course.get(cname)
+                    if not ref:
+                        continue
+                    ref_id, ref_session = ref
+                    if ref_id == cours_id:
+                        continue  # pas d'auto-référence
+                    if ref_session != cours_session:
+                        continue  # co‑requis dans la même session uniquement
+                    corequis_to_add.append((cours_id, ref_id))
+
+        # Insérer en base (en filtrant doublons)
+        seen_pairs_p = set()
+        for (cid, pid) in prealables_to_add:
+            key = (cid, pid)
+            if key in seen_pairs_p:
+                continue
+            seen_pairs_p.add(key)
+            db.session.add(CoursPrealable(cours_id=cid, cours_prealable_id=pid, note_necessaire=None))
+
+        seen_pairs_c = set()
+        for (cid, coid) in corequis_to_add:
+            key = (cid, coid)
+            if key in seen_pairs_c:
+                continue
+            seen_pairs_c.add(key)
+            db.session.add(CoursCorequis(cours_id=cid, cours_corequis_id=coid))
 
         db.session.commit()
         return jsonify({'ok': True, 'created': created}), 200

@@ -81,7 +81,7 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
             "- Utilise uniquement les codes fournis (pas d'invention).\n"
             "- Contraintes fortes: au maximum 3 compétences par cours; au plus 2 liens de type 'reinvesti' par cours; une même compétence ne doit pas apparaître dans plus de 3 cours du programme.\n"
             "- Répartition temporelle: privilégier 'developpe' dans les sessions initiales, puis 'atteint' lorsque la compétence est consolidée en fin de parcours; 'reinvesti' sert à réutiliser des compétences déjà atteintes ou développés.\n"
-            "- Plusieurs cours peuvent développés une même compétence, idéalement, pas à la même session. \n"
+            "- Plusieurs cours devraient développés une même compétence (2 cours par compétence + 1 qui certifie), idéalement, pas à la même session. \n"
             "- Couverture des compétences: chaque compétence du programme doit être marquée au moins une fois 'atteint' et, ce, répartit à travers le programme (il y en aura plus vers la fin du parcours évidemment).\n"
             "- Cohérence temporelle: une compétence ne doit plus être marquée 'developpe' dans une session ultérieure après avoir été marquée 'atteint'.\n\n"
             f"Programme: {programme.nom}\n"

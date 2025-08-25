@@ -813,9 +813,17 @@ function handlePlanCoursAction() {
       html += '<ul class="list-group list-group-sm">';
       for (const c of (s.courses||[])) {
         const ht = c.heures_theorie||0, hl=c.heures_laboratoire||0, hm=c.heures_travail_maison||0;
-        html += `<li class="list-group-item d-flex justify-content-between align-items-center">`+
+        const pre = Array.isArray(c.prealables) ? c.prealables : (c.prerequis||[]);
+        const co = Array.isArray(c.corequis) ? c.corequis : [];
+        const preTxt = (pre && pre.length) ? `Préalables: ${pre.map(x=>String(x)).join(', ')}` : '';
+        const coTxt = (co && co.length) ? `Co‑requis: ${co.map(x=>String(x)).join(', ')}` : '';
+        const relines = [preTxt, coTxt].filter(Boolean).join(' — ');
+        html += `<li class="list-group-item">`+
+                `<div class="d-flex justify-content-between align-items-center">`+
                 `<span>${(c.nom||'Cours').replace(/</g,'&lt;')}</span>`+
                 `<span class="badge bg-secondary">${ht}-${hl}-${hm} h</span>`+
+                `</div>`+
+                `${relines ? `<div class="small text-muted mt-1">${relines.replace(/</g,'&lt;')}</div>` : ''}`+
                 `</li>`;
       }
       html += '</ul></div>';
