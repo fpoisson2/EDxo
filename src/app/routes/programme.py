@@ -1055,6 +1055,13 @@ def view_programme(programme_id):
         plans = PlanDeCours.query.filter_by(cours_id=cours.id).all()
         cours_plans_mapping[cours.id] = [p.to_dict() for p in plans]
 
+    # Génération IA: liste de modèles (pour le modal)
+    try:
+        from ..forms import GenerateContentForm
+        generate_form = GenerateContentForm()
+    except Exception:
+        generate_form = None
+
     return render_template('view_programme.html',
                            programme=programme,
                            programmes=programmes,
@@ -1070,8 +1077,128 @@ def view_programme(programme_id):
                            total_heures_laboratoire=total_heures_laboratoire,
                            total_heures_travail_maison=total_heures_travail_maison,
                            total_unites=total_unites,
-                           cours_plans_mapping=cours_plans_mapping
+                           cours_plans_mapping=cours_plans_mapping,
+                           generate_form=generate_form
                            )
+
+@programme_bp.route('/<int:programme_id>/grille/generate', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def generate_programme_grille(programme_id):
+    programme = Programme.query.get_or_404(programme_id)
+    if current_user.role not in ('admin', 'coordo'):
+        return jsonify({'error': 'Accès restreint (admin/coordo)'}), 403
+    if current_user.role != 'admin' and programme not in current_user.programmes:
+        return jsonify({'error': 'Accès refusé'}), 403
+    user = current_user
+    if not user.openai_key:
+        return jsonify({'error': 'Aucune clé OpenAI configurée dans votre profil.'}), 400
+    if not user.credits or user.credits <= 0:
+        return jsonify({'error': "Crédits insuffisants pour effectuer l\'appel."}), 400
+
+    form = request.get_json(silent=True) or {}
+    from ..tasks.generation_grille import generate_programme_grille_task
+    task = generate_programme_grille_task.delay(programme_id, user.id, form)
+    return jsonify({'task_id': task.id}), 202
+
+@programme_bp.route('/<int:programme_id>/grille/apply', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def apply_programme_grille(programme_id):
+    programme = Programme.query.get_or_404(programme_id)
+    if current_user.role not in ('admin', 'coordo'):
+        return jsonify({'error': 'Accès restreint (admin/coordo)'}), 403
+    if current_user.role != 'admin' and programme not in current_user.programmes:
+        return jsonify({'error': 'Accès refusé'}), 403
+
+    payload = request.get_json(silent=True) or {}
+    mode = (payload.get('mode') or 'append').lower()
+    grid = payload.get('grid') or {}
+    sessions = grid.get('sessions') or []
+
+    # Option overwrite: supprimer les associations Cours↔Programme (pas les cours)
+    if mode == 'overwrite':
+        try:
+            # Détacher tous les cours de ce programme
+            for assoc in list(programme.cours_assocs):
+                db.session.delete(assoc)
+            db.session.flush()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': f"Erreur lors de l\'effacement de la grille: {e}"}), 500
+
+    import random, string, re
+    from ..models import Cours, CoursProgramme as CP
+
+    def gen_unique_code():
+        """Génère un code de cours unique préfixé par le code du programme.
+
+        Si le programme possède un code ministériel (ex: 243.A0), on extrait le
+        préfixe numérique (ex: 243) et on produit des codes du type '243-ABC'.
+        À défaut, on utilise l'identifiant du programme comme préfixe.
+        """
+        # Déterminer le préfixe de programme
+        prefix = None
+        try:
+            lp = getattr(programme, 'liste_programme_ministeriel', None)
+            if lp and getattr(lp, 'code', None):
+                m = re.match(r"^(\d{2,4})", lp.code.strip())
+                if m:
+                    prefix = m.group(1)
+            if not prefix:
+                prefix = str(programme.id)
+        except Exception:
+            prefix = str(programme.id)
+
+        # Génère un code court aléatoire et vérifie l'unicité
+        for _ in range(12):
+            code = f"{prefix}-{''.join(random.choices(string.ascii_uppercase, k=3))}"
+            if not Cours.query.filter_by(code=code).first():
+                return code
+        # Fallback numériques
+        for _ in range(12):
+            code = f"{prefix}-{random.randint(100,999)}"
+            if not Cours.query.filter_by(code=code).first():
+                return code
+        # Dernier recours
+        return f"{prefix}-{random.randint(1000,9999)}"
+
+    created = []
+    try:
+        for sess_obj in sessions:
+            sess_num = int(sess_obj.get('session') or 0)
+            for course in (sess_obj.get('courses') or []):
+                nom = (course.get('nom') or 'Cours généré').strip()
+                ht = int(course.get('heures_theorie') or 0)
+                hl = int(course.get('heures_laboratoire') or 0)
+                hm = int(course.get('heures_travail_maison') or 0)
+                unites = float(course.get('nombre_unites') or 0.0)
+                if unites == 0.0:
+                    try:
+                        unites = round((ht + hl) / 15.0, 2)
+                    except Exception:
+                        unites = 1.0
+
+                c = Cours(code=gen_unique_code(), nom=nom,
+                          nombre_unites=unites,
+                          heures_theorie=ht,
+                          heures_laboratoire=hl,
+                          heures_travail_maison=hm)
+                db.session.add(c)
+                db.session.flush()
+                # Associer au programme avec session
+                assoc = CP()
+                assoc.cours_id = c.id
+                assoc.programme_id = programme.id
+                assoc.session = sess_num
+                db.session.add(assoc)
+                created.append({'id': c.id, 'code': c.code, 'nom': c.nom, 'session': sess_num})
+
+        db.session.commit()
+        return jsonify({'ok': True, 'created': created}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f"Erreur lors de l\'application de la grille: {e}"}), 500
 
 @programme_bp.route('/competence/<int:competence_id>/edit', methods=['GET', 'POST'])
 @roles_required('admin', 'coordo')

@@ -13,10 +13,10 @@
   <form method="POST">
     {{ form.hidden_tag() }}
     
-    <!-- Champ Programme -->
+    <!-- Champ Programmes (multi-sélection) -->
     <div class="form-group">
-      {{ form.programme.label(class="form-label") }}
-      {{ form.programme(class="form-control") }}
+      {{ form.programmes.label(class="form-label") }}
+      {{ form.programmes(class="form-control", multiple=True) }}
     </div>
     
     <!-- Champ Code -->

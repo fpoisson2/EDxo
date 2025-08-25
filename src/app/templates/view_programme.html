@@ -22,6 +22,9 @@
           <a href="{{ url_for('grille_bp.import_grille') }}" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-file-import"></i> Importer une grille
           </a>
+          <button class="btn btn-sm btn-outline-success" type="button" id="btn-ai-grille" title="Générer une grille (IA)">
+            <i class="fas fa-wand-magic-sparkles"></i> Générer (IA)
+          </button>
           {% endif %}
           <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#vp-fil-bar" aria-expanded="false" aria-controls="vp-fil-bar">
             <i class="bi bi-tags"></i> Fils
@@ -609,6 +612,235 @@ function handlePlanCoursAction() {
         window.location.href = url;
     }
 }
+</script>
+
+<!-- Modal Génération de Grille (IA) -->
+<div class="modal fade" id="aiGrilleModal" tabindex="-1" aria-labelledby="aiGrilleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="aiGrilleModalLabel">Générer une grille de cours (IA)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label for="ai_model" class="form-label">Modèle</label>
+            <select id="ai_model" class="form-select form-select-sm">
+              {% if generate_form and generate_form.ai_model.choices %}
+                {% for val, label in generate_form.ai_model.choices %}
+                  <option value="{{ val }}" {% if generate_form.ai_model.data == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              {% else %}
+                <option value="gpt-5">gpt-5</option>
+              {% endif %}
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label for="total_hours" class="form-label">Heures totales</label>
+            <input type="number" id="total_hours" class="form-control form-control-sm" min="1" step="1" placeholder="ex: 1800">
+          </div>
+          <div class="col-sm-6">
+            <label for="nb_sessions" class="form-label">Nombre de sessions</label>
+            <input type="number" id="nb_sessions" class="form-control form-control-sm" min="1" step="1" value="4">
+          </div>
+          <div class="col-sm-6">
+            <label for="ai_reasoning" class="form-label">Effort de raisonnement</label>
+            {% if generate_form %}
+              {{ generate_form.reasoning_effort(class="form-select form-select-sm", id="ai_reasoning") }}
+            {% else %}
+              <select id="ai_reasoning" class="form-select form-select-sm">
+                <option value="minimal">Minimal</option>
+                <option value="low">Faible</option>
+                <option value="medium" selected>Moyen</option>
+                <option value="high">Élevé</option>
+              </select>
+            {% endif %}
+          </div>
+          <div class="col-sm-6">
+            <label for="ai_verbosity" class="form-label">Verbosité</label>
+            {% if generate_form %}
+              {{ generate_form.verbosity(class="form-select form-select-sm", id="ai_verbosity") }}
+            {% else %}
+              <select id="ai_verbosity" class="form-select form-select-sm">
+                <option value="low">Faible</option>
+                <option value="medium" selected>Moyenne</option>
+                <option value="high">Élevée</option>
+              </select>
+            {% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label">Mode d'application</label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="apply_mode" id="mode_append" value="append" checked>
+                <label class="form-check-label" for="mode_append">Ajouter aux cours existants</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="apply_mode" id="mode_overwrite" value="overwrite">
+                <label class="form-check-label" for="mode_overwrite">Écraser la grille existante</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <label for="ai_additional" class="form-label">Informations complémentaires (optionnel)</label>
+            <textarea id="ai_additional" class="form-control form-control-sm" rows="3" placeholder="Contexte, contraintes, profil des étudiants…"></textarea>
+          </div>
+        </div>
+
+        <div id="ai-grille-progress" class="mt-3 small text-muted"></div>
+        <div id="ai-grille-preview" class="mt-3"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+        <button type="button" class="btn btn-outline-primary" id="btn-ai-generate">Générer</button>
+        <button type="button" class="btn btn-primary d-none" id="btn-ai-apply">Appliquer la grille</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+<script>
+  let aiGrilleModal;
+  let aiGrilleResult = null;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    aiGrilleModal = new bootstrap.Modal(document.getElementById('aiGrilleModal'));
+    const openBtn = document.getElementById('btn-ai-grille');
+    if (openBtn) openBtn.addEventListener('click', () => {
+      resetAiGrilleModal();
+      aiGrilleModal.show();
+    });
+
+    document.getElementById('btn-ai-generate').addEventListener('click', startAiGrilleGeneration);
+    document.getElementById('btn-ai-apply').addEventListener('click', applyAiGrille);
+  });
+
+  function resetAiGrilleModal() {
+    aiGrilleResult = null;
+    document.getElementById('ai-grille-progress').textContent = '';
+    document.getElementById('ai-grille-preview').innerHTML = '';
+    document.getElementById('btn-ai-apply').classList.add('d-none');
+  }
+
+  async function startAiGrilleGeneration() {
+    const generateBtn = document.getElementById('btn-ai-generate');
+    const originalBtnHtml = generateBtn.innerHTML;
+    // Désactiver le bouton et afficher un spinner pendant l'attente
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Génération…';
+
+    const ai_model = document.getElementById('ai_model').value;
+    const total_hours = parseInt(document.getElementById('total_hours').value || '0', 10);
+    const nb_sessions = parseInt(document.getElementById('nb_sessions').value || '0', 10);
+    const additional_info = document.getElementById('ai_additional').value || '';
+    const reasoning_effort = (document.getElementById('ai_reasoning')?.value) || 'medium';
+    const verbosity = (document.getElementById('ai_verbosity')?.value) || 'medium';
+    if (!total_hours || !nb_sessions) {
+      alert('Veuillez saisir les heures totales et le nombre de sessions.');
+      // Réactiver le bouton si validation échoue
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = originalBtnHtml;
+      return;
+    }
+    setAiGrilleProgress('Préparation de la génération…');
+    // Notifier via le système global (comme pour les plans-cadres)
+    try { addNotification('Génération de la grille en cours…', 'in-progress'); } catch(e) {}
+    try {
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+      const resp = await fetch(`{{ url_for('programme.generate_programme_grille', programme_id=programme.id) }}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+        body: JSON.stringify({ ai_model, total_hours, nb_sessions, additional_info, reasoning_effort, verbosity })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(()=>({error:'Erreur serveur'}));
+        throw new Error(err.error || 'Erreur lors du démarrage de la génération');
+      }
+      const { task_id } = await resp.json();
+      await pollAiTask(task_id);
+      // Réactiver le bouton après succès du polling (proposition prête)
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = originalBtnHtml;
+    } catch (e) {
+      setAiGrilleProgress('Erreur: ' + e.message);
+      try { addNotification('Erreur de génération: ' + e.message, 'error'); } catch(_) {}
+      // Réactiver le bouton en cas d'erreur
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = originalBtnHtml;
+    }
+  }
+
+  async function pollAiTask(taskId) {
+    setAiGrilleProgress('Génération en cours…');
+    while (true) {
+      const r = await fetch(`{{ url_for('programme.programme_task_status', task_id='__TASK__') }}`.replace('__TASK__', taskId));
+      const j = await r.json();
+      if (j.state === 'SUCCESS') {
+        if (j.status === 'success' && j.result) {
+          aiGrilleResult = j.result;
+          renderAiGrillePreview(aiGrilleResult);
+          setAiGrilleProgress('Proposition prête. Vérifiez et appliquez.');
+          try { addNotification('Proposition de grille prête. Vérifiez et appliquez.', 'success'); } catch(_) {}
+          document.getElementById('btn-ai-apply').classList.remove('d-none');
+          return;
+        } else {
+          throw new Error(j.message || 'Échec de la génération');
+        }
+      } else if (j.state === 'FAILURE' || j.status === 'error') {
+        throw new Error(j.message || 'Échec de la tâche');
+      } else {
+        // PROGRESS or PENDING
+        if (j.message) setAiGrilleProgress(j.message);
+        await new Promise(res => setTimeout(res, 1200));
+      }
+    }
+  }
+
+  function renderAiGrillePreview(data) {
+    const wrap = document.getElementById('ai-grille-preview');
+    const sessions = (data && data.sessions) || [];
+    if (!sessions.length) { wrap.innerHTML = '<div class="text-muted">Aucune donnée.</div>'; return; }
+    let html = '';
+    sessions.sort((a,b)=> (a.session||0)-(b.session||0));
+    for (const s of sessions) {
+      html += `<div class="mb-3"><h6 class="mb-2">Session ${s.session}</h6>`;
+      html += '<ul class="list-group list-group-sm">';
+      for (const c of (s.courses||[])) {
+        const ht = c.heures_theorie||0, hl=c.heures_laboratoire||0, hm=c.heures_travail_maison||0;
+        html += `<li class="list-group-item d-flex justify-content-between align-items-center">`+
+                `<span>${(c.nom||'Cours').replace(/</g,'&lt;')}</span>`+
+                `<span class="badge bg-secondary">${ht}-${hl}-${hm} h</span>`+
+                `</li>`;
+      }
+      html += '</ul></div>';
+    }
+    wrap.innerHTML = html;
+  }
+
+  function setAiGrilleProgress(msg) {
+    document.getElementById('ai-grille-progress').textContent = msg || '';
+  }
+
+  async function applyAiGrille() {
+    if (!aiGrilleResult) return;
+    const mode = document.querySelector('input[name="apply_mode"]:checked')?.value || 'append';
+    setAiGrilleProgress('Application en base…');
+    try {
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+      const resp = await fetch(`{{ url_for('programme.apply_programme_grille', programme_id=programme.id) }}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+        body: JSON.stringify({ mode, grid: aiGrilleResult })
+      });
+      const j = await resp.json();
+      if (!resp.ok || !j.ok) throw new Error(j.error || 'Échec application');
+      setAiGrilleProgress('Grille appliquée. Rechargement…');
+      window.location.reload();
+    } catch (e) {
+      setAiGrilleProgress('Erreur: ' + e.message);
+    }
+  }
 </script>
 
 {% endblock %}

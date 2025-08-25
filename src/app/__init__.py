@@ -151,8 +151,9 @@ def create_app(testing=False):
             MISTRAL_API_KEY=MISTRAL_API_KEY,
             OPENAI_API_KEY=OPENAI_API_KEY,
             MISTRAL_MODEL_OCR="mistral-ocr-latest",
-            OPENAI_MODEL_SECTION=OPENAI_MODEL_SECTION,  # Modèle pour la détection de section
-            OPENAI_MODEL_EXTRACTION=OPENAI_MODEL_EXTRACTION,  # Modèle pour l'extraction de compétences
+            # Forcer l'utilisation de gpt-5 partout, ignorer les variables d'environnement
+            OPENAI_MODEL_SECTION='gpt-5',
+            OPENAI_MODEL_EXTRACTION='gpt-5',
             WTF_CSRF_ENABLED=True,
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),
