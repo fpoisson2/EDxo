@@ -76,6 +76,14 @@ def perform_ocr_and_save(pdf_url_or_path, output_markdown_filename):
         logging.error(f"Erreur lors de la conversion PDF->markdown: {e}", exc_info=True)
         return False
 
+def _get_ocr_settings_safely():
+    try:
+        from src.app.models import OcrPromptSettings
+        return OcrPromptSettings.get_current()
+    except Exception:
+        return None
+
+
 def find_competences_pages(markdown_content, openai_key=None, pdf_path: str | None = None):
     """
     Utilise l'API OpenAI pour identifier la section 'Formation spécifique'
@@ -102,20 +110,22 @@ def find_competences_pages(markdown_content, openai_key=None, pdf_path: str | No
     """
     # Préparer le prompt pour que l'IA segmente la section en retournant
     # un tableau des bornes de page pour chaque compétence.
+    settings = _get_ocr_settings_safely()
     system_prompt = (
-        "Rôle : Assistant IA expert en analyse de documents OCRés de programmes d'études collégiales québécois.\n\n"
-        "Objectif : Identifier la section 'Formation spécifique' et segmenter cette section en plusieurs compétences. "
-        "Pour chaque compétence, retourne son code ainsi que la page de début et la page de fin correspondantes. "
-        "Le résultat doit être un objet JSON strict respectant le schéma suivant :\n"
-        "{\n"
-        '  "competences": [\n'
-        "    { \"code\": \"04A0\", \"page_debut\": <numéro>, \"page_fin\": <numéro> },\n"
-        "    ...\n"
-        "  ]\n"
-        "}\n\n"
-        "Assure-toi que 'page_debut' est la page où débute la compétence et 'page_fin' est la dernière page où elle se termine. "
-        "Utilise uniquement les pages comportant des informations de compétences (l'énoncé, le contexte, les éléments et les critères).\n\n"
-        "Voici le document OCRé en Markdown (avec indicateurs de page comme '## --- Page <numéro> ---') :\n"
+        (settings.segmentation_prompt if (settings and settings.segmentation_prompt) else
+         "Rôle : Assistant IA expert en analyse de documents OCRés de programmes d'études collégiales québécois.\n\n"
+         "Objectif : Identifier la section 'Formation spécifique' et segmenter cette section en plusieurs compétences. "
+         "Pour chaque compétence, retourne son code ainsi que la page de début et la page de fin correspondantes. "
+         "Le résultat doit être un objet JSON strict respectant le schéma suivant :\n"
+         "{\n"
+         '  "competences": [\n'
+         "    { \"code\": \"04A0\", \"page_debut\": <numéro>, \"page_fin\": <numéro> },\n"
+         "    ...\n"
+         "  ]\n"
+         "}\n\n"
+         "Assure-toi que 'page_debut' est la page où débute la compétence et 'page_fin' est la dernière page où elle se termine. "
+         "Utilise uniquement les pages comportant des informations de compétences (l'énoncé, le contexte, les éléments et les critères).\n\n"
+         "Voici le document OCRé en Markdown (avec indicateurs de page comme '## --- Page <numéro> ---') :\n")
     )
     
     prompt_content = system_prompt + "\n" + markdown_content
@@ -167,10 +177,11 @@ def find_competences_pages(markdown_content, openai_key=None, pdf_path: str | No
         file_id = None
 
     try:
+        model_section = (settings.model_section if (settings and settings.model_section) else current_app.config.get('OPENAI_MODEL_SECTION'))
         if file_id:
             # Utiliser le fichier et une instruction compacte
             response = openai_client.responses.create(
-                model=current_app.config.get('OPENAI_MODEL_SECTION'),
+                model=model_section,
                 input=[{
                     "role": "user",
                     "content": [
@@ -192,7 +203,7 @@ def find_competences_pages(markdown_content, openai_key=None, pdf_path: str | No
         else:
             # Fallback: utiliser le markdown OCR
             response = openai_client.responses.create(
-                model=current_app.config.get('OPENAI_MODEL_SECTION'),
+                model=model_section,
                 input=messages,
                 text={
                     "format": {
@@ -337,6 +348,7 @@ def find_section_with_openai(markdown_content, openai_key=None):
 
 
     # Définition du prompt système
+    settings = _get_ocr_settings_safely()
     system_prompt = (
         "Rôle: Assistant IA expert en analyse de documents PDF de programmes d'études collégiales québécois.\n\n"
         "Objectif: Identifier précisément la section 'Formation spécifique' dans le document OCRé, et retourner les numéros de page de début et de fin de cette section.\n\n"
@@ -367,8 +379,9 @@ def find_section_with_openai(markdown_content, openai_key=None):
     logging.info("Appel API OpenAI pour identifier la section...")
     print("Appel API OpenAI pour identifier la section...") # Pour console serveur
     try:
+        model_section = (settings.model_section if (settings and settings.model_section) else current_app.config.get('OPENAI_MODEL_SECTION'))
         response = openai_client.responses.create(
-            model=current_app.config.get('OPENAI_MODEL_SECTION'),
+            model=model_section,
             input=messages,
             text={"format": {"type": "json_schema", "name": "PageSection", "schema": json_schema, "strict": True}},
             reasoning={}, tools=[], tool_choice="none", temperature=0, max_output_tokens=1000, top_p=1, store=True,
@@ -420,6 +433,7 @@ def extraire_competences_depuis_txt(text_content, output_json_filename, openai_k
         raise SkillExtractionError(msg) from e
 
     # --- Définition du prompt et du schéma ---
+    settings = _get_ocr_settings_safely()
     system_prompt_inline = (
         """Tu es un assistant expert spécialisé dans l'extraction d'informations structurées à partir de documents textuels bruts, en particulier des descriptions de compétences de formation québécoises (souvent issues de PDF de programmes d'études).
 
@@ -434,6 +448,8 @@ Le contenu textuel extrait pour chaque champ doit être nettoyé : retire les pu
 
 Tu **dois impérativement** utiliser l'outil/fonction `extraire_competences_en_json` qui t'est fourni pour formater l'intégralité des données extraites pour *toutes* les compétences identifiées dans le texte source. Le résultat final DOIT être un unique objet JSON contenant une clé `competences` dont la valeur est une liste (array) d'objets, chaque objet représentant une compétence structurée selon le schéma. Respecte **strictement** et **exclusivement** le schéma JSON fourni dans les `parameters` de cet outil, y compris les types (`string`, `array`, `object`, `null`), les structures imbriquées et les champs requis (`required`). Ne fournis aucune explication, introduction, conclusion ou texte en dehors de l'appel à cette fonction structurée respectant le schéma demandé."""
     )
+    if settings and settings.extraction_prompt:
+        system_prompt_inline = settings.extraction_prompt
     json_schema = {
         "type": "object",
         "required": ["competences"],
@@ -607,7 +623,8 @@ def extraire_competences_depuis_pdf(pdf_path, output_json_filename, openai_key=N
         logging.error(msg)
         raise SkillExtractionError(msg)
 
-    model_name = current_app.config.get('OPENAI_MODEL_EXTRACTION')
+    settings = _get_ocr_settings_safely()
+    model_name = (settings.model_extraction if (settings and settings.model_extraction) else current_app.config.get('OPENAI_MODEL_EXTRACTION'))
     _progress(f"[EXTRACTION] Début | modèle='{model_name}' | pdf_url={'oui' if pdf_url else 'non'} | pdf_path='{pdf_path}'")
 
     try:
@@ -644,6 +661,8 @@ Tu dois EXTRAIRE UNIQUEMENT les compétences de la formation spécifique reliée
 Nettoie le texte: retire les puces/marqueurs de liste redondants (e, °, +, o, *, - en tête de ligne si déjà listé), les pieds de page récurrents ("Ministère...", "Code de programme XXX"), les numéros de page isolés, et les marqueurs de saut de page. Utilise exclusivement le schéma JSON fourni et ne renvoie aucun texte hors JSON.
 """
     )
+    if settings and settings.extraction_prompt:
+        system_prompt_inline = settings.extraction_prompt
     json_schema = {
         "type": "object",
         "required": ["competences"],
@@ -748,6 +767,7 @@ Nettoie le texte: retire les puces/marqueurs de liste redondants (e, °, +, o, *
             input=request_input,
             text={"format": {"type": "json_schema", "name": "extraire_competences_en_json", "strict": True, "schema": json_schema}},
             store=True,
+            reasoning={"summary": "auto"},
         )
 
         # --- Streaming ---
@@ -759,6 +779,7 @@ Nettoie le texte: retire les puces/marqueurs de liste redondants (e, °, +, o, *
 
         try:
             with client.responses.stream(**request_kwargs) as stream:
+                reasoning_summary_text = ''
                 for event in stream:
                     events_count += 1
                     etype = getattr(event, 'type', '') or ''
@@ -769,6 +790,15 @@ Nettoie le texte: retire les puces/marqueurs de liste redondants (e, °, +, o, *
                             logging.info(f"[EXTRACTION][stream] delta len={len(delta)} total={len(streamed_text)} type={etype}")
                             # Remonter périodiquement l'avancement en streaming au callback (UI)
                             try:
+                                # Toujours pousser un état structuré minimal pour permettre un aperçu en direct
+                                if callback:
+                                    callback({
+                                        'type': 'stream',
+                                        'stream_chunk': delta,
+                                        'stream_buffer': streamed_text,
+                                        'events': events_count
+                                    })
+                                # Et périodiquement, pousser un message de progression texte (rétro‑compatibilité)
                                 if progress_tick and (events_count % progress_tick == 0):
                                     _progress(f"[EXTRACTION][stream] output_text.delta total={len(streamed_text)} chars | events={events_count}")
                             except Exception:
@@ -787,6 +817,15 @@ Nettoie le texte: retire les puces/marqueurs de liste redondants (e, °, +, o, *
                                 logging.info(f"[EXTRACTION][stream] item.added len={len(text_val)} total={len(streamed_text)}")
                         except Exception:
                             pass
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        try:
+                            rs_delta = getattr(event, 'delta', '') or ''
+                            if rs_delta:
+                                reasoning_summary_text += rs_delta
+                                if callback:
+                                    callback({ 'type': 'reasoning', 'reasoning_summary': reasoning_summary_text })
+                        except Exception:
+                            pass
                     elif etype.endswith('response.completed') or etype == 'response.completed':
                         logging.info("[EXTRACTION][stream] completed")
                         try:
@@ -800,6 +839,12 @@ Nettoie le texte: retire les puces/marqueurs de liste redondants (e, °, +, o, *
 
                 final_response = stream.get_final_response()
                 usage_info = getattr(final_response, 'usage', None)
+                # Dernière remontée du résumé si disponible
+                try:
+                    if reasoning_summary_text and callback:
+                        callback({ 'type': 'reasoning', 'reasoning_summary': reasoning_summary_text })
+                except Exception:
+                    pass
         except Exception as stream_err:
             logging.warning(f"[EXTRACTION] Streaming non disponible/échoué ({stream_err}). Fallback non-stream.")
             final_response = client.responses.create(**request_kwargs)

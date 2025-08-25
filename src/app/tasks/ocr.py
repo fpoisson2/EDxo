@@ -527,43 +527,61 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id):
         json_output_path = os.path.join(txt_output_dir, f"{base_filename_local}_competences.json")
         try:
             # Callback de streaming pour exposer les événements côté UI (SSE)
-            def stream_callback(msg: str):
+            def stream_callback(msg):
                 try:
-                    # Extraire un compteur cumulatif du message de log, p.ex. "total=50903"
-                    total_chars = None
-                    try:
-                        m = re.search(r"total=(\d+)", str(msg))
-                        if m:
-                            total_chars = int(m.group(1))
-                    except Exception:
-                        total_chars = None
-
-                    # Base: 50% au démarrage du streaming, puis progression jusqu'à ~95%
-                    progress_val = 50
-                    if isinstance(total_chars, int):
-                        # Approximation: considérer terminé à 80 000 (caractères ≈ tokens)
-                        target = 80000
-                        pct = min(1.0, max(0.0, total_chars / float(target)))
-                        progress_val = int(50 + pct * 45)  # 50% -> 95%
-
-                    # Rendre le message variant pour déclencher l'SSE
-                    dyn_message = (
-                        f"Streaming ({total_chars} chars)" if isinstance(total_chars, int) else "Streaming..."
-                    )
-
-                    self.update_state(state='PROGRESS', meta={
+                    # Accepte soit une chaîne (rétro‑compat), soit un dict structuré
+                    meta_update = {
                         'step': 'Extraction IA',
-                        'message': dyn_message,
-                        'details': str(msg)[:5000],
-                        'progress': progress_val,
                         'task_id': task_id,
                         'pdf_source': pdf_source,
                         'pdf_title': pdf_title,
                         'base_filename': base_filename_local,
                         'download_path': download_path_local
-                    })
+                    }
+                    total_chars = None
+                    stream_chunk = None
+                    stream_buffer = None
+                    if isinstance(msg, dict):
+                        stream_chunk = msg.get('stream_chunk')
+                        stream_buffer = msg.get('stream_buffer')
+                        reasoning_summary = msg.get('reasoning_summary')
+                        # Essayez d'inférer total à partir du buffer
+                        try:
+                            if isinstance(stream_buffer, str):
+                                total_chars = len(stream_buffer)
+                        except Exception:
+                            total_chars = None
+                        # Propager dans le meta pour l'UI (comme plan‑cadre)
+                        if stream_chunk is not None:
+                            meta_update['stream_chunk'] = stream_chunk
+                        if stream_buffer is not None:
+                            meta_update['stream_buffer'] = stream_buffer
+                        if reasoning_summary:
+                            meta_update['reasoning_summary'] = reasoning_summary
+                        # Conserver aussi un détail brut lisible
+                        meta_update['details'] = f"[stream] total={total_chars or 'n/a'}"
+                        dyn_message = f"Streaming ({total_chars} chars)" if isinstance(total_chars, int) else "Streaming..."
+                    else:
+                        # Ancien format: chaîne de log
+                        s = str(msg)
+                        m = re.search(r"total=(\d+)", s)
+                        if m:
+                            total_chars = int(m.group(1))
+                        meta_update['details'] = s[:5000]
+                        dyn_message = f"Streaming ({total_chars} chars)" if isinstance(total_chars, int) else "Streaming..."
+
+                    # Progression basée sur total
+                    progress_val = 50
+                    if isinstance(total_chars, int):
+                        target = 80000
+                        pct = min(1.0, max(0.0, total_chars / float(target)))
+                        progress_val = int(50 + pct * 45)
+
+                    meta_update['message'] = dyn_message
+                    meta_update['progress'] = progress_val
+
+                    self.update_state(state='PROGRESS', meta=meta_update)
                 except Exception:
-                    # Ne pas interrompre la tâche si un update_state échoue
                     pass
 
             # Passer aussi l'URL directe si disponible pour éviter l'upload

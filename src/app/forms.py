@@ -400,6 +400,29 @@ class PlanDeCoursPromptSettingsForm(FlaskForm):
         self.ai_model.choices = [(model.name, model.name) for model in models]
 
 
+class OcrPromptSettingsForm(FlaskForm):
+    segmentation_prompt = TextAreaField(
+        'Prompt système – Segmentation (repérer les compétences et bornes de pages)',
+        validators=[Optional()],
+        render_kw={"rows": 12, "class": "form-control font-monospace"}
+    )
+    extraction_prompt = TextAreaField(
+        'Prompt système – Extraction (JSON des compétences)',
+        validators=[Optional()],
+        render_kw={"rows": 18, "class": "form-control font-monospace"}
+    )
+    model_section = SelectField('Modèle – Segmentation', validators=[Optional()])
+    model_extraction = SelectField('Modèle – Extraction', validators=[Optional()])
+    submit = SubmitField('Sauvegarder', render_kw={"class": "btn btn-primary"})
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        models = get_all_models()
+        choices = [(m.name, m.name) for m in models]
+        self.model_section.choices = [('', '— par défaut —')] + choices
+        self.model_extraction.choices = [('', '— par défaut —')] + choices
+
+
 class GenerateContentForm(FlaskForm):
     additional_info = TextAreaField('Informations complémentaires', validators=[DataRequired()])
     ai_model = SelectField(

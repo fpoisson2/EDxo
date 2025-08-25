@@ -157,6 +157,35 @@ class GrillePromptSettings(db.Model):
             db.session.commit()
         return settings
 
+
+class OcrPromptSettings(db.Model):
+    """Paramètres configurables pour l'extraction des compétences depuis un devis ministériel (OCR/IA)."""
+    __tablename__ = 'ocr_prompt_settings'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # Prompt pour la segmentation/repérage des pages des compétences (section/borne)
+    segmentation_prompt = db.Column(db.Text, nullable=True)
+    # Prompt pour l'extraction structurée des compétences (JSON)
+    extraction_prompt = db.Column(db.Text, nullable=True)
+    # Modèles à utiliser (facultatif; sinon on prend la config appli)
+    model_section = db.Column(db.String(64), nullable=True)
+    model_extraction = db.Column(db.String(64), nullable=True)
+    # Dernière mise à jour
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
+
+    @classmethod
+    def get_current(cls):
+        try:
+            obj = cls.query.first()
+            if not obj:
+                obj = cls()
+                db.session.add(obj)
+                db.session.commit()
+            return obj
+        except Exception:
+            # Si la table n'existe pas encore, retourner None pour fallback
+            return None
+
 class EvaluationSavoirFaire(db.Model):
     __tablename__ = 'evaluation_savoirfaire'
     

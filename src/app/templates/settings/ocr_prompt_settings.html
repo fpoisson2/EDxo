@@ -1,0 +1,33 @@
+{% extends 'parametres.html' %}
+{% block parametres_content %}
+<h4>Devis ministériels (OCR) – Prompts IA</h4>
+<p class="text-muted">Définissez ici les prompts système et, si désiré, les modèles utilisés pour l’identification des compétences et l’extraction structurée.</p>
+
+<form method="POST">
+  {{ form.hidden_tag() }}
+  <div class="mb-3">
+    {{ form.model_section.label(class="form-label") }}
+    {{ form.model_section(class="form-select") }}
+    <div class="form-text">Laisser vide pour utiliser la valeur par défaut de l’application.</div>
+  </div>
+  <div class="mb-3">
+    {{ form.segmentation_prompt.label(class="form-label") }}
+    {{ form.segmentation_prompt }}
+  </div>
+
+  <hr>
+
+  <div class="mb-3">
+    {{ form.model_extraction.label(class="form-label") }}
+    {{ form.model_extraction(class="form-select") }}
+    <div class="form-text">Laisser vide pour utiliser la valeur par défaut de l’application.</div>
+  </div>
+  <div class="mb-3">
+    {{ form.extraction_prompt.label(class="form-label") }}
+    {{ form.extraction_prompt }}
+  </div>
+
+  <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+</form>
+{% endblock %}
+

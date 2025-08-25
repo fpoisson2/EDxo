@@ -31,6 +31,10 @@
     <div class="mt-3">
         <h5>Flux en direct</h5>
         <div id="stream-log" style="background:#0f172a;color:#e2e8f0;border-radius:6px;padding:10px;min-height:120px;max-height:280px;overflow:auto;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;"></div>
+        <div class="mt-2">
+            <div id="reasoning-summary" class="alert alert-secondary py-2 small d-none"></div>
+            <pre id="stream-output" class="form-control d-none" style="max-height:280px; overflow:auto;"></pre>
+        </div>
     </div>
 
     <!-- Lien vers le résultat -->
@@ -92,8 +96,35 @@
                     if (data.state) {
                         statusTextElement.textContent = data.state === 'PROGRESS' ? (data.message || 'En cours...') : data.state;
                         if (typeof data.progress === 'number') updateProgressBar(data.progress);
-                        if (data.meta && data.meta.details) {
-                            progressDetailsElement.textContent = data.meta.details;
+                        // Détails textuels
+                        if (data.meta && data.meta.details) progressDetailsElement.textContent = data.meta.details;
+                        // Résumé de raisonnement (si disponible)
+                        const rs = data.meta && data.meta.reasoning_summary;
+                        const rsEl = document.getElementById('reasoning-summary');
+                        if (rsEl && rs) {
+                            rsEl.textContent = rs;
+                            rsEl.classList.remove('d-none');
+                        }
+                        // Contenu en direct (buffer JSON)
+                        const outEl = document.getElementById('stream-output');
+                        const buf = data.meta && data.meta.stream_buffer;
+                        const chunk = data.meta && data.meta.stream_chunk;
+                        if (outEl && (buf || chunk)) {
+                            try {
+                                if (buf) {
+                                    // Afficher joliment si JSON valide
+                                    try {
+                                        const obj = JSON.parse(buf);
+                                        outEl.textContent = JSON.stringify(obj, null, 2);
+                                    } catch(_) {
+                                        outEl.textContent = buf;
+                                    }
+                                } else if (chunk) {
+                                    outEl.textContent += chunk;
+                                }
+                                outEl.classList.remove('d-none');
+                                outEl.scrollTop = outEl.scrollHeight;
+                            } catch(_) {}
                         }
                     }
                 } catch {}

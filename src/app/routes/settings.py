@@ -16,6 +16,7 @@ from ..forms import (
     OpenAIModelForm,
     ChatSettingsForm,
     APITokenForm,
+    OcrPromptSettingsForm,
 )
 from .evaluation import AISixLevelGridResponse
 from ...config.constants import SECTIONS  # Importer la liste des sections
@@ -39,6 +40,7 @@ from ..models import (
     Department,
     OpenAIModel,
     ChatModelConfig,
+    OcrPromptSettings,
 )
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
@@ -72,6 +74,34 @@ def manage_openai_models():
         return redirect(url_for('settings.manage_openai_models'))
 
     return render_template('settings/manage_openai_models.html', models=models, form=form)
+
+
+@settings_bp.route('/ocr_prompts', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def ocr_prompt_settings():
+    """Configuration des prompts et modèles pour l'extraction de compétences (devis ministériels)."""
+    settings = OcrPromptSettings.get_current()
+    form = OcrPromptSettingsForm(obj=settings)
+
+    if form.validate_on_submit():
+        if settings is None:
+            settings = OcrPromptSettings()
+            db.session.add(settings)
+        settings.segmentation_prompt = form.segmentation_prompt.data or None
+        settings.extraction_prompt = form.extraction_prompt.data or None
+        settings.model_section = form.model_section.data or None
+        settings.model_extraction = form.model_extraction.data or None
+        try:
+            db.session.commit()
+            flash('Paramètres OCR (prompts IA) enregistrés.', 'success')
+            return redirect(url_for('settings.ocr_prompt_settings'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Erreur enregistrement OcrPromptSettings: {e}")
+            flash("Erreur lors de l'enregistrement.", 'danger')
+
+    return render_template('settings/ocr_prompt_settings.html', form=form)
 
 @settings_bp.route('/openai_models/delete/<int:model_id>', methods=['POST'])
 @login_required
