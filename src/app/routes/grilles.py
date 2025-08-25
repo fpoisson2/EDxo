@@ -6,6 +6,7 @@ from ..forms import FileUploadForm
 from ..tasks.import_grille import extract_grille_from_pdf_task
 import logging
 from celery.result import AsyncResult   
+import time
 from ...celery_app import celery
 from ..forms import (
     ConfirmationGrilleForm
@@ -148,6 +149,72 @@ def get_task_status(task_id):
             "status": "error", 
             "message": f"Erreur serveur: {str(e)}"
         }), 500
+
+
+@grille_bp.route('/api/task_events/<task_id>')
+@login_required
+def stream_task_events(task_id):
+    """
+    Flux SSE (Server-Sent Events) pour suivre en direct l'évolution d'une tâche.
+    Implémentation basée sur un polling interne du backend Celery afin d'émettre
+    des événements 'progress' lorsqu'il y a un changement d'état ou de message.
+    Le flux se termine lorsque la tâche est SUCCESS ou FAILURE.
+    """
+    def sse_gen():
+        last_state = None
+        last_message = None
+        last_progress = None
+        last_step = None
+        # cadence de polling interne (en secondes)
+        interval = 1.0
+
+        yield "event: open\ndata: {}\n\n"
+
+        while True:
+            try:
+                task_result = AsyncResult(task_id, app=celery)
+                state = task_result.state
+                meta = task_result.info if isinstance(task_result.info, dict) else {}
+                message = meta.get('message') if isinstance(meta, dict) else None
+                progress = meta.get('progress') if isinstance(meta, dict) else None
+                step = meta.get('step') if isinstance(meta, dict) else None
+
+                changed = (state != last_state) or (message != last_message) or (progress != last_progress) or (step != last_step)
+                if changed:
+                    payload = {
+                        'state': state,
+                        'message': message,
+                        'progress': progress,
+                        'step': step,
+                        'meta': meta
+                    }
+                    yield f"event: progress\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+                    last_state, last_message, last_progress, last_step = state, message, progress, step
+
+                if state in ('SUCCESS', 'FAILURE'):
+                    # Inclure le résultat final si dispo
+                    final_payload = {
+                        'state': state,
+                        'result': task_result.result if state == 'SUCCESS' else None,
+                        'meta': meta
+                    }
+                    yield f"event: done\ndata: {json.dumps(final_payload, ensure_ascii=False)}\n\n"
+                    break
+
+                # Heartbeat pour garder la connexion vivante
+                yield "event: ping\ndata: {}\n\n"
+                time.sleep(interval)
+            except Exception as e:
+                err = {'error': str(e)}
+                yield f"event: error\ndata: {json.dumps(err, ensure_ascii=False)}\n\n"
+                break
+
+    headers = {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
+    }
+    return Response(sse_gen(), headers=headers)
 
 @grille_bp.route('/liste_grilles')
 @login_required

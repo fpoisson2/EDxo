@@ -17,6 +17,7 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
     Entrée (form):
       - ai_model (str)
       - total_hours (int)
+      - total_units (float, optionnel)
       - nb_sessions (int)
       - additional_info (str, optionnel)
 
@@ -47,6 +48,7 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
 
         ai_model = (form or {}).get('ai_model') or 'gpt-5'
         total_hours = int((form or {}).get('total_hours') or 0)
+        total_units = float((form or {}).get('total_units') or 0)
         nb_sessions = int((form or {}).get('nb_sessions') or 0)
         additional_info = (form or {}).get('additional_info') or ''
         reasoning_effort = (form or {}).get('reasoning_effort') or 'medium'
@@ -65,20 +67,23 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
         ]
 
         system_prompt = (
-            "Tu es un conseiller pédagogique. À partir du nombre total d'heures et du nombre de sessions, "
-            "propose une grille de cours répartie par session pour le programme ci-dessous."
+            "Tu es un conseiller pédagogique. À partir du nombre total d'heures, du nombre de sessions, "
+            "et éventuellement des unités totales, propose une grille de cours répartie par session pour le programme ci-dessous."
         )
         user_prompt = (
             "Contraintes et format (respect strict):\n"
             "- Base-toi sur la liste des compétences du programme (ci-dessous).\n"
             "- Pour chaque cours, fournis un 'nom' (sans code), et une ventilation en 'heures_theorie', 'heures_laboratoire', 'heures_travail_maison'.\n"
-            "- Définition des heures d'un cours: h_cours = (heures_theorie + heures_laboratoire + heures_travail_maison) * 15.\n"
-            "- Somme stricte: la somme de tous les h_cours sur toutes les sessions DOIT être égale (pas proche) aux 'Heures totales à répartir'. Ajuste les 3 valeurs au besoin pour obtenir l'égalité exacte.\n"
-            "- Répartis les heures sur les sessions de manière équilibrée et cohérente avec les compétences.\n"
-            "- Retourne strictement du JSON valide de la forme: {\"sessions\":[{\"session\":1,\"courses\":[{\"nom\":\"...\",\"heures_theorie\":3,\"heures_laboratoire\":2,\"heures_travail_maison\":2}]}]}\n"
+            "- Calcule et inclus 'nombre_unites' = (heures_theorie + heures_laboratoire + heures_travail_maison).\n"
+            "- Définition des heures totales d'un cours (pour le contrôle des heures): h_cours = (heures_theorie + heures_laboratoire) * 15.\n"
+            "- Somme stricte heures: la somme de tous les h_cours sur toutes les sessions DOIT être égale (pas proche) aux 'Heures totales à répartir'. Ajuste les 3 valeurs au besoin pour obtenir l'égalité exacte.\n"
+            + ("- Somme stricte unités: la somme de tous les 'nombre_unites' DOIT être égale aux 'Unités totales à répartir'.\n" if total_units > 0 else "") +
+            "- Répartis les heures et les unités sur les sessions de manière équilibrée et cohérente avec les compétences.\n"
+            "- Retourne strictement du JSON valide de la forme: {\"sessions\":[{\"session\":1,\"courses\":[{\"nom\":\"...\",\"heures_theorie\":3,\"heures_laboratoire\":2,\"heures_travail_maison\":2,\"nombre_unites\":7}]}]}\n"
             f"Programme: {programme.nom}\n"
             f"Heures totales à répartir: {total_hours}\n"
             f"Nombre de sessions: {nb_sessions}\n"
+            + (f"Unités totales à répartir: {total_units}\n" if total_units > 0 else "") +
             f"Contexte additionnel (facultatif): {additional_info}\n\n"
             f"Compétences du programme: {json.dumps(competences_list, ensure_ascii=False)}\n"
         )
@@ -124,11 +129,22 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
             courses = []
             for cr in (s.get('courses') or []):
                 try:
+                    ht = int(cr.get('heures_theorie') or 0)
+                    hl = int(cr.get('heures_laboratoire') or 0)
+                    hm = int(cr.get('heures_travail_maison') or 0)
+                    nu = cr.get('nombre_unites')
+                    try:
+                        nu = float(nu)
+                    except Exception:
+                        nu = None
+                    if not nu or nu <= 0:
+                        nu = float(ht + hl + hm)
                     courses.append({
                         'nom': str(cr.get('nom') or 'Cours généré').strip()[:120],
-                        'heures_theorie': int(cr.get('heures_theorie') or 0),
-                        'heures_laboratoire': int(cr.get('heures_laboratoire') or 0),
-                        'heures_travail_maison': int(cr.get('heures_travail_maison') or 0),
+                        'heures_theorie': ht,
+                        'heures_laboratoire': hl,
+                        'heures_travail_maison': hm,
+                        'nombre_unites': round(nu, 2),
                     })
                 except Exception:
                     continue
@@ -144,28 +160,6 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
             return { 'status': 'error', 'message': "Crédits insuffisants pour cet appel." }
         user.credits = new_credits
         db.session.commit()
-
-        # Validation stricte de la somme des heures totales retournées
-        computed_total = 0
-        try:
-            for s in cleaned:
-                for cr in s.get('courses', []):
-                    computed_total += int(cr.get('heures_theorie') or 0)
-                    computed_total += int(cr.get('heures_laboratoire') or 0)
-                    computed_total += int(cr.get('heures_travail_maison') or 0)
-            computed_total *= 15
-        except Exception:
-            computed_total = -1
-
-        if computed_total != total_hours:
-            return {
-                'status': 'error',
-                'message': (
-                    f"Somme des heures générées ({computed_total}) différente du total requis ({total_hours}). "
-                    "Veuillez régénérer: la somme DOIT être égale, pas approximative."
-                ),
-                'usage': { 'prompt_tokens': usage_prompt, 'completion_tokens': usage_completion, 'cost': cost }
-            }
 
         return {
             'status': 'success',

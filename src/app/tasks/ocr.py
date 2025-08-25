@@ -523,9 +523,32 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id):
         logger.info(f"[{task_id}] Appel extraire_competences_depuis_pdf (model: {current_app.config.get('OPENAI_MODEL_EXTRACTION')})")
         json_output_path = os.path.join(txt_output_dir, f"{base_filename_local}_competences.json")
         try:
+            # Callback de streaming pour exposer les événements côté UI (SSE)
+            def stream_callback(msg: str):
+                try:
+                    self.update_state(state='PROGRESS', meta={
+                        'step': 'Extraction IA',
+                        'message': 'Streaming...',
+                        'details': str(msg)[:5000],
+                        'progress': 50,
+                        'task_id': task_id,
+                        'pdf_source': pdf_source,
+                        'pdf_title': pdf_title,
+                        'base_filename': base_filename_local,
+                        'download_path': download_path_local
+                    })
+                except Exception:
+                    pass
+
             # Passer aussi l'URL directe si disponible pour éviter l'upload
             pdf_url_arg = pdf_source if (isinstance(pdf_source, str) and (pdf_source.startswith('http://') or pdf_source.startswith('https://'))) else None
-            extraction_output = api_clients.extraire_competences_depuis_pdf(download_path_local, json_output_path, openai_key, pdf_url=pdf_url_arg)
+            extraction_output = api_clients.extraire_competences_depuis_pdf(
+                download_path_local,
+                json_output_path,
+                openai_key,
+                callback=stream_callback,
+                pdf_url=pdf_url_arg
+            )
         except Exception as e:
             logger.error(f"[{task_id}] Échec extraction depuis PDF: {e}", exc_info=True)
             final_meta = {
@@ -543,6 +566,29 @@ def process_ocr_task(self, pdf_source, pdf_title, user_id):
             # mais indiquer 'final_status' = 'FAILURE' dans le meta
             self.update_state(state='SUCCESS', meta=final_meta)
             return final_meta
+
+        # Point de contrôle: nous avons une réponse de l'API
+        try:
+            output_preview_len = len(extraction_output.get('result', '')) if isinstance(extraction_output, dict) else -1
+            logger.info(f"[{task_id}] Réponse OpenAI reçue (aperçu longueur={output_preview_len}).")
+        except Exception:
+            logger.info(f"[{task_id}] Réponse OpenAI reçue (aperçu longueur indisponible).")
+
+        # Mettre à jour l'état pour refléter la réception de la réponse
+        try:
+            self.update_state(state='PROGRESS', meta={
+                'step': 'Post-Extraction',
+                'message': "Réponse OpenAI reçue, post-traitement...",
+                'progress': 80,
+                'task_id': task_id,
+                'pdf_source': pdf_source,
+                'pdf_title': pdf_title,
+                'base_filename': base_filename_local,
+                'download_path': download_path_local,
+                'json_output_path': json_output_path
+            })
+        except Exception as upd_err:
+            logger.warning(f"[{task_id}] Impossible de mettre à jour l'état PROGRESS(80): {upd_err}")
 
         # Compter les compétences
         competences_count = 0

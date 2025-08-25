@@ -517,6 +517,10 @@ Tu **dois impérativement** utiliser l'outil/fonction `extraire_competences_en_j
         logging.info("Test extraction usage: %s", getattr(response, "usage", None))
 
         # Récupération robuste du JSON
+        try:
+            logging.info(f"Réponse OpenAI reçue (type={type(response).__name__}). Tentative d'extraction du JSON...")
+        except Exception:
+            pass
         full_json_string = None
         try:
             full_json_string = response.output[0].content[0].text
@@ -582,14 +586,33 @@ def extraire_competences_depuis_pdf(pdf_path, output_json_filename, openai_key=N
     """
     Extrait toutes les compétences directement à partir d'un PDF via OpenAI Responses.
     Retourne {"result": json_string, "usage": usage_obj}.
+    Ajouts: logs détaillés de bout en bout (stratégie, timings, compte de compétences).
     """
+    import time
+
+    start_ts = time.monotonic()
+
+    def _progress(msg: str):
+        logging.info(msg)
+        try:
+            if callback:
+                callback(msg)
+        except Exception:
+            # on ne casse pas le flux si le callback échoue
+            pass
+
     api_key = openai_key or current_app.config.get('OPENAI_API_KEY')
     if not api_key:
         msg = "Clé API OpenAI non trouvée dans la configuration."
         logging.error(msg)
         raise SkillExtractionError(msg)
+
+    model_name = current_app.config.get('OPENAI_MODEL_EXTRACTION')
+    _progress(f"[EXTRACTION] Début | modèle='{model_name}' | pdf_url={'oui' if pdf_url else 'non'} | pdf_path='{pdf_path}'")
+
     try:
         client = OpenAI(api_key=api_key)
+        _progress("[EXTRACTION] Client OpenAI initialisé")
     except Exception as e:
         msg = f"Erreur initialisation client OpenAI (PDF): {e}"
         logging.error(msg, exc_info=True)
@@ -598,11 +621,25 @@ def extraire_competences_depuis_pdf(pdf_path, output_json_filename, openai_key=N
     if not pdf_url:
         if not pdf_path or not os.path.exists(pdf_path):
             raise SkillExtractionError(f"PDF introuvable: {pdf_path}")
+        try:
+            pdf_size = os.path.getsize(pdf_path)
+        except Exception:
+            pdf_size = None
+        _progress(f"[EXTRACTION] Fichier local détecté | taille={pdf_size} octets")
 
-    # Prompt et schéma (alignés avec la version texte)
+    # Prompt et schéma alignés sur la version texte pour garantir le même remplissage des champs
     system_prompt_inline = (
-        "Tu es un assistant expert pour extraire des compétences à partir de PDF de programmes d'études québécois.\n"
-        "Analyse le document fourni (fichier), identifie chaque compétence et retourne un JSON strict."
+        """Tu es un assistant expert spécialisé dans l'extraction d'informations structurées à partir de documents textuels bruts, en particulier des descriptions de compétences de formation québécoises (souvent issues de PDF de programmes d'études).
+
+Ton objectif principal est d'analyser le document PDF fourni (potentiellement bruité par l'OCR), d'identifier chaque bloc décrivant une compétence unique (généralement introduit par un code alphanumérique comme "Code : XXXX" ou "0XXX"), et d'en extraire méticuleusement les informations suivantes pour CHAQUE compétence trouvée:
+1. Le `Code` de la compétence (ex: "02MU", "O1XY").
+2. Le `Nom de la compétence` (le titre ou l'énoncé principal, ex: "Adopter un comportement professionnel.").
+3. Le `Contexte de réalisation` : extrais toutes les lignes descriptives textuelles trouvées sous ce titre exact. Structure spécifiquement les sous-sections introduites par "À partir :" et "À l’aide :" comme des listes de chaînes de caractères, ET supporte des sous-structures hiérarchiques en représentant le contexte comme une liste d'items `{texte, sous_points}` (où `sous_points` est récursif). Si une sous-section ("À partir de:", "À l'aide de:") est absente, sa valeur peut être `null` ou une liste vide. Si toute la section "Contexte de réalisation" est absente, sa valeur doit être `null`.
+4. Les `Critères de performance pour l’ensemble de la compétence` : extrais les lignes descriptives textuelles trouvées sous ce titre exact sous forme de liste de chaînes de caractères. Si la section est absente ou marquée comme non applicable (ex: "S. O."), la valeur du champ doit être `null` ou une liste vide.
+5. Les `Éléments` : Identifie chaque élément spécifique de la compétence (souvent numéroté `1.`, `2.`, etc., ou précédé d'une puce). Pour chaque élément, crée un objet contenant deux champs: `element` (la description textuelle de l'élément de compétence spécifique) et `criteres` (une liste de chaînes de caractères contenant les critères de performance associés spécifiquement à cet élément). Si aucun critère n'est listé pour un élément, `criteres` doit être `null` ou une liste vide. Si la section "Éléments" entière est absente, sa valeur doit être `null`.
+
+Nettoie le texte: retire les puces/marqueurs de liste redondants (e, °, +, o, *, - en tête de ligne si déjà listé), les pieds de page récurrents ("Ministère...", "Code de programme XXX"), les numéros de page isolés, et les marqueurs de saut de page. Utilise exclusivement le schéma JSON fourni et ne renvoie aucun texte hors JSON.
+"""
     )
     json_schema = {
         "type": "object",
@@ -610,6 +647,7 @@ def extraire_competences_depuis_pdf(pdf_path, output_json_filename, openai_key=N
         "properties": {
             "competences": {
                 "type": "array",
+                "description": "Liste des objets représentant chaque compétence extraite du document.",
                 "items": {
                     "type": "object",
                     "required": [
@@ -620,30 +658,27 @@ def extraire_competences_depuis_pdf(pdf_path, output_json_filename, openai_key=N
                         "Éléments"
                     ],
                     "properties": {
-                        "Code": {"type": "string"},
-                        "Nom de la compétence": {"type": "string"},
+                        "Code": {"type": "string", "description": "Code alphanumérique unique de la compétence (ex: 02MU)."},
+                        "Nom de la compétence": {"type": "string", "description": "Le titre ou l'énoncé principal de la compétence."},
                         "Contexte de réalisation": {
-                            "type": ["null", "object"],
-                            "properties": {
-                                "APartir": {"type": ["null", "array"], "items": {"type": "string"}},
-                                "ALaide": {"type": ["null", "array"], "items": {"type": "string"}},
-                                "details_generaux": {"type": ["null", "array"], "items": {"type": "string"}}
-                            },
-                            "required": ["APartir", "ALaide", "details_generaux"],
-                            "additionalProperties": False
+                            "type": ["array", "null"],
+                            "description": "Structure hiérarchique du contexte (liste d'items récursifs).",
+                            "items": {"$ref": "#/definitions/context_item"}
                         },
                         "Critères de performance pour l’ensemble de la compétence": {
-                            "type": ["null", "array"],
-                            "items": {"type": "string"}
+                            "type": ["array", "null"],
+                            "items": {"type": "string"},
+                            "description": "Liste des critères généraux."
                         },
                         "Éléments": {
-                            "type": ["null", "array"],
+                            "type": ["array", "null"],
+                            "description": "Liste des éléments spécifiques décomposant la compétence.",
                             "items": {
                                 "type": "object",
                                 "required": ["element", "criteres"],
                                 "properties": {
-                                    "element": {"type": "string"},
-                                    "criteres": {"type": ["null", "array"], "items": {"type": "string"}}
+                                    "element": {"type": "string", "description": "Description de l'élément de compétence."},
+                                    "criteres": {"type": ["array", "null"], "items": {"type": "string"}, "description": "Liste des critères pour cet élément."}
                                 },
                                 "additionalProperties": False
                             }
@@ -653,59 +688,157 @@ def extraire_competences_depuis_pdf(pdf_path, output_json_filename, openai_key=N
                 }
             }
         },
-        "additionalProperties": False
+        "additionalProperties": False,
+        "definitions": {
+            "context_item": {
+                "type": "object",
+                "required": ["texte", "sous_points"],
+                "properties": {
+                    "texte": {"type": "string", "description": "Contenu textuel du point principal ou sous-point."},
+                    "sous_points": {"type": ["array", "null"], "description": "Sous-points hiérarchiques.", "items": {"$ref": "#/definitions/context_item"}}
+                },
+                "additionalProperties": False
+            }
+        }
     }
 
     file_id = None
+    response = None
+    route_used = None
     try:
+        req_start_ts = time.monotonic()
+        # Construire l'input pour l'appel
+        request_input = [
+            {"role": "system", "content": [{"type": "input_text", "text": system_prompt_inline}]}
+        ]
         if pdf_url:
             try:
-                # Préférer l'usage de file_url dans input content (compat SDK)
-                response = client.responses.create(
-                    model=current_app.config.get('OPENAI_MODEL_EXTRACTION'),
-                    input=[
-                        {"role": "system", "content": [{"type": "input_text", "text": system_prompt_inline}]},
-                        {"role": "user", "content": [
-                            {"type": "input_file", "file_url": pdf_url},
-                            {"type": "input_text", "text": "Extrais et retourne le JSON strict 'competences'."}
-                        ]}
-                    ],
-                    text={"format": {"type": "json_schema", "name": "extraire_competences_en_json", "strict": True, "schema": json_schema}},
-                    reasoning={}, tools=[], tool_choice="none", store=True
-                )
+                route_used = "file_url"
+                _progress(f"[EXTRACTION] Appel API via URL de fichier | url='{pdf_url}'")
+                request_input.append({
+                    "role": "user",
+                    "content": [
+                        {"type": "input_file", "file_url": pdf_url},
+                        {"type": "input_text", "text": "Extrais et retourne le JSON strict 'competences'."}
+                    ]
+                })
             except Exception as e:
-                logging.info(f"file_url non supporté ({e}). Fallback upload de fichier.")
+                logging.info(f"[EXTRACTION] 'file_url' non supporté ou erreur ({e}). Fallback upload.")
                 pdf_url = None
+
         if not pdf_url:
+            route_used = "upload"
             with open(pdf_path, 'rb') as f:
                 up = client.files.create(file=f, purpose='user_data')
-                file_id = getattr(up, 'id', None)
+            file_id = getattr(up, 'id', None)
+            _progress(f"[EXTRACTION] Fichier uploadé | file_id='{file_id}'")
+            request_input.append({
+                "role": "user",
+                "content": [
+                    {"type": "input_file", "file_id": file_id},
+                    {"type": "input_text", "text": "Extrais et retourne le JSON strict 'competences'."}
+                ]
+            })
 
-            response = client.responses.create(
-                model=current_app.config.get('OPENAI_MODEL_EXTRACTION'),
-                input=[
-                    {"role": "system", "content": [{"type": "input_text", "text": system_prompt_inline}]},
-                    {"role": "user", "content": [
-                        {"type": "input_file", "file_id": file_id},
-                        {"type": "input_text", "text": "Extrais et retourne le JSON strict 'competences'."}
-                    ]}
-                ],
-                text={"format": {"type": "json_schema", "name": "extraire_competences_en_json", "strict": True, "schema": json_schema}},
-                reasoning={}, tools=[], tool_choice="none", store=True
-            )
+        request_kwargs = dict(
+            model=model_name,
+            input=request_input,
+            text={"format": {"type": "json_schema", "name": "extraire_competences_en_json", "strict": True, "schema": json_schema}},
+            store=True,
+        )
 
-        # Récupération robuste du JSON
-        full_json_string = None
+        # --- Streaming ---
+        streamed_text = ""
+        usage_info = None
+        final_response = None
+        events_count = 0
+        progress_tick = 50  # fréquence d'émission des événements de progression
+
         try:
-            full_json_string = response.output[0].content[0].text
+            with client.responses.stream(**request_kwargs) as stream:
+                for event in stream:
+                    events_count += 1
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            logging.info(f"[EXTRACTION][stream] delta len={len(delta)} total={len(streamed_text)} type={etype}")
+                            # Remonter périodiquement l'avancement en streaming au callback (UI)
+                            try:
+                                if progress_tick and (events_count % progress_tick == 0):
+                                    _progress(f"[EXTRACTION][stream] output_text.delta total={len(streamed_text)} chars | events={events_count}")
+                            except Exception:
+                                pass
+                    elif etype.endswith('response.output_item.added') or etype == 'response.output_item.added':
+                        try:
+                            item = getattr(event, 'item', None)
+                            text_val = ''
+                            if item:
+                                if isinstance(item, dict):
+                                    text_val = item.get('text') or ''
+                                else:
+                                    text_val = getattr(item, 'text', '') or ''
+                            if text_val:
+                                streamed_text += text_val
+                                logging.info(f"[EXTRACTION][stream] item.added len={len(text_val)} total={len(streamed_text)}")
+                        except Exception:
+                            pass
+                    elif etype.endswith('response.completed') or etype == 'response.completed':
+                        logging.info("[EXTRACTION][stream] completed")
+                        try:
+                            _progress("[EXTRACTION][stream] completed")
+                        except Exception:
+                            pass
+                    elif etype.endswith('response.error') or etype == 'response.error':
+                        logging.error(f"[EXTRACTION][stream] error event: {getattr(event, 'error', None)}")
+                    else:
+                        logging.debug(f"[EXTRACTION][stream] event={etype}")
+
+                final_response = stream.get_final_response()
+                usage_info = getattr(final_response, 'usage', None)
+        except Exception as stream_err:
+            logging.warning(f"[EXTRACTION] Streaming non disponible/échoué ({stream_err}). Fallback non-stream.")
+            final_response = client.responses.create(**request_kwargs)
+            try:
+                usage_info = getattr(final_response, 'usage', None)
+            except Exception:
+                usage_info = None
+
+        req_dur = time.monotonic() - req_start_ts
+        rid = getattr(final_response, "id", None)
+        status = getattr(final_response, "status", None)
+        _progress(f"[EXTRACTION] Réponse finale reçue | route={route_used} | response_id={rid} | status={status} | durée_api={req_dur:.2f}s | events={events_count}")
+
+        # --- Extraction robuste du JSON ---
+        json_start_ts = time.monotonic()
+        full_json_string = None
+        parsed_json = None
+        source_method = None
+
+        try:
+            parsed_json = getattr(final_response, "output_parsed", None)
+            if parsed_json is not None:
+                source_method = "output_parsed"
         except Exception:
-            pass
-        if not full_json_string:
-            full_json_string = getattr(response, 'output_text', None)
-        if not full_json_string:
+            parsed_json = None
+
+        if parsed_json is None:
+            try:
+                full_json_string = getattr(final_response, "output_text", None)
+                if full_json_string:
+                    source_method = "output_text"
+            except Exception:
+                full_json_string = None
+
+        if parsed_json is None and not full_json_string and streamed_text:
+            full_json_string = streamed_text
+            source_method = "stream_buffer"
+
+        if parsed_json is None and not full_json_string:
             try:
                 parts = []
-                for item in getattr(response, 'output', []) or []:
+                for item in getattr(final_response, 'output', []) or []:
                     content_list = getattr(item, 'content', None)
                     if isinstance(content_list, list):
                         for c in content_list:
@@ -714,34 +847,89 @@ def extraire_competences_depuis_pdf(pdf_path, output_json_filename, openai_key=N
                                 parts.append(t)
                 if parts:
                     full_json_string = "".join(parts)
+                    source_method = "output[].content[].text"
             except Exception:
                 pass
-        if not full_json_string:
+
+        if parsed_json is None and not full_json_string:
+            try:
+                for item in getattr(final_response, 'output', []) or []:
+                    parsed_candidate = getattr(item, 'parsed', None)
+                    if parsed_candidate is not None:
+                        parsed_json = parsed_candidate
+                        source_method = "output[].parsed"
+                        break
+            except Exception:
+                pass
+
+        if parsed_json is None and not full_json_string:
             raise SkillExtractionError("Réponse OpenAI sans texte de sortie exploitable (PDF).")
 
-        # Sauvegarde du résultat
-        try:
-            with open(output_json_filename, 'w', encoding='utf-8') as f:
+        if parsed_json is None:
+            try:
+                parsed_json = json.loads(full_json_string)
+                _progress(f"[EXTRACTION] JSON parsé depuis {source_method} | longueur={len(full_json_string)}")
+            except json.JSONDecodeError as e:
                 try:
-                    parsed_json = json.loads(full_json_string)
-                    json.dump(parsed_json, f, ensure_ascii=False, indent=4)
-                except json.JSONDecodeError:
-                    logging.warning(f"JSON invalide lors du formatage. Sauvegarde brute dans {output_json_filename}.")
-                    f.write(full_json_string)
+                    with open(output_json_filename, "w", encoding="utf-8") as f:
+                        f.write(full_json_string)
+                    _progress(f"[EXTRACTION] JSON brut sauvegardé (non valide) dans '{output_json_filename}'")
+                except Exception as io_err:
+                    logging.error(f"Erreur lors de l'écriture du JSON brut: {io_err}", exc_info=True)
+                raise SkillExtractionError(f"JSON invalide renvoyé par le modèle : {e}") from e
+
+        nb_comp = None
+        try:
+            if isinstance(parsed_json, dict):
+                comps = parsed_json.get("competences") or []
+                nb_comp = len(comps) if isinstance(comps, list) else None
+        except Exception:
+            pass
+
+        json_dur = time.monotonic() - json_start_ts
+        _progress(f"[EXTRACTION] Méthode d'extraction='{source_method}' | competences={nb_comp} | durée_parse={json_dur:.2f}s")
+
+        io_start_ts = time.monotonic()
+        try:
+            with open(output_json_filename, "w", encoding="utf-8") as f:
+                json.dump(parsed_json, f, ensure_ascii=False, indent=4)
+            try:
+                out_size = os.path.getsize(output_json_filename)
+            except Exception:
+                out_size = None
+            _progress(f"[EXTRACTION] Résultat écrit -> '{output_json_filename}' | taille={out_size} octets")
         except Exception as io_err:
             raise SkillExtractionError(f"Erreur écriture JSON: {io_err}") from io_err
+        io_dur = time.monotonic() - io_start_ts
 
-        usage_info = getattr(response, 'usage', None)
-        return {"result": full_json_string, "usage": usage_info}
+        try:
+            if isinstance(usage_info, dict):
+                pt = usage_info.get("input_tokens")
+                ct = usage_info.get("output_tokens")
+            else:
+                pt = getattr(usage_info, "input_tokens", None)
+                ct = getattr(usage_info, "output_tokens", None)
+            _progress(f"[EXTRACTION] Usage tokens | input={pt} | output={ct}")
+        except Exception:
+            pass
+
+        total_dur = time.monotonic() - start_ts
+        _progress(f"[EXTRACTION] Terminé | route={route_used} | competences={nb_comp} | I/O={io_dur:.2f}s | total={total_dur:.2f}s")
+
+        return {"result": json.dumps(parsed_json, ensure_ascii=False), "usage": usage_info}
+
     except SkillExtractionError:
+        # l'erreur a déjà été loggée en amont
         raise
     except Exception as e:
         msg = f"Erreur lors de l'appel OpenAI (PDF): {e}"
         logging.error(msg, exc_info=True)
         raise SkillExtractionError(msg, original_exception=e) from e
     finally:
-        try:
-            if file_id:
+        # Nettoyage de l'upload si nécessaire
+        if file_id:
+            try:
                 client.files.delete(file_id)
-        except Exception:
-            pass
+                _progress(f"[EXTRACTION] Nettoyage effectué | file_id supprimé='{file_id}'")
+            except Exception as e:
+                logging.warning(f"[EXTRACTION] Impossible de supprimer file_id='{file_id}' ({e})")

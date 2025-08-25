@@ -51,6 +51,10 @@
     <span id="task-status" class="status-message status-{{ state|lower }}">{{ state }}</span>
     <span id="loading-indicator" style="display: none;"> ( Rafraîchissement en cours<span class="dots">...</span> )</span>
   </p>
+  <div class="mt-3">
+    <h3>Flux en direct</h3>
+    <div id="stream-log" style="background:#0f172a;color:#e2e8f0;border-radius:6px;padding:10px;min-height:120px;max-height:240px;overflow:auto;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;"></div>
+  </div>
 <div id="result-area">
     <h2>Résultat :</h2>
     {% if result and result.status == 'success' %}
@@ -106,9 +110,55 @@ document.addEventListener("DOMContentLoaded", function() {
     const usageStats = document.getElementById("usage-stats");
     const inputTokens = document.getElementById("input-tokens");
     const outputTokens = document.getElementById("output-tokens");
+    const streamLog = document.getElementById("stream-log");
 
     // Obtenir l'ID de la tâche
     const taskId = taskIdElement.textContent.trim();
+
+    // --- SSE Streaming des événements de tâche (si disponible) ---
+    try {
+        const sseUrl = `/api/task_events/${taskId}`;
+        const es = new EventSource(sseUrl);
+        function appendLog(line) {
+            if (!line) return;
+            const now = new Date();
+            const ts = now.toLocaleTimeString();
+            const safe = ('' + line).replace(/[\u0000-\u001F\u007F<>]/g, ch => ({'<':'&lt;','>':'&gt;'}[ch]||''));
+            const wasAtBottom = streamLog.scrollTop + streamLog.clientHeight >= streamLog.scrollHeight - 4;
+            streamLog.insertAdjacentHTML('beforeend', `<div>[${ts}] ${safe}</div>`);
+            if (wasAtBottom) streamLog.scrollTop = streamLog.scrollHeight;
+        }
+        es.addEventListener('open', () => appendLog('Connexion au flux ouverte.'));
+        es.addEventListener('progress', (ev) => {
+            try {
+                const data = JSON.parse(ev.data || '{}');
+                if (data.step || data.message) {
+                    const parts = [];
+                    if (data.step) parts.push(`Étape: ${data.step}`);
+                    if (data.message) parts.push(data.message);
+                    if (typeof data.progress === 'number') parts.push(`Progression: ${data.progress}%`);
+                    appendLog(parts.join(' | '));
+                } else {
+                    appendLog('Mise à jour de progression.');
+                }
+                if (data.state) {
+                    taskStatusElement.textContent = data.state;
+                    updateStatusClasses(data.state);
+                }
+            } catch {}
+        });
+        es.addEventListener('done', (ev) => {
+            try {
+                const data = JSON.parse(ev.data || '{}');
+                appendLog(`Terminé avec état ${data.state}.`);
+            } catch { appendLog('Terminé.'); }
+            es.close();
+        });
+        es.addEventListener('error', (ev) => {
+            try { const data = JSON.parse(ev.data || '{}'); appendLog('Erreur flux: ' + (data.error||'inconnue')); } catch { appendLog('Erreur flux.'); }
+        });
+        es.addEventListener('ping', () => {});
+    } catch (e) { console.warn('SSE indisponible:', e); }
     
     // États pour lesquels on continue de vérifier
     const pendingStates = ["PENDING", "STARTED", "RECEIVED", "PROGRESS", "RETRY"];

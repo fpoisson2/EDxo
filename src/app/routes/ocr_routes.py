@@ -198,6 +198,25 @@ def task_status(task_id):
         task = celery.AsyncResult(task_id)
         response_data = {'task_id': task_id, 'state': task.state, 'info': {}}
 
+        # Filets de sécurité: si l'état est incohérent, interroger directement le backend
+        try:
+            backend_meta = task.backend.get_task_meta(task_id)
+            # backend_meta: {'status': 'SUCCESS'|'FAILURE'|..., 'result': ..., 'traceback': ...}
+            if isinstance(backend_meta, dict):
+                backend_status = backend_meta.get('status') or backend_meta.get('state')
+                if backend_status == 'SUCCESS' and task.state != 'SUCCESS':
+                    # Corriger l'état à partir du backend et retourner immédiatement
+                    meta = backend_meta.get('result') or {}
+                    response_data['state'] = 'SUCCESS'
+                    response_data['info'] = meta if isinstance(meta, dict) else {'raw_result': str(meta)}
+                    # Lien vers le résultat final
+                    result_id = meta.get('callback_task_id') if isinstance(meta, dict) and meta.get('callback_task_id') else task_id
+                    response_data['result_url'] = url_for('ocr.task_result', task_id=result_id)
+                    return jsonify(response_data)
+        except Exception:
+            # Ne pas interrompre le flux si l'accès direct au backend échoue
+            pass
+
         if task.state == 'PENDING':
             response_data['info'] = {
                 'status': 'En attente...',
@@ -274,6 +293,52 @@ def task_status(task_id):
         }), 500
 
 
+@ocr_bp.route('/status/events/<task_id>')
+@login_required
+def task_status_events(task_id):
+    """Flux SSE des événements de progression pour une tâche OCR."""
+    from celery.result import AsyncResult
+    import time, json as _json
+
+    def sse_gen():
+        last_state = None
+        last_msg = None
+        last_step = None
+        last_progress = None
+        interval = 1.0
+
+        yield "event: open\ndata: {}\n\n"
+
+        while True:
+            try:
+                res = AsyncResult(task_id, app=celery)
+                state = res.state
+                meta = res.info if isinstance(res.info, dict) else {}
+                msg = meta.get('message') if isinstance(meta, dict) else None
+                step = meta.get('step') if isinstance(meta, dict) else None
+                prog = meta.get('progress') if isinstance(meta, dict) else None
+
+                changed = (state != last_state) or (msg != last_msg) or (step != last_step) or (prog != last_progress)
+                if changed:
+                    payload = {'state': state, 'message': msg, 'step': step, 'progress': prog, 'meta': meta}
+                    yield f"event: progress\ndata: {_json.dumps(payload, ensure_ascii=False)}\n\n"
+                    last_state, last_msg, last_step, last_progress = state, msg, step, prog
+
+                if state in ('SUCCESS', 'FAILURE'):
+                    final_payload = {'state': state, 'result': res.result if state == 'SUCCESS' else None, 'meta': meta}
+                    yield f"event: done\ndata: {_json.dumps(final_payload, ensure_ascii=False)}\n\n"
+                    break
+
+                yield "event: ping\ndata: {}\n\n"
+                time.sleep(interval)
+            except Exception as e:
+                yield f"event: error\ndata: {_json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
+                break
+
+    headers = {'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive'}
+    return current_app.response_class(sse_gen(), headers=headers)
+
+
 @ocr_bp.route('/result/<task_id>')
 @login_required
 def task_result(task_id):
@@ -347,4 +412,15 @@ def task_result(task_id):
 @login_required
 def task_status_page(task_id):
     """Affiche la page qui suivra la progression de la tâche."""
+    return render_template('ocr/processing_page.html', task_id=task_id)
+
+# Optionnel: prise en charge d'une page sans paramètre de chemin, avec query string
+@ocr_bp.route('/status-page')
+@login_required
+def task_status_page_query():
+    """Affiche la page de statut à partir d'un paramètre de requête 'task_id' ou 'id'."""
+    task_id = request.args.get('task_id') or request.args.get('id')
+    if not task_id:
+        flash("ID de tâche manquant.", "warning")
+        return redirect(url_for('ocr.show_trigger_page'))
     return render_template('ocr/processing_page.html', task_id=task_id)

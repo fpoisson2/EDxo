@@ -24,6 +24,7 @@ from ..models import (
     Programme,
     Competence,
     ElementCompetence,
+    competence_programme,
     FilConducteur,
     Cours,
     CoursPrealable,
@@ -836,6 +837,25 @@ def confirm_competencies_import():
                     competences_added_count += 1
                     logger.info(f"Création de la compétence {code}.")
 
+                # Associer la compétence au programme dans la table d'association (utilisée par le logigramme)
+                try:
+                    link_exists = db.session.execute(
+                        db.text(
+                            "SELECT 1 FROM Competence_Programme WHERE competence_id = :cid AND programme_id = :pid"
+                        ),
+                        {"cid": comp_to_process.id, "pid": programme.id}
+                    ).first()
+                    if not link_exists:
+                        db.session.execute(
+                            db.text(
+                                "INSERT INTO Competence_Programme (competence_id, programme_id) VALUES (:cid, :pid)"
+                            ),
+                            {"cid": comp_to_process.id, "pid": programme.id}
+                        )
+                        logger.debug(f"Association Competence[{comp_to_process.id}] -> Programme[{programme.id}] créée.")
+                except Exception as link_err:
+                    logger.warning(f"Impossible de créer l'association Competence_Programme pour {code}: {link_err}")
+
                 # Traitement complet des éléments de compétence :
                 # Récupération de la liste d'éléments depuis le JSON
                 elements_list = comp_data.get('elements') or comp_data.get('Éléments') or []
@@ -1175,9 +1195,9 @@ def apply_programme_grille(programme_id):
                 unites = float(course.get('nombre_unites') or 0.0)
                 if unites == 0.0:
                     try:
-                        unites = round((ht + hl) / 15.0, 2)
+                        unites = round((ht + hl + hm), 2)
                     except Exception:
-                        unites = 1.0
+                        unites = float(ht + hl + hm) if all(isinstance(x, int) for x in (ht, hl, hm)) else 1.0
 
                 c = Cours(code=gen_unique_code(), nom=nom,
                           nombre_unites=unites,
