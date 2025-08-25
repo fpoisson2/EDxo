@@ -12,6 +12,7 @@ services:
     volumes:
       - txt_outputs:/app/src/txt_outputs
       - pdfs:/app/src/pdfs_downloaded
+      - db_data:/app/src/database
     depends_on:
       - redis
     restart: unless-stopped
@@ -29,6 +30,7 @@ services:
     volumes:
       - txt_outputs:/app/src/txt_outputs
       - pdfs:/app/src/pdfs_downloaded
+      - db_data:/app/src/database
     depends_on:
       - redis
     restart: unless-stopped
@@ -36,3 +38,4 @@ services:
 volumes:
   txt_outputs: {}
   pdfs: {}
+  db_data: {}
