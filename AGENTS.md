@@ -42,14 +42,16 @@
   - Streaming SSE: `GET /tasks/events/<task_id>` → événements `open|progress|ping|done`.
   - Page de suivi: `GET /tasks/track/<task_id>` (utilise `task_status.html`).
 - Orchestrateur Frontend: `static/js/task_orchestrator.js`
-  - `EDxoTasks.startCeleryTask(url, fetchOpts, {title,startMessage})`: lance la tâche, ajoute une notification « in-progress » avec lien `/tasks/track/<task_id>`, et ouvre un modal de suivi (stream + JSON).
+  - `EDxoTasks.startCeleryTask(url, fetchOpts, {title,startMessage,summaryEl,streamEl})`: lance la tâche, ajoute une notification « in-progress » avec lien `/tasks/track/<task_id>`, et ouvre un modal de suivi (stream, résumé de raisonnement, JSON). Les options `summaryEl` et `streamEl` permettent de renseigner des éléments externes (par défaut ceux du modal sont utilisés).
   - `EDxoTasks.openTaskModal(taskId, {title,statusUrl,eventsUrl,onDone})`: ouvre le modal sur un `task_id` existant.
 - Notifications enrichies (base.html):
   - En cours: `addNotification('…', 'in-progress', '/tasks/track/<task_id>')` pour permettre d’ouvrir le suivi.
   - Succès: si le payload contient `validation_url`, la notification pointe vers la page de validation/comparaison; sinon fallback (reviewUrl, planCadreUrl, plan_de_cours_url).
-- Modal générique de suivi (injecté par l’orchestrateur):
-  - Onglets minimalistes: flux (stream), affichage JSON.
-  - Bouton « Aller à la validation » si `validation_url` présent dans le payload final.
+  - Modal générique de suivi (injecté par l’orchestrateur):
+    - Zone de texte à défilement pour le streaming (`streamEl`).
+    - Conteneur distinct pour le résumé de raisonnement (`summaryEl`).
+    - Onglets minimalistes: flux (logs), affichage JSON.
+    - Bouton « Aller à la validation » si `validation_url` présent dans le payload final.
 - Configuration IA centralisée:
   - Page dédiée: `GET /settings/generation` pour choisir le modèle, l’effort de raisonnement et la verbosité.
   - Les prompts spécifiques demeurent dans leurs pages respectives (Plan-cadre, Plan de cours, OCR), accessibles depuis le menu Paramètres.
@@ -77,6 +79,7 @@
 
 2) Dans la tâche Celery:
    - Publier la progression: `self.update_state(state='PROGRESS', meta={'message': '...', 'step': '...', 'progress': 0-100})`.
+   - Pour le streaming temps réel, envoyer `meta.stream_chunk` (append) ou `meta.stream_buffer` (contenu complet), et `meta.reasoning_summary` pour le résumé de raisonnement.
    - Renvoyer un `dict` final:
      - `status: 'success' | 'error'` + `message` en cas d’erreur.
      - `validation_url` vers la page de validation/comparaison.
@@ -97,6 +100,8 @@ await EDxoTasks.startCeleryTask('/api/.../start', {
   title: 'Titre de la tâche',
   startMessage: 'En cours…',
   userPrompt: promptOptionnel,
+  streamEl: document.getElementById('ma-zone-stream'),
+  summaryEl: document.getElementById('mon-resume'),
   onDone: (data) => { /* hook si besoin */ }
 });
 ```
