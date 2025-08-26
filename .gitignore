@@ -1,27 +1,44 @@
+### Cache & Bytecode ###
+__pycache__/
 *.pyc
-add_user.py
-/venv
+
+### Environnements virtuels ###
+/venv/
+/myenv/
+
+### IDE ###
+/.idea/
+
+### Logs ###
 app_errors.log
+src/scripts/extraction.log
+
+### Bases de données ###
 *.db
 *.db-wal
 *.db-shm
-token.json
+
+### Secrets ###
 .env
+token.json
 credentials.json
 src/config/credentials.json
-/src/scripts/json_output
-/src/scripts/pdfs
-/src/scripts/pdfs_extraits
-src/scripts/extraction.log
-/src/scripts/txt_output
-/myenv
-/src/pdfs_downloaded
-/src/src
-/src/txt_outputs
-/src/txt_outputs
-/src/txt_outputs
-/src/txt_outputs
-/src/static/docs
+
+### Fichiers générés ###
+/src/scripts/json_output/
+/src/scripts/pdfs/
+/src/scripts/pdfs_extraits/
+/src/scripts/txt_output/
+/src/pdfs_downloaded/
+/pdfs_downloaded/
+/src/txt_outputs/
+/src/static/docs/
 /src/flask_sessions/
+/src/src/
+
+### Scripts locaux ###
+add_user.py
+
+### Docker ###
 docker-compose.override.yml
-/pdfs_downloaded
+
