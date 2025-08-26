@@ -25,3 +25,4 @@ src/scripts/extraction.log
 /src/flask_sessions/
 docker-compose.override.yml
 /pdfs_downloaded
+/.idea/
