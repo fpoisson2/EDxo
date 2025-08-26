@@ -1,4 +1,4 @@
-from .ocr import process_ocr_task, extract_json_competence, aggregate_ocr_results_task
+from .ocr import process_ocr_task
 from .generation_plan_cadre import generate_plan_cadre_content_task
 from .generation_plan_de_cours import generate_plan_de_cours_all_task
 from .import_grille import extract_grille_from_pdf_task

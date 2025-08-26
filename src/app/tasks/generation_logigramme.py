@@ -179,6 +179,11 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
             'result': { 'links': cleaned, 'reasoning_summary': reasoning_summary },
             'usage': { 'prompt_tokens': usage_prompt, 'completion_tokens': usage_completion, 'cost': cost }
         }
+        try:
+            # Rediriger vers la vue interactive du logigramme pour validation/ajustement
+            result['validation_url'] = f"/programme/{programme.id}/competences/logigramme"
+        except Exception:
+            pass
         return result
     except Exception as e:
         logger.exception('Erreur génération logigramme')

@@ -110,22 +110,20 @@ def find_competences_pages(markdown_content, openai_key=None, pdf_path: str | No
     """
     # Préparer le prompt pour que l'IA segmente la section en retournant
     # un tableau des bornes de page pour chaque compétence.
-    settings = _get_ocr_settings_safely()
     system_prompt = (
-        (settings.segmentation_prompt if (settings and settings.segmentation_prompt) else
-         "Rôle : Assistant IA expert en analyse de documents OCRés de programmes d'études collégiales québécois.\n\n"
-         "Objectif : Identifier la section 'Formation spécifique' et segmenter cette section en plusieurs compétences. "
-         "Pour chaque compétence, retourne son code ainsi que la page de début et la page de fin correspondantes. "
-         "Le résultat doit être un objet JSON strict respectant le schéma suivant :\n"
-         "{\n"
-         '  "competences": [\n'
-         "    { \"code\": \"04A0\", \"page_debut\": <numéro>, \"page_fin\": <numéro> },\n"
-         "    ...\n"
-         "  ]\n"
-         "}\n\n"
-         "Assure-toi que 'page_debut' est la page où débute la compétence et 'page_fin' est la dernière page où elle se termine. "
-         "Utilise uniquement les pages comportant des informations de compétences (l'énoncé, le contexte, les éléments et les critères).\n\n"
-         "Voici le document OCRé en Markdown (avec indicateurs de page comme '## --- Page <numéro> ---') :\n")
+        "Rôle : Assistant IA expert en analyse de documents OCRés de programmes d'études collégiales québécois.\n\n"
+        "Objectif : Identifier la section 'Formation spécifique' et segmenter cette section en plusieurs compétences. "
+        "Pour chaque compétence, retourne son code ainsi que la page de début et la page de fin correspondantes. "
+        "Le résultat doit être un objet JSON strict respectant le schéma suivant :\n"
+        "{\n"
+        '  "competences": [\n'
+        "    { \"code\": \"04A0\", \"page_debut\": <numéro>, \"page_fin\": <numéro> },\n"
+        "    ...\n"
+        "  ]\n"
+        "}\n\n"
+        "Assure-toi que 'page_debut' est la page où débute la compétence et 'page_fin' est la dernière page où elle se termine. "
+        "Utilise uniquement les pages comportant des informations de compétences (l'énoncé, le contexte, les éléments et les critères).\n\n"
+        "Voici le document OCRé en Markdown (avec indicateurs de page comme '## --- Page <numéro> ---') :\n"
     )
     
     prompt_content = system_prompt + "\n" + markdown_content
@@ -177,7 +175,7 @@ def find_competences_pages(markdown_content, openai_key=None, pdf_path: str | No
         file_id = None
 
     try:
-        model_section = (settings.model_section if (settings and settings.model_section) else current_app.config.get('OPENAI_MODEL_SECTION'))
+        model_section = current_app.config.get('OPENAI_MODEL_EXTRACTION')
         if file_id:
             # Utiliser le fichier et une instruction compacte
             response = openai_client.responses.create(
@@ -348,7 +346,6 @@ def find_section_with_openai(markdown_content, openai_key=None):
 
 
     # Définition du prompt système
-    settings = _get_ocr_settings_safely()
     system_prompt = (
         "Rôle: Assistant IA expert en analyse de documents PDF de programmes d'études collégiales québécois.\n\n"
         "Objectif: Identifier précisément la section 'Formation spécifique' dans le document OCRé, et retourner les numéros de page de début et de fin de cette section.\n\n"
@@ -379,9 +376,9 @@ def find_section_with_openai(markdown_content, openai_key=None):
     logging.info("Appel API OpenAI pour identifier la section...")
     print("Appel API OpenAI pour identifier la section...") # Pour console serveur
     try:
-        model_section = (settings.model_section if (settings and settings.model_section) else current_app.config.get('OPENAI_MODEL_SECTION'))
+        model_name = current_app.config.get('OPENAI_MODEL_EXTRACTION')
         response = openai_client.responses.create(
-            model=model_section,
+            model=model_name,
             input=messages,
             text={"format": {"type": "json_schema", "name": "PageSection", "schema": json_schema, "strict": True}},
             reasoning={}, tools=[], tool_choice="none", temperature=0, max_output_tokens=1000, top_p=1, store=True,

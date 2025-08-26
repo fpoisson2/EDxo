@@ -10,6 +10,8 @@ import os
 import html
 
 import json
+import re
+import time
 from flask_login import login_required, current_user
 
 from ..forms import (
@@ -1161,6 +1163,101 @@ def generate_programme_grille(programme_id):
     task = generate_programme_grille_task.delay(programme_id, user.id, form)
     return jsonify({'task_id': task.id}), 202
 
+@programme_bp.route('/<int:programme_id>/competences/import_pdf/start', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def import_competences_pdf_start(programme_id):
+    """Démarre l'import simplifié de compétences depuis un PDF pour un programme.
+
+    Reçoit un formulaire multipart avec 'file' et retourne {task_id}.
+    """
+    from ..tasks.ocr import simple_import_competences_pdf
+    programme = Programme.query.get_or_404(programme_id)
+    if current_user.role not in ('admin', 'coordo') and programme not in current_user.programmes:
+        return jsonify({'error': 'Accès refusé'}), 403
+    if 'file' not in request.files:
+        return jsonify({'error': 'Aucun fichier fourni.'}), 400
+    f = request.files['file']
+    if not f or not f.filename.lower().endswith('.pdf'):
+        return jsonify({'error': 'Veuillez fournir un fichier PDF.'}), 400
+    upload_dir = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'uploads'))
+    os.makedirs(upload_dir, exist_ok=True)
+    safe_name = re.sub(r'[^A-Za-z0-9_.-]+', '_', f.filename)
+    filename = f"prog{programme_id}_{int(time.time())}_{safe_name}"
+    pdf_path = os.path.join(upload_dir, filename)
+    f.save(pdf_path)
+    task = simple_import_competences_pdf.delay(programme_id, pdf_path, current_user.id)
+    return jsonify({'task_id': task.id}), 202
+
+@programme_bp.route('/<int:programme_id>/competences/import/review')
+@login_required
+@ensure_profile_completed
+def review_competences_import_task(programme_id):
+    """Affiche la page de comparaison à partir du résultat de tâche (task_id)."""
+    from ...celery_app import celery
+    from celery.result import AsyncResult
+    programme = Programme.query.get_or_404(programme_id)
+    task_id = request.args.get('task_id')
+    if not task_id:
+        flash('Identifiant de tâche manquant.', 'danger')
+        return redirect(url_for('programme.view_competences_programme', programme_id=programme.id))
+    res = AsyncResult(task_id, app=celery)
+    data = res.result or {}
+    base_filename = (data.get('result') or {}).get('base_filename') or ''
+
+    comparisons = []
+    try:
+        txt_output_dir = current_app.config.get('TXT_OUTPUT_DIR', 'txt_outputs')
+        source_list = (data.get('result') or {}).get('competences') or []
+        if base_filename:
+            json_path = os.path.join(txt_output_dir, f"{base_filename}_competences.json")
+            if os.path.exists(json_path):
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    j = json.load(f)
+                    source_list = j.get('competences') or source_list
+        for comp in source_list:
+            code = comp.get('Code') or comp.get('code')
+            if not code:
+                continue
+            db_comp = Competence.query.filter_by(code=code, programme_id=programme.id).first()
+            db_version = None
+            if db_comp:
+                db_elements = []
+                for elem in db_comp.elements:
+                    criteria_list = [c.criteria for c in elem.criteria] if elem.criteria else []
+                    db_elements.append({'nom': elem.nom, 'criteres': criteria_list})
+                db_version = {
+                    'code': db_comp.code,
+                    'nom': db_comp.nom,
+                    'contexte': db_comp.contexte_de_realisation,
+                    'criteres': db_comp.criteria_de_performance,
+                    'elements': db_elements,
+                }
+            json_elements = []
+            elems = comp.get('Éléments') or comp.get('elements') or []
+            for elem in elems:
+                if isinstance(elem, str):
+                    json_elements.append({'nom': elem, 'criteres': None})
+                elif isinstance(elem, dict):
+                    json_elements.append({'nom': elem.get('element') or elem.get('nom'), 'criteres': elem.get('criteres')})
+            json_version = {
+                'code': comp.get('Code') or comp.get('code'),
+                'nom': comp.get('Nom de la compétence') or comp.get('nom'),
+                'contexte': comp.get('Contexte de réalisation') or comp.get('Contexte') or comp.get('contexte_de_realisation'),
+                'criteres': comp.get("Critères de performance pour l’ensemble de la compétence") or comp.get('criteria_de_performance'),
+                'elements': json_elements,
+            }
+            comparisons.append({'code': code, 'db': db_version, 'json': json_version})
+    except Exception:
+        current_app.logger.exception('Erreur construction comparatif import (task)')
+        comparisons = []
+
+    form = ReviewImportConfirmForm()
+    form.programme_id.data = programme_id
+    form.base_filename.data = base_filename
+    form.import_structured.data = 'true'
+    return render_template('programme/review_import.html', programme=programme, comparisons=comparisons, base_filename=base_filename, form=form)
+
 @programme_bp.route('/<int:programme_id>/grille/apply', methods=['POST'])
 @login_required
 @ensure_profile_completed
@@ -1383,6 +1480,23 @@ def apply_programme_grille(programme_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f"Erreur lors de l\'application de la grille: {e}"}), 500
+
+
+@programme_bp.route('/<int:programme_id>/grille/review/<task_id>')
+@login_required
+@ensure_profile_completed
+def review_programme_grille(programme_id, task_id):
+    """Page de validation/aperçu d'une grille générée (via task_id)."""
+    programme = Programme.query.get_or_404(programme_id)
+    if current_user.role not in ('admin', 'coordo'):
+        flash('Accès restreint (admin/coordo).', 'danger')
+        return redirect(url_for('main.index'))
+    if current_user.role != 'admin' and programme not in current_user.programmes:
+        flash('Accès refusé.', 'danger')
+        return redirect(url_for('main.index'))
+
+    # La page charge les détails via /tasks/status/<task_id> côté client et affiche un aperçu + bouton d'application
+    return render_template('programme/review_grille_generation.html', programme=programme, task_id=task_id)
 
 @programme_bp.route('/<int:programme_id>/grille/pdf')
 @login_required

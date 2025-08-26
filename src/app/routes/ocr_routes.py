@@ -175,7 +175,8 @@ def start_ocr_processing():
                 kwargs={}
             )
             logger.info(f"Tâche Celery démarrée pour OCR: {task.id} pour l'URL: {programme_url} (Titre: {pdf_title})")
-            return redirect(url_for('ocr.task_status_page', task_id=task.id))
+            # Rediriger vers la page unifiée de suivi des tâches
+            return redirect(url_for('tasks.track_task', task_id=task.id))
         except NameError: # Si process_ocr_task n'a pas pu être importé (à cause de la circulaire)
              logger.error("Échec de l'importation de la tâche Celery 'process_ocr_task'. Vérifiez les dépendances circulaires.", exc_info=True)
              flash("Erreur interne du serveur lors du lancement de la tâche.", "danger")

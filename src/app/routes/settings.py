@@ -88,9 +88,9 @@ def ocr_prompt_settings():
         if settings is None:
             settings = OcrPromptSettings()
             db.session.add(settings)
-        settings.segmentation_prompt = form.segmentation_prompt.data or None
+        # On ne conserve désormais qu'un seul prompt système (extraction)
         settings.extraction_prompt = form.extraction_prompt.data or None
-        settings.model_section = form.model_section.data or None
+        # Un seul modèle pertinent: celui d'extraction
         settings.model_extraction = form.model_extraction.data or None
         try:
             db.session.commit()
@@ -138,6 +138,34 @@ def chat_model_settings():
     # Assurer l'affichage cohérent: refléter le couplage côté formulaire
     form.tool_model.data = config.chat_model
     return render_template('settings/chat_models.html', form=form)
+
+
+@settings_bp.route('/generation', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def generation_settings():
+    """Page dédiée à la configuration globale de la génération IA.
+
+    - Modèle, effort de raisonnement, verbosité (ChatModelConfig)
+    - Liens rapides vers les pages de prompts spécifiques (Plan-cadre, Plan de cours, OCR)
+    """
+    config = ChatModelConfig.get_current()
+    form = ChatSettingsForm(obj=config)
+
+    if form.validate_on_submit():
+        config.chat_model = form.chat_model.data
+        config.tool_model = config.chat_model  # conserver l'alignement
+        config.reasoning_effort = form.reasoning_effort.data
+        config.verbosity = form.verbosity.data
+        db.session.commit()
+        flash('Paramètres de génération IA mis à jour.', 'success')
+        return redirect(url_for('settings.generation_settings'))
+
+    form.tool_model.data = config.chat_model
+    return render_template(
+        'settings/generation_settings.html',
+        form=form,
+    )
 
 
 @settings_bp.route('/developer', methods=['GET', 'POST'])
@@ -507,7 +535,7 @@ def prompt_settings():
                          settings=settings,
                          schema_json=schema_json)
 
-@settings_bp.route('/generation', methods=['GET', 'POST'])
+@settings_bp.route('/plan_cadre', methods=['GET', 'POST'])
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_global_generation_settings():
@@ -561,7 +589,7 @@ def edit_global_generation_settings():
                     db.session.add(new_setting)
 
             db.session.commit()
-            flash('Paramètres globaux de génération mis à jour avec succès!', 'success')
+            flash('Paramètres Plan-cadre mis à jour avec succès!', 'success')
             return redirect(url_for('settings.edit_global_generation_settings'))
 
         except Exception as e:

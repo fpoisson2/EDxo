@@ -35,7 +35,11 @@ def make_celery_instance():
         timezone='America/New_York', # Adapter si nécessaire
         enable_utc=True,
         broker_connection_retry_on_startup=True,
-        task_ignore_result=False  # Stocker les états pour permettre le suivi depuis le frontend
+        task_ignore_result=False,  # Stocker les états pour permettre le suivi depuis le frontend
+        # Marquer explicitement les tâches comme STARTED dès leur prise en charge par un worker
+        task_track_started=True,
+        # File par défaut explicite pour éviter toute ambiguïté de routage
+        task_default_queue='celery'
     )
 
     # Définir la classe de tâche pour le contexte Flask

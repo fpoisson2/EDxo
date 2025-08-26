@@ -1206,6 +1206,62 @@ def generate_all_status():
     return jsonify({'success': True, 'state': res.state})
 
 
+@plan_de_cours_bp.route('/review/<int:plan_id>')
+@login_required
+@ensure_profile_completed
+def review_plan_de_cours_generation(plan_id):
+    """Affiche une page de comparaison avant/après pour une génération récente.
+
+    Lit 'task_id' dans la query string pour récupérer old/new depuis le payload de la tâche.
+    Si indisponible, affiche uniquement l'état actuel.
+    """
+    task_id = request.args.get('task_id')
+    old_fields = {}
+    old_cal = []
+    new_fields = {}
+    new_cal = []
+    try:
+        if task_id:
+            res = AsyncResult(task_id, app=celery)
+            data = res.result or {}
+            old_fields = data.get('old_fields') or {}
+            old_cal = data.get('old_calendriers') or []
+            new_fields = data.get('fields') or {}
+            new_cal = data.get('calendriers') or []
+    except Exception:
+        current_app.logger.exception('Erreur lecture résultat tâche plan de cours')
+
+    if not new_fields:
+        plan = db.session.get(PlanDeCours, plan_id)
+        if plan:
+            new_fields = {
+                'presentation_du_cours': plan.presentation_du_cours,
+                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+                'organisation_et_methodes': plan.organisation_et_methodes,
+                'accomodement': plan.accomodement,
+                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'materiel': plan.materiel,
+            }
+            new_cal = [
+                {
+                    'semaine': c.semaine,
+                    'sujet': c.sujet,
+                    'activites': c.activites,
+                    'travaux_hors_classe': c.travaux_hors_classe,
+                    'evaluations': c.evaluations,
+                } for c in plan.calendriers
+            ]
+
+    return render_template('plan_de_cours/review_generation.html',
+                           plan_id=plan_id,
+                           task_id=task_id,
+                           old_fields=old_fields,
+                           old_calendriers=old_cal,
+                           new_fields=new_fields,
+                           new_calendriers=new_cal)
+
+
 @plan_de_cours_bp.route(
     "/cours/<int:cours_id>/plan_de_cours/", methods=["GET", "POST"]
 )

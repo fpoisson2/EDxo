@@ -655,6 +655,10 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             'preview': True,
             'proposed': proposed
         }
+        try:
+            result['validation_url'] = f"/plan_cadre/{plan.id}/review?task_id={self.request.id}"
+        except Exception:
+            pass
         self.update_state(state='SUCCESS', meta=result)
         return result
 

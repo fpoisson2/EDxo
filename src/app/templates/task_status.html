@@ -44,7 +44,13 @@
 {% endblock %}
 {% block content %}
 <div class="container mt-4">
-  <h1>Suivi de la tâche</h1>
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h1 class="mb-0">Suivi de la tâche</h1>
+    <div class="d-flex gap-2">
+      <button id="btn-leave-track" class="btn btn-sm btn-outline-secondary" type="button" title="Revenir à la page précédente">Quitter le suivi</button>
+      <a id="btn-open-modal" class="btn btn-sm btn-outline-primary" href="#" title="Ouvrir en modal non bloquant">Ouvrir en modal</a>
+    </div>
+  </div>
   <p><strong>ID de la tâche :</strong> <span id="task-id">{{ task_id }}</span></p>
   <p>
     <strong>Statut :</strong>
@@ -98,6 +104,36 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js" referrerpolicy="no-referrer"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // Assainir tout backdrop/modal résiduel pouvant bloquer l'UI
+    try {
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    } catch {}
+    // Boutons utilitaires
+    const leaveBtn = document.getElementById('btn-leave-track');
+    const openModalBtn = document.getElementById('btn-open-modal');
+    const _taskId = {{ task_id|tojson }};
+    if (leaveBtn) {
+        leaveBtn.addEventListener('click', function() {
+            if (window.history && window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/';
+            }
+        });
+    }
+    if (openModalBtn) {
+        openModalBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            try { sessionStorage.setItem('currentTaskId', _taskId); } catch {}
+            if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
+                window.EDxoTasks.settings && (window.EDxoTasks.settings.preferPage = false);
+                window.EDxoTasks.openTaskModal(_taskId, { title: 'Suivi de la tâche' });
+            }
+        });
+    }
     // Éléments DOM à manipuler
     const taskIdElement = document.getElementById("task-id");
     const taskStatusElement = document.getElementById("task-status");
@@ -115,10 +151,11 @@ document.addEventListener("DOMContentLoaded", function() {
     // Obtenir l'ID de la tâche
     const taskId = taskIdElement.textContent.trim();
 
-    // --- SSE Streaming des événements de tâche (si disponible) ---
+    // --- SSE Streaming des événements de tâche (si disponible et non désactivé) ---
     try {
-        const sseUrl = `/api/task_events/${taskId}`;
-        const es = new EventSource(sseUrl);
+        const allowSSE = !((window.EDxoTasks && window.EDxoTasks.settings && window.EDxoTasks.settings.disableSSE) === true);
+        const sseUrl = {{ (events_url or ('/tasks/events/' ~ task_id))|tojson }};
+        const es = allowSSE ? new EventSource(sseUrl) : null;
         function appendLog(line) {
             if (!line) return;
             const now = new Date();
@@ -128,8 +165,8 @@ document.addEventListener("DOMContentLoaded", function() {
             streamLog.insertAdjacentHTML('beforeend', `<div>[${ts}] ${safe}</div>`);
             if (wasAtBottom) streamLog.scrollTop = streamLog.scrollHeight;
         }
-        es.addEventListener('open', () => appendLog('Connexion au flux ouverte.'));
-        es.addEventListener('progress', (ev) => {
+        if (es) es.addEventListener('open', () => appendLog('Connexion au flux ouverte.'));
+        if (es) es.addEventListener('progress', (ev) => {
             try {
                 const data = JSON.parse(ev.data || '{}');
                 if (data.step || data.message) {
@@ -147,18 +184,18 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             } catch {}
         });
-        es.addEventListener('done', (ev) => {
+        if (es) es.addEventListener('done', (ev) => {
             try {
                 const data = JSON.parse(ev.data || '{}');
                 appendLog(`Terminé avec état ${data.state}.`);
             } catch { appendLog('Terminé.'); }
-            es.close();
+            if (es) es.close();
         });
-        es.addEventListener('error', (ev) => {
+        if (es) es.addEventListener('error', (ev) => {
             try { const data = JSON.parse(ev.data || '{}'); appendLog('Erreur flux: ' + (data.error||'inconnue')); } catch { appendLog('Erreur flux.'); }
         });
-        es.addEventListener('ping', () => {});
-    } catch (e) { console.warn('SSE indisponible:', e); }
+        if (es) es.addEventListener('ping', () => {});
+    } catch (e) { console.warn('SSE indisponible ou désactivée:', e); }
     
     // États pour lesquels on continue de vérifier
     const pendingStates = ["PENDING", "STARTED", "RECEIVED", "PROGRESS", "RETRY"];
@@ -229,7 +266,8 @@ document.addEventListener("DOMContentLoaded", function() {
         try {
             loadingIndicator.style.display = "inline"; // Afficher l'indicateur de chargement
             
-            const response = await fetch(`/api/task_status/${taskId}`);
+            const statusUrl = {{ (status_api_url or ('/tasks/status/' ~ task_id))|tojson }};
+            const response = await fetch(statusUrl);
             const data = await response.json();
             
             // Mettre à jour l'état de la tâche

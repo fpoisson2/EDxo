@@ -64,6 +64,35 @@ def import_grille():
     return render_template('import_grille.html', form=form)
 
 
+@grille_bp.route('/grille/import', methods=['POST'])
+@login_required
+def import_grille_start():
+    """Unified start endpoint for grille import (PDF -> Celery task).
+
+    Accepts multipart FormData with key 'file'. Returns { task_id } and 202.
+    """
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'Aucun fichier fourni.'}), 400
+        file = request.files['file']
+        if not file or not file.filename:
+            return jsonify({'error': 'Fichier invalide.'}), 400
+        # Build upload path
+        upload_dir = os.path.join(current_app.config.get("UPLOAD_FOLDER", "uploads"))
+        os.makedirs(upload_dir, exist_ok=True)
+        filename = f"{uuid.uuid4().hex}_{file.filename}"
+        filepath = os.path.join(upload_dir, filename)
+        file.save(filepath)
+
+        # Enqueue Celery task
+        openai_key = current_user.openai_key
+        task = extract_grille_from_pdf_task.delay(pdf_path=filepath, openai_key=openai_key)
+        return jsonify({'task_id': task.id}), 202
+    except Exception as e:
+        logger.exception('Erreur lors du démarrage de l\'import de grille')
+        return jsonify({'error': str(e)}), 500
+
+
 @grille_bp.route('/grille_task_status/<task_id>')
 @login_required
 def grille_task_status_page(task_id):
@@ -80,10 +109,14 @@ def grille_task_status_page(task_id):
         current_result = task_result.result
         logger.info(f"Rendering HTML page for task {task_id}. Initial state: {current_state}, Result: {current_result}")
 
-        return render_template('task_status.html',
-                               task_id=task_id,
-                               state=current_state,
-                               result=current_result)
+        return render_template(
+            'task_status.html',
+            task_id=task_id,
+            state=current_state,
+            result=current_result,
+            status_api_url=url_for('tasks.unified_task_status', task_id=task_id),
+            events_url=url_for('tasks.unified_task_events', task_id=task_id),
+        )
 
     except AttributeError as e:
         if "'DisabledBackend' object has no attribute" in str(e):

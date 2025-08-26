@@ -36,12 +36,98 @@
 - Pull Requests: description claire, issues liées, étapes de test, et mention de toute migration BD. Ajoutez des captures d’écran/GIF pour les changements UI. Assurez-vous que `pytest` passe.
 - Limitez la portée des PR et mettez à jour la documentation lors de modifications des commandes, routes ou de la structure.
 
-## Tâches asynchrones (Celery) et notifications UI
-- Pattern standard pour les opérations longues (plans-cadres, génération de grille, import):
-  - Backend: déclencher une tâche Celery et retourner `task_id` (ex: `POST /programme/<id>/grille/generate`). Exposer un endpoint de statut JSON (ex: `GET /programme/api/task_status/<task_id>`), incluant `state` (`PENDING|PROGRESS|SUCCESS|FAILURE`) et un payload `{status,message,result}`.
-  - Frontend: au clic sur l’action, désactiver le bouton, afficher un spinner et créer une notification « in-progress » via `addNotification('…', 'in-progress')`. Ensuite, poller l’endpoint de statut jusqu’à `SUCCESS`/`FAILURE`.
-  - Succès: remplacer la notification par un message `success`, réactiver le bouton, mettre à jour l’UI (aperçu, lien d’application, etc.).
-  - Échec: afficher une notification `error`, réactiver le bouton, laisser l’utilisateur relancer.
-- Composants réutilisables:
-  - Système de notifications global (menu cloche) dans `base.html` avec `addNotification(type='in-progress'|'success'|'error')`.
-  - Exemple d’implémentation: générateur de plans-cadres et modal « Générer une grille (IA) » dans `view_programme.html` (désactivation du bouton + spinner, polling, notifications, prévisualisation, bouton « Appliquer »).
+## Tâches asynchrones unifiées (Celery) et notifications UI
+- Endpoints unifiés:
+  - Statut JSON: `GET /tasks/status/<task_id>` → `{task_id,state,message,meta,result}`.
+  - Streaming SSE: `GET /tasks/events/<task_id>` → événements `open|progress|ping|done`.
+  - Page de suivi: `GET /tasks/track/<task_id>` (utilise `task_status.html`).
+- Orchestrateur Frontend: `static/js/task_orchestrator.js`
+  - `EDxoTasks.startCeleryTask(url, fetchOpts, {title,startMessage})`: lance la tâche, ajoute une notification « in-progress » avec lien `/tasks/track/<task_id>`, et ouvre un modal de suivi (stream + JSON).
+  - `EDxoTasks.openTaskModal(taskId, {title,statusUrl,eventsUrl,onDone})`: ouvre le modal sur un `task_id` existant.
+- Notifications enrichies (base.html):
+  - En cours: `addNotification('…', 'in-progress', '/tasks/track/<task_id>')` pour permettre d’ouvrir le suivi.
+  - Succès: si le payload contient `validation_url`, la notification pointe vers la page de validation/comparaison; sinon fallback (reviewUrl, planCadreUrl, plan_de_cours_url).
+- Modal générique de suivi (injecté par l’orchestrateur):
+  - Onglets minimalistes: flux (stream), affichage JSON.
+  - Bouton « Aller à la validation » si `validation_url` présent dans le payload final.
+- Configuration IA centralisée:
+  - Page dédiée: `GET /settings/generation` pour choisir le modèle, l’effort de raisonnement et la verbosité.
+  - Les prompts spécifiques demeurent dans leurs pages respectives (Plan-cadre, Plan de cours, OCR), accessibles depuis le menu Paramètres.
+- Importations (PDF devis/logigrammes/grilles/plans):
+  - Appliquer le même pattern que l’import devis ministériel: POST déclenche tâche → retourne `task_id` → suivi via `/tasks/track/<task_id>` → redirection vers page de validation/comparaison à la fin.
+- Exemples rapides:
+  - Lancer génération: `EDxoTasks.startCeleryTask('/api/plan_cadre/123/generate', {method:'POST'}, {title:'Générer un plan-cadre'})`.
+  - Ouvrir un suivi existant: `EDxoTasks.openTaskModal(taskId, {title:'Import en cours'})`.
+
+### Principe général
+
+- Tâches exécutées via Celery: chaque action lourde est déclenchée côté serveur et retourne `{ task_id }`.
+- Suivi unifié: endpoints partagés `GET /tasks/status/<task_id>` (JSON) et `GET /tasks/events/<task_id>` (SSE) + page `GET /tasks/track/<task_id>`.
+- Orchestrateur Frontend: `static/js/task_orchestrator.js` expose `EDxoTasks.startCeleryTask()` et `EDxoTasks.openTaskModal()`.
+- Modal de suivi: affiche flux (stream), JSON, et (optionnel) le prompt utilisateur; propose un lien de validation si disponible.
+- Notifications enrichies: ajout de notifications « in-progress » et « success » avec lien de suivi/validation.
+- Configuration IA centralisée: `/settings/generation` (modèle, effort de raisonnement, verbosité), avec pages dédiées par domaine (Plan‑cadre, Plan de cours, OCR, etc.).
+
+### Patron d’implémentation côté serveur
+
+1) Créer un endpoint de déclenchement (POST) qui:
+   - Valide les entrées minimales (ex.: IDs, fichiers).
+   - Lance la tâche Celery: `task = my_task.delay(...)`
+   - Retourne `jsonify({ 'task_id': task.id })`, HTTP 202.
+
+2) Dans la tâche Celery:
+   - Publier la progression: `self.update_state(state='PROGRESS', meta={'message': '...', 'step': '...', 'progress': 0-100})`.
+   - Renvoyer un `dict` final:
+     - `status: 'success' | 'error'` + `message` en cas d’erreur.
+     - `validation_url` vers la page de validation/comparaison.
+     - Toute donnée utile au front (ex.: `result`, `usage`, etc.).
+
+3) Vérifier que les endpoints unifiés existent et sont exposés (`src/app/routes/tasks.py`).
+
+### Patron d’implémentation côté client
+
+Pour toute action (génération, amélioration, import), appeler:
+
+```js
+await EDxoTasks.startCeleryTask('/api/.../start', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+  body: JSON.stringify(payload)
+}, {
+  title: 'Titre de la tâche',
+  startMessage: 'En cours…',
+  userPrompt: promptOptionnel,
+  onDone: (data) => { /* hook si besoin */ }
+});
+```
+
+- Le modal s’ouvre automatiquement et se met à jour (SSE + polling).
+- À la fin, si `validation_url` est présent, le bouton « Aller à la validation » s’active et une notification « success » est ajoutée avec le lien.
+
+### Exemples supplémentaires
+
+- Génération Plan‑cadre: `POST /api/plan_cadre/<plan_id>/generate`
+- Amélioration Plan‑cadre: `POST /api/plan_cadre/<plan_id>/improve` (ou section ciblée)
+- Génération Plan de cours: `POST /api/plan_de_cours/<plan_id>/generate` → `validation_url=/plan_de_cours/review/<id>?task_id=...`
+- Import Plan‑cadre (DOCX): `POST /plan_cadre/<plan_id>/import_docx_start` → `validation_url=/plan_cadre/<id>/review?task_id=...`
+- Génération Grille de cours: `POST /programme/<programme_id>/grille/generate` → `validation_url=/programme/<id>/grille/review?task_id=...`
+- Génération Logigramme compétences: `POST /programme/<programme_id>/competences/logigramme/generate` → `validation_url=/programme/<id>/competences/logigramme`
+- Import Grille PDF: `POST /grille/import` → `validation_url=/confirm_grille_import/<task_id>`
+- Import Devis ministériel PDF (simplifié):
+  - Démarrage: `POST /programme/<programme_id>/competences/import_pdf/start` avec `FormData(file=pdf)` → `{ task_id }`
+  - Suivi: `/tasks/track/<task_id>` (modal unifié), notification in-progress avec lien de suivi
+  - Validation: le worker fournit `validation_url=/programme/<programme_id>/competences/import/review?task_id=...` (comparaison JSON↔BD; confirmation via formulaire existant)
+
+Pour une importation de fichier (PDF/DOCX), construire un `FormData` et appeler `EDxoTasks.startCeleryTask()` avec `body: formData` sans `Content-Type` (laissez le navigateur définir `multipart/form-data`).
+
+### Points d’attention
+
+- Toute tâche doit prévoir un `validation_url` pour guider l’utilisateur vers la comparaison/validation.
+- Les prompts spécifiques restent dans leurs pages: Plan‑cadre, Plan de cours, OCR.
+- La configuration IA (modèle/raisonnement/verbosité) se fait dans `/settings/generation`.
+- Le modal peut afficher le prompt utilisateur (`userPrompt`) si fourni côté UI.
+
+### Nettoyage
+
+- Utiliser les endpoints unifiés `/tasks/status|events|track` pour tout suivi.
+- Déprécier les anciens endpoints de statut/stream spécifiques dès migration.

@@ -41,9 +41,14 @@
       </div>
       {% if current_user.role in ['admin','coordo'] %}
         <div class="vr d-none d-md-block"></div>
-        <button id="openGenerateLogigramBtn" class="btn btn-sm btn-success" type="button" data-bs-toggle="modal" data-bs-target="#generateLogigramModal">
+        <a id="openGenerateLogigramBtn" class="btn btn-sm btn-success" href="#"
+           data-task-start
+           data-url="{{ url_for('programme.generate_competence_logigramme', programme_id=programme.id) }}"
+           data-title="Générer le logigramme de compétences"
+           data-mode="json"
+           data-json='{"additional_info":"","reasoning_effort":"medium","verbosity":"medium"}'>
           <i class="bi bi-stars"></i> Générer
-        </button>
+        </a>
         <button id="editModeToggle" class="btn btn-sm btn-outline-danger" type="button" aria-pressed="false">
           <i class="bi bi-pencil-square"></i> Mode édition
         </button>
@@ -158,10 +163,8 @@
 {% if current_user.role in ['admin','coordo'] %}
 <script id="gl-celery-overrides">
 document.addEventListener('DOMContentLoaded', function(){
-  const oldForm = document.getElementById('generateLogigramForm');
-  if (!oldForm) return;
-  const newForm = oldForm.cloneNode(true);
-  oldForm.parentNode.replaceChild(newForm, oldForm);
+  const form = document.getElementById('generateLogigramForm');
+  if (!form) return;
   const btn = document.getElementById('confirmGenerateLogigramBtn');
   const spinner = document.getElementById('glSpinner');
 
@@ -170,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function(){
     return el ? (el.value || '').trim() : '';
   }
 
-  newForm.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     try {
       btn.disabled = true; spinner.classList.remove('d-none');
@@ -178,93 +181,26 @@ document.addEventListener('DOMContentLoaded', function(){
       const reasoning_effort = getVal('gl-reasoning', 'generate_form-reasoning_effort') || 'medium';
       const verbosity = getVal('gl-verbosity', 'generate_form-verbosity') || 'medium';
       const additional_info = (document.getElementById('generate_form-additional_info')?.value || document.getElementById('gl-additional')?.value || '').trim();
-      const replaceExisting = document.getElementById('gl-replace')?.checked || false;
-      const url = "{{ url_for('programme.generate_competence_logigramme', programme_id=programme.id) }}";
       const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-      const start = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf}, body: JSON.stringify({ ai_model, reasoning_effort, verbosity, additional_info })});
-      const startOut = await start.json();
-      if (!start.ok) throw new Error(startOut.error || ('HTTP '+start.status));
-      const taskId = startOut.task_id;
-      const statusUrl = "{{ url_for('programme.programme_task_status', task_id='__TASK__') }}".replace('__TASK__', taskId);
-
-      // Progress box in modal
-      let progressBox = document.getElementById('gl-progress');
-      if (!progressBox) {
-        progressBox = document.createElement('div');
-        progressBox.id = 'gl-progress';
-        progressBox.className = 'border rounded p-2 small mt-2';
-        progressBox.style.maxHeight = '180px'; progressBox.style.overflow='auto';
-        newForm.querySelector('.modal-body').appendChild(progressBox);
-      }
-      progressBox.innerHTML = '<div class="text-muted">Tâche lancée…</div>';
-
-      async function applyLinks(result){
-        const links = (result && result.result && result.result.links) || [];
-        const data = window.COMPETENCE_MAP_DATA || {};
-        const normalize = (s) => String(s||'').trim().replace(/[\u00A0\u200b\u200c\u200d\ufeff]/g, '');
-        const compByCode = new Map((data.competences||[]).map(c => [normalize(c.code), c]));
-        const courseByCode = new Map((data.cours||[]).map(c => [normalize(c.code), c]));
-        const payload = [];
-        const unknownCourses = new Set();
-        const unknownComps = new Set();
-        for (const l of links) {
-          const c = courseByCode.get(normalize(l.cours_code));
-          const k = compByCode.get(normalize(l.competence_code));
-          if (!c) { unknownCourses.add(normalize(l.cours_code)); continue; }
-          if (!k) { unknownComps.add(normalize(l.competence_code)); continue; }
-          payload.push({ cours_id: c.id, competence_id: k.id, type: String(l.type||'').toLowerCase() });
+      const startUrl = "{{ url_for('programme.generate_competence_logigramme', programme_id=programme.id) }}";
+      await window.EDxoTasks.startCeleryTask(startUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+        body: JSON.stringify({ ai_model, reasoning_effort, verbosity, additional_info })
+      }, {
+        title: 'Génération du logigramme',
+        startMessage: 'Génération en cours…',
+        userPrompt: additional_info,
+        onDone: (payload) => {
+          const link = (payload && payload.validation_url) ? payload.validation_url : ("/programme/{{ programme.id }}/competences/logigramme");
+          try { addNotification('Proposition de logigramme prête. Cliquez pour ouvrir.', 'success', link); } catch(_) {}
         }
-        const programmeId = (data.programme && data.programme.id) ? String(data.programme.id) : '';
-        const url = `/programme/${encodeURIComponent(programmeId)}/links`;
-        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-        const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf }, body: JSON.stringify(payload) });
-        const out = await resp.json().catch(() => ({}));
-        const main = document.querySelector('main.container') || document.body;
-        const modalEl = document.getElementById('generateLogigrammeModal') || document.getElementById('generateLogigramModal');
-        if (modalEl) try { bootstrap.Modal.getInstance(modalEl)?.hide(); } catch(_) {}
-        const alert = document.createElement('div');
-        if (!resp.ok) {
-          alert.className = 'alert alert-danger alert-dismissible fade show';
-          alert.role = 'alert';
-          alert.innerHTML = (out.error || ('Erreur HTTP '+resp.status)) + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
-          main.prepend(alert);
-          return;
-        }
-        alert.className = 'alert alert-success alert-dismissible fade show';
-        alert.role = 'alert';
-        const uc = Array.from(unknownCourses).slice(0,5);
-        const uk = Array.from(unknownComps).slice(0,5);
-        const ucTxt = uc.length ? `<div class="mt-1 small">Cours inconnus: ${uc.join(', ')}${unknownCourses.size>uc.length?'…':''}</div>` : '';
-        const ukTxt = uk.length ? `<div class="mt-1 small">Compétences inconnues: ${uk.join(', ')}${unknownComps.size>uk.length?'…':''}</div>` : '';
-        alert.innerHTML = (out.message || 'Liens enregistrés') + ucTxt + ukTxt + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
-        main.prepend(alert);
-        setTimeout(() => { window.location.reload(); }, 500);
-      }
-
-      await new Promise((resolve, reject) => {
-        const interval = setInterval(async () => {
-          try {
-            const r = await fetch(statusUrl);
-            const s = await r.json();
-            if (s.state === 'PROGRESS') {
-              const msg = s.message || '…'; const rs = s.reasoning_summary || ''; const buf = s.stream_buffer || '';
-              progressBox.innerHTML = `<div>${msg}</div>` + (rs ? `<div class=\"text-muted\">${rs}</div>` : '') + (buf ? `<pre class=\"mt-1\">${buf}</pre>` : '');
-            } else if (s.state === 'SUCCESS') {
-              clearInterval(interval); resolve(s);
-            } else if (s.state === 'FAILURE' || s.status === 'error' || s.state === 'ERROR') {
-              clearInterval(interval); reject(new Error(s.message || 'Échec de la tâche'));
-            }
-          } catch (e) { clearInterval(interval); reject(e); }
-        }, 1200);
-      }).then(applyLinks);
+      });
+      const modalEl = document.getElementById('generateLogigramModal');
+      if (modalEl) try { (bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl)).hide(); } catch(_) {}
     } catch (err) {
       console.error('Erreur génération logigramme', err);
-      const main = document.querySelector('main.container') || document.body;
-      const alert = document.createElement('div');
-      alert.className = 'alert alert-danger alert-dismissible fade show';
-      alert.role = 'alert';
-      alert.innerHTML = (err && err.message ? err.message : 'Erreur lors de la génération') + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
-      main.prepend(alert);
+      try { addNotification('Erreur de génération: ' + (err.message||err), 'error'); } catch(_) {}
     } finally {
       btn.disabled = false; spinner.classList.add('d-none');
     }

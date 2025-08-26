@@ -57,6 +57,7 @@ from .routes.ocr_routes import ocr_bp
 from .routes.grilles import grille_bp
 from .routes.api import api_bp
 from .routes.oauth import oauth_bp
+from .routes.tasks import tasks_bp
 from ..mcp_server.server import init_app as init_mcp_server
 
 # Import version
@@ -240,11 +241,31 @@ def create_app(testing=False):
     app.register_blueprint(grille_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(oauth_bp)
+    app.register_blueprint(tasks_bp)
 
     # Register helpers and handlers
     @app.context_processor
     def inject_version():
         return dict(version=__version__)
+
+    @app.context_processor
+    def inject_template_helpers():
+        # Helper accessible dans les templates: has_endpoint('blueprint.endpoint')
+        def has_endpoint(name: str) -> bool:
+            try:
+                return name in current_app.view_functions
+            except Exception:
+                return False
+        # Cache-busting helper: build static URL with file mtime as version
+        def asset_url(path: str) -> str:
+            try:
+                full_path = os.path.join(app.static_folder or "", path)
+                ver = int(os.path.getmtime(full_path)) if os.path.exists(full_path) else int(datetime.now(timezone.utc).timestamp())
+            except Exception:
+                ver = int(datetime.now(timezone.utc).timestamp())
+            return url_for('static', filename=path, v=ver)
+
+        return dict(has_endpoint=has_endpoint, asset_url=asset_url)
 
     @app.before_request
     def before_request():

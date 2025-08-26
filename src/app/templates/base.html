@@ -156,6 +156,8 @@
       /* S'assurer que les modaux passent au-dessus du header et des menus */
       .modal-backdrop {
         z-index: 2050;
+        /* Par sécurité: si un backdrop résiduel subsiste, ne pas bloquer les clics */
+        pointer-events: none;
       }
       .modal {
         z-index: 2060;
@@ -448,7 +450,7 @@
       });
     </script>
 
-    <!-- Gestion du polling pour les tâches -->
+    <!-- Gestion du polling pour les tâches (unifié) -->
     <script>
       let currentTaskId = null;
       let isPolling = false;
@@ -456,7 +458,7 @@
       function checkTaskStatus() {
         if (!currentTaskId) return;
 
-        fetch('/task_status/' + currentTaskId, {
+        fetch('/tasks/status/' + currentTaskId, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           credentials: 'same-origin'
@@ -518,10 +520,12 @@
             clearTaskId();
             window.onTaskStreamUpdate = null;
           } else if (data.state === 'PROGRESS') {
-            addNotification(data.message || "Génération en cours...", "in-progress");
+            const link = `/tasks/track/${currentTaskId}`;
+            addNotification(data.message || "Tâche en cours...", "in-progress", link);
             setTimeout(checkTaskStatus, 3000);
           } else {
-            addNotification("Génération en cours...", "in-progress");
+            const link = `/tasks/track/${currentTaskId}`;
+            addNotification("Tâche en cours...", "in-progress", link);
             setTimeout(checkTaskStatus, 3000);
           }
         })
@@ -535,7 +539,7 @@
         if (isPolling) return;
         currentTaskId = taskId;
         isPolling = true;
-        addNotification("Génération en cours...", "in-progress");
+        addNotification("Tâche en cours...", "in-progress", `/tasks/track/${taskId}`);
         checkTaskStatus();
       }
 
@@ -566,14 +570,51 @@
       }
 
       setInterval(function() {
+        // Désactiver le poller hérité si l'orchestrateur unifié est chargé
+        if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') return;
         const storedTaskId = sessionStorage.getItem('currentTaskId');
-        console.log("Looking for task");
         if (storedTaskId && !isPolling) startTaskPolling(storedTaskId);
       }, 3000);
 
       document.addEventListener('DOMContentLoaded', function() {
-        const storedTaskId = sessionStorage.getItem('currentTaskId');
-        if (storedTaskId && !isPolling) startTaskPolling(storedTaskId);
+        // Désactiver le poller hérité si l'orchestrateur unifié est chargé
+        if (!(window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function')) {
+          const storedTaskId = sessionStorage.getItem('currentTaskId');
+          if (storedTaskId && !isPolling) startTaskPolling(storedTaskId);
+        }
+      });
+    </script>
+
+    <!-- Orchestrateur unifié des tâches (SSE + polling) -->
+    <script src="{{ asset_url('js/task_orchestrator.js') }}"></script>
+
+    <!-- Ouvrir le suivi tâche en modal quand on clique une notification /tasks/track/<id> -->
+    <script>
+      document.addEventListener('click', function (e) {
+        const anchor = e.target && e.target.closest ? e.target.closest('a') : null;
+        if (!anchor || !anchor.href) return;
+        try {
+          const url = new URL(anchor.getAttribute('href'), window.location.origin);
+          if (url.pathname.startsWith('/tasks/track/')) {
+            const parts = url.pathname.split('/');
+            const taskId = parts[parts.length - 1];
+            if (taskId) {
+              e.preventDefault();
+              try { sessionStorage.setItem('currentTaskId', taskId); } catch {}
+              // Fermer un éventuel dropdown de notifications
+              try {
+                const dd = bootstrap.Dropdown.getInstance(document.getElementById('notificationDropdown'));
+                if (dd) dd.hide();
+              } catch {}
+              // Ouvrir le modal de suivi si dispo; replis vers la navigation sinon
+              if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
+                window.EDxoTasks.openTaskModal(taskId, { title: 'Suivi de la tâche' });
+              } else {
+                window.location.href = url.href;
+              }
+            }
+          }
+        } catch {}
       });
     </script>
 

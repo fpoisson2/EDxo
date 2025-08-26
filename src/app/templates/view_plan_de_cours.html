@@ -16,6 +16,29 @@
             <i class="bi bi-file-earmark-arrow-up me-2"></i>
             <span>Importer .docx</span>
         </button>
+        <!-- Démarrer (unifié) -->
+        <div class="btn-group">
+          <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            Démarrer (unifié)
+          </button>
+          <ul class="dropdown-menu">
+            <li>
+              <a class="dropdown-item" href="#"
+                 data-task-start
+                 data-url="/api/plan_de_cours/{{ plan_de_cours.id }}/generate"
+                 data-title="Générer le plan de cours"
+                 data-mode="json"
+                 data-json='{"prompt":""}'>Générer (API)</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="#"
+                 data-task-start
+                 data-url="{{ url_for('plan_de_cours.import_docx_start') }}"
+                 data-title="Importer Plan de cours (.docx)"
+                 data-mode="form">Importer DOCX</a>
+            </li>
+          </ul>
+        </div>
     </div>
 
     <div class="accordion" id="accordionPlanCours">
@@ -879,76 +902,37 @@ document.addEventListener('DOMContentLoaded', function() {
             genForm.querySelector('.modal-body')?.appendChild(statusText);
 
             try {
-                const startResp = await fetch("{{ url_for('plan_de_cours.generate_all_start') }}", {
+                // Démarrer via orchestrateur unifié + modal de suivi
+                const params = new URLSearchParams();
+                params.append('cours_id', String({{ cours.id }}));
+                params.append('session', "{{ plan_de_cours.session }}");
+                const addInfo = formData.get('additional_info');
+                if (addInfo) params.append('additional_info', addInfo);
+                const aiModel = formData.get('ai_model');
+                if (aiModel) params.append('ai_model', aiModel);
+
+                const startUrl = "{{ url_for('plan_de_cours.generate_all_start') }}";
+                await window.EDxoTasks.startCeleryTask(startUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
-                    body: payload.toString(),
+                    body: params.toString(),
                     credentials: 'same-origin'
+                }, {
+                    title: 'Génération du plan de cours',
+                    startMessage: 'Génération en cours…',
+                    onDone: (payload) => {
+                        const reviewUrl = payload && payload.validation_url
+                          ? payload.validation_url
+                          : (`/plan_de_cours/review/${payload?.plan_id || ''}?task_id=${sessionStorage.getItem('currentTaskId')||''}`);
+                        try { addNotification('Génération terminée. Cliquez pour comparer.', 'success', reviewUrl); } catch(_) {}
+                    }
                 });
-                const startData = await startResp.json();
-                if (!startResp.ok || !startData.success) throw new Error(startData.message || 'Démarrage échoué');
 
-                statusText.textContent = 'Génération en cours...';
-                const taskId = startData.task_id;
-                let done = false;
-                while (!done) {
-                    await new Promise(r => setTimeout(r, 1500));
-                    const st = await fetch(`{{ url_for('plan_de_cours.generate_all_status') }}?task_id=${encodeURIComponent(taskId)}`, { method: 'GET', credentials: 'same-origin' });
-                    const stData = await st.json();
-                    if (!st.ok || stData.success === false) throw new Error(stData.message || 'Erreur de tâche');
-                    if (stData.state === 'PROGRESS' && stData.meta?.message) {
-                        statusText.textContent = stData.meta.message;
-                    }
-                    if (stData.state === 'SUCCESS') {
-                        const data = stData.result || {};
-                        // Mettre à jour les champs texte
-                        if (data.fields) {
-                            for (const [key, val] of Object.entries(data.fields)) {
-                                const el = document.getElementById(key);
-                                if (!el) continue;
-                                el.value = val ?? '';
-                                if (el.toastEditor) {
-                                    el.toastEditor.setMarkdown(val ?? '');
-                                }
-                            }
-                        }
-                        // Mettre à jour le calendrier
-                        const container = document.getElementById('calendrier-container');
-                        if (container) {
-                            container.innerHTML = '';
-                            const entries = data.calendriers || [];
-                            if (entries.length > 0) {
-                                container.style.display = 'block';
-                                entries.forEach((entry, index) => {
-                                    const newItem = document.createElement('div');
-                                    newItem.className = `calendar-item border p-2 mb-2 ${index % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
-                                    newItem.innerHTML = document.getElementById('calendrier-template').innerHTML.replace(/__index__/g, index);
-                                    newItem.querySelector(`[name="calendriers-${index}-semaine"]`).value = entry.semaine ?? '';
-                                    newItem.querySelector(`[name="calendriers-${index}-sujet"]`).value = entry.sujet ?? '';
-                                    newItem.querySelector(`[name="calendriers-${index}-activites"]`).value = entry.activites ?? '';
-                                    newItem.querySelector(`[name="calendriers-${index}-travaux_hors_classe"]`).value = entry.travaux_hors_classe ?? '';
-                                    newItem.querySelector(`[name="calendriers-${index}-evaluations"]`).value = entry.evaluations ?? '';
-                                    container.appendChild(newItem);
-                                });
-                                calendrierIndex = entries.length;
-                                initDragAndDrop();
-                                if (window.showFloatingButtons) window.showFloatingButtons();
-                            } else {
-                                container.style.display = 'none';
-                            }
-                        }
-                        done = true;
-                    }
-                }
-
-                // Fermer le modal
+                // Fermer le modal de configuration
                 const modalEl = document.getElementById('generatePlanCoursModal');
                 const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
                 modal.hide();
                 statusText.remove();
-
-                const toast = document.getElementById('generateSuccessToast');
-                if (toast) new bootstrap.Toast(toast).show();
             } catch (e) {
                 console.error('Erreur génération complète du plan de cours', e);
                 const toast = document.getElementById('generateErrorToast');

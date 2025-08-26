@@ -53,7 +53,10 @@
                 </h2>
                 <div id="iaSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
                   <div class="accordion-body p-0">
-                    <div class="list-group list-group-flush">
+                  <div class="list-group list-group-flush">
+                      <a href="{{ url_for('settings.generation_settings') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-magic me-2"></i>Génération IA (global)
+                      </a>
                       <a href="{{ url_for('settings.edit_global_generation_settings') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-gear me-2"></i>Plan-cadre
                       </a>

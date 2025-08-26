@@ -161,8 +161,19 @@ def plans_de_cours_list(cours_id):
 @api_bp.post('/plan_cadre/<int:plan_id>/generate')
 @api_auth_required
 def generate_plan_cadre(plan_id):
+    """Démarre la génération d'un plan-cadre (unifié).
+
+    Accepte JSON ou FormData; relaie le payload au worker.
+    """
     from ..tasks.generation_plan_cadre import generate_plan_cadre_content_task
-    task = generate_plan_cadre_content_task.delay(plan_id, {}, g.api_user.id)
+    payload = request.get_json(silent=True)
+    if payload is None:
+        # Fallback for form/multipart
+        try:
+            payload = dict(request.form) if request.form else {}
+        except Exception:
+            payload = {}
+    task = generate_plan_cadre_content_task.delay(plan_id, payload or {}, g.api_user.id)
     return jsonify({'task_id': task.id}), 202
 
 
@@ -178,7 +189,13 @@ def generate_plan_de_cours(plan_id):
 @api_auth_required
 def improve_plan_cadre(plan_id):
     from ..tasks.generation_plan_cadre import generate_plan_cadre_content_task
-    payload = {'improve_only': True}
+    base = request.get_json(silent=True)
+    if base is None:
+        try:
+            base = dict(request.form) if request.form else {}
+        except Exception:
+            base = {}
+    payload = {**(base or {}), 'improve_only': True}
     task = generate_plan_cadre_content_task.delay(plan_id, payload, g.api_user.id)
     return jsonify({'task_id': task.id}), 202
 
@@ -187,7 +204,13 @@ def improve_plan_cadre(plan_id):
 @api_auth_required
 def improve_plan_cadre_section(plan_id, section):
     from ..tasks.generation_plan_cadre import generate_plan_cadre_content_task
-    payload = {'improve_only': True, 'target_columns': [section]}
+    base = request.get_json(silent=True)
+    if base is None:
+        try:
+            base = dict(request.form) if request.form else {}
+        except Exception:
+            base = {}
+    payload = {**(base or {}), 'improve_only': True, 'target_columns': [section]}
     task = generate_plan_cadre_content_task.delay(plan_id, payload, g.api_user.id)
     return jsonify({'task_id': task.id}), 202
 

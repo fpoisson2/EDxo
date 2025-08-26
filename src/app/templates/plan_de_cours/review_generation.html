@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "components/diff.html" import render_simple_diff %}
+{% block title %}Comparaison — Plan de cours{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h1>Comparaison — Plan de cours</h1>
+  {% if task_id %}
+  <p class="text-muted">Tâche: <code>{{ task_id }}</code></p>
+  {% endif %}
+
+  <h4 class="mt-3">Champs principaux</h4>
+  <div class="row g-3">
+    {% for key, label in {
+      'presentation_du_cours': 'Présentation du cours',
+      'objectif_terminal_du_cours': 'Objectif terminal',
+      'organisation_et_methodes': 'Organisation et méthodes',
+      'accomodement': 'Accommodement',
+      'evaluation_formative_apprentissages': 'Éval. formative',
+      'evaluation_expression_francais': 'Éval. expression français',
+      'materiel': 'Matériel',
+    }.items() %}
+      <div class="col-12">
+        <h6 class="mb-2">{{ label }}</h6>
+        {{ render_simple_diff(old_fields.get(key, ''), new_fields.get(key, ''), 'Avant', 'Après') }}
+      </div>
+    {% endfor %}
+  </div>
+
+  <h4 class="mt-4">Calendrier</h4>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Avant</div>
+        <div class="card-body">
+          {% if old_calendriers %}
+            <ul class="list-group">
+              {% for c in old_calendriers %}
+                <li class="list-group-item">
+                  <strong>S{{ c.semaine }}</strong> — {{ c.sujet or '' }}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted">Aucun calendrier</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Après</div>
+        <div class="card-body">
+          {% if new_calendriers %}
+            <ul class="list-group">
+              {% for c in new_calendriers %}
+                <li class="list-group-item">
+                  <strong>S{{ c.semaine }}</strong> — {{ c.sujet or '' }}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted">Aucun calendrier</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <a href="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=(plan.cours_id if plan else 0)) if false }}" class="btn btn-secondary">Retour</a>
+  </div>
+</div>
+{% endblock %}
+

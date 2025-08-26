@@ -88,6 +88,26 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
         if parsed is None:
             return {"status": "error", "message": "Aucune donnée renvoyée par le modèle."}
 
+        # Snapshot avant modification pour comparaison
+        old_fields = {
+            'presentation_du_cours': plan.presentation_du_cours,
+            'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+            'organisation_et_methodes': plan.organisation_et_methodes,
+            'accomodement': plan.accomodement,
+            'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+            'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'materiel': plan.materiel,
+        }
+        old_calendriers = [
+            {
+                'semaine': c.semaine,
+                'sujet': c.sujet,
+                'activites': c.activites,
+                'travaux_hors_classe': c.travaux_hors_classe,
+                'evaluations': c.evaluations,
+            } for c in plan.calendriers
+        ]
+
         # Mettre à jour les champs
         plan.presentation_du_cours = parsed.presentation_du_cours or plan.presentation_du_cours
         plan.objectif_terminal_du_cours = parsed.objectif_terminal_du_cours or plan.objectif_terminal_du_cours
@@ -132,7 +152,13 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
                     'travaux_hors_classe': c.travaux_hors_classe,
                     'evaluations': c.evaluations,
                 } for c in plan.calendriers
-            ]
+            ],
+            "old_fields": old_fields,
+            "old_calendriers": old_calendriers,
+            "cours_id": plan.cours_id,
+            "plan_id": plan.id,
+            "session": plan.session,
+            "validation_url": f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}"
         }
 
     except Exception as e:

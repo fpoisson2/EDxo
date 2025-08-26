@@ -200,7 +200,9 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None):
             "usage": {
                 "input_tokens": getattr(response.usage, 'input_tokens', 0),
                 "output_tokens": getattr(response.usage, 'output_tokens', 0)
-            }
+            },
+            # Page standard de validation/confirmation de l'import
+            "validation_url": f"/confirm_grille_import/{task_id}"
         }
 
     except Exception as e:

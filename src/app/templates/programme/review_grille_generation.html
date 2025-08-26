@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Validation grille générée{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h1>Validation de la grille générée</h1>
+  <p class="text-muted">Programme: <strong>{{ programme.nom }}</strong> — Tâche <code>{{ task_id }}</code></p>
+
+  <div id="status" class="mb-2 small"></div>
+  <div id="stream" class="mb-3" style="background:#0f172a;color:#e2e8f0;border-radius:6px;padding:10px;min-height:100px;max-height:220px;overflow:auto;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;"></div>
+
+  <div class="card">
+    <div class="card-header">Aperçu</div>
+    <div class="card-body" id="preview">En attente du résultat…</div>
+  </div>
+
+  <div class="d-flex gap-2 mt-3">
+    <button id="apply-append" class="btn btn-primary" disabled>Appliquer (ajout)</button>
+    <button id="apply-overwrite" class="btn btn-outline-danger" disabled>Appliquer (remplacer)</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const taskId = {{ task_id|tojson }};
+  const programmeId = {{ programme.id|tojson }};
+  const statusUrl = `/tasks/status/${taskId}`;
+  const eventsUrl = `/tasks/events/${taskId}`;
+  const stream = document.getElementById('stream');
+  const preview = document.getElementById('preview');
+  let finalData = null;
+
+  function log(line) {
+    const now = new Date();
+    const ts = now.toLocaleTimeString();
+    const safe = (''+line).replace(/[\u0000-\u001F\u007F<>]/g, ch => ({'<':'&lt;','>':'&gt;'}[ch]||''));
+    const atBottom = stream.scrollTop + stream.clientHeight >= stream.scrollHeight - 4;
+    stream.insertAdjacentHTML('beforeend', `<div>[${ts}] ${safe}</div>`);
+    if (atBottom) stream.scrollTop = stream.scrollHeight;
+  }
+
+  function renderPreview(data) {
+    try {
+      const sessions = (data && data.sessions) || [];
+      const fils = (data && data.fils_conducteurs) || [];
+      if (!sessions.length && !fils.length) { preview.textContent = 'Aucune donnée.'; return; }
+      let html = '';
+      sessions.sort((a,b)=>(a.session||0)-(b.session||0));
+      for (const s of sessions) {
+        html += `<div class="mb-3"><h5 class="mb-2">Session ${s.session}</h5>`;
+        html += '<ul class="list-group">';
+        for (const c of (s.courses||s.cours||[])) {
+          const name = (c.nom||'Cours').replace(/</g,'&lt;');
+          const ht = c.heures_theorie||0, hl=c.heures_laboratoire||0, hm=c.heures_travail_maison||0;
+          html += `<li class="list-group-item d-flex justify-content-between align-items-center">`+
+                  `<span>${name}</span>`+
+                  `<span class="badge bg-secondary">${ht}-${hl}-${hm} h</span>`+
+                  `</li>`;
+        }
+        html += '</ul></div>';
+      }
+      if (fils.length) {
+        html += '<div class="mb-2 mt-3"><h6>Fils conducteurs</h6><div class="d-flex flex-wrap gap-2">';
+        for (const f of fils) {
+          const color = (typeof f.couleur === 'string') ? f.couleur : '#888';
+          const desc = (f.description||'').replace(/</g,'&lt;');
+          html += `<div class="border rounded p-2" style="border-left:6px solid ${color};">${desc}</div>`;
+        }
+        html += '</div></div>';
+      }
+      preview.innerHTML = html;
+    } catch {
+      preview.textContent = 'Erreur lors du rendu.';
+    }
+  }
+
+  // SSE stream for context
+  try {
+    const es = new EventSource(eventsUrl);
+    es.addEventListener('progress', (ev) => {
+      try { const d = JSON.parse(ev.data||'{}'); if (d.meta && (d.meta.message||d.meta.step)) { log(`${d.meta.step? 'Étape: '+d.meta.step+' | ':''}${d.meta.message||''}`); } } catch {}
+    });
+    es.addEventListener('done', () => { es.close(); });
+  } catch {}
+
+  async function poll() {
+    try {
+      const r = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
+      const j = await r.json();
+      if (j.state === 'SUCCESS') {
+        const payload = j.result || j.meta || {};
+        finalData = payload.result || payload; // support both shapes
+        renderPreview(finalData);
+        document.getElementById('apply-append').disabled = false;
+        document.getElementById('apply-overwrite').disabled = false;
+        return;
+      } else if (j.state === 'FAILURE') {
+        log('Échec de la tâche.');
+        return;
+      }
+    } catch(e) { /* ignore transient */ }
+    setTimeout(poll, 1200);
+  }
+  poll();
+
+  async function apply(mode) {
+    if (!finalData) return;
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const btn = mode==='overwrite' ? document.getElementById('apply-overwrite') : document.getElementById('apply-append');
+    const txt = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = 'Application…';
+    try {
+      const resp = await fetch(`/programme/${programmeId}/grille/apply`, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf}, body: JSON.stringify({ mode, grid: finalData }) });
+      const j = await resp.json();
+      if (!resp.ok || !j.ok) throw new Error(j.error || 'Échec application');
+      window.location = {{ url_for('programme.view_programme', programme_id=programme.id)|tojson }};
+    } catch (e) {
+      btn.disabled = false; btn.innerHTML = txt; log('Erreur: ' + e.message);
+    }
+  }
+
+  document.getElementById('apply-append').addEventListener('click', () => apply('append'));
+  document.getElementById('apply-overwrite').addEventListener('click', () => apply('overwrite'));
+});
+</script>
+{% endblock %}
+

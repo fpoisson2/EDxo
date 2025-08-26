@@ -62,7 +62,7 @@
             <span>Importer .docx</span>
         </button>
 
-        <button type="button" id="openGenerateBtn" class="btn btn-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
+        <button type="button" id="openGenerateBtn" class="btn btn-success d-flex align-items-center" data-quick-mode="generate">
             <i class="bi bi-box-arrow-up-right me-2"></i>
             <span class="btn-text">Générer le plan-cadre</span>
             <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="loadingSpinner">
@@ -70,10 +70,43 @@
             </span>
         </button>
 
-        <button type="button" id="openImproveBtn" class="btn btn-outline-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
+        <button type="button" id="openImproveBtn" class="btn btn-outline-success d-flex align-items-center" data-quick-mode="improve">
             <i class="bi bi-magic me-2"></i>
             <span>Améliorer le plan-cadre</span>
         </button>
+
+        <!-- Démarrage unifié (JSON/FormData) -->
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            Démarrer (unifié)
+          </button>
+          <ul class="dropdown-menu">
+            <li>
+              <a class="dropdown-item" href="#"
+                 data-task-start
+                 data-url="/api/plan_cadre/{{ plan.id }}/generate"
+                 data-title="Générer le plan‑cadre"
+                 data-mode="json"
+                 data-json='{"stream":true}'>Générer (API)</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="#"
+                 data-task-start
+                 data-url="/api/plan_cadre/{{ plan.id }}/improve"
+                 data-title="Améliorer le plan‑cadre"
+                 data-mode="json"
+                 data-json='{"improve_only":true,"stream":true}'>Améliorer (API)</a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="#"
+                 data-task-start
+                 data-url="{{ url_for('plan_cadre.import_plan_cadre_docx_start', plan_id=plan.id) }}"
+                 data-title="Importer Plan‑cadre (.docx)"
+                 data-mode="form">Importer DOCX</a>
+            </li>
+          </ul>
+        </div>
         {% endif %}
 
         <a href="{{ url_for('plan_cadre.export_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary d-flex align-items-center">
@@ -931,87 +964,6 @@
         </div>
     </div>
 
-    <!-- Modal Génération du Plan-cadre (Formulaire Séparé) -->
-    <div class="modal fade" id="generateModal" tabindex="-1" aria-labelledby="generateModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post" id="generateContentForm">
-                    {{ generate_form.hidden_tag() }}
-                    <input type="hidden" name="mode" id="genMode" value="generate">
-                    <input type="hidden" name="target_columns" id="genTargetColumns" value="">
-                    <input type="hidden" name="stream" id="genStream" value="0">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="generateModalLabel">Générer le plan-cadre</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="streamContainer" class="d-none mb-3">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <label class="form-label d-flex align-items-center gap-2 mb-0">
-                                    <i class="bi bi-lightbulb"></i>
-                                    <span>Aperçu en direct</span>
-                                </label>
-                                <div id="streamTabs" class="btn-group btn-group-sm" role="group" aria-label="Aperçu tabs">
-                                    <button type="button" class="btn btn-outline-secondary active" data-target="structured">Structuré</button>
-                                    <button type="button" class="btn btn-outline-secondary" data-target="json">JSON</button>
-                                </div>
-                            </div>
-                            <div id="reasoningSummary" class="alert alert-secondary py-2 small mb-2 d-none"></div>
-                            <div class="small text-muted mb-2" id="streamStatus"></div>
-                            <div id="streamPreviewHtml" class="stream-preview d-none"></div>
-                            <pre id="streamOutput" class="form-control stream-output d-none"></pre>
-                        </div>
-                        <!-- Groupe prompt général (génération/amélioration globale) -->
-                        <div class="mb-3" id="generalPromptGroup">
-                            {{ generate_form.additional_info.label(class="form-label") }}
-                            {{ generate_form.additional_info(class="form-control border-0", rows="3", placeholder="Décrivez brièvement le contexte de génération/amélioration globale.") }}
-                            {% for error in generate_form.additional_info.errors %}
-                                <div class="text-danger">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        <!-- Groupe prompt simple (baguette magique) -->
-                        <div class="mb-3 d-none" id="wandPromptGroup">
-                            <label class="form-label">Instruction (baguette magique)</label>
-                            <textarea name="wand_instruction" class="form-control border-0" rows="3" placeholder="Ex.: Rendre ce texte plus clair, simple et concis, sans ajouter d'information."></textarea>
-                            <div class="form-text">Cette instruction courte est utilisée uniquement pour améliorer la section ciblée.</div>
-                        </div>
-                        <div class="mb-3">
-                            {{ generate_form.ai_model.label(class="form-label") }}
-                            {{ generate_form.ai_model(class="form-select border-0") }}
-                            {% for error in generate_form.ai_model.errors %}
-                                <div class="text-danger">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        <div class="mb-3">
-                            {{ generate_form.reasoning_effort.label(class="form-label") }}
-                            {{ generate_form.reasoning_effort(class="form-select border-0") }}
-                            {% for error in generate_form.reasoning_effort.errors %}
-                                <div class="text-danger">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        <div class="mb-3">
-                            {{ generate_form.verbosity.label(class="form-label") }}
-                            {{ generate_form.verbosity(class="form-select border-0") }}
-                            {% for error in generate_form.verbosity.errors %}
-                                <div class="text-danger">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        {# Case à cocher supprimée (mode géré par les boutons) #}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                        <button type="submit" class="btn btn-primary" id="confirmGenerateBtn">
-                            <span class="btn-text">Générer le plan-cadre</span>
-                            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="modalLoadingSpinner">
-                                <span class="visually-hidden">Chargement...</span>
-                            </span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal Import DOCX Plan-cadre -->
     <div class="modal fade" id="importPlanCadreModal" tabindex="-1" aria-labelledby="importPlanCadreModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -1041,8 +993,73 @@
       </div>
     </div>
 
+    <!-- Modal rapide (unifié) — champ unique "texte complémentaire" -->
+    <div class="modal fade" id="pcQuickGenModal" tabindex="-1" aria-labelledby="pcQuickGenLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="pcQuickGenLabel">Génération du plan‑cadre</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-2">
+              <label class="form-label" for="pcQuickText">Texte complémentaire</label>
+              <textarea id="pcQuickText" class="form-control" rows="3" placeholder="Ajoutez des précisions pour guider la génération (optionnel)"></textarea>
+              <div class="form-text">Ce texte est transmis comme instructions complémentaires.</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="button" class="btn btn-primary" id="pcQuickSubmit">Lancer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
       document.addEventListener('DOMContentLoaded', function() {
+        // --- Quick unified start (single complementary text) ---
+        try {
+          const btnGen = document.getElementById('openGenerateBtn');
+          const btnImp = document.getElementById('openImproveBtn');
+          const quickModalEl = document.getElementById('pcQuickGenModal');
+          const quickText = document.getElementById('pcQuickText');
+          const submitBtn = document.getElementById('pcQuickSubmit');
+          let mode = 'generate';
+          function openQuick(m){
+            mode = m;
+            const titleEl = document.getElementById('pcQuickGenLabel');
+            if (titleEl) titleEl.textContent = (mode === 'improve') ? 'Améliorer le plan‑cadre' : 'Générer le plan‑cadre';
+            submitBtn.textContent = (mode === 'improve') ? 'Générer la proposition' : 'Lancer';
+            if (quickText) quickText.value = '';
+            bootstrap.Modal.getOrCreateInstance(quickModalEl).show();
+          }
+          if (btnGen) btnGen.addEventListener('click', (e) => { e.preventDefault(); openQuick('generate'); });
+          if (btnImp) btnImp.addEventListener('click', (e) => { e.preventDefault(); openQuick('improve'); });
+          if (submitBtn) submitBtn.addEventListener('click', async () => {
+            const addl = (quickText && quickText.value) ? quickText.value : '';
+            const endpoint = (mode === 'improve') ? `/api/plan_cadre/{{ plan.id }}/improve` : `/api/plan_cadre/{{ plan.id }}/generate`;
+            const body = { stream: true };
+            if (addl) body.additional_info = addl;
+            if (mode === 'improve') body.improve_only = true;
+            const title = (mode === 'improve') ? 'Améliorer le plan‑cadre' : 'Générer le plan‑cadre';
+            try {
+              let csrf = '';
+              try { csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content') || ''; } catch {}
+              const taskId = await (window.EDxoTasks && window.EDxoTasks.startCeleryTask ? window.EDxoTasks.startCeleryTask(endpoint, {
+                method: 'POST',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, csrf ? { 'X-CSRFToken': csrf } : {}),
+                body: JSON.stringify(body),
+                credentials: 'same-origin'
+              }, { title, startMessage: 'Tâche en cours…', userPrompt: addl }) : Promise.reject(new Error('EDxoTasks indisponible')));
+              bootstrap.Modal.getOrCreateInstance(quickModalEl).hide();
+              try { sessionStorage.setItem('currentTaskId', taskId); } catch {}
+            } catch (err) {
+              console.error('Erreur démarrage tâche (Plan‑cadre)', err);
+            }
+          });
+        } catch (_) {}
+
         const importForm = document.getElementById('importPlanCadreForm');
         const importBtn = document.getElementById('confirmImportPlanCadreBtn');
         if (!importForm) return;

@@ -399,7 +399,9 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
             'cours_id': plan.cours_id,
             'plan_id': plan.id,
             'session': plan.session,
-            # Chemin direct vers l'affichage du plan de cours
+            # Lien de validation/comparaison standardisé
+            'validation_url': f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
+            # Lien direct possible vers l'affichage du plan de cours (fallback)
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
         }
 

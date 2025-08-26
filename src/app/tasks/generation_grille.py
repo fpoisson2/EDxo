@@ -5,7 +5,7 @@ from openai import OpenAI
 
 from src.extensions import db
 from src.utils.openai_pricing import calculate_call_cost
-from src.app.models import Programme, User, Competence
+from src.app.models import Programme, User, Competence, ChatModelConfig
 
 logger = logging.getLogger(__name__)
 
@@ -46,13 +46,19 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
         if not user.openai_key:
             return { 'status': 'error', 'message': "Aucune clé OpenAI configurée dans votre profil." }
 
-        ai_model = (form or {}).get('ai_model') or 'gpt-5'
+        # Modèle et paramètres IA: priorité au formulaire, sinon config centrale
+        cfg = None
+        try:
+            cfg = ChatModelConfig.get_current()
+        except Exception:
+            cfg = None
+        ai_model = (form or {}).get('ai_model') or (cfg.chat_model if cfg and cfg.chat_model else 'gpt-5')
         total_hours = int((form or {}).get('total_hours') or 0)
         total_units = float((form or {}).get('total_units') or 0)
         nb_sessions = int((form or {}).get('nb_sessions') or 0)
         additional_info = (form or {}).get('additional_info') or ''
-        reasoning_effort = (form or {}).get('reasoning_effort') or 'medium'
-        verbosity = (form or {}).get('verbosity') or 'medium'
+        reasoning_effort = (form or {}).get('reasoning_effort') or ((cfg.reasoning_effort or 'medium') if cfg else 'medium')
+        verbosity = (form or {}).get('verbosity') or ((cfg.verbosity or 'medium') if cfg else 'medium')
 
         if total_hours <= 0 or nb_sessions <= 0:
             return { 'status': 'error', 'message': 'Paramètres invalides (heures/sessions).' }
@@ -274,7 +280,10 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
                 'sessions': cleaned,
                 'fils_conducteurs': fils_conducteurs
             },
-            'usage': { 'prompt_tokens': usage_prompt, 'completion_tokens': usage_completion, 'cost': cost }
+            'usage': { 'prompt_tokens': usage_prompt, 'completion_tokens': usage_completion, 'cost': cost },
+            # Lien standardisé vers la page de validation (comparaison/édition)
+            # Utiliser la variante avec paramètre de chemin, alignée sur la route Flask
+            'validation_url': f"/programme/{programme.id}/grille/review/{self.request.id}"
         }
     except Exception as e:
         logger.exception('Erreur génération grille')

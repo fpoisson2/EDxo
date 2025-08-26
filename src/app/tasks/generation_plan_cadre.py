@@ -16,7 +16,8 @@ from ..models import (
     ElementCompetenceParCours, CoursCorequis, Cours, CoursPrealable,
     PlanCadreSavoirEtre, PlanCadreCapacites,
     PlanCadreCapaciteSavoirsNecessaires, PlanCadreCapaciteSavoirsFaire,
-    PlanCadreCapaciteMoyensEvaluation, User, Programme
+    PlanCadreCapaciteMoyensEvaluation, User, Programme,
+    ChatModelConfig,
 )
 
 from celery import shared_task, group, signature
@@ -35,8 +36,17 @@ from src.config.constants import *
 from flask import current_app 
 from celery.exceptions import Ignore
 from celery import chord
+from src.config.env import CELERY_BROKER_URL
 
 logger = logging.getLogger(__name__)
+
+def _cancel_requested(task_id: str) -> bool:
+    try:
+        import redis
+        r = redis.Redis.from_url(CELERY_BROKER_URL)
+        return bool(r.get(f"edxo:cancel:{task_id}"))
+    except Exception:
+        return False
 
 def _collect_summary(items):
     """Return concatenated summary_text from items."""
@@ -174,6 +184,18 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             if wand_instruction:
                 additional_info = wand_instruction
 
+        # Fallback: utiliser la configuration globale si non fournie
+        try:
+            cfg = ChatModelConfig.get_current()
+        except Exception:
+            cfg = None
+        if not ai_model:
+            ai_model = (cfg.chat_model if cfg and getattr(cfg, 'chat_model', None) else 'gpt-4.1-mini')
+        if not reasoning_effort and cfg and getattr(cfg, 'reasoning_effort', None):
+            reasoning_effort = cfg.reasoning_effort
+        if not verbosity and cfg and getattr(cfg, 'verbosity', None):
+            verbosity = cfg.verbosity
+
         # Save additional info and the AI model in the plan (éviter d'écraser en mode baguette)
         if mode != 'wand':
             plan.additional_info = additional_info
@@ -201,6 +223,12 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             state='PROGRESS',
             meta={'message': f"Génération automatique du plan-cadre du cours {cours_nom} en cours"}
         )
+
+        # Annulation précoce si demandée
+        if _cancel_requested(self.request.id):
+            result_meta = {"status": "error", "message": "Tâche annulée par l'utilisateur."}
+            self.update_state(state="REVOKED", meta=result_meta)
+            raise Ignore()
 
         # Récupérer les paramètres globaux de génération
         parametres_generation = db.session.query(
@@ -787,6 +815,14 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                         streamed_text = ""
                         seq = 0
                         for event in stream:
+                            # Vérifier annulation à chaque itération de stream
+                            if _cancel_requested(self.request.id):
+                                try:
+                                    stream.close()
+                                except Exception:
+                                    pass
+                                self.update_state(state='REVOKED', meta={'message': "Tâche annulée par l'utilisateur."})
+                                raise Ignore()
                             etype = getattr(event, 'type', '') or ''
                             # Handle text deltas for output text
                             if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
@@ -876,6 +912,10 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                     })
                             elif etype.endswith('response.completed') or etype == 'response.completed':
                                 break
+                        # Dernière vérification avant de récupérer la réponse finale
+                        if _cancel_requested(self.request.id):
+                            self.update_state(state='REVOKED', meta={'message': "Tâche annulée par l'utilisateur."})
+                            raise Ignore()
                         response = stream.get_final_response()
                         if not reasoning_summary_text:
                             reasoning_summary_text = _extract_reasoning_summary_from_response(response)
@@ -892,6 +932,10 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             # Non-stream or fallback: perform standard request
             if streamed_text is None:
                 response = client.responses.create(**request_kwargs)
+                # Vérifier annulation après l'appel non-stream (non interruptible)
+                if _cancel_requested(self.request.id):
+                    self.update_state(state='REVOKED', meta={'message': "Tâche annulée par l'utilisateur."})
+                    raise Ignore()
                 reasoning_summary_text = _extract_reasoning_summary_from_response(response)
                 if reasoning_summary_text:
                     self.update_state(state='PROGRESS', meta={
@@ -907,6 +951,11 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         if response is not None and hasattr(response, 'usage'):
             total_prompt_tokens += response.usage.input_tokens
             total_completion_tokens += response.usage.output_tokens
+
+        # Nouvelle vérification avant de continuer le post-traitement
+        if _cancel_requested(self.request.id):
+            self.update_state(state='REVOKED', meta={'message': "Tâche annulée par l'utilisateur."})
+            raise Ignore()
 
         usage_prompt = response.usage.input_tokens if (response is not None and hasattr(response, 'usage')) else 0
         usage_completion = response.usage.output_tokens if (response is not None and hasattr(response, 'usage')) else 0
@@ -1097,6 +1146,10 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             if not proposed['capacites']:
                 proposed.pop('capacites')
 
+            # Vérification d'annulation avant préparation de l'aperçu
+            if _cancel_requested(self.request.id):
+                self.update_state(state='REVOKED', meta={'message': "Tâche annulée par l'utilisateur."})
+                raise Ignore()
             self.update_state(state='PROGRESS', meta={'message': "Préparation de l’aperçu des changements..."})
             result = {
                 "status": "success",
@@ -1106,6 +1159,11 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 "preview": True,
                 "proposed": proposed
             }
+            try:
+                # Lien standardisé vers la page de comparaison/validation
+                result["validation_url"] = f"/plan_cadre/{plan.id}/review?task_id={self.request.id}"
+            except Exception:
+                pass
             if streamed_text:
                 result["stream_buffer"] = streamed_text
             if reasoning_summary_text:
@@ -1113,6 +1171,10 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             self.update_state(state="SUCCESS", meta=result)
             return result
         else:
+            # Vérification d'annulation avant commit
+            if _cancel_requested(self.request.id):
+                self.update_state(state='REVOKED', meta={'message': "Tâche annulée par l'utilisateur."})
+                raise Ignore()
             db.session.commit()
             result = {
                 "status": "success",
@@ -1132,5 +1194,9 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         logging.error("Unexpected error: %s", e, exc_info=True)
         error_message = f"Erreur lors de la génération du contenu: {str(e)}"
         result_meta = {"status": "error", "message": error_message}
+        # Dernière vérification d'annulation avant retour
+        if _cancel_requested(self.request.id):
+            self.update_state(state='REVOKED', meta={'message': "Tâche annulée par l'utilisateur."})
+            raise Ignore()
         self.update_state(state="SUCCESS", meta=result_meta)
         return result_meta

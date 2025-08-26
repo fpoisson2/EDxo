@@ -4,14 +4,51 @@
 
 {% block content %}
   <h1>Importation de la grille de cours</h1>
-  <form method="POST" enctype="multipart/form-data">
+  <form id="grilleImportForm" method="POST" enctype="multipart/form-data">
       {{ form.hidden_tag() }}
-      <div>
-          {{ form.file.label }}<br>
-          {{ form.file() }}
+      <div class="mb-3">
+          {{ form.file.label(class_='form-label') }}
+          {{ form.file(class_='form-control', id='grilleFile') }}
       </div>
       <div>
-          {{ form.submit() }}
+          {{ form.submit(class_='btn btn-primary') }}
       </div>
   </form>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('grilleImportForm');
+      if (!form) return;
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById('grilleFile');
+        if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+          try { addNotification('Sélectionnez un fichier PDF.', 'warning'); } catch(_) {}
+          return;
+        }
+        const fd = new FormData(form);
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        try {
+          const startUrl = '/grille/import';
+          await window.EDxoTasks.startCeleryTask(startUrl, {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-CSRFToken': csrf },
+            credentials: 'same-origin'
+          }, {
+            title: 'Import de la grille (PDF)',
+            startMessage: 'Import en cours…',
+            userPrompt: 'Extraction de la grille à partir du PDF fourni.',
+            onDone: (payload) => {
+              const link = (payload && payload.validation_url) ? payload.validation_url : (`/confirm_grille_import/${sessionStorage.getItem('currentTaskId')||''}`);
+              try { addNotification("Import terminé. Cliquez pour valider l'import.", 'success', link); } catch(_) {}
+            }
+          });
+        } catch (err) {
+          console.error('Erreur import grille', err);
+          try { addNotification('Erreur import: ' + (err.message||err), 'error'); } catch(_) {}
+        }
+      });
+    });
+  </script>
 {% endblock %}

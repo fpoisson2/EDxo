@@ -22,9 +22,15 @@
           <a href="{{ url_for('grille_bp.import_grille') }}" class="btn btn-sm btn-outline-secondary">
             <i class="fas fa-file-import"></i> Importer une grille
           </a>
-          <button class="btn btn-sm btn-outline-success" type="button" id="btn-ai-grille" title="Générer une grille (IA)">
+          <a href="#"
+             class="btn btn-sm btn-outline-success"
+             data-task-start
+             data-url="{{ url_for('programme.generate_programme_grille', programme_id=programme.id) }}"
+             data-title="Générer la grille (IA)"
+             data-mode="json"
+             data-json='{"total_hours":0,"nb_sessions":0,"total_units":0,"additional_info":""}'>
             <i class="fas fa-wand-magic-sparkles"></i> Générer (IA)
-          </button>
+          </a>
           {% endif %}
           <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
@@ -712,15 +718,36 @@ function handlePlanCoursAction() {
   let aiGrilleResult = null;
 
   document.addEventListener('DOMContentLoaded', function() {
-    aiGrilleModal = new bootstrap.Modal(document.getElementById('aiGrilleModal'));
+    // Branche le bouton sur l'orchestrateur unifié
     const openBtn = document.getElementById('btn-ai-grille');
-    if (openBtn) openBtn.addEventListener('click', () => {
-      resetAiGrilleModal();
-      aiGrilleModal.show();
+    if (openBtn) openBtn.addEventListener('click', async () => {
+      try {
+        const ai_model = document.getElementById('ai_model')?.value || 'gpt-5';
+        const total_hours = parseInt(document.getElementById('total_hours')?.value || '0', 10);
+        const total_units = parseFloat(document.getElementById('total_units')?.value || '0');
+        const nb_sessions = parseInt(document.getElementById('nb_sessions')?.value || '0', 10);
+        const additional_info = document.getElementById('ai_additional')?.value || '';
+        const reasoning_effort = (document.getElementById('ai_reasoning')?.value) || 'medium';
+        const verbosity = (document.getElementById('ai_verbosity')?.value) || 'medium';
+        if (!total_hours || !nb_sessions) {
+          alert('Veuillez saisir les heures totales et le nombre de sessions.');
+          return;
+        }
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const startUrl = `{{ url_for('programme.generate_programme_grille', programme_id=programme.id) }}`;
+        const body = JSON.stringify({ ai_model, total_hours, total_units, nb_sessions, additional_info, reasoning_effort, verbosity });
+        const taskId = await window.EDxoTasks.startCeleryTask(startUrl, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf}, body }, { title: 'Génération de la grille', startMessage: 'Génération de la grille en cours…', onDone: (payload) => {
+          const reviewUrl = `{{ url_for('programme.review_programme_grille', programme_id=programme.id, task_id='__TASK__') }}`.replace('__TASK__', sessionStorage.getItem('currentTaskId') || '');
+          try { addNotification('Proposition de grille prête. Cliquez pour valider.', 'success', reviewUrl); } catch(_) {}
+        }});
+        // Optionnel: ouverture directe page de validation
+        const reviewUrl = `{{ url_for('programme.review_programme_grille', programme_id=programme.id, task_id='__TASK__') }}`.replace('__TASK__', taskId);
+        // Laisser l'utilisateur suivre dans le modal, ou décommentez pour rediriger:
+        // window.location = reviewUrl;
+      } catch (e) {
+        try { addNotification('Erreur de génération: ' + e.message, 'error'); } catch(_) {}
+      }
     });
-
-    document.getElementById('btn-ai-generate').addEventListener('click', startAiGrilleGeneration);
-    document.getElementById('btn-ai-apply').addEventListener('click', applyAiGrille);
   });
 
   function resetAiGrilleModal() {
