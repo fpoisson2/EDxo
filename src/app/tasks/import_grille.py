@@ -221,8 +221,6 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None):
                 "temperature": 0.1,
                 "top_p": 1,
             })
-        # max_output_tokens est supporté par les modèles Responses
-        request_kwargs["max_output_tokens"] = 4096
 
         # Appel non-stream
         self.update_state(state='PROGRESS', meta={'message': "Appel au modèle IA..."})
