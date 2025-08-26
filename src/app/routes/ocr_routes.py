@@ -3,14 +3,12 @@
 import logging
 from flask import (
     Blueprint, request, redirect, url_for, jsonify,
-    render_template, current_app, flash
+    render_template, flash
 )
 from flask_login import login_required
 
 # --- Imports Projet ---
-from ...extensions import csrf
 from ..forms import OcrProgrammeSelectionForm
-from ..forms import AssociateDevisForm
 try:
     from ...ocr_processing import web_utils
     from ...config import constants
@@ -29,49 +27,11 @@ except ImportError as e:
 
 from flask_login import login_required, current_user
 
-from ..models import (
-    Programme
-)
-
 from ...celery_app import celery
 # --- Fin Imports Projet ---
 
 ocr_bp = Blueprint('ocr', __name__, url_prefix='/ocr')
 logger = logging.getLogger(__name__)
-
-
-@ocr_bp.route('/associate/<path:base_filename>')
-@login_required
-def associate_devis(base_filename):
-    if not base_filename:
-        flash("Nom de fichier de base manquant.", "danger")
-        return redirect(url_for('ocr.show_trigger_page'))
-
-    # Filtrer les programmes selon le département de l'utilisateur, etc.
-    programmes_query = Programme.query
-    if hasattr(current_user, 'department_id') and current_user.department_id:
-         programmes_query = programmes_query.filter(Programme.department_id == current_user.department_id)
-    programmes = programmes_query.order_by(Programme.nom).all()
-
-    if not programmes:
-        flash("Aucun programme trouvé dans la base de données auquel associer ce devis.", "warning")
-
-    # Instancier le formulaire et pré-remplir le champ caché
-    form = AssociateDevisForm()
-    form.base_filename.data = base_filename
-    # Construire la liste des choix sous la forme (id, "Nom (code)") par exemple
-    form.programme_id.choices = [
-        (p.id, p.nom)
-        for p in programmes
-    ]
-    # Si vous souhaitez également afficher un titre ou autre info :
-    devis_title_display = base_filename  # À améliorer si besoin
-
-    return render_template(
-        'ocr/associate_devis.html',
-        form=form,
-        devis_title=devis_title_display
-    )
 
 
 # === Route pour afficher la page de déclenchement ===
@@ -190,69 +150,3 @@ def start_ocr_processing():
         logger.warning(f"Échec de validation du formulaire OCR : {form.errors}")
         return render_template('ocr/trigger_page.html', form=form)
 
-@ocr_bp.route('/result/<task_id>')
-@login_required
-def task_result(task_id):
-    """Affiche les résultats finaux de la tâche."""
-    try:
-        # Utiliser l'instance 'celery' importée
-        task = celery.AsyncResult(task_id)
-        results = None
-        
-        # Vérifier si c'est une tâche principale qui a lancé un callback
-        if task.state == 'SUCCESS' and isinstance(task.result, dict) and 'task_id' in task.result and 'workflow a été lancé' in task.result.get('message', ''):
-            # C'est une tâche "lanceur de workflow", on doit vérifier le callback
-            callback_id = task.result.get('task_id')
-            if callback_id:
-                logger.info(f"Tâche {task_id} est un lanceur de workflow, redirection vers le résultat du callback {callback_id}")
-                # Rediriger vers la page de résultat du callback
-                return redirect(url_for('ocr.task_result', task_id=callback_id))
-            else:
-                logger.warning(f"Tâche {task_id} est un lanceur de workflow mais l'ID du callback est manquant")
-        
-        # Vérifier les états de succès ou d'échec pour obtenir les résultats/infos
-        if task.state == 'SUCCESS' or task.state.startswith('COMPLETED_WITH'):
-            results = task.result # task.result contient le dict retourné par la tâche
-            if not isinstance(results, dict): # Vérification de sécurité
-                 logger.warning(f"Résultat inattendu (pas dict) pour tâche {task_id} réussie: {results}")
-                 results = {"task_id": task_id, "final_status": task.state, "raw_result": str(results)}
-            
-            # Assurer que task_id et final_status sont là pour le template
-            results['task_id'] = results.get('task_id', task_id)
-            results['final_status'] = results.get('final_status', task.state)
-            
-            # Vérifier si les informations essentielles manquent
-            if not results.get('competences_count') and not results.get('base_filename') and not results.get('pdf_title'):
-                # Tenter de trouver une tâche originale ou callback associée
-                orig_task_id = results.get('original_task_id')
-                if orig_task_id and orig_task_id != task_id:
-                    logger.info(f"Tentative de récupération des informations depuis la tâche originale {orig_task_id}")
-                    try:
-                        orig_task = celery.AsyncResult(orig_task_id)
-                        if orig_task.state == 'SUCCESS' and isinstance(orig_task.result, dict):
-                            # Enrichir les résultats avec les informations de la tâche originale
-                            for key, value in orig_task.result.items():
-                                if key not in results:
-                                    results[key] = value
-                    except Exception as orig_err:
-                        logger.error(f"Erreur lors de la récupération de la tâche originale {orig_task_id}: {orig_err}")
-            
-        elif task.state == 'FAILURE':
-            error_info = task.result # task.result contient l'exception
-            error_detail = str(error_info)
-            if isinstance(error_info, Exception):
-                 error_detail = f"{type(error_info).__name__}: {error_info}"
-            results = {
-                "task_id": task_id, "error": error_detail, "final_status": "FAILURE",
-                "pdf_title": "Inconnu (Échec)", "pdf_source": "Inconnue (Échec)"
-            }
-            flash(f"Le traitement a échoué: {error_detail}", "danger")
-        else: # PENDING, PROGRESS, etc.
-            flash("Le traitement n'est pas encore terminé ou dans un état inattendu.", "info")
-            return redirect(url_for('tasks.track_task', task_id=task_id))
-        
-        return render_template('ocr/results.html', results=results)
-    except Exception as e:
-        logger.error(f"Erreur dans task_result pour {task_id}: {e}", exc_info=True)
-        flash(f"Erreur lors de la récupération des résultats de la tâche: {e}", "danger")
-        return redirect(url_for('tasks.track_task', task_id=task_id)) # Rediriger vers la page de statut
