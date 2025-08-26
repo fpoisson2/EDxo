@@ -1,12 +1,11 @@
 import os
 import uuid
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, Response, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, jsonify
 from flask_login import login_required, current_user
 from ..forms import FileUploadForm
 from ..tasks.import_grille import extract_grille_from_pdf_task
 import logging
-from celery.result import AsyncResult   
-import time
+from celery.result import AsyncResult
 from ...celery_app import celery
 from ..forms import (
     ConfirmationGrilleForm
@@ -59,8 +58,8 @@ def import_grille():
         task = extract_grille_from_pdf_task.delay(pdf_path=filepath, openai_key=openai_key)
         
         flash("Le fichier a été importé et la tâche a été lancée. Veuillez patienter...", "info")
-        # Rediriger vers la page de suivi avec le task.id
-        return redirect(url_for('grille_bp.grille_task_status_page', task_id=task.id))
+        # Rediriger vers la page de suivi unifiée
+        return redirect(url_for('tasks.track_task', task_id=task.id))
     return render_template('import_grille.html', form=form)
 
 
@@ -91,44 +90,6 @@ def import_grille_start():
     except Exception as e:
         logger.exception('Erreur lors du démarrage de l\'import de grille')
         return jsonify({'error': str(e)}), 500
-
-
-@grille_bp.route('/grille_task_status/<task_id>')
-@login_required
-def grille_task_status_page(task_id):
-    """
-    Affiche la page HTML de suivi du statut et du résultat de la tâche Celery pour la grille.
-    """
-    logger.info(f"Vérification du backend Celery dans la route: Broker='{celery.conf.broker_url}', Backend='{celery.conf.result_backend}'")
-
-    try:
-        # Récupérer le résultat de la tâche avec l'instance celery explicite
-        task_result = AsyncResult(task_id, app=celery)
-
-        current_state = task_result.state
-        current_result = task_result.result
-        logger.info(f"Rendering HTML page for task {task_id}. Initial state: {current_state}, Result: {current_result}")
-
-        return render_template(
-            'task_status.html',
-            task_id=task_id,
-            state=current_state,
-            result=current_result,
-            status_api_url=url_for('tasks.unified_task_status', task_id=task_id),
-            events_url=url_for('tasks.unified_task_events', task_id=task_id),
-        )
-
-    except AttributeError as e:
-        if "'DisabledBackend' object has no attribute" in str(e):
-            logger.error(f"Celery utilise TOUJOURS un 'DisabledBackend' pour la tâche {task_id}. Vérifiez la configuration ET la connexion Redis.", exc_info=True)
-            return Response(f"Erreur: Backend Celery désactivé malgré la configuration explicite. Vérifiez la connexion Redis. Backend configuré: {celery.conf.result_backend}", status=500)
-        else:
-            logger.error(f"Erreur AttributeError inattendue dans grille_task_status_page pour {task_id}: {e}", exc_info=True)
-            return Response("Erreur interne du serveur (AttributeError)", status=500)
-    except Exception as e:
-        # Attraper d'autres erreurs potentielles (ex: connexion Redis refusée)
-        logger.error(f"Exception générale dans grille_task_status_page pour {task_id}: {e}", exc_info=True)
-        return Response(f"Erreur interne du serveur: {e}", status=500)
 
 
 @grille_bp.route('/liste_grilles')
@@ -188,7 +149,7 @@ def confirm_grille_import(task_id):
     
     if task_result.state != 'SUCCESS' or not task_result.result or task_result.result.get('status') != 'success':
         flash("L'extraction n'est pas encore terminée ou a échoué.", "warning")
-        return redirect(url_for('grille_bp.grille_task_status_page', task_id=task_id))
+        return redirect(url_for('tasks.track_task', task_id=task_id))
     
     # Récupérer le JSON de la grille
     try:
