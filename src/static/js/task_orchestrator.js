@@ -69,7 +69,7 @@
         if (csrf) { fetchOpts.headers['X-CSRFToken'] = csrf; fetchOpts.headers['X-CSRF-Token'] = csrf; }
       } catch {}
       try {
-        const taskId = await startCeleryTask(opts.url, fetchOpts, { title: opts.title, startMessage: opts.startMessage || 'En cours…', userPrompt: additional, openModal: true, onDone: opts.onDone });
+        const taskId = await startCeleryTask(opts.url, fetchOpts, { title: opts.title, startMessage: opts.startMessage || 'En cours…', userPrompt: additional, openModal: true, summaryEl: opts.summaryEl, streamEl: opts.streamEl, onDone: opts.onDone });
         try { if (document.activeElement) document.activeElement.blur(); } catch {}
         bootstrap.Modal.getOrCreateInstance(modalEl).hide();
         return taskId;
@@ -278,8 +278,9 @@
       }
 
       try {
+        const extra = modal._extraOpts || {};
         // Start and immediately open unified tracking
-        const taskId = await startCeleryTask(endpoint, fetchOpts, { title, startMessage, userPrompt });
+        const taskId = await startCeleryTask(endpoint, fetchOpts, { title, startMessage, userPrompt, summaryEl: extra.summaryEl, streamEl: extra.streamEl, onDone: extra.onDone });
         // Hide modal after launching
         bootstrap.Modal.getOrCreateInstance(modal).hide();
         return taskId;
@@ -313,6 +314,7 @@
     const ev = new Event('change');
     modeJson.dispatchEvent(ev);
     modeForm.dispatchEvent(ev);
+    modalEl._extraOpts = { summaryEl: opts.summaryEl || null, streamEl: opts.streamEl || null, onDone: opts.onDone };
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
   }
 
@@ -333,7 +335,9 @@
               <button class="btn btn-sm btn-outline-secondary mb-2" type="button" id="task-orch-toggle-prompt">Afficher le prompt</button>
               <pre id="task-orch-prompt" class="small" style="display:none;max-height:25vh;overflow:auto;background:#f8f9fa;padding:8px;border-radius:6px;"></pre>
             </div>
-            <div id="task-orch-stream" style="background:#0f172a;color:#e2e8f0;border-radius:6px;padding:10px;min-height:140px;max-height:280px;overflow:auto;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;"></div>
+            <div id="task-orch-reasoning" class="mb-2 small d-none" style="max-height:25vh;overflow:auto;background:#f8f9fa;padding:8px;border-radius:6px;"></div>
+            <textarea id="task-orch-stream" class="form-control" rows="6" readonly style="background:#0f172a;color:#e2e8f0;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;min-height:140px;max-height:280px;"></textarea>
+            <div id="task-orch-log" class="mt-2" style="background:#0f172a;color:#e2e8f0;border-radius:6px;padding:10px;max-height:120px;overflow:auto;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;"></div>
             <div class="mt-3">
               <button class="btn btn-sm btn-outline-secondary" type="button" id="task-orch-toggle-json">Afficher JSON</button>
               <pre id="task-orch-json" class="mt-2" style="display:none;max-height:30vh;overflow:auto;background:#f8f9fa;padding:8px;border-radius:6px;"></pre>
@@ -367,14 +371,14 @@
   }
 
   function appendLog(text) {
-    const stream = document.getElementById('task-orch-stream');
-    if (!stream) return;
+    const log = document.getElementById('task-orch-log');
+    if (!log) return;
     const now = new Date();
     const ts = now.toLocaleTimeString();
     const safe = ('' + text).replace(/[\u0000-\u001F\u007F<>]/g, ch => ({'<':'&lt;','>':'&gt;'}[ch]||''));
-    const atBottom = stream.scrollTop + stream.clientHeight >= stream.scrollHeight - 4;
-    stream.insertAdjacentHTML('beforeend', `<div>[${ts}] ${safe}</div>`);
-    if (atBottom) stream.scrollTop = stream.scrollHeight;
+    const atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 4;
+    log.insertAdjacentHTML('beforeend', `<div>[${ts}] ${safe}</div>`);
+    if (atBottom) log.scrollTop = log.scrollHeight;
   }
 
   // Lightweight background watcher (notifications only) when modal is closed
@@ -438,7 +442,12 @@
     const modalEl = ensureModal();
     document.getElementById('task-orch-id').textContent = taskId;
     document.getElementById('task-orch-state').textContent = 'PENDING';
-    document.getElementById('task-orch-stream').innerHTML = '';
+    const logEl = document.getElementById('task-orch-log');
+    if (logEl) logEl.innerHTML = '';
+    const streamEl = opts.streamEl || document.getElementById('task-orch-stream');
+    if (streamEl) streamEl.value = '';
+    const reasoningEl = opts.summaryEl || document.getElementById('task-orch-reasoning');
+    if (reasoningEl) { reasoningEl.textContent = ''; reasoningEl.classList.add('d-none'); }
     document.getElementById('task-orch-json').textContent = '';
     const validateBtn = document.getElementById('task-orch-validate');
     validateBtn.classList.add('d-none');
@@ -514,25 +523,17 @@
                 } else if (meta.stream_buffer) {
                   streamBuf = String(meta.stream_buffer);
                 }
-                if (streamBuf) {
-                  const streamEl = document.getElementById('task-orch-stream');
-                  if (streamEl) {
-                    streamEl.textContent = streamBuf;
-                    streamEl.scrollTop = streamEl.scrollHeight;
-                  }
+                if (streamBuf && streamEl) {
+                  streamEl.value = streamBuf;
+                  streamEl.scrollTop = streamEl.scrollHeight;
                 }
-                if (meta.reasoning_summary) {
+                if (meta.reasoning_summary && reasoningEl) {
                   if (String(meta.reasoning_summary) !== lastReasoning) {
                     lastReasoning = String(meta.reasoning_summary);
                     appendLog('Résumé du raisonnement mis à jour.');
-                    try {
-                      const streamEl = document.getElementById('task-orch-stream');
-                      if (streamEl) {
-                        streamEl.textContent = (streamEl.textContent ? (streamEl.textContent + '\n\n') : '') + '[Raisonnement]\n' + lastReasoning;
-                        streamEl.scrollTop = streamEl.scrollHeight;
-                      }
-                    } catch {}
                   }
+                  reasoningEl.textContent = lastReasoning;
+                  reasoningEl.classList.remove('d-none');
                 }
               } catch {}
               // Update JSON snapshot
@@ -564,12 +565,15 @@
           try { document.getElementById('task-orch-json').textContent = JSON.stringify(d0.meta || {}, null, 2); } catch {}
           try {
             const sb = d0.meta.stream_buffer;
-            if (sb) {
-              const streamEl = document.getElementById('task-orch-stream');
-              if (streamEl) {
-                try { streamEl.textContent = JSON.stringify(JSON.parse(sb), null, 2); } catch { streamEl.textContent = String(sb); }
-                streamEl.scrollTop = streamEl.scrollHeight;
-              }
+            if (sb && streamEl) {
+              try { streamEl.value = JSON.stringify(JSON.parse(sb), null, 2); } catch { streamEl.value = String(sb); }
+              streamEl.scrollTop = streamEl.scrollHeight;
+            }
+            const rs0 = d0.meta.reasoning_summary;
+            if (rs0 && reasoningEl) {
+              reasoningEl.textContent = String(rs0);
+              reasoningEl.classList.remove('d-none');
+              lastReasoning = String(rs0);
             }
           } catch {}
         }
@@ -584,13 +588,15 @@
           if (data.message) appendLog(data.message);
           try {
             const meta = data.meta || {};
-            if (meta.stream_buffer) {
+            if (meta.stream_buffer && streamEl) {
               streamBuf = String(meta.stream_buffer);
-              const streamEl = document.getElementById('task-orch-stream');
-              if (streamEl) {
-                streamEl.textContent = streamBuf;
-                streamEl.scrollTop = streamEl.scrollHeight;
-              }
+              streamEl.value = streamBuf;
+              streamEl.scrollTop = streamEl.scrollHeight;
+            }
+            if (meta.reasoning_summary && reasoningEl) {
+              lastReasoning = String(meta.reasoning_summary);
+              reasoningEl.textContent = lastReasoning;
+              reasoningEl.classList.remove('d-none');
             }
           } catch {}
           try { document.getElementById('task-orch-json').textContent = JSON.stringify(data.meta || {}, null, 2); } catch {}
@@ -637,17 +643,20 @@
       try { if (es) es.close(); } catch {}
       try { if (pollTimer) clearTimeout(pollTimer); } catch {}
       try {
-        if (!streamBuf && payload && payload.stream_buffer) {
+        if (!streamBuf && payload && payload.stream_buffer && streamEl) {
           streamBuf = String(payload.stream_buffer);
-          const streamEl = document.getElementById('task-orch-stream');
-          if (streamEl) {
-            // Try to pretty format JSON if applicable
-            try {
-              const obj = JSON.parse(streamBuf);
-              streamEl.textContent = JSON.stringify(obj, null, 2);
-            } catch { streamEl.textContent = streamBuf; }
-            streamEl.scrollTop = streamEl.scrollHeight;
-          }
+          // Try to pretty format JSON if applicable
+          try {
+            const obj = JSON.parse(streamBuf);
+            streamEl.value = JSON.stringify(obj, null, 2);
+          } catch { streamEl.value = streamBuf; }
+          streamEl.scrollTop = streamEl.scrollHeight;
+        }
+      } catch {}
+      try {
+        if (payload && payload.reasoning_summary && reasoningEl) {
+          reasoningEl.textContent = String(payload.reasoning_summary);
+          reasoningEl.classList.remove('d-none');
         }
       } catch {}
       // Validation/redirect link inference
@@ -757,8 +766,8 @@
       const link = `/tasks/track/${taskId}`;
       window.addNotification(uiOpts.startMessage || 'Tâche en cours...', 'in-progress', link);
     }
-    // Optionally open the modal (default disabled to avoid blocking UX)
-    if (uiOpts.openModal === true) {
+    // Optionnellement ouvrir le modal et mettre à jour les éléments fournis
+    if (uiOpts.openModal === true || uiOpts.summaryEl || uiOpts.streamEl) {
       try { stopBackgroundWatch(); } catch {}
       openTaskModal(taskId, uiOpts);
     }
