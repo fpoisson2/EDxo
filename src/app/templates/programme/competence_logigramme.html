@@ -104,11 +104,11 @@
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label">Informations complémentaires (facultatif)</label>
+            <label class="form-label" for="gl-additional">Informations complémentaires (facultatif)</label>
             {% if generate_form %}
               {{ generate_form.additional_info(class="form-control border-0", rows="3", placeholder="Contexte, priorités, contraintes…") }}
             {% else %}
-              <textarea id="gl-additional" class="form-control" rows="3" placeholder="Contexte, priorités, contraintes…"></textarea>
+              <textarea id="gl-additional" class="form-control" rows="3" placeholder="Contexte, priorités, contraintes…" aria-label="Informations complémentaires"></textarea>
             {% endif %}
           </div>
           <div class="row g-3">

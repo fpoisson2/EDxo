@@ -1,71 +1,66 @@
-// --- Fonctions pour le Toast UI Editor ---
+// --- Fonctions pour l'éditeur EasyMDE ---
 // Vérifie si un élément est visible (utile pour les zones dans des accordéons masqués)
 function isVisible(el) {
     return !!( el.offsetWidth || el.offsetHeight || el.getClientRects().length );
 }
 
 function initToastEditor(textarea) {
-    const container = document.createElement('div');
-    textarea.parentNode.insertBefore(container, textarea);
-    textarea.style.display = 'none';
-
-    const editor = new toastui.Editor({
-        el: container,
-        initialEditType: 'wysiwyg',
-        initialValue: textarea.value || '',
-        toolbarItems: [
-            ['bold', 'italic'],
-            ['ul', 'indent', 'outdent']
-        ],
-        usageStatistics: false,
-        hideModeSwitch: true,
+    // Conserver le nom pour limiter l'impact: utilise EasyMDE sous le capot
+    const mde = new EasyMDE({
+        element: textarea,
+        autoDownloadFontAwesome: false,
+        spellChecker: false,
         autofocus: false,
-        height: 'auto',
         minHeight: '100px',
-        toolbarVisibleWithoutEditor: false,
-        customKeyMap: {
-            Tab: (editor, ev) => {
-                ev.preventDefault();
-                editor.exec('indent');
-            },
-            'Shift-Tab': (editor, ev) => {
-                ev.preventDefault();
-                editor.exec('outdent');
+        status: false,
+        forceSync: true,
+        toolbar: [
+            'bold', 'italic', '|', 'unordered-list', 'ordered-list', '|', 'guide'
+        ],
+    });
+
+    // Synchroniser la valeur vers le textarea (forceSync le fait déjà, mais on garde explicitement)
+    mde.codemirror.on('change', () => {
+        textarea.value = mde.value();
+    });
+
+    // Accessibilité: associer un libellé au textarea interne CodeMirror
+    try {
+        const cmInput = mde.codemirror.getInputField && mde.codemirror.getInputField();
+        if (cmInput) {
+            let labelEl = null;
+            if (textarea.id) {
+                labelEl = document.querySelector(`label[for="${textarea.id}"]`);
+            }
+            if (labelEl) {
+                if (!labelEl.id) labelEl.id = `${textarea.id}-label`;
+                cmInput.setAttribute('aria-labelledby', labelEl.id);
+            } else if (textarea.getAttribute('placeholder')) {
+                cmInput.setAttribute('aria-label', textarea.getAttribute('placeholder'));
+            } else {
+                cmInput.setAttribute('aria-label', 'Zone de texte');
             }
         }
-    });
-
-    editor.on('change', () => {
-        textarea.value = editor.getMarkdown();
-    });
+    } catch {}
 
     textarea.classList.add('toast-initialized');
-    
-    const editorEl = container.querySelector('.toastui-editor');
-    if (editorEl) {
-        const observer = new ResizeObserver(() => {
-            editor.setHeight('auto');
+
+    // Cacher la toolbar par défaut, l'afficher au focus
+    const container = textarea.closest('.EasyMDEContainer') || textarea.parentElement;
+    const toolbar = container ? container.querySelector('.editor-toolbar') : null;
+    if (toolbar) toolbar.style.display = 'none';
+
+    if (container) {
+        container.addEventListener('focusin', () => {
+            if (toolbar) toolbar.style.display = 'block';
         });
-        observer.observe(editorEl);
-    }
-
-    const toolbar = container.querySelector('.toastui-editor-toolbar');
-    if (toolbar) {
-        toolbar.style.display = 'none';
-    }
-
-    container.addEventListener('focusin', () => {
-        if (toolbar) toolbar.style.display = 'block';
-    });
-
-    container.addEventListener('focusout', (e) => {
-        if (!container.contains(e.relatedTarget) && toolbar) {
-            const selection = window.getSelection();
-            if (!selection.toString()) {
-                toolbar.style.display = 'none';
+        container.addEventListener('focusout', (e) => {
+            if (!container.contains(e.relatedTarget) && toolbar) {
+                const selection = window.getSelection();
+                if (!selection.toString()) toolbar.style.display = 'none';
             }
-        }
-    });
+        });
+    }
 }
 
 function initToastEditorWhenVisible(textarea) {
@@ -115,8 +110,9 @@ function addItemWithDescription(containerId, fieldPrefix) {
                            style="overflow:hidden; resize:none;"
                            placeholder="Titre"
                            type="text">
+                    <label for="${fieldPrefix}-${index}-texte_description" class="visually-hidden">Description</label>
                     <textarea id="${fieldPrefix}-${index}-texte_description" name="${fieldPrefix}-${index}-texte_description"
-                              class="form-control auto-resize border-0"
+                              class="form-control auto-resize border-0" aria-label="Description"
                               oninput="autoResize(this)"
                               style="overflow:hidden; resize:none;"
                               placeholder="Description"></textarea>
@@ -189,17 +185,17 @@ function addCapacite() {
                          data-bs-parent="#capaciteAccordion${index}">
                         <div class="accordion-body">
                             <div class="mb-3">
-                                <label class="fw-bold">Énoncé de la capacité</label>
-                                <input type="text" name="capacites-${index}-capacite" 
+                                <label class="fw-bold" for="capacites-${index}-capacite">Énoncé de la capacité</label>
+                                <input type="text" id="capacites-${index}-capacite" name="capacites-${index}-capacite" 
                                        class="form-control fw-bold auto-resize border-0"
                                        oninput="autoResize(this)"
                                        style="overflow:hidden; resize:none;"
                                        placeholder="Capacité">
                             </div>
                             <div class="mb-3">
-                                <label class="fw-bold">Description</label>
-                                <textarea name="capacites-${index}-description_capacite" 
-                                          class="form-control auto-resize border-0 use-toast"
+                                <label class="fw-bold" for="capacites-${index}-description_capacite">Description</label>
+                                <textarea id="capacites-${index}-description_capacite" name="capacites-${index}-description_capacite" 
+                                          class="form-control auto-resize border-0 use-toast" aria-label="Description de la capacité"
                                           oninput="autoResize(this)"
                                           style="overflow:hidden; resize:none;"
                                           placeholder="Description"></textarea>
@@ -208,10 +204,10 @@ function addCapacite() {
                                 <label class="fw-bold">Pondération</label>
                                 <div class="d-flex align-items-center">
                                     <span class="me-1">(</span>
-                                    <input type="number" name="capacites-${index}-ponderation_min"
+                                    <input type="number" name="capacites-${index}-ponderation_min" aria-label="Pondération minimum"
                                            class="form-control border-0 me-2" style="width: 80px;" value="0">
                                     <span class="me-2">-</span>
-                                    <input type="number" name="capacites-${index}-ponderation_max"
+                                    <input type="number" name="capacites-${index}-ponderation_max" aria-label="Pondération maximum"
                                            class="form-control border-0 me-2" style="width: 80px;" value="100">
                                     <span>%)</span>
                                 </div>
@@ -303,21 +299,21 @@ function addSavoirFaire(capaciteIndex) {
                            placeholder="Savoir faire">
                     <div class="row mb-2">
                         <div class="col-6 mb-2">
-                            <label class="fw-bold text-dark px-2 rounded" style="background-color: #28a745;">
+                            <label class="fw-bold text-dark px-2 rounded" style="background-color: #28a745;" for="capacites-${capaciteIndex}-savoirs_faire-${index}-cible">
                                 Cible
                             </label>
-                            <textarea name="capacites-${capaciteIndex}-savoirs_faire-${index}-cible"
-                                      class="form-control auto-resize border-0 mt-1"
+                            <textarea id="capacites-${capaciteIndex}-savoirs_faire-${index}-cible" name="capacites-${capaciteIndex}-savoirs_faire-${index}-cible"
+                                      class="form-control auto-resize border-0 mt-1" aria-label="Cible"
                                       oninput="autoResize(this)"
                                       style="overflow:hidden; resize:none;"
                                       placeholder="Cible"></textarea>
                         </div>
                         <div class="col-6 mb-2">
-                            <label class="fw-bold text-dark px-2 rounded" style="background-color: #ffc107;">
+                            <label class="fw-bold text-dark px-2 rounded" style="background-color: #ffc107;" for="capacites-${capaciteIndex}-savoirs_faire-${index}-seuil_reussite">
                                 Seuil de réussite
                             </label>
-                            <textarea name="capacites-${capaciteIndex}-savoirs_faire-${index}-seuil_reussite"
-                                      class="form-control auto-resize border-0 mt-1"
+                            <textarea id="capacites-${capaciteIndex}-savoirs_faire-${index}-seuil_reussite" name="capacites-${capaciteIndex}-savoirs_faire-${index}-seuil_reussite"
+                                      class="form-control auto-resize border-0 mt-1" aria-label="Seuil de réussite"
                                       oninput="autoResize(this)"
                                       style="overflow:hidden; resize:none;"
                                       placeholder="Seuil de réussite"></textarea>
@@ -921,7 +917,7 @@ function buildHumanPreviewFromPlanCadreJSON(obj) {
     };
 
     if (Array.isArray(obj.fields) && obj.fields.length) {
-        parts.push('<h6 class="mb-2">Champs textuels</h6>');
+        parts.push('<h3 class="mb-2">Champs textuels</h3>');
         obj.fields.forEach(f => {
             const name = (f && (f.field_name || '')).trim();
             const content = (f && (f.content || '')).trim();
@@ -930,7 +926,7 @@ function buildHumanPreviewFromPlanCadreJSON(obj) {
         });
     }
     if (Array.isArray(obj.fields_with_description) && obj.fields_with_description.length) {
-        parts.push('<h6 class="mb-2">Listes avec descriptions</h6>');
+        parts.push('<h3 class="mb-2">Listes avec descriptions</h3>');
         obj.fields_with_description.forEach(sec => {
             const name = (sec && sec.field_name) || '';
             const items = (sec && Array.isArray(sec.content)) ? sec.content : [];
@@ -945,12 +941,12 @@ function buildHumanPreviewFromPlanCadreJSON(obj) {
         });
     }
     if (Array.isArray(obj.savoir_etre) && obj.savoir_etre.length) {
-        parts.push('<h6 class="mb-2">Savoir-être</h6><ul class="ps-3">');
+        parts.push('<h3 class="mb-2">Savoir-être</h3><ul class="ps-3">');
         obj.savoir_etre.forEach(t => parts.push(`<li>${escapeHtml(t)}</li>`));
         parts.push('</ul>');
     }
     if (Array.isArray(obj.capacites) && obj.capacites.length) {
-        parts.push('<h6 class="mb-2">Capacités</h6>');
+        parts.push('<h3 class="mb-2">Capacités</h3>');
         obj.capacites.forEach(c => {
             parts.push('<div class="mb-3 p-2 border rounded">');
             if (c.capacite) parts.push(`<div><strong>Capacité:</strong> ${escapeHtml(c.capacite)}</div>`);

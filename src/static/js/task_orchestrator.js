@@ -3,6 +3,148 @@
 // - Enriches notifications with a link to open tracking UI
 
 (function () {
+  // Helper: get CSRF token from meta or fallback cookie
+  function getCsrfToken() {
+    try {
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      const val = meta && meta.getAttribute('content');
+      if (val) return val;
+    } catch {}
+    try {
+      const name = 'csrf_token=';
+      const arr = document.cookie ? document.cookie.split(';') : [];
+      for (let i = 0; i < arr.length; i++) {
+        let c = arr[i];
+        while (c.charAt(0) === ' ') c = c.substring(1);
+        if (c.indexOf(name) === 0) return c.substring(name.length);
+      }
+    } catch {}
+    return '';
+  }
+  // ---------- Quick Modal: only "Informations complémentaires" ----------
+  function ensureQuickModal() {
+    let modal = document.getElementById('taskQuickModal');
+    if (modal) return modal;
+    const html = `
+    <div class="modal fade" id="taskQuickModal" tabindex="-1" aria-labelledby="taskQuickLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="taskQuickLabel">Démarrer</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <label class="form-label" for="task-quick-info">Informations complémentaires (optionnel)</label>
+            <textarea class="form-control" id="task-quick-info" rows="4" placeholder="Ajoutez des précisions utiles (contexte, contraintes, préférences, etc.)" aria-label="Informations complémentaires"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="button" class="btn btn-primary" id="task-quick-submit">Lancer</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+    modal = document.getElementById('taskQuickModal');
+    return modal;
+  }
+
+  function openQuickTask(opts = {}) {
+    const modalEl = ensureQuickModal();
+    const label = modalEl.querySelector('#taskQuickLabel');
+    const ta = modalEl.querySelector('#task-quick-info');
+    label.textContent = opts.title || 'Démarrer';
+    ta.value = opts.defaultText || '';
+    // Clean previous handler
+    const btn = modalEl.querySelector('#task-quick-submit');
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    newBtn.addEventListener('click', async () => {
+      const additional = ta.value || '';
+      const payload = Object.assign({}, opts.basePayload || {}, additional ? { additional_info: additional } : {});
+      const fetchOpts = { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
+      // CSRF if available
+      try {
+        const csrf = getCsrfToken();
+        if (csrf) { fetchOpts.headers['X-CSRFToken'] = csrf; fetchOpts.headers['X-CSRF-Token'] = csrf; }
+      } catch {}
+      try {
+        const taskId = await startCeleryTask(opts.url, fetchOpts, { title: opts.title, startMessage: opts.startMessage || 'En cours…', userPrompt: additional, openModal: true, onDone: opts.onDone });
+        try { if (document.activeElement) document.activeElement.blur(); } catch {}
+        bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        return taskId;
+      } catch (e) {
+        alert('Erreur lors du démarrage: ' + (e && e.message ? e.message : e));
+      }
+    });
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  }
+
+  // ---------- Quick File Modal: only file field ----------
+  function ensureFileModal() {
+    let modal = document.getElementById('taskFileModal');
+    if (modal) return modal;
+    const html = `
+    <div class="modal fade" id="taskFileModal" tabindex="-1" aria-labelledby="taskFileLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="taskFileLabel">Importer un fichier</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <label class="form-label">Fichier</label>
+            <input type="file" class="form-control" id="task-file-input">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="button" class="btn btn-primary" id="task-file-submit">Importer</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+    modal = document.getElementById('taskFileModal');
+    return modal;
+  }
+
+  function openFileTask(opts = {}) {
+    const modalEl = ensureFileModal();
+    const label = modalEl.querySelector('#taskFileLabel');
+    const input = modalEl.querySelector('#task-file-input');
+    label.textContent = opts.title || 'Importer un fichier';
+    input.value = '';
+    // Reset submit handler
+    const btn = modalEl.querySelector('#task-file-submit');
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+    newBtn.addEventListener('click', async () => {
+      const file = input && input.files && input.files[0];
+      if (!file) { alert('Veuillez choisir un fichier.'); return; }
+      const fd = new FormData();
+      fd.append('file', file);
+      const fetchOpts = { method: 'POST', credentials: 'same-origin', body: fd, headers: { 'Accept': 'application/json' } };
+      try {
+        const csrf = getCsrfToken();
+        if (csrf) { fetchOpts.headers['X-CSRFToken'] = csrf; fetchOpts.headers['X-CSRF-Token'] = csrf; }
+      } catch {}
+      try {
+        const taskId = await startCeleryTask(opts.url, fetchOpts, { title: opts.title, startMessage: opts.startMessage || 'Import en cours…', openModal: true });
+        try { if (document.activeElement) document.activeElement.blur(); } catch {}
+        bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        return taskId;
+      } catch (e) {
+        alert('Erreur lors du démarrage: ' + (e && e.message ? e.message : e));
+      }
+    });
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    try {
+      modalEl.addEventListener('hide.bs.modal', () => { try { if (document.activeElement) document.activeElement.blur(); } catch {} });
+      modalEl.addEventListener('hidden.bs.modal', () => { try { if (document.activeElement) document.activeElement.blur(); } catch {} });
+    } catch {}
+    inst.show();
+  }
+
   // ---------- Unified Start Modal (generic task launcher) ----------
   function ensureStartModal() {
     let modal = document.getElementById('taskStartModal');
@@ -38,8 +180,8 @@
               <input type="text" class="form-control" id="task-start-message" placeholder="En cours…" />
             </div>
             <div class="mb-3">
-              <label class="form-label">Afficher le prompt utilisateur (optionnel)</label>
-              <textarea class="form-control" id="task-start-user-prompt" rows="2" placeholder="Sera affiché dans le suivi"></textarea>
+              <label class="form-label" for="task-start-user-prompt">Afficher le prompt utilisateur (optionnel)</label>
+              <textarea class="form-control" id="task-start-user-prompt" rows="2" placeholder="Sera affiché dans le suivi" aria-label="Prompt utilisateur"></textarea>
             </div>
             <div class="mb-2">
               <div class="btn-group btn-group-sm" role="group" aria-label="Payload mode">
@@ -50,15 +192,15 @@
               </div>
             </div>
             <div id="task-start-json-wrap" class="mb-2">
-              <label class="form-label">Payload JSON</label>
-              <textarea class="form-control" id="task-start-json" rows="8" placeholder='{"key":"value"}'></textarea>
+              <label class="form-label" for="task-start-json">Payload JSON</label>
+              <textarea class="form-control" id="task-start-json" rows="8" placeholder='{"key":"value"}' aria-label="Payload JSON"></textarea>
               <div class="form-text">Assurez-vous que le JSON est valide.</div>
             </div>
             <div id="task-start-form-wrap" class="mb-2" style="display:none;">
               <label class="form-label">Fichier</label>
               <input type="file" class="form-control" id="task-start-file">
-              <label class="form-label mt-2">Champs additionnels (facultatifs)</label>
-              <textarea class="form-control" id="task-start-form-extras" rows="3" placeholder="ai_model=gpt-5\nfoo=bar"></textarea>
+              <label class="form-label mt-2" for="task-start-form-extras">Champs additionnels (facultatifs)</label>
+              <textarea class="form-control" id="task-start-form-extras" rows="3" placeholder="ai_model=gpt-5\nfoo=bar" aria-label="Champs additionnels"></textarea>
               <div class="form-text">1 champ par ligne au format clé=valeur.</div>
             </div>
           </div>
@@ -100,7 +242,7 @@
       const fetchOpts = { method, credentials: 'same-origin', headers: {} };
       // CSRF if available
       try {
-        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const csrf = getCsrfToken();
         if (csrf) fetchOpts.headers['X-CSRFToken'] = csrf;
       } catch {}
 
@@ -248,11 +390,15 @@
       if (data && (data.state === 'SUCCESS' || data.state === 'FAILURE' || data.state === 'REVOKED')) {
         // Final notification
         try {
-          if (typeof window.addNotification === 'function') {
+          // Suppress duplicate final notifications if already marked
+          const key = `edxo_done_notified_${BG.taskId || ''}`;
+          const already = (typeof sessionStorage !== 'undefined') && sessionStorage.getItem(key) === '1';
+          if (!already && typeof window.addNotification === 'function') {
             const payload = data.result || data.meta || {};
             const vurl = payload.validation_url || payload.reviewUrl || payload.plan_de_cours_url || `/tasks/track/${data.task_id || ''}`;
             const msg = data.state === 'SUCCESS' ? 'Tâche terminée.' : 'Tâche arrêtée.';
             window.addNotification(`${title ? title + ' — ' : ''}${msg}`, data.state === 'SUCCESS' ? 'success' : 'warning', vurl);
+            try { if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(key, '1'); } catch {}
           }
         } catch {}
         stopBackgroundWatch();
@@ -338,7 +484,9 @@
     let es;
     let sawAnyMeaningfulProgress = false;
     let completed = false;
+    let doneFired = false;
     let streamBuf = '';
+    let lastReasoning = '';
     const allowSSE = !((window.EDxoTasks && window.EDxoTasks.settings && window.EDxoTasks.settings.disableSSE) === true);
     try {
       if (allowSSE) {
@@ -348,38 +496,48 @@
       if (es) es.addEventListener('progress', (ev) => {
         try {
           const data = JSON.parse(ev.data || '{}');
-          if (data && data.meta) {
-            const { state, meta } = data;
-            if (state) document.getElementById('task-orch-state').textContent = state;
-            if (meta && (meta.message || meta.step || typeof meta.progress === 'number')) {
-              sawAnyMeaningfulProgress = true;
-              const bits = [];
-              if (meta.step) bits.push(`Étape: ${meta.step}`);
-              if (meta.message) bits.push(meta.message);
-              if (typeof meta.progress === 'number') bits.push(`Progression: ${meta.progress}%`);
-              appendLog(bits.join(' | '));
-            }
-            // Live JSON stream buffer/chunks
-            try {
-              if (meta.stream_chunk) {
-                streamBuf += String(meta.stream_chunk);
-              } else if (meta.stream_buffer) {
-                streamBuf = String(meta.stream_buffer);
+            if (data && data.meta) {
+              const { state, meta } = data;
+              if (state) document.getElementById('task-orch-state').textContent = state;
+              if (meta && (meta.message || meta.step || typeof meta.progress === 'number')) {
+                sawAnyMeaningfulProgress = true;
+                const bits = [];
+                if (meta.step) bits.push(`Étape: ${meta.step}`);
+                if (meta.message) bits.push(meta.message);
+                if (typeof meta.progress === 'number') bits.push(`Progression: ${meta.progress}%`);
+                appendLog(bits.join(' | '));
               }
-              if (streamBuf) {
-                const streamEl = document.getElementById('task-orch-stream');
-                if (streamEl) {
-                  streamEl.textContent = streamBuf;
-                  streamEl.scrollTop = streamEl.scrollHeight;
+              // Live JSON stream buffer/chunks
+              try {
+                if (meta.stream_chunk) {
+                  streamBuf += String(meta.stream_chunk);
+                } else if (meta.stream_buffer) {
+                  streamBuf = String(meta.stream_buffer);
                 }
-              }
-              if (meta.reasoning_summary) {
-                appendLog('Résumé du raisonnement mis à jour.');
-              }
-            } catch {}
-            // Update JSON snapshot
-            try { document.getElementById('task-orch-json').textContent = JSON.stringify(meta || {}, null, 2); } catch {}
-          }
+                if (streamBuf) {
+                  const streamEl = document.getElementById('task-orch-stream');
+                  if (streamEl) {
+                    streamEl.textContent = streamBuf;
+                    streamEl.scrollTop = streamEl.scrollHeight;
+                  }
+                }
+                if (meta.reasoning_summary) {
+                  if (String(meta.reasoning_summary) !== lastReasoning) {
+                    lastReasoning = String(meta.reasoning_summary);
+                    appendLog('Résumé du raisonnement mis à jour.');
+                    try {
+                      const streamEl = document.getElementById('task-orch-stream');
+                      if (streamEl) {
+                        streamEl.textContent = (streamEl.textContent ? (streamEl.textContent + '\n\n') : '') + '[Raisonnement]\n' + lastReasoning;
+                        streamEl.scrollTop = streamEl.scrollHeight;
+                      }
+                    } catch {}
+                  }
+                }
+              } catch {}
+              // Update JSON snapshot
+              try { document.getElementById('task-orch-json').textContent = JSON.stringify(meta || {}, null, 2); } catch {}
+            }
         } catch {}
       });
       if (es) es.addEventListener('done', (ev) => {
@@ -467,11 +625,17 @@
     poll();
 
     function handleDone(data) {
+      if (doneFired) return; // idempotent guard
+      doneFired = true;
       const payload = data.result || data.meta || {};
       const state = data.state || payload.state || 'DONE';
       document.getElementById('task-orch-state').textContent = state;
       appendLog(`Terminé avec état ${state}.`);
       completed = true;
+      // Stop streams/polls immediately to avoid double notifications
+      try { stopped = true; } catch {}
+      try { if (es) es.close(); } catch {}
+      try { if (pollTimer) clearTimeout(pollTimer); } catch {}
       try {
         if (!streamBuf && payload && payload.stream_buffer) {
           streamBuf = String(payload.stream_buffer);
@@ -505,6 +669,8 @@
       }
       // Success notification with tracking/validation link
       try {
+        // Mark task as notified to suppress duplicates from background watcher
+        try { if (sessionStorage) sessionStorage.setItem(`edxo_done_notified_${taskId}`, '1'); } catch {}
         if (typeof window.addNotification === 'function') {
           if (vurl) {
             window.addNotification('Tâche terminée. Cliquez pour valider.', 'success', vurl);
@@ -529,7 +695,7 @@
         try {
           const headers = {};
           try {
-            const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const csrf = getCsrfToken();
             if (csrf) headers['X-CSRFToken'] = csrf;
           } catch {}
           const r = await fetch(`/tasks/cancel/${encodeURIComponent(taskId)}`, { method: 'POST', credentials: 'same-origin', headers });
@@ -567,12 +733,25 @@
   }
 
   async function startCeleryTask(startUrl, fetchOpts = {}, uiOpts = {}) {
-    const res = await fetch(startUrl, Object.assign({ method: 'POST', credentials: 'same-origin' }, fetchOpts));
-    const data = await res.json();
-    if (!data || !data.task_id) throw new Error('Aucun task_id retourné.');
+    const res = await fetch(startUrl, Object.assign({ method: 'POST', credentials: 'same-origin', headers: { 'Accept': 'application/json' } }, fetchOpts));
+    let data;
+    try {
+      data = await res.json();
+    } catch (_) {
+      try {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      } catch (e) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+    }
+    if (!data || !data.task_id) throw new Error((data && (data.error || data.message)) || 'Aucun task_id retourné.');
     const taskId = data.task_id;
     // Persist task id for auto-resume
-    try { sessionStorage.setItem('currentTaskId', taskId); } catch {}
+    try {
+      sessionStorage.setItem('currentTaskId', taskId);
+      sessionStorage.removeItem(`edxo_done_notified_${taskId}`);
+    } catch {}
     // Enrich notifications with tracking link
     if (typeof window.addNotification === 'function') {
       const link = `/tasks/track/${taskId}`;
@@ -593,12 +772,14 @@
     openTaskModal,
     startCeleryTask,
     openTaskStartModal,
+    openQuickTask,
+    openFileTask,
     startBackgroundWatch,
     stopBackgroundWatch,
     cancelTask: async (taskId) => {
       const headers = {};
       try {
-        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const csrf = getCsrfToken();
         if (csrf) headers['X-CSRFToken'] = csrf;
       } catch {}
       const r = await fetch(`/tasks/cancel/${encodeURIComponent(taskId)}`, { method: 'POST', credentials: 'same-origin', headers });

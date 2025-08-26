@@ -1206,7 +1206,8 @@ def generate_all_status():
     return jsonify({'success': True, 'state': res.state})
 
 
-@plan_de_cours_bp.route('/review/<int:plan_id>')
+# Aligner l'URL avec les liens générés par les tâches: /plan_de_cours/review/<id>
+@plan_de_cours_bp.route('/plan_de_cours/review/<int:plan_id>')
 @login_required
 @ensure_profile_completed
 def review_plan_de_cours_generation(plan_id):
@@ -1231,35 +1232,118 @@ def review_plan_de_cours_generation(plan_id):
     except Exception:
         current_app.logger.exception('Erreur lecture résultat tâche plan de cours')
 
-    if not new_fields:
-        plan = db.session.get(PlanDeCours, plan_id)
-        if plan:
-            new_fields = {
-                'presentation_du_cours': plan.presentation_du_cours,
-                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
-                'organisation_et_methodes': plan.organisation_et_methodes,
-                'accomodement': plan.accomodement,
-                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
-                'evaluation_expression_francais': plan.evaluation_expression_francais,
-                'materiel': plan.materiel,
-            }
-            new_cal = [
-                {
-                    'semaine': c.semaine,
-                    'sujet': c.sujet,
-                    'activites': c.activites,
-                    'travaux_hors_classe': c.travaux_hors_classe,
-                    'evaluations': c.evaluations,
-                } for c in plan.calendriers
-            ]
+    plan = db.session.get(PlanDeCours, plan_id)
+    if not new_fields and plan:
+        new_fields = {
+            'presentation_du_cours': plan.presentation_du_cours,
+            'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+            'organisation_et_methodes': plan.organisation_et_methodes,
+            'accomodement': plan.accomodement,
+            'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+            'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'materiel': plan.materiel,
+        }
+        new_cal = [
+            {
+                'semaine': c.semaine,
+                'sujet': c.sujet,
+                'activites': c.activites,
+                'travaux_hors_classe': c.travaux_hors_classe,
+                'evaluations': c.evaluations,
+            } for c in plan.calendriers
+        ]
 
     return render_template('plan_de_cours/review_generation.html',
+                           plan=plan,
                            plan_id=plan_id,
                            task_id=task_id,
                            old_fields=old_fields,
                            old_calendriers=old_cal,
                            new_fields=new_fields,
                            new_calendriers=new_cal)
+
+
+@plan_de_cours_bp.route('/plan_de_cours/review/<int:plan_id>/apply', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def apply_review_plan_de_cours(plan_id):
+    """Confirme les changements (no-op) ou restaure l'ancienne version depuis la tâche."""
+    plan = db.session.get(PlanDeCours, plan_id)
+    if not plan:
+        return jsonify({'success': False, 'message': 'Plan de cours non trouvé.'}), 404
+
+    data = request.get_json(silent=True) or {}
+    action = data.get('action')
+    task_id = data.get('task_id') or request.args.get('task_id')
+
+    if action not in ('confirm', 'revert'):
+        return jsonify({'success': False, 'message': 'Action invalide.'}), 400
+
+    if action == 'revert':
+        if not task_id:
+            return jsonify({'success': False, 'message': 'task_id requis pour restaurer.'}), 400
+        try:
+            res = AsyncResult(task_id, app=celery)
+            payload = res.result or {}
+            old_fields = payload.get('old_fields') or {}
+            old_cal = payload.get('old_calendriers') or []
+        except Exception:
+            current_app.logger.exception('Erreur lecture résultat tâche pour revert plan de cours')
+            return jsonify({'success': False, 'message': "Impossible de lire le résultat de la tâche."}), 500
+
+        # Appliquer anciens champs si disponibles
+        field_names = [
+            'presentation_du_cours',
+            'objectif_terminal_du_cours',
+            'organisation_et_methodes',
+            'accomodement',
+            'evaluation_formative_apprentissages',
+            'evaluation_expression_francais',
+            'materiel',
+        ]
+        for fn in field_names:
+            if fn in old_fields:
+                setattr(plan, fn, old_fields.get(fn))
+
+        # Remplacer calendrier
+        for c in plan.calendriers:
+            db.session.delete(c)
+        for entry in (old_cal or []):
+            db.session.add(PlanDeCoursCalendrier(
+                plan_de_cours_id=plan.id,
+                semaine=entry.get('semaine'),
+                sujet=entry.get('sujet'),
+                activites=entry.get('activites'),
+                travaux_hors_classe=entry.get('travaux_hors_classe'),
+                evaluations=entry.get('evaluations'),
+            ))
+
+        db.session.commit()
+
+    # En cas de confirmation: rien à faire car la génération a déjà écrit en BD
+    redirect_url = f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/"
+    return jsonify({'success': True, 'redirect_url': redirect_url})
+
+
+@plan_de_cours_bp.route('/<int:plan_id>/improve', methods=['GET'])
+@login_required
+@ensure_profile_completed
+def improve_plan_de_cours_page(plan_id):
+    """Page d'amélioration du plan de cours (UI dédiée), alignée sur le modèle Plan‑cadre.
+
+    Propose un formulaire léger (modèle, effort, verbosité, informations complémentaires)
+    et déclenche la tâche unifiée via l'orchestrateur (avec improve_only=1 côté client).
+    """
+    plan = db.session.get(PlanDeCours, plan_id)
+    if not plan:
+        abort(404)
+    # Réutilise le formulaire de génération s'il existe (pour sélecteurs)
+    try:
+        from ..forms import PlanDeCoursGenerateForm
+        generate_form = PlanDeCoursGenerateForm()
+    except Exception:
+        generate_form = None
+    return render_template('plan_de_cours/improve.html', plan=plan, cours=plan.cours if plan else None, generate_form=generate_form)
 
 
 @plan_de_cours_bp.route(

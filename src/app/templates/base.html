@@ -37,34 +37,68 @@
 
     <title>EDxo - Gestion pédagogique</title>
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    {% if config['USE_LOCAL_BOOTSTRAP'] %}
+      <link rel="stylesheet" href="{{ asset_url('vendor/bootstrap/bootstrap.min.css') }}" />
+    {% else %}
+      <!-- Bootstrap CSS (preload to reduce render-blocking) -->
+      <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+      <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" /></noscript>
+    {% endif %}
 
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+    {% if config['USE_LOCAL_ICONS'] %}
+      <link rel="preload" href="{{ asset_url('vendor/bootstrap-icons/font/fonts/bootstrap-icons.woff2') }}" as="font" type="font/woff2" crossorigin>
+      <link rel="stylesheet" href="{{ asset_url('vendor/bootstrap-icons/font/bootstrap-icons.css') }}" />
+    {% else %}
+      <!-- Bootstrap Icons (defer apply via preload) -->
+      <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+      <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/fonts/bootstrap-icons.woff2" as="font" type="font/woff2" crossorigin>
+      <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" /></noscript>
+    {% endif %}
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Font Awesome (low priority) -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Preload main FA webfonts to reduce icon CLS -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" /></noscript>
 
     {% block head %}
     <style>
       body {
         font-family: 'Roboto', sans-serif;
       }
+      /* Minimal critical utilities to reduce CLS before Bootstrap loads */
+      .container { max-width: 1140px; margin-left: auto; margin-right: auto; padding-left: 1rem; padding-right: 1rem; }
+      .mt-4 { margin-top: 1.5rem !important; }
+      .mb-3 { margin-bottom: 1rem !important; }
+      .text-center { text-align: center !important; }
       /* Logo */
+      .logo-container { min-height: 44px; display:flex; align-items:center; }
       .logo-container img {
-        max-width: 80px;
-        height: auto;
+        width: 40px; height: 40px;
+        object-fit: contain;
+      }
+      /* Desktop: enlarge logo slightly while keeping header compact */
+      @media (min-width: 992px) {
+        .logo-container { min-height: 56px; }
+        .logo-container img { width: 56px; height: 56px; }
+        .header-container { min-height: auto; padding: 0; }
+        .header-container .navbar { padding-top: 0; padding-bottom: 0; min-height: 56px; align-items: center; }
+        .header-container .navbar-brand { padding-top: 0; padding-bottom: 0; margin: 0; }
+        .header-container .navbar-nav .nav-link { padding-top: 0; padding-bottom: 0; line-height: 1.1; }
+        .header-container .user-info { padding-top: 0; padding-bottom: 0; }
+        .header-container .dropdown-menu { margin-top: 0.25rem; }
       }
       /* Header */
       .header-container {
         background-color: #f0f0f0;
-        padding: 0.5rem 0;
+        padding: 0.25rem 0;
         border-bottom: 1px solid #e0e0e0;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         /* S'assurer que les menus (notifications, user) passent au-dessus des éléments sticky de la page */
         position: relative;
         z-index: 1100;
+        min-height: 48px;
       }
       .navbar-nav .nav-link {
         margin-right: 1rem;
@@ -125,7 +159,7 @@
       }
       /* Menu Notification */
       .notification-toggle {
-        font-size: 1.75rem;
+        font-size: 1.25rem;
         color: #555;
         position: relative;
         text-decoration: none;
@@ -137,14 +171,22 @@
         display: none;
       }
       #notification-badge {
-        font-size: 0.65rem;
-        padding: 2px 5px;
-        border-radius: 50%;
-        background: #dc3545;
-        color: #fff;
         position: absolute;
         top: 0;
         right: 0;
+        transform: translate(35%, -35%);
+        background: #dc3545;
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 14px;
+        min-width: 14px;
+        padding: 0 4px; /* allows 2-digit counts to fit as a pill */
+        border-radius: 999px;
+        border: 2px solid #fff; /* white ring so it doesn’t cover the bell */
+        font-size: 10px;
+        line-height: 1;
       }
       #notification-list li {
         white-space: normal;
@@ -178,7 +220,12 @@
         opacity: 0;
         transform: translateY(-100%);
       }
-      /* Adaptations pour petit écran */
+      /* Contrast tweaks */
+      .credit-display { background-color: #e6f4ea; color: #1f5133; }
+      .accordion-button.bg-info.text-white { color: #052c65 !important; background-color: #cfe8ff !important; }
+      .accordion-button.bg-primary.text-white { background-color: #0b5ed7 !important; color: #fff !important; }
+      .btn:focus { outline: 2px solid #0d6efd; outline-offset: 2px; }
+    /* Adaptations pour petit écran */
       @media (max-width: 768px) {
         .navbar-collapse {
           padding: 0;
@@ -244,6 +291,7 @@
         }
       }
     </style>
+    
     {% endblock %}
   </head>
   <body>
@@ -255,7 +303,7 @@
       <div class="container">
         <nav class="navbar navbar-expand-lg navbar-light">
           <a class="navbar-brand logo-container" href="{{ url_for('main.index') }}">
-            <img src="{{ url_for('static', filename='assets/EDxologo.png') }}" alt="EDxo Logo" class="img-fluid" loading="lazy" />
+            <img src="{{ url_for('static', filename='assets/EDxologo.png') }}" alt="EDxo Logo" class="img-fluid" loading="lazy" width="80" height="80" />
           </a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                   aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Basculer la navigation">
@@ -283,7 +331,7 @@
             <div class="user-info ms-3 d-flex align-items-center">
               <!-- Menu Notification -->
               <div class="dropdown me-3">
-                <a class="notification-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <a class="notification-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Ouvrir les notifications" title="Notifications">
                   <i class="bi bi-bell"></i>
                   <span id="notification-badge" style="display:none;"></span>
                 </a>
@@ -371,9 +419,13 @@
       <p>Version: {{ version }}</p>
     </footer>
 
-    <!-- Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Bootstrap Bundle JS / Marked (defer to avoid blocking) -->
+    {% if config['USE_LOCAL_BOOTSTRAP'] %}
+      <script src="{{ asset_url('vendor/bootstrap/bootstrap.bundle.min.js') }}" defer></script>
+    {% else %}
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    {% endif %}
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
 
     <!-- Gestion du crédit -->
     <script>
@@ -586,7 +638,7 @@
     </script>
 
     <!-- Orchestrateur unifié des tâches (SSE + polling) -->
-    <script src="{{ asset_url('js/task_orchestrator.js') }}"></script>
+    <script src="{{ asset_url('js/task_orchestrator.js') }}" defer></script>
 
     <!-- Ouvrir le suivi tâche en modal quand on clique une notification /tasks/track/<id> -->
     <script>

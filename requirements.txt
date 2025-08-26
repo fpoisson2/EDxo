@@ -40,3 +40,6 @@ cachelib
 watchfiles
 openpyxl
 reportlab
+weasyprint
+mammoth
+Flask-Compress>=1.14

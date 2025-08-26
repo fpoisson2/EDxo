@@ -11,67 +11,21 @@
     </div>
     {% if current_user.role in ['admin', 'coordo'] %}
         <div class="mt-4 d-flex gap-2">
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importDevisModal">
+            <button id="btnImportDevis" class="btn btn-success">
                 <i class="fas fa-upload"></i> Importer les compétences (PDF)
             </button>
         </div>
-        <!-- Modal Import PDF -->
-        <div class="modal fade" id="importDevisModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <form id="importDevisForm">
-                <div class="modal-header">
-                  <h5 class="modal-title">Importer le devis ministériel (PDF)</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-                </div>
-                <div class="modal-body">
-                  <div class="mb-3">
-                    <label for="devisFile" class="form-label">Fichier PDF</label>
-                    <input type="file" class="form-control" id="devisFile" accept="application/pdf" required />
-                    <div class="form-text">Le PDF sera associé à ce programme.</div>
-                  </div>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                  <button type="submit" class="btn btn-primary">Lancer l'import</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
         <script>
         document.addEventListener('DOMContentLoaded', () => {
-          const form = document.getElementById('importDevisForm');
-          if (!form) return;
-          form.addEventListener('submit', async (e) => {
+          const btn = document.getElementById('btnImportDevis');
+          if (!btn || !(window.EDxoTasks && window.EDxoTasks.openFileTask)) return;
+          btn.addEventListener('click', (e) => {
             e.preventDefault();
-            const input = document.getElementById('devisFile');
-            if (!input || !input.files || !input.files[0]) { alert('Sélectionnez un PDF.'); return; }
-            const fd = new FormData();
-            fd.append('file', input.files[0]);
-            const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            try {
-              const startUrl = `{{ url_for('programme.import_competences_pdf_start', programme_id=programme.id) }}`;
-              await window.EDxoTasks.startCeleryTask(startUrl, {
-                method: 'POST',
-                body: fd,
-                headers: { 'X-CSRFToken': csrf },
-                credentials: 'same-origin'
-              }, {
-                title: 'Import du devis (PDF)',
-                startMessage: 'Import en cours…',
-                userPrompt: 'Importation des compétences à partir d\'un PDF fourni.',
-                onDone: (payload) => {
-                  const reviewUrl = payload && payload.validation_url ? payload.validation_url : (`/programme/{{ programme.id }}/competences/import/review?task_id=${sessionStorage.getItem('currentTaskId')||''}`);
-                  try { addNotification('Import terminé. Cliquez pour valider.', 'success', reviewUrl); } catch(_) {}
-                }
-              });
-              const modalEl = document.getElementById('importDevisModal');
-              (bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl)).hide();
-            } catch (err) {
-              console.error('Erreur import PDF', err);
-              try { addNotification('Erreur import: ' + (err.message||err), 'error'); } catch(_) {}
-            }
+            window.EDxoTasks.openFileTask({
+              url: `{{ url_for('programme.import_competences_pdf_start', programme_id=programme.id) }}`,
+              title: 'Importer le devis ministériel (PDF)',
+              startMessage: 'Import en cours…'
+            });
           });
         });
         </script>

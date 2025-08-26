@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h1>Améliorer le plan de cours — {{ cours.code }} · {{ cours.nom }}</h1>
+  <p class="text-muted">L'IA propose des améliorations sur les sections et le calendrier. Vous pourrez consulter le résultat sur la page de comparaison.</p>
+
+  <div class="card mt-3">
+    <div class="card-header">Paramètres d'amélioration</div>
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label">Modèle</label>
+          {% if generate_form and generate_form.ai_model %}
+            {{ generate_form.ai_model(class="form-select", id="ai_model") }}
+          {% else %}
+            <select id="ai_model" class="form-select">
+              <option value="gpt-5">gpt-5</option>
+              <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+            </select>
+          {% endif %}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Effort de raisonnement</label>
+          {% if generate_form and generate_form.reasoning_effort %}
+            {{ generate_form.reasoning_effort(class="form-select", id="ai_reasoning") }}
+          {% else %}
+            <select id="ai_reasoning" class="form-select">
+              <option value="minimal">Minimal</option>
+              <option value="low">Faible</option>
+              <option value="medium" selected>Moyen</option>
+              <option value="high">Élevé</option>
+            </select>
+          {% endif %}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Verbosité</label>
+          {% if generate_form and generate_form.verbosity %}
+            {{ generate_form.verbosity(class="form-select", id="ai_verbosity") }}
+          {% else %}
+            <select id="ai_verbosity" class="form-select">
+              <option value="low">Faible</option>
+              <option value="medium" selected>Moyenne</option>
+              <option value="high">Élevée</option>
+            </select>
+          {% endif %}
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="additional_info">Informations complémentaires (optionnel)</label>
+          <textarea id="additional_info" class="form-control" rows="3" placeholder="Contexte, contraintes, profil des étudiants…" aria-label="Informations complémentaires"></textarea>
+        </div>
+        <div class="col-12 d-flex gap-2">
+          <button class="btn btn-primary" id="btn-start-improve">
+            <i class="bi bi-magic me-2"></i>Générer la proposition
+          </button>
+          <a class="btn btn-outline-secondary" href="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=cours.id) }}">Retour au plan de cours</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="improve-hint" class="small text-muted mt-2">Une notification s'affichera et un suivi s'ouvrira automatiquement.</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const btn = document.getElementById('btn-start-improve');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    try {
+      const ai_model = document.getElementById('ai_model')?.value || 'gpt-5';
+      const reasoning_effort = document.getElementById('ai_reasoning')?.value || 'medium';
+      const verbosity = document.getElementById('ai_verbosity')?.value || 'medium';
+      const additional_info = document.getElementById('additional_info')?.value || '';
+      const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+      const startUrl = "{{ url_for('plan_de_cours.generate_all_start') }}";
+      const params = new URLSearchParams();
+      params.append('cours_id', String({{ cours.id }}));
+      params.append('session', "{{ plan.session }}");
+      params.append('improve_only', 'true');
+      if (additional_info) params.append('additional_info', additional_info);
+      if (ai_model) params.append('ai_model', ai_model);
+      // Note: reasoning_effort/verbosity peuvent être utilisés côté worker si supportés
+      params.append('reasoning_effort', reasoning_effort);
+      params.append('verbosity', verbosity);
+
+      await window.EDxoTasks.startCeleryTask(startUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrf },
+        body: params.toString(),
+        credentials: 'same-origin'
+      }, {
+        title: 'Amélioration du plan de cours',
+        startMessage: 'Amélioration en cours…',
+        onDone: (payload) => {
+          const reviewUrl = payload && payload.validation_url
+            ? payload.validation_url
+            : (`/plan_de_cours/review/${payload?.plan_id || ''}?task_id=${sessionStorage.getItem('currentTaskId')||''}`);
+          try { addNotification('Proposition prête. Cliquez pour comparer.', 'success', reviewUrl); } catch(_) {}
+        }
+      });
+    } catch (e) {
+      console.error('Erreur déclenchement amélioration plan de cours', e);
+      try { addNotification('Erreur: ' + (e.message||e), 'error'); } catch(_) {}
+    }
+  });
+});
+</script>
+{% endblock %}

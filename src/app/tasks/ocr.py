@@ -394,13 +394,54 @@ def simple_import_competences_pdf(self, programme_id: int, pdf_path: str, user_i
         base_filename = f"{base}_{int(time.time())}"
         output_json_filename = os.path.join(txt_output_dir, f"{base_filename}_competences.json")
 
+        # Dédoublonnage et lissage du flux pour éviter les répétitions
+        last_msg = { 'text': None, 'ts': 0.0 }
+        from time import monotonic
         def callback(msg):
             meta = {'step': 'Extraction IA', 'task_id': task_id}
+            # Structured streaming: prefer passing buffers/summaries, suppress noisy text
             if isinstance(msg, dict):
-                meta.update(msg)
-                meta['message'] = msg.get('message') or 'Progression…'
+                t = msg.get('type')
+                if t == 'stream':
+                    # Propager le buffer/last chunk pour affichage live, sans spammer le champ message
+                    if 'stream_buffer' in msg:
+                        meta['stream_buffer'] = msg['stream_buffer']
+                    if 'stream_chunk' in msg:
+                        meta['stream_chunk'] = msg['stream_chunk']
+                    # Optionnel: progression implicite (la barre se mettra à jour côté UI avec progress/pings)
+                    try:
+                        self.update_state(state='PROGRESS', meta=meta)
+                    except Exception:
+                        pass
+                    return
+                if t == 'reasoning':
+                    if 'reasoning_summary' in msg:
+                        meta['reasoning_summary'] = msg['reasoning_summary']
+                    try:
+                        self.update_state(state='PROGRESS', meta=meta)
+                    except Exception:
+                        pass
+                    return
+                # Generic structured message: map to message if provided
+                if 'message' in msg and msg['message']:
+                    meta['message'] = str(msg['message'])
+                else:
+                    # Avoid emitting placeholder messages repeatedly
+                    meta['message'] = ''
             else:
                 meta['message'] = str(msg)
+
+            # Dédoublonnage de messages identiques très rapprochés
+            try:
+                now = monotonic()
+                text = meta.get('message') or ''
+                if text and text == last_msg['text'] and (now - last_msg['ts']) < 2.0:
+                    return
+                last_msg['text'] = text
+                last_msg['ts'] = now
+            except Exception:
+                pass
+
             try:
                 self.update_state(state='PROGRESS', meta=meta)
             except Exception:

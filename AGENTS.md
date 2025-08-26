@@ -91,7 +91,7 @@ Pour toute action (génération, amélioration, import), appeler:
 ```js
 await EDxoTasks.startCeleryTask('/api/.../start', {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+  headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf },
   body: JSON.stringify(payload)
 }, {
   title: 'Titre de la tâche',
@@ -131,3 +131,40 @@ Pour une importation de fichier (PDF/DOCX), construire un `FormData` et appeler 
 
 - Utiliser les endpoints unifiés `/tasks/status|events|track` pour tout suivi.
 - Déprécier les anciens endpoints de statut/stream spécifiques dès migration.
+
+## Validation Plan de cours (review)
+
+- Page de comparaison: `GET /plan_de_cours/review/<plan_id>?task_id=...` affiche les champs avant/après et le calendrier.
+- Actions:
+  - Confirmer: `POST /plan_de_cours/review/<plan_id>/apply` avec `{ action: 'confirm', task_id }`.
+    - Effet: aucun changement supplémentaire (la génération a déjà persisté en BD). Répond avec `redirect_url` vers le plan.
+  - Restaurer: `POST /plan_de_cours/review/<plan_id>/apply` avec `{ action: 'revert', task_id }`.
+    - Effet: restaure les champs et le calendrier à partir de `old_fields` et `old_calendriers` présents dans le payload Celery.
+- CSRF côté client: récupérer le jeton via la balise meta globale et l’envoyer dans l’en-tête `X-CSRFToken`.
+
+Exemples JS (dans un template Jinja):
+
+```js
+const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+await fetch(`/plan_de_cours/review/${planId}/apply`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf },
+  body: JSON.stringify({ action: 'confirm', task_id })
+});
+
+// Import grille via FormData
+const fd = new FormData();
+fd.append('file', file);
+await fetch('/grille/import', {
+  method: 'POST',
+  body: fd,
+  credentials: 'same-origin',
+  headers: { 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf }
+});
+```
+
+Pré-requis côté worker: inclure dans le `result` de la tâche les clés suivantes pour alimenter la page de review et permettre le revert:
+
+- `fields` et `calendriers` (nouveaux)
+- `old_fields` et `old_calendriers` (état précédent)
+- `validation_url` pointant vers `/plan_de_cours/review/<id>?task_id=...`

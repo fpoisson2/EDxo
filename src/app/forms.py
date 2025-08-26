@@ -416,6 +416,21 @@ class OcrPromptSettingsForm(FlaskForm):
         self.model_extraction.choices = [('', '— par défaut —')] + choices
 
 
+class PlanCadreImportPromptSettingsForm(FlaskForm):
+    prompt_template = TextAreaField(
+        'Template du prompt (inclure {doc_text})',
+        validators=[DataRequired()],
+        render_kw={"rows": 18, "class": "form-control font-monospace"}
+    )
+    ai_model = SelectField('Modèle IA', validators=[DataRequired()], default='gpt-5')
+    submit = SubmitField('Sauvegarder', render_kw={"class": "btn btn-primary"})
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        models = get_all_models()
+        self.ai_model.choices = [(m.name, m.name) for m in models]
+
+
 class GenerateContentForm(FlaskForm):
     additional_info = TextAreaField('Informations complémentaires', validators=[DataRequired()])
     ai_model = SelectField(

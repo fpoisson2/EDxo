@@ -317,8 +317,30 @@ def confirm_grille_import(task_id):
     # Récupérer le JSON de la grille
     try:
         grille_json = task_result.result['result']
-        grille_data = json.loads(grille_json)
-        
+        # Accepter dict/list directement, ou parser texte avec reformatage tolérant
+        if isinstance(grille_json, (dict, list)):
+            grille_data = grille_json
+        else:
+            def _parse_or_coerce(s):
+                s = (s or '').strip()
+                # Retirer éventuelles fences Markdown
+                for fence in ("```json", "```JSON", "```"):
+                    if s.startswith(fence):
+                        s = s[len(fence):].strip()
+                if s.endswith("```"):
+                    s = s[:-3].strip()
+                try:
+                    return json.loads(s)
+                except Exception:
+                    pass
+                start = s.find('{')
+                end = s.rfind('}')
+                if start != -1 and end != -1 and end > start:
+                    candidate = s[start:end+1]
+                    return json.loads(candidate)
+                return json.loads(s)  # Laisse lever
+            grille_data = _parse_or_coerce(grille_json)
+
         # Obtenir le nom du programme depuis le JSON
         nom_programme = grille_data.get('programme', 'Programme inconnu')
     except Exception as e:

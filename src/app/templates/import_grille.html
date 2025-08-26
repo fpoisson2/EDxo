@@ -33,7 +33,7 @@
           await window.EDxoTasks.startCeleryTask(startUrl, {
             method: 'POST',
             body: fd,
-            headers: { 'X-CSRFToken': csrf },
+            headers: { 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf },
             credentials: 'same-origin'
           }, {
             title: 'Import de la grille (PDF)',

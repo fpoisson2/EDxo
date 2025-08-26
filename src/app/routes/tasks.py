@@ -10,6 +10,15 @@ from ...config.env import CELERY_BROKER_URL
 tasks_bp = Blueprint("tasks", __name__, url_prefix="/tasks")
 
 
+def _is_cancel_requested(task_id: str) -> bool:
+    """Return True if a cooperative cancel flag is present in Redis for task_id."""
+    try:
+        import redis
+        r = redis.Redis.from_url(CELERY_BROKER_URL)
+        return bool(r.get(f"edxo:cancel:{task_id}"))
+    except Exception:
+        return False
+
 @tasks_bp.get("/status/<task_id>")
 @login_required
 def unified_task_status(task_id):
@@ -26,6 +35,15 @@ def unified_task_status(task_id):
     res = AsyncResult(task_id, app=celery)
     state = res.state
     meta = res.info if isinstance(res.info, dict) else {}
+
+    # If user requested cancel while task never started, Celery may keep PENDING forever.
+    # Surface a REVOKED state for UX if our cancel flag is set.
+    if state == "PENDING" and _is_cancel_requested(task_id):
+        state = "REVOKED"
+        if isinstance(meta, dict):
+            meta = {**meta, "message": meta.get("message") or "Tâche annulée (avant démarrage)."}
+        else:
+            meta = {"message": "Tâche annulée (avant démarrage)."}
     message = meta.get("message") if isinstance(meta, dict) else None
 
     result_payload = res.result if state == "SUCCESS" else None
@@ -59,6 +77,14 @@ def unified_task_events(task_id):
                 res = AsyncResult(task_id, app=celery)
                 state = res.state
                 meta = res.info if isinstance(res.info, dict) else {}
+
+                # Mirror the status endpoint: if cancel flag is set and still PENDING, treat as REVOKED
+                if state == "PENDING" and _is_cancel_requested(task_id):
+                    state = "REVOKED"
+                    if isinstance(meta, dict):
+                        meta = {**meta, "message": meta.get("message") or "Tâche annulée (avant démarrage)."}
+                    else:
+                        meta = {"message": "Tâche annulée (avant démarrage)."}
                 snapshot = (state, json.dumps(meta, sort_keys=True, ensure_ascii=False))
                 if snapshot != last_snapshot:
                     payload = {"state": state, "meta": meta}

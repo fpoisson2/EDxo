@@ -772,7 +772,7 @@ Nettoie le texte: retire les puces/marqueurs de liste redondants (e, °, +, o, *
         usage_info = None
         final_response = None
         events_count = 0
-        progress_tick = 50  # fréquence d'émission des événements de progression
+        progress_tick = 0  # désactiver les messages texte de progression (on utilise le stream_buffer)
 
         try:
             with client.responses.stream(**request_kwargs) as stream:

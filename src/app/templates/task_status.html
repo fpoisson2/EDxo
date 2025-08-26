@@ -166,17 +166,35 @@ document.addEventListener("DOMContentLoaded", function() {
             if (wasAtBottom) streamLog.scrollTop = streamLog.scrollHeight;
         }
         if (es) es.addEventListener('open', () => appendLog('Connexion au flux ouverte.'));
+        let lastMsg = null;
+        let lastSeq = -1;
+        let lastReasoning = '';
         if (es) es.addEventListener('progress', (ev) => {
             try {
                 const data = JSON.parse(ev.data || '{}');
+                // 1) Afficher message/étape si nouveau
                 if (data.step || data.message) {
-                    const parts = [];
-                    if (data.step) parts.push(`Étape: ${data.step}`);
-                    if (data.message) parts.push(data.message);
-                    if (typeof data.progress === 'number') parts.push(`Progression: ${data.progress}%`);
-                    appendLog(parts.join(' | '));
-                } else {
-                    appendLog('Mise à jour de progression.');
+                    const msg = `${data.step ? `Étape: ${data.step} | ` : ''}${data.message || ''}${typeof data.progress === 'number' ? ` | Progression: ${data.progress}%` : ''}`.trim();
+                    if (msg && msg !== lastMsg) {
+                        lastMsg = msg;
+                        appendLog(msg);
+                    }
+                }
+                // 2) Détails: raisonnement + aperçu du flux JSON
+                const meta = data.meta || {};
+                const details = meta.details || meta; // accepter soit details, soit directement dans meta
+                if (details) {
+                    const rs = (details.reasoning_summary || '').trim();
+                    if (rs && rs !== lastReasoning) {
+                        lastReasoning = rs;
+                        appendLog('Raisonnement: ' + rs);
+                    }
+                    const seq = typeof details.seq === 'number' ? details.seq : (typeof details.SEQ === 'number' ? details.SEQ : null);
+                    const preview = details.stream_preview || details.stream_buffer || '';
+                    if (seq !== null && typeof seq === 'number' && seq > lastSeq && preview) {
+                        lastSeq = seq;
+                        appendLog('Flux: ' + String(preview).slice(-300));
+                    }
                 }
                 if (data.state) {
                     taskStatusElement.textContent = data.state;

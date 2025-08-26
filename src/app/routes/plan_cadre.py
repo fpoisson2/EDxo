@@ -43,6 +43,9 @@ from ...utils import (
 )
 from ...utils.logging_config import get_logger
 from bs4 import BeautifulSoup
+import os
+import re
+import time
 import zipfile
 from io import BytesIO
 
@@ -264,23 +267,36 @@ def import_plan_cadre_docx_start(plan_id):
     if not file or not file.filename.lower().endswith('.docx'):
         return jsonify(success=False, message='Veuillez fournir un fichier .docx.'), 400
 
+    # Sauvegarder le fichier afin de pouvoir l'envoyer à OpenAI côté worker
     try:
-        doc_text = _read_docx_text(file)
+        upload_dir = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+        os.makedirs(upload_dir, exist_ok=True)
+        safe_name = re.sub(r'[^A-Za-z0-9_.-]+', '_', file.filename)
+        stored_name = f"plan_cadre_{plan.id}_{int(time.time())}_{safe_name}"
+        stored_path = os.path.join(upload_dir, stored_name)
+        file.stream.seek(0, os.SEEK_SET)
+        file.save(stored_path)
     except Exception:
-        current_app.logger.exception('Erreur lecture DOCX (plan-cadre)')
-        return jsonify(success=False, message='Impossible de lire le DOCX.'), 400
+        current_app.logger.exception('Erreur lors de la sauvegarde du DOCX (plan-cadre)')
+        return jsonify(success=False, message='Impossible de sauvegarder le fichier.'), 400
 
-    # Refuser de lancer l'IA si le document semble vide/illisible
-    if not doc_text or not doc_text.strip():
-        current_app.logger.warning('Import DOCX plan-cadre: texte extrait vide (fichier=%s)', getattr(file, 'filename', '?'))
-        return jsonify(success=False, message='Le fichier .docx semble vide ou illisible.'), 400
+    # Lecture de secours du texte (pour fallback si upload échoue côté worker)
+    try:
+        with open(stored_path, 'rb') as fh:
+            from docx import Document  # python-docx
+            doc = Document(fh)
+            paragraphs = [p.text for p in doc.paragraphs if p.text and p.text.strip()]
+            doc_text = '\n\n'.join(paragraphs)
+    except Exception:
+        current_app.logger.warning('Lecture texte DOCX de secours échouée; on poursuivra via fichier côté worker.', exc_info=True)
+        doc_text = ''
 
     # Choisir le modèle (préfère la valeur du formulaire, sinon modèle du plan ou défaut)
     ai_model = (request.form.get('ai_model') or '').strip() or (plan.ai_model or 'gpt-5')
 
     try:
         # Lancer la tâche d'import en mode APERÇU (ne modifie pas la BD)
-        task = import_plan_cadre_preview_task.delay(plan.id, doc_text, ai_model, current_user.id)
+        task = import_plan_cadre_preview_task.delay(plan.id, doc_text, ai_model, current_user.id, stored_path)
         # Mémoriser pour le polling global
         session['task_id'] = task.id
         return jsonify(success=True, task_id=task.id)

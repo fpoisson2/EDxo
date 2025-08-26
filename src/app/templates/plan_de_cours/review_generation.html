@@ -67,8 +67,53 @@
   </div>
 
   <div class="mt-4">
-    <a href="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=(plan.cours_id if plan else 0)) if false }}" class="btn btn-secondary">Retour</a>
+    <div class="d-flex gap-2">
+      {% if plan %}
+        <a href="/cours/{{ plan.cours_id }}/plan_de_cours/{{ plan.session }}/" class="btn btn-outline-secondary">Retour au plan</a>
+      {% endif %}
+      <button id="confirmBtn" class="btn btn-success">Confirmer</button>
+      {% if task_id %}
+        <button id="revertBtn" class="btn btn-warning">Restaurer l'ancienne version</button>
+      {% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}
 
+{% block scripts %}
+<script>
+  (function(){
+    const planId = {{ plan_id|int }};
+    const taskId = {{ (task_id or '')|tojson }};
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    async function callApply(action) {
+      try {
+        const res = await fetch(`/plan_de_cours/review/${planId}/apply${taskId ? ('?task_id=' + encodeURIComponent(taskId)) : ''}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(csrf ? {'X-CSRFToken': csrf, 'X-CSRF-Token': csrf} : {})
+          },
+          body: JSON.stringify({ action, task_id: taskId })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          alert(data.message || 'Action échouée.');
+          return;
+        }
+        try { addNotification('Modifications enregistrées.', 'success', data.redirect_url); } catch(_) {}
+        if (data.redirect_url) window.location.href = data.redirect_url;
+      } catch (e) {
+        console.error(e);
+        alert('Erreur réseau.');
+      }
+    }
+
+    const confirmBtn = document.getElementById('confirmBtn');
+    if (confirmBtn) confirmBtn.addEventListener('click', function(){ callApply('confirm'); });
+    const revertBtn = document.getElementById('revertBtn');
+    if (revertBtn) revertBtn.addEventListener('click', function(){ if (confirm("Restaurer l'ancienne version ?")) callApply('revert'); });
+  })();
+</script>
+{% endblock %}

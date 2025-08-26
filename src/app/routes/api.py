@@ -180,8 +180,39 @@ def generate_plan_cadre(plan_id):
 @api_bp.post('/plan_de_cours/<int:plan_id>/generate')
 @api_auth_required
 def generate_plan_de_cours(plan_id):
+    """Démarre la génération/amélioration d'un plan de cours (unifié).
+
+    Accepte JSON ou FormData: additional_info, ai_model, reasoning_effort, verbosity, improve_only.
+    Construit le prompt via build_all_prompt et enfile la tâche Celery.
+    """
     from ..tasks.generation_plan_de_cours import generate_plan_de_cours_all_task
-    task = generate_plan_de_cours_all_task.delay(plan_id, '', 'gpt-5', g.api_user.id)
+    from ..models import PlanDeCours
+    # Charger payload
+    payload = request.get_json(silent=True)
+    if payload is None:
+        try:
+            payload = dict(request.form) if request.form else {}
+        except Exception:
+            payload = {}
+    additional_info = payload.get('additional_info') or ''
+    ai_model = payload.get('ai_model') or ''
+    # Récupérer PlanDeCours et contexte pour construire le prompt
+    plan = PlanDeCours.query.get_or_404(plan_id)
+    cours = plan.cours
+    plan_cadre = cours.plan_cadre if cours else None
+    try:
+        # Réutiliser la logique de prompt depuis le routeur PDC
+        from ..routes.plan_de_cours import PlanDeCoursPromptSettings, build_all_prompt
+        prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
+        prompt_template = prompt_settings.prompt_template if prompt_settings else None
+        ai_model = (ai_model or (prompt_settings.ai_model if prompt_settings else None) or 'gpt-5')
+        prompt = build_all_prompt(plan_cadre, cours, plan.session, prompt_template, additional_info=additional_info)
+    except Exception:
+        # Fallback minimal si import échoue
+        prompt = additional_info or ''
+        if not ai_model:
+            ai_model = 'gpt-5'
+    task = generate_plan_de_cours_all_task.delay(plan.id, prompt, ai_model, g.api_user.id)
     return jsonify({'task_id': task.id}), 202
 
 
@@ -248,3 +279,44 @@ def export_plan_de_cours_docx(plan_id):
     from .plan_de_cours import export_docx as export_pdc
     plan = PlanDeCours.query.get_or_404(plan_id)
     return export_pdc(plan.cours_id, plan.session)
+
+
+@api_bp.post('/plan_de_cours/<int:plan_id>/improve/<string:field_name>')
+@api_auth_required
+def improve_plan_de_cours_field(plan_id, field_name):
+    """Démarre la génération/amélioration d'un champ individuel du plan de cours (unifié)."""
+    from ..tasks.generation_plan_de_cours import generate_plan_de_cours_field_task
+    payload = request.get_json(silent=True)
+    if payload is None:
+        try:
+            payload = dict(request.form) if request.form else {}
+        except Exception:
+            payload = {}
+    additional_info = payload.get('additional_info') or ''
+    plan = PlanDeCours.query.get_or_404(plan_id)
+    task = generate_plan_de_cours_field_task.delay(plan.id, field_name, additional_info, g.api_user.id)
+    return jsonify({'task_id': task.id}), 202
+
+
+@api_bp.post('/plan_de_cours/<int:plan_id>/generate_calendar')
+@api_auth_required
+def generate_plan_de_cours_calendar(plan_id):
+    """Démarre la génération du calendrier via Celery (unifié)."""
+    from ..tasks.generation_plan_de_cours import generate_plan_de_cours_calendar_task
+    payload = request.get_json(silent=True) or {}
+    additional_info = payload.get('additional_info') or ''
+    plan = PlanDeCours.query.get_or_404(plan_id)
+    task = generate_plan_de_cours_calendar_task.delay(plan.id, additional_info, g.api_user.id)
+    return jsonify({'task_id': task.id}), 202
+
+
+@api_bp.post('/plan_de_cours/<int:plan_id>/generate_evaluations')
+@api_auth_required
+def generate_plan_de_cours_evaluations(plan_id):
+    """Démarre la génération de la liste d'évaluations via Celery (unifié)."""
+    from ..tasks.generation_plan_de_cours import generate_plan_de_cours_evaluations_task
+    payload = request.get_json(silent=True) or {}
+    additional_info = payload.get('additional_info') or ''
+    plan = PlanDeCours.query.get_or_404(plan_id)
+    task = generate_plan_de_cours_evaluations_task.delay(plan.id, additional_info, g.api_user.id)
+    return jsonify({'task_id': task.id}), 202

@@ -8,69 +8,62 @@
 {% block programmes_specific %}
 <div class="container mt-4">
   <div class="vp-header mb-3">
-    <div>
-      <div class="vp-title">
-        <h2 class="mb-1">{{ programme.nom }}</h2>
-        <div class="d-flex align-items-center gap-2">
-          <a href="{{ url_for('programme.view_competences_programme', programme_id=programme.id) }}" class="btn btn-sm btn-outline-info">
-            <i class="fas fa-list-ul"></i> Voir les compétences
-          </a>
-          <a href="{{ url_for('programme.competence_logigramme', programme_id=programme.id) }}" class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-graph-up"></i> Logigramme compétences
-          </a>
-          {% if current_user.role in ['admin', 'coordo'] %}
-          <a href="{{ url_for('grille_bp.import_grille') }}" class="btn btn-sm btn-outline-secondary">
-            <i class="fas fa-file-import"></i> Importer une grille
-          </a>
-          <a href="#"
-             class="btn btn-sm btn-outline-success"
-             data-task-start
-             data-url="{{ url_for('programme.generate_programme_grille', programme_id=programme.id) }}"
-             data-title="Générer la grille (IA)"
-             data-mode="json"
-             data-json='{"total_hours":0,"nb_sessions":0,"total_units":0,"additional_info":""}'>
-            <i class="fas fa-wand-magic-sparkles"></i> Générer (IA)
-          </a>
-          {% endif %}
-          <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
-          </a>
-          <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#vp-fil-bar" aria-expanded="false" aria-controls="vp-fil-bar">
-            <i class="bi bi-tags"></i> Fils
-          </button>
+    <div class="vp-title">
+      <h2 class="mb-1">{{ programme.nom }}</h2>
+      <div class="vp-stats">
+        <div class="vp-stat vp-stat-theorie">
+          <div class="label"><i class="bi bi-journal-text"></i> Théorie</div>
+          <div class="value">{{ total_heures_theorie }} h</div>
         </div>
-      </div>
-
-      <div id="vp-fil-bar" class="collapse mt-2">
-        <div class="vp-fil-list" role="list">
-          {% for fil in fil_conducteurs %}
-            {% set bg = fil.couleur or '#cccccc' %}
-            <span class="vp-fil-dot" title="{{ fil.description }}" style="--dot: {{ bg }}"></span>
-          {% else %}
-            <span class="vp-empty">Aucun fil conducteur</span>
-          {% endfor %}
-          {% if current_user.role in ['admin', 'coordo'] %}
-            <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-xs btn-primary ms-2">Ajouter</a>
-          {% endif %}
+        <div class="vp-stat vp-stat-pratique">
+          <div class="label"><i class="bi bi-tools"></i> Pratique</div>
+          <div class="value">{{ total_heures_laboratoire }} h</div>
+        </div>
+        <div class="vp-stat vp-stat-maison">
+          <div class="label"><i class="bi bi-house-door"></i> Travail maison</div>
+          <div class="value">{{ total_heures_travail_maison }} h</div>
+        </div>
+        <div class="vp-stat vp-stat-unites">
+          <div class="label"><i class="bi bi-123"></i> Unités</div>
+          <div class="value">{{ "%.2f"|format(total_unites) }}</div>
         </div>
       </div>
     </div>
-    <div class="vp-stats">
-      <div class="vp-stat vp-stat-theorie">
-        <div class="label">Théorie</div>
-        <div class="value">{{ total_heures_theorie }} h</div>
-      </div>
-      <div class="vp-stat vp-stat-pratique">
-        <div class="label">Pratique</div>
-        <div class="value">{{ total_heures_laboratoire }} h</div>
-      </div>
-      <div class="vp-stat vp-stat-maison">
-        <div class="label">Travail maison</div>
-        <div class="value">{{ total_heures_travail_maison }} h</div>
-      </div>
-      <div class="vp-stat vp-stat-unites">
-        <div class="label">Unités</div>
-        <div class="value">{{ "%.2f"|format(total_unites) }}</div>
+
+    <div class="vp-actions d-flex align-items-center gap-2 flex-wrap">
+      <a href="{{ url_for('programme.view_competences_programme', programme_id=programme.id) }}" class="btn btn-sm btn-outline-info">
+        <i class="fas fa-list-ul"></i> Voir les compétences
+      </a>
+      <a href="{{ url_for('programme.competence_logigramme', programme_id=programme.id) }}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-graph-up"></i> Logigramme compétences
+      </a>
+      {% if current_user.role in ['admin', 'coordo'] %}
+      <a href="#" id="openImportGrilleBtn" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-file-import"></i> Importer une grille
+      </a>
+      <a href="#" id="openGenerateGrilleBtn" class="btn btn-sm btn-outline-success">
+        <i class="fas fa-wand-magic-sparkles"></i> Générer (IA)
+      </a>
+      {% endif %}
+      <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
+      </a>
+      <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#vp-fil-bar" aria-expanded="false" aria-controls="vp-fil-bar">
+        <i class="bi bi-tags"></i> Fils
+      </button>
+    </div>
+
+    <div id="vp-fil-bar" class="collapse mt-2">
+      <div class="vp-fil-list" role="list">
+        {% for fil in fil_conducteurs %}
+          {% set bg = fil.couleur or '#cccccc' %}
+          <span class="vp-fil-dot" title="{{ fil.description }}" style="--dot: {{ bg }}"></span>
+        {% else %}
+          <span class="vp-empty">Aucun fil conducteur</span>
+        {% endfor %}
+        {% if current_user.role in ['admin', 'coordo'] %}
+          <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-xs btn-primary ms-2">Ajouter</a>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -275,6 +268,97 @@
   .plan-card.selected, .session-card.selected { border: 2px solid #0d6efd; }
 </style>
 
+<script>
+  // Brancher les boutons Importer/Générer sur les modaux simplifiés (comme view_plan_cadre)
+  document.addEventListener('DOMContentLoaded', function() {
+    // Import grille (PDF) → modal fichier unifié
+    try {
+      const impBtn = document.getElementById('openImportGrilleBtn');
+      if (impBtn) {
+        impBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const start = () => window.EDxoTasks.openFileTask({
+            url: '/grille/import',
+            title: 'Importer une grille (PDF)',
+            startMessage: 'Import en cours…'
+          });
+          if (window.EDxoTasks && typeof window.EDxoTasks.openFileTask === 'function') {
+            start();
+          } else {
+            // Repli: naviguer vers l'ancienne page d'import
+            window.location.href = '{{ url_for('grille_bp.import_grille') }}';
+          }
+        });
+      }
+    } catch(_) {}
+
+    // Génération de la grille (IA) → modal rapide "Informations complémentaires"
+    try {
+      const genBtn = document.getElementById('openGenerateGrilleBtn');
+      if (genBtn) {
+        genBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const computeDefaults = () => {
+            // Tente d'inférer nb_sessions et total_hours à partir de la page
+            let nbSessions = 0;
+            try { nbSessions = document.querySelectorAll('.accordion-item.vp-session').length || 0; } catch {}
+            let totalHours = 0;
+            try {
+              document.querySelectorAll('.vp-hours-badge').forEach(span => {
+                const m = (span.textContent || '').match(/(\d+)\D+(\d+)\D+\d+/);
+                if (m) {
+                  const ht = parseInt(m[1], 10) || 0;
+                  const hl = parseInt(m[2], 10) || 0;
+                  totalHours += (ht + hl) * 15; // h_cours = (théorie + labo) * 15
+                }
+              });
+            } catch {}
+            // total unités calculé côté serveur si non fourni; on peut passer la somme actuelle en optionnel
+            const totalUnits = parseFloat('{{ "%.2f"|format(total_unites) }}') || 0;
+            return { nbSessions, totalHours, totalUnits };
+          };
+
+          const { nbSessions, totalHours, totalUnits } = computeDefaults();
+          const url = "{{ url_for('programme.generate_programme_grille', programme_id=programme.id) }}";
+
+          if (window.EDxoTasks && typeof window.EDxoTasks.openQuickTask === 'function' && nbSessions > 0 && totalHours > 0) {
+            window.EDxoTasks.openQuickTask({
+              url,
+              title: 'Générer la grille (IA)',
+              startMessage: 'Génération de la grille en cours…',
+              basePayload: {
+                nb_sessions: nbSessions,
+                total_hours: totalHours,
+                total_units: totalUnits
+              }
+            });
+            return;
+          }
+
+          // Repli: ouvrir le Start Modal générique pré-rempli pour compléter manuellement
+          const defaultJson = {
+            total_hours: totalHours || 0,
+            nb_sessions: nbSessions || 0,
+            total_units: totalUnits || 0,
+            additional_info: ''
+          };
+          if (window.EDxoTasks && typeof window.EDxoTasks.openTaskStartModal === 'function') {
+            window.EDxoTasks.openTaskStartModal({
+              url,
+              title: 'Générer la grille (IA)',
+              method: 'POST',
+              mode: 'json',
+              defaultJson
+            });
+          } else {
+            // Dernier repli: simple redirection
+            window.location.href = url;
+          }
+        });
+      }
+    } catch(_) {}
+  });
+</script>
 <script>
 const allCoursPlans = {{ cours_plans_mapping|tojson }};
 let planCoursModal;
@@ -623,282 +707,5 @@ function handlePlanCoursAction() {
 }
 </script>
 
-<!-- Modal Génération de Grille (IA) -->
-<div class="modal fade" id="aiGrilleModal" tabindex="-1" aria-labelledby="aiGrilleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="aiGrilleModalLabel">Générer une grille de cours (IA)</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="row g-3">
-          <div class="col-12">
-            <label for="ai_model" class="form-label">Modèle</label>
-            <select id="ai_model" class="form-select form-select-sm">
-              {% if generate_form and generate_form.ai_model.choices %}
-                {% for val, label in generate_form.ai_model.choices %}
-                  <option value="{{ val }}" {% if generate_form.ai_model.data == val %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              {% else %}
-                <option value="gpt-5">gpt-5</option>
-              {% endif %}
-            </select>
-          </div>
-          <div class="col-sm-6">
-            <label for="total_hours" class="form-label">Heures totales</label>
-            <input type="number" id="total_hours" class="form-control form-control-sm" min="1" step="1" placeholder="ex: 1800">
-          </div>
-          <div class="col-sm-6">
-            <label for="total_units" class="form-label">Unités totales (optionnel)</label>
-            <input type="number" id="total_units" class="form-control form-control-sm" min="0" step="0.01" placeholder="ex: 90" value="{{ '%.2f'|format(total_unites) }}">
-          </div>
-          <div class="col-sm-6">
-            <label for="nb_sessions" class="form-label">Nombre de sessions</label>
-            <input type="number" id="nb_sessions" class="form-control form-control-sm" min="1" step="1" value="4">
-          </div>
-          <div class="col-sm-6">
-            <label for="ai_reasoning" class="form-label">Effort de raisonnement</label>
-            {% if generate_form %}
-              {{ generate_form.reasoning_effort(class="form-select form-select-sm", id="ai_reasoning") }}
-            {% else %}
-              <select id="ai_reasoning" class="form-select form-select-sm">
-                <option value="minimal">Minimal</option>
-                <option value="low">Faible</option>
-                <option value="medium" selected>Moyen</option>
-                <option value="high">Élevé</option>
-              </select>
-            {% endif %}
-          </div>
-          <div class="col-sm-6">
-            <label for="ai_verbosity" class="form-label">Verbosité</label>
-            {% if generate_form %}
-              {{ generate_form.verbosity(class="form-select form-select-sm", id="ai_verbosity") }}
-            {% else %}
-              <select id="ai_verbosity" class="form-select form-select-sm">
-                <option value="low">Faible</option>
-                <option value="medium" selected>Moyenne</option>
-                <option value="high">Élevée</option>
-              </select>
-            {% endif %}
-          </div>
-          <div class="col-12">
-            <label class="form-label">Mode d'application</label>
-            <div class="d-flex gap-3">
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="apply_mode" id="mode_append" value="append" checked>
-                <label class="form-check-label" for="mode_append">Ajouter aux cours existants</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="apply_mode" id="mode_overwrite" value="overwrite">
-                <label class="form-check-label" for="mode_overwrite">Écraser la grille existante</label>
-              </div>
-            </div>
-          </div>
-          <div class="col-12">
-            <label for="ai_additional" class="form-label">Informations complémentaires (optionnel)</label>
-            <textarea id="ai_additional" class="form-control form-control-sm" rows="3" placeholder="Contexte, contraintes, profil des étudiants…"></textarea>
-          </div>
-        </div>
-
-        <div id="ai-grille-progress" class="mt-3 small text-muted"></div>
-        <div id="ai-grille-preview" class="mt-3"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-        <button type="button" class="btn btn-outline-primary" id="btn-ai-generate">Générer</button>
-        <button type="button" class="btn btn-primary d-none" id="btn-ai-apply">Appliquer la grille</button>
-      </div>
-    </div>
-  </div>
-  </div>
-
-<script>
-  let aiGrilleModal;
-  let aiGrilleResult = null;
-
-  document.addEventListener('DOMContentLoaded', function() {
-    // Branche le bouton sur l'orchestrateur unifié
-    const openBtn = document.getElementById('btn-ai-grille');
-    if (openBtn) openBtn.addEventListener('click', async () => {
-      try {
-        const ai_model = document.getElementById('ai_model')?.value || 'gpt-5';
-        const total_hours = parseInt(document.getElementById('total_hours')?.value || '0', 10);
-        const total_units = parseFloat(document.getElementById('total_units')?.value || '0');
-        const nb_sessions = parseInt(document.getElementById('nb_sessions')?.value || '0', 10);
-        const additional_info = document.getElementById('ai_additional')?.value || '';
-        const reasoning_effort = (document.getElementById('ai_reasoning')?.value) || 'medium';
-        const verbosity = (document.getElementById('ai_verbosity')?.value) || 'medium';
-        if (!total_hours || !nb_sessions) {
-          alert('Veuillez saisir les heures totales et le nombre de sessions.');
-          return;
-        }
-        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        const startUrl = `{{ url_for('programme.generate_programme_grille', programme_id=programme.id) }}`;
-        const body = JSON.stringify({ ai_model, total_hours, total_units, nb_sessions, additional_info, reasoning_effort, verbosity });
-        const taskId = await window.EDxoTasks.startCeleryTask(startUrl, { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':csrf}, body }, { title: 'Génération de la grille', startMessage: 'Génération de la grille en cours…', onDone: (payload) => {
-          const reviewUrl = `{{ url_for('programme.review_programme_grille', programme_id=programme.id, task_id='__TASK__') }}`.replace('__TASK__', sessionStorage.getItem('currentTaskId') || '');
-          try { addNotification('Proposition de grille prête. Cliquez pour valider.', 'success', reviewUrl); } catch(_) {}
-        }});
-        // Optionnel: ouverture directe page de validation
-        const reviewUrl = `{{ url_for('programme.review_programme_grille', programme_id=programme.id, task_id='__TASK__') }}`.replace('__TASK__', taskId);
-        // Laisser l'utilisateur suivre dans le modal, ou décommentez pour rediriger:
-        // window.location = reviewUrl;
-      } catch (e) {
-        try { addNotification('Erreur de génération: ' + e.message, 'error'); } catch(_) {}
-      }
-    });
-  });
-
-  function resetAiGrilleModal() {
-    aiGrilleResult = null;
-    document.getElementById('ai-grille-progress').textContent = '';
-    document.getElementById('ai-grille-preview').innerHTML = '';
-    document.getElementById('btn-ai-apply').classList.add('d-none');
-  }
-
-  async function startAiGrilleGeneration() {
-    const generateBtn = document.getElementById('btn-ai-generate');
-    const originalBtnHtml = generateBtn.innerHTML;
-    // Désactiver le bouton et afficher un spinner pendant l'attente
-    generateBtn.disabled = true;
-    generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Génération…';
-
-    const ai_model = document.getElementById('ai_model').value;
-    const total_hours = parseInt(document.getElementById('total_hours').value || '0', 10);
-    const total_units = parseFloat(document.getElementById('total_units').value || '0');
-    const nb_sessions = parseInt(document.getElementById('nb_sessions').value || '0', 10);
-    const additional_info = document.getElementById('ai_additional').value || '';
-    const reasoning_effort = (document.getElementById('ai_reasoning')?.value) || 'medium';
-    const verbosity = (document.getElementById('ai_verbosity')?.value) || 'medium';
-    if (!total_hours || !nb_sessions) {
-      alert('Veuillez saisir les heures totales et le nombre de sessions.');
-      // Réactiver le bouton si validation échoue
-      generateBtn.disabled = false;
-      generateBtn.innerHTML = originalBtnHtml;
-      return;
-    }
-    setAiGrilleProgress('Préparation de la génération…');
-    // Notifier via le système global (comme pour les plans-cadres)
-    try { addNotification('Génération de la grille en cours…', 'in-progress'); } catch(e) {}
-    try {
-      const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-      const resp = await fetch(`{{ url_for('programme.generate_programme_grille', programme_id=programme.id) }}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
-        body: JSON.stringify({ ai_model, total_hours, total_units, nb_sessions, additional_info, reasoning_effort, verbosity })
-      });
-      if (!resp.ok) {
-        const err = await resp.json().catch(()=>({error:'Erreur serveur'}));
-        throw new Error(err.error || 'Erreur lors du démarrage de la génération');
-      }
-      const { task_id } = await resp.json();
-      await pollAiTask(task_id);
-      // Réactiver le bouton après succès du polling (proposition prête)
-      generateBtn.disabled = false;
-      generateBtn.innerHTML = originalBtnHtml;
-    } catch (e) {
-      setAiGrilleProgress('Erreur: ' + e.message);
-      try { addNotification('Erreur de génération: ' + e.message, 'error'); } catch(_) {}
-      // Réactiver le bouton en cas d'erreur
-      generateBtn.disabled = false;
-      generateBtn.innerHTML = originalBtnHtml;
-    }
-  }
-
-  async function pollAiTask(taskId) {
-    setAiGrilleProgress('Génération en cours…');
-    while (true) {
-      const r = await fetch(`{{ url_for('programme.programme_task_status', task_id='__TASK__') }}`.replace('__TASK__', taskId));
-      const j = await r.json();
-      if (j.state === 'SUCCESS') {
-        if (j.status === 'success' && j.result) {
-          aiGrilleResult = j.result;
-          renderAiGrillePreview(aiGrilleResult);
-          setAiGrilleProgress('Proposition prête. Vérifiez et appliquez.');
-          try { addNotification('Proposition de grille prête. Vérifiez et appliquez.', 'success'); } catch(_) {}
-          document.getElementById('btn-ai-apply').classList.remove('d-none');
-          return;
-        } else {
-          throw new Error(j.message || 'Échec de la génération');
-        }
-      } else if (j.state === 'FAILURE' || j.status === 'error') {
-        throw new Error(j.message || 'Échec de la tâche');
-      } else {
-        // PROGRESS or PENDING
-        if (j.message) setAiGrilleProgress(j.message);
-        await new Promise(res => setTimeout(res, 1200));
-      }
-    }
-  }
-
-  function renderAiGrillePreview(data) {
-    const wrap = document.getElementById('ai-grille-preview');
-    const sessions = (data && data.sessions) || [];
-    const fils = (data && data.fils_conducteurs) || [];
-    if (!sessions.length && !fils.length) { wrap.innerHTML = '<div class="text-muted">Aucune donnée.</div>'; return; }
-    let html = '';
-    sessions.sort((a,b)=> (a.session||0)-(b.session||0));
-    for (const s of sessions) {
-      html += `<div class="mb-3"><h6 class="mb-2">Session ${s.session}</h6>`;
-      html += '<ul class="list-group list-group-sm">';
-      for (const c of (s.courses||[])) {
-        const ht = c.heures_theorie||0, hl=c.heures_laboratoire||0, hm=c.heures_travail_maison||0;
-        const pre = Array.isArray(c.prealables) ? c.prealables : (c.prerequis||[]);
-        const co = Array.isArray(c.corequis) ? c.corequis : [];
-        const preTxt = (pre && pre.length) ? `Préalables: ${pre.map(x=>String(x)).join(', ')}` : '';
-        const coTxt = (co && co.length) ? `Co‑requis: ${co.map(x=>String(x)).join(', ')}` : '';
-        const relines = [preTxt, coTxt].filter(Boolean).join(' — ');
-        html += `<li class="list-group-item">`+
-                `<div class="d-flex justify-content-between align-items-center">`+
-                `<span>${(c.nom||'Cours').replace(/</g,'&lt;')}</span>`+
-                `<span class="badge bg-secondary">${ht}-${hl}-${hm} h</span>`+
-                `</div>`+
-                `${relines ? `<div class="small text-muted mt-1">${relines.replace(/</g,'&lt;')}</div>` : ''}`+
-                `</li>`;
-      }
-      html += '</ul></div>';
-    }
-    if (fils.length) {
-      html += '<div class="mb-2 mt-3"><h6 class="mb-2">Fils conducteurs</h6>';
-      html += '<div class="d-flex flex-wrap gap-2">';
-      for (const f of fils) {
-        const color = (typeof f.couleur === 'string' && /^#([0-9a-fA-F]{6})$/.test(f.couleur)) ? f.couleur : '#888888';
-        const desc = (f.description||'').replace(/</g,'&lt;');
-        const assoc = (Array.isArray(f.cours) ? f.cours : (f.cours?[String(f.cours)]:[])).map(x=>String(x).replace(/</g,'&lt;'));
-        html += `<div class="border rounded p-2" style="border-left:6px solid ${color};">
-                    <div class="fw-semibold" style="color:${color}">${desc}</div>
-                    ${assoc.length? `<div class="small text-muted">${assoc.join(', ')}</div>` : ''}
-                  </div>`;
-      }
-      html += '</div></div>';
-    }
-    wrap.innerHTML = html;
-  }
-
-  function setAiGrilleProgress(msg) {
-    document.getElementById('ai-grille-progress').textContent = msg || '';
-  }
-
-  async function applyAiGrille() {
-    if (!aiGrilleResult) return;
-    const mode = document.querySelector('input[name="apply_mode"]:checked')?.value || 'append';
-    setAiGrilleProgress('Application en base…');
-    try {
-      const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-      const resp = await fetch(`{{ url_for('programme.apply_programme_grille', programme_id=programme.id) }}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
-        body: JSON.stringify({ mode, grid: aiGrilleResult })
-      });
-      const j = await resp.json();
-      if (!resp.ok || !j.ok) throw new Error(j.error || 'Échec application');
-      setAiGrilleProgress('Grille appliquée. Rechargement…');
-      window.location.reload();
-    } catch (e) {
-      setAiGrilleProgress('Erreur: ' + e.message);
-    }
-  }
-</script>
 
 {% endblock %}

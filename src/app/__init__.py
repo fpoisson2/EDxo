@@ -64,6 +64,7 @@ from ..mcp_server.server import init_app as init_mcp_server
 from ..config.version import __version__
 # Import centralized extensions
 from ..extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
+from flask_wtf.csrf import generate_csrf
 from ..utils.db_tracking import init_change_tracking
 from ..utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 
@@ -121,6 +122,22 @@ def create_app(testing=False):
         static_folder=os.path.join(base_path, "static")
     )
 
+    # Enable response compression for text assets if Flask-Compress is available
+    try:
+        from flask_compress import Compress
+        app.config.setdefault('COMPRESS_ALGORITHM', 'br,gzip')
+        app.config.setdefault('COMPRESS_LEVEL', 6)
+        app.config.setdefault('COMPRESS_BR_LEVEL', 5)
+        app.config.setdefault('COMPRESS_MIMETYPES', [
+            'text/html', 'text/css', 'text/xml', 'text/plain',
+            'application/javascript', 'application/x-javascript', 'application/json',
+            'image/svg+xml'
+        ])
+        Compress(app)
+        logger.info("Compression enabled (Flask-Compress)")
+    except Exception as e:
+        logger.info(f"Compression not enabled: {e}")
+
     # Respect reverse proxy headers for scheme, host and path prefix
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_prefix=1)
 
@@ -140,12 +157,15 @@ def create_app(testing=False):
 
         SESS_DIR = os.path.join(BASE_DIR, "flask_sessions")
         os.makedirs(SESS_DIR, exist_ok=True)      # ensure dir exists for FileSystemCache
+        # Shared upload directory (bind-mounted volume recommended)
+        UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
         app.config.update(
             PREFERRED_URL_SCHEME='https',
             SQLALCHEMY_DATABASE_URI=f"sqlite:///{DB_PATH}?timeout=30",
             SQLALCHEMY_TRACK_MODIFICATIONS=False,
             DB_PATH=DB_PATH,
-            UPLOAD_FOLDER=os.path.join(base_path, 'static', 'docs'),
+            UPLOAD_FOLDER=UPLOAD_DIR,
             SECRET_KEY=SECRET_KEY,
             RECAPTCHA_SITE_KEY=RECAPTCHA_PUBLIC_KEY,
             RECAPTCHA_SECRET_KEY=RECAPTCHA_PRIVATE_KEY,
@@ -156,6 +176,17 @@ def create_app(testing=False):
             OPENAI_MODEL_SECTION='gpt-5',
             OPENAI_MODEL_EXTRACTION='gpt-5',
             WTF_CSRF_ENABLED=True,
+            SEND_FILE_MAX_AGE_DEFAULT=timedelta(days=30),
+            # Prefer CDN for Toast UI assets by default; set TOASTUI_USE_CDN=0 to self-host
+            TOASTUI_USE_CDN=(os.getenv('TOASTUI_USE_CDN', '1') == '1'),
+            TOASTUI_CDN_PROVIDER=os.getenv('TOASTUI_CDN_PROVIDER', 'jsdelivr'),  # 'toast' | 'jsdelivr'
+            TOASTUI_VERSION=os.getenv('TOASTUI_VERSION', '3.2.2'),
+            # EasyMDE (Markdown editor) config
+            EASYMDE_USE_CDN=(os.getenv('EASYMDE_USE_CDN', '1') == '1'),
+            EASYMDE_VERSION=os.getenv('EASYMDE_VERSION', '2.18.0'),
+            # Asset hosting switches
+            USE_LOCAL_BOOTSTRAP=(os.getenv('USE_LOCAL_BOOTSTRAP', '0') == '1'),
+            USE_LOCAL_ICONS=(os.getenv('USE_LOCAL_ICONS', '0') == '1'),
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),
             SESSION_COOKIE_SECURE = False,
@@ -264,8 +295,8 @@ def create_app(testing=False):
             except Exception:
                 ver = int(datetime.now(timezone.utc).timestamp())
             return url_for('static', filename=path, v=ver)
-
-        return dict(has_endpoint=has_endpoint, asset_url=asset_url)
+        # Expose csrf_token() helper globally for templates
+        return dict(has_endpoint=has_endpoint, asset_url=asset_url, csrf_token=generate_csrf)
 
     @app.before_request
     def before_request():
@@ -343,6 +374,12 @@ def create_app(testing=False):
             )
         if current_user.is_authenticated and session.modified:
             session.modified = True
+        # Ensure CSRF token is generated and available to JS via cookie
+        try:
+            token = generate_csrf()
+            response.set_cookie('csrf_token', token, samesite='Lax', secure=False, httponly=False)
+        except Exception:
+            pass
         return response
 
     # '/version' is now served by the main blueprint

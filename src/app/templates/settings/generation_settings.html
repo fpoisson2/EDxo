@@ -29,6 +29,7 @@
   <p class="text-muted">Ajustez les prompts par fonctionnalité depuis les pages dédiées:</p>
   <ul>
     <li><a href="{{ url_for('settings.ocr_prompt_settings') }}">OCR / Devis ministériels</a></li>
+    <li><a href="{{ url_for('settings.plan_cadre_import_prompt_settings') }}">Plan‑cadre • Import DOCX</a></li>
     <li><a href="{{ url_for('settings.parametres') }}#plan-cadre">Plan-cadre (sections)</a> — via Paramètres généraux</li>
     <li><a href="{{ url_for('settings.plan_de_cours_prompts') if has_endpoint('settings.plan_de_cours_prompts') else '#' }}">Plan de cours</a></li>
     <li><a href="{{ url_for('settings.chat_model_settings') }}">Modèles (chat)</a> — détail avancé</li>

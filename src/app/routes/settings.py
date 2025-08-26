@@ -17,6 +17,7 @@ from ..forms import (
     ChatSettingsForm,
     APITokenForm,
     OcrPromptSettingsForm,
+    PlanCadreImportPromptSettingsForm,
 )
 from .evaluation import AISixLevelGridResponse
 from ...config.constants import SECTIONS  # Importer la liste des sections
@@ -41,6 +42,7 @@ from ..models import (
     OpenAIModel,
     ChatModelConfig,
     OcrPromptSettings,
+    PlanCadreImportPromptSettings,
 )
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
@@ -102,6 +104,32 @@ def ocr_prompt_settings():
             flash("Erreur lors de l'enregistrement.", 'danger')
 
     return render_template('settings/ocr_prompt_settings.html', form=form)
+
+
+@settings_bp.route('/plan-cadre/import_prompt', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def plan_cadre_import_prompt_settings():
+    """Configuration du prompt système pour l'import DOCX du plan-cadre."""
+    settings = PlanCadreImportPromptSettings.get_current()
+    form = PlanCadreImportPromptSettingsForm(obj=settings)
+
+    if form.validate_on_submit():
+        if settings is None:
+            settings = PlanCadreImportPromptSettings()
+            db.session.add(settings)
+        settings.prompt_template = form.prompt_template.data
+        settings.ai_model = form.ai_model.data
+        try:
+            db.session.commit()
+            flash('Paramètres d\'import Plan‑cadre enregistrés.', 'success')
+            return redirect(url_for('settings.plan_cadre_import_prompt_settings'))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Erreur enregistrement PlanCadreImportPromptSettings: {e}")
+            flash("Erreur lors de l'enregistrement.", 'danger')
+
+    return render_template('settings/plan_cadre_import_prompt.html', form=form)
 
 @settings_bp.route('/openai_models/delete/<int:model_id>', methods=['POST'])
 @login_required

@@ -12,10 +12,19 @@
             <i class="bi bi-file-earmark-word me-2"></i>
             <span>Exporter en .docx</span>
         </a>
-        <button type="button" class="btn btn-outline-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#importDocxModal">
+        <button type="button" id="openImportPlanCoursTask" class="btn btn-outline-primary d-flex align-items-center">
             <i class="bi bi-file-earmark-arrow-up me-2"></i>
             <span>Importer .docx</span>
         </button>
+        <!-- Actions rapides (unifiées) -->
+        <button type="button" id="openGeneratePdcBtn" class="btn btn-success d-flex align-items-center">
+            <i class="bi bi-box-arrow-up-right me-2"></i>
+            <span>Générer le plan de cours</span>
+        </button>
+        <a href="{{ url_for('plan_de_cours.improve_plan_de_cours_page', plan_id=plan_de_cours.id) }}" class="btn btn-outline-success d-flex align-items-center">
+            <i class="bi bi-magic me-2"></i>
+            <span>Améliorer le plan de cours</span>
+        </a>
         <!-- Démarrer (unifié) -->
         <div class="btn-group">
           <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -29,6 +38,14 @@
                  data-title="Générer le plan de cours"
                  data-mode="json"
                  data-json='{"prompt":""}'>Générer (API)</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="#"
+                 data-task-start
+                 data-url="/api/plan_de_cours/{{ plan_de_cours.id }}/generate"
+                 data-title="Améliorer le plan de cours"
+                 data-mode="json"
+                 data-json='{"improve_only":true,"additional_info":""}'>Améliorer (API)</a>
             </li>
             <li>
               <a class="dropdown-item" href="#"
@@ -225,11 +242,7 @@
             </h2>
             <div id="collapseEdition" class="accordion-collapse collapse" aria-labelledby="headingEdition">
                 <div class="accordion-body">
-                    <div class="d-flex justify-content-end mb-3">
-                        <button type="button" class="btn btn-primary btn-sm" id="open-generate-plan-cours" title="Générer toutes les sections" data-bs-toggle="modal" data-bs-target="#generatePlanCoursModal">
-                            <i class="bi bi-magic me-2"></i>Tout générer
-                        </button>
-                    </div>
+                    
                     <form method="POST" action="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=cours.id) }}" id="planDeCoursForm">
                         {{ form.hidden_tag() }}
                         <!-- Informations Principales -->
@@ -250,9 +263,11 @@
                         <div class="mb-3 position-relative">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="presentation_du_cours" class="form-label fw-bold">Présentation du cours</label>
-                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="presentation_du_cours" title="Générer automatiquement">
-                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="presentation_du_cours" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
                                 </button>
+                                {% endif %}
                             </div>
                             {{ form.presentation_du_cours(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="presentation_du_cours") }}
                         </div>
@@ -260,9 +275,11 @@
                         <div class="mb-3 position-relative">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="objectif_terminal_du_cours" class="form-label fw-bold">{{ form.objectif_terminal_du_cours.label.text }}</label>
-                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="objectif_terminal_du_cours" title="Générer automatiquement">
-                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objectif_terminal_du_cours" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
                                 </button>
+                                {% endif %}
                             </div>
                             {{ form.objectif_terminal_du_cours(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="objectif_terminal_du_cours") }}
                         </div>
@@ -270,9 +287,11 @@
                         <div class="mb-3 position-relative">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="organisation_et_methodes" class="form-label fw-bold">{{ form.organisation_et_methodes.label.text }}</label>
-                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="organisation_et_methodes" title="Générer automatiquement">
-                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="organisation_et_methodes" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
                                 </button>
+                                {% endif %}
                             </div>
                             {{ form.organisation_et_methodes(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="organisation_et_methodes") }}
                         </div>
@@ -280,9 +299,11 @@
                         <div class="mb-3 position-relative">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="accomodement" class="form-label fw-bold">{{ form.accomodement.label.text }}</label>
-                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="accomodement" title="Générer automatiquement">
-                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="accomodement" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
                                 </button>
+                                {% endif %}
                             </div>
                             {{ form.accomodement(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="accomodement") }}
                         </div>
@@ -290,9 +311,11 @@
                         <div class="mb-3 position-relative">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="evaluation_formative_apprentissages" class="form-label fw-bold">{{ form.evaluation_formative_apprentissages.label.text }}</label>
-                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="evaluation_formative_apprentissages" title="Générer automatiquement">
-                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="evaluation_formative_apprentissages" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
                                 </button>
+                                {% endif %}
                             </div>
                             {{ form.evaluation_formative_apprentissages(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="evaluation_formative_apprentissages") }}
                         </div>
@@ -300,9 +323,11 @@
                         <div class="mb-3 position-relative">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="evaluation_expression_francais" class="form-label fw-bold">{{ form.evaluation_expression_francais.label.text }}</label>
-                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="evaluation_expression_francais" title="Générer automatiquement">
-                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="evaluation_expression_francais" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
                                 </button>
+                                {% endif %}
                             </div>
                             {{ form.evaluation_expression_francais(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="evaluation_expression_francais") }}
                         </div>
@@ -458,7 +483,12 @@
 
                         <!-- Évaluations -->
                         <div class="mb-3">
-                            <h4>Évaluations</h4>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h4 class="mb-0">Évaluations</h4>
+                                <button type="button" class="btn btn-secondary btn-sm" id="generate-evaluations" title="Générer les évaluations">
+                                    <i class="bi bi-magic"></i>Générer les évaluations
+                                </button>
+                            </div>
                             <div id="evaluations-container" class="mb-3" {% if not form.evaluations %}style="display: none;"{% endif %}>
                                 {% for evaluation_subform in form.evaluations %}
                                     <div class="card mb-3 evaluation-item {% if loop.index0 is even %}bg-light{% else %}bg-secondary text-white{% endif %}" data-eval-index="{{ loop.index0 }}">
@@ -677,12 +707,7 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Toast UI Editor CSS -->
-<link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.css" />
-
-<!-- Toast UI Editor Scripts with defer -->
-<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
-<script src="https://uicdn.toast.com/editor-plugin-autoheight/latest/toastui-editor-plugin-autoheight.js"></script>
+{% include '_easymde_assets.html' %}
 
 <style>
 .calendar-item {
@@ -875,74 +900,72 @@ textarea.toast-ui-target:not(.toast-initialized) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Soumission du modal de génération globale du plan de cours
-    const genForm = document.getElementById('generatePlanCoursForm');
-    if (genForm) {
-        genForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const submitBtn = document.getElementById('confirmGeneratePlanCoursBtn');
-            submitBtn?.classList.add('loading');
-            submitBtn?.setAttribute('disabled', 'disabled');
-
-            const csrfToken = "{{ csrf_token() }}";
-            const formData = new FormData(genForm);
-            // Démarrer la tâche asynchrone puis poller jusqu'à complétion
-            const payload = new URLSearchParams();
-            payload.append('cours_id', String({{ cours.id }}));
-            payload.append('session', "{{ plan_de_cours.session }}");
-            const addInfo = formData.get('additional_info');
-            if (addInfo) payload.append('additional_info', addInfo);
-            const aiModel = formData.get('ai_model');
-            if (aiModel) payload.append('ai_model', aiModel);
-
-            const statusText = document.createElement('div');
-            statusText.className = 'small text-muted mb-2';
-            statusText.id = 'generatePlanCoursStatus';
-            statusText.textContent = 'Préparation de la génération...';
-            genForm.querySelector('.modal-body')?.appendChild(statusText);
-
+    // Uniformiser l'import PDC: ouvrir le Start Modal (mode fichier)
+    try {
+      const btnImp = document.getElementById('openImportPlanCoursTask');
+      if (btnImp && window.EDxoTasks && window.EDxoTasks.openTaskStartModal) {
+        btnImp.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.EDxoTasks.openTaskStartModal({
+            url: "{{ url_for('plan_de_cours.import_docx_start') }}",
+            title: 'Importer Plan de cours (.docx)',
+            mode: 'form'
+          });
+          // Préremplir les champs additionnels requis (cours_id, session)
+          setTimeout(() => {
             try {
-                // Démarrer via orchestrateur unifié + modal de suivi
-                const params = new URLSearchParams();
-                params.append('cours_id', String({{ cours.id }}));
-                params.append('session', "{{ plan_de_cours.session }}");
-                const addInfo = formData.get('additional_info');
-                if (addInfo) params.append('additional_info', addInfo);
-                const aiModel = formData.get('ai_model');
-                if (aiModel) params.append('ai_model', aiModel);
-
-                const startUrl = "{{ url_for('plan_de_cours.generate_all_start') }}";
-                await window.EDxoTasks.startCeleryTask(startUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
-                    body: params.toString(),
-                    credentials: 'same-origin'
-                }, {
-                    title: 'Génération du plan de cours',
-                    startMessage: 'Génération en cours…',
-                    onDone: (payload) => {
-                        const reviewUrl = payload && payload.validation_url
-                          ? payload.validation_url
-                          : (`/plan_de_cours/review/${payload?.plan_id || ''}?task_id=${sessionStorage.getItem('currentTaskId')||''}`);
-                        try { addNotification('Génération terminée. Cliquez pour comparer.', 'success', reviewUrl); } catch(_) {}
-                    }
-                });
-
-                // Fermer le modal de configuration
-                const modalEl = document.getElementById('generatePlanCoursModal');
-                const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                modal.hide();
-                statusText.remove();
-            } catch (e) {
-                console.error('Erreur génération complète du plan de cours', e);
-                const toast = document.getElementById('generateErrorToast');
-                if (toast) new bootstrap.Toast(toast).show();
-            } finally {
-                submitBtn?.classList.remove('loading');
-                submitBtn?.removeAttribute('disabled');
-            }
+              const extras = document.getElementById('task-start-form-extras');
+              if (extras) extras.value = `cours_id={{ cours.id }}\nsession={{ plan_de_cours.session }}`;
+            } catch(_) {}
+          }, 50);
         });
-    }
+      }
+    } catch(_) {}
+
+    // Bouton principal Générer: ouvrir le Quick Modal (JSON)
+    try {
+      const btnGen = document.getElementById('openGeneratePdcBtn');
+      if (btnGen && window.EDxoTasks && window.EDxoTasks.openQuickTask) {
+        btnGen.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.EDxoTasks.openQuickTask({
+            url: "/api/plan_de_cours/{{ plan_de_cours.id }}/generate",
+            title: 'Générer le plan de cours',
+            startMessage: 'Génération en cours…',
+            basePayload: { stream: true }
+          });
+        });
+      }
+    } catch(_) {}
+    // Amélioration ciblée: utiliser le Quick Modal unifié pour lancer une tâche Celery par champ
+    try {
+      const magicBtns = document.querySelectorAll('.magic-generate[data-target-column]');
+      magicBtns.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const field = btn.getAttribute('data-target-column');
+          if (!field) return;
+          const url = `/api/plan_de_cours/{{ plan_de_cours.id }}/improve/${encodeURIComponent(field)}`;
+          const title = btn.getAttribute('title') || `Améliorer: ${field}`;
+          if (window.EDxoTasks && typeof window.EDxoTasks.openQuickTask === 'function') {
+            window.EDxoTasks.openQuickTask({
+              url,
+              title,
+              startMessage: 'Amélioration en cours…',
+              basePayload: { stream: true }
+            });
+          } else {
+            // Fallback minimal si orchestrateur indisponible
+            const headers = { 'Content-Type': 'application/json' };
+            try { const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content'); if (csrf) headers['X-CSRFToken'] = csrf; } catch{}
+            fetch(url, { method: 'POST', headers, credentials: 'same-origin', body: JSON.stringify({ stream: true }) })
+              .then(r => r.json())
+              .then(d => { if (d && d.task_id) window.location.href = `/tasks/track/${d.task_id}`; })
+              .catch(() => {});
+          }
+        });
+      });
+    } catch(_) {}
     // Fonction pour afficher les toasts
     function showToast(toastId) {
         const toastElement = document.getElementById(toastId);
@@ -997,85 +1020,7 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.head.appendChild(style);
 
-    // Gestion des clics sur les boutons de génération
-    document.querySelectorAll('.generate-button').forEach(button => {
-        button.addEventListener('click', async function() {
-            const fieldName = this.getAttribute('data-field');
-            const fieldElement = document.getElementById(fieldName);
-            if (!fieldElement) {
-                console.error(`Champ ${fieldName} non trouvé.`);
-                showToast('generateErrorToast');
-                return;
-            }
-
-            // Créer et ajouter l'overlay de chargement
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.className = 'loading-overlay';
-            loadingOverlay.innerHTML = `
-                <div class="loading-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <div class="loading-text">Génération en cours...</div>
-                </div>
-            `;
-            
-            // Ajouter l'overlay et configurer le conteneur parent
-            fieldElement.parentElement.style.position = 'relative';
-            fieldElement.parentElement.appendChild(loadingOverlay);
-            
-            // Désactiver le bouton pendant la génération
-            this.classList.add('loading');
-            this.disabled = true;
-
-            try {
-                const payload = {
-                    field_name: fieldName,
-                    current_value: fieldElement.value || '',
-                    cours_id: {{ cours.id }},
-                    session: "{{ plan_de_cours.session }}"
-                };
-
-                const response = await fetch("{{ url_for('plan_de_cours.generate_content') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': "{{ csrf_token() }}"
-                    },
-                    body: JSON.stringify(payload),
-                    credentials: 'same-origin'
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Erreur inconnue lors de la génération.');
-                }
-
-                const data = await response.json();
-
-                if (data.champ_description) {
-                    fieldElement.value = data.champ_description;
-                    if (fieldElement.toastEditor) {
-                        fieldElement.toastEditor.setMarkdown(data.champ_description);
-                    }
-                    showToast('generateSuccessToast');
-                } else {
-                    throw new Error('Contenu généré non reçu.');
-                }
-            } catch (error) {
-                console.error('Erreur lors de la génération automatique:', error);
-                showToast('generateErrorToast');
-            } finally {
-                // Nettoyer : supprimer l'overlay et réactiver le bouton
-                const overlay = fieldElement.parentElement.querySelector('.loading-overlay');
-                if (overlay) {
-                    overlay.remove();
-                }
-                this.classList.remove('loading');
-                this.disabled = false;
-            }
-        });
-    });
+    // Ancien flux de génération par champ supprimé au profit du modal unifié
 });
 document.addEventListener('DOMContentLoaded', function() {
     const toastFields = [
@@ -1091,115 +1036,73 @@ document.addEventListener('DOMContentLoaded', function() {
 
     toastFields.forEach(fieldId => {
         const textarea = document.getElementById(fieldId);
+        if (!textarea) {
+            console.warn(`Le champ ${fieldId} n'existe pas !`);
+            return;
+        }
 
-        if (textarea) {
-            const container = document.createElement('div');
-            textarea.parentNode.insertBefore(container, textarea);
-            textarea.style.display = 'none';
-
-            const editor = new toastui.Editor({
-                el: container,
-                initialEditType: 'wysiwyg',
-                initialValue: textarea.value || '',
-                toolbarItems: [
-                    ['bold', 'italic'],
-                    ['ul', 'indent', 'outdent']
-                ],
-                usageStatistics: false,
-                hideModeSwitch: true,
+        try {
+            const mde = new EasyMDE({
+                element: textarea,
+                autoDownloadFontAwesome: false,
+                spellChecker: false,
                 autofocus: false,
-                height: 'auto',
-                minHeight: '100px',
-                toolbarVisibleWithoutEditor: false,
-                customKeyMap: {
-                    Tab: (editor, ev) => {
-                        ev.preventDefault();
-                        editor.exec('indent');
-                    },
-                    'Shift-Tab': (editor, ev) => {
-                        ev.preventDefault();
-                        editor.exec('outdent');
-                    }
-                }
+                minHeight: '120px',
+                status: false,
+                forceSync: true,
+                toolbar: ['bold','italic','|','unordered-list','ordered-list','|','guide'],
             });
 
+            // Marquer comme initialisé et wrapper compatible
             textarea.classList.add('toast-initialized');
-            textarea.toastEditor = editor;
+            textarea.toastEditor = { setMarkdown: (val) => mde.value(val) };
 
-            editor.on('change', () => {
-                textarea.value = editor.getMarkdown();
+            mde.codemirror.on('change', () => {
+                textarea.value = mde.value();
                 if (typeof window.showFloatingButtons === 'function') {
                     window.showFloatingButtons();
                 }
             });
-        } else {
-            console.warn(`Le champ ${fieldId} n'existe pas !`);
+
+            // A11y: associer un libellé au textarea interne CodeMirror
+            try {
+                const cmInput = mde.codemirror.getInputField && mde.codemirror.getInputField();
+                if (cmInput) {
+                    // Associer un nom accessible explicite selon le champ
+                    const labels = {
+                        'presentation_du_cours': 'Présentation du cours',
+                        'objectif_terminal_du_cours': 'Objectif terminal du cours',
+                        'organisation_et_methodes': 'Organisation et méthodes',
+                        'accomodement': 'Accommodement',
+                        'evaluation_formative_apprentissages': 'Évaluation formative des apprentissages',
+                        'evaluation_expression_francais': 'Évaluation de l\'expression du français',
+                        'seuil_reussite': 'Seuil de réussite',
+                        'materiel': 'Matériel'
+                    };
+                    const labelText = labels[fieldId] || textarea.getAttribute('placeholder') || 'Zone de texte';
+                    cmInput.setAttribute('aria-label', labelText);
+                }
+            } catch {}
+
+            // Toolbar: cachée tant que pas de focus
+            const container = textarea.nextElementSibling && textarea.nextElementSibling.classList.contains('EasyMDEContainer')
+                ? textarea.nextElementSibling : document.querySelector(`#${textarea.id} + .EasyMDEContainer`);
+            const toolbar = container ? container.querySelector('.editor-toolbar') : null;
+            if (toolbar) toolbar.style.display = 'none';
+            if (container) {
+                container.addEventListener('focusin', () => { if (toolbar) toolbar.style.display = 'block'; });
+                container.addEventListener('focusout', (e) => {
+                    if (!container.contains(e.relatedTarget) && toolbar) {
+                        const selection = window.getSelection();
+                        if (!selection.toString()) toolbar.style.display = 'none';
+                    }
+                });
+            }
+
+        } catch (error) {
+            console.error(`Erreur lors de l'initialisation de l'éditeur pour ${fieldId}:`, error);
         }
     });
-
-    function waitForToastUI() {
-        return new Promise((resolve) => {
-            function checkToastUI() {
-                if (window.toastui && window.toastui.Editor && toastui.Editor.plugin) {
-                    resolve();
-                } else {
-                    setTimeout(checkToastUI, 100);
-                }
-            }
-            checkToastUI();
-        });
-    }
-
-
-    // Initialiser les éditeurs Toast UI
-    async function initToastEditors() {
-        await waitForToastUI();
-
-        toastFields.forEach(fieldId => {
-            const textarea = document.getElementById(fieldId);
-            if (textarea) {
-                try {
-                    const container = document.createElement('div');
-                    textarea.parentNode.insertBefore(container, textarea);
-                    textarea.style.display = 'none';
-
-                    const editor = new toastui.Editor({
-                        el: container,
-                        initialEditType: 'wysiwyg',
-                        initialValue: textarea.value || '',
-                        height: 'auto',
-                        minHeight: '200px',
-                        toolbarItems: [
-                            ['heading', 'bold', 'italic', 'strike'],
-                            ['ul', 'ol', 'indent', 'outdent'],
-                            ['table', 'link']
-                        ],
-                        plugins: [toastui.Editor.plugin.autoHeight],
-                        usageStatistics: false,
-                        hideModeSwitch: true
-                    });
-
-                    // Gestionnaire de changement
-                    editor.on('change', () => {
-                        textarea.value = editor.getMarkdown();
-                        if (typeof window.showFloatingButtons === 'function') {
-                            window.showFloatingButtons();
-                        }
-                    });
-
-                    // Marquer comme initialisé
-                    textarea.classList.add('toast-initialized');
-                    textarea.toastEditor = editor;
-
-                } catch (error) {
-                    console.error(`Erreur lors de l'initialisation de l'éditeur pour ${fieldId}:`, error);
-                }
-            }
-        });
-    }
-
-    // Lancer l'initialisation
-    initToastEditors();
 });
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1341,83 +1244,39 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialiser le drag & drop au chargement
     initDragAndDrop();
 
-    // Génération automatique du calendrier via l'IA
-    document.getElementById('generate-calendar')?.addEventListener('click', async function() {
-        const button = this;
+    // Helper DOM: remplir calendrier depuis payload (calendriers)
+    function populateCalendarFromPayload(payload) {
         const container = document.getElementById('calendrier-container');
+        const items = (payload && (payload.calendriers || payload.entries)) || [];
+        container.innerHTML = '';
+        if (!items.length) { container.style.display = 'none'; return; }
         container.style.display = 'block';
+        items.forEach((entry, index) => {
+            const newItem = document.createElement('div');
+            newItem.className = `calendar-item border p-2 mb-2 ${index % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
+            newItem.innerHTML = document.getElementById('calendrier-template').innerHTML.replace(/__index__/g, index);
+            newItem.querySelector(`[name="calendriers-${index}-semaine"]`).value = entry.semaine ?? '';
+            newItem.querySelector(`[name="calendriers-${index}-sujet"]`).value = entry.sujet ?? '';
+            newItem.querySelector(`[name="calendriers-${index}-activites"]`).value = entry.activites ?? '';
+            newItem.querySelector(`[name="calendriers-${index}-travaux_hors_classe"]`).value = entry.travaux_hors_classe ?? '';
+            newItem.querySelector(`[name="calendriers-${index}-evaluations"]`).value = entry.evaluations ?? '';
+            container.appendChild(newItem);
+        });
+        calendrierIndex = items.length;
+        initDragAndDrop();
+        if (window.showFloatingButtons) window.showFloatingButtons();
+    }
 
-        // Ajouter overlay de chargement
-        const loadingOverlay = document.createElement('div');
-        loadingOverlay.className = 'loading-overlay';
-        loadingOverlay.innerHTML = `
-            <div class="loading-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-                <div class="loading-text">Génération en cours...</div>
-            </div>
-        `;
-        container.style.position = 'relative';
-        container.appendChild(loadingOverlay);
-        button.classList.add('loading');
-        button.disabled = true;
-        try {
-            const payload = {
-                cours_id: {{ cours.id }},
-                session: "{{ plan_de_cours.session }}"
-            };
-            const response = await fetch("{{ url_for('plan_de_cours.generate_calendar') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': "{{ csrf_token() }}"
-                },
-                body: JSON.stringify(payload),
-                credentials: 'same-origin'
+    // Génération calendrier via EDxoTasks
+    document.getElementById('generate-calendar')?.addEventListener('click', function() {
+        if (window.EDxoTasks && window.EDxoTasks.openQuickTask) {
+            window.EDxoTasks.openQuickTask({
+                url: "/api/plan_de_cours/{{ plan_de_cours.id }}/generate_calendar",
+                title: 'Générer le calendrier',
+                startMessage: 'Génération en cours…',
+                basePayload: { stream: true },
+                onDone: (data) => { try { populateCalendarFromPayload(data); showToast('generateSuccessToast'); } catch(_) {} }
             });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error || 'Erreur inconnue');
-            }
-
-            const data = await response.json();
-            const overlay = container.querySelector('.loading-overlay');
-            if (overlay) {
-                overlay.remove();
-            }
-            container.innerHTML = '';
-            if (data.entries && data.entries.length > 0) {
-                container.style.display = 'block';
-                data.entries.forEach((entry, index) => {
-                    const newItem = document.createElement('div');
-                    newItem.className = `calendar-item border p-2 mb-2 ${index % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
-                    newItem.innerHTML = document.getElementById('calendrier-template').innerHTML.replace(/__index__/g, index);
-                    newItem.querySelector(`[name="calendriers-${index}-semaine"]`).value = entry.semaine ?? '';
-                    newItem.querySelector(`[name="calendriers-${index}-sujet"]`).value = entry.sujet ?? '';
-                    newItem.querySelector(`[name="calendriers-${index}-activites"]`).value = entry.activites ?? '';
-                    newItem.querySelector(`[name="calendriers-${index}-travaux_hors_classe"]`).value = entry.travaux_hors_classe ?? '';
-                    newItem.querySelector(`[name="calendriers-${index}-evaluations"]`).value = entry.evaluations ?? '';
-                    container.appendChild(newItem);
-                });
-                calendrierIndex = data.entries.length;
-                initDragAndDrop();
-                window.showFloatingButtons();
-                showToast('generateSuccessToast');
-            } else {
-                showToast('generateErrorToast');
-            }
-        } catch (error) {
-            console.error('Erreur lors de la génération du calendrier:', error);
-            showToast('generateErrorToast');
-        } finally {
-            const overlay = container.querySelector('.loading-overlay');
-            if (overlay) {
-                overlay.remove();
-            }
-            button.classList.remove('loading');
-            button.disabled = false;
         }
     });
 
@@ -1456,6 +1315,64 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/__index__/g, disponibiliteIndex++);
         container.appendChild(newItem);
         window.showFloatingButtons();
+    });
+
+    // Helper: remplir évaluations depuis payload (evaluations)
+    function populateEvaluationsFromPayload(payload) {
+        const container = document.getElementById('evaluations-container');
+        const list = (payload && payload.evaluations) || [];
+        container.innerHTML = '';
+        if (!list.length) { container.style.display = 'none'; return; }
+        container.style.display = 'block';
+        const capHidden = document.getElementById('capacites-hidden');
+        const nameToId = {};
+        if (capHidden) {
+            Array.from(capHidden.options).forEach(opt => { if (opt.text) nameToId[opt.text.trim()] = opt.value; });
+        }
+        list.forEach((ev, idx) => {
+            const tpl = document.getElementById('evaluation-template');
+            const wrap = document.createElement('div');
+            wrap.className = `evaluation-item border p-2 mb-2 ${idx % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
+            wrap.setAttribute('data-eval-index', String(idx));
+            wrap.innerHTML = tpl.innerHTML.replace(/__index__/g, String(idx));
+            wrap.querySelector(`[name="evaluations-${idx}-titre_evaluation"]`).value = ev.titre || '';
+            wrap.querySelector(`[name="evaluations-${idx}-semaine"]`).value = ev.semaine ?? '';
+            wrap.querySelector(`[name="evaluations-${idx}-texte_description"]`).value = ev.description || '';
+            // Capacités
+            const capCont = wrap.querySelector('.capacites-container');
+            (ev.capacites || []).forEach((ce, cIdx) => {
+                const capTpl = document.getElementById('evaluation-capacite-template');
+                const capEl = document.createElement('div');
+                capEl.className = 'capacite-item mb-2 border p-2';
+                capEl.innerHTML = capTpl.innerHTML
+                    .replace(/__eval_index__/g, String(idx))
+                    .replace(/__cap_index__/g, String(cIdx));
+                // Fill select options from hidden
+                const sel = capEl.querySelector(`#evaluations-${idx}-capacites-${cIdx}-capacite_id`);
+                if (sel && capHidden) sel.innerHTML = capHidden.innerHTML;
+                const capId = ce.capacite_id || (ce.capacite && nameToId[ce.capacite.trim()]) || '';
+                if (sel) sel.value = String(capId || '');
+                const pond = capEl.querySelector(`#evaluations-${idx}-capacites-${cIdx}-ponderation`);
+                if (pond) pond.value = ce.ponderation || '';
+                capCont.appendChild(capEl);
+            });
+            container.appendChild(wrap);
+        });
+        if (typeof reindexEvaluations === 'function') reindexEvaluations();
+        if (window.showFloatingButtons) window.showFloatingButtons();
+    }
+
+    // Génération des évaluations via EDxoTasks
+    document.getElementById('generate-evaluations')?.addEventListener('click', function() {
+        if (window.EDxoTasks && window.EDxoTasks.openQuickTask) {
+            window.EDxoTasks.openQuickTask({
+                url: "/api/plan_de_cours/{{ plan_de_cours.id }}/generate_evaluations",
+                title: 'Générer les évaluations',
+                startMessage: 'Génération en cours…',
+                basePayload: { stream: true },
+                onDone: (data) => { try { populateEvaluationsFromPayload(data); showToast('generateSuccessToast'); } catch(_) {} }
+            });
+        }
     });
 
 // Modification de la fonction d'ajout d'évaluation
@@ -1660,56 +1577,7 @@ document.addEventListener('click', function(e) {
         if (window.showFloatingButtons) window.showFloatingButtons();
     }
 
-    const importForm = document.getElementById('importDocxForm');
-    const importBtn = document.getElementById('confirmImportDocxBtn');
-    if (importForm) {
-      importForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const fileInput = document.getElementById('docxFile');
-        if (!fileInput?.files?.length) return;
-        importBtn?.setAttribute('disabled', 'disabled');
-        importBtn?.classList.add('disabled');
-        try {
-            // Define completion handler so base polling updates UI when task finishes
-            window.onTaskCompleted = function(payload) {
-                try { applyImportPayloadToUI(payload); } catch (e) { console.error('applyImportPayloadToUI error', e); }
-                const toast = document.getElementById('generateSuccessToast');
-                if (toast) new bootstrap.Toast(toast).show();
-            };
-
-            const fd = new FormData();
-            fd.append('file', fileInput.files[0]);
-            fd.append('cours_id', String({{ cours.id }}));
-            fd.append('session', "{{ plan_de_cours.session }}");
-            const aiModelEl = document.getElementById('importDocxAiModel');
-            if (aiModelEl && aiModelEl.value) {
-                fd.append('ai_model', aiModelEl.value);
-            }
-            const resp = await fetch("{{ url_for('plan_de_cours.import_docx_start') }}", {
-                method: 'POST',
-                body: fd,
-                credentials: 'same-origin',
-                headers: { 'X-CSRFToken': "{{ csrf_token() }}" }
-            });
-            const data = await resp.json();
-            if (!resp.ok || data.success === false || !data.task_id) throw new Error(data.message || 'Échec lancement import');
-
-            const modalEl = document.getElementById('importDocxModal');
-            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-            modal.hide();
-            if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('currentTaskId', data.task_id);
-            if (typeof startTaskPolling === 'function') startTaskPolling(data.task_id);
-        } catch (err) {
-            console.error('Erreur import DOCX (start)', err);
-            const toast = document.getElementById('generateErrorToast');
-            if (toast) new bootstrap.Toast(toast).show();
-        } finally {
-            importBtn?.removeAttribute('disabled');
-            importBtn?.classList.remove('disabled');
-            importForm.reset();
-        }
-      });
-    }
+    // Import DOCX via Start Modal unifié — plus de gestion locale ici
 
     // Gestion de la sauvegarde
     if (floatingSaveBtn && planDeCoursForm) {
@@ -1919,76 +1787,9 @@ document.addEventListener('click', function(e) {
 </script>
 
 <!-- Modal Import DOCX (moved outside accordion to avoid collapse visibility issues) -->
-<div class="modal fade" id="importDocxModal" tabindex="-1" aria-labelledby="importDocxModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="importDocxModalLabel">Importer un plan de cours (.docx)</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <form id="importDocxForm">
-        <div class="modal-body">
-          <div class="mb-3">
-            <label for="docxFile" class="form-label">Fichier .docx</label>
-            <input class="form-control" type="file" id="docxFile" name="file" accept=".docx" required>
-          </div>
-          <div class="mb-3">
-            <label for="importDocxAiModel" class="form-label">Modèle d'IA</label>
-            {{ generate_form.ai_model(class="form-select border-0", id="importDocxAiModel") }}
-          </div>
-          <div class="small text-muted">Le contenu sera analysé pour remplir les sections, y compris évaluations, informations prof, disponibilités et médiagraphie.</div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-          <button type="submit" id="confirmImportDocxBtn" class="btn btn-primary">Importer</button>
-        </div>
-      </form>
-    </div>
-  </div>
-  </div>
+<!-- Import DOCX modal supprimé — utilisation du Start Modal unifié -->
 
-<!-- Modal Génération du Plan de Cours (similaire au plan-cadre) -->
-<div class="modal fade" id="generatePlanCoursModal" tabindex="-1" aria-labelledby="generatePlanCoursLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
-    <div class="modal-content">
-      <form id="generatePlanCoursForm">
-        {{ generate_form.hidden_tag() }}
-        <div class="modal-header">
-          <h5 class="modal-title" id="generatePlanCoursLabel">Générer le plan de cours</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            {{ generate_form.additional_info.label(class="form-label") }}
-            {{ generate_form.additional_info(class="form-control border-0", rows="3", placeholder="Ajoutez des précisions utiles (public cible, modalités, logiciels, etc.)") }}
-          </div>
-          <div class="mb-3">
-            {{ generate_form.ai_model.label(class="form-label") }}
-            {{ generate_form.ai_model(class="form-select border-0") }}
-          </div>
-          <div class="mb-3">
-            {{ generate_form.reasoning_effort.label(class="form-label") }}
-            {{ generate_form.reasoning_effort(class="form-select border-0") }}
-          </div>
-          <div class="mb-3">
-            {{ generate_form.verbosity.label(class="form-label") }}
-            {{ generate_form.verbosity(class="form-select border-0") }}
-          </div>
-          <div class="form-text">La génération remplira toutes les sections disponibles et le calendrier.</div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-          <button type="submit" class="btn btn-primary" id="confirmGeneratePlanCoursBtn">
-            <span class="btn-text">Générer</span>
-            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="modalLoadingSpinnerPlanCours">
-              <span class="visually-hidden">Chargement...</span>
-            </span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-  </div>
+<!-- Modal génération Plan de Cours supprimé: l'orchestrateur unifié est utilisé -->
 
 <div class="toast-container position-fixed bottom-0 end-0 p-3">
     <div id="saveSuccessToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">

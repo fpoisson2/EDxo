@@ -8,7 +8,13 @@ WORKDIR /app
 
 # Copier le fichier de dépendances et installer
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
+# Lighter system deps for WeasyPrint (HTML->PDF) + fonts
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+       libpango-1.0-0 libpangoft2-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 \
+       fonts-dejavu-core fonts-liberation \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --upgrade pip && pip install -r requirements.txt
 
 # Copier l'ensemble du projet dans /app
 COPY . .

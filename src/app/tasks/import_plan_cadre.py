@@ -5,6 +5,10 @@ from typing import List, Optional, Tuple
 
 from celery import shared_task
 from openai import OpenAI
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Preformatted
+from xml.sax.saxutils import escape as xml_escape
 from pydantic import BaseModel, Field
 
 from src.extensions import db
@@ -23,6 +27,7 @@ from src.app.models import (
     PlanCadreCapaciteSavoirsFaire,
     PlanCadreCapaciteMoyensEvaluation,
     User,
+    PlanCadreImportPromptSettings,
 )
 
 logger = logging.getLogger(__name__)
@@ -75,6 +80,57 @@ class ImportPlanCadreResponse(BaseModel):
 
     # Capacités
     capacites: List[AICapacite] = Field(default_factory=list)
+
+
+def _format_import_prompt(template: str, doc_text: str) -> str:
+    """Safely format a user-configurable template that contains JSON braces.
+    Only substitute the {doc_text} placeholder; escape all other braces.
+    """
+    if not isinstance(template, str):
+        template = str(template or '')
+    # First escape all braces to avoid str.format interpreting JSON examples
+    safe = template.replace('{', '{{').replace('}', '}}')
+    # Re-enable the {doc_text} placeholder for substitution
+    safe = safe.replace('{{doc_text}}', '{doc_text}')
+    return safe.format(doc_text=(doc_text or '')[:150000])
+
+
+def _create_pdf_from_text(text: str, pdf_path: str) -> None:
+    """Create a simple PDF containing the provided text.
+    Uses ReportLab. Preserves paragraphs and basic line breaks; renders markdown tables as preformatted text.
+    """
+    try:
+        styles = getSampleStyleSheet()
+        story = []
+        doc = SimpleDocTemplate(pdf_path, pagesize=letter)
+        blocks = (text or '').replace('\r\n', '\n').replace('\r', '\n').split('\n\n')
+        for block in blocks:
+            b = block.strip()
+            if not b:
+                continue
+            if b.startswith('TABLE ') or '|' in b and '---' in b:
+                story.append(Preformatted(b, styles['Code']))
+            else:
+                # Escape Paragraph markup and keep single line breaks
+                safe = xml_escape(b).replace('\n', '<br/>' )
+                story.append(Paragraph(safe, styles['BodyText']))
+            story.append(Spacer(1, 6))
+        if not story:
+            story.append(Paragraph(xml_escape('Document vide'), styles['BodyText']))
+        doc.build(story)
+    except Exception:
+        # As last resort, write a minimal PDF with plain text
+        from reportlab.pdfgen import canvas
+        c = canvas.Canvas(pdf_path, pagesize=letter)
+        width, height = letter
+        y = height - 72
+        for line in (text or '').splitlines() or ['Document vide']:
+            c.drawString(72, y, line[:1000])
+            y -= 14
+            if y < 72:
+                c.showPage()
+                y = height - 72
+        c.save()
 
 
 def _sanitize_str(s: Optional[str]) -> Optional[str]:
@@ -301,194 +357,27 @@ def _heuristic_extract_basic_fields(doc_text: str) -> dict:
     return out
 
 
-@shared_task(bind=True, name='src.app.tasks.import_plan_cadre.import_plan_cadre_task')
-def import_plan_cadre_task(self, plan_cadre_id: int, doc_text: str, ai_model: str, user_id: int):
-    """Celery task: analyse un DOCX (texte brut) et met à jour le PlanCadre."""
-    try:
-        plan = db.session.get(PlanCadre, plan_cadre_id)
-        if not plan:
-            return {"status": "error", "message": "Plan-cadre non trouvé."}
-
-        # SQLite ne supporte pas réellement FOR UPDATE; et Query.get est obsolète en SA 2.x
-        user = db.session.get(User, user_id)
-        if not user:
-            return {"status": "error", "message": "Utilisateur introuvable."}
-        if not user.openai_key:
-            return {"status": "error", "message": "Clé OpenAI non configurée."}
-        if user.credits is None:
-            user.credits = 0.0
-            db.session.commit()
-        if user.credits <= 0:
-            return {"status": "error", "message": "Crédits insuffisants."}
-
-        # Prompt d'analyse du plan-cadre
-        prompt = (
-            "Tu es un assistant pédagogique. Analyse le plan-cadre fourni (texte brut extrait d'un DOCX). "
-            "Le texte peut contenir des tableaux rendus en Markdown, encadrés par ‘TABLE n:’ et ‘ENDTABLE’. "
-            "TIENS ABSOLUMENT COMPTE du contenu des tableaux (ils prévalent sur le texte libre en cas de doublon). "
-            "Retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes). "
-            "Quand tu utilises des guillemets, emploie les guillemets français « » uniquement. "
-            'Conserve les paragraphes et retours de ligne réels; n\'insère PAS de littéraux "\\n" dans les champs texte (utilise de vrais sauts de ligne). '
-            "Si un tableau/section d’évaluation comporte des colonnes comme ‘Savoirs faire’, ‘Cible’, ‘Seuil’, ‘Pondération’, ou ‘Capacité’, "
-            "alors: (1) aligne chaque ligne sur un élément de 'savoirs_faire' de la même capacité (même ordre, 1:1), "
-            "(2) renseigne 'cible' et 'seuil_reussite' depuis les colonnes correspondantes si elles existent, "
-            "(3) déduis 'ponderation_min' et 'ponderation_max' de la plage ou des pourcentages indiqués pour la capacité.\n"
-            "{{\n"
-            "  'place_intro': str | null,\n"
-            "  'objectif_terminal': str | null,\n"
-            "  'structure_intro': str | null,\n"
-            "  'structure_activites_theoriques': str | null,\n"
-            "  'structure_activites_pratiques': str | null,\n"
-            "  'structure_activites_prevues': str | null,\n"
-            "  'eval_evaluation_sommative': str | null,\n"
-            "  'eval_nature_evaluations_sommatives': str | null,\n"
-            "  'eval_evaluation_de_la_langue': str | null,\n"
-            "  'eval_evaluation_sommatives_apprentissages': str | null,\n"
-            "  'competences_developpees': [ {{ 'texte': str | null, 'description': str | null }} ],\n"
-            "  'competences_certifiees': [ {{ 'texte': str | null, 'description': str | null }} ],\n"
-            "  'cours_corequis': [ {{ 'texte': str | null, 'description': str | null }} ],\n"
-            "  'cours_prealables': [ {{ 'texte': str | null, 'description': str | null }} ],\n"
-            "  'cours_relies': [ {{ 'texte': str | null, 'description': str | null }} ],\n"
-            "  'objets_cibles': [ {{ 'texte': str | null, 'description': str | null }} ],\n"
-            "  'savoir_etre': [ str ],\n"
-            "  'capacites': [ {{\n"
-            "      'capacite': str | null,\n"
-            "      'description_capacite': str | null,\n"
-            "      'ponderation_min': int | null,\n"
-            "      'ponderation_max': int | null,\n"
-            "      'savoirs_necessaires': [ str ],\n"
-            "      'savoirs_faire': [ {{ 'texte': str | null, 'cible': str | null, 'seuil_reussite': str | null }} ],\n"
-            "      'moyens_evaluation': [ str ]\n"
-            "  }} ]\n"
-            "}}\n\n"
-            "Règles:\n"
-            "- Si une information n’est pas trouvée, mets null.\n"
-            "- Si la même information apparaît à la fois en tableau et en texte libre, privilégie le tableau.\n"
-            "- Les tableaux sont de la forme Markdown:\nTABLE 1:\n| Col1 | Col2 | ... |\n| --- | --- | ... |\n| v11 | v12 | ... |\nENDTABLE\n"
-            "- Si tu restitues plusieurs paragraphes dans un même champ, sépare-les par un simple saut de ligne (ou une ligne vide si nécessaire).\n"
-            "Renvoie uniquement le JSON, sans texte avant ni après.\n"
-            "Texte du plan-cadre:\n---\n{doc_text}\n---\n"
-        ).format(doc_text=doc_text[:150000])
-
-        client = OpenAI(api_key=user.openai_key)
-        response = client.responses.parse(
-            model=ai_model or 'gpt-5',
-            input=prompt,
-            text_format=ImportPlanCadreResponse,
-        )
-
-        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
-        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
-        cost = calculate_call_cost(usage_prompt, usage_completion, ai_model or 'gpt-5')
-        user.credits = max((user.credits or 0.0) - cost, 0.0)
-        db.session.commit()
-
-        parsed = _extract_first_parsed(response)
-        if not parsed:
-            return {"status": "error", "message": "Réponse IA invalide."}
-
-        # Fallback: enrich cible/seuil à partir du texte si manquants
-        try:
-            _fallback_fill_cible_seuil(doc_text, parsed)
-        except Exception:
-            logger.debug("Fallback cible/seuil non appliqué")
-
-        # Mettre à jour les champs simples (normalisés)
-        plan.place_intro = _sanitize_str(parsed.place_intro) or plan.place_intro
-        plan.objectif_terminal = _sanitize_str(parsed.objectif_terminal) or plan.objectif_terminal
-        plan.structure_intro = _sanitize_str(parsed.structure_intro) or plan.structure_intro
-        plan.structure_activites_theoriques = _sanitize_str(parsed.structure_activites_theoriques) or plan.structure_activites_theoriques
-        plan.structure_activites_pratiques = _sanitize_str(parsed.structure_activites_pratiques) or plan.structure_activites_pratiques
-        plan.structure_activites_prevues = _sanitize_str(parsed.structure_activites_prevues) or plan.structure_activites_prevues
-        plan.eval_evaluation_sommative = _sanitize_str(parsed.eval_evaluation_sommative) or plan.eval_evaluation_sommative
-        plan.eval_nature_evaluations_sommatives = _sanitize_str(parsed.eval_nature_evaluations_sommatives) or plan.eval_nature_evaluations_sommatives
-        plan.eval_evaluation_de_la_langue = _sanitize_str(parsed.eval_evaluation_de_la_langue) or plan.eval_evaluation_de_la_langue
-        plan.eval_evaluation_sommatives_apprentissages = _sanitize_str(parsed.eval_evaluation_sommatives_apprentissages) or plan.eval_evaluation_sommatives_apprentissages
-
-        # Listes avec description (remplacement)
-        def replace_list(current_rel, items, model_cls):
-            current_rel.clear()
-            for it in (items or []):
-                if not it:
-                    continue
-                texte = _sanitize_str(getattr(it, 'texte', None)) or ''
-                desc = _sanitize_str(getattr(it, 'description', None)) or ''
-                current_rel.append(model_cls(texte=texte, description=desc))
-
-        replace_list(plan.competences_developpees, parsed.competences_developpees, PlanCadreCompetencesDeveloppees)
-        replace_list(plan.competences_certifiees, parsed.competences_certifiees, PlanCadreCompetencesCertifiees)
-        replace_list(plan.cours_corequis, parsed.cours_corequis, PlanCadreCoursCorequis)
-        replace_list(plan.cours_prealables, parsed.cours_prealables, PlanCadreCoursPrealables)
-        replace_list(plan.cours_relies, parsed.cours_relies, PlanCadreCoursRelies)
-        replace_list(plan.objets_cibles, parsed.objets_cibles, PlanCadreObjetsCibles)
-
-        # Savoir-être (remplacement)
-        plan.savoirs_etre.clear()
-        for se in (parsed.savoir_etre or []):
-            se_clean = _sanitize_str(se)
-            if (se_clean or '').strip():
-                plan.savoirs_etre.append(PlanCadreSavoirEtre(texte=se_clean.strip()))
-
-        # Capacités (remplacement)
-        plan.capacites.clear()
-        for cap in (parsed.capacites or []):
-            if not cap:
-                continue
-            new_cap = PlanCadreCapacites(
-                capacite=_sanitize_str(cap.capacite) or '',
-                description_capacite=_sanitize_str(cap.description_capacite) or '',
-                ponderation_min=int(cap.ponderation_min or 0),
-                ponderation_max=int(cap.ponderation_max or 0),
-            )
-            # Savoirs nécessaires
-            for sn in (cap.savoirs_necessaires or []):
-                sn_clean = _sanitize_str(sn)
-                if (sn_clean or '').strip():
-                    new_cap.savoirs_necessaires.append(
-                        PlanCadreCapaciteSavoirsNecessaires(texte=sn_clean.strip())
-                    )
-            # Savoirs faire
-            for sf in (cap.savoirs_faire or []):
-                if not sf:
-                    continue
-                new_cap.savoirs_faire.append(
-                    PlanCadreCapaciteSavoirsFaire(
-                        texte=_sanitize_str(sf.texte) or '',
-                        cible=_sanitize_str(sf.cible) or '',
-                        seuil_reussite=_sanitize_str(sf.seuil_reussite) or '',
-                    )
-                )
-            # Moyens d'évaluation
-            for me in (cap.moyens_evaluation or []):
-                me_clean = _sanitize_str(me)
-                if (me_clean or '').strip():
-                    new_cap.moyens_evaluation.append(
-                        PlanCadreCapaciteMoyensEvaluation(texte=me_clean.strip())
-                    )
-            plan.capacites.append(new_cap)
-
-        db.session.commit()
-
-        # Retour simple pour le front; on peut juste recharger la page
-        return {
-            'status': 'success',
-            'message': 'Import du plan-cadre terminé',
-            'plan_id': plan.id,
-        }
-
-    except Exception as e:
-        logger.exception('Erreur lors de l\'import du plan-cadre')
-        db.session.rollback()
-        return {"status": "error", "message": str(e)}
-
 
 @shared_task(bind=True, name='src.app.tasks.import_plan_cadre.import_plan_cadre_preview_task')
-def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_model: str, user_id: int):
+def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_model: str, user_id: int, file_path: str | None = None):
     """
     Celery task: analyse un DOCX (texte brut) et retourne un APERÇU des modifications
     sans appliquer directement sur la base de données, pour permettre une comparaison.
     """
     try:
+        # Streaming buffer to display live progress in the unified modal
+        stream_buf = ""
+        def push(step_msg: str, step: str = "", progress: int = None):
+            nonlocal stream_buf
+            try:
+                stream_buf += (step_msg + "\n")
+                meta = { 'message': step_msg, 'stream_buffer': stream_buf }
+                if step: meta['step'] = step
+                if progress is not None: meta['progress'] = progress
+                self.update_state(state='PROGRESS', meta=meta)
+            except Exception:
+                pass
+        push("Initialisation de l'import (aperçu)…", step='init', progress=1)
         plan = db.session.get(PlanCadre, plan_cadre_id)
         if not plan:
             return {"status": "error", "message": "Plan-cadre non trouvé."}
@@ -504,6 +393,7 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
         if user.credits <= 0:
             return {"status": "error", "message": "Crédits insuffisants."}
 
+        push("Préparation du texte et du prompt…", step='prepare', progress=5)
         prompt = (
             "Tu es un assistant pédagogique. Analyse le plan-cadre fourni (texte brut extrait d'un DOCX) "
             "et retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes). "
@@ -544,12 +434,246 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             "Texte du plan-cadre:\n---\n{doc_text}\n---\n"
         ).format(doc_text=doc_text[:150000])
 
+        push("Appel au modèle IA…", step='ai_call', progress=20)
         client = OpenAI(api_key=user.openai_key)
-        response = client.responses.parse(
-            model=ai_model or 'gpt-5',
-            input=prompt,
-            text_format=ImportPlanCadreResponse,
-        )
+        pc_settings = PlanCadreImportPromptSettings.get_current()
+        model_name = (ai_model or (pc_settings.ai_model if pc_settings else None) or 'gpt-5')
+
+        parsed = None
+        if file_path:
+            try:
+                import os as _os
+                size_info = None
+                try:
+                    st = _os.stat(file_path)
+                    size_info = st.st_size
+                except Exception:
+                    size_info = None
+                push(f"Fichier prêt: {file_path} ({(size_info or 0)} octets)", step='file', progress=18)
+
+                # Convertir .docx -> .pdf si nécessaire (OpenAI ne prend pas .docx en input_file)
+                upload_path = file_path
+                try:
+                    if file_path.lower().endswith('.docx'):
+                        pdf_path = file_path[:-5] + '.pdf'
+                        push("Conversion DOCX → PDF (haute fidélité)…", step='convert', progress=19)
+                        # 1) Prefer Mammoth (DOCX->HTML) + WeasyPrint (HTML->PDF) for better formatting
+                        html = None
+                        try:
+                            import mammoth
+                            with open(file_path, 'rb') as df:
+                                res = mammoth.convert_to_html(df)
+                                html = res.value
+                        except Exception:
+                            html = None
+                        if html:
+                            try:
+                                from weasyprint import HTML
+                                HTML(string=html).write_pdf(pdf_path)
+                            except Exception:
+                                # Fallback to plain-text PDF
+                                _create_pdf_from_text(doc_text or 'Document importé', pdf_path)
+                        else:
+                            # Fallback to plain-text PDF
+                            _create_pdf_from_text(doc_text or 'Document importé', pdf_path)
+                        upload_path = pdf_path
+                        try:
+                            st2 = _os.stat(upload_path)
+                            push(f"PDF prêt: {upload_path} ({st2.st_size} octets)", step='convert', progress=20)
+                        except Exception:
+                            push(f"PDF prêt: {upload_path}", step='convert', progress=20)
+                except Exception:
+                    pass
+
+                with open(upload_path, 'rb') as f:
+                    up = client.files.create(file=f, purpose='user_data')
+                    file_id = getattr(up, 'id', None)
+                push(f"Upload OpenAI réussi (file_id={file_id})" if file_id else "Upload OpenAI non disponible", step='upload', progress=22)
+            except Exception:
+                file_id = None
+                push("Échec upload vers OpenAI; repli en mode texte brut.", step='upload', progress=19)
+
+            # Build compact instruction (do not inline full text when using file)
+            template = (pc_settings.prompt_template if pc_settings else '')
+            if '{doc_text}' in (template or ''):
+                compact_prompt = _format_import_prompt(template, '(document joint)')
+            else:
+                compact_prompt = template or "Analyse le document DOCX joint et retourne le JSON attendu."
+
+            # Define JSON schema expected
+            json_schema = {
+                "type": "object",
+                "properties": {
+                    "place_intro": {"type": ["string", "null"]},
+                    "objectif_terminal": {"type": ["string", "null"]},
+                    "structure_intro": {"type": ["string", "null"]},
+                    "structure_activites_theoriques": {"type": ["string", "null"]},
+                    "structure_activites_pratiques": {"type": ["string", "null"]},
+                    "structure_activites_prevues": {"type": ["string", "null"]},
+                    "eval_evaluation_sommative": {"type": ["string", "null"]},
+                    "eval_nature_evaluations_sommatives": {"type": ["string", "null"]},
+                    "eval_evaluation_de_la_langue": {"type": ["string", "null"]},
+                    "eval_evaluation_sommatives_apprentissages": {"type": ["string", "null"]},
+                    "competences_developpees": {"type": "array", "items": {"type": "object", "properties": {"texte": {"type": ["string", "null"]}, "description": {"type": ["string", "null"]}}}},
+                    "competences_certifiees": {"type": "array", "items": {"type": "object", "properties": {"texte": {"type": ["string", "null"]}, "description": {"type": ["string", "null"]}}}},
+                    "cours_corequis": {"type": "array", "items": {"type": "object", "properties": {"texte": {"type": ["string", "null"]}, "description": {"type": ["string", "null"]}}}},
+                    "cours_prealables": {"type": "array", "items": {"type": "object", "properties": {"texte": {"type": ["string", "null"]}, "description": {"type": ["string", "null"]}}}},
+                    "cours_relies": {"type": "array", "items": {"type": "object", "properties": {"texte": {"type": ["string", "null"]}, "description": {"type": ["string", "null"]}}}},
+                    "objets_cibles": {"type": "array", "items": {"type": "object", "properties": {"texte": {"type": ["string", "null"]}, "description": {"type": ["string", "null"]}}}},
+                    "savoir_etre": {"type": "array", "items": {"type": "string"}},
+                    "capacites": {"type": "array", "items": {"type": "object", "properties": {
+                        "capacite": {"type": ["string", "null"]},
+                        "description_capacite": {"type": ["string", "null"]},
+                        "ponderation_min": {"type": ["integer", "null"]},
+                        "ponderation_max": {"type": ["integer", "null"]},
+                        "savoirs_necessaires": {"type": "array", "items": {"type": "string"}},
+                        "savoirs_faire": {"type": "array", "items": {"type": "object", "properties": {
+                            "texte": {"type": ["string", "null"]},
+                            "cible": {"type": ["string", "null"]},
+                            "seuil_reussite": {"type": ["string", "null"]},
+                        } }},
+                        "moyens_evaluation": {"type": "array", "items": {"type": "string"}}
+                    }}}
+                },
+                "additionalProperties": True
+            }
+
+            try:
+                if file_id:
+                    # Build request
+                    request_input = [{
+                        "role": "user",
+                        "content": [
+                            {"type": "input_file", "file_id": file_id},
+                            {"type": "input_text", "text": compact_prompt}
+                        ]
+                    }]
+                    request_kwargs = dict(
+                        model=model_name,
+                        input=request_input,
+                        text={
+                            "format": {
+                                "type": "json_schema",
+                                "name": "PlanCadreImport",
+                                "strict": False,
+                                "schema": json_schema
+                            }
+                        },
+                        store=True,
+                        reasoning={"summary": "auto"},
+                    )
+                    # Streaming for live updates
+                    streamed_text = ""
+                    reasoning_summary_text = ''
+                    final_response = None
+                    try:
+                        with client.responses.stream(**request_kwargs) as stream:
+                            for event in stream:
+                                etype = getattr(event, 'type', '') or ''
+                                if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                                    delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                                    if delta:
+                                        streamed_text += delta
+                                        try:
+                                            self.update_state(state='PROGRESS', meta={ 'stream_chunk': delta, 'stream_buffer': streamed_text })
+                                        except Exception:
+                                            pass
+                                elif etype.endswith('response.output_item.added') or etype == 'response.output_item.added':
+                                    try:
+                                        item = getattr(event, 'item', None)
+                                        text_val = ''
+                                        if item:
+                                            if isinstance(item, dict):
+                                                text_val = item.get('text') or ''
+                                            else:
+                                                text_val = getattr(item, 'text', '') or ''
+                                        if text_val:
+                                            streamed_text += text_val
+                                    except Exception:
+                                        pass
+                                elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                                    try:
+                                        rs_delta = getattr(event, 'delta', '') or ''
+                                        if rs_delta:
+                                            reasoning_summary_text += rs_delta
+                                            try:
+                                                self.update_state(state='PROGRESS', meta={ 'reasoning_summary': reasoning_summary_text })
+                                            except Exception:
+                                                pass
+                                    except Exception:
+                                        pass
+                                elif etype.endswith('response.completed'):
+                                    pass
+                                elif etype.endswith('response.error'):
+                                    pass
+                            final_response = stream.get_final_response()
+                    except Exception:
+                        # Fallback non-stream
+                        final_response = client.responses.create(**request_kwargs)
+
+                    # Parse final response
+                    json_text = None
+                    try:
+                        parsed_json = getattr(final_response, 'output_parsed', None)
+                    except Exception:
+                        parsed_json = None
+                    if parsed_json is not None:
+                        try:
+                            parsed = ImportPlanCadreResponse.model_validate(parsed_json)
+                        except Exception:
+                            # As dict already
+                            parsed = ImportPlanCadreResponse.parse_obj(parsed_json)
+                    else:
+                        try:
+                            json_text = getattr(final_response, 'output_text', None)
+                        except Exception:
+                            json_text = None
+                        if not json_text and streamed_text:
+                            json_text = streamed_text
+                        if not json_text:
+                            try:
+                                for out in getattr(final_response, 'output', []) or []:
+                                    for c in getattr(out, 'content', []) or []:
+                                        t = getattr(c, 'text', None)
+                                        if t:
+                                            json_text = t
+                                            break
+                                    if json_text:
+                                        break
+                            except Exception:
+                                json_text = None
+                        if json_text:
+                            import json as _json
+                            data = _json.loads(json_text)
+                            try:
+                                parsed = ImportPlanCadreResponse.model_validate(data)
+                            except Exception:
+                                parsed = ImportPlanCadreResponse.parse_obj(data)
+                    # propagate usage for crediting
+                    try:
+                        response = final_response
+                    except Exception:
+                        pass
+            except Exception as e:
+                push(f"Erreur analyse fichier: {getattr(e, 'message', str(e))}", step='ai_call', progress=35)
+                parsed = None
+
+        if parsed is None:
+            # Fallback to text-based parsing
+            template = (pc_settings.prompt_template if pc_settings else None)
+            if not template or '{doc_text}' not in template:
+                template = (
+                    "Tu es un assistant pédagogique. Analyse le plan-cadre fourni (texte brut extrait d'un DOCX) "
+                    "et retourne un JSON strictement conforme au schéma attendu.\n\n"
+                    "Texte du plan-cadre:\n---\n{doc_text}\n---\n"
+                )
+            prompt = _format_import_prompt(template, doc_text)
+            response = client.responses.parse(
+                model=model_name,
+                input=prompt,
+                text_format=ImportPlanCadreResponse,
+            )
+            parsed = _extract_first_parsed(response)
 
         usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
         usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
@@ -557,7 +681,7 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
         user.credits = max((user.credits or 0.0) - cost, 0.0)
         db.session.commit()
 
-        parsed = _extract_first_parsed(response)
+        push("Réception et parsing de la réponse…", step='parse', progress=60)
         if not parsed:
             return {"status": "error", "message": "Réponse IA invalide."}
 
@@ -567,6 +691,7 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
         except Exception:
             logger.debug("Fallback cible/seuil non appliqué (preview)")
 
+        push("Construction de l'aperçu des modifications…", step='build_preview', progress=75)
         # Construire la structure 'proposed' compatible avec la vue de revue
         fields = {}
         for key in [
@@ -657,6 +782,12 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
         }
         try:
             result['validation_url'] = f"/plan_cadre/{plan.id}/review?task_id={self.request.id}"
+        except Exception:
+            pass
+        # Final streaming update before marking success
+        try:
+            stream_buf += "Pré-analyse terminée. Ouverture de la revue…\n"
+            result['stream_buffer'] = stream_buf
         except Exception:
             pass
         self.update_state(state='SUCCESS', meta=result)
