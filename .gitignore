@@ -1,12 +1,26 @@
+### Cache & Bytecode ###
+__pycache__/
 *.pyc
-add_user.py
-/venv
+
+### Environnements virtuels ###
+/venv/
+/myenv/
+
+### IDE ###
+/.idea/
+
+### Logs ###
 app_errors.log
+src/scripts/extraction.log
+
+### Bases de données ###
 *.db
 *.db-wal
 *.db-shm
-token.json
+
+### Secrets ###
 .env
+token.json
 credentials.json
 src/config/credentials.json
 /src/scripts/json_output
@@ -20,5 +34,11 @@ src/scripts/extraction.log
 /src/txt_outputs
 /src/static/docs
 /src/flask_sessions/
+/src/src/
+
+### Scripts locaux ###
+add_user.py
+
+### Docker ###
 docker-compose.override.yml
-/pdfs_downloaded
+
