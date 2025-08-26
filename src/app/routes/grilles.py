@@ -1,12 +1,11 @@
 import os
 import uuid
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, Response, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, jsonify
 from flask_login import login_required, current_user
 from ..forms import FileUploadForm
 from ..tasks.import_grille import extract_grille_from_pdf_task
 import logging
-from celery.result import AsyncResult   
-import time
+from celery.result import AsyncResult
 from ...celery_app import celery
 from ..forms import (
     ConfirmationGrilleForm
@@ -59,8 +58,8 @@ def import_grille():
         task = extract_grille_from_pdf_task.delay(pdf_path=filepath, openai_key=openai_key)
         
         flash("Le fichier a été importé et la tâche a été lancée. Veuillez patienter...", "info")
-        # Rediriger vers la page de suivi avec le task.id
-        return redirect(url_for('grille_bp.grille_task_status_page', task_id=task.id))
+        # Rediriger vers la page de suivi unifiée
+        return redirect(url_for('tasks.track_task', task_id=task.id))
     return render_template('import_grille.html', form=form)
 
 
@@ -92,168 +91,6 @@ def import_grille_start():
         logger.exception('Erreur lors du démarrage de l\'import de grille')
         return jsonify({'error': str(e)}), 500
 
-
-@grille_bp.route('/grille_task_status/<task_id>')
-@login_required
-def grille_task_status_page(task_id):
-    """
-    Affiche la page HTML de suivi du statut et du résultat de la tâche Celery pour la grille.
-    """
-    logger.info(f"Vérification du backend Celery dans la route: Broker='{celery.conf.broker_url}', Backend='{celery.conf.result_backend}'")
-
-    try:
-        # Récupérer le résultat de la tâche avec l'instance celery explicite
-        task_result = AsyncResult(task_id, app=celery)
-
-        current_state = task_result.state
-        current_result = task_result.result
-        logger.info(f"Rendering HTML page for task {task_id}. Initial state: {current_state}, Result: {current_result}")
-
-        return render_template(
-            'task_status.html',
-            task_id=task_id,
-            state=current_state,
-            result=current_result,
-            status_api_url=url_for('tasks.unified_task_status', task_id=task_id),
-            events_url=url_for('tasks.unified_task_events', task_id=task_id),
-        )
-
-    except AttributeError as e:
-        if "'DisabledBackend' object has no attribute" in str(e):
-            logger.error(f"Celery utilise TOUJOURS un 'DisabledBackend' pour la tâche {task_id}. Vérifiez la configuration ET la connexion Redis.", exc_info=True)
-            return Response(f"Erreur: Backend Celery désactivé malgré la configuration explicite. Vérifiez la connexion Redis. Backend configuré: {celery.conf.result_backend}", status=500)
-        else:
-            logger.error(f"Erreur AttributeError inattendue dans grille_task_status_page pour {task_id}: {e}", exc_info=True)
-            return Response("Erreur interne du serveur (AttributeError)", status=500)
-    except Exception as e:
-        # Attraper d'autres erreurs potentielles (ex: connexion Redis refusée)
-        logger.error(f"Exception générale dans grille_task_status_page pour {task_id}: {e}", exc_info=True)
-        return Response(f"Erreur interne du serveur: {e}", status=500)
-
-@grille_bp.route('/api/task_status/<task_id>')
-@login_required
-def get_task_status(task_id):
-    """
-    Endpoint API qui renvoie le statut et le résultat actuels d'une tâche Celery au format JSON.
-    """
-    try:
-        # Récupérer le résultat de la tâche
-        task_result = AsyncResult(task_id, app=celery)
-        state = task_result.state
-        result = task_result.result
-
-        # Construire la réponse
-        response_data = {
-            "task_id": task_id,
-            "state": state,
-        }
-
-        # Ajouter des détails du résultat en fonction de l'état
-        if state == 'SUCCESS':
-            if isinstance(result, dict) and 'status' in result:
-                response_data["status"] = result['status']
-                if result['status'] == 'success':
-                    response_data["result"] = result['result']
-                    # Ajouter les statistiques d'utilisation si disponibles
-                    if 'usage' in result:
-                        response_data["usage"] = result['usage']
-                else:
-                    # Cas d'erreur retournée par la tâche elle-même
-                    response_data["message"] = result.get('message', 'Erreur inconnue')
-            else:
-                # Pour les tâches qui ne suivent pas la structure standard
-                response_data["status"] = "success"
-                response_data["result"] = result
-        elif state == 'FAILURE':
-            # En cas d'échec de la tâche
-            response_data["status"] = "error"
-            if isinstance(result, Exception):
-                response_data["message"] = str(result)
-            else:
-                response_data["message"] = "Échec de la tâche pour une raison inconnue"
-        
-        return jsonify(response_data)
-    
-    except Exception as e:
-        logger.error(f"Erreur lors de la récupération du statut de la tâche {task_id}: {e}", exc_info=True)
-        return jsonify({
-            "task_id": task_id,
-            "state": "ERROR",
-            "status": "error", 
-            "message": f"Erreur serveur: {str(e)}"
-        }), 500
-
-
-@grille_bp.route('/api/task_events/<task_id>')
-@login_required
-def stream_task_events(task_id):
-    """
-    Flux SSE (Server-Sent Events) pour suivre en direct l'évolution d'une tâche.
-    Implémentation basée sur un polling interne du backend Celery afin d'émettre
-    des événements 'progress' lorsqu'il y a un changement d'état ou de message.
-    Le flux se termine lorsque la tâche est SUCCESS ou FAILURE.
-    """
-    def sse_gen():
-        last_state = None
-        last_message = None
-        last_progress = None
-        last_step = None
-        last_details = None
-        # cadence de polling interne (en secondes)
-        interval = 1.0
-
-        yield "event: open\ndata: {}\n\n"
-
-        while True:
-            try:
-                task_result = AsyncResult(task_id, app=celery)
-                state = task_result.state
-                meta = task_result.info if isinstance(task_result.info, dict) else {}
-                message = meta.get('message') if isinstance(meta, dict) else None
-                progress = meta.get('progress') if isinstance(meta, dict) else None
-                step = meta.get('step') if isinstance(meta, dict) else None
-                details = meta.get('details') if isinstance(meta, dict) else None
-
-                changed = (
-                    (state != last_state) or (message != last_message) or
-                    (progress != last_progress) or (step != last_step) or
-                    (details != last_details)
-                )
-                if changed:
-                    payload = {
-                        'state': state,
-                        'message': message,
-                        'progress': progress,
-                        'step': step,
-                        'meta': meta
-                    }
-                    yield f"event: progress\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
-                    last_state, last_message, last_progress, last_step, last_details = state, message, progress, step, details
-
-                if state in ('SUCCESS', 'FAILURE'):
-                    # Inclure le résultat final si dispo
-                    final_payload = {
-                        'state': state,
-                        'result': task_result.result if state == 'SUCCESS' else None,
-                        'meta': meta
-                    }
-                    yield f"event: done\ndata: {json.dumps(final_payload, ensure_ascii=False)}\n\n"
-                    break
-
-                # Heartbeat pour garder la connexion vivante
-                yield "event: ping\ndata: {}\n\n"
-                time.sleep(interval)
-            except Exception as e:
-                err = {'error': str(e)}
-                yield f"event: error\ndata: {json.dumps(err, ensure_ascii=False)}\n\n"
-                break
-
-    headers = {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive'
-    }
-    return Response(sse_gen(), headers=headers)
 
 @grille_bp.route('/liste_grilles')
 @login_required
@@ -312,7 +149,7 @@ def confirm_grille_import(task_id):
     
     if task_result.state != 'SUCCESS' or not task_result.result or task_result.result.get('status') != 'success':
         flash("L'extraction n'est pas encore terminée ou a échoué.", "warning")
-        return redirect(url_for('grille_bp.grille_task_status_page', task_id=task_id))
+        return redirect(url_for('tasks.track_task', task_id=task_id))
     
     # Récupérer le JSON de la grille
     try:

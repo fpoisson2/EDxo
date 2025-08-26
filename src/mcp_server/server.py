@@ -16,7 +16,13 @@ try:  # FastMCP may not be available in some environments (tests)
     _FASTMCP_AVAILABLE = True
 except Exception:  # pragma: no cover - best effort fallback
     FastMCP = None  # type: ignore
-    AccessToken = None  # type: ignore
+
+    class AccessToken:  # minimal placeholder for tests
+        def __init__(self, token: str, client_id: str, scopes: list[Any], expires_at: Optional[int]):
+            self.token = token
+            self.client_id = client_id
+            self.scopes = scopes
+            self.expires_at = expires_at
 
     class TokenVerifier:  # minimal placeholder
         async def verify_token(self, token: str):
@@ -453,7 +459,7 @@ class DBTokenVerifier(TokenVerifier):
                             "presented": presented_resource,
                         },
                     )
-                if AccessToken is None:  # fastmcp not available (tests)
+                if not _FASTMCP_AVAILABLE:
                     logger.info(
                         "MCP: token accepted (fallback)",
                         extra={
@@ -461,19 +467,14 @@ class DBTokenVerifier(TokenVerifier):
                             "exp": int(oauth.expires_at.timestamp()),
                         },
                     )
-                    return {
-                        "token": token,
-                        "client_id": oauth.client_id,
-                        "scopes": [],
-                        "expires_at": int(oauth.expires_at.timestamp()),
-                    }
-                logger.info(
-                    "MCP: token accepted",
-                    extra={
-                        "client_id": oauth.client_id,
-                        "exp": int(oauth.expires_at.timestamp()),
-                    },
-                )
+                else:
+                    logger.info(
+                        "MCP: token accepted",
+                        extra={
+                            "client_id": oauth.client_id,
+                            "exp": int(oauth.expires_at.timestamp()),
+                        },
+                    )
                 return AccessToken(
                     token=token,
                     client_id=oauth.client_id,
@@ -488,7 +489,7 @@ class DBTokenVerifier(TokenVerifier):
                 client_id = f"user:{user.id}"
                 exp_norm = ensure_aware_utc(user.api_token_expires_at)
                 exp_ts = int(exp_norm.timestamp()) if exp_norm else None
-                if AccessToken is None:  # fastmcp not available (tests)
+                if not _FASTMCP_AVAILABLE:
                     logger.info(
                         "MCP: user API token accepted (fallback)",
                         extra={
@@ -496,19 +497,14 @@ class DBTokenVerifier(TokenVerifier):
                             "exp": exp_ts,
                         },
                     )
-                    return {
-                        "token": token,
-                        "client_id": client_id,
-                        "scopes": [],
-                        "expires_at": exp_ts,
-                    }
-                logger.info(
-                    "MCP: user API token accepted",
-                    extra={
-                        "client_id": client_id,
-                        "exp": exp_ts,
-                    },
-                )
+                else:
+                    logger.info(
+                        "MCP: user API token accepted",
+                        extra={
+                            "client_id": client_id,
+                            "exp": exp_ts,
+                        },
+                    )
                 return AccessToken(
                     token=token,
                     client_id=client_id,

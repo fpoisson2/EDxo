@@ -174,7 +174,7 @@
               </ul>
               <!-- Formulaire d'ajout d'une règle de PIEA -->
               <div class="mt-3">
-                <form method="POST" action="{{ url_for('main.gestion_departements') }}">
+                <form method="POST" action="{{ url_for('settings.gestion_departements') }}">
                   {{ piea_form.csrf_token }}
                   <input type="hidden" name="department_id" value="{{ department.id }}">
                   <div class="mb-3">
