@@ -19,7 +19,12 @@ def create_admin_and_cegep(app):
         db.session.add(cegep)
         db.session.commit()
 
-        admin = User(username='admin_test', password=generate_password_hash('password'), role='admin')
+        admin = User(
+            username='admin_test',
+            password=generate_password_hash('password'),
+            role='admin',
+            is_first_connexion=False,
+        )
         db.session.add(admin)
         db.session.commit()
 

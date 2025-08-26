@@ -5,6 +5,7 @@ import re
 import json
 import logging
 from typing import List, Optional
+from types import SimpleNamespace
 
 # Import your OpenAI client (adjust this import according to your library)
 from openai import OpenAI
@@ -34,11 +35,51 @@ from src.utils import (
 from src.ocr_processing import api_clients, pdf_tools, web_utils
 from src.ocr_processing.api_clients import SkillExtractionError
 from src.config.constants import *
-from flask import current_app 
+from flask import current_app
 from celery.exceptions import Ignore
 from celery import chord
 
 logger = logging.getLogger(__name__)
+
+
+@shared_task(bind=True, name='app.tasks.ocr.extract_json_competence')
+def extract_json_competence(self, competence, download_path_local, txt_output_dir,
+                            base_filename_local, openai_key, model="gpt-test"):
+    """Extrait les compétences d'un segment PDF et retourne les usages API."""
+    section_pdf = os.path.join(
+        txt_output_dir, f"{base_filename_local}_{competence['code']}.pdf"
+    )
+    pdf_tools.extract_pdf_section(
+        download_path_local, section_pdf,
+        competence["page_debut"], competence["page_fin"]
+    )
+    text = pdf_tools.convert_pdf_to_txt(section_pdf, txt_output_dir, base_filename_local)
+    if not text.strip():
+        return {
+            "competences": [],
+            "code": competence["code"],
+            "api_usage": {
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "model": model,
+            },
+        }
+    response = api_clients.extraire_competences_depuis_txt(text, openai_key, model=model)
+    usage = response.get("usage", SimpleNamespace(input_tokens=0, output_tokens=0))
+    try:
+        parsed = json.loads(response.get("result", ""))
+        competences = parsed.get("competences", [])
+    except Exception:
+        competences = []
+    return {
+        "competences": competences,
+        "code": competence["code"],
+        "api_usage": {
+            "prompt_tokens": getattr(usage, "input_tokens", 0),
+            "completion_tokens": getattr(usage, "output_tokens", 0),
+            "model": model,
+        },
+    }
 
 ###############################################################################
 # Ancien pipeline (segmentation + sous‑tâches) retiré

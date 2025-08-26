@@ -2,7 +2,7 @@
 
 import sqlite3
 
-from ..config.constants import SECTIONS
+from src.config.constants import SECTIONS
 
 DATABASE = 'programme.db'
 
