@@ -444,32 +444,6 @@ def generate_competence_logigramme(programme_id):
     
 
 
-@programme_bp.route('/api/task_status/<task_id>')
-@login_required
-def programme_task_status(task_id):
-    from ...celery_app import celery
-    from celery.result import AsyncResult
-    try:
-        task_result = AsyncResult(task_id, app=celery)
-        state = task_result.state
-        result = task_result.result
-        resp = { 'task_id': task_id, 'state': state }
-        if state == 'PROGRESS':
-            info = task_result.info or {}
-            if isinstance(info, dict):
-                resp.update(info)
-        elif state == 'SUCCESS':
-            if isinstance(result, dict):
-                resp.update(result)
-            else:
-                resp.update({ 'status': 'success', 'result': result })
-        elif state == 'FAILURE':
-            resp.update({ 'status': 'error', 'message': str(result) if result else 'Echec de la tâche' })
-        return jsonify(resp)
-    except Exception as e:
-        current_app.logger.exception('Erreur statut de tâche')
-        return jsonify({ 'task_id': task_id, 'state': 'ERROR', 'status': 'error', 'message': str(e) }), 500
-
 @programme_bp.route('/<int:programme_id>/competences')
 @login_required
 @ensure_profile_completed

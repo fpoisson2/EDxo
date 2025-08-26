@@ -155,41 +155,6 @@ def reset_password(token):
 
 
 
-@main.route('/task_status/<task_id>', methods=['GET'])
-def task_status(task_id):
-    from ...celery_app import celery
-    from celery.result import AsyncResult
-
-    res = AsyncResult(task_id, app=celery)
-    current_state = res.state
-    # Récupération du meta si présent, sinon message par défaut
-    meta = res.info
-    if isinstance(meta, dict):
-        current_message = meta.get('message', '')
-    elif meta is None:
-        meta = {}
-        current_message = ''
-    else:
-        # Peut être une Exception (ex.: NotRegistered)
-        current_message = str(meta)
-
-    # En mode succès, certains backends peuvent ne pas exposer res.result ;
-    # on se rabat alors sur meta pour éviter un résultat vide côté client.
-    result_payload = res.result if current_state == 'SUCCESS' else None
-    if current_state == 'SUCCESS' and not result_payload:
-        result_payload = meta if isinstance(meta, dict) else None
-
-    logger.info("Task %s state: %s, meta: %s", task_id, current_state, meta)
-
-    return jsonify({
-        'state': current_state,
-        'message': current_message,
-        'meta': meta,
-        'result': result_payload
-    })
-
-
-
 @main.route('/clear_task_id', methods=['POST'])
 def clear_task_id():
     """Retire l'identifiant de tâche de la session sans supprimer
@@ -494,28 +459,3 @@ def index():
 
 
 
-from flask import redirect
-@main.route('/parametres/gestion_departements', methods=['GET', 'POST'])
-def gestion_departements():
-    return redirect(url_for('settings.gestion_departements'))
-
-
-@main.route('/parametres/gestion_departements/supprimer/<int:departement_id>', methods=['POST'])
-def supprimer_departement(departement_id):
-    return redirect(url_for('settings.supprimer_departement', departement_id=departement_id))
-
-@main.route('/parametres/gestion_departements/supprimer_regle/<int:regle_id>', methods=['POST'])
-def supprimer_regle(regle_id):
-    return redirect(url_for('settings.supprimer_regle', regle_id=regle_id))
-
-@main.route('/parametres/gestion_departements/supprimer_piea/<int:piea_id>', methods=['POST'])
-def supprimer_piea(piea_id):
-    return redirect(url_for('settings.supprimer_piea', piea_id=piea_id))
-
-@main.route('/parametres/gestion_departements/edit_regle/<int:regle_id>', methods=['GET', 'POST'])
-def edit_regle(regle_id):
-    return redirect(url_for('settings.edit_regle', regle_id=regle_id))
-
-@main.route('/parametres/gestion_departements/edit_piea/<int:piea_id>', methods=['GET', 'POST'])
-def edit_piea(piea_id):
-    return redirect(url_for('settings.edit_piea', piea_id=piea_id))
