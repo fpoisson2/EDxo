@@ -186,7 +186,7 @@
                             <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.place_intro.id }}">
                                 <strong>Place et rôle du cours dans le programme</strong>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="place_intro" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="place_intro" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -201,7 +201,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h3 class="fw-bold d-flex align-items-center gap-2">Compétences développées
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="competences_developpees" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="competences_developpees" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -245,7 +245,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h3 class="fw-bold d-flex align-items-center gap-2">Objets cibles
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objets_cibles" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objets_cibles" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -289,7 +289,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h3 class="fw-bold d-flex align-items-center gap-2">Compétences certifiées
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="competences_certifiees" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="competences_certifiees" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -333,7 +333,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h3 class="fw-bold d-flex align-items-center gap-2">Cours corequis
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_corequis" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_corequis" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -377,7 +377,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h3 class="fw-bold d-flex align-items-center gap-2">Cours préalables
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_prealables" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_prealables" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -421,7 +421,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h3 class="fw-bold d-flex align-items-center gap-2">Cours reliés
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_relies" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_relies" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -484,7 +484,7 @@
                             <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.objectif_terminal.id }}">
                                 <span>Objectif terminal</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objectif_terminal" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objectif_terminal" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -499,7 +499,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h3 class="fw-bold d-flex align-items-center gap-2">Capacités
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="capacites" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="capacites" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -685,7 +685,7 @@
                             <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.structure_intro.id }}">
                                 <span>Structure du cours</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_intro" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_intro" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -698,7 +698,7 @@
                             <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.structure_activites_theoriques.id }}">
                                 <span>Activités théoriques</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_theoriques" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_theoriques" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -711,7 +711,7 @@
                             <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.structure_activites_pratiques.id }}">
                                 <span>Activités pratiques</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_pratiques" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_pratiques" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -724,7 +724,7 @@
                             <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.structure_activites_prevues.id }}">
                                 <span>Organisation du cours (activités prévues)</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_prevues" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_prevues" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -756,7 +756,7 @@
                             <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.eval_evaluation_sommative.id }}">
                                 <span>Évaluation sommative des apprentissages</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_sommative" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_sommative" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -769,7 +769,7 @@
                             <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.eval_nature_evaluations_sommatives.id }}">
                                 <span>Nature des évaluations sommatives</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_nature_evaluations_sommatives" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_nature_evaluations_sommatives" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -782,7 +782,7 @@
                             <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.eval_evaluation_de_la_langue.id }}">
                                 <span>Évaluation de la langue</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_de_la_langue" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_de_la_langue" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -795,7 +795,7 @@
                             <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.eval_evaluation_sommatives_apprentissages.id }}">
                                 <span>Évaluation formative des apprentissages</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_sommatives_apprentissages" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_sommatives_apprentissages" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -810,7 +810,7 @@
                                 <label class="fw-bold d-flex align-items-center gap-2">
                                     <span>Savoir-être</span>
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="savoirs_etre" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="savoirs_etre" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -963,9 +963,7 @@
                 url: "/api/plan_cadre/{{ plan.id }}/generate",
                 title: 'Générer le plan‑cadre — {{ cours.code }}',
                 startMessage: 'Génération en cours…',
-                fixedPayload: { stream: true },
-                summaryEl: document.getElementById('reasoningSummary'),
-                streamEl: document.getElementById('streamOutput')
+                fixedPayload: { stream: true }
               });
             });
           }
@@ -976,9 +974,7 @@
                 url: "/api/plan_cadre/{{ plan.id }}/improve",
                 title: 'Améliorer le plan‑cadre — {{ cours.code }}',
                 startMessage: 'Amélioration en cours…',
-                fixedPayload: { improve_only: true, stream: true },
-                summaryEl: document.getElementById('reasoningSummary'),
-                streamEl: document.getElementById('streamOutput')
+                fixedPayload: { improve_only: true, stream: true }
               });
             });
           }
@@ -1027,9 +1023,7 @@
                   url,
                   title,
                   startMessage: 'Amélioration en cours…',
-                  fixedPayload: { stream: true },
-                  summaryEl: document.getElementById('reasoningSummary'),
-                  streamEl: document.getElementById('streamOutput')
+                  fixedPayload: { stream: true }
                 });
               } else {
                 // Fallback: démarrer directement avec payload minimal
@@ -1042,7 +1036,7 @@
                     if (taskId) {
                       try { sessionStorage.setItem('currentTaskId', taskId); } catch {}
                       if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
-                        window.EDxoTasks.openTaskModal(taskId, { title, summaryEl: document.getElementById('reasoningSummary'), streamEl: document.getElementById('streamOutput') });
+                        window.EDxoTasks.openTaskModal(taskId, { title });
                       } else {
                         window.location.href = `/tasks/track/${taskId}`;
                       }
@@ -1099,7 +1093,7 @@
                 try { sessionStorage.setItem('currentTaskId', j.task_id); } catch{}
                 // If orchestrator is ready now, open modal; otherwise navigate to track page
               if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
-                  window.EDxoTasks.openTaskModal(j.task_id, { title: 'Import Plan‑cadre', summaryEl: document.getElementById('reasoningSummary'), streamEl: document.getElementById('streamOutput') });
+                  window.EDxoTasks.openTaskModal(j.task_id, { title: 'Import Plan‑cadre' });
                 } else {
                   window.location.href = `/tasks/track/${j.task_id}`;
                 }

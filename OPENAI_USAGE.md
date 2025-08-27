@@ -4,10 +4,7 @@ Ce document recense tous les points du code qui appellent l’API OpenAI, le typ
 
 | Chemin | Endpoint / Tâche / Fonction | API OpenAI | Méthodes | Fonctionnalité | Utilisé |
 |---|---|---|---|---|---|
-| src/ocr_processing/api_clients.py | find_competences_pages | Responses, Files | responses.create, files.create | OCR: détection bornes de pages des compétences (formation spécifique) | Partiel (utilisé via extraire_toutes_les_competences) |
-| src/ocr_processing/api_clients.py | extraire_toutes_les_competences | Responses | responses.create | OCR: pipeline pages→texte→JSON compétences | Partiel (utilisé localement) |
-| src/ocr_processing/api_clients.py | find_section_with_openai | Responses | responses.create | OCR: localisation section « Formation spécifique » | Partiel |
-| src/ocr_processing/api_clients.py | extraire_competences_depuis_txt | Responses | responses.create | OCR: extraction JSON compétences à partir de texte | Oui (appelé par task OCR legacy helper) |
+| src/ocr_processing/api_clients.py | — | — | — | Fonctions legacy retirées: find_competences_pages, extraire_toutes_les_competences, find_section_with_openai, extraire_competences_depuis_txt | Retiré |
 | src/ocr_processing/api_clients.py | extraire_competences_depuis_pdf | Responses, Files | responses.stream, responses.create, files.create | OCR: extraction directe JSON compétences depuis PDF | Oui (appelé par src/app/tasks/ocr.py) |
 | src/app/routes/chat.py | SSE chat streaming | Responses | responses.create (stream/non-stream) | Chat IA (SSE, suivi de thread) | Oui |
 | src/app/routes/gestion_programme.py | update_verifier_plan_cours | Chat Completions (beta) | beta.chat.completions.parse | Vérification de plan de cours en 2 passes (o3-mini → gpt-5) | Oui |
@@ -37,4 +34,3 @@ Catégorisation par API
 - Files: upload de PDF pour les tâches d’import/ocr.
 
 Dernière mise à jour: générée automatiquement par inspection de code à la date de l’analyse.
-

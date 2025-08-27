@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
           alert(data.message || 'Action échouée.');
           return;
         }
-        try { addNotification('Modifications enregistrées.', 'success', data.redirect_url || null); } catch(_) {}
+        try { addNotification('Modifications enregistrées.', 'success', data.redirect_url || null, taskId); } catch(_) {}
         if (data.redirect_url) window.location.href = data.redirect_url;
       }
 

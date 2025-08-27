@@ -448,11 +448,15 @@
             <div id="task-orch-reasoning" class="mb-2 small d-none" style="max-height:25vh;overflow:auto;background:#f8f9fa;padding:8px;border-radius:6px;"></div>
 
             <h6 class="mt-3 mb-1">Contenu généré</h6>
+            <div class="d-flex gap-2 mb-2">
+              <button class="btn btn-sm btn-outline-secondary active" id="task-orch-view-text" type="button">Texte</button>
+              <button class="btn btn-sm btn-outline-secondary" id="task-orch-view-json" type="button" disabled>JSON</button>
+            </div>
             <div id="task-orch-stream-spinner" class="my-2" style="min-height:1.5rem;">
               <div class="spinner-border spinner-border-sm text-primary" role="status" aria-label="Chargement"></div>
             </div>
             <textarea id="task-orch-stream" class="form-control" rows="6" readonly style="background:#0f172a;color:#e2e8f0;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;min-height:140px;max-height:280px;"></textarea>
-            <div id="task-orch-log" class="mt-2" style="background:#0f172a;color:#e2e8f0;border-radius:6px;padding:10px;max-height:120px;overflow:auto;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;"></div>
+            <pre id="task-orch-stream-json" class="form-control" style="display:none;background:#0f172a;color:#e2e8f0;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;min-height:140px;max-height:280px;white-space:pre-wrap;overflow:auto;"></pre>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-danger me-auto" id="task-orch-cancel">Arrêter</button>
@@ -464,15 +468,28 @@
     </div>`;
     document.body.insertAdjacentHTML('beforeend', html);
     modal = document.getElementById('taskOrchestratorModal');
-    const toggleBtn = document.getElementById('task-orch-toggle-json');
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', () => {
-        const pre = document.getElementById('task-orch-json');
-        if (!pre) return;
-        pre.style.display = pre.style.display === 'none' ? 'block' : 'none';
-        toggleBtn.textContent = pre.style.display === 'none' ? 'Afficher JSON' : 'Masquer JSON';
-      });
-    }
+    // Wire view toggle buttons for content
+    try {
+      const btnText = document.getElementById('task-orch-view-text');
+      const btnJson = document.getElementById('task-orch-view-json');
+      const areaText = document.getElementById('task-orch-stream');
+      const areaJson = document.getElementById('task-orch-stream-json');
+      if (btnText && btnJson && areaText && areaJson) {
+        btnText.addEventListener('click', () => {
+          btnText.classList.add('active');
+          btnJson.classList.remove('active');
+          areaText.style.display = '';
+          areaJson.style.display = 'none';
+        });
+        btnJson.addEventListener('click', () => {
+          btnJson.classList.add('active');
+          btnText.classList.remove('active');
+          areaText.style.display = 'none';
+          areaJson.style.display = '';
+          try { if (typeof tryUpdateJsonView === 'function') tryUpdateJsonView(); } catch {}
+        });
+      }
+    } catch {}
     return modal;
   }
 
@@ -560,10 +577,13 @@
     const modalEl = ensureModal();
     document.getElementById('task-orch-id').textContent = taskId;
     document.getElementById('task-orch-state').textContent = 'PENDING';
-    const logEl = document.getElementById('task-orch-log');
-    if (logEl) logEl.innerHTML = '';
+    // Log UI removed (status and progress are reflected elsewhere)
+    try { const logEl = document.getElementById('task-orch-log'); if (logEl) logEl.remove(); } catch {}
     const streamEl = opts.streamEl || document.getElementById('task-orch-stream');
     try { if (streamEl) streamEl.style.background = '#0f172a'; } catch {}
+    const streamJsonPre = document.getElementById('task-orch-stream-json');
+    const viewTextBtn = document.getElementById('task-orch-view-text');
+    const viewJsonBtn = document.getElementById('task-orch-view-json');
     const streamSpinner = document.getElementById('task-orch-stream-spinner');
     const reasoningEl = opts.summaryEl || document.getElementById('task-orch-reasoning');
     const reasoningSpinner = document.getElementById('task-orch-reasoning-spinner');
@@ -595,6 +615,7 @@
         streamEl.scrollTop = streamEl.scrollHeight;
         if (streamSpinner) streamSpinner.style.display = streamEl.value ? 'none' : '';
       }
+      try { if (typeof tryUpdateJsonView === 'function') tryUpdateJsonView(); } catch {}
       if (reasoningEl) {
         const txt = cache.reasoning || '';
         try {
@@ -658,6 +679,32 @@
     const MAX_STREAM_LEN = 120000; // ~120KB tail to avoid UI freezes
     let streamTimer = null;
     let streamDirty = false;
+    let streamViewMode = 'text';
+    function tryUpdateJsonView() {
+      try {
+        const raw = streamBuf || (streamEl && streamEl.value) || '';
+        let parsed;
+        try { parsed = JSON.parse(raw); } catch { parsed = null; }
+        if (parsed) {
+          if (viewJsonBtn) viewJsonBtn.disabled = false;
+          if (streamJsonPre && (streamViewMode === 'json')) {
+            try { streamJsonPre.textContent = JSON.stringify(parsed, null, 2); } catch {}
+          }
+        } else {
+          if (viewJsonBtn) viewJsonBtn.disabled = true;
+          if (streamJsonPre && (streamViewMode === 'json')) {
+            // Fallback to text view if JSON becomes invalid during stream
+            if (viewTextBtn) viewTextBtn.click();
+          }
+        }
+      } catch {}
+    }
+    // Remember view mode from clicks
+    try {
+      if (viewTextBtn) viewTextBtn.addEventListener('click', () => { streamViewMode = 'text'; });
+      if (viewJsonBtn) viewJsonBtn.addEventListener('click', () => { if (!viewJsonBtn.disabled) streamViewMode = 'json'; });
+    } catch {}
+
     function clampAndMarkStreamDirty() {
       try {
         if (!streamBuf) return;
@@ -677,6 +724,7 @@
                 streamEl.scrollTop = streamEl.scrollHeight;
               }
               if (streamSpinner) streamSpinner.style.display = streamEl && streamEl.value ? 'none' : '';
+              tryUpdateJsonView();
               try { scheduleCacheSave(taskId); } catch {}
             } catch {}
           }, 250);
@@ -915,15 +963,22 @@
           try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
         }
       } catch {}
-      // Pretty-print JSON if the final content looks like JSON; then turn background green
+      // Pretty-print JSON if the final content looks like JSON; then apply light green background + border
       try {
         if (streamEl) {
           const current = streamEl.value || '';
           if (current) {
-            try { const obj = JSON.parse(current); streamEl.value = JSON.stringify(obj, null, 2); } catch {}
+            try { const obj = JSON.parse(current); streamEl.value = JSON.stringify(obj, null, 2); if (streamJsonPre) streamJsonPre.textContent = JSON.stringify(obj, null, 2); if (viewJsonBtn) viewJsonBtn.disabled = false; } catch {}
           }
-          // Green background to indicate completion
-          try { streamEl.style.background = '#14532d'; } catch {}
+          // Light green background and emphasized green border to indicate completion
+          try { streamEl.style.background = '#dcfce7'; } catch {}
+          try { streamEl.style.border = '2px solid #16a34a'; } catch {}
+          try { streamEl.style.color = '#064e3b'; } catch {}
+          if (streamJsonPre) {
+            try { streamJsonPre.style.background = '#dcfce7'; } catch {}
+            try { streamJsonPre.style.border = '2px solid #16a34a'; } catch {}
+            try { streamJsonPre.style.color = '#064e3b'; } catch {}
+          }
           try { if (streamSpinner) streamSpinner.style.display = 'none'; } catch {}
         }
         if (reasoningSpinner) reasoningSpinner.style.display = 'none';

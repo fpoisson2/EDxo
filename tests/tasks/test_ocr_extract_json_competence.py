@@ -36,7 +36,7 @@ def test_pdf_inexistant_declenche_exception(app, tmp_path, monkeypatch):
 
         monkeypatch.setattr(ocr_tasks.pdf_tools, "extract_pdf_section", fake_extract_pdf_section)
         monkeypatch.setattr(ocr_tasks.pdf_tools, "convert_pdf_to_txt", lambda *args, **kwargs: "")
-        monkeypatch.setattr(ocr_tasks.api_clients, "extraire_competences_depuis_txt", lambda *args, **kwargs: {})
+        monkeypatch.setattr(ocr_tasks.api_clients, "extraire_competences_depuis_pdf", lambda *args, **kwargs: {})
 
         competence = {"code": "C1", "page_debut": 1, "page_fin": 2}
         with pytest.raises(FileNotFoundError):
@@ -55,7 +55,7 @@ def test_retour_vide_si_conversion_vide(app, tmp_path, monkeypatch):
 
         monkeypatch.setattr(ocr_tasks.pdf_tools, "extract_pdf_section", lambda *args, **kwargs: True)
         monkeypatch.setattr(ocr_tasks.pdf_tools, "convert_pdf_to_txt", lambda *args, **kwargs: "   ")
-        monkeypatch.setattr(ocr_tasks.api_clients, "extraire_competences_depuis_txt", lambda *args, **kwargs: {})
+        monkeypatch.setattr(ocr_tasks.api_clients, "extraire_competences_depuis_pdf", lambda *args, **kwargs: {})
 
         competence = {"code": "C1", "page_debut": 1, "page_fin": 2}
         result = run_task(competence, "dummy.pdf", str(txt_dir), "base", "key")
@@ -83,7 +83,7 @@ def test_succes_retourne_usages_api(app, tmp_path, monkeypatch):
         mock_response = {"result": '{"competences": [{"Code": "C1"}]}', "usage": usage}
         monkeypatch.setattr(
             ocr_tasks.api_clients,
-            "extraire_competences_depuis_txt",
+            "extraire_competences_depuis_pdf",
             lambda *args, **kwargs: mock_response,
         )
 

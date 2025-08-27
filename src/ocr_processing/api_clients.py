@@ -108,6 +108,7 @@ def find_competences_pages(markdown_content, openai_key=None, pdf_path: str | No
     
     Cela permettra de traiter une compétence à la fois.
     """
+    raise NotImplementedError("find_competences_pages a été retirée. Utiliser des flux PDF directs (extraire_competences_depuis_pdf).")
     # Préparer le prompt pour que l'IA segmente la section en retournant
     # un tableau des bornes de page pour chaque compétence.
     system_prompt = (
@@ -283,6 +284,7 @@ def extraire_toutes_les_competences(markdown_content, openai_key, output_json_fi
      - Pour chaque bloc, appelle extraire_competences_depuis_txt pour obtenir le JSON structuré.
      - Concatène les résultats dans une seule structure JSON sous la clé 'competences'.
     """
+    raise NotImplementedError("extraire_toutes_les_competences a été retirée.")
     # Obtenir la liste des compétences avec leurs bornes de pages
     pages_info = find_competences_pages(markdown_content, openai_key)
     if not pages_info or "competences" not in pages_info:
@@ -330,6 +332,7 @@ def find_section_with_openai(markdown_content, openai_key=None):
     Utilise l'API OpenAI pour identifier la section "Formation spécifique".
     Retourne None en cas d'échec.
     """
+    raise NotImplementedError("find_section_with_openai a été retirée.")
     # --- Initialize client inside the function ---
     api_key = openai_key
     if not api_key:
@@ -411,6 +414,7 @@ def extraire_competences_depuis_txt(text_content, output_json_filename, openai_k
     Extrait les compétences via API OpenAI (mode synchrone).
     Lève SkillExtractionError en cas d'échec.
     """
+    raise NotImplementedError("extraire_competences_depuis_txt a été retirée. Utiliser extraire_competences_depuis_pdf.")
     # --- Initialisation du client ---
     api_key = openai_key or current_app.config.get('OPENAI_API_KEY')
     if not api_key:

@@ -54,21 +54,18 @@ def extract_json_competence(self, competence, download_path_local, txt_output_di
         competence["page_debut"], competence["page_fin"]
     )
     text = pdf_tools.convert_pdf_to_txt(section_pdf, txt_output_dir, base_filename_local)
-    if not text.strip():
-        return {
-            "competences": [],
-            "code": competence["code"],
-            "api_usage": {
-                "prompt_tokens": 0,
-                "completion_tokens": 0,
-                "model": model,
-            },
-        }
-    response = api_clients.extraire_competences_depuis_txt(text, openai_key, model=model)
+    # Appel direct à l'extraction depuis le PDF segmenté (remplace la voie texte)
+    out_json_path = os.path.join(txt_output_dir, f"{base_filename_local}_{competence['code']}_competences.json")
+    try:
+        response = api_clients.extraire_competences_depuis_pdf(
+            section_pdf, out_json_path, openai_key
+        )
+    except Exception:
+        response = {"result": "", "usage": SimpleNamespace(input_tokens=0, output_tokens=0)}
     usage = response.get("usage", SimpleNamespace(input_tokens=0, output_tokens=0))
     try:
-        parsed = json.loads(response.get("result", ""))
-        competences = parsed.get("competences", [])
+        parsed = json.loads(response.get("result", "")) if isinstance(response.get("result"), (str, bytes)) else (response.get("result") or {})
+        competences = parsed.get("competences", []) if isinstance(parsed, dict) else []
     except Exception:
         competences = []
     return {

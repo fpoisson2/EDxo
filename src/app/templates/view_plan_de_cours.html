@@ -1075,6 +1075,42 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.head.appendChild(style);
 
+    // Navigation des sections: ouvrir l'accordéon ciblé et défiler en douceur
+    try {
+        const sectionsNav = document.getElementById('sectionsNav');
+        let scrollSpyInstance;
+        if (sectionsNav) {
+            scrollSpyInstance = new bootstrap.ScrollSpy(document.body, { target: '#sectionsNav', offset: 100 });
+        }
+        document.querySelectorAll('#sectionsNav .nav-link, #sectionsOffcanvas .nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetSelector = link.getAttribute('href');
+                if (!targetSelector || !targetSelector.startsWith('#')) return;
+                const item = document.querySelector(targetSelector);
+                if (!item) return;
+                const collapseEl = item.querySelector('.accordion-collapse');
+                if (collapseEl) {
+                    const collapseInstance = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+                    collapseInstance.show();
+                }
+                const scrollToTarget = () => {
+                    item.scrollIntoView({ behavior: 'smooth' });
+                    if (scrollSpyInstance) scrollSpyInstance.refresh();
+                };
+                const offcanvasEl = document.getElementById('sectionsOffcanvas');
+                const offcanvas = offcanvasEl ? bootstrap.Offcanvas.getInstance(offcanvasEl) : null;
+                if (offcanvas) {
+                    const handler = () => { offcanvasEl.removeEventListener('hidden.bs.offcanvas', handler); scrollToTarget(); };
+                    offcanvasEl.addEventListener('hidden.bs.offcanvas', handler);
+                    offcanvas.hide();
+                } else {
+                    scrollToTarget();
+                }
+            });
+        });
+    } catch(_) {}
+
     // Ancien flux de génération par champ supprimé au profit du modal unifié
 });
 document.addEventListener('DOMContentLoaded', function() {
