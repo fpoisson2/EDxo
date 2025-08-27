@@ -184,7 +184,7 @@ WorkingDirectory=/home/'your_user_name'
 Environment="PATH=/home/'your_user_name'/edxo/venv/bin"
 Environment="PYTHONPATH=/home/'your_user_name'/edxo/src"
 Environment="CELERY_WORKER=1"
-ExecStart=/home/'your_user_name'/edxo/venv/bin/celery -A celery_app.celery worker --loglevel=info --hostname=worker2@%h
+ExecStart=/home/'your_user_name'/edxo/venv/bin/celery -A celery_app.celery worker --loglevel=info --concurrency=4 --hostname=worker2@%h
 Restart=always
 RestartSec=10
 
