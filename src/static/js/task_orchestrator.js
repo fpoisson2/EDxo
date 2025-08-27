@@ -54,12 +54,13 @@
 
     const fields = Object.assign({}, opts.basePayload || {});
     if (!('additional_info' in fields)) fields.additional_info = '';
+    const fixedPayload = Object.assign({}, opts.fixedPayload || {});
 
     const fieldLabels = Object.assign({
       nb_sessions: 'Nombre de sessions',
       total_hours: "Total d'heures",
       total_units: "Total d'unités",
-      additional_info: 'Informations additionnelles'
+      additional_info: 'Informations complémentaires'
     }, opts.fieldLabels || {});
 
     body.innerHTML = '';
@@ -92,7 +93,7 @@
     const newBtn = btn.cloneNode(true);
     btn.parentNode.replaceChild(newBtn, btn);
     newBtn.addEventListener('click', async () => {
-      const payload = {};
+      const payload = { ...fixedPayload };
       Object.keys(fields).forEach(key => {
         const el = body.querySelector(`#task-quick-${key}`);
         if (!el) return;
