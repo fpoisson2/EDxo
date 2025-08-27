@@ -1,5 +1,7 @@
 import json
 import logging
+import re
+import unicodedata
 from typing import List
 
 from celery import shared_task
@@ -177,7 +179,27 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
 
         # Parse
         self.update_state(state='PROGRESS', meta={'message': 'Analyse de la réponse…'})
-        data = json.loads(output_text) if output_text else {}
+
+        def _extract_json(txt: str) -> dict:
+            if not txt:
+                return {}
+            txt = txt.strip()
+            # Remove potential Markdown fences ```json ... ```
+            if txt.startswith("```"):
+                txt = re.sub(r'^```(?:json)?\n?', '', txt)
+                txt = re.sub(r'```$', '', txt).strip()
+            try:
+                return json.loads(txt)
+            except Exception:
+                match = re.search(r'\{.*\}', txt, re.DOTALL)
+                if match:
+                    try:
+                        return json.loads(match.group(0))
+                    except Exception:
+                        pass
+            return {}
+
+        data = _extract_json(output_text)
         links = data.get('links') or []
         allowed = {'developpe', 'atteint', 'reinvesti'}
         cleaned = []
@@ -186,6 +208,7 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
                 cc = str(l.get('cours_code') or '').strip()
                 kc = str(l.get('competence_code') or '').strip()
                 tp = str(l.get('type') or '').strip().lower()
+                tp = unicodedata.normalize('NFKD', tp).encode('ascii', 'ignore').decode('ascii')
             except Exception:
                 continue
             if not cc or not kc or tp not in allowed:
