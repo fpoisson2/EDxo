@@ -24,7 +24,7 @@ services:
     # No host port mapping needed; used only on internal network
   celery:
     build: .
-    command: celery -A src.celery_app:celery worker --loglevel=info --hostname=worker2@%h
+    command: celery -A src.celery_app:celery worker --loglevel=info --concurrency=4 --hostname=worker2@%h
     env_file:
       - .env
     environment:
