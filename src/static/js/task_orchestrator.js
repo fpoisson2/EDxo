@@ -33,10 +33,7 @@
             <h5 class="modal-title" id="taskQuickLabel">Démarrer</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body">
-            <label class="form-label" for="task-quick-info">Informations complémentaires (optionnel)</label>
-            <textarea class="form-control" id="task-quick-info" rows="4" placeholder="Ajoutez des précisions utiles (contexte, contraintes, préférences, etc.)" aria-label="Informations complémentaires"></textarea>
-          </div>
+          <div class="modal-body" id="task-quick-body"></div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
             <button type="button" class="btn btn-primary" id="task-quick-submit">Lancer</button>
@@ -52,24 +49,67 @@
   function openQuickTask(opts = {}) {
     const modalEl = ensureQuickModal();
     const label = modalEl.querySelector('#taskQuickLabel');
-    const ta = modalEl.querySelector('#task-quick-info');
+    const body = modalEl.querySelector('#task-quick-body');
     label.textContent = opts.title || 'Démarrer';
-    ta.value = opts.defaultText || '';
-    // Clean previous handler
+
+    const fields = Object.assign({}, opts.basePayload || {});
+    if (!('additional_info' in fields)) fields.additional_info = '';
+
+    const fieldLabels = Object.assign({
+      nb_sessions: 'Nombre de sessions',
+      total_hours: "Total d'heures",
+      total_units: "Total d'unités",
+      additional_info: 'Informations additionnelles'
+    }, opts.fieldLabels || {});
+
+    body.innerHTML = '';
+    Object.entries(fields).forEach(([key, val]) => {
+      const div = document.createElement('div');
+      div.className = 'mb-3';
+      const lbl = document.createElement('label');
+      lbl.className = 'form-label';
+      lbl.setAttribute('for', `task-quick-${key}`);
+      lbl.textContent = fieldLabels[key] || key;
+      div.appendChild(lbl);
+      let input;
+      if (key === 'additional_info') {
+        input = document.createElement('textarea');
+        input.className = 'form-control';
+        input.rows = 3;
+        input.value = val || '';
+      } else {
+        input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'form-control';
+        input.value = val ?? '';
+      }
+      input.id = `task-quick-${key}`;
+      div.appendChild(input);
+      body.appendChild(div);
+    });
+
     const btn = modalEl.querySelector('#task-quick-submit');
     const newBtn = btn.cloneNode(true);
     btn.parentNode.replaceChild(newBtn, btn);
     newBtn.addEventListener('click', async () => {
-      const additional = ta.value || '';
-      const payload = Object.assign({}, opts.basePayload || {}, additional ? { additional_info: additional } : {});
+      const payload = {};
+      Object.keys(fields).forEach(key => {
+        const el = body.querySelector(`#task-quick-${key}`);
+        if (!el) return;
+        if (el.tagName === 'TEXTAREA') {
+          payload[key] = el.value || '';
+        } else {
+          const v = el.value;
+          payload[key] = v === '' ? 0 : Number(v);
+        }
+      });
       const fetchOpts = { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
-      // CSRF if available
       try {
         const csrf = getCsrfToken();
         if (csrf) { fetchOpts.headers['X-CSRFToken'] = csrf; fetchOpts.headers['X-CSRF-Token'] = csrf; }
       } catch {}
       try {
-        const taskId = await startCeleryTask(opts.url, fetchOpts, { title: opts.title, startMessage: opts.startMessage || 'En cours…', userPrompt: additional, openModal: true, summaryEl: opts.summaryEl, streamEl: opts.streamEl, onDone: opts.onDone });
+        const taskId = await startCeleryTask(opts.url, fetchOpts, { title: opts.title, startMessage: opts.startMessage || 'En cours…', userPrompt: payload.additional_info || '', openModal: true, summaryEl: opts.summaryEl, streamEl: opts.streamEl, onDone: opts.onDone });
         try { if (document.activeElement) document.activeElement.blur(); } catch {}
         bootstrap.Modal.getOrCreateInstance(modalEl).hide();
         return taskId;
