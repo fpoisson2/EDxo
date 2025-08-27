@@ -30,6 +30,104 @@
 <div class="container-fluid px-4">
     <h1 class="mt-4">Configuration des Prompts IA - Plans de cours</h1>
     <div class="card mb-4">
+        <div class="card-header bg-light">
+            <strong>Paramètres IA – Plans de cours</strong>
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs" id="pdcTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab-gen" data-bs-toggle="tab" data-bs-target="#pane-gen" type="button" role="tab">Génération</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-impv" data-bs-toggle="tab" data-bs-target="#pane-impv" type="button" role="tab">Amélioration</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-impt" data-bs-toggle="tab" data-bs-target="#pane-impt" type="button" role="tab">Importation</button>
+                </li>
+            </ul>
+            <div class="tab-content pt-3">
+                <div class="tab-pane fade show active" id="pane-gen" role="tabpanel">
+                    <form method="POST" action="{{ url_for('settings.ai_plan_de_cours_settings') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="mb-3">
+                            <label class="form-label">{{ ai_form_gen.system_prompt.label }}</label>
+                            {{ ai_form_gen.system_prompt(class_='form-control font-monospace', rows=6) }}
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">{{ ai_form_gen.ai_model.label }}</label>
+                                {{ ai_form_gen.ai_model(class_='form-select') }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ ai_form_gen.reasoning_effort.label }}</label>
+                                {{ ai_form_gen.reasoning_effort(class_='form-select') }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ ai_form_gen.verbosity.label }}</label>
+                                {{ ai_form_gen.verbosity(class_='form-select') }}
+                            </div>
+                        </div>
+                        <div class="mt-3 text-end">
+                            <button class="btn btn-primary" type="submit">Enregistrer (Génération)</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="tab-pane fade" id="pane-impv" role="tabpanel">
+                    <form method="POST" action="{{ url_for('settings.ai_plan_de_cours_improve_settings') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="mb-3">
+                            <label class="form-label">{{ ai_form_impv.system_prompt.label }}</label>
+                            {{ ai_form_impv.system_prompt(class_='form-control font-monospace', rows=6) }}
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">{{ ai_form_impv.ai_model.label }}</label>
+                                {{ ai_form_impv.ai_model(class_='form-select') }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ ai_form_impv.reasoning_effort.label }}</label>
+                                {{ ai_form_impv.reasoning_effort(class_='form-select') }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ ai_form_impv.verbosity.label }}</label>
+                                {{ ai_form_impv.verbosity(class_='form-select') }}
+                            </div>
+                        </div>
+                        <div class="mt-3 text-end">
+                            <button class="btn btn-primary" type="submit">Enregistrer (Amélioration)</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="tab-pane fade" id="pane-impt" role="tabpanel">
+                    <form method="POST" action="{{ url_for('settings.ai_plan_de_cours_import_settings') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="mb-3">
+                            <label class="form-label">{{ ai_form_impt.system_prompt.label }}</label>
+                            {{ ai_form_impt.system_prompt(class_='form-control font-monospace', rows=6) }}
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">{{ ai_form_impt.ai_model.label }}</label>
+                                {{ ai_form_impt.ai_model(class_='form-select') }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ ai_form_impt.reasoning_effort.label }}</label>
+                                {{ ai_form_impt.reasoning_effort(class_='form-select') }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{{ ai_form_impt.verbosity.label }}</label>
+                                {{ ai_form_impt.verbosity(class_='form-select') }}
+                            </div>
+                        </div>
+                        <div class="mt-3 text-end">
+                            <button class="btn btn-primary" type="submit">Enregistrer (Importation)</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card mb-4">
         <div class="card-body">
             <div class="alert alert-info">
                 <h5>Variables disponibles pour les prompts :</h5>
@@ -78,13 +176,12 @@
                 </div>
             </div>
             
-            <div class="table-responsive">
+            <div class="table-responsive" id="granular-prompts-section">
                 <table class="table table-bordered">
                     <thead>
                         <tr>
-                            <th style="width: 10%">Champ du plan de cours</th>
+                            <th style="width: 20%">Champ du plan de cours</th>
                             <th style="width: 80%">Template du Prompt</th>
-                            <th style="width: 10%">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -94,26 +191,17 @@
                             <td>
                                 <textarea class="form-control prompt-template" rows="4">{{ prompt.prompt_template }}</textarea>
                             </td>
-                            <td>
-                                <button class="btn btn-primary btn-sm save-prompt">
-                                    Sauvegarder
-                                </button>
-                                <button class="btn btn-secondary btn-sm test-prompt"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#testPromptModal">
-                                    Tester
-                                </button>
-                                <a href="{{ url_for('settings.edit_plan_de_cours_prompt', prompt_id=prompt.id) }}"
-                                   class="btn btn-secondary btn-sm">
-                                    Configurer
-                                </a>
-                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
+    </div>
+    <div class="d-flex justify-content-end mb-4" id="save-all-wrapper">
+        <button id="save-all" class="btn btn-primary">
+            <i class="bi bi-save me-2"></i>Enregistrer tout
+        </button>
     </div>
 </div>
 
@@ -172,39 +260,23 @@ function showToast(type, message) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Save prompt handler
-    document.querySelectorAll('.save-prompt').forEach(button => {
-        button.addEventListener('click', async function() {
-            const row = this.closest('tr');
-            const promptId = row.dataset.promptId;
-            const csrfToken = row.dataset.csrfToken;
-            const template = row.querySelector('.prompt-template').value;
-
-            try {
-                const response = await fetch(`/settings/plan-de-cours/prompts/${promptId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': csrfToken
-                    },
-                    body: JSON.stringify({
-                        prompt_template: template,
-                        context_variables: [] // Send empty array since we're not using it
-                    })
-                });
-
-                if (!response.ok) {
-                    const data = await response.json();
-                    throw new Error(data.error || `Erreur HTTP: ${response.status}`);
-                }
-
-                showToast('success', 'Configuration sauvegardée avec succès');
-            } catch (error) {
-                console.error('Erreur:', error);
-                showToast('error', `Erreur lors de la sauvegarde: ${error.message}`);
-            }
-        });
+    // Hide granular prompts section when Importation tab is active
+    const granularSection = document.getElementById('granular-prompts-section');
+    const saveAllWrapper = document.getElementById('save-all-wrapper');
+    function updateGranularVisibility(activeId) {
+        const isImport = activeId === 'tab-impt';
+        if (granularSection) granularSection.style.display = isImport ? 'none' : '';
+        if (saveAllWrapper) saveAllWrapper.style.display = isImport ? 'none' : '';
+    }
+    ['tab-gen','tab-impv','tab-impt'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('shown.bs.tab', function (evt) {
+                updateGranularVisibility(evt.target.id);
+            });
+        }
     });
+    updateGranularVisibility('tab-gen');
 
     // Test prompt handler
     let currentTemplate = '';
@@ -250,6 +322,48 @@ document.addEventListener('DOMContentLoaded', function() {
             showToast('error', 'Erreur: Format JSON invalide');
         }
     });
+    // Global save-all handler
+    const saveAllBtn = document.getElementById('save-all');
+    if (saveAllBtn) {
+        saveAllBtn.addEventListener('click', async function() {
+            const rows = Array.from(document.querySelectorAll('tr[data-prompt-id]'));
+            const csrf = document.querySelector('input[name="csrf_token"]').value;
+            try {
+                // 1) Save IA section settings
+                const aiForm = document.getElementById('ai-settings-form');
+                const formData = new FormData(aiForm);
+                const aiResp = await fetch(aiForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRF-Token': csrf }
+                });
+                if (!aiResp.ok) {
+                    throw new Error('Échec enregistrement paramètres IA');
+                }
+                // 2) Save all prompts sequentially
+                for (const row of rows) {
+                    const promptId = row.dataset.promptId;
+                    const template = row.querySelector('.prompt-template').value;
+                    const resp = await fetch(`/settings/plan-de-cours/prompts/${promptId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrf
+                        },
+                        body: JSON.stringify({ prompt_template: template, context_variables: [] })
+                    });
+                    if (!resp.ok) {
+                        const data = await resp.json();
+                        throw new Error(data.error || `Erreur HTTP: ${resp.status}`);
+                    }
+                }
+                showToast('success', 'Tous les paramètres ont été enregistrés');
+            } catch (e) {
+                console.error(e);
+                showToast('error', e.message || 'Erreur lors de la sauvegarde');
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

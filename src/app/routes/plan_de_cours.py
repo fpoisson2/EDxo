@@ -581,18 +581,24 @@ def import_docx():
         doc_text=doc_text[:120000]  # guardrail to avoid excessive tokens
     )
 
-    # Choose model (prefer explicit from form, fallback to saved settings)
+    # Choose model (prefer explicit from form, fallback to saved settings + section settings)
+    from ..models import SectionAISettings
+    sa = SectionAISettings.get_for('plan_de_cours')
     chosen_model = (request.form.get('ai_model') or '').strip()
     if not chosen_model:
         prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
-        chosen_model = (prompt_settings.ai_model if prompt_settings and prompt_settings.ai_model else None) or 'gpt-5'
+        chosen_model = (prompt_settings.ai_model if prompt_settings and prompt_settings.ai_model else None) or (sa.ai_model or 'gpt-5')
     ai_model = chosen_model
 
     try:
         client = OpenAI(api_key=current_user.openai_key)
+        input_data = ([
+            {"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]},
+            {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
+        ] if sa.system_prompt else prompt)
         response = client.responses.parse(
             model=ai_model,
-            input=prompt,
+            input=input_data,
             text_format=ImportPlanDeCoursResponse,
         )
 
@@ -899,9 +905,16 @@ def generate_content():
     try:
         client = OpenAI(api_key=current_user.openai_key)
 
+        # Section-level settings
+        from ..models import SectionAISettings
+        sa = SectionAISettings.get_for('plan_de_cours')
+        input_data = ([
+            {"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]},
+            {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
+        ] if sa.system_prompt else prompt)
         response = client.responses.parse(
             model=ai_model,
-            input=prompt,
+            input=input_data,
             text_format=AIPlandeCoursResponse,
         )
 

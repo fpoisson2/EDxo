@@ -468,7 +468,9 @@ def index():
         )
 
     cfg = ChatModelConfig.get_current()
-    current_model = (cfg.chat_model or "gpt-5-mini") if cfg else "gpt-5-mini"
+    from ..models import SectionAISettings
+    sa = SectionAISettings.get_for('chat')
+    current_model = (sa.ai_model or (cfg.chat_model or "gpt-5-mini") if cfg else "gpt-5-mini")
     prev_id = current_user.last_openai_response_id
     return render_template(
         "chat/index.html",
@@ -494,11 +496,13 @@ def send_message():
 
     client = OpenAI(api_key=current_user.openai_key)
     cfg = ChatModelConfig.get_current()
-    chat_model = cfg.chat_model or "gpt-5-mini"
+    from ..models import SectionAISettings
+    sa = SectionAISettings.get_for('chat')
+    chat_model = sa.ai_model or (cfg.chat_model or "gpt-5-mini")
     # Règle stricte: tool_model = chat_model (même modèle pour initial et follow-up)
     tool_model = chat_model
-    reasoning_effort = cfg.reasoning_effort
-    verbosity = cfg.verbosity
+    reasoning_effort = sa.reasoning_effort or cfg.reasoning_effort
+    verbosity = sa.verbosity or cfg.verbosity
 
     # --- Fetch and Format History ---
     print("[DEBUG LOG] Fetching last 10 messages from ChatHistory.")
@@ -578,7 +582,8 @@ def send_message():
     # Manually adding history might be supplementary or potentially ignored if prev_id exists.
     if prev_id is None:
         print("[DEBUG LOG] No prev_id found, adding system prompt.")
-        inp.append({"type": "message", "role": "system", "content": [{"type": "input_text", "text": "Vous êtes EDxo, un assistant IA spécialisé dans les plans de cours et plans-cadres du Cégep Garneau. Répondez de manière concise et professionnelle en français québécois."}]}) # Customize your system prompt
+        sys_text = sa.system_prompt or "Vous êtes EDxo, un assistant IA spécialisé dans les plans de cours et plans-cadres du Cégep Garneau. Répondez de manière concise et professionnelle en français québécois."
+        inp.append({"type": "message", "role": "system", "content": [{"type": "input_text", "text": sys_text}]})
 
     # Add formatted history messages only when there is no prev_id
     # Une fois previous_response_id disponible, on ne renvoie plus d'historique manuel

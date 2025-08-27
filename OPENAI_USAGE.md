@@ -90,3 +90,34 @@ Ce document recense tous les points du code qui appellent l’API OpenAI, le typ
 - Files: upload de PDF pour les tâches d’import/OCR.
 
 Dernière mise à jour: générée automatiquement par inspection de code à la date de l’analyse.
+
+---
+
+Plan d’action – Pages de paramètres IA par section
+
+1) Modèle et formulaire
+- Créer `SectionAISettings` (section unique) avec: `system_prompt`, `ai_model`, `reasoning_effort`, `verbosity`, `updated_at`.
+- Ajouter `SectionAISettingsForm` (textarea + selects) alimenté par la table `openai_models` pour les choix de modèles.
+
+2) Routes par section (pas de page globale)
+- `GET/POST /settings/plan-de-cours/ai`
+- `GET/POST /settings/plan-cadre/ai`
+- `GET/POST /settings/logigramme/ai`
+- `GET/POST /settings/grille/ai`
+- `GET/POST /settings/ocr/ai`
+- `GET/POST /settings/chat/ai`
+- `GET/POST /settings/evaluation/ai`
+
+3) Template commun
+- Créer `settings/section_ai_settings.html` (titre/description passés en contexte) réutilisé par chaque route.
+
+4) Persistance et robustesse
+- Méthode `SectionAISettings.get_for(section)` avec création de table à la volée si absente (`checkfirst=True`).
+- CSRF + validations; flash messages de succès/erreur.
+
+5) Navigation et liens
+- Ajouter des entrées vers chaque page dans le menu Paramètres existant; conserver les anciennes pages pour compatibilité.
+
+6) Intégration (suivi)
+- Brancher progressivement les tâches IA pour lire ces réglages (modèle/raisonnement/verbosité/prompt).
+- Déprécier les usages « globaux » une fois migrés.

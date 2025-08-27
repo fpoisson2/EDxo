@@ -29,13 +29,38 @@
 
   <form method="POST">
       {{ form.hidden_tag() }} <!-- Inclut le token CSRF -->
+
+      <div class="card mb-4">
+        <div class="card-header bg-light">
+          <strong>Paramètres IA (section Plan‑cadre)</strong>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">{{ ai_form.system_prompt.label }}</label>
+            {{ ai_form.system_prompt(class_='form-control font-monospace', rows=8) }}
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">{{ ai_form.ai_model.label }}</label>
+              {{ ai_form.ai_model(class_='form-select') }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">{{ ai_form.reasoning_effort.label }}</label>
+              {{ ai_form.reasoning_effort(class_='form-select') }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">{{ ai_form.verbosity.label }}</label>
+              {{ ai_form.verbosity(class_='form-select') }}
+            </div>
+          </div>
+        </div>
+      </div>
       
       <div class="table-responsive">
           <table class="table table-bordered">
               <thead>
                   <tr>
                       <th>Section</th>
-                      <th>Utiliser l'IA</th>
                       <th>Texte / Prompt</th>
                   </tr>
               </thead>
@@ -43,7 +68,6 @@
                   {% for section_form, section_name in sections_with_forms %}
                       <tr>
                           <td>{{ section_name }}</td>
-                          <td>{{ section_form.use_ai(class="form-check-input") }}</td>
                           <td>{{ section_form.text_content(class="form-control", rows=3, cols=60) }}</td>
                       </tr>
                   {% endfor %}

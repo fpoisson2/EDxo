@@ -5,7 +5,7 @@ from openai import OpenAI
 
 from src.extensions import db
 from src.utils.openai_pricing import calculate_call_cost
-from src.app.models import Programme, User, Competence, ChatModelConfig
+from src.app.models import Programme, User, Competence, ChatModelConfig, SectionAISettings
 
 logger = logging.getLogger(__name__)
 
@@ -75,13 +75,18 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
             cfg = ChatModelConfig.get_current()
         except Exception:
             cfg = None
-        ai_model = (form or {}).get('ai_model') or (cfg.chat_model if cfg and cfg.chat_model else 'gpt-5')
+        sa = None
+        try:
+            sa = SectionAISettings.get_for('grille')
+        except Exception:
+            sa = None
+        ai_model = (form or {}).get('ai_model') or (sa.ai_model if sa and sa.ai_model else (cfg.chat_model if cfg and cfg.chat_model else 'gpt-5'))
         total_hours = int((form or {}).get('total_hours') or 0)
         total_units = float((form or {}).get('total_units') or 0)
         nb_sessions = int((form or {}).get('nb_sessions') or 0)
         additional_info = (form or {}).get('additional_info') or ''
-        reasoning_effort = (form or {}).get('reasoning_effort') or ((cfg.reasoning_effort or 'medium') if cfg else 'medium')
-        verbosity = (form or {}).get('verbosity') or ((cfg.verbosity or 'medium') if cfg else 'medium')
+        reasoning_effort = (form or {}).get('reasoning_effort') or (sa.reasoning_effort if sa and sa.reasoning_effort else ((cfg.reasoning_effort or 'medium') if cfg else 'medium'))
+        verbosity = (form or {}).get('verbosity') or (sa.verbosity if sa and sa.verbosity else ((cfg.verbosity or 'medium') if cfg else 'medium'))
 
         if total_hours <= 0 or nb_sessions <= 0:
             return { 'status': 'error', 'message': 'Paramètres invalides (heures/sessions).' }
@@ -95,10 +100,14 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
             for comp in programme.competences.order_by(Competence.code).all()
         ]
 
-        system_prompt = (
+        # Prompt système par défaut (si non configuré côté section)
+        base_system_prompt = (
             "Tu es un conseiller pédagogique. À partir du nombre total d'heures, du nombre de sessions, "
-            "et éventuellement des unités totales, propose une grille de cours répartie par session pour le programme ci-dessous."
+            "et éventuellement des unités totales, propose une grille de cours répartie par session pour le programme ci-dessous. "
+            "N'invente pas de données; respecte strictement les contraintes et le format demandé."
         )
+        sa_prompt = (sa.system_prompt if sa and getattr(sa, 'system_prompt', None) else '').strip()
+        system_prompt = (sa_prompt + "\n\n" if sa_prompt else "") + base_system_prompt
         user_prompt = (
             "Contraintes et format (respect strict):\n"
             "- Base-toi sur la liste des compétences du programme (ci-dessous).\n"

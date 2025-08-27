@@ -465,6 +465,20 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
         client = OpenAI(api_key=user.openai_key)
         pc_settings = PlanCadreImportPromptSettings.get_current()
         model_name = (ai_model or (pc_settings.ai_model if pc_settings else None) or 'gpt-5')
+        # Prompt système (SectionAISettings) pour l'import
+        from ..models import SectionAISettings
+        try:
+            sa_impt = SectionAISettings.get_for('plan_cadre_import')
+            default_impt = (
+                "Tu es un assistant d'importation. Analyse un plan‑cadre et renvoie une sortie strictement conforme au schéma. "
+                "Le contenu des tableaux prévaut sur le texte libre. Mets null lorsqu'une information est absente."
+            )
+            system_prompt_text = (getattr(sa_impt, 'system_prompt', None) or '').strip() or default_impt
+        except Exception:
+            system_prompt_text = (
+                "Tu es un assistant d'importation. Analyse un plan‑cadre et renvoie une sortie strictement conforme au schéma. "
+                "Le contenu des tableaux prévaut sur le texte libre. Mets null lorsqu'une information est absente."
+            )
 
         parsed = None
         if file_path:
@@ -568,13 +582,14 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             try:
                 if file_id:
                     # Build request
-                    request_input = [{
-                        "role": "user",
-                        "content": [
+                    request_input = [
+                        {"role": "system", "content": [{"type": "input_text", "text": system_prompt_text}]},
+                        {"role": "user",
+                         "content": [
                             {"type": "input_file", "file_id": file_id},
                             {"type": "input_text", "text": compact_prompt}
-                        ]
-                    }]
+                         ]}
+                    ]
                     request_kwargs = dict(
                         model=model_name,
                         input=request_input,
@@ -710,7 +725,10 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             prompt = _format_import_prompt(template, doc_text)
             response = client.responses.parse(
                 model=model_name,
-                input=prompt,
+                input=[
+                    {"role": "system", "content": [{"type": "input_text", "text": system_prompt_text}]},
+                    {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
+                ],
                 text_format=ImportPlanCadreResponse,
             )
             parsed = _extract_first_parsed(response)

@@ -12,7 +12,7 @@ from src.extensions import db
 from src.utils.openai_pricing import calculate_call_cost
 from src.utils.datetime_utils import now_utc
 
-from src.app.models import Programme, User, ChatModelConfig, ElementCompetence, ElementCompetenceParCours
+from src.app.models import Programme, User, ChatModelConfig, ElementCompetence, ElementCompetenceParCours, SectionAISettings
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +44,15 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
             cfg = ChatModelConfig.get_current()
         except Exception:
             cfg = None
-        ai_model = (form or {}).get('ai_model') or (cfg.chat_model if cfg and cfg.chat_model else 'gpt-5')
+        sa = None
+        try:
+            sa = SectionAISettings.get_for('logigramme')
+        except Exception:
+            sa = None
+        ai_model = (form or {}).get('ai_model') or (sa.ai_model if sa and sa.ai_model else (cfg.chat_model if cfg and cfg.chat_model else 'gpt-5'))
         additional_info = (form or {}).get('additional_info') or ''
-        reasoning_effort = (form or {}).get('reasoning_effort') or ((cfg.reasoning_effort or 'medium') if cfg else 'medium')
-        verbosity = (form or {}).get('verbosity') or ((cfg.verbosity or 'medium') if cfg else 'medium')
+        reasoning_effort = (form or {}).get('reasoning_effort') or (sa.reasoning_effort if sa and sa.reasoning_effort else ((cfg.reasoning_effort or 'medium') if cfg else 'medium'))
+        verbosity = (form or {}).get('verbosity') or (sa.verbosity if sa and sa.verbosity else ((cfg.verbosity or 'medium') if cfg else 'medium'))
 
         # Collect inputs
         course_items = []
@@ -76,31 +81,14 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
                 'elements': elements
             })
 
-        system_prompt = (
-            "Tu es un assistant pédagogique expert des programmes collégiaux. "
-            "À partir du nom du programme, de la liste de cours et de la liste de compétences (avec leurs éléments et critères), "
-            "propose un logigramme de liens cours→compétence."
-        )
-        user_prompt = (
-            "Consignes:\n"
-            "- Retourne exclusivement du JSON valide avec une clé 'links' contenant une liste d'objets.\n"
-            "- Chaque lien contient: 'cours_code' (code du cours), 'competence_code' (code de la compétence), 'type'∈{\"developpe\",\"atteint\",\"reinvesti\"}.\n"
-            "- Oriente les liens du cours vers la compétence. Évite les doublons stricts.\n"
-            "- Utilise uniquement les codes fournis (pas d'invention).\n"
-            "- Contraintes fortes: au maximum 3 compétences par cours; au plus 2 liens de type 'reinvesti' par cours; une même compétence ne doit pas apparaître dans plus de 3 cours du programme.\n"
-            "- Répartition temporelle: privilégier 'developpe' dans les sessions initiales, puis 'atteint' lorsque la compétence est consolidée en fin de parcours; 'reinvesti' sert à réutiliser des compétences déjà atteintes ou développés.\n"
-            "- Plusieurs cours devraient développés une même compétence (2 cours par compétence + 1 qui certifie), idéalement, pas à la même session. \n"
-            "- Couverture des compétences: chaque compétence du programme doit être marquée au moins une fois 'atteint' et, ce, répartit à travers le programme (il y en aura plus vers la fin du parcours évidemment).\n"
-            "- Cohérence temporelle: une compétence ne doit plus être marquée 'developpe' dans une session ultérieure après avoir été marquée 'atteint'.\n\n"
-            f"Programme: {programme.nom}\n"
-            f"Informations supplémentaires (optionnel): {additional_info}\n\n"
-            "Cours (code, nom, session, heures):\n"
-            f"{json.dumps(course_items, ensure_ascii=False)}\n\n"
-            "Compétences (code, nom, contexte, critères, éléments):\n"
-            f"{json.dumps(comp_list, ensure_ascii=False)}\n\n"
-            "Exemple de sortie JSON minimal:\n"
-            "{\n  \"links\": [\n    {\"cours_code\": \"420-ABC\", \"competence_code\": \"C1\", \"type\": \"developpe\"}\n  ]\n}"
-        )
+        # System prompt strictly from DB (fallback minimal if absent)
+        system_prompt = (sa.system_prompt if (sa and sa.system_prompt) else
+                         "Retourne strictement un JSON {\"links\": [{\"cours_code\": str, \"competence_code\": str, \"type\": \"developpe|atteint|reinvesti\"}]} sans texte hors JSON.")
+        # User message should only contain the data (courses/competences), no instructions
+        user_payload = {
+            'courses': course_items,
+            'competences': comp_list
+        }
 
         self.update_state(state='PROGRESS', meta={'message': 'Préparation des données…'})
         client = OpenAI(api_key=user.openai_key)
@@ -110,7 +98,7 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
             model=ai_model,
             input=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)}
             ],
             metadata={'feature': 'generate_programme_logigramme', 'programme_id': str(programme.id)}
         )

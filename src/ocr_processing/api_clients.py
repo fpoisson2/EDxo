@@ -625,7 +625,13 @@ def extraire_competences_depuis_pdf(pdf_path, output_json_filename, openai_key=N
         raise SkillExtractionError(msg)
 
     settings = _get_ocr_settings_safely()
-    model_name = (settings.model_extraction if (settings and settings.model_extraction) else current_app.config.get('OPENAI_MODEL_EXTRACTION'))
+    # Section-level defaults
+    try:
+        from src.app.models import SectionAISettings
+        _sa_ocr = SectionAISettings.get_for('ocr')
+    except Exception:
+        _sa_ocr = None
+    model_name = (settings.model_extraction if (settings and settings.model_extraction) else (_sa_ocr.ai_model if (_sa_ocr and _sa_ocr.ai_model) else current_app.config.get('OPENAI_MODEL_EXTRACTION')))
     _progress(f"[EXTRACTION] Début | modèle='{model_name}' | pdf_url={'oui' if pdf_url else 'non'} | pdf_path='{pdf_path}'")
 
     try:
@@ -664,6 +670,8 @@ Nettoie le texte: retire les puces/marqueurs de liste redondants (e, °, +, o, *
     )
     if settings and settings.extraction_prompt:
         system_prompt_inline = settings.extraction_prompt
+    elif _sa_ocr and getattr(_sa_ocr, 'system_prompt', None):
+        system_prompt_inline = _sa_ocr.system_prompt
     json_schema = {
         "type": "object",
         "required": ["competences"],
@@ -763,12 +771,15 @@ Nettoie le texte: retire les puces/marqueurs de liste redondants (e, °, +, o, *
                 ]
             })
 
+        text_params = {"format": {"type": "json_schema", "name": "extraire_competences_en_json", "strict": True, "schema": json_schema}}
+        if _sa_ocr and getattr(_sa_ocr, 'verbosity', None) in {"low", "medium", "high"}:
+            text_params["verbosity"] = _sa_ocr.verbosity
         request_kwargs = dict(
             model=model_name,
             input=request_input,
-            text={"format": {"type": "json_schema", "name": "extraire_competences_en_json", "strict": True, "schema": json_schema}},
+            text=text_params,
             store=True,
-            reasoning={"summary": "auto"},
+            reasoning={**({"effort": _sa_ocr.reasoning_effort} if (_sa_ocr and _sa_ocr.reasoning_effort in {"minimal","low","medium","high"}) else {}), "summary": "auto"},
         )
 
         # --- Streaming ---

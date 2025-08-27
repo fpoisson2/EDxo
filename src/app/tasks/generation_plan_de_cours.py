@@ -10,7 +10,7 @@ from src.extensions import db
 from src.utils.openai_pricing import calculate_call_cost
 from src.app.models import (
     PlanDeCours, PlanDeCoursCalendrier, User, PlanDeCoursPromptSettings, Cours, PlanCadre,
-    PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, PlanCadreCapacites
+    PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, PlanCadreCapacites, SectionAISettings
 )
 
 logger = logging.getLogger(__name__)
@@ -122,14 +122,31 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
         self.update_state(state='PROGRESS', meta={'message': 'Appel au modèle IA en cours...'})
 
         client = OpenAI(api_key=user.openai_key)
+        # Section-level IA settings (génération)
+        sa = SectionAISettings.get_for('plan_de_cours')
+        default_gen_system = (
+            "Tu es un assistant pédagogique qui génère des plans de cours en français. "
+            "Respecte le ton institutionnel, la clarté et la concision. Appuie-toi sur les données du plan-cadre, "
+            "n'invente pas d'informations. Lorsque tu dois structurer une sortie, respecte le schéma demandé."
+        )
+        final_model = (ai_model or '').strip() or (sa.ai_model or 'gpt-5')
+        reasoning_params = {"summary": "auto"}
+        if getattr(sa, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
+            reasoning_params["effort"] = sa.reasoning_effort
+        # Build input with optional system prompt
+        sys_prompt = (sa.system_prompt or '').strip() or default_gen_system
+        input_data = ([
+            {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
+            {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
+        ])
         streamed_text = ""
         reasoning_summary_text = ""
         try:
             with client.responses.stream(
-                model=ai_model,
-                input=prompt,
+                model=final_model,
+                input=input_data,
                 text_format=BulkPlanDeCoursResponse,
-                reasoning={"summary": "auto"},
+                reasoning=reasoning_params,
             ) as stream:
                 for event in stream:
                     etype = getattr(event, 'type', '') or ''
@@ -174,8 +191,8 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
             logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
             streamed_text = None
             response = client.responses.parse(
-                model=ai_model,
-                input=prompt,
+                model=final_model,
+                input=input_data,
                 text_format=BulkPlanDeCoursResponse,
             )
             reasoning_summary_text = _extract_reasoning_summary_from_response(response)
@@ -187,7 +204,7 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
 
         usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
         usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
-        cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
+        cost = calculate_call_cost(usage_prompt, usage_completion, final_model)
 
         if user.credits < cost:
             return {"status": "error", "message": "Crédits insuffisants pour cette opération."}
@@ -272,16 +289,20 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
                 self.update_state(state='PROGRESS', meta={'message': 'Génération des évaluations…'})
 
                 client = OpenAI(api_key=user.openai_key)
+                eval_input = ([
+                    {"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]},
+                    {"role": "user", "content": [{"type": "input_text", "text": eval_prompt}]}
+                ] if (sa and sa.system_prompt) else eval_prompt)
                 eval_response = client.responses.parse(
-                    model=ai_model or 'gpt-5',
-                    input=eval_prompt,
+                    model=final_model or 'gpt-5',
+                    input=eval_input,
                     text_format=EvaluationsResponse,
                 )
 
                 # Décompte des crédits pour cet appel également
                 e_usage_prompt = eval_response.usage.input_tokens if hasattr(eval_response, 'usage') else 0
                 e_usage_completion = eval_response.usage.output_tokens if hasattr(eval_response, 'usage') else 0
-                e_cost = calculate_call_cost(e_usage_prompt, e_usage_completion, ai_model or 'gpt-5')
+                e_cost = calculate_call_cost(e_usage_prompt, e_usage_completion, final_model or 'gpt-5')
                 if user.credits < e_cost:
                     # Ne pas interrompre le flux global: retourner un succès partiel sans nouvelles évaluations
                     logger.warning("Crédits insuffisants pour générer les évaluations; champs/calendrier mis à jour.")
@@ -417,7 +438,10 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
         prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name=field_name).first()
         if not prompt_settings:
             return {"status": "error", "message": "Configuration de prompt introuvable pour ce champ."}
-        ai_model = prompt_settings.ai_model or 'gpt-5'
+        # Amélioration: prompt système spécifique si configuré, sinon fallback génération
+        sa_impv = SectionAISettings.get_for('plan_de_cours_improve')
+        sa = sa_impv if (sa_impv and (sa_impv.system_prompt or sa_impv.ai_model or sa_impv.reasoning_effort or sa_impv.verbosity)) else SectionAISettings.get_for('plan_de_cours')
+        ai_model = (prompt_settings.ai_model or '').strip() or (sa.ai_model or 'gpt-5')
 
         # Contexte issu du plan-cadre/cours (similaire à route sync generate_content)
         cours: Cours = plan.cours
@@ -461,12 +485,27 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
         client = OpenAI(api_key=user.openai_key)
         streamed_text = ""
         reasoning_summary_text = ""
+        # Reasoning effort from section settings
+        reasoning_params = {"summary": "auto"}
+        if getattr(sa, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
+            reasoning_params["effort"] = sa.reasoning_effort
+        # System prompt (defaulted for amélioration)
+        default_impv_system = (
+            "Tu es un assistant qui améliore un plan de cours existant en français. "
+            "Améliore la lisibilité et la précision sans changer le sens ni inventer. "
+            "Préserve la structure et le vocabulaire institutionnel; corrige la langue et uniformise le style."
+        )
+        sys_prompt = (getattr(sa, 'system_prompt', None) or '').strip() or default_impv_system
+        input_data = ([
+            {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
+            {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
+        ])
         try:
             with client.responses.stream(
                 model=ai_model,
-                input=prompt,
+                input=input_data,
                 text_format=SingleFieldResponse,
-                reasoning={"summary": "auto"},
+                reasoning=reasoning_params,
             ) as stream:
                 for event in stream:
                     etype = getattr(event, 'type', '') or ''
@@ -512,7 +551,7 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
             streamed_text = None
             response = client.responses.parse(
                 model=ai_model,
-                input=prompt,
+                input=input_data,
                 text_format=SingleFieldResponse,
             )
             reasoning_summary_text = _extract_reasoning_summary_from_response(response)
@@ -631,21 +670,35 @@ def generate_plan_de_cours_calendar_task(
         if current_calendrier:
             prompt += "\n\nCalendrier actuel:\n" + json.dumps(current_calendrier, ensure_ascii=False)
 
-        # Choix du modèle (reuse 'all' if set)
+        # Choix du modèle (reuse 'all' if set) + section settings override
+        sa = SectionAISettings.get_for('plan_de_cours')
         ps = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
-        ai_model = (ps.ai_model if ps and ps.ai_model else None) or 'gpt-5'
+        ai_model = (ps.ai_model if ps and ps.ai_model else None) or (sa.ai_model or 'gpt-5')
 
         self.update_state(state='PROGRESS', meta={'message': 'Génération du calendrier…'})
 
         client = OpenAI(api_key=user.openai_key)
         streamed_text = ""
         reasoning_summary_text = ""
+        reasoning_params = {"summary": "auto"}
+        if getattr(sa, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
+            reasoning_params["effort"] = sa.reasoning_effort
+        default_gen_system = (
+            "Tu es un assistant pédagogique qui génère des plans de cours en français. "
+            "Respecte le ton institutionnel, la clarté et la concision. Appuie-toi sur les données du plan-cadre, "
+            "n'invente pas d'informations. Lorsque tu dois structurer une sortie, respecte le schéma demandé."
+        )
+        sys_prompt = (sa.system_prompt or '').strip() or default_gen_system
+        input_data = ([
+            {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
+            {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
+        ])
         try:
             with client.responses.stream(
                 model=ai_model,
-                input=prompt,
+                input=input_data,
                 text_format=CalendarOnlyResponse,
-                reasoning={"summary": "auto"},
+                reasoning=reasoning_params,
             ) as stream:
                 for event in stream:
                     etype = getattr(event, 'type', '') or ''
@@ -691,7 +744,7 @@ def generate_plan_de_cours_calendar_task(
             streamed_text = None
             response = client.responses.parse(
                 model=ai_model,
-                input=prompt,
+                input=input_data,
                 text_format=CalendarOnlyResponse,
             )
             reasoning_summary_text = _extract_reasoning_summary_from_response(response)
@@ -852,6 +905,17 @@ def generate_plan_de_cours_evaluations_task(
 
         self.update_state(state='PROGRESS', meta={'message': 'Génération des évaluations…'})
         client = OpenAI(api_key=user.openai_key)
+        sa = SectionAISettings.get_for('plan_de_cours')
+        default_gen_system = (
+            "Tu es un assistant pédagogique qui génère des plans de cours en français. "
+            "Respecte le ton institutionnel, la clarté et la concision. Appuie-toi sur les données du plan-cadre, "
+            "n'invente pas d'informations. Lorsque tu dois structurer une sortie, respecte le schéma demandé."
+        )
+        sys_prompt = (sa.system_prompt or '').strip() or default_gen_system
+        eval_input = ([
+            {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
+            {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
+        ])
 
         streamed_text = ""
         reasoning_summary_text = ""
@@ -861,7 +925,7 @@ def generate_plan_de_cours_evaluations_task(
             # Streaming compatible avec SSE du frontend
             with client.responses.stream(
                 model=ai_model,
-                input=prompt,
+                input=eval_input,
                 text_format=EvaluationsResponse,
                 reasoning={"summary": "auto"},
             ) as stream:
@@ -919,7 +983,7 @@ def generate_plan_de_cours_evaluations_task(
             # Fallback non-streaming
             response = client.responses.parse(
                 model=ai_model,
-                input=prompt,
+                input=eval_input,
                 text_format=EvaluationsResponse,
             )
             try:

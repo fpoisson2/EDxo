@@ -17,7 +17,7 @@ from ..models import (
     PlanCadreSavoirEtre, PlanCadreCapacites,
     PlanCadreCapaciteSavoirsNecessaires, PlanCadreCapaciteSavoirsFaire,
     PlanCadreCapaciteMoyensEvaluation, User, Programme,
-    ChatModelConfig,
+    ChatModelConfig, SectionAISettings,
 )
 
 from celery import shared_task, group, signature
@@ -189,12 +189,18 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             cfg = ChatModelConfig.get_current()
         except Exception:
             cfg = None
+        sa = None
+        try:
+            # Utiliser un prompt spécifique en mode amélioration
+            sa = SectionAISettings.get_for('plan_cadre_improve' if improve_only else 'plan_cadre')
+        except Exception:
+            sa = None
         if not ai_model:
-            ai_model = (cfg.chat_model if cfg and getattr(cfg, 'chat_model', None) else 'gpt-5-mini')
-        if not reasoning_effort and cfg and getattr(cfg, 'reasoning_effort', None):
-            reasoning_effort = cfg.reasoning_effort
-        if not verbosity and cfg and getattr(cfg, 'verbosity', None):
-            verbosity = cfg.verbosity
+            ai_model = (sa.ai_model if sa and getattr(sa, 'ai_model', None) else (cfg.chat_model if cfg and getattr(cfg, 'chat_model', None) else 'gpt-5-mini'))
+        if not reasoning_effort:
+            reasoning_effort = (sa.reasoning_effort if sa and getattr(sa, 'reasoning_effort', None) else (cfg.reasoning_effort if cfg and getattr(cfg, 'reasoning_effort', None) else None))
+        if not verbosity:
+            verbosity = (sa.verbosity if sa and getattr(sa, 'verbosity', None) else (cfg.verbosity if cfg and getattr(cfg, 'verbosity', None) else None))
 
         # Save additional info and the AI model in the plan (éviter d'écraser en mode baguette)
         if mode != 'wand':
@@ -728,6 +734,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 f"Assistant de rédaction concis. Améliore uniquement la section ciblée. Instruction: {additional_info}. "
                 "Fais ton raisonnement en français."
             )
+            if sa and getattr(sa, 'system_prompt', None):
+                system_message = f"{sa.system_prompt}\n\n{system_message}"
         else:
             improve_clause = (
                 "S'il y a un 'current_content', améliore-le. Sinon, génère un contenu approprié pour les sections ciblées. "
@@ -752,10 +760,20 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 + ("Exigences pour chaque capacité: inclure 'description_capacite', une plage 'ponderation_min'/'ponderation_max',\n"
                    "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
             )
-            system_message = (
-                f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. Informations importantes: {additional_info}. "
-                "Fais ton raisonnement en français."
-            )
+            if improve_only:
+                base = (
+                    f"Tu es un assistant qui améliore un plan‑cadre existant pour le cours '{cours_nom}', session {cours_session}. "
+                    f"Consignes: {additional_info}. Améliore la lisibilité et la précision sans changer le sens ni inventer. "
+                    "Préserve la structure et le vocabulaire institutionnel. Fais ton raisonnement en français."
+                )
+            else:
+                base = (
+                    f"Tu es un rédacteur pour un plan‑cadre de cours '{cours_nom}', session {cours_session}. "
+                    f"Informations importantes: {additional_info}. Fais ton raisonnement en français."
+                )
+            system_message = base
+            if sa and getattr(sa, 'system_prompt', None):
+                system_message = f"{sa.system_prompt}\n\n{system_message}"
         # combined_instruction can be large; avoid noisy stdout
         logger.debug(combined_instruction)
 
@@ -782,7 +800,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 "format": {
                     "type": "json_schema",
                     "name": "PlanCadreAIResponse",
-                    "schema": PlanCadreAIResponse.schema(),
+                    "schema": PlanCadreAIResponse.model_json_schema(),
                     "strict": True
                 }
             }

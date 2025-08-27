@@ -183,35 +183,46 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None, pr
         logger.info(f"[{task_id}] Calling OpenAI responses.create API, model: {model}")
         # Construire la requête
         logger.info(f"[{task_id}] Preparing OpenAI request for model: {model}")
+        # Allow section IA settings for import (grille_import)
+        try:
+            from src.app.models import SectionAISettings
+            sa_imp = SectionAISettings.get_for('grille_import')
+        except Exception:
+            sa_imp = None
+        text_params = {
+            "format": {
+                "type": "json_schema",
+                "name": "programme_etudes",
+                "strict": True,
+                "schema": GRILLE_JSON_SCHEMA,
+            }
+        }
+        try:
+            if sa_imp and getattr(sa_imp, 'verbosity', None) in {"low", "medium", "high"}:
+                text_params["verbosity"] = sa_imp.verbosity
+        except Exception:
+            pass
+        reasoning_params = {"summary": "auto"}
+        try:
+            if sa_imp and getattr(sa_imp, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
+                reasoning_params["effort"] = sa_imp.reasoning_effort
+        except Exception:
+            pass
+        # Prompt système par défaut pour l'import (si non fourni)
+        default_import_system = (
+            "Tu es un assistant d'importation de grille de cours. Extrait uniquement la formation spécifique du PDF joint et "
+            "retourne un JSON strictement conforme au schéma. Respecte les pondérations X-Y-Z → théorie-labo-maison; ne crée pas de données."
+        )
+        sys_prompt = ((getattr(sa_imp, 'system_prompt', None) or '').strip() or default_import_system)
         request_kwargs = dict(
             model=model,
             input=[
-                {
-                    "role": "developer",
-                    "content": [
-                        {"type": "input_text", "text": prompt_text}
-                    ]
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "input_file", "file_id": file_response.id}
-                    ]
-                }
+                {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
+                {"role": "developer", "content": [{"type": "input_text", "text": prompt_text}]},
+                {"role": "user", "content": [{"type": "input_file", "file_id": file_response.id}]}
             ],
-            text={
-                "format": {
-                    "type": "json_schema",
-                    "name": "programme_etudes",
-                    "strict": True,
-                    "schema": GRILLE_JSON_SCHEMA,
-                },
-                "verbosity": "medium",
-            },
-            reasoning={
-                "effort": "medium",
-                "summary": "auto",
-            },
+            text=text_params,
+            reasoning=reasoning_params,
             tools=[],
             store=True,
         )

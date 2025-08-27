@@ -2,7 +2,12 @@
 
 {% block content %}
 
-<div class="container-fluid py-4">
+<div class="container-fluid py-4" style="overflow-x: hidden;">
+  <style>
+    .settings-sidebar { max-height: calc(100vh - 2rem); overflow-y: auto; overflow-x: hidden; }
+    .settings-sidebar .card-body { overflow: visible; }
+    .settings-sidebar .list-group-item.active { background-color: #0d6efd; color: #fff; }
+  </style>
   <div class="row g-4">
     <!-- Sidebar -->
     <div class="col-12 col-lg-3 col-xl-2">
@@ -54,20 +59,27 @@
                 <div id="iaSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
                   <div class="accordion-body p-0">
                   <div class="list-group list-group-flush">
-                      <a href="{{ url_for('settings.generation_settings') }}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-magic me-2"></i>Génération IA (global)
+                      {# Lien global retiré #}
+                      <a href="{{ url_for('settings.plan_cadre_prompts') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.plan_cadre_prompts' %}active{% endif %}">
+                        <i class="bi bi-gear me-2"></i>Plan-cadre — Prompts IA
                       </a>
-                      <a href="{{ url_for('settings.edit_global_generation_settings') }}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-gear me-2"></i>Plan-cadre
+                      <a href="{{ url_for('settings.edit_global_generation_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.edit_global_generation_settings' %}active{% endif %}">
+                        <i class="bi bi-list-check me-2"></i>Plan-cadre — Sections (granularité)
                       </a>
-                      <a href="{{ url_for('settings.plan_de_cours_prompt_settings') }}" class="list-group-item list-group-item-action">
+                      <a href="{{ url_for('settings.plan_de_cours_prompt_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.plan_de_cours_prompt_settings' %}active{% endif %}">
                         <i class="bi bi-file-earmark-text me-2"></i>Plans de cours
                       </a>
-                      <a href="{{ url_for('settings.ocr_prompt_settings') }}" class="list-group-item list-group-item-action">
+                      <a href="{{ url_for('settings.ai_logigramme_settings') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-diagram-3 me-2"></i>Logigramme
+                      </a>
+                      <a href="{{ url_for('settings.ocr_prompt_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.ocr_prompt_settings' %}active{% endif %}">
                         <i class="bi bi-filetype-pdf me-2"></i>Devis ministériels (OCR)
                       </a>
-                      <a href="{{ url_for('settings.prompt_settings') }}" class="list-group-item list-group-item-action">
+                      <a href="{{ url_for('settings.prompt_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.prompt_settings' %}active{% endif %}">
                         <i class="bi bi-clipboard-check me-2"></i>Grille d'évaluation
+                      </a>
+                      <a href="{{ url_for('settings.grille_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.grille_settings' %}active{% endif %}">
+                        <i class="bi bi-grid-3x3-gap me-2"></i>Grille de cours
                       </a>
                       <a href="{{ url_for('settings.configure_analyse_prompt') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.configure_analyse_prompt' %}active{% endif %}">
                         <i class="bi bi-chat-text me-2"></i>Analyse des plans de cours
@@ -93,16 +105,16 @@
                 <div id="academicSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
                   <div class="accordion-body p-0">
                     <div class="list-group list-group-flush">
-                      <a href="{{ url_for('settings.gestion_canevas') }}" class="list-group-item list-group-item-action">
+                      <a href="{{ url_for('settings.gestion_canevas') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.gestion_canevas' %}active{% endif %}">
                         <i class="bi bi-file-earmark-word me-2"></i>Canevas (docx)
                       </a>
-                      <a href="{{ url_for('settings.gestion_plans_cours') }}" class="list-group-item list-group-item-action">
+                      <a href="{{ url_for('settings.gestion_plans_cours') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.gestion_plans_cours' %}active{% endif %}">
                         <i class="bi bi-journal-text me-2"></i>Plans de cours
                       </a>
-                      <a href="{{ url_for('settings.gestion_departements') }}" class="list-group-item list-group-item-action">
+                      <a href="{{ url_for('settings.gestion_departements') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.gestion_departements' %}active{% endif %}">
                         <i class="bi bi-building me-2"></i>Départements
                       </a>
-                      <a href="{{ url_for('main.gestion_cegeps') }}" class="list-group-item list-group-item-action">
+                      <a href="{{ url_for('main.gestion_cegeps') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'main.gestion_cegeps' %}active{% endif %}">
                         <i class="bi bi-building me-2"></i>Cégeps
                       </a>
                     </div>
@@ -228,6 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (accordionItem) {
         accordionItem.classList.add('show');
       }
+      link.classList.add('active');
     }
   });
 });

@@ -6,14 +6,15 @@ from typing import Optional
 from flask import Blueprint, jsonify, render_template
 from flask_login import login_required, current_user
 from openai import OpenAI
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, ConfigDict
 
 # Import SQLAlchemy DB and models
 from ..models import (
     db,
     PlanDeCours,
     Cours,
-    AnalysePlanCoursPrompt
+    AnalysePlanCoursPrompt,
+    SectionAISettings
 )
 from ...utils.decorator import ensure_profile_completed
 from ...utils.logging_config import get_logger
@@ -23,7 +24,33 @@ logger = get_logger(__name__)
 # ---------------------------------------------------------------------------
 # Modèle Pydantic pour la réponse de PlanDeCours
 # ---------------------------------------------------------------------------
+def _postprocess_openai_schema(schema: dict) -> None:
+    schema.pop('default', None)
+    if '$ref' in schema:
+        return
+    if schema.get('type') == 'object' or 'properties' in schema:
+        schema['additionalProperties'] = False
+    props = schema.get('properties')
+    if props:
+        for prop_schema in props.values():
+            _postprocess_openai_schema(prop_schema)
+    if 'items' in schema:
+        items = schema['items']
+        if isinstance(items, dict):
+            _postprocess_openai_schema(items)
+        elif isinstance(items, list):
+            for item in items:
+                _postprocess_openai_schema(item)
+    if '$defs' in schema:
+        for def_schema in schema['$defs'].values():
+            _postprocess_openai_schema(def_schema)
+
+
 class PlanDeCoursAIResponse(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+        json_schema_extra=lambda schema, _: _postprocess_openai_schema(schema)
+    )
     """
     Représente la structure retournée par l'IA pour la vérification
     d'un plan de cours (compatibility_percentage, recommendations, etc.).
@@ -97,7 +124,7 @@ def update_verifier_plan_cours(plan_id):
         return jsonify({'error': "Aucune clé OpenAI dans votre profil."}), 400
 
     # Données à envoyer dans le prompt
-    schema_json = json.dumps(PlanDeCoursAIResponse.schema(), indent=4, ensure_ascii=False)
+    schema_json = json.dumps(PlanDeCoursAIResponse.model_json_schema(), indent=4, ensure_ascii=False)
 
     plan_de_cours = PlanDeCours.query.get_or_404(plan_id)
     plan_cadre = plan_de_cours.cours.plan_cadre
@@ -120,29 +147,37 @@ def update_verifier_plan_cours(plan_id):
         "instruction": instruction
     }
 
-    # Construction du client identique au plan-cadre
+    # Construction du client et paramètres IA
     client = OpenAI(api_key=openai_key)
+    sa = SectionAISettings.get_for('analyse_plan_cours')
+    model_name = sa.ai_model or 'gpt-5'
+    input_data = [
+        {"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]}] if sa.system_prompt else []
+    input_data += [{"role": "user", "content": [{"type": "input_text", "text": json.dumps(structured_request, ensure_ascii=False)}]}]
+    reasoning_params = {"summary": "auto"}
+    if sa.reasoning_effort in {"minimal", "low", "medium", "high"}:
+        reasoning_params["effort"] = sa.reasoning_effort
 
     total_prompt_tokens = 0
     total_completion_tokens = 0
 
-    # Appel unique: gpt-5
     try:
-        completion = client.beta.chat.completions.parse(
-            model="gpt-5",
-            messages=[{"role": "user", "content": json.dumps(structured_request)}],
-            response_format=PlanDeCoursAIResponse,
+        completion = client.responses.create(
+            model=model_name,
+            input=input_data,
+            text={"format": {"type": "json_schema", "name": "PlanDeCoursAIResponse", "schema": PlanDeCoursAIResponse.model_json_schema(), "strict": True}, **({"verbosity": sa.verbosity} if sa.verbosity in {"low","medium","high"} else {})},
+            reasoning=reasoning_params,
         )
     except Exception as e:
         logger.error(f"OpenAI error: {e}")
         return jsonify({'error': f"Erreur API OpenAI: {str(e)}"}), 500
 
     # Tokens et coût
-    usage_prompt = completion.usage.prompt_tokens if hasattr(completion, 'usage') else 0
-    usage_completion = completion.usage.completion_tokens if hasattr(completion, 'usage') else 0
+    usage_prompt = getattr(getattr(completion, 'usage', None), 'input_tokens', 0) or 0
+    usage_completion = getattr(getattr(completion, 'usage', None), 'output_tokens', 0) or 0
     total_prompt_tokens += usage_prompt
     total_completion_tokens += usage_completion
-    total_cost = calculate_call_cost(usage_prompt, usage_completion, "gpt-5")
+    total_cost = calculate_call_cost(usage_prompt, usage_completion, model_name)
     print(f"Appel gpt-5: {total_cost:.6f}$ (prompt {usage_prompt}, completion {usage_completion})")
 
     # Vérifier si l'utilisateur a suffisamment de crédits
@@ -157,15 +192,16 @@ def update_verifier_plan_cours(plan_id):
     # ----------------------------------------------------------
     # 3) Parser et mettre à jour le plan de cours avec la réponse finale
     # ----------------------------------------------------------
-    if hasattr(completion.choices[0].message, 'parsed'):
-        ai_response = completion.choices[0].message.parsed
-    else:
-        content = completion.choices[0].message.content if completion.choices else ""
-        try:
-            ai_response = PlanDeCoursAIResponse.parse_raw(content)
-        except ValidationError as e:
-            logger.error(f"Validation Pydantic error: {e}")
-            return jsonify({'error': "Erreur de structuration des données par l'IA."}), 500
+    try:
+        outputs = getattr(completion, 'output', [])
+        parsed = None
+        for item in outputs:
+            for c in getattr(item, 'content', []) or []:
+                parsed = getattr(c, 'parsed', None) or parsed
+        ai_response = parsed or PlanDeCoursAIResponse()
+    except Exception as e:
+        logger.error(f"Validation Pydantic error: {e}")
+        return jsonify({'error': "Erreur de structuration des données par l'IA."}), 500
 
     # Mise à jour du plan avec les données de l'IA
     plan.compatibility_percentage = ai_response.compatibility_percentage

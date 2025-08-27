@@ -85,6 +85,44 @@ class ChatModelConfig(db.Model):
             db.session.add(config)
             db.session.commit()
         return config
+    
+class SectionAISettings(db.Model):
+    """Paramètres IA par section (pas de page globale).
+
+    Champs: system_prompt, ai_model, reasoning_effort, verbosity
+    La clé "section" est unique (ex.: 'plan_de_cours', 'plan_cadre', 'logigramme',
+    'grille', 'ocr', 'chat', 'evaluation').
+    """
+    __tablename__ = 'section_ai_settings'
+
+    id = db.Column(db.Integer, primary_key=True)
+    section = db.Column(db.String(64), unique=True, nullable=False)
+    system_prompt = db.Column(db.Text, nullable=True)
+    ai_model = db.Column(db.String(64), nullable=True)
+    reasoning_effort = db.Column(db.String(16), nullable=True)
+    verbosity = db.Column(db.String(16), nullable=True)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
+
+    @classmethod
+    def get_for(cls, section: str):
+        """Récupère ou crée (table incluse si manquante) la config d'une section."""
+        try:
+            obj = cls.query.filter_by(section=section).first()
+        except Exception:
+            # Si la table n'existe pas encore (pas de migration), tente de la créer
+            try:
+                cls.__table__.create(db.engine, checkfirst=True)
+            except Exception:
+                pass
+            obj = None
+        if not obj:
+            obj = cls(section=section)
+            try:
+                db.session.add(obj)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+        return obj
 
 class AnalysePlanCoursPrompt(db.Model):
     __tablename__ = 'analyse_plan_cours_prompt'

@@ -1,0 +1,71 @@
+{% extends "parametres.html" %}
+{% block parametres_content %}
+<div class="container-fluid px-2">
+  <h2 class="mb-3">Grille de cours – Paramètres</h2>
+
+  <form method="POST">
+    {{ form_gen.csrf_token }}
+
+    <div class="row g-4">
+      <div class="col-12 col-xl-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-light"><strong>Génération (IA)</strong></div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">{{ form_gen.system_prompt.label }}</label>
+              {{ form_gen.system_prompt(class_='form-control font-monospace', rows=8) }}
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">{{ form_gen.ai_model.label }}</label>
+                {{ form_gen.ai_model(class_='form-select') }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form_gen.reasoning_effort.label }}</label>
+                {{ form_gen.reasoning_effort(class_='form-select') }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form_gen.verbosity.label }}</label>
+                {{ form_gen.verbosity(class_='form-select') }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-6">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-light"><strong>Importation PDF (IA)</strong></div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">{{ form_imp.system_prompt.label }}</label>
+              {{ form_imp.system_prompt(class_='form-control font-monospace', rows=8) }}
+            </div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">{{ form_imp.ai_model.label }}</label>
+                {{ form_imp.ai_model(class_='form-select') }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form_imp.reasoning_effort.label }}</label>
+                {{ form_imp.reasoning_effort(class_='form-select') }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ form_imp.verbosity.label }}</label>
+                {{ form_imp.verbosity(class_='form-select') }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 d-flex justify-content-end">
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-save me-2"></i>Enregistrer
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

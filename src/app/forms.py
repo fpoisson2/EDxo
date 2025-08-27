@@ -156,6 +156,40 @@ class ChatSettingsForm(FlaskForm):
         self.chat_model.choices = [(model.name, model.name) for model in models]
         self.tool_model.choices = [(model.name, model.name) for model in models]
 
+
+class SectionAISettingsForm(FlaskForm):
+    system_prompt = TextAreaField(
+        'Prompt système',
+        validators=[Optional()],
+        render_kw={"rows": 16, "class": "form-control font-monospace"}
+    )
+    ai_model = SelectField('Modèle', validators=[Optional()])
+    reasoning_effort = SelectField(
+        'Niveau de raisonnement',
+        choices=[
+            ('', '— par défaut —'),
+            ('minimal', 'Minimal'),
+            ('low', 'Faible'),
+            ('medium', 'Moyen'),
+            ('high', 'Élevé')
+        ]
+    )
+    verbosity = SelectField(
+        'Verbosité',
+        choices=[
+            ('', '— par défaut —'),
+            ('low', 'Faible'),
+            ('medium', 'Moyenne'),
+            ('high', 'Élevée')
+        ]
+    )
+    submit = SubmitField('Enregistrer')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        models = get_all_models()
+        self.ai_model.choices = [('', '— par défaut —')] + [(m.name, m.name) for m in models]
+
 class MultiCheckboxField(SelectMultipleField):
     widget = widgets.ListWidget(prefix_label=False)
     option_widget = widgets.CheckboxInput()

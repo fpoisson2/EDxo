@@ -36,6 +36,55 @@
 - Pull Requests: description claire, issues liées, étapes de test, et mention de toute migration BD. Ajoutez des captures d’écran/GIF pour les changements UI. Assurez-vous que `pytest` passe.
 - Limitez la portée des PR et mettez à jour la documentation lors de modifications des commandes, routes ou de la structure.
 
+## Ajouter un appel OpenAI (checklist)
+
+Quand vous ajoutez une nouvelle génération/importation basée sur OpenAI, suivez ce canevas pour rester aligné avec l’architecture EDxo.
+
+1) Définir la section et la configuration IA
+- Utiliser la configuration par section via `SectionAISettings` (BD) pour: `system_prompt`, `ai_model`, `reasoning_effort`, `verbosity`.
+- Si la fonctionnalité a déjà une page Paramètres (ex.: Plan‑cadre, Plan de cours, OCR, Grille), intégrer les champs IA dans cette page. Sinon, créer une page dédiée sous `/settings/<domaine>` rendue via `parametres.html`.
+- Éviter toute page « globale »; la granularité est par domaine (ex.: `plan_de_cours`, `plan_cadre`, `logigramme`, `grille`, `grille_import`, `ocr`, `chat`, `evaluation`, `analyse_plan_cours`).
+
+2) Appel API côté serveur (pattern Responses)
+- Préférer l’API `Responses` (stream/non-stream) plutôt que Chat Completions pour bénéficier de `reasoning` et `text.verbosity`.
+- Construire l’input comme suit:
+  - Inclure le `system_prompt` depuis la BD en message `system` (ou `developer` pour des instructions techniques d’import OCR/Grille), si présent.
+  - Mettre les données brutes dans le message `user` (ex.: JSON `courses/competences`, texte/doc, etc.). Éviter d’y glisser des consignes; les consignes restent dans le `system_prompt`.
+  - Passer `reasoning={ summary:'auto', effort: <sa.reasoning_effort> }` si configuré.
+  - Passer `text={ format: json_schema|pydantic, verbosity: <sa.verbosity> }`.
+- Pour des sorties structurées, utiliser:
+  - Un modèle Pydantic avec `json_schema` strict (cf. `OpenAIFunctionModel`) ou
+  - `text.format = { type: 'json_schema', strict: true, schema: ... }`.
+- Supporter le streaming (`client.responses.stream`) et publier la progression via Celery: `stream_chunk`, `stream_buffer`, `reasoning_summary`.
+
+3) Sécurité, crédits et erreurs
+- Jamais de secrets en dur. Utiliser la clé OpenAI de l’utilisateur (`current_user.openai_key`).
+- Vérifier les crédits et calculer le coût via `calculate_call_cost(usage.input_tokens, usage.output_tokens, model)` puis décrémenter (`user.credits -= cost`).
+- Gérer les exceptions et retourner `{ status: 'error', message }` en cas de problème.
+
+4) Intégration Celery et suivi unifié
+- Exposer un endpoint POST minimal qui valide l’entrée et lance `task.delay(...)`, puis retourne `202 { task_id }`.
+- Dans la tâche Celery, utiliser `self.update_state(... meta=...)` pour surface stream/raisonnement.
+- Retourner un payload final avec:
+  - `status: 'success' | 'error'`
+  - `validation_url` (si applicable) pour guider l’utilisateur vers la page de comparaison/validation.
+  - `result`, `usage` et tout champ nécessaire au front.
+- Côté UI, démarrer via `EDxoTasks.startCeleryTask(...)` pour bénéficier du modal de suivi (`/tasks/track/<task_id>`), des notifications et du bouton « Aller à la validation ».
+
+5) Paramétrage UI
+- Ajouter/étendre la page Paramètres du domaine sous `src/app/templates/settings/`, rendue dans `parametres.html`.
+- Réutiliser `SectionAISettingsForm` (modèle, raisonnement, verbosité; `system_prompt` si pertinent). Éviter les doublons avec les « template du prompt » déjà présents (ne pas afficher deux zones texte semi-redondantes).
+- Pour Plan de cours, garder les templates par champ (table `PlanDeCoursPromptSettings`) et un seul bouton « Enregistrer tout ».
+
+6) Inventaire et documentation
+- Mettre à jour `OPENAI_USAGE.md` (tableau des usages avec: chemin, méthode, API, modèle, prompt système source, etc.).
+- Documenter succinctement la nouvelle route/tâche et sa page Paramètres.
+
+7) Cas particuliers
+- OCR et import PDF: utiliser `input_file`/`file_url` et un `developer/system` prompt technique; brancher reasoning/verbosity depuis `SectionAISettings('ocr'|'grille_import')`.
+- Chat: lire `SectionAISettings('chat')` pour `system_prompt`, `reasoning_effort`, `verbosity`, et modèle par défaut (en respectant la config chat existante).
+- Logigramme: `system_prompt` en BD; message `user` ne contient que les données (cours/compétences), pas de consignes.
+
 ## Tâches asynchrones unifiées (Celery) et notifications UI
 - Endpoints unifiés:
   - Statut JSON: `GET /tasks/status/<task_id>` → `{task_id,state,message,meta,result}`.
@@ -52,8 +101,8 @@
     - Conteneur distinct pour le résumé de raisonnement (`summaryEl`).
     - Onglets minimalistes: flux (logs), affichage JSON.
     - Bouton « Aller à la validation » si `validation_url` présent dans le payload final.
-- Configuration IA centralisée:
-  - Page dédiée: `GET /settings/generation` pour choisir le modèle, l’effort de raisonnement et la verbosité.
+- Configuration IA par domaine:
+  - Chaque domaine (Plan‑cadre, Plan de cours, OCR, Grille, Chat, Logigramme, etc.) possède sa page Paramètres dédiée sous `/settings/...` avec modèle, effort de raisonnement et verbosité.
   - Les prompts spécifiques demeurent dans leurs pages respectives (Plan-cadre, Plan de cours, OCR), accessibles depuis le menu Paramètres.
 - Importations (PDF devis/logigrammes/grilles/plans):
   - Appliquer le même pattern que l’import devis ministériel: POST déclenche tâche → retourne `task_id` → suivi via `/tasks/track/<task_id>` → redirection vers page de validation/comparaison à la fin.
@@ -68,7 +117,7 @@
 - Orchestrateur Frontend: `static/js/task_orchestrator.js` expose `EDxoTasks.startCeleryTask()` et `EDxoTasks.openTaskModal()`.
 - Modal de suivi: affiche flux (stream), JSON, et (optionnel) le prompt utilisateur; propose un lien de validation si disponible.
 - Notifications enrichies: ajout de notifications « in-progress » et « success » avec lien de suivi/validation.
-- Configuration IA centralisée: `/settings/generation` (modèle, effort de raisonnement, verbosité), avec pages dédiées par domaine (Plan‑cadre, Plan de cours, OCR, etc.).
+- Configuration IA par domaine: pages dédiées (Plan‑cadre, Plan de cours, OCR, Grille, Chat, Logigramme, etc.) avec modèle, effort de raisonnement et verbosité.
 
 ### Patron d’implémentation côté serveur
 
@@ -129,7 +178,7 @@ Pour une importation de fichier (PDF/DOCX), construire un `FormData` et appeler 
 
 - Toute tâche doit prévoir un `validation_url` pour guider l’utilisateur vers la comparaison/validation.
 - Les prompts spécifiques restent dans leurs pages: Plan‑cadre, Plan de cours, OCR.
-- La configuration IA (modèle/raisonnement/verbosité) se fait dans `/settings/generation`.
+- La configuration IA (modèle/raisonnement/verbosité) se fait dans les pages Paramètres dédiées de chaque domaine (`/settings/...`).
 - Le modal peut afficher le prompt utilisateur (`userPrompt`) si fourni côté UI.
 
 ### Nettoyage

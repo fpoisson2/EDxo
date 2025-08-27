@@ -12,7 +12,7 @@ from src.utils.openai_pricing import calculate_call_cost
 from src.app.models import (
     PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
     PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites,
-    User
+    User, SectionAISettings
 )
 
 logger = logging.getLogger(__name__)
@@ -216,42 +216,26 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
         if user.credits <= 0:
             return {"status": "error", "message": "Crédits insuffisants."}
 
-        # Note: escape all literal braces in the JSON example ({{ and }})
-        # so that .format only processes our named placeholders below.
-        prompt = (
-            "Tu es un assistant pédagogique. Analyse le plan de cours fourni (texte brut extrait d'un DOCX). "
-            "Le texte peut contenir des tableaux rendus en Markdown, encadrés par ‘TABLE n:’ et ‘ENDTABLE’. "
-            "TIENS ABSOLUMENT COMPTE du contenu des tableaux (ils prévalent sur le texte libre en cas de doublon). "
-            "Retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes):\n"
-            "{{\n"
-            "  'presentation_du_cours': str | null,\n"
-            "  'objectif_terminal_du_cours': str | null,\n"
-            "  'organisation_et_methodes': str | null,\n"
-            "  'accomodement': str | null,\n"
-            "  'evaluation_formative_apprentissages': str | null,\n"
-            "  'evaluation_expression_francais': str | null,\n"
-            "  'materiel': str | null,\n"
-            "  'calendriers': [ {{ 'semaine': int | null, 'sujet': str | null, 'activites': str | null, 'travaux_hors_classe': str | null, 'evaluations': str | null }} ],\n"
-            "  'nom_enseignant': str | null,\n"
-            "  'telephone_enseignant': str | null,\n"
-            "  'courriel_enseignant': str | null,\n"
-            "  'bureau_enseignant': str | null,\n"
-            "  'disponibilites': [ {{ 'jour_semaine': str | null, 'plage_horaire': str | null, 'lieu': str | null }} ],\n"
-            "  'mediagraphies': [ {{ 'reference_bibliographique': str | null }} ],\n"
-            "  'evaluations': [ {{ 'titre_evaluation': str | null, 'description': str | null, 'semaine': int | null, 'capacites': [ {{ 'capacite': str | null, 'ponderation': str | null }} ] }} ]\n"
-            "}}\n\n"
-            "Consignes spécifiques aux tableaux:\n"
-            "- Les tableaux (Markdown) peuvent décrire le calendrier: colonnes typiques ‘Semaine’, ‘Sujet’, ‘Activités’, ‘Travaux hors classe’, ‘Évaluations’. Mappe chaque ligne vers un objet dans 'calendriers'.\n"
-            "- Les tableaux d’évaluation peuvent indiquer des ‘Titre’, ‘Description’, ‘Semaine’, et des pondérations par ‘Capacité’.\n"
-            "  Dans ce cas, crée des objets 'evaluations' et, pour chaque capacité, ajoute {{ 'capacite': libellé exact, 'ponderation': valeur }}.\n"
-            "- Si une information n’est pas trouvée, mets null. Si conflit tableau/texte, privilégie le tableau.\n\n"
-            "Contexte: cours {cours_code} - {cours_nom}, session {session}.\n"
-            "Texte du plan de cours:\n---\n{doc_text}\n---\n"
+        # Prépare system prompt (SectionAISettings 'plan_de_cours_import' ou défaut) + message utilisateur (données brutes)
+        sa_impt = SectionAISettings.get_for('plan_de_cours_import')
+        default_impt = (
+            "Tu es un assistant d'importation. Analyse le plan de cours fourni (texte brut extrait d'un DOCX). "
+            "Le texte peut contenir des tableaux en Markdown (‘TABLE n:’ … ‘ENDTABLE’) qui priment sur le texte libre. "
+            "Retourne une sortie STRICTEMENT conforme au schéma Pydantic fourni au parsing. Si une information est absente, renvoie null.\n\n"
+            "Règles spécifiques:\n"
+            "- Les tableaux de calendrier: colonnes typiques Semaine, Sujet, Activités, Travaux hors classe, Évaluations → map vers 'calendriers'.\n"
+            "- Les tableaux d’évaluations: Titre, Description, Semaine et pondérations par Capacité → map vers 'evaluations' avec capacités [{'capacite','ponderation'}].\n"
+            "- Ne pas inventer; conserver fidèlement le contenu."
+        )
+        sys_prompt = (getattr(sa_impt, 'system_prompt', None) or '').strip() or default_impt
+        user_input = (
+            "Contexte: cours {code} - {nom}, session {session}.\n"
+            "Texte du plan de cours (brut):\n---\n{texte}\n---\n"
         ).format(
-            cours_code=getattr(cours, 'code', '') or '',
-            cours_nom=getattr(cours, 'nom', '') or '',
+            code=getattr(cours, 'code', '') or '',
+            nom=getattr(cours, 'nom', '') or '',
             session=plan.session,
-            doc_text=(doc_text or '')[:120000],
+            texte=(doc_text or '')[:120000],
         )
 
         self.update_state(state='PROGRESS', meta={'message': "Analyse du .docx en cours..."})
@@ -259,7 +243,10 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
         client = OpenAI(api_key=user.openai_key)
         response = client.responses.parse(
             model=ai_model,
-            input=prompt,
+            input=[
+                {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
+                {"role": "user", "content": [{"type": "input_text", "text": user_input}]}
+            ],
             text_format=ImportPlanDeCoursResponse,
         )
 

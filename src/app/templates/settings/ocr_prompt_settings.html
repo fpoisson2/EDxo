@@ -5,6 +5,23 @@
 
 <form method="POST">
   {{ form.hidden_tag() }}
+  <div class="card mb-4">
+    <div class="card-header bg-light">
+      <strong>Paramètres IA – Devis (OCR)</strong>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">{{ ai_form.reasoning_effort.label }}</label>
+          {{ ai_form.reasoning_effort(class_='form-select') }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">{{ ai_form.verbosity.label }}</label>
+          {{ ai_form.verbosity(class_='form-select') }}
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="mb-3">
     {{ form.model_extraction.label(class="form-label") }}
     {{ form.model_extraction(class="form-select") }}
