@@ -104,7 +104,9 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            reasoning={'effort': reasoning_effort},
+            # Explicitly request streaming and a reasoning summary from OpenAI.
+            stream=True,
+            reasoning={"effort": reasoning_effort, "summary": "auto"},
             metadata={'feature': 'generate_programme_logigramme', 'programme_id': str(programme.id)},
         )
 
