@@ -246,6 +246,17 @@ def ai_plan_de_cours_improve_settings():
 @login_required
 @role_required('admin')
 def ai_plan_de_cours_import_settings():
+    # Pré-remplir un prompt d'importation par défaut (affichage) si vide
+    s = SectionAISettings.get_for('plan_de_cours_import')
+    if not (s.system_prompt or '').strip():
+        s.system_prompt = (
+            "Assistant d'importation de plan de cours: le texte peut contenir des tableaux Markdown (‘TABLE n:’ … ‘ENDTABLE’) "
+            "qui prévalent sur le texte libre. Retourne une sortie STRICTEMENT conforme au schéma attendu (Pydantic côté serveur). "
+            "Règles spécifiques: \n"
+            "- Les tableaux calendrier (Semaine, Sujet, Activités, Travaux hors classe, Évaluations) → map vers 'calendriers'.\n"
+            "- Les tableaux d’évaluations (Titre, Description, Semaine, pondérations par Capacité) → map vers 'evaluations' et 'capacites' (capacite, ponderation).\n"
+            "- N'invente pas; conserve fidèlement le contenu; valeurs null si absentes."
+        )
     return _edit_section_ai_settings(
         'plan_de_cours_import',
         'Plans de cours – Paramètres IA (Importation)',
@@ -429,9 +440,16 @@ def grille_settings():
     sa_imp = SectionAISettings.get_for('grille_import')
     # Defaults for display (not persisted unless saved)
     default_gen = (
-        "Tu es un conseiller pédagogique. À partir du nombre total d'heures, du nombre de sessions, "
-        "et éventuellement des unités totales, propose une grille de cours répartie par session pour un programme. "
-        "Respecte strictement le format demandé; n'invente pas de données."
+        "Conseiller pédagogique – Génération de grille:\n"
+        "- Respecte strictement un JSON: {sessions:[{session:int,courses:[{nom,heures_theorie,heures_laboratoire,heures_travail_maison,nombre_unites,prealables,corequis}]}],fils_conducteurs:[{description,couleur,cours}]}\n"
+        "- Calcule nombre_unites = (heures_theorie + heures_laboratoire + heures_travail_maison)/3.\n"
+        "- h_cours = (heures_theorie + heures_laboratoire) * 15; somme(h_cours) sur TOUTES les sessions = Heures totales à répartir (égalité stricte).\n"
+        "- Si des unités totales sont fournies: somme(nombre_unites) = Unités totales (égalité stricte).\n"
+        "- Répartis heures/unités de façon équilibrée et cohérente avec les compétences.\n"
+        "- prealables: max 2 par cours, seulement vers des cours en sessions antérieures.\n"
+        "- corequis: cours de la même session uniquement. Limiter le nombre global de liens au strict nécessaire.\n"
+        "- Génère 3–6 fils_conducteurs (description courte, couleur hex unique, cours[]); chaque cours ∈ 0..1 fil.\n"
+        "- N'invente pas de données; utilise uniquement le contexte fourni."
     )
     default_imp = (
         "Tu es un assistant d'importation de grille de cours. À partir d'un PDF, extrais uniquement la formation spécifique "

@@ -247,51 +247,8 @@ class PlanCadreImportPromptSettings(db.Model):
                 pass
             obj = None
         if not obj:
-            # Default template mirrors current import preview prompt; must include {doc_text}
-            default_template = (
-                "Tu es un assistant pédagogique. Analyse le plan-cadre fourni (texte brut extrait d'un DOCX) "
-                "et retourne un JSON STRICTEMENT au format requis (clés exactes, valeurs nulles si absentes). "
-                "Quand tu utilises des guillemets, emploie les guillemets français « » uniquement. "
-                "Conserve les paragraphes et retours de ligne réels (pas de littéraux \\n). "
-                "Si le document contient un tableau/section d’évaluation avec des colonnes/sections 'Cible' et 'Seuil', "
-                "associe chaque entrée aux 'savoirs_faire' correspondants de la même capacité (même ordre, 1:1) et renseigne 'cible' et 'seuil_reussite'.\n\n"
-                "Schéma attendu (extrait):\n"
-                "{\n"
-                "  'place_intro': str | null,\n"
-                "  'objectif_terminal': str | null,\n"
-                "  'structure_intro': str | null,\n"
-                "  'structure_activites_theoriques': str | null,\n"
-                "  'structure_activites_pratiques': str | null,\n"
-                "  'structure_activites_prevues': str | null,\n"
-                "  'eval_evaluation_sommative': str | null,\n"
-                "  'eval_nature_evaluations_sommatives': str | null,\n"
-                "  'eval_evaluation_de_la_langue': str | null,\n"
-                "  'eval_evaluation_sommatives_apprentissages': str | null,\n"
-                "  'competences_developpees': [ { 'texte': str | null, 'description': str | null } ],\n"
-                "  'competences_certifiees': [ { 'texte': str | null, 'description': str | null } ],\n"
-                "  'cours_corequis': [ { 'texte': str | null, 'description': str | null } ],\n"
-                "  'cours_prealables': [ { 'texte': str | null, 'description': str | null } ],\n"
-                "  'cours_relies': [ { 'texte': str | null, 'description': str | null } ],\n"
-                "  'objets_cibles': [ { 'texte': str | null, 'description': str | null } ],\n"
-                "  'savoir_etre': [ str ],\n"
-                "  'capacites': [ {\n"
-                "      'capacite': str | null,\n"
-                "      'description_capacite': str | null,\n"
-                "      'ponderation_min': int | null,\n"
-                "      'ponderation_max': int | null,\n"
-                "      'savoirs_necessaires': [ str ],\n"
-                "      'savoirs_faire': [ { 'texte': str | null, 'cible': str | null, 'seuil_reussite': str | null } ],\n"
-                "      'moyens_evaluation': [ str ]\n"
-                "  } ]\n"
-                "}\n\n"
-                "Règles:\n"
-                "- Si une information n’est pas trouvée, mets null.\n"
-                "- Si la même information apparaît à la fois en tableau et en texte libre, privilégie le tableau.\n"
-                "- Les tableaux peuvent être rendus en Markdown (TABLE n:/ENDTABLE) — prends-les en compte.\n"
-                "- Si tu restitues plusieurs paragraphes dans un même champ, sépare-les par un simple saut de ligne.\n\n"
-                "Texte du plan-cadre:\n---\n{doc_text}\n---\n"
-            )
-            obj = cls(prompt_template=default_template, ai_model='gpt-5')
+            # Créer une entrée par défaut sans consignes (configurable via /settings)
+            obj = cls(prompt_template='', ai_model='gpt-5')
             try:
                 db.session.add(obj)
                 db.session.commit()
