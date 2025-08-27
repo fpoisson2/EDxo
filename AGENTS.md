@@ -2,7 +2,10 @@
 
 ## Structure du projet et des modules
 - Source: `src/` (application Flask). Blueprints dans `src/app/routes/`, templates dans `src/app/templates/`, assets statiques dans `src/static/`.
-- Fabrique d’application: `src/app/__init__.py`; entrée WSGI: `src/wsgi.py` (Gunicorn utilise `create_app()`).
+- Fabrique d’application: `src/app/__init__.py`.
+- Entrées serveur:
+  - WSGI: `src/wsgi.py` (Gunicorn peut utiliser `create_app()`).
+  - ASGI: `src/asgi.py` (Starlette monte Flask et expose l’SSE natif pour `/tasks/events/<task_id>`).
 - Tâches/Celery: `src/celery_app.py` et `src/app/tasks/`.
 - Base de données: `src/database/` (SQLite) et migrations dans `src/migrations/`.
 - Utilitaires: `src/utils/`, configuration dans `src/config/`.
@@ -18,7 +21,8 @@
 - Docker: `docker-compose up --build` pour lancer l’API, Redis et Celery.
 - Migrations: `flask db migrate -m "msg" && flask db upgrade`.
 - Tests: `pytest -q`.
-- Production: `gunicorn -w 4 "src.app.__init__:create_app()" --bind 0.0.0.0:5000`.
+- Production (recommandé, ASGI): `gunicorn -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:8000 src.asgi:app`.
+- Production (WSGI, alternatif): `gunicorn -w 4 "src.app.__init__:create_app()" --bind 0.0.0.0:5000`.
 
 ## Style de code et conventions de nommage
 - Python 3.x, PEP 8, indentation 4 espaces.
@@ -88,7 +92,7 @@ Quand vous ajoutez une nouvelle génération/importation basée sur OpenAI, suiv
 ## Tâches asynchrones unifiées (Celery) et notifications UI
 - Endpoints unifiés:
   - Statut JSON: `GET /tasks/status/<task_id>` → `{task_id,state,message,meta,result}`.
-  - Streaming SSE: `GET /tasks/events/<task_id>` → événements `open|progress|ping|done`.
+  - Streaming SSE: `GET /tasks/events/<task_id>` → événements `open|progress|ping|done` (servi par l’ASGI hub pour des flux non bloquants).
   - Page de suivi: `GET /tasks/track/<task_id>` (utilise `task_status.html`).
 - Orchestrateur Frontend: `static/js/task_orchestrator.js`
   - `EDxoTasks.startCeleryTask(url, fetchOpts, {title,startMessage,summaryEl,streamEl})`: lance la tâche, ajoute une notification « in-progress » avec lien `/tasks/track/<task_id>`, et ouvre un modal de suivi (stream, résumé de raisonnement, JSON). Les options `summaryEl` et `streamEl` permettent de renseigner des éléments externes (par défaut ceux du modal sont utilisés).

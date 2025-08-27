@@ -3,6 +3,8 @@
 // - Enriches notifications with a link to open tracking UI
 
 (function () {
+  // Global app prefix for building URLs once
+  const prefix = (typeof window !== 'undefined' && window.APP_PREFIX) ? window.APP_PREFIX : '';
   // Helper: get CSRF token from meta or fallback cookie
   function getCsrfToken() {
     try {
@@ -616,7 +618,6 @@
     try {
       const preferPage = !!(window.EDxoTasks && window.EDxoTasks.settings && window.EDxoTasks.settings.preferPage);
       if (preferPage) {
-        const prefix = (typeof window !== 'undefined' && window.APP_PREFIX) ? window.APP_PREFIX : '';
         window.location.href = `${prefix}/tasks/track/${taskId}`;
         return null;
       }
@@ -762,7 +763,6 @@
     modalEl.addEventListener('hidden.bs.modal', unblockPage, { once: true });
 
     // SSE stream (can be disabled via settings.disableSSE to avoid dev-server blocking)
-    const prefix = (typeof window !== 'undefined' && window.APP_PREFIX) ? window.APP_PREFIX : '';
     const eventsUrl = opts.eventsUrl || `${prefix}/tasks/events/${taskId}`;
     let es;
     let sawAnyMeaningfulProgress = false;
@@ -1017,7 +1017,6 @@
     } catch (e) { /* SSE not available */ }
 
     // Polling fallback (and completion handling)
-    const prefix = (typeof window !== 'undefined' && window.APP_PREFIX) ? window.APP_PREFIX : '';
     const statusUrl = opts.statusUrl || `${prefix}/tasks/status/${taskId}`;
     let stopped = false;
     let pollTimer = null;
