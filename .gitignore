@@ -42,3 +42,4 @@ add_user.py
 ### Docker ###
 docker-compose.override.yml
 
+/pdfs_downloaded
