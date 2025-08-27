@@ -901,26 +901,23 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     } catch(_) {}
 
-    // Bouton Améliorer: démarrer la tâche globale via modal simplifié
+    // Bouton Améliorer: ouvrir le Quick Modal pour saisir l'info complémentaire
     try {
       const btnImprove = document.getElementById('openImprovePdcBtn');
-      if (btnImprove && window.EDxoTasks && window.EDxoTasks.startCeleryTask) {
-        btnImprove.addEventListener('click', async (e) => {
+      if (btnImprove && window.EDxoTasks && window.EDxoTasks.openQuickTask) {
+        btnImprove.addEventListener('click', (e) => {
           e.preventDefault();
-          const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-          const params = new URLSearchParams();
-          params.append('cours_id', "{{ cours.id }}");
-          params.append('session', "{{ plan_de_cours.session }}");
-          params.append('improve_only', 'true');
-          await window.EDxoTasks.startCeleryTask("{{ url_for('plan_de_cours.generate_all_start') }}", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf },
-            body: params.toString(),
-            credentials: 'same-origin'
-          }, {
+          window.EDxoTasks.openQuickTask({
+            url: "{{ url_for('plan_de_cours.generate_all_start') }}",
             title: 'Améliorer le plan de cours',
             startMessage: 'Amélioration en cours…',
-            openModal: true
+            basePayload: { additional_info: '' },
+            fixedPayload: {
+              cours_id: {{ cours.id }},
+              session: "{{ plan_de_cours.session }}",
+              improve_only: true,
+              stream: true
+            }
           });
         });
       }

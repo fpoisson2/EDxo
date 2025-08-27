@@ -53,6 +53,7 @@
     label.textContent = opts.title || 'Démarrer';
 
     const fields = Object.assign({}, opts.basePayload || {});
+    const fixedPayload = Object.assign({}, opts.fixedPayload || {});
     if (!('additional_info' in fields)) fields.additional_info = '';
 
     const fieldLabels = Object.assign({
@@ -103,7 +104,8 @@
           payload[key] = v === '' ? 0 : Number(v);
         }
       });
-      const fetchOpts = { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
+      const fullPayload = Object.assign({}, fixedPayload, payload);
+      const fetchOpts = { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fullPayload) };
       try {
         const csrf = getCsrfToken();
         if (csrf) { fetchOpts.headers['X-CSRFToken'] = csrf; fetchOpts.headers['X-CSRF-Token'] = csrf; }
