@@ -1,228 +1,27 @@
-# Guide du Référentiel (FR)
+# Guide pour les contributions des agents (EDxo)
 
-## Structure du projet et des modules
-- Source: `src/` (application Flask). Blueprints dans `src/app/routes/`, templates dans `src/app/templates/`, assets statiques dans `src/static/`.
-- Fabrique d’application: `src/app/__init__.py`.
-- Entrées serveur:
-  - WSGI: `src/wsgi.py` (Gunicorn peut utiliser `create_app()`).
-  - ASGI: `src/asgi.py` (Starlette monte Flask et expose l’SSE natif pour `/tasks/events/<task_id>`).
-- Tâches/Celery: `src/celery_app.py` et `src/app/tasks/`.
-- Base de données: `src/database/` (SQLite) et migrations dans `src/migrations/`.
-- Utilitaires: `src/utils/`, configuration dans `src/config/`.
-- Tests: `tests/` avec `conftest.py` et des fichiers `test_*.py`.
+Ce référentiel utilise des agents/outils pour automatiser des modifications de code. Pour garantir la qualité et éviter les régressions, respectez les règles suivantes à chaque demande de correctif ou de nouvelle fonctionnalité.
 
-## Commandes de build, test et développement
-- Installation: `python -m venv venv && source venv/bin/activate && pip install -r requirements.txt`.
-- Lancer (dev): `export FLASK_APP=src/app/__init__.py; export FLASK_ENV=development; flask run`.
-- Worker Celery (local):
-  - Depuis la racine du repo: `celery -A src.celery_app:celery worker --loglevel=info`.
-  - Depuis le dossier `src/`: `celery -A celery_app:celery worker --loglevel=info`.
-  - Redis requis; configurez `CELERY_BROKER_URL` et `CELERY_RESULT_BACKEND` dans `.env`.
-- Docker: `docker-compose up --build` pour lancer l’API, Redis et Celery.
-- Migrations: `flask db migrate -m "msg" && flask db upgrade`.
-- Tests: `pytest -q`.
-- Production (recommandé, ASGI): `gunicorn -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:8000 src.asgi:app`.
-- Production (WSGI, alternatif): `gunicorn -w 4 "src.app.__init__:create_app()" --bind 0.0.0.0:5000`.
+## Règle essentielle
+- Toujours écrire des tests pertinents (pytest) pour couvrir le correctif ou la fonctionnalité ajoutée.
+- Toujours exécuter la suite de tests localement avec `pytest -q` et s'assurer qu'elle passe avant de conclure la tâche.
 
-## Style de code et conventions de nommage
-- Python 3.x, PEP 8, indentation 4 espaces.
-- Fichiers/modules/fonctions: `snake_case`; classes: `PascalCase`; constantes: `UPPER_SNAKE_CASE`.
-- Ajoutez les nouvelles routes sous `src/app/routes/` et les templates HTML dans `src/app/templates/`.
-- Pas de secrets en dur. Utilisez `.env` (ignoré par Git) pour `SECRET_KEY`, `RECAPTCHA_PUBLIC_KEY`, `RECAPTCHA_PRIVATE_KEY`, `OPENAI_API_KEY`, ainsi que `CELERY_BROKER_URL` et `CELERY_RESULT_BACKEND`.
+## Détails pratiques
+- Emplacement des tests: placez-les sous `tests/` avec le préfixe `test_*.py`.
+- Fixtures disponibles: utilisez celles de `tests/conftest.py` (`app`, `client`).
+- Si un bug est reproduit par un test, commencez par écrire le test qui échoue, puis corrigez le code jusqu'à ce que le test passe.
+- Ne modifiez pas de parties non liées; concentrez-vous sur la portée de la demande.
+- Si des avertissements perturbent la lisibilité, nettoyez-les ou filtrez-les de manière ciblée, sans masquer des problèmes réels.
 
-## Lignes directrices pour les tests
-- Framework: `pytest`. Placez les tests dans `tests/` avec le préfixe `test_`.
-- Fixtures: utilisez celles de `tests/conftest.py` (`app`, `client`). Les tests tournent sur SQLite en mémoire via `TestConfig` (définie dans `src/app/__init__.py`).
-- Couvrez routes, modèles et flux d’authentification (p. ex. `/version`, redirections). Mockez les appels externes; utilisez Redis uniquement si nécessaire pour les tests Celery.
+## Commandes utiles
+- Lancer les tests: `pytest -q`
+- Exécuter un seul fichier: `pytest -q tests/test_mon_module.py`
+- Exécuter un seul test: `pytest -q tests/test_mon_module.py::test_cas_specifique`
 
-## Bonnes pratiques pour commits et PR
-- Commits: concis, au présent. L’historique favorise des résumés courts en français (p. ex. `M2M cours-programme`, `Update programme.py`). Groupez les changements liés.
-- Pull Requests: description claire, issues liées, étapes de test, et mention de toute migration BD. Ajoutez des captures d’écran/GIF pour les changements UI. Assurez-vous que `pytest` passe.
-- Limitez la portée des PR et mettez à jour la documentation lors de modifications des commandes, routes ou de la structure.
+## Sortie attendue
+- À la fin de la tâche, indiquez brièvement:
+  - Les fichiers modifiés/ajoutés.
+  - Les tests ajoutés/ajustés.
+  - Le résultat de `pytest -q` (nombre de tests passés, durée, et absence de warnings si demandé).
 
-## Ajouter un appel OpenAI (checklist)
-
-Quand vous ajoutez une nouvelle génération/importation basée sur OpenAI, suivez ce canevas pour rester aligné avec l’architecture EDxo.
-
-1) Définir la section et la configuration IA
-- Utiliser la configuration par section via `SectionAISettings` (BD) pour: `system_prompt`, `ai_model`, `reasoning_effort`, `verbosity`.
-- Si la fonctionnalité a déjà une page Paramètres (ex.: Plan‑cadre, Plan de cours, OCR, Grille), intégrer les champs IA dans cette page. Sinon, créer une page dédiée sous `/settings/<domaine>` rendue via `parametres.html`.
-- Éviter toute page « globale »; la granularité est par domaine (ex.: `plan_de_cours`, `plan_cadre`, `logigramme`, `grille`, `grille_import`, `ocr`, `chat`, `evaluation`, `analyse_plan_cours`).
-
-2) Appel API côté serveur (pattern Responses)
-- Préférer l’API `Responses` (stream/non-stream) plutôt que Chat Completions pour bénéficier de `reasoning` et `text.verbosity`.
-- Construire l’input comme suit:
-  - Inclure le `system_prompt` depuis la BD en message `system` (ou `developer` pour des instructions techniques d’import OCR/Grille), si présent.
-  - Mettre les données brutes dans le message `user` (ex.: JSON `courses/competences`, texte/doc, etc.). Éviter d’y glisser des consignes; les consignes restent dans le `system_prompt`.
-  - Passer `reasoning={ summary:'auto', effort: <sa.reasoning_effort> }` si configuré.
-  - Passer `text={ format: json_schema|pydantic, verbosity: <sa.verbosity> }`.
-- Pour des sorties structurées, utiliser:
-  - Un modèle Pydantic avec `json_schema` strict (cf. `OpenAIFunctionModel`) ou
-  - `text.format = { type: 'json_schema', strict: true, schema: ... }`.
-- Supporter le streaming (`client.responses.stream`) et publier la progression via Celery: `stream_chunk`, `stream_buffer`, `reasoning_summary`.
-
-3) Sécurité, crédits et erreurs
-- Jamais de secrets en dur. Utiliser la clé OpenAI de l’utilisateur (`current_user.openai_key`).
-- Vérifier les crédits et calculer le coût via `calculate_call_cost(usage.input_tokens, usage.output_tokens, model)` puis décrémenter (`user.credits -= cost`).
-- Gérer les exceptions et retourner `{ status: 'error', message }` en cas de problème.
-
-4) Intégration Celery et suivi unifié
-- Exposer un endpoint POST minimal qui valide l’entrée et lance `task.delay(...)`, puis retourne `202 { task_id }`.
-- Dans la tâche Celery, utiliser `self.update_state(... meta=...)` pour surface stream/raisonnement.
-- Retourner un payload final avec:
-  - `status: 'success' | 'error'`
-  - `validation_url` (si applicable) pour guider l’utilisateur vers la page de comparaison/validation.
-  - `result`, `usage` et tout champ nécessaire au front.
-- Côté UI, démarrer via `EDxoTasks.startCeleryTask(...)` pour bénéficier du modal de suivi (`/tasks/track/<task_id>`), des notifications et du bouton « Aller à la validation ».
-
-5) Paramétrage UI
-- Ajouter/étendre la page Paramètres du domaine sous `src/app/templates/settings/`, rendue dans `parametres.html`.
-- Réutiliser `SectionAISettingsForm` (modèle, raisonnement, verbosité; `system_prompt` si pertinent). Éviter les doublons avec les « template du prompt » déjà présents (ne pas afficher deux zones texte semi-redondantes).
-- Pour Plan de cours, garder les templates par champ (table `PlanDeCoursPromptSettings`) et un seul bouton « Enregistrer tout ».
-
-6) Inventaire et documentation
-- Mettre à jour `OPENAI_USAGE.md` (tableau des usages avec: chemin, méthode, API, modèle, prompt système source, etc.).
-- Documenter succinctement la nouvelle route/tâche et sa page Paramètres.
-
-7) Cas particuliers
-- OCR et import PDF: utiliser `input_file`/`file_url` et un `developer/system` prompt technique; brancher reasoning/verbosity depuis `SectionAISettings('ocr'|'grille_import')`.
-- Chat: lire `SectionAISettings('chat')` pour `system_prompt`, `reasoning_effort`, `verbosity`, et modèle par défaut (en respectant la config chat existante).
-- Logigramme: `system_prompt` en BD; message `user` ne contient que les données (cours/compétences), pas de consignes.
-
-## Tâches asynchrones unifiées (Celery) et notifications UI
-- Endpoints unifiés:
-  - Statut JSON: `GET /tasks/status/<task_id>` → `{task_id,state,message,meta,result}`.
-  - Streaming SSE: `GET /tasks/events/<task_id>` → événements `open|progress|ping|done` (servi par l’ASGI hub pour des flux non bloquants).
-  - Page de suivi: `GET /tasks/track/<task_id>` (utilise `task_status.html`).
-- Orchestrateur Frontend: `static/js/task_orchestrator.js`
-  - `EDxoTasks.startCeleryTask(url, fetchOpts, {title,startMessage,summaryEl,streamEl})`: lance la tâche, ajoute une notification « in-progress » avec lien `/tasks/track/<task_id>`, et ouvre un modal de suivi (stream, résumé de raisonnement, JSON). Les options `summaryEl` et `streamEl` permettent de renseigner des éléments externes (par défaut ceux du modal sont utilisés).
-  - `EDxoTasks.openTaskModal(taskId, {title,statusUrl,eventsUrl,onDone})`: ouvre le modal sur un `task_id` existant.
-- Notifications enrichies (base.html):
-  - En cours: `addNotification('…', 'in-progress', '/tasks/track/<task_id>')` pour permettre d’ouvrir le suivi.
-  - Succès: si le payload contient `validation_url`, la notification pointe vers la page de validation/comparaison; sinon fallback (reviewUrl, planCadreUrl, plan_de_cours_url).
-  - Modal générique de suivi (injecté par l’orchestrateur):
-    - Zone de texte à défilement pour le streaming (`streamEl`).
-    - Conteneur distinct pour le résumé de raisonnement (`summaryEl`).
-    - Onglets minimalistes: flux (logs), affichage JSON.
-    - Bouton « Aller à la validation » si `validation_url` présent dans le payload final.
-- Configuration IA par domaine:
-  - Chaque domaine (Plan‑cadre, Plan de cours, OCR, Grille, Chat, Logigramme, etc.) possède sa page Paramètres dédiée sous `/settings/...` avec modèle, effort de raisonnement et verbosité.
-  - Les prompts spécifiques demeurent dans leurs pages respectives (Plan-cadre, Plan de cours, OCR), accessibles depuis le menu Paramètres.
-- Importations (PDF devis/logigrammes/grilles/plans):
-  - Appliquer le même pattern que l’import devis ministériel: POST déclenche tâche → retourne `task_id` → suivi via `/tasks/track/<task_id>` → redirection vers page de validation/comparaison à la fin.
-- Exemples rapides:
-  - Lancer génération: `EDxoTasks.startCeleryTask('/api/plan_cadre/123/generate', {method:'POST'}, {title:'Générer un plan-cadre'})`.
-  - Ouvrir un suivi existant: `EDxoTasks.openTaskModal(taskId, {title:'Import en cours'})`.
-
-### Principe général
-
-- Tâches exécutées via Celery: chaque action lourde est déclenchée côté serveur et retourne `{ task_id }`.
-- Suivi unifié: endpoints partagés `GET /tasks/status/<task_id>` (JSON) et `GET /tasks/events/<task_id>` (SSE) + page `GET /tasks/track/<task_id>`.
-- Orchestrateur Frontend: `static/js/task_orchestrator.js` expose `EDxoTasks.startCeleryTask()` et `EDxoTasks.openTaskModal()`.
-- Modal de suivi: affiche flux (stream), JSON, et (optionnel) le prompt utilisateur; propose un lien de validation si disponible.
-- Notifications enrichies: ajout de notifications « in-progress » et « success » avec lien de suivi/validation.
-- Configuration IA par domaine: pages dédiées (Plan‑cadre, Plan de cours, OCR, Grille, Chat, Logigramme, etc.) avec modèle, effort de raisonnement et verbosité.
-
-### Patron d’implémentation côté serveur
-
-1) Créer un endpoint de déclenchement (POST) qui:
-   - Valide les entrées minimales (ex.: IDs, fichiers).
-   - Lance la tâche Celery: `task = my_task.delay(...)`
-   - Retourne `jsonify({ 'task_id': task.id })`, HTTP 202.
-
-2) Dans la tâche Celery:
-   - Publier la progression: `self.update_state(state='PROGRESS', meta={'message': '...', 'step': '...', 'progress': 0-100})`.
-   - Pour le streaming temps réel, envoyer `meta.stream_chunk` (append) ou `meta.stream_buffer` (contenu complet), et `meta.reasoning_summary` pour le résumé de raisonnement.
-   - Renvoyer un `dict` final:
-     - `status: 'success' | 'error'` + `message` en cas d’erreur.
-     - `validation_url` vers la page de validation/comparaison.
-     - Toute donnée utile au front (ex.: `result`, `usage`, etc.).
-
-3) Vérifier que les endpoints unifiés existent et sont exposés (`src/app/routes/tasks.py`).
-
-### Patron d’implémentation côté client
-
-Pour toute action (génération, amélioration, import), appeler:
-
-```js
-await EDxoTasks.startCeleryTask('/api/.../start', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf },
-  body: JSON.stringify(payload)
-}, {
-  title: 'Titre de la tâche',
-  startMessage: 'En cours…',
-  userPrompt: promptOptionnel,
-  streamEl: document.getElementById('ma-zone-stream'),
-  summaryEl: document.getElementById('mon-resume'),
-  onDone: (data) => { /* hook si besoin */ }
-});
-```
-
-- Le modal s’ouvre automatiquement et se met à jour (SSE + polling).
-- À la fin, si `validation_url` est présent, le bouton « Aller à la validation » s’active et une notification « success » est ajoutée avec le lien.
-
-### Exemples supplémentaires
-
-- Génération Plan‑cadre: `POST /api/plan_cadre/<plan_id>/generate`
-- Amélioration Plan‑cadre: `POST /api/plan_cadre/<plan_id>/improve` (ou section ciblée)
-- Génération Plan de cours: `POST /api/plan_de_cours/<plan_id>/generate` → `validation_url=/plan_de_cours/review/<id>?task_id=...`
-- Import Plan‑cadre (DOCX): `POST /plan_cadre/<plan_id>/import_docx_start` → `validation_url=/plan_cadre/<id>/review?task_id=...`
-- Génération Grille de cours: `POST /programme/<programme_id>/grille/generate` → `validation_url=/programme/<id>/grille/review?task_id=...`
-- Génération Logigramme compétences: `POST /programme/<programme_id>/competences/logigramme/generate` → `validation_url=/programme/<id>/competences/logigramme`
-- Import Grille PDF: `POST /grille/import` → `validation_url=/confirm_grille_import/<task_id>`
-- Import Devis ministériel PDF (simplifié):
-  - Démarrage: `POST /programme/<programme_id>/competences/import_pdf/start` avec `FormData(file=pdf)` → `{ task_id }`
-  - Suivi: `/tasks/track/<task_id>` (modal unifié), notification in-progress avec lien de suivi
-  - Validation: le worker fournit `validation_url=/programme/<programme_id>/competences/import/review?task_id=...` (comparaison JSON↔BD; confirmation via formulaire existant)
-
-Pour une importation de fichier (PDF/DOCX), construire un `FormData` et appeler `EDxoTasks.startCeleryTask()` avec `body: formData` sans `Content-Type` (laissez le navigateur définir `multipart/form-data`).
-
-### Points d’attention
-
-- Toute tâche doit prévoir un `validation_url` pour guider l’utilisateur vers la comparaison/validation.
-- Les prompts spécifiques restent dans leurs pages: Plan‑cadre, Plan de cours, OCR.
-- La configuration IA (modèle/raisonnement/verbosité) se fait dans les pages Paramètres dédiées de chaque domaine (`/settings/...`).
-- Le modal peut afficher le prompt utilisateur (`userPrompt`) si fourni côté UI.
-
-### Nettoyage
-
-- Utiliser les endpoints unifiés `/tasks/status|events|track` pour tout suivi.
-- Déprécier les anciens endpoints de statut/stream spécifiques dès migration.
-
-## Validation Plan de cours (review)
-
-- Page de comparaison: `GET /plan_de_cours/review/<plan_id>?task_id=...` affiche les champs avant/après et le calendrier.
-- Actions:
-  - Confirmer: `POST /plan_de_cours/review/<plan_id>/apply` avec `{ action: 'confirm', task_id }`.
-    - Effet: aucun changement supplémentaire (la génération a déjà persisté en BD). Répond avec `redirect_url` vers le plan.
-  - Restaurer: `POST /plan_de_cours/review/<plan_id>/apply` avec `{ action: 'revert', task_id }`.
-    - Effet: restaure les champs et le calendrier à partir de `old_fields` et `old_calendriers` présents dans le payload Celery.
-- CSRF côté client: récupérer le jeton via la balise meta globale et l’envoyer dans l’en-tête `X-CSRFToken`.
-
-Exemples JS (dans un template Jinja):
-
-```js
-const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-await fetch(`/plan_de_cours/review/${planId}/apply`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf },
-  body: JSON.stringify({ action: 'confirm', task_id })
-});
-
-// Import grille via FormData
-const fd = new FormData();
-fd.append('file', file);
-await fetch('/grille/import', {
-  method: 'POST',
-  body: fd,
-  credentials: 'same-origin',
-  headers: { 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf }
-});
-```
-
-Pré-requis côté worker: inclure dans le `result` de la tâche les clés suivantes pour alimenter la page de review et permettre le revert:
-
-- `fields` et `calendriers` (nouveaux)
-- `old_fields` et `old_calendriers` (état précédent)
-- `validation_url` pointant vers `/plan_de_cours/review/<id>?task_id=...`
+Merci de maintenir une base de code fiable et testée.

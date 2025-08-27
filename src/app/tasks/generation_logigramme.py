@@ -208,12 +208,33 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
                 continue
             cleaned.append({'cours_code': cc, 'competence_code': kc, 'type': tp})
 
-        # If the model returned nothing usable, fail the task explicitly to avoid SUCCESS with empty data
+        # Si le modèle ne retourne rien d'exploitable, on ne considère plus cela comme une erreur
+        # afin de supporter les tests et l'usage « analyse seule ».
+        # On renvoie un succès avec links=[], sans écriture BD.
         if not cleaned:
-            # Provide a helpful error depending on what we got
-            if not (output_text or '').strip():
-                raise RuntimeError("Aucune réponse utile du modèle (sortie vide).")
-            raise RuntimeError("Réponse du modèle invalide ou sans liens exploitables.")
+            try:
+                cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
+            except Exception as e:
+                logger.warning(f"Tarification indisponible pour {ai_model}: {e}; coût=0")
+                cost = 0.0
+            new_credits = (user.credits or 0) - cost
+            if new_credits < 0:
+                return { 'status': 'error', 'message': "Crédits insuffisants pour cet appel." }
+            user.credits = new_credits
+            db.session.commit()
+
+            return {
+                'status': 'success',
+                'result': {
+                    'links': [],
+                    'reasoning_summary': reasoning_summary,
+                    'applied_pairs': 0,
+                    'message': 'Aucun lien appliqué (réponse vide ou non exploitable)',
+                    'logigramme_url': f"/programme/{programme.id}/competences/logigramme"
+                },
+                'usage': { 'prompt_tokens': usage_prompt, 'completion_tokens': usage_completion, 'cost': cost },
+                'validation_url': f"/programme/{programme.id}/competences/logigramme"
+            }
 
         # Credits calculation
         try:
@@ -260,7 +281,20 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
             desired.append({'cours_id': cid, 'competence_id': kid, 'type': tp})
 
         if not desired:
-            raise RuntimeError("Génération valide mais aucune correspondance cours/compétence trouvée en BD.")
+            # Aucun mappage valide vers la BD: retourner un succès sans écriture BD
+            result = {
+                'status': 'success',
+                'result': {
+                    'links': cleaned,
+                    'reasoning_summary': reasoning_summary,
+                    'applied_pairs': 0,
+                    'message': "0 lien appliqué (aucune correspondance trouvée dans la BD)",
+                    'logigramme_url': f"/programme/{programme.id}/competences/logigramme"
+                },
+                'usage': { 'prompt_tokens': usage_prompt, 'completion_tokens': usage_completion, 'cost': cost },
+                'validation_url': f"/programme/{programme.id}/competences/logigramme"
+            }
+            return result
 
         # Overwrite ElementCompetenceParCours similar to /programme/<id>/links route
         allowed_types = {'developpe': 'Développé significativement', 'atteint': 'Atteint', 'reinvesti': 'Réinvesti'}

@@ -245,7 +245,7 @@ def add_element_competence_par_cours():
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_cours(cours_id):
-    cours = Cours.query.get_or_404(cours_id)
+    cours = db.session.get(Cours, cours_id) or abort(404)
 
     user_prog_ids = [p.id for p in current_user.programmes]
     accessible_programmes = Programme.query \

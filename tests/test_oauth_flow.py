@@ -1,4 +1,5 @@
 from src.app import db
+import pytest
 from src.app.models import Programme, Department, OAuthClient, User
 
 
@@ -142,4 +143,3 @@ def test_authorization_code_flow(app, client):
     resp = client.get('/api/programmes', headers=headers)
     assert resp.status_code == 200
     assert any(p['id'] == prog_id for p in resp.get_json())
-

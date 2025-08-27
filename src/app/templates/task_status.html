@@ -58,6 +58,22 @@
     <span id="loading-indicator" style="display: none;"> ( Rafraîchissement en cours<span class="dots">...</span> )</span>
   </p>
   <div class="mt-3">
+    <h3>Résumé du raisonnement</h3>
+    <div id="reasoning-wrap" class="position-relative mb-3">
+      <div id="reasoning-overlay" style="position:absolute;inset:0;pointer-events:none;z-index:10;display:flex;align-items:center;justify-content:center;">
+        <div class="spinner-border text-secondary" role="status" aria-label="Chargement"><span class="visually-hidden">Chargement…</span></div>
+      </div>
+      <div id="reasoning" class="small" style="min-height:100px;max-height:25vh;overflow:auto;background:#f8f9fa;padding:8px;border-radius:6px;"></div>
+    </div>
+
+    <h3>Contenu généré (stream)</h3>
+    <div id="stream-wrap" class="position-relative mb-3">
+      <div id="stream-overlay" style="position:absolute;inset:0;pointer-events:none;z-index:10;display:flex;align-items:center;justify-content:center;">
+        <div class="spinner-border text-secondary" role="status" aria-label="Chargement"><span class="visually-hidden">Chargement…</span></div>
+      </div>
+      <div id="stream-text" class="form-control" style="background:#0f172a;color:#e2e8f0;font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Cantarell, Noto Sans, Ubuntu, Helvetica Neue, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';font-size:0.95rem;line-height:1.3;min-height:140px;max-height:280px;overflow:auto;white-space:pre-wrap;position:relative;"></div>
+    </div>
+
     <h3>Flux en direct</h3>
     <div id="stream-log" style="background:#0f172a;color:#e2e8f0;border-radius:6px;padding:10px;min-height:120px;max-height:240px;overflow:auto;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;"></div>
   </div>
@@ -94,7 +110,9 @@
     </div>
   </div>
 
-  <p class="mt-3"><a href="{{ url_for('grille_bp.import_grille') }}" class="btn btn-secondary">Revenir à l'import</a></p>
+  <p class="mt-3">
+    <a id="return-link" href="#" class="btn btn-secondary">Revenir</a>
+  </p>
 </div>
 {% endblock %}
 
@@ -115,12 +133,37 @@ document.addEventListener("DOMContentLoaded", function() {
     const leaveBtn = document.getElementById('btn-leave-track');
     const openModalBtn = document.getElementById('btn-open-modal');
     const _taskId = {{ task_id|tojson }};
+    // Lien de retour configurable (sessionStorage ou query string)
+    let returnLink = null;
+    try { returnLink = sessionStorage.getItem(`return_link_${_taskId}`) || null; } catch {}
+    try {
+        if (!returnLink) {
+            const params = new URLSearchParams(window.location.search);
+            const r = params.get('return');
+            if (r) returnLink = r;
+        }
+    } catch {}
     if (leaveBtn) {
         leaveBtn.addEventListener('click', function() {
-            if (window.history && window.history.length > 1) {
+            if (returnLink) {
+                window.location.href = returnLink;
+            } else if (window.history && window.history.length > 1) {
                 window.history.back();
             } else {
                 window.location.href = '/';
+            }
+        });
+    }
+    const returnAnchor = document.getElementById('return-link');
+    if (returnAnchor) {
+        returnAnchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (returnLink) {
+                window.location.href = returnLink;
+            } else if (document.referrer) {
+                window.location.href = document.referrer;
+            } else {
+                window.history.back();
             }
         });
     }
@@ -156,6 +199,41 @@ document.addEventListener("DOMContentLoaded", function() {
         const allowSSE = !((window.EDxoTasks && window.EDxoTasks.settings && window.EDxoTasks.settings.disableSSE) === true);
         const sseUrl = {{ (events_url or ('/tasks/events/' ~ task_id))|tojson }};
         const es = allowSSE ? new EventSource(sseUrl) : null;
+        const reasoningEl = document.getElementById('reasoning');
+        const reasoningOverlay = document.getElementById('reasoning-overlay');
+        const streamTextEl = document.getElementById('stream-text');
+        const streamOverlay = document.getElementById('stream-overlay');
+        let streamBuf = '';
+        let streamTimer = null;
+        let streamDirty = false;
+        function setStreamText(el, text) { try { if (!el) return; if ('value' in el) el.value = text || ''; else el.textContent = text || ''; } catch {} }
+        function scrollStreamToBottom(el) { try { if (el) el.scrollTop = el.scrollHeight; } catch {} }
+        function scheduleStreamUpdate() {
+            if (!streamDirty) return;
+            if (!streamTimer) {
+                streamTimer = setTimeout(() => {
+                    streamTimer = null;
+                    if (!streamDirty) return;
+                    streamDirty = false;
+                    setStreamText(streamTextEl, streamBuf);
+                    scrollStreamToBottom(streamTextEl);
+                }, 200);
+            }
+        }
+        let lastReasoning = '';
+        let reasoningTimer = null;
+        let reasoningDirty = false;
+        function scheduleReasoningUpdate() {
+            if (!reasoningDirty) return;
+            if (!reasoningTimer) {
+                reasoningTimer = setTimeout(() => {
+                    reasoningTimer = null;
+                    if (!reasoningDirty) return;
+                    reasoningDirty = false;
+                    if (reasoningEl) reasoningEl.textContent = lastReasoning;
+                }, 120);
+            }
+        }
         function appendLog(line) {
             if (!line) return;
             const now = new Date();
@@ -180,20 +258,26 @@ document.addEventListener("DOMContentLoaded", function() {
                         appendLog(msg);
                     }
                 }
-                // 2) Détails: raisonnement + aperçu du flux JSON
+                // 2) Détails: raisonnement + flux de texte
                 const meta = data.meta || {};
-                const details = meta.details || meta; // accepter soit details, soit directement dans meta
-                if (details) {
-                    const rs = (details.reasoning_summary || '').trim();
+                if (meta) {
+                    const rs = (meta.reasoning_summary || '').trim();
                     if (rs && rs !== lastReasoning) {
                         lastReasoning = rs;
-                        appendLog('Raisonnement: ' + rs);
+                        reasoningDirty = true;
+                        if (reasoningOverlay && rs) reasoningOverlay.style.display = 'none';
+                        scheduleReasoningUpdate();
                     }
-                    const seq = typeof details.seq === 'number' ? details.seq : (typeof details.SEQ === 'number' ? details.SEQ : null);
-                    const preview = details.stream_preview || details.stream_buffer || '';
-                    if (seq !== null && typeof seq === 'number' && seq > lastSeq && preview) {
-                        lastSeq = seq;
-                        appendLog('Flux: ' + String(preview).slice(-300));
+                    if (meta.stream_chunk) {
+                        streamBuf += String(meta.stream_chunk);
+                        streamDirty = true;
+                        if (streamOverlay) streamOverlay.style.display = 'none';
+                        scheduleStreamUpdate();
+                    } else if (meta.stream_buffer) {
+                        streamBuf = String(meta.stream_buffer);
+                        streamDirty = true;
+                        if (streamOverlay) streamOverlay.style.display = 'none';
+                        scheduleStreamUpdate();
                     }
                 }
                 if (data.state) {
@@ -206,6 +290,22 @@ document.addEventListener("DOMContentLoaded", function() {
             try {
                 const data = JSON.parse(ev.data || '{}');
                 appendLog(`Terminé avec état ${data.state}.`);
+                // Afficher le bouton de validation si présent
+                try {
+                    const payload = data && data.result ? data.result : (data.meta || {});
+                    const url = payload && (payload.validation_url || payload.reviewUrl || payload.plan_de_cours_url);
+                    if (url) {
+                        const existing = document.getElementById('btn-validate-final');
+                        if (!existing) {
+                            const btn = document.createElement('a');
+                            btn.id = 'btn-validate-final';
+                            btn.className = 'btn btn-primary mt-2';
+                            btn.href = url;
+                            btn.textContent = 'Aller à la validation';
+                            document.querySelector('#result-area')?.insertAdjacentElement('afterbegin', btn);
+                        }
+                    }
+                } catch {}
             } catch { appendLog('Terminé.'); }
             if (es) es.close();
         });
@@ -299,6 +399,21 @@ if (data.state === "SUCCESS") {
                 if (data.status === "success") {
                     // Afficher le résultat sous forme de JSON
                     displayJsonResult(data.result);
+                    // Si un lien de validation est fourni, l'afficher en tête
+                    try {
+                        const url = (data.result && (data.result.validation_url || data.result.reviewUrl || data.result.plan_de_cours_url)) || null;
+                        if (url) {
+                            const existing = document.getElementById('btn-validate-final');
+                            if (!existing) {
+                                const btn = document.createElement('a');
+                                btn.id = 'btn-validate-final';
+                                btn.className = 'btn btn-primary mt-2';
+                                btn.href = url;
+                                btn.textContent = 'Aller à la validation';
+                                document.querySelector('#result-area')?.insertAdjacentElement('afterbegin', btn);
+                            }
+                        }
+                    } catch {}
                     
                     // Afficher les statistiques d'utilisation si disponibles
                     if (data.usage) {

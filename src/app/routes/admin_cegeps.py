@@ -26,7 +26,7 @@ def gestion_cegeps():
 
 @main.route('/supprimer_cegep/<int:id>', methods=['POST'])
 def supprimer_cegep(id):
-    cegep = ListeCegep.query.get_or_404(id)
+    cegep = db.session.get(ListeCegep, id) or abort(404)
     db.session.delete(cegep)
     db.session.commit()
     flash('Cégep supprimé avec succès!', 'success')
@@ -35,7 +35,7 @@ def supprimer_cegep(id):
 
 @main.route('/modifier_cegep/<int:id>', methods=['GET', 'POST'])
 def modifier_cegep(id):
-    cegep = ListeCegep.query.get_or_404(id)
+    cegep = db.session.get(ListeCegep, id) or abort(404)
     form = CegepForm(obj=cegep)
 
     if form.validate_on_submit():
@@ -47,4 +47,3 @@ def modifier_cegep(id):
         return redirect(url_for('main.gestion_cegeps'))
 
     return render_template('modifier_cegep.html', form=form, cegep=cegep)
-

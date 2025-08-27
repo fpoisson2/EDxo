@@ -32,6 +32,10 @@ def _postprocess_openai_schema(schema: dict) -> None:
         schema['additionalProperties'] = False
     props = schema.get('properties')
     if props:
+        # OpenAI Responses JSON schema requires a 'required' array listing
+        # every key present in 'properties', even if values may be null.
+        # Align with the pattern used elsewhere in the project.
+        schema['required'] = list(props.keys())
         for prop_schema in props.values():
             _postprocess_openai_schema(prop_schema)
     if 'items' in schema:
@@ -85,7 +89,7 @@ def gestion_programme():
 @login_required
 @ensure_profile_completed
 def get_verifier_plan_cours(plan_id):
-    plan = PlanDeCours.query.get_or_404(plan_id)
+    plan = db.session.get(PlanDeCours, plan_id) or abort(404)
 
     # Vérifier les permissions de l'utilisateur
     if current_user.role not in ['admin', 'coordo']:
@@ -106,117 +110,32 @@ def get_verifier_plan_cours(plan_id):
 @login_required
 @ensure_profile_completed
 def update_verifier_plan_cours(plan_id):
-    """
-    Vérifie un plan de cours en un seul appel gpt-5
-    et met à jour les champs de vérification.
-    """
-    plan = PlanDeCours.query.get_or_404(plan_id)
+    """[Déprécié] Utiliser l'endpoint asynchrone /gestion_programme/analyse_plan_de_cours/<id>/start.
 
-    # Vérifier les permissions
+    Cette route est conservée temporairement pour compatibilité et renvoie 410.
+    """
+    return jsonify({
+        'error': "Endpoint déprécié. Utiliser /gestion_programme/analyse_plan_de_cours/<id>/start",
+        'replacement': f"/gestion_programme/analyse_plan_de_cours/{plan_id}/start"
+    }), 410
+
+
+# ---------------------------------------------------------------------------
+# Démarrage asynchrone (pattern unifié /tasks) pour l'analyse Plan de cours
+# ---------------------------------------------------------------------------
+from ..tasks.analyse_plan_de_cours import analyse_plan_de_cours_task
+
+
+@gestion_programme_bp.route('/analyse_plan_de_cours/<int:plan_id>/start', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def start_analyse_plan_de_cours(plan_id):
+    """Déclenche l'analyse du plan de cours en tâche Celery et retourne { task_id } (202)."""
+    # Permissions identiques à la vérification synchronisée
     if current_user.role not in ['admin', 'coordo']:
         return jsonify({'error': "Vous n'avez pas les droits nécessaires pour vérifier ce plan de cours."}), 403
-
-    # Récupérer l'openai_key et les crédits de l'utilisateur
-    openai_key = current_user.openai_key
-    user_credits = current_user.credits
-
-    if not openai_key:
-        return jsonify({'error': "Aucune clé OpenAI dans votre profil."}), 400
-
-    # Données à envoyer dans le prompt
-    schema_json = json.dumps(PlanDeCoursAIResponse.model_json_schema(), indent=4, ensure_ascii=False)
-
-    plan_de_cours = PlanDeCours.query.get_or_404(plan_id)
-    plan_cadre = plan_de_cours.cours.plan_cadre
-
-    # Récupérer le template de prompt en BD
-    prompt_template = AnalysePlanCoursPrompt.query.first()
-    if not prompt_template:
-        return jsonify({'error': "Le template de prompt n'est pas configuré."}), 500
-
-    # Formater le prompt d'instructions (système) et regrouper les données utilisateur à part
-    instruction = prompt_template.prompt_template
-    structured_request = {
-        "plan_cours_id": plan_de_cours.id,
-        "plan_cours": plan_de_cours.to_dict(),
-        "plan_cadre_id": plan_cadre.id,
-        "plan_cadre": plan_cadre.to_dict(),
-        # Le schéma est déjà passé via text.format, mais on peut aussi l'inclure dans les données
-        "schema_json": json.loads(schema_json)
-    }
-
-    # Construction du client et paramètres IA
-    client = OpenAI(api_key=openai_key)
-    sa = SectionAISettings.get_for('analyse_plan_cours')
-    model_name = sa.ai_model or 'gpt-5'
-    sys_text = (sa.system_prompt or '')
-    if instruction:
-        sys_text = (sys_text + "\n\n" + instruction).strip()
-    input_data = [{"role": "system", "content": [{"type": "input_text", "text": sys_text}]}] if sys_text else []
-    input_data += [{"role": "user", "content": [{"type": "input_text", "text": json.dumps(structured_request, ensure_ascii=False)}]}]
-    reasoning_params = {"summary": "auto"}
-    if sa.reasoning_effort in {"minimal", "low", "medium", "high"}:
-        reasoning_params["effort"] = sa.reasoning_effort
-
-    total_prompt_tokens = 0
-    total_completion_tokens = 0
-
-    try:
-        completion = client.responses.create(
-            model=model_name,
-            input=input_data,
-            text={"format": {"type": "json_schema", "name": "PlanDeCoursAIResponse", "schema": PlanDeCoursAIResponse.model_json_schema(), "strict": True}, **({"verbosity": sa.verbosity} if sa.verbosity in {"low","medium","high"} else {})},
-            reasoning=reasoning_params,
-        )
-    except Exception as e:
-        logger.error(f"OpenAI error: {e}")
-        return jsonify({'error': f"Erreur API OpenAI: {str(e)}"}), 500
-
-    # Tokens et coût
-    usage_prompt = getattr(getattr(completion, 'usage', None), 'input_tokens', 0) or 0
-    usage_completion = getattr(getattr(completion, 'usage', None), 'output_tokens', 0) or 0
-    total_prompt_tokens += usage_prompt
-    total_completion_tokens += usage_completion
-    total_cost = calculate_call_cost(usage_prompt, usage_completion, model_name)
-    print(f"Appel gpt-5: {total_cost:.6f}$ (prompt {usage_prompt}, completion {usage_completion})")
-
-    # Vérifier si l'utilisateur a suffisamment de crédits
-    new_credits = user_credits - total_cost
-    if new_credits < 0:
-        return jsonify({"error": "Crédits insuffisants pour cet appel."}), 400
-
-    # Mettre à jour les crédits
-    current_user.credits = new_credits
-    db.session.commit()
-
-    # ----------------------------------------------------------
-    # 3) Parser et mettre à jour le plan de cours avec la réponse finale
-    # ----------------------------------------------------------
-    try:
-        outputs = getattr(completion, 'output', [])
-        parsed = None
-        for item in outputs:
-            for c in getattr(item, 'content', []) or []:
-                parsed = getattr(c, 'parsed', None) or parsed
-        ai_response = parsed or PlanDeCoursAIResponse()
-    except Exception as e:
-        logger.error(f"Validation Pydantic error: {e}")
-        return jsonify({'error': "Erreur de structuration des données par l'IA."}), 500
-
-    # Mise à jour du plan avec les données de l'IA
-    plan.compatibility_percentage = ai_response.compatibility_percentage
-    plan.recommendation_ameliore = ai_response.recommendation_ameliore
-    plan.recommendation_plan_cadre = ai_response.recommendation_plan_cadre
-
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Erreur lors de la mise à jour du plan après IA: {e}")
-        return jsonify({'error': "Erreur lors de la mise à jour du plan après IA."}), 500
-
-    return jsonify({
-        'compatibility_percentage': plan.compatibility_percentage,
-        'recommendation_ameliore': plan.recommendation_ameliore,
-        'recommendation_plan_cadre': plan.recommendation_plan_cadre
-    })
+    # Existence minimale
+    plan = db.session.get(PlanDeCours, plan_id) or abort(404)
+    # Lancer la tâche en passant l'id utilisateur pour l'accès à la clé et crédits
+    task = analyse_plan_de_cours_task.delay(plan.id, current_user.id)
+    return jsonify({'task_id': task.id}), 202

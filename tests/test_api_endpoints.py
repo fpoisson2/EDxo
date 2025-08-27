@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import pytest
 from werkzeug.security import generate_password_hash
 from src.app import db
 from src.app.models import (
@@ -50,7 +51,7 @@ def create_user(app, programmes=None, token="api-token", expires_in_days=1):
             credits=0.0,
             is_first_connexion=False,
             api_token=token,
-            api_token_expires_at=datetime.utcnow() + timedelta(days=expires_in_days),
+            api_token_expires_at=datetime.now(timezone.utc) + timedelta(days=expires_in_days),
         )
         if programmes:
             for pid in programmes:

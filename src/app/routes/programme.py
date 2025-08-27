@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 
 import bleach
-from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, jsonify
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, jsonify, abort
 
 import os
 
@@ -63,7 +63,7 @@ def competence_logigramme(programme_id):
     visualisant la progression par session et les liens développée/atteinte.
     """
     logger.debug(f"Accessing competence logigramme for programme ID: {programme_id}")
-    programme = Programme.query.get_or_404(programme_id)
+    programme = db.session.get(Programme, programme_id) or abort(404)
 
     # Vérifier l’accès
     if programme not in current_user.programmes and current_user.role != 'admin':
@@ -215,7 +215,7 @@ def export_competence_logigramme_xlsx(programme_id):
     """
     if openpyxl is None:
         return jsonify({'error': "Dépendance 'openpyxl' manquante côté serveur."}), 500
-    programme = Programme.query.get_or_404(programme_id)
+    programme = db.session.get(Programme, programme_id) or abort(404)
     if programme not in current_user.programmes and current_user.role != 'admin':
         flash("Vous n'avez pas accès à ce programme.", 'danger')
         return redirect(url_for('main.index'))
@@ -323,7 +323,7 @@ def save_programme_links(programme_id):
     the number of elements is authoritative; all rows are set to the given type.
     """
     from flask import jsonify
-    programme = Programme.query.get_or_404(programme_id)
+    programme = db.session.get(Programme, programme_id) or abort(404)
     # Restrict to admin/coordo only
     if current_user.role not in ('admin', 'coordo'):
         return jsonify({'error': "Accès restreint (admin/coordo)"}), 403
@@ -423,7 +423,7 @@ def save_programme_links(programme_id):
 @ensure_profile_completed
 def generate_competence_logigramme(programme_id):
     """Start Celery task to generate suggested links; returns task_id for polling."""
-    programme = Programme.query.get_or_404(programme_id)
+    programme = db.session.get(Programme, programme_id) or abort(404)
     if current_user.role not in ('admin', 'coordo'):
         return jsonify({'error': 'Accès restreint (admin/coordo)'}), 403
     if current_user.role != 'admin' and programme not in current_user.programmes:
@@ -452,7 +452,7 @@ def view_competences_programme(programme_id):
     Affiche la liste de toutes les compétences associées à un programme spécifique.
     """
     logger.debug(f"Accessing competencies list for programme ID: {programme_id}")
-    programme = Programme.query.get_or_404(programme_id)
+    programme = db.session.get(Programme, programme_id) or abort(404)
 
     # Vérifier l’accès
     if programme not in current_user.programmes and current_user.role != 'admin':
@@ -1123,7 +1123,7 @@ def view_programme(programme_id):
 @login_required
 @ensure_profile_completed
 def generate_programme_grille(programme_id):
-    programme = Programme.query.get_or_404(programme_id)
+    programme = db.session.get(Programme, programme_id) or abort(404)
     if current_user.role not in ('admin', 'coordo'):
         return jsonify({'error': 'Accès restreint (admin/coordo)'}), 403
     if current_user.role != 'admin' and programme not in current_user.programmes:
@@ -1148,7 +1148,7 @@ def import_competences_pdf_start(programme_id):
     Reçoit un formulaire multipart avec 'file' et retourne {task_id}.
     """
     from ..tasks.ocr import simple_import_competences_pdf
-    programme = Programme.query.get_or_404(programme_id)
+    programme = db.session.get(Programme, programme_id) or abort(404)
     if current_user.role not in ('admin', 'coordo') and programme not in current_user.programmes:
         return jsonify({'error': 'Accès refusé'}), 403
     if 'file' not in request.files:
@@ -1172,7 +1172,7 @@ def review_competences_import_task(programme_id):
     """Affiche la page de comparaison à partir du résultat de tâche (task_id)."""
     from ...celery_app import celery
     from celery.result import AsyncResult
-    programme = Programme.query.get_or_404(programme_id)
+    programme = db.session.get(Programme, programme_id) or abort(404)
     task_id = request.args.get('task_id')
     if not task_id:
         flash('Identifiant de tâche manquant.', 'danger')
@@ -1238,7 +1238,7 @@ def review_competences_import_task(programme_id):
 @login_required
 @ensure_profile_completed
 def apply_programme_grille(programme_id):
-    programme = Programme.query.get_or_404(programme_id)
+    programme = db.session.get(Programme, programme_id) or abort(404)
     if current_user.role not in ('admin', 'coordo'):
         return jsonify({'error': 'Accès restreint (admin/coordo)'}), 403
     if current_user.role != 'admin' and programme not in current_user.programmes:
@@ -1526,7 +1526,7 @@ def export_programme_grille_pdf(programme_id):
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_competence(competence_id):
-    competence = Competence.query.get_or_404(competence_id)
+    competence = db.session.get(Competence, competence_id) or abort(404)
     programmes = Programme.query.all()
     form = CompetenceForm()
     form.programmes.choices = [(p.id, p.nom) for p in programmes]

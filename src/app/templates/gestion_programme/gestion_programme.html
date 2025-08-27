@@ -285,39 +285,37 @@
             console.log(`URL pour mettre à jour les données de vérification: ${updateVerifierPlanUrl}`);
 
             try {
-                const response = await fetch(updateVerifierPlanUrl, {
+                // Nouvelle approche unifiée: tâche Celery + orchestrateur
+                const startUrl = `/gestion_programme/analyse_plan_de_cours/${encodeURIComponent(planId)}/start`;
+                const taskId = await EDxoTasks.startCeleryTask(startUrl, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken  // Inclure le jeton CSRF si nécessaire
-                    },
-                    body: JSON.stringify({})  // Envoyer des données si nécessaire
+                    headers: { 'X-CSRFToken': csrfToken, 'X-CSRF-Token': csrfToken },
+                    credentials: 'same-origin'
+                }, {
+                    title: 'Analyse du plan de cours',
+                    startMessage: 'Analyse en cours…',
+                    openModal: true,
+                    onDone: (data) => {
+                        const payload = data && data.result ? data.result : data;
+                        if (payload && payload.status !== 'error') {
+                            compatibilityPercentage.textContent = payload.compatibility_percentage ?? 'N/A';
+                            recommendationAmeliore.innerHTML = marked.parse(payload.recommendation_ameliore || 'N/A');
+                            recommendationPlanCadre.innerHTML = marked.parse(payload.recommendation_plan_cadre || 'N/A');
+                        } else if (payload && payload.message) {
+                            errorMessage.textContent = payload.message;
+                            errorMessage.classList.remove('d-none');
+                            errorMessage.classList.add('d-block');
+                        }
+                    }
                 });
 
-                console.log('Réponse de la mise à jour:', response);
-                if (!response.ok) {
-                    if (response.status === 403) {
-                        throw new Error("Vous n'avez pas les droits nécessaires pour vérifier ce plan de cours.");
-                    } else if (response.status === 404) {
-                        throw new Error('Plan de cours non trouvé.');
-                    } else {
-                        let errorText = 'Erreur lors de la mise à jour des données de vérification.';
-                        try {
-                            const data = await response.json();
-                            errorText = data.error || errorText;
-                        } catch (jsonError) {
-                            // Si la réponse n'est pas un JSON valide
-                        }
-                        throw new Error(errorText);
-                    }
-                }
+                // Enregistrer un lien de retour pour cette tâche afin de ré-ouvrir ce modal via la page de gestion
+                try {
+                    sessionStorage.setItem(`return_link_${taskId}`, `/gestion_programme/?open=verify&plan_id=${encodeURIComponent(planId)}`);
+                } catch {}
 
-                const data = await response.json();
-                console.log('Données de vérification mises à jour:', data);
-                // Lors de la récupération initiale des données
-                compatibilityPercentage.textContent = data.compatibility_percentage;
-                recommendationAmeliore.innerHTML = marked.parse(data.recommendation_ameliore || 'N/A');
-                recommendationPlanCadre.innerHTML = marked.parse(data.recommendation_plan_cadre || 'N/A');
+                // Fermer le modal de vérification initial une fois le suivi ouvert
+                try { verifyModal.hide(); } catch {}
 
                 // Masquer l'indicateur de chargement
                 loadingIndicatorVerify.classList.add('d-none');
@@ -378,6 +376,16 @@
             launchVerificationBtn.innerHTML = 'Lancer la vérification';
             launchVerificationBtn.removeAttribute('data-plan-id');
         });
+
+        // Auto-ouverture du modal de vérification si demandé via la query string
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const open = params.get('open');
+            const planIdQ = params.get('plan_id');
+            if (open === 'verify' && planIdQ) {
+                verifyPlan(planIdQ);
+            }
+        } catch {}
 
     });
 </script>

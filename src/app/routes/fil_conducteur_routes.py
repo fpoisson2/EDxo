@@ -11,7 +11,7 @@ from .routes import main
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_fil_conducteur(fil_id):
-    fil = FilConducteur.query.get_or_404(fil_id)
+    fil = db.session.get(FilConducteur, fil_id) or abort(404)
     form = FilConducteurForm(obj=fil)
     programmes = Programme.query.all()
     form.programme.choices = [(p.id, p.nom) for p in programmes]
@@ -60,7 +60,7 @@ def delete_fil_conducteur(fil_id):
     if not form.validate_on_submit():
         return redirect(url_for('main.index'))
 
-    fil = FilConducteur.query.get_or_404(fil_id)
+    fil = db.session.get(FilConducteur, fil_id) or abort(404)
     programme_id = fil.programme_id
 
     # Détacher les cours associés pour éviter les contraintes d'intégrité

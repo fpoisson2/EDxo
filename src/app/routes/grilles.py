@@ -1,6 +1,6 @@
 import os
 import uuid
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, jsonify, abort
 from flask_login import login_required, current_user
 from ..forms import FileUploadForm
 from ..tasks.import_grille import extract_grille_from_pdf_task
@@ -202,7 +202,7 @@ def confirm_grille_import(task_id):
         flash("Programme non spécifié.", "warning")
         return redirect(url_for('tasks.track_task', task_id=task_id))
 
-    programme = Programme.query.get_or_404(programme_id)
+    programme = db.session.get(Programme, programme_id) or abort(404)
     
     # Stocker l'ID de la tâche et le JSON pour soumission
     form.task_id.data = task_id

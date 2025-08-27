@@ -923,7 +923,7 @@ def edit_capacite(cours_id, plan_id, capacite_id):
 def delete_cours(cours_id):
     form = DeleteForm(prefix=f"cours-{cours_id}")
     if form.validate_on_submit():
-        cours = Cours.query.get(cours_id)
+        cours = db.session.get(Cours, cours_id)
         if not cours:
             flash('Cours non trouvé.')
             return redirect(url_for('main.index'))

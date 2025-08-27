@@ -43,7 +43,7 @@ def get_model_pricing(model_name: str):
 
     # 2) Filet de sécurité: barème par défaut connu
     if model_name in DEFAULT_PRICING:
-        logger.warning(
+        logger.info(
             "Tarif du modèle '%s' absent de la base. Utilisation du barème par défaut.",
             model_name,
         )
@@ -51,7 +51,7 @@ def get_model_pricing(model_name: str):
 
     # 3) Heuristique simple: si nom se termine par '-mini', caler sur gpt-5-mini
     if model_name.endswith("-mini") and "gpt-5-mini" in DEFAULT_PRICING:
-        logger.warning(
+        logger.info(
             "Tarif du modèle '%s' introuvable. Fallback heuristique sur 'gpt-5-mini'.",
             model_name,
         )
@@ -62,7 +62,7 @@ def get_model_pricing(model_name: str):
     # être encore enregistrées en base. On cale par défaut sur gpt-5 pour éviter
     # une erreur 500 côté application, tout en journalisant le fallback.
     if model_name.startswith("gpt-5") and "gpt-5" in DEFAULT_PRICING:
-        logger.warning(
+        logger.info(
             "Tarif du modèle '%s' introuvable. Fallback heuristique sur 'gpt-5'.",
             model_name,
         )

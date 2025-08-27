@@ -104,6 +104,8 @@ class TestConfig:
     SECRET_KEY = 'test_key'
     RECAPTCHA_PUBLIC_KEY = 'test_public'
     RECAPTCHA_SECRET_KEY = 'test_secret'
+    # Avoid Flask-Limiter warning by explicitly setting storage backend in tests
+    RATELIMIT_STORAGE_URI = 'memory://'
     # Add other testing-specific configurations here
 
 
@@ -529,7 +531,6 @@ def create_app(testing=False):
             # After scheduler starts, schedule a couple of delayed cleanup retries
             try:
                 if is_primary_worker and scheduler.running:
-                    from datetime import datetime, timezone
                     now = datetime.now(timezone.utc)
                     # Retry shortly after startup to catch workers that connected later
                     scheduler.add_job(lambda: perform_celery_cleanup(tag="retry+5s"), 'date', run_date=now + timedelta(seconds=5), id='celery_cleanup_retry_1', replace_existing=True)

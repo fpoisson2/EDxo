@@ -188,4 +188,3 @@ Le serveur FastMCP (`src/mcp_server/server.py`) expose les mêmes données via M
 Projet sous licence MIT.
 
 Contributions bienvenues (issues/PR). Pour toute question: francis.poisson2@gmail.com.
-

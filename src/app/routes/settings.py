@@ -762,7 +762,7 @@ def plan_de_cours_prompt_settings():
 def update_plan_de_cours_prompt(prompt_id):
     """Met à jour une configuration de prompt pour plan de cours."""
     try:
-        prompt = PlanDeCoursPromptSettings.query.get_or_404(prompt_id)
+        prompt = db.session.get(PlanDeCoursPromptSettings, prompt_id) or abort(404)
         
         if not request.is_json:
             return jsonify({'error': 'Content-Type must be application/json'}), 400
@@ -809,7 +809,7 @@ def test_plan_de_cours_prompt():
 @ensure_profile_completed
 def edit_plan_de_cours_prompt(prompt_id):
     """Affiche et met à jour la configuration d'un prompt de plan de cours."""
-    prompt = PlanDeCoursPromptSettings.query.get_or_404(prompt_id)
+    prompt = db.session.get(PlanDeCoursPromptSettings, prompt_id) or abort(404)
     form = PlanDeCoursPromptSettingsForm(obj=prompt)
 
     if form.validate_on_submit():

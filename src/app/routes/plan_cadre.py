@@ -861,7 +861,7 @@ def edit_plan_cadre(plan_id):
 def delete_plan_cadre(plan_id):
     form = DeleteForm()
     if form.validate_on_submit():
-        plan_cadre = PlanCadre.query.get(plan_id)
+        plan_cadre = db.session.get(PlanCadre, plan_id)
         if not plan_cadre:
             flash('Plan Cadre non trouvé.', 'danger')
             return redirect(url_for('main.index'))
@@ -889,7 +889,7 @@ def delete_plan_cadre(plan_id):
 @ensure_profile_completed
 def add_capacite(plan_id):
     form = CapaciteForm()
-    plan_cadre = PlanCadre.query.get(plan_id)
+    plan_cadre = db.session.get(PlanCadre, plan_id)
     if not plan_cadre:
         flash('Plan Cadre non trouvé.', 'danger')
         return redirect(url_for('main.index'))
@@ -944,7 +944,7 @@ def add_capacite(plan_id):
 def delete_capacite(plan_id, capacite_id):
     form = DeleteForm(prefix=f"capacite-{capacite_id}")
     if form.validate_on_submit():
-        plan_cadre = PlanCadre.query.get(plan_id)
+        plan_cadre = db.session.get(PlanCadre, plan_id)
         if not plan_cadre:
             flash('Plan Cadre non trouvé.', 'danger')
             return redirect(url_for('main.index'))
@@ -966,7 +966,7 @@ def delete_capacite(plan_id, capacite_id):
         return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
     else:
         flash('Erreur lors de la soumission du formulaire de suppression.', 'danger')
-        plan_cadre = PlanCadre.query.get(plan_id)
+        plan_cadre = db.session.get(PlanCadre, plan_id)
         if plan_cadre:
             return redirect(url_for('cours.view_plan_cadre', cours_id=plan_cadre.cours_id, plan_id=plan_id))
         return redirect(url_for('main.index'))

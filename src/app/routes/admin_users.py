@@ -152,7 +152,7 @@ def edit_user(user_id):
             user.programmes.clear()
             submitted_programmes = request.form.getlist('programmes')
             for prog_id in submitted_programmes:
-                prog_obj = Programme.query.get(int(prog_id))
+                prog_obj = db.session.get(Programme, int(prog_id))
                 if prog_obj:
                     user.programmes.append(prog_obj)
 

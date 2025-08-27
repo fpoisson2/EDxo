@@ -1,4 +1,5 @@
 from flask import url_for
+import pytest
 from werkzeug.security import generate_password_hash
 
 from src.app import db
@@ -61,4 +62,3 @@ def test_logigramme_unauthorized_redirect(app, client):
     assert resp.status_code in (301, 302)
     with app.app_context():
         assert resp.headers["Location"].endswith(url_for("main.index", _external=False))
-

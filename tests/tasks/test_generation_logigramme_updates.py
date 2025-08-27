@@ -4,6 +4,7 @@ from unittest.mock import patch
 from src.app import db
 from src.app.models import Programme, Department, User
 from src.app.tasks.generation_logigramme import generate_programme_logigramme_task
+import pytest
 
 
 class DummySelf:

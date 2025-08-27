@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import pytest
 from src.app.tasks.generation_logigramme import generate_programme_logigramme_task
 from .test_generation_logigramme_updates import (
     DummySelf,

@@ -1,4 +1,5 @@
 from flask import url_for
+import pytest
 from werkzeug.security import generate_password_hash
 
 from src.app import db

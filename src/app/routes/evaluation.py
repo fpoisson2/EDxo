@@ -128,7 +128,7 @@ def admin_required(f):
 @ensure_profile_completed
 def get_description(evaluation_id):
     try:
-        evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
+        evaluation = db.session.get(PlanDeCoursEvaluations, evaluation_id) or abort(404)
         return jsonify({
             'success': True,
             'description': evaluation.description or ''
@@ -190,7 +190,7 @@ def select_plan(course_id):
 @login_required
 @ensure_profile_completed
 def select_evaluation(plan_id):
-    plan = PlanDeCours.query.get_or_404(plan_id)
+    plan = db.session.get(PlanDeCours, plan_id) or abort(404)
     evaluations = PlanDeCoursEvaluations.query.filter_by(plan_de_cours_id=plan_id).all()
     
     if not evaluations:
@@ -231,7 +231,7 @@ from collections import defaultdict
 @login_required
 @ensure_profile_completed
 def configure_grid(evaluation_id):
-    evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
+    evaluation = db.session.get(PlanDeCoursEvaluations, evaluation_id) or abort(404)
     plan = evaluation.plan_de_cours
     plan_id = plan.id
 
@@ -345,7 +345,7 @@ def configure_grid(evaluation_id):
 @login_required
 @ensure_profile_completed
 def configure_six_level_grid(evaluation_id):
-    evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
+    evaluation = db.session.get(PlanDeCoursEvaluations, evaluation_id) or abort(404)
     form = SixLevelGridForm()
     
     if request.method == 'GET':
@@ -649,7 +649,7 @@ def evaluation_wizard():
         if 'submit_evaluation' in request.form:
             evaluation_id = request.form.get('evaluation')
             if evaluation_id:
-                selected_evaluation = PlanDeCoursEvaluations.query.get_or_404(int(evaluation_id))
+                selected_evaluation = db.session.get(PlanDeCoursEvaluations, int(evaluation_id)) or abort(404)
                 
                 # Récupérer les capacités et savoirs-faire
                 eval_capacites = (
@@ -781,7 +781,7 @@ def get_grid():
     if not evaluation_id:
         return ""
         
-    evaluation = PlanDeCoursEvaluations.query.get_or_404(int(evaluation_id))
+    evaluation = db.session.get(PlanDeCoursEvaluations, int(evaluation_id)) or abort(404)
     
     # Récupérer les capacités et savoirs-faire
     eval_capacites = (
@@ -908,7 +908,7 @@ def save_grid():
 @ensure_profile_completed
 def export_evaluation_docx(evaluation_id):
     # 1. Récupérer l'évaluation
-    evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
+    evaluation = db.session.get(PlanDeCoursEvaluations, evaluation_id) or abort(404)
     
     # 2. Récupérer les capacités et savoirs-faire associés
     eval_capacites = (

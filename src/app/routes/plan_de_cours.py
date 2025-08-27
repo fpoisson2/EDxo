@@ -1855,7 +1855,7 @@ def export_session_plans(programme_id, session):
     Exporte tous les plans de cours d'une session donnée dans un fichier ZIP
     """
 
-    programme = Programme.query.get_or_404(programme_id)
+    programme = db.session.get(Programme, programme_id) or abort(404)
     # Convertir le numéro de session en format attendu (ex: 2 -> h25 ou a24)
     session_num = int(session)
     current_year = datetime.now().year % 100  # Obtenir les 2 derniers chiffres de l'année
@@ -1880,7 +1880,7 @@ def export_session_plans(programme_id, session):
 
         filtered_plans = []
         for plan_de_cours in plans_de_cours:
-            cours = Cours.query.get_or_404(plan_de_cours.cours_id)
+            cours = db.session.get(Cours, plan_de_cours.cours_id) or abort(404)
             try:
                 session_cours = int(cours.code[0])
                 if session_cours == session_num:
@@ -1899,7 +1899,7 @@ def export_session_plans(programme_id, session):
         # Pour chaque plan de cours
         for plan_de_cours in plans_de_cours:
             # Récupérer le cours associé
-            cours = Cours.query.get_or_404(plan_de_cours.cours_id)
+            cours = db.session.get(Cours, plan_de_cours.cours_id) or abort(404)
             
             # Récupérer le plan cadre
             plan_cadre = PlanCadre.query.options(
@@ -2095,7 +2095,7 @@ def delete_plan_de_cours(plan_id):
 @ensure_profile_completed
 def export_docx(cours_id, session):
     # 1. Récupérer le Cours
-    cours = Cours.query.get_or_404(cours_id)
+    cours = db.session.get(Cours, cours_id) or abort(404)
 
     # 2. Récupérer le PlanCadre + chargement des relations
     plan_cadre = PlanCadre.query.options(

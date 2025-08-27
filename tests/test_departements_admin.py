@@ -59,4 +59,3 @@ def test_add_department_success(client, app):
         dep = Department.query.filter_by(nom='Département Informatique').first()
         assert dep is not None
         assert dep.cegep_id == cegep_id
-

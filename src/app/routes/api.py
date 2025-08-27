@@ -5,7 +5,7 @@ from datetime import timedelta
 from src.utils.datetime_utils import now_utc, ensure_aware_utc
 import secrets
 
-from flask import Blueprint, jsonify, send_file, request, g
+from flask import Blueprint, jsonify, send_file, request, g, abort
 from flask_login import current_user, login_required
 
 from .oauth import _json_error
@@ -91,7 +91,7 @@ def list_programmes():
 @api_bp.get('/programmes/<int:programme_id>/cours')
 @api_auth_required
 def list_courses_for_program(programme_id):
-    programme = Programme.query.get_or_404(programme_id)
+    programme = db.session.get(Programme, programme_id) or abort(404)
     courses = [{'id': c.id, 'code': c.code, 'nom': c.nom} for c in programme.cours]
     return jsonify(courses)
 
@@ -107,7 +107,7 @@ def list_competences_for_program(programme_id):
 @api_bp.get('/competences/<int:competence_id>')
 @api_auth_required
 def competence_details(competence_id):
-    comp = Competence.query.get_or_404(competence_id)
+    comp = db.session.get(Competence, competence_id) or abort(404)
     elements = [
         {
             'id': e.id,
@@ -138,7 +138,7 @@ def list_courses():
 @api_bp.get('/cours/<int:cours_id>')
 @api_auth_required
 def course_details(cours_id):
-    cours = Cours.query.get_or_404(cours_id)
+    cours = db.session.get(Cours, cours_id) or abort(404)
     return jsonify({'id': cours.id, 'code': cours.code, 'nom': cours.nom})
 
 
@@ -200,7 +200,7 @@ def generate_plan_de_cours(plan_id):
     additional_info = payload.get('additional_info') or ''
     ai_model = payload.get('ai_model') or ''
     # Récupérer PlanDeCours et contexte pour construire le prompt
-    plan = PlanDeCours.query.get_or_404(plan_id)
+    plan = db.session.get(PlanDeCours, plan_id) or abort(404)
     cours = plan.cours
     plan_cadre = cours.plan_cadre if cours else None
     try:
@@ -252,7 +252,7 @@ def improve_plan_cadre_section(plan_id, section):
 @api_bp.get('/plan_cadre/<int:plan_id>/section/<string:section>')
 @api_auth_required
 def get_plan_cadre_section(plan_id, section):
-    plan = PlanCadre.query.get_or_404(plan_id)
+    plan = db.session.get(PlanCadre, plan_id) or abort(404)
     if not hasattr(plan, section):
         return jsonify({'error': 'Section inconnue'}), 404
     return jsonify({section: getattr(plan, section)})
@@ -262,7 +262,7 @@ def get_plan_cadre_section(plan_id, section):
 @api_auth_required
 def export_plan_cadre_docx(plan_id):
     from ...utils import generate_docx_with_template
-    plan = PlanCadre.query.get_or_404(plan_id)
+    plan = db.session.get(PlanCadre, plan_id) or abort(404)
     docx_file = generate_docx_with_template(plan_id)
     if not docx_file:
         return jsonify({'error': 'generation failed'}), 400
@@ -280,7 +280,7 @@ def export_plan_cadre_docx(plan_id):
 @api_auth_required
 def export_plan_de_cours_docx(plan_id):
     from .plan_de_cours import export_docx as export_pdc
-    plan = PlanDeCours.query.get_or_404(plan_id)
+    plan = db.session.get(PlanDeCours, plan_id) or abort(404)
     return export_pdc(plan.cours_id, plan.session)
 
 
@@ -296,7 +296,7 @@ def improve_plan_de_cours_field(plan_id, field_name):
         except Exception:
             payload = {}
     additional_info = payload.get('additional_info') or ''
-    plan = PlanDeCours.query.get_or_404(plan_id)
+    plan = db.session.get(PlanDeCours, plan_id) or abort(404)
     task = generate_plan_de_cours_field_task.delay(plan.id, field_name, additional_info, g.api_user.id)
     return jsonify({'task_id': task.id}), 202
 
@@ -309,7 +309,7 @@ def generate_plan_de_cours_calendar(plan_id):
     payload = request.get_json(silent=True) or {}
     additional_info = payload.get('additional_info') or ''
     current_cal = payload.get('existing_calendriers')
-    plan = PlanDeCours.query.get_or_404(plan_id)
+    plan = db.session.get(PlanDeCours, plan_id) or abort(404)
     task = generate_plan_de_cours_calendar_task.delay(
         plan.id, additional_info, g.api_user.id, current_cal
     )
@@ -324,7 +324,7 @@ def generate_plan_de_cours_evaluations(plan_id):
     payload = request.get_json(silent=True) or {}
     additional_info = payload.get('additional_info') or ''
     current_evals = payload.get('existing_evaluations')
-    plan = PlanDeCours.query.get_or_404(plan_id)
+    plan = db.session.get(PlanDeCours, plan_id) or abort(404)
     task = generate_plan_de_cours_evaluations_task.delay(
         plan.id, additional_info, g.api_user.id, current_evals
     )

@@ -1,4 +1,5 @@
 from werkzeug.security import generate_password_hash
+import pytest
 from src.app import db
 from src.app.models import (
     Programme,
