@@ -1,5 +1,5 @@
 import json
-from typing import Optional
+from typing import Optional, List, Union
 
 from celery import shared_task
 from openai import OpenAI
@@ -43,6 +43,32 @@ class PlanDeCoursAIResponse(BaseModel):
     compatibility_percentage: Optional[float] = None
     recommendation_ameliore: Optional[str] = None
     recommendation_plan_cadre: Optional[str] = None
+
+
+def _collect_summary(items: Union[List, str, None]) -> str:
+    """Return concatenated summary_text from items."""
+    text = ""
+    if not items:
+        return text
+    if not isinstance(items, (list, tuple)):
+        items = [items]
+    for item in items:
+        if getattr(item, "type", "") == "summary_text":
+            text += getattr(item, "text", "")
+    return text
+
+
+def _extract_reasoning_summary_from_response(response) -> str:
+    """Extract reasoning summary from a Responses API result."""
+    summary = ""
+    if hasattr(response, "reasoning") and response.reasoning:
+        for r in response.reasoning:
+            summary += _collect_summary(getattr(r, "summary", None))
+    if not summary and hasattr(response, "output"):
+        for item in getattr(response, "output", []):
+            if getattr(item, "type", "") == "reasoning":
+                summary += _collect_summary(getattr(item, "summary", None))
+    return summary.strip()
 
 
 @shared_task(bind=True, name='src.app.tasks.analyse_plan_de_cours.analyse_plan_de_cours_task')
@@ -111,7 +137,7 @@ def analyse_plan_de_cours_task(self, plan_id: int, user_id: int) -> dict:
         total_completion_tokens = 0
 
         streamed_text = ""
-        reasoning_summary = ""
+        reasoning_summary_text = ""
 
         # Streaming quand possible
         try:
@@ -123,17 +149,71 @@ def analyse_plan_de_cours_task(self, plan_id: int, user_id: int) -> dict:
                 reasoning=reasoning_params,
             ) as stream:
                 for event in stream:
-                    et = getattr(event, 'event', '') or ''
+                    # Newer SDKs expose event type via `type`; older ones via `event`.
+                    et = getattr(event, 'type', '') or getattr(event, 'event', '') or ''
                     if et.endswith('response.output_text.delta') or et == 'response.output_text.delta':
-                        delta = getattr(event, 'delta', '') or ''
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
                         if delta:
                             streamed_text += delta
-                            self.update_state(state='PROGRESS', meta={'stream_chunk': delta, 'stream_buffer': streamed_text})
+                            self.update_state(
+                                state='PROGRESS',
+                                meta={
+                                    'message': 'Analyse en cours...',
+                                    'stream_chunk': delta,
+                                    'stream_buffer': streamed_text,
+                                }
+                            )
                     elif et.endswith('response.reasoning_summary_text.delta') or et == 'response.reasoning_summary_text.delta':
-                        rs_delta = getattr(event, 'delta', '') or ''
+                        rs_delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
                         if rs_delta:
-                            reasoning_summary += rs_delta
-                            self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary.strip()})
+                            reasoning_summary_text += rs_delta
+                            self.update_state(
+                                state='PROGRESS',
+                                meta={
+                                    'message': 'Résumé du raisonnement',
+                                    'reasoning_summary': reasoning_summary_text.strip(),
+                                }
+                            )
+                    elif et.endswith('reasoning.summary.delta') or et == 'reasoning.summary.delta':
+                        reasoning_summary_text += _collect_summary(getattr(event, 'delta', None))
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(
+                                state='PROGRESS',
+                                meta={
+                                    'message': 'Résumé du raisonnement',
+                                    'reasoning_summary': reasoning_summary_text,
+                                }
+                            )
+                    elif et.endswith('response.reasoning.delta') or et == 'response.reasoning.delta' or \
+                         et.endswith('reasoning.delta') or et == 'reasoning.delta':
+                        delta_obj = getattr(event, 'delta', None)
+                        if isinstance(delta_obj, str):
+                            reasoning_summary_text += delta_obj
+                        elif isinstance(delta_obj, dict):
+                            reasoning_summary_text += delta_obj.get('summary_text') or delta_obj.get('text') or ''
+                        else:
+                            reasoning_summary_text += _collect_summary(getattr(event, 'summary', None))
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(
+                                state='PROGRESS',
+                                meta={
+                                    'message': 'Résumé du raisonnement',
+                                    'reasoning_summary': reasoning_summary_text,
+                                }
+                            )
+                    elif getattr(event, 'summary', None):
+                        reasoning_summary_text += _collect_summary(event.summary)
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(
+                                state='PROGRESS',
+                                meta={
+                                    'message': 'Résumé du raisonnement',
+                                    'reasoning_summary': reasoning_summary_text,
+                                }
+                            )
                 completion = stream.get_final_response()
         except Exception:
             # Fallback non-stream
@@ -144,6 +224,17 @@ def analyse_plan_de_cours_task(self, plan_id: int, user_id: int) -> dict:
                 text=text_kwargs,
                 reasoning=reasoning_params,
             )
+
+        if not reasoning_summary_text:
+            reasoning_summary_text = _extract_reasoning_summary_from_response(completion)
+            if reasoning_summary_text:
+                self.update_state(
+                    state='PROGRESS',
+                    meta={
+                        'message': 'Résumé du raisonnement',
+                        'reasoning_summary': reasoning_summary_text,
+                    }
+                )
 
         # Usage et coût
         usage_prompt = getattr(getattr(completion, 'usage', None), 'input_tokens', 0) or 0
@@ -211,8 +302,8 @@ def analyse_plan_de_cours_task(self, plan_id: int, user_id: int) -> dict:
             # Retour vers la gestion avec réouverture du modal de vérification
             'validation_url': f"/gestion_programme/?open=verify&plan_id={plan.id}",
         }
-        if reasoning_summary:
-            result['reasoning_summary'] = reasoning_summary.strip()
+        if reasoning_summary_text:
+            result['reasoning_summary'] = reasoning_summary_text.strip()
         return result
     except Exception as e:
         logger.exception("Erreur dans analyse_plan_de_cours_task")
