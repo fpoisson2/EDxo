@@ -54,12 +54,6 @@ REGIONS = [
 
 class ConfirmationGrilleForm(FlaskForm):
     """Formulaire pour confirmer l'importation d'une grille de cours."""
-    programme_id = SelectField(
-        'Programme', 
-        validators=[DataRequired()], 
-        coerce=int,
-        render_kw={"class": "form-select"}
-    )
     import_mode = SelectField(
         'Mode d\'import',
         choices=[('append', 'Ajouter aux cours existants'), ('overwrite', 'Écraser les cours existants du programme')],
@@ -67,16 +61,10 @@ class ConfirmationGrilleForm(FlaskForm):
         validators=[DataRequired()],
         render_kw={"class": "form-select"}
     )
-    
-    nom_programme = StringField(
-        'Nom du programme (tel que détecté dans le PDF)', 
-        validators=[DataRequired(), Length(max=255)],
-        render_kw={"class": "form-control", "readonly": True}
-    )
-    
+
     task_id = HiddenField('ID de la tâche')
     grille_json = HiddenField('JSON de la grille')
-    
+
     confirmer = SubmitField('Confirmer importation', render_kw={"class": "btn btn-success"})
     annuler = SubmitField('Annuler', render_kw={"class": "btn btn-secondary"})
 
