@@ -606,7 +606,6 @@
   function startBackgroundWatch(taskId, opts = {}) {
     stopBackgroundWatch();
     BG.taskId = taskId;
-    const prefix = (typeof window !== 'undefined' && window.APP_PREFIX) ? window.APP_PREFIX : '';
     const statusUrl = opts.statusUrl || `${prefix}/tasks/status/${taskId}`;
     const title = opts.title || 'Suivi de la tâche';
     BG.timer = setTimeout(() => backgroundPoll(statusUrl, title), 1500);
