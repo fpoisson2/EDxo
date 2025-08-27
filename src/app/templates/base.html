@@ -756,7 +756,7 @@
               return Object.assign({}, n, tid ? { taskId: tid } : {});
             }).filter(Boolean);
             const byId = new Map();
-            const others = [];
+            const others = new Map();
             for (const n of normed) {
               if (n.taskId) {
                 const prev = byId.get(n.taskId);
@@ -764,10 +764,14 @@
                   byId.set(n.taskId, n);
                 }
               } else {
-                others.push(n);
+                const key = n.link ? `link:${n.link}` : `msg:${n.type}|${n.message}`;
+                const prev = others.get(key);
+                if (!prev || (new Date(n.timestamp || 0) > new Date(prev.timestamp || 0))) {
+                  others.set(key, n);
+                }
               }
             }
-            notifications = [...byId.values(), ...others];
+            notifications = [...byId.values(), ...others.values()];
           } catch (e) {
             console.error("Erreur lors du chargement des notifications", e);
             notifications = [];
@@ -798,13 +802,36 @@
             } else if (notif.type === "in-progress") {
               iconHtml = '<span class="spinner-border spinner-border-sm me-2 text-primary"></span>';
             } else {
-              iconHtml = '<i class="bi bi-info-circle me-2 text-info"></i>';
+              // Fallback: when no specific icon, prefer the blue loader next to the task
+              iconHtml = '<span class="spinner-border spinner-border-sm me-2 text-primary"></span>';
             }
             const li = document.createElement("li");
             li.className = "dropdown-item";
             li.innerHTML = notif.link 
               ? iconHtml + '<a href="' + notif.link + '">' + notif.message + "</a>"
               : iconHtml + notif.message;
+            // Validate existence on click; prune invalid entries
+            try {
+              const a = li.querySelector('a');
+              if (a) {
+                a.addEventListener('click', async (ev) => {
+                  try {
+                    const href = a.getAttribute('href') || '';
+                    const tid = extractTaskId(href);
+                    if (!tid) return; // no validation for non-task links
+                    const ok = await checkTaskExists(tid);
+                    if (!ok) {
+                      ev.preventDefault();
+                      // Remove the stale notification
+                      notifications = notifications.filter(n => !(n && (n.taskId === tid || (n.link && n.link.indexOf(`/tasks/track/${tid}`) !== -1))));
+                      saveNotifications();
+                      updateNotificationUI();
+                      try { window.flashMessageSystem && window.flashMessageSystem.warning('Cette tâche n\'existe plus. Liste nettoyée.', 4000); } catch {}
+                    }
+                  } catch {}
+                });
+              }
+            } catch {}
             list.appendChild(li);
           });
           const clearBtnLi = document.createElement("li");
@@ -818,6 +845,51 @@
         updateNotificationBadge();
       }
 
+      // Quick server-side existence check
+      async function checkTaskExists(taskId) {
+        try {
+          const r = await fetch('/tasks/status/' + taskId, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+          if (!r.ok) return false;
+          const d = await r.json();
+          return !!(d && d.state);
+        } catch (_) { return false; }
+      }
+
+      // Prune stale/invalid notifications; validate hits limited to avoid burst
+      let pruningInFlight = false;
+      async function pruneNotifications({ maxAgeMs = 1000 * 60 * 60 * 24, validate = false, validateLimit = 6 } = {}) {
+        if (pruningInFlight) return;
+        pruningInFlight = true;
+        try {
+          const now = Date.now();
+          // Drop very old non-active items
+          notifications = notifications.filter(n => {
+            if (!n) return false;
+            if (n.type === 'in-progress' || n.type === 'queued') return true;
+            const ts = new Date(n.timestamp || 0).getTime();
+            if (!ts) return true;
+            return (now - ts) <= maxAgeMs;
+          });
+          if (validate) {
+            let validated = 0;
+            for (const n of [...notifications]) {
+              if (validated >= validateLimit) break;
+              if (!(n && (n.taskId || extractTaskId(n.link)))) continue;
+              const tid = n.taskId || extractTaskId(n.link);
+              if (!tid) continue;
+              validated++;
+              const ok = await checkTaskExists(tid);
+              if (!ok) {
+                notifications = notifications.filter(x => !(x && (x.taskId === tid || (x.link && x.link.indexOf(`/tasks/track/${tid}`) !== -1))));
+              }
+            }
+          }
+          saveNotifications();
+          updateNotificationUI();
+        } catch {}
+        pruningInFlight = false;
+      }
+
       function updateNotificationBadge() {
         const badge = document.getElementById("notification-badge");
         if (notifications.length > 0) {
@@ -829,30 +901,58 @@
       }
 
       function addNotification(message, type = "info", link = null, taskId = null) {
-        // Nouveau: une seule entrée par tâche (state), identifiée par taskId
+        // Déduplique par taskId ou lien; sinon, atténue les doublons exacts message+type
         let tid = taskId;
-        if (!tid && typeof link === 'string') {
-          const m = link.match(/\/tasks\/track\/([^/]+)/);
-          if (m) tid = m[1];
-        }
+        try {
+          if (!tid && typeof link === 'string') {
+            const m = link.match(/\/tasks\/track\/([^/]+)/);
+            if (m) tid = m[1];
+          }
+        } catch {}
         const nowIso = new Date().toISOString();
         if (tid) {
-          const idx = notifications.findIndex(n => n.taskId === tid);
-          if (idx !== -1) {
-            notifications[idx].message = message;
-            notifications[idx].type = type;
-            notifications[idx].link = link;
-            notifications[idx].timestamp = nowIso;
-          } else {
-            notifications.push({ id: Date.now(), taskId: tid, message, type, link, timestamp: nowIso });
+          const payload = { id: Date.now(), taskId: tid, message, type, link, timestamp: nowIso };
+          let updated = false;
+          for (let i = 0; i < notifications.length; i++) {
+            const n = notifications[i];
+            if (n && n.taskId === tid) {
+              notifications[i] = Object.assign({}, n, payload);
+              updated = true;
+            }
           }
+          if (!updated) notifications.push(payload);
+          // Nettoyage: supprimer doublons potentiels sans taskId mais avec même lien de suivi
+          try {
+            const trackLink = `/tasks/track/${tid}`;
+            notifications = notifications.filter((n, idx) => {
+              if (!n) return false;
+              if (n.taskId === tid) return true;
+              if (n.link && typeof n.link === 'string' && n.link.indexOf(trackLink) !== -1) return false;
+              return true;
+            });
+          } catch {}
           saveNotifications();
           updateNotificationUI();
           return;
         }
-        // Fallback si pas de taskId
-        const notif = { id: Date.now(), message, type, link, timestamp: nowIso };
-        notifications.push(notif);
+        if (link) {
+          const i = notifications.findIndex(n => n && n.link === link && !n.taskId);
+          if (i !== -1) {
+            notifications[i].message = message;
+            notifications[i].type = type;
+            notifications[i].timestamp = nowIso;
+          } else {
+            notifications.push({ id: Date.now(), message, type, link, timestamp: nowIso });
+          }
+        } else {
+          const i = notifications.slice(-10).findIndex(n => n && !n.taskId && n.message === message && n.type === type);
+          if (i !== -1) {
+            const realIdx = notifications.length - 10 + i;
+            notifications[realIdx].timestamp = nowIso;
+          } else {
+            notifications.push({ id: Date.now(), message, type, timestamp: nowIso });
+          }
+        }
         saveNotifications();
         updateNotificationUI();
       }
@@ -895,9 +995,13 @@
         } catch {}
         updateNotificationUI();
         const notificationDropdown = document.getElementById('notificationDropdown');
-        notificationDropdown.addEventListener('click', () => {
+        notificationDropdown.addEventListener('click', async () => {
           document.getElementById("notification-badge").style.display = "none";
+          // On open, validate a handful and prune stale
+          await pruneNotifications({ validate: true, validateLimit: 6, maxAgeMs: 1000 * 60 * 60 * 24 });
         });
+        // Background prune for age only
+        pruneNotifications({ validate: false });
       });
     </script>
 

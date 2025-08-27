@@ -331,7 +331,9 @@
                 nb_sessions: nbSessions,
                 total_hours: totalHours,
                 total_units: totalUnits
-              }
+              },
+              // Align with other flows to explicitly enable streaming UI
+              fixedPayload: { stream: true }
             });
             return;
           }

@@ -1,35 +1,100 @@
 {% extends 'base.html' %}
 
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/view_plan_cadre.css') }}">
+    <script>
+      window.addEventListener('DOMContentLoaded', function() {
+        if (window.marked && window.marked.setOptions) {
+          window.marked.setOptions({ breaks: true, gfm: true });
+        }
+      });
+    </script>
+    <script>
+      // a11y: aria-labels for textareas and icon-only buttons
+      document.addEventListener('DOMContentLoaded', function(){
+        try {
+          document.querySelectorAll('textarea').forEach(el => {
+            if (!el.getAttribute('aria-label')) {
+              let p = el.parentElement, labelText = '';
+              while (p && p !== document.body) { const lab = p.querySelector('label'); if (lab && lab.textContent.trim()) { labelText = lab.textContent.trim(); break; } p = p.parentElement; }
+              if (labelText) el.setAttribute('aria-label', labelText);
+            }
+          });
+          document.querySelectorAll('button, a').forEach(el => { const hasText = (el.textContent||'').trim().length>0; if (!hasText) { const t = el.getAttribute('title'); if (t && !el.getAttribute('aria-label')) el.setAttribute('aria-label', t); } });
+        } catch(_){}
+      });
+    </script>
+    <style>
+      html { scroll-behavior: smooth; }
+      /* Assure un bon décalage pour les ancres avec la nav collante */
+      #accordionPlanCours .accordion-item { scroll-margin-top: 140px; }
+      @media (max-width: 768px) { #accordionPlanCours .accordion-item { scroll-margin-top: 80px; } }
+    </style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5">
-    <h1>Plan de cours</h1>
-    <hr>
+    <button class="btn btn-outline-primary d-md-none mb-3" type="button"
+            data-bs-toggle="offcanvas" data-bs-target="#sectionsOffcanvas" aria-controls="sectionsOffcanvas">
+        Sections
+    </button>
+    <!-- Navigation de sections (desktop) -->
+    <nav id="sectionsNav" class="nav nav-pills d-none d-md-flex flex-wrap gap-2 sticky-top bg-white py-2 px-2 border rounded mb-3 shadow-sm" style="top: 70px; z-index: 1020; overflow-x: auto;">
+        <a class="nav-link" href="#section-infos">Informations générales</a>
+        <a class="nav-link" href="#section-capacites">Capacités du cours</a>
+        <a class="nav-link" href="#section-regles-dept">Règles départementales</a>
+        <a class="nav-link" href="#section-piea">Règles de PIEA</a>
+        <a class="nav-link" href="#section-contenu">Contenu du cours</a>
+    </nav>
+    <!-- Navigation mobile (offcanvas) -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sectionsOffcanvas" aria-labelledby="sectionsOffcanvasLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sectionsOffcanvasLabel">Sections</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
+        </div>
+        <div class="offcanvas-body">
+            <nav class="nav flex-column">
+                <a class="nav-link" href="#section-infos" data-bs-dismiss="offcanvas">Informations générales</a>
+                <a class="nav-link" href="#section-capacites" data-bs-dismiss="offcanvas">Capacités du cours</a>
+                <a class="nav-link" href="#section-regles-dept" data-bs-dismiss="offcanvas">Règles départementales</a>
+                <a class="nav-link" href="#section-piea" data-bs-dismiss="offcanvas">Règles de PIEA</a>
+                <a class="nav-link" href="#section-contenu" data-bs-dismiss="offcanvas">Contenu du cours</a>
+            </nav>
+        </div>
+    </div>
 
-    <!-- Actions (responsive) -->
-    <div class="d-flex justify-content-start gap-2 mb-4 pdc-actions">
-        <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" 
-           class="btn btn-success d-flex align-items-center">
-            <i class="bi bi-file-earmark-word me-2"></i>
-            <span>Exporter en .docx</span>
-        </a>
+    <!-- Titre -->
+    <div class="mb-3 text-center">
+        <h1>Plan de cours pour le cours : {{ cours.code }} - {{ cours.nom }}</h1>
+    </div>
+
+    <!-- Actions (alignées au style plan-cadre) -->
+    <div class="d-flex flex-column flex-sm-row gap-3 mb-5 align-items-center pdc-actions">
+        {% if current_user.role in ['admin', 'coordo'] %}
         <button type="button" id="openImportPlanCoursTask" class="btn btn-outline-primary d-flex align-items-center">
             <i class="bi bi-file-earmark-arrow-up me-2"></i>
-            <span>Importer .docx</span>
+            <span>Importer</span>
         </button>
-        <!-- Actions rapides (unifiées) -->
         <button type="button" id="openGeneratePdcBtn" class="btn btn-success d-flex align-items-center">
             <i class="bi bi-box-arrow-up-right me-2"></i>
-            <span>Générer le plan de cours</span>
+            <span>Générer</span>
         </button>
         <button type="button" id="openImprovePdcBtn" class="btn btn-outline-success d-flex align-items-center">
             <i class="bi bi-magic me-2"></i>
-            <span>Améliorer le plan de cours</span>
+            <span>Améliorer</span>
         </button>
+        {% endif %}
+        <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" 
+           class="btn btn-primary d-flex align-items-center">
+            <i class="bi bi-file-earmark-word me-2"></i>
+            <span>Exporter</span>
+        </a>
     </div>
 
     <div class="accordion" id="accordionPlanCours">
         <!-- Accordéon : Informations Générales sur le Cours -->
-        <div class="accordion-item">
+        <div class="accordion-item" id="section-infos">
             <h2 class="accordion-header" id="headingInfoGen">
                 <button class="accordion-button collapsed bg-primary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInfoGen" aria-expanded="false" aria-controls="collapseInfoGen">
                     Informations générales sur le cours
@@ -61,8 +126,8 @@
             </div>
         </div>
 
-        <!-- Accordéon : Informations PlanCadre -->
-        <div class="accordion-item">
+        <!-- Accordéon : Capacités du cours (PlanCadre) -->
+        <div class="accordion-item" id="section-capacites">
             <h2 class="accordion-header" id="headingPlanCadre">
                 <button class="accordion-button collapsed bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePlanCadre" aria-expanded="false" aria-controls="collapsePlanCadre">
                     Capacités du cours
@@ -153,7 +218,7 @@
         </div>
 
         <!-- Accordéon : Règles Départementales -->
-        <div class="accordion-item">
+        <div class="accordion-item" id="section-regles-dept">
             <h2 class="accordion-header" id="headingReglesDept">
                 <button class="accordion-button collapsed bg-danger text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReglesDept" aria-expanded="false" aria-controls="collapseReglesDept">
                     Règles départementales
@@ -178,7 +243,7 @@
         </div>
 
         <!-- Accordéon : Règles de PIEA -->
-        <div class="accordion-item">
+        <div class="accordion-item" id="section-piea">
             <h2 class="accordion-header" id="headingReglesPIEA">
                 <button class="accordion-button collapsed bg-warning text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReglesPIEA" aria-expanded="false" aria-controls="collapseReglesPIEA">
                     Règles de PIEA
@@ -202,8 +267,8 @@
             </div>
         </div>
 
-        <!-- Accordéon : Édition du PlanDeCours -->
-        <div class="accordion-item">
+        <!-- Accordéon : Contenu du cours (édition) -->
+        <div class="accordion-item" id="section-contenu">
             <h2 class="accordion-header" id="headingEdition">
                 <button class="accordion-button collapsed bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEdition" aria-expanded="false" aria-controls="collapseEdition">
                     Contenu du cours
@@ -338,6 +403,9 @@
                         <div class="mb-3">
                             <div class="d-flex align-items-center justify-content-between">
                                 <h4 class="mb-0">Calendrier des activités</h4>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="improve-calendar" title="Améliorer le calendrier">
+                                    <i class="bi bi-magic"></i>
+                                </button>
                             </div>
                             <div id="calendrier-container" class="mb-3" {% if not form.calendriers %}style="display: none;"{% endif %}>
                                  {% for subform in form.calendriers %}
@@ -451,6 +519,9 @@
                         <div class="mb-3">
                             <div class="d-flex align-items-center justify-content-between">
                                 <h4 class="mb-0">Évaluations</h4>
+                                <button type="button" id="improve-evaluations" class="btn btn-outline-primary btn-sm" title="Améliorer les évaluations">
+                                    <i class="bi bi-magic"></i>
+                                </button>
                             </div>
                             <div id="evaluations-container" class="mb-3" {% if not form.evaluations %}style="display: none;"{% endif %}>
                                 {% for evaluation_subform in form.evaluations %}
@@ -478,7 +549,7 @@
                                                 {{ evaluation_subform.texte_description(class="form-control") }}
                                             </div>
                                             <div class="capacites-section">
-                                                <h5>Capacités évaluées</h5>
+                                                <h5 class="mb-0">Capacités évaluées</h5>
                                                 <div class="capacites-container">
                                                     {% for cap_subform in evaluation_subform.capacites %}
                                                         <div class="capacite-item card bg-light mb-2 p-2">
@@ -518,14 +589,7 @@
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-end gap-2 mb-3">
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="improve-calendar" title="Améliorer le calendrier">
-                                <i class="bi bi-magic"></i>Améliorer le calendrier
-                            </button>
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="improve-evaluations" title="Améliorer les évaluations">
-                                <i class="bi bi-magic"></i>Améliorer les évaluations
-                            </button>
-                        </div>
+                        
 
                         <button type="submit" id="floatingSaveBtn" class="btn d-none">
                             <i class="bi bi-check-lg"></i>
@@ -1424,6 +1488,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+
+    // Un seul bouton (titre section) gère l'amélioration des évaluations
 
 // Modification de la fonction d'ajout d'évaluation
     document.getElementById('add-evaluation')?.addEventListener('click', function() {
