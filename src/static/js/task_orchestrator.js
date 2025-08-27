@@ -455,7 +455,7 @@
             <div id="task-orch-stream-spinner" class="my-2" style="min-height:1.5rem;">
               <div class="spinner-border spinner-border-sm text-primary" role="status" aria-label="Chargement"></div>
             </div>
-            <textarea id="task-orch-stream" class="form-control" rows="6" readonly style="background:#0f172a;color:#e2e8f0;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;min-height:140px;max-height:280px;"></textarea>
+            <div id="task-orch-stream-text" class="form-control" style="background:#0f172a;color:#e2e8f0;font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Cantarell, Noto Sans, Ubuntu, Helvetica Neue, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';font-size:0.95rem;line-height:1.3;min-height:140px;max-height:280px;overflow:auto;white-space:pre-wrap;"></div>
             <pre id="task-orch-stream-json" class="form-control" style="display:none;background:#0f172a;color:#e2e8f0;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;min-height:140px;max-height:280px;white-space:pre-wrap;overflow:auto;"></pre>
           </div>
           <div class="modal-footer">
@@ -472,7 +472,7 @@
     try {
       const btnText = document.getElementById('task-orch-view-text');
       const btnJson = document.getElementById('task-orch-view-json');
-      const areaText = document.getElementById('task-orch-stream');
+      const areaText = document.getElementById('task-orch-stream-text');
       const areaJson = document.getElementById('task-orch-stream-json');
       if (btnText && btnJson && areaText && areaJson) {
         btnText.addEventListener('click', () => {
@@ -579,7 +579,7 @@
     document.getElementById('task-orch-state').textContent = 'PENDING';
     // Log UI removed (status and progress are reflected elsewhere)
     try { const logEl = document.getElementById('task-orch-log'); if (logEl) logEl.remove(); } catch {}
-    const streamEl = opts.streamEl || document.getElementById('task-orch-stream');
+    const streamEl = opts.streamEl || document.getElementById('task-orch-stream-text');
     try { if (streamEl) streamEl.style.background = '#0f172a'; } catch {}
     const streamJsonPre = document.getElementById('task-orch-stream-json');
     const viewTextBtn = document.getElementById('task-orch-view-text');
@@ -611,9 +611,9 @@
     try {
       const cache = getCache(taskId);
       if (streamEl) {
-        streamEl.value = cache.stream || '';
-        streamEl.scrollTop = streamEl.scrollHeight;
-        if (streamSpinner) streamSpinner.style.display = streamEl.value ? 'none' : '';
+        setStreamText(streamEl, cache.stream || '');
+        scrollStreamToBottom(streamEl);
+        if (streamSpinner) streamSpinner.style.display = getStreamText(streamEl) ? 'none' : '';
       }
       try { if (typeof tryUpdateJsonView === 'function') tryUpdateJsonView(); } catch {}
       if (reasoningEl) {
@@ -680,21 +680,54 @@
     let streamTimer = null;
     let streamDirty = false;
     let streamViewMode = 'text';
+    function renderReadableFromJson(obj, level = 0) {
+      try {
+        if (obj === null || obj === undefined) return '';
+        if (typeof obj !== 'object') return String(obj);
+        if (Array.isArray(obj)) {
+          if (obj.length === 0) return '<div class="text-muted">(vide)</div>';
+          const items = obj.map(it => {
+            if (typeof it === 'object' && it !== null) {
+              return `<div>• ${renderReadableFromJson(it, level + 1)}</div>`;
+            }
+            return `<div>• ${String(it)}</div>`;
+          }).join('');
+          return items;
+        }
+        const parts = [];
+        for (const [k, v] of Object.entries(obj)) {
+          const title = String(k).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          if (typeof v === 'object' && v !== null) {
+            parts.push(`<div style="margin-top:${level?4:0}px"><strong>${title}</strong></div>`);
+            parts.push(`<div style="margin-left:10px">${renderReadableFromJson(v, level + 1)}</div>`);
+          } else {
+            parts.push(`<div><strong>${title}:</strong> ${String(v)}</div>`);
+          }
+        }
+        return parts.join('');
+      } catch { return ''; }
+    }
     function tryUpdateJsonView() {
       try {
-        const raw = streamBuf || (streamEl && streamEl.value) || '';
+        const raw = streamBuf || (streamEl ? getStreamText(streamEl) : '');
         let parsed;
         try { parsed = JSON.parse(raw); } catch { parsed = null; }
         if (parsed) {
           if (viewJsonBtn) viewJsonBtn.disabled = false;
-          if (streamJsonPre && (streamViewMode === 'json')) {
-            try { streamJsonPre.textContent = JSON.stringify(parsed, null, 2); } catch {}
+          try { if (streamJsonPre) streamJsonPre.textContent = JSON.stringify(parsed, null, 2); } catch {}
+          // Render readable titles in text pane when in text mode
+          if (streamEl && (streamViewMode === 'text')) {
+            try { streamEl.innerHTML = renderReadableFromJson(parsed); } catch {}
           }
         } else {
           if (viewJsonBtn) viewJsonBtn.disabled = true;
           if (streamJsonPre && (streamViewMode === 'json')) {
             // Fallback to text view if JSON becomes invalid during stream
             if (viewTextBtn) viewTextBtn.click();
+          }
+          // Keep raw text in text view
+          if (streamEl && (streamViewMode === 'text')) {
+            try { setStreamText(streamEl, raw); } catch {}
           }
         }
       } catch {}
@@ -719,11 +752,11 @@
               if (!streamDirty) return;
               streamDirty = false;
               if (streamEl) {
-                streamEl.value = streamBuf;
+                setStreamText(streamEl, streamBuf);
                 // Keep viewport near bottom
-                streamEl.scrollTop = streamEl.scrollHeight;
+                scrollStreamToBottom(streamEl);
               }
-              if (streamSpinner) streamSpinner.style.display = streamEl && streamEl.value ? 'none' : '';
+              if (streamSpinner) streamSpinner.style.display = streamEl && getStreamText(streamEl) ? 'none' : '';
               tryUpdateJsonView();
               try { scheduleCacheSave(taskId); } catch {}
             } catch {}
@@ -957,18 +990,19 @@
           // Try to pretty format JSON if applicable
           try {
             const obj = JSON.parse(streamBuf);
-            streamEl.value = JSON.stringify(obj, null, 2);
-          } catch { streamEl.value = streamBuf; }
-          streamEl.scrollTop = streamEl.scrollHeight;
+            setStreamText(streamEl, JSON.stringify(obj, null, 2));
+          } catch { setStreamText(streamEl, streamBuf); }
+          scrollStreamToBottom(streamEl);
           try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
         }
       } catch {}
+      try { if (typeof tryUpdateJsonView === 'function') tryUpdateJsonView(); } catch {}
       // Pretty-print JSON if the final content looks like JSON; then apply light green background + border
       try {
         if (streamEl) {
-          const current = streamEl.value || '';
+          const current = getStreamText(streamEl) || '';
           if (current) {
-            try { const obj = JSON.parse(current); streamEl.value = JSON.stringify(obj, null, 2); if (streamJsonPre) streamJsonPre.textContent = JSON.stringify(obj, null, 2); if (viewJsonBtn) viewJsonBtn.disabled = false; } catch {}
+            try { const obj = JSON.parse(current); setStreamText(streamEl, JSON.stringify(obj, null, 2)); if (streamJsonPre) streamJsonPre.textContent = JSON.stringify(obj, null, 2); if (viewJsonBtn) viewJsonBtn.disabled = false; } catch {}
           }
           // Light green background and emphasized green border to indicate completion
           try { streamEl.style.background = '#dcfce7'; } catch {}
@@ -1169,3 +1203,13 @@
     openTaskStartModal({ url, title, method, mode, defaultJsonText });
   });
 })();
+    function setStreamText(el, text) {
+      try {
+        if (!el) return;
+        if ('value' in el) { el.value = text || ''; } else { el.textContent = text || ''; }
+      } catch {}
+    }
+    function getStreamText(el) {
+      try { if (!el) return ''; return ('value' in el) ? (el.value || '') : (el.textContent || ''); } catch { return ''; }
+    }
+    function scrollStreamToBottom(el) { try { if (el) el.scrollTop = el.scrollHeight; } catch {} }

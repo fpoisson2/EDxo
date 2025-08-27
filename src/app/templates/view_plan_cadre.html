@@ -997,9 +997,6 @@
                   start();
                 } else if (retries > 0) {
                   setTimeout(() => waitForOrchestrator(retries - 1), 100);
-                } else {
-                  // Fallback: local minimal file modal
-                  ensureLocalImportDocxModal(endpoint);
                 }
               };
               waitForOrchestrator();
@@ -1048,65 +1045,7 @@
           });
         } catch(_) {}
 
-        // Local fallback modal if orchestrator is not yet ready
-        function ensureLocalImportDocxModal(endpoint) {
-          let modal = document.getElementById('localImportDocxModal');
-          if (!modal) {
-            const html = `
-            <div class="modal fade" id="localImportDocxModal" tabindex="-1" aria-hidden="true">
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title">Importer Plan‑cadre (.docx)</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-                  </div>
-                  <div class="modal-body">
-                    <input type="file" id="localDocxFile" class="form-control" accept=".docx" />
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="button" class="btn btn-primary" id="localDocxSubmit">Importer</button>
-                  </div>
-                </div>
-              </div>
-            </div>`;
-            document.body.insertAdjacentHTML('beforeend', html);
-            modal = document.getElementById('localImportDocxModal');
-          }
-          const submitBtn = document.getElementById('localDocxSubmit');
-          const fileInput = document.getElementById('localDocxFile');
-          // Reset previous handler
-          const newBtn = submitBtn.cloneNode(true);
-          submitBtn.parentNode.replaceChild(newBtn, submitBtn);
-          newBtn.addEventListener('click', async () => {
-            if (!fileInput || !fileInput.files || !fileInput.files[0]) { alert('Choisissez un fichier .docx'); return; }
-            const fd = new FormData();
-            fd.append('file', fileInput.files[0]);
-            const headers = {};
-            try { const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content'); if (csrf) headers['X-CSRFToken'] = csrf; } catch{}
-            headers['Accept'] = 'application/json';
-            try {
-              const r = await fetch(endpoint, { method: 'POST', body: fd, headers, credentials: 'same-origin' });
-              let j;
-              try { j = await r.json(); } catch (_) { const t = await r.text(); throw new Error(t || `HTTP ${r.status}`); }
-              if (j && j.task_id) {
-                try { sessionStorage.setItem('currentTaskId', j.task_id); } catch{}
-                // If orchestrator is ready now, open modal; otherwise navigate to track page
-              if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
-                  window.EDxoTasks.openTaskModal(j.task_id, { title: 'Import Plan‑cadre' });
-                } else {
-                  window.location.href = `/tasks/track/${j.task_id}`;
-                }
-                bootstrap.Modal.getOrCreateInstance(modal).hide();
-              } else {
-                alert('Erreur import: ' + (j && j.message ? j.message : 'inconnue'));
-              }
-            } catch (e) {
-              alert('Erreur: ' + (e && e.message ? e.message : e));
-            }
-          });
-          bootstrap.Modal.getOrCreateInstance(modal).show();
-        }
+        // Fallback local supprimé: l'orchestrateur EDxoTasks est requis
       });
     </script>
 
