@@ -49,3 +49,21 @@ def add_fil_conducteur():
         return redirect(url_for('programme.view_programme', programme_id=programme_id))
 
     return render_template('add_fil_conducteur.html', form=form)
+
+
+@main.route('/delete_fil_conducteur/<int:fil_id>', methods=['POST'])
+@roles_required('admin', 'coordo')
+@ensure_profile_completed
+def delete_fil_conducteur(fil_id):
+    """Supprime un fil conducteur après avoir détaché les cours associés."""
+    fil = FilConducteur.query.get_or_404(fil_id)
+    programme_id = fil.programme_id
+
+    # Détacher les cours associés pour éviter les contraintes d'intégrité
+    for cours in list(fil.cours_list or []):
+        cours.fil_conducteur = None
+
+    db.session.delete(fil)
+    db.session.commit()
+
+    return redirect(url_for('programme.view_programme', programme_id=programme_id))

@@ -54,10 +54,19 @@
     </div>
 
     <div id="vp-fil-bar" class="collapse mt-2">
-      <div class="vp-fil-list" role="list">
+      <div class="vp-fil-list d-flex align-items-center flex-wrap gap-2" role="list">
         {% for fil in fil_conducteurs %}
           {% set bg = fil.couleur or '#cccccc' %}
-          <span class="vp-fil-dot" title="{{ fil.description }}" style="--dot: {{ bg }}"></span>
+          <div class="d-inline-flex align-items-center gap-1">
+            <span class="vp-fil-dot" title="{{ fil.description }}" style="--dot: {{ bg }}"></span>
+            {% if current_user.role in ['admin', 'coordo'] %}
+              <a href="{{ url_for('main.edit_fil_conducteur', fil_id=fil.id) }}" class="btn btn-xs btn-outline-secondary" title="Éditer"><i class="bi bi-pencil"></i></a>
+              <form method="POST" action="{{ url_for('main.delete_fil_conducteur', fil_id=fil.id) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce fil conducteur ?');">
+                {{ delete_forms_fils[fil.id].hidden_tag() }}
+                <button type="submit" class="btn btn-xs btn-outline-danger" title="Supprimer"><i class="bi bi-trash"></i></button>
+              </form>
+            {% endif %}
+          </div>
         {% else %}
           <span class="vp-empty">Aucun fil conducteur</span>
         {% endfor %}
@@ -170,6 +179,14 @@
                               type="button">
                         Plan de cours
                       </button>
+                      {% if current_user.role in ['admin', 'coordo'] %}
+                        <form method="POST" action="{{ url_for('cours.delete_cours', cours_id=c.id) }}" class="mt-2" onsubmit="return confirm('Supprimer le cours {{ c.code }} — {{ c.nom }} ?');">
+                          {{ delete_forms_cours[c.id].hidden_tag() }}
+                          <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                            <i class="bi bi-trash"></i> Supprimer le cours
+                          </button>
+                        </form>
+                      {% endif %}
                     </div>
                   </div>
                 </div>

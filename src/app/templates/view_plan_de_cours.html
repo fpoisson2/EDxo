@@ -84,6 +84,13 @@
             <i class="bi bi-magic me-2"></i>
             <span>Améliorer</span>
         </button>
+        <form method="POST" action="{{ url_for('plan_de_cours.delete_plan_de_cours', plan_id=plan_de_cours.id) }}" class="d-inline" onsubmit="return confirm('Supprimer ce plan de cours ({{ cours.code }} - {{ plan_de_cours.session }}) ?');">
+            {{ delete_plan_form.hidden_tag() }}
+            <button type="submit" class="btn btn-outline-danger d-flex align-items-center">
+                <i class="bi bi-trash me-2"></i>
+                <span>Supprimer</span>
+            </button>
+        </form>
         {% endif %}
         <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" 
            class="btn btn-primary d-flex align-items-center">

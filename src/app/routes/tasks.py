@@ -77,9 +77,8 @@ def unified_task_status(task_id):
     state = res.state
     meta = res.info if isinstance(res.info, dict) else {}
 
-    # If user requested cancel while task never started, Celery may keep PENDING forever.
-    # Surface a REVOKED state for UX if our cancel flag is set.
-    if state == "PENDING":
+    # Normalize stuck/unknown tasks to REVOKED for better UX
+    if state in ("PENDING", "STARTED", "PROGRESS"):
         if _is_cancel_requested(task_id):
             state = "REVOKED"
             if isinstance(meta, dict):
@@ -87,9 +86,10 @@ def unified_task_status(task_id):
             else:
                 meta = {"message": "Tâche annulée (avant démarrage)."}
         elif not _is_task_known(task_id):
-            # Treat unknown PENDING tasks (e.g., after restart cleanup) as revoked
+            # After restart, a started/progress task may be orphaned; present as revoked/cleaned
             state = "REVOKED"
-            meta = {**meta, "message": meta.get("message") or "Tâche nettoyée après redémarrage."} if isinstance(meta, dict) else {"message": "Tâche nettoyée après redémarrage."}
+            msg = "Tâche interrompue/nettoyée après redémarrage."
+            meta = {**meta, "message": meta.get("message") or msg} if isinstance(meta, dict) else {"message": msg}
     message = meta.get("message") if isinstance(meta, dict) else None
 
     result_payload = res.result if state == "SUCCESS" else None
@@ -143,8 +143,8 @@ def unified_task_events(task_id):
                 state = res.state
                 meta = res.info if isinstance(res.info, dict) else {}
 
-                # Mirror the status endpoint: if cancel flag is set and still PENDING, treat as REVOKED
-                if state == "PENDING":
+                # Mirror the status endpoint: if cancel flag is set or task is unknown, treat as REVOKED
+                if state in ("PENDING", "STARTED", "PROGRESS"):
                     pending_ticks += 1
                     if _is_cancel_requested(task_id):
                         state = "REVOKED"
@@ -155,7 +155,8 @@ def unified_task_events(task_id):
                     elif (pending_ticks % 15) == 0:  # check at most ~ every 15s
                         if not _is_task_known(task_id):
                             state = "REVOKED"
-                            meta = {**meta, "message": meta.get("message") or "Tâche nettoyée après redémarrage."} if isinstance(meta, dict) else {"message": "Tâche nettoyée après redémarrage."}
+                            msg = "Tâche interrompue/nettoyée après redémarrage."
+                            meta = {**meta, "message": meta.get("message") or msg} if isinstance(meta, dict) else {"message": msg}
                 snapshot = (state, json.dumps(meta, sort_keys=True, ensure_ascii=False))
                 if snapshot != last_snapshot:
                     payload = {"state": state, "meta": meta}

@@ -18,14 +18,14 @@ from openai import OpenAIError
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 
-from ..forms import PlanDeCoursForm, GenerateContentForm
+from ..forms import PlanDeCoursForm, GenerateContentForm, DeletePlanForm
 from ..models import (
     db, Cours, PlanCadre, User,
     PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
     PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, Programme,
     PlanDeCoursPromptSettings
 )
-from ...utils.decorator import ensure_profile_completed
+from ...utils.decorator import ensure_profile_completed, roles_required
 from ...utils.openai_pricing import calculate_call_cost
 from ...utils import get_initials, get_programme_id_for_cours, is_teacher_in_programme
 from ...utils.calendar_generator import (
@@ -1869,15 +1869,18 @@ def view_plan_de_cours(cours_id, session=None):
 
     # 6. Rendre la page
     generate_form = GenerateContentForm()
-    return render_template("view_plan_de_cours.html",
-                                        cours=cours, 
-                                        plan_cadre=plan_cadre,
-                                        plan_de_cours=plan_de_cours,
-                                        form=form,
-                                        generate_form=generate_form,
-                                        departement=departement,
-                                        regles_departementales=regles_departementales,
-                                        regles_piea=regles_piea)
+    return render_template(
+        "view_plan_de_cours.html",
+        cours=cours,
+        plan_cadre=plan_cadre,
+        plan_de_cours=plan_de_cours,
+        form=form,
+        generate_form=generate_form,
+        departement=departement,
+        regles_departementales=regles_departementales,
+        regles_piea=regles_piea,
+        delete_plan_form=DeletePlanForm(),
+    )
 
 
 @plan_de_cours_bp.route(
@@ -2081,6 +2084,34 @@ def export_session_plans(programme_id, session):
 
             
             
+
+@plan_de_cours_bp.route('/plans/<int:plan_id>/delete', methods=['POST'])
+@roles_required('admin', 'coordo')
+@ensure_profile_completed
+def delete_plan_de_cours(plan_id):
+    """Supprime un plan de cours et redirige vers le programme associé."""
+    form = DeletePlanForm()
+    if not form.validate_on_submit():
+        flash("Requête invalide.", "error")
+        return redirect(url_for('settings.gestion_plans_cours'))
+
+    plan = db.session.get(PlanDeCours, plan_id)
+    if not plan:
+        flash("Plan de cours introuvable.", "error")
+        return redirect(url_for('settings.gestion_plans_cours'))
+
+    programme_id = plan.cours.programme_id if plan.cours else None
+    try:
+        db.session.delete(plan)
+        db.session.commit()
+        flash("Plan de cours supprimé avec succès.", "success")
+    except Exception as e:  # pylint: disable=broad-except
+        db.session.rollback()
+        flash(f"Erreur lors de la suppression du plan de cours: {e}", "error")
+
+    if programme_id:
+        return redirect(url_for('programme.view_programme', programme_id=programme_id))
+    return redirect(url_for('settings.gestion_plans_cours'))
 
             # Nouveau nom de fichier avec les initiales
             filename = f"Plan_de_cours_{cours.code}_{session_code}_{initiales}.docx"

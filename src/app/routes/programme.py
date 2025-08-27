@@ -1082,6 +1082,7 @@ def view_programme(programme_id):
     # Créer des dictionnaires de formulaires de suppression
     delete_forms_competences = {comp.id: DeleteForm(prefix=f"competence-{comp.id}") for comp in competences}
     delete_forms_cours = {c.id: DeleteForm(prefix=f"cours-{c.id}") for c in cours_liste}
+    delete_forms_fils = {f.id: DeleteForm(prefix=f"fil-{f.id}") for f in fil_conducteurs}
 
     # Récupérer tous les programmes (pour le sélecteur éventuel)
     programmes = current_user.programmes
@@ -1106,6 +1107,7 @@ def view_programme(programme_id):
                            cours_par_session=cours_par_session,
                            delete_forms_competences=delete_forms_competences,
                            delete_forms_cours=delete_forms_cours,
+                           delete_forms_fils=delete_forms_fils,
                            prerequisites=prerequisites,
                            corequisites=corequisites,
                            competencies_codes=competencies_codes,

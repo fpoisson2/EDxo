@@ -21,6 +21,11 @@ services:
     restart: unless-stopped
   redis:
     image: redis:alpine
+    # Disable persistence to avoid restoring old Celery tasks on restart
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    # Keep Redis data purely in-memory for dev; ensures clean state on container restart
+    tmpfs:
+      - /data
     # No host port mapping needed; used only on internal network
   celery:
     build: .

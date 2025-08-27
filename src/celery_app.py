@@ -39,7 +39,17 @@ def make_celery_instance():
         # Marquer explicitement les tâches comme STARTED dès leur prise en charge par un worker
         task_track_started=True,
         # File par défaut explicite pour éviter toute ambiguïté de routage
-        task_default_queue='celery'
+        task_default_queue='celery',
+        # Rendez la recirculation des tâches non acquittées plus rapide en dev
+        broker_transport_options={
+            # Si un worker meurt sans ACK, la tâche redevient livrable rapidement
+            'visibility_timeout': int(os.environ.get('CELERY_VISIBILITY_TIMEOUT', '60')),
+            # Meilleur comportement du canal de contrôle Redis
+            'fanout_patterns': True,
+            'fanout_prefix': True,
+        },
+        # Nettoyage plus rapide des résultats obsolètes
+        result_expires=int(os.environ.get('CELERY_RESULT_EXPIRES', '3600')),
     )
 
     # Définir la classe de tâche pour le contexte Flask

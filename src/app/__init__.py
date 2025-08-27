@@ -488,6 +488,26 @@ def create_app(testing=False):
                             logger.info(f"Cleared {deleted} result/flag keys in Redis backend.")
                         except Exception as e:
                             logger.warning(f"Redis backend cleanup skipped/failed: {e}")
+
+                        # 4) Clear residual broker-side Redis keys (unacked, pidbox, stray queues)
+                        try:
+                            import redis
+                            broker_url = celery.conf.broker_url
+                            rb = redis.Redis.from_url(broker_url)
+                            bdel = 0
+                            # Target only Celery-related broker keys; safe in dev/startup
+                            for pattern in [
+                                'celery',               # default queue list
+                                'celery.*',
+                                'unacked', 'unacked*',  # redis transport bookkeeping
+                                'pidbox', 'celery.pidbox*',
+                            ]:
+                                for key in rb.scan_iter(match=pattern, count=1000):
+                                    rb.delete(key); bdel += 1
+                            if bdel:
+                                logger.info(f"Cleared {bdel} broker-side Redis keys (queues/unacked/pidbox).")
+                        except Exception as e:
+                            logger.warning(f"Redis broker cleanup skipped/failed: {e}")
                     except Exception as e:
                         logger.warning(f"Celery cleanup ({tag}) encountered an issue: {e}")
 
