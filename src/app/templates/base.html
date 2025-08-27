@@ -809,8 +809,23 @@
             }
             const li = document.createElement("li");
             li.className = "dropdown-item";
-            li.innerHTML = notif.link 
-              ? iconHtml + '<a href="' + notif.link + '">' + notif.message + "</a>"
+            // Sanitize track links: only present clickable links that resolve to a concrete task id
+            let safeLink = notif.link || null;
+            try {
+              const isTrack = typeof safeLink === 'string' && (safeLink.indexOf('/tasks/track/') === 0 || safeLink.indexOf((window.APP_PREFIX||'') + '/tasks/track/') === 0);
+              if (isTrack) {
+                const m = String(safeLink).match(/\/tasks\/track\/([^/]+)/);
+                const tid = (notif.taskId || (m ? m[1] : null) || '').trim();
+                if (tid) {
+                  const prefix = (typeof window !== 'undefined' && window.APP_PREFIX) ? window.APP_PREFIX : '';
+                  safeLink = `${prefix}/tasks/track/${tid}`;
+                } else {
+                  safeLink = null; // do not render empty /tasks/track/
+                }
+              }
+            } catch {}
+            li.innerHTML = safeLink 
+              ? iconHtml + '<a href="' + safeLink + '">' + notif.message + "</a>"
               : iconHtml + notif.message;
             // Validate existence on click; prune invalid entries
             try {
@@ -1004,6 +1019,14 @@
           return;
         }
         if (link) {
+          // Ne jamais stocker un lien /tasks/track/ sans ID; rendre non cliquable
+          try {
+            const isTrack = (typeof link === 'string') && (link.indexOf('/tasks/track/') === 0 || link.indexOf((window.APP_PREFIX||'') + '/tasks/track/') === 0);
+            if (isTrack) {
+              const m = String(link).match(/\/tasks\/track\/([^/]+)/);
+              if (!m || !m[1]) link = null;
+            }
+          } catch {}
           const i = notifications.findIndex(n => n && n.link === link && !n.taskId);
           if (i !== -1) {
             notifications[i].message = message;
