@@ -40,9 +40,10 @@
             startMessage: 'Import en cours…',
             userPrompt: 'Extraction de la grille à partir du PDF fourni.',
             openModal: true,
-            onDone: (payload) => {
-              const link = (payload && payload.validation_url) ? payload.validation_url : (`/confirm_grille_import/${sessionStorage.getItem('currentTaskId')||''}`);
-              try { addNotification("Import terminé. Cliquez pour valider l'import.", 'success', link, (sessionStorage.getItem('currentTaskId')||null)); } catch(_) {}
+            onDone: (payload, _state, taskId) => {
+              const tid = taskId || (sessionStorage.getItem('currentTaskId')||'');
+              const link = (payload && payload.validation_url) ? payload.validation_url : (`/confirm_grille_import/${tid}`);
+              try { addNotification("Import terminé. Cliquez pour valider l'import.", 'success', link, tid); } catch(_) {}
             }
           });
         } catch (err) {

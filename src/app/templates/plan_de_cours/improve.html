@@ -96,11 +96,12 @@ document.addEventListener('DOMContentLoaded', function(){
         title: 'Amélioration du plan de cours — {{ cours.code }}',
         startMessage: 'Amélioration en cours…',
         openModal: true,
-        onDone: (payload) => {
-          const reviewUrl = payload && payload.validation_url
+        onDone: (payload, _state, taskId) => {
+          const tid = taskId || (sessionStorage.getItem('currentTaskId')||'');
+          const reviewUrl = (payload && payload.validation_url)
             ? payload.validation_url
-            : (`/plan_de_cours/review/${payload?.plan_id || ''}?task_id=${sessionStorage.getItem('currentTaskId')||''}`);
-          try { addNotification('Proposition prête. Cliquez pour comparer.', 'success', reviewUrl, (sessionStorage.getItem('currentTaskId')||null)); } catch(_) {}
+            : (`/plan_de_cours/review/${payload?.plan_id || ''}?task_id=${tid}`);
+          try { addNotification('Proposition prête. Cliquez pour comparer.', 'success', reviewUrl, tid); } catch(_) {}
         }
       });
     } catch (e) {

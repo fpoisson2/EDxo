@@ -1220,7 +1220,7 @@
         }
       } catch {}
       if (typeof opts.onDone === 'function') {
-        try { opts.onDone(payload, state); } catch {}
+        try { opts.onDone(payload, state, taskId); } catch {}
       }
     }
 
