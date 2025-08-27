@@ -580,10 +580,9 @@ def send_message():
     # Add system prompt ONLY if there's no previous ID (start of a conversation state)
     # The Responses API relies primarily on prev_id for context continuity.
     # Manually adding history might be supplementary or potentially ignored if prev_id exists.
-    if prev_id is None:
+    if prev_id is None and sa.system_prompt:
         print("[DEBUG LOG] No prev_id found, adding system prompt.")
-        sys_text = sa.system_prompt or "Vous êtes EDxo, un assistant IA spécialisé dans les plans de cours et plans-cadres du Cégep Garneau. Répondez de manière concise et professionnelle en français québécois."
-        inp.append({"type": "message", "role": "system", "content": [{"type": "input_text", "text": sys_text}]})
+        inp.append({"type": "message", "role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]})
 
     # Add formatted history messages only when there is no prev_id
     # Une fois previous_response_id disponible, on ne renvoie plus d'historique manuel

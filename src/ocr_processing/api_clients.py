@@ -435,22 +435,20 @@ def extraire_competences_depuis_txt(text_content, output_json_filename, openai_k
 
     # --- Définition du prompt et du schéma ---
     settings = _get_ocr_settings_safely()
-    system_prompt_inline = (
-        """Tu es un assistant expert spécialisé dans l'extraction d'informations structurées à partir de documents textuels bruts, en particulier des descriptions de compétences de formation québécoises (souvent issues de PDF de programmes d'études).
-
-Ton objectif principal est d'analyser le texte fourni par l'utilisateur, qui représente le contenu extrait d'un PDF (potentiellement bruité par l'OCR ou la conversion texte), d'identifier chaque bloc décrivant une compétence unique (généralement introduit par un code alphanumérique comme "Code : XXXX" ou "0XXX"), et d'en extraire méticuleusement les informations suivantes pour CHAQUE compétence trouvée:
-1. Le `Code` de la compétence (ex: "02MU", "O1XY").
-2. Le `Nom de la compétence` (le titre ou l'énoncé principal, ex: "Adopter un comportement professionnel.").
-3. Le `Contexte de réalisation` : extrais toutes les lignes descriptives textuelles trouvées sous ce titre exact. Structure spécifiquement les sous-sections introduites par "À partir :" et "À l’aide :" comme des listes de chaînes de caractères dans des objets JSON imbriqués (`APartir`, `ALaide`) à l'intérieur de l'objet `Contexte de réalisation`. Les autres lignes descriptives générales vont dans `details_generaux`. Si une sous-section ("À partir de:", "À l'aide de:") est absente, sa valeur doit être `null` ou une liste vide. Si toute la section "Contexte de réalisation" est absente, sa valeur doit être `null`.
-4. Les `Critères de performance pour l’ensemble de la compétence` : extrais les lignes descriptives textuelles trouvées sous ce titre exact sous forme de liste de chaînes de caractères. Si la section est absente ou marquée comme non applicable (ex: "S. O."), la valeur du champ doit être `null` ou une liste vide.
-5. Les `Éléments` : Identifie chaque élément spécifique de la compétence (souvent numéroté `1.`, `2.`, etc., ou précédé d'une puce). Pour chaque élément, crée un objet contenant deux champs: `element` (la description textuelle de l'élément de compétence spécifique) et `criteres` (une liste de chaînes de caractères contenant les critères de performance associés *spécifiquement* à cet élément, trouvés immédiatement après la description de l'élément). Si aucun critère n'est listé pour un élément, `criteres` doit être `null` ou une liste vide. Si la section "Éléments" entière est absente, sa valeur doit être `null`.
-
-Le contenu textuel extrait pour chaque champ doit être nettoyé : retire les puces/marqueurs de liste redondants (comme e, °, +, o, * au début des lignes si la structure est déjà une liste), les pieds de page fréquents ("Ministère...", "Code de programme XXX"), les numéros de page isolés sur une ligne, et les marqueurs de saut de page ("=== PAGE BREAK ==="). Assure-toi de conserver le sens et l'intégralité du texte pertinent.
-
-Tu **dois impérativement** utiliser l'outil/fonction `extraire_competences_en_json` qui t'est fourni pour formater l'intégralité des données extraites pour *toutes* les compétences identifiées dans le texte source. Le résultat final DOIT être un unique objet JSON contenant une clé `competences` dont la valeur est une liste (array) d'objets, chaque objet représentant une compétence structurée selon le schéma. Respecte **strictement** et **exclusivement** le schéma JSON fourni dans les `parameters` de cet outil, y compris les types (`string`, `array`, `object`, `null`), les structures imbriquées et les champs requis (`required`). Ne fournis aucune explication, introduction, conclusion ou texte en dehors de l'appel à cette fonction structurée respectant le schéma demandé."""
-    )
-    if settings and settings.extraction_prompt:
-        system_prompt_inline = settings.extraction_prompt
+    # Prompt système (aucun contenu en dur)
+    system_prompt_inline = ''
+    try:
+        if settings and getattr(settings, 'extraction_prompt', None):
+            system_prompt_inline = settings.extraction_prompt
+    except Exception:
+        system_prompt_inline = ''
+    if not system_prompt_inline:
+        try:
+            from src.app.models import SectionAISettings
+            _sa_ocr = SectionAISettings.get_for('ocr')
+            system_prompt_inline = getattr(_sa_ocr, 'system_prompt', None) or ''
+        except Exception:
+            system_prompt_inline = ''
     json_schema = {
         "type": "object",
         "required": ["competences"],
@@ -651,27 +649,16 @@ def extraire_competences_depuis_pdf(pdf_path, output_json_filename, openai_key=N
             pdf_size = None
         _progress(f"[EXTRACTION] Fichier local détecté | taille={pdf_size} octets")
 
-    # Prompt et schéma alignés sur la version texte pour garantir le même remplissage des champs
-    system_prompt_inline = (
-        """Tu es un assistant expert spécialisé dans l'extraction d'informations structurées à partir de documents textuels bruts, en particulier des descriptions de compétences de formation québécoises (souvent issues de PDF de programmes d'études).
-
-Ton objectif principal est d'analyser le document PDF fourni (potentiellement bruité par l'OCR), d'identifier chaque bloc décrivant une compétence unique (généralement introduit par un code alphanumérique comme "Code : XXXX" ou "0XXX"), et d'en extraire méticuleusement les informations suivantes pour CHAQUE compétence trouvée:
-1. Le `Code` de la compétence (ex: "02MU", "O1XY").
-2. Le `Nom de la compétence` (le titre ou l'énoncé principal, ex: "Adopter un comportement professionnel.").
-3. Le `Contexte de réalisation` : extrais toutes les lignes descriptives textuelles trouvées sous ce titre exact. Structure spécifiquement les sous-sections introduites par "À partir :" et "À l’aide :" comme des listes de chaînes de caractères, ET supporte des sous-structures hiérarchiques en représentant le contexte comme une liste d'items `{texte, sous_points}` (où `sous_points` est récursif). Si une sous-section ("À partir de:", "À l'aide de:") est absente, sa valeur peut être `null` ou une liste vide. Si toute la section "Contexte de réalisation" est absente, sa valeur doit être `null`.
-4. Les `Critères de performance pour l’ensemble de la compétence` : extrais les lignes descriptives textuelles trouvées sous ce titre exact sous forme de liste de chaînes de caractères. Si la section est absente ou marquée comme non applicable (ex: "S. O."), la valeur du champ doit être `null` ou une liste vide.
-5. Les `Éléments` : Identifie chaque élément spécifique de la compétence (souvent numéroté `1.`, `2.`, etc., ou précédé d'une puce). Pour chaque élément, crée un objet contenant deux champs: `element` (la description textuelle de l'élément de compétence spécifique) et `criteres` (une liste de chaînes de caractères contenant les critères de performance associés spécifiquement à cet élément). Si aucun critère n'est listé pour un élément, `criteres` doit être `null` ou une liste vide. Si la section "Éléments" entière est absente, sa valeur doit être `null`.
-
-ATTENTION : Le document peut contenir plusieurs types de compétences (formation générale, formation spécifique, formation complémentaire).
-Tu dois EXTRAIRE UNIQUEMENT les compétences de la formation spécifique reliée au programme, et IGNORER celles de la formation générale ou complémentaire.
-
-Nettoie le texte: retire les puces/marqueurs de liste redondants (e, °, +, o, *, - en tête de ligne si déjà listé), les pieds de page récurrents ("Ministère...", "Code de programme XXX"), les numéros de page isolés, et les marqueurs de saut de page. Utilise exclusivement le schéma JSON fourni et ne renvoie aucun texte hors JSON.
-"""
-    )
-    if settings and settings.extraction_prompt:
-        system_prompt_inline = settings.extraction_prompt
-    elif _sa_ocr and getattr(_sa_ocr, 'system_prompt', None):
-        system_prompt_inline = _sa_ocr.system_prompt
+    # Prompt système d'extraction: configuration uniquement (pas de contenu en dur)
+    system_prompt_inline = ''
+    try:
+        if settings and getattr(settings, 'extraction_prompt', None):
+            system_prompt_inline = settings.extraction_prompt
+    except Exception:
+        system_prompt_inline = ''
+    if not system_prompt_inline:
+        if _sa_ocr and getattr(_sa_ocr, 'system_prompt', None):
+            system_prompt_inline = _sa_ocr.system_prompt
     json_schema = {
         "type": "object",
         "required": ["competences"],

@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, request
 from flask_login import current_user
 from ...utils.decorator import roles_required, ensure_profile_completed
 
-from ..forms import FilConducteurForm
+from ..forms import FilConducteurForm, DeleteForm
 from ..models import db, Programme, FilConducteur
 from .routes import main
 
@@ -55,7 +55,11 @@ def add_fil_conducteur():
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def delete_fil_conducteur(fil_id):
-    """Supprime un fil conducteur après avoir détaché les cours associés."""
+    """Supprime un fil conducteur après validation CSRF et détache les cours associés."""
+    form = DeleteForm(prefix=f"fil-{fil_id}")
+    if not form.validate_on_submit():
+        return redirect(url_for('main.index'))
+
     fil = FilConducteur.query.get_or_404(fil_id)
     programme_id = fil.programme_id
 

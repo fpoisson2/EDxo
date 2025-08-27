@@ -124,17 +124,12 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
         client = OpenAI(api_key=user.openai_key)
         # Section-level IA settings (génération)
         sa = SectionAISettings.get_for('plan_de_cours')
-        default_gen_system = (
-            "Tu es un assistant pédagogique qui génère des plans de cours en français. "
-            "Respecte le ton institutionnel, la clarté et la concision. Appuie-toi sur les données du plan-cadre, "
-            "n'invente pas d'informations. Lorsque tu dois structurer une sortie, respecte le schéma demandé."
-        )
         final_model = (ai_model or '').strip() or (sa.ai_model or 'gpt-5')
         reasoning_params = {"summary": "auto"}
         if getattr(sa, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
             reasoning_params["effort"] = sa.reasoning_effort
-        # Build input with optional system prompt
-        sys_prompt = (sa.system_prompt or '').strip() or default_gen_system
+        # Build input with optional system prompt (from settings only)
+        sys_prompt = (sa.system_prompt or '').strip()
         input_data = ([
             {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
             {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
@@ -270,29 +265,23 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
             cours: Cours = plan.cours
             plan_cadre: PlanCadre = cours.plan_cadre if cours else None
             if cours and plan_cadre:
-                # Construire un prompt pour les évaluations, similaire à la tâche dédiée
-                cap_lines = ", ".join([c.capacite for c in getattr(plan_cadre, 'capacites', []) or []])
-                sections = [
-                    f"Cours: {cours.code or ''} - {cours.nom or ''}",
-                    f"Objectif terminal: {plan_cadre.objectif_terminal or ''}",
-                    f"Capacités: {cap_lines}",
-                ]
-                eval_prompt = (
-                    "Tu es un assistant pédagogique. Propose une liste d'évaluations pour le plan de cours "
-                    f"de la session {plan.session}. Retourne un JSON sous la forme:\n"
-                    "{ 'evaluations': [ { 'titre': str, 'semaine': int, 'description': str, 'capacites': [ { 'capacite': str, 'ponderation': str } ] } ] }\n"
-                    "Le champ 'capacite' doit correspondre au libellé exact d'une capacité du plan-cadre.\n\n"
-                    "Contexte:\n" + "\n".join(sections)
-                )
+                # Données utilisateur uniquement (contexte JSON)
+                eval_payload = {
+                    'cours': {'code': cours.code, 'nom': cours.nom, 'session': plan.session},
+                    'plan_cadre': {
+                        'objectif_terminal': plan_cadre.objectif_terminal,
+                        'capacites': [c.capacite for c in getattr(plan_cadre, 'capacites', []) or []]
+                    }
+                }
 
                 # Feedback progression
                 self.update_state(state='PROGRESS', meta={'message': 'Génération des évaluations…'})
 
                 client = OpenAI(api_key=user.openai_key)
                 eval_input = ([
-                    {"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]},
-                    {"role": "user", "content": [{"type": "input_text", "text": eval_prompt}]}
-                ] if (sa and sa.system_prompt) else eval_prompt)
+                    {"role": "system", "content": [{"type": "input_text", "text": (sa.system_prompt or '')}]},
+                    {"role": "user", "content": [{"type": "input_text", "text": json.dumps(eval_payload, ensure_ascii=False)}]}
+                ])
                 eval_response = client.responses.parse(
                     model=final_model or 'gpt-5',
                     input=eval_input,
@@ -489,13 +478,8 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
         reasoning_params = {"summary": "auto"}
         if getattr(sa, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
             reasoning_params["effort"] = sa.reasoning_effort
-        # System prompt (defaulted for amélioration)
-        default_impv_system = (
-            "Tu es un assistant qui améliore un plan de cours existant en français. "
-            "Améliore la lisibilité et la précision sans changer le sens ni inventer. "
-            "Préserve la structure et le vocabulaire institutionnel; corrige la langue et uniformise le style."
-        )
-        sys_prompt = (getattr(sa, 'system_prompt', None) or '').strip() or default_impv_system
+        # System prompt from settings only (no hard-coded default)
+        sys_prompt = (getattr(sa, 'system_prompt', None) or '').strip()
         input_data = ([
             {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
             {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
@@ -683,12 +667,7 @@ def generate_plan_de_cours_calendar_task(
         reasoning_params = {"summary": "auto"}
         if getattr(sa, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
             reasoning_params["effort"] = sa.reasoning_effort
-        default_gen_system = (
-            "Tu es un assistant pédagogique qui génère des plans de cours en français. "
-            "Respecte le ton institutionnel, la clarté et la concision. Appuie-toi sur les données du plan-cadre, "
-            "n'invente pas d'informations. Lorsque tu dois structurer une sortie, respecte le schéma demandé."
-        )
-        sys_prompt = (sa.system_prompt or '').strip() or default_gen_system
+        sys_prompt = (sa.system_prompt or '').strip()
         input_data = ([
             {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
             {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
@@ -888,13 +867,14 @@ def generate_plan_de_cours_evaluations_task(
             f"Objectif terminal: {plan_cadre.objectif_terminal or ''}",
             f"Capacités: {cap_lines}",
         ]
-        prompt = (
-            "Tu es un assistant pédagogique. Propose une liste d'évaluations pour le plan de cours "
-            f"de la session {plan.session}. Retourne un JSON sous la forme:\n"
-            "{ 'evaluations': [ { 'titre': str, 'semaine': int, 'description': str, 'capacites': [ { 'capacite': str, 'ponderation': str } ] } ] }\n"
-            "Le champ 'capacite' doit correspondre au libellé exact d'une capacité du plan-cadre.\n\n"
-            "Contexte:\n" + "\n".join(sections)
-        )
+        # Données utilisateur uniquement (contexte JSON)
+        prompt = json.dumps({
+            'cours': {'code': cours.code, 'nom': cours.nom, 'session': plan.session},
+            'plan_cadre': {
+                'objectif_terminal': plan_cadre.objectif_terminal,
+                'capacites': [c.capacite for c in getattr(plan_cadre, 'capacites', []) or []]
+            }
+        }, ensure_ascii=False)
         if additional_info:
             prompt += "\n\nContraintes/Précisions: " + str(additional_info)
         if current_evaluations:
@@ -906,12 +886,7 @@ def generate_plan_de_cours_evaluations_task(
         self.update_state(state='PROGRESS', meta={'message': 'Génération des évaluations…'})
         client = OpenAI(api_key=user.openai_key)
         sa = SectionAISettings.get_for('plan_de_cours')
-        default_gen_system = (
-            "Tu es un assistant pédagogique qui génère des plans de cours en français. "
-            "Respecte le ton institutionnel, la clarté et la concision. Appuie-toi sur les données du plan-cadre, "
-            "n'invente pas d'informations. Lorsque tu dois structurer une sortie, respecte le schéma demandé."
-        )
-        sys_prompt = (sa.system_prompt or '').strip() or default_gen_system
+        sys_prompt = (sa.system_prompt or '').strip()
         eval_input = ([
             {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
             {"role": "user", "content": [{"type": "input_text", "text": prompt}]}

@@ -158,27 +158,7 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None, pr
         file_id = getattr(file_response, 'id', None)
         logger.info(f"[{task_id}] File uploaded, file_id: {file_id}")
 
-        # Prompt développeur (procédure en 3 passes) — adapté selon votre spécification
-        prompt_text = (
-            "Vous êtes un assistant spécialisé dans l’extraction structurée de données à partir de documents académiques.\n"
-            "Votre tâche est d’extraire uniquement les cours de la formation spécifique présents dans le document fourni, et de les organiser selon le schéma JSON strict 'grille_de_cours' fourni.\n"
-            "🔒 Contraintes obligatoires :\n"
-            "Respectez strictement le schéma JSON fourni. Aucune propriété additionnelle ou omission ne sera tolérée.\n"
-            "Tous les champs requis doivent être présents et respecter leur type (chaîne, nombre, tableau, etc.).\n"
-            "La sortie doit être un objet JSON valide correspondant exactement au schéma.\n"
-            "Ne produisez aucun texte explicatif ou commentaire en dehors du JSON.\n"
-            "Lorsqu’un cours présente une pondération au format X-Y-Z, elle représente : X heures de théorie, Y heures de laboratoire, Z heures de travail à la maison. Décomposez ces valeurs dans les champs correspondants.\n"
-            "🧭 Procédure en 3 passes (pour documents tabulaires linéarisés) :\n"
-            "Repérage robuste : identifiez d’abord les lignes qui contiennent un code de cours et leur pondération (X-Y-Z). Conservez uniquement la formation spécifique et ignorez la formation générale et les cours complémentaires.\n"
-            "Association du titre : pour chaque code de cours retenu, associez le titre le plus pertinent et spatialement proche dans la même session/zone. En cas de doute, laissez le titre vide (\"\") plutôt que d’inventer.\n"
-            "(Co)requis : ajoutez un préalable uniquement si une mention explicite d’un cours préalable apparaît (avec pourcentage minimal si indiqué). Ajoutez un corequis uniquement si une mention explicite de corequis apparaît. Sinon, laissez les tableaux vides.\n"
-            "🧠 Règles d’interprétation :\n"
-            "Ignorez toute occurrence de la mention « (ASP) » dans les titres de cours.\n"
-            "N’incluez aucun cours de formation générale ou complémentaire.\n"
-            "Si une note minimale est spécifiée (ex.: « 60 % »), extrayez la valeur numérique ; sinon, utilisez 0.\n"
-            "Les sessions peuvent être libellées en chiffres romains : convertissez-les en entiers (I→1, II→2, etc.).\n"
-            "Extrayez le nom du programme et structurez les cours par session."
-        )
+        # Developer/system prompt content must come from settings only
 
         logger.info(f"[{task_id}] Calling OpenAI responses.create API, model: {model}")
         # Construire la requête
@@ -208,17 +188,12 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None, pr
                 reasoning_params["effort"] = sa_imp.reasoning_effort
         except Exception:
             pass
-        # Prompt système par défaut pour l'import (si non fourni)
-        default_import_system = (
-            "Tu es un assistant d'importation de grille de cours. Extrait uniquement la formation spécifique du PDF joint et "
-            "retourne un JSON strictement conforme au schéma. Respecte les pondérations X-Y-Z → théorie-labo-maison; ne crée pas de données."
-        )
-        sys_prompt = ((getattr(sa_imp, 'system_prompt', None) or '').strip() or default_import_system)
+        # System prompt from SectionAISettings('grille_import') only (no hard-coded default)
+        sys_prompt = (getattr(sa_imp, 'system_prompt', None) or '').strip()
         request_kwargs = dict(
             model=model,
             input=[
                 {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
-                {"role": "developer", "content": [{"type": "input_text", "text": prompt_text}]},
                 {"role": "user", "content": [{"type": "input_file", "file_id": file_response.id}]}
             ],
             text=text_params,

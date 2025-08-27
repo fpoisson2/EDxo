@@ -81,9 +81,8 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
                 'elements': elements
             })
 
-        # System prompt strictly from DB (fallback minimal if absent)
-        system_prompt = (sa.system_prompt if (sa and sa.system_prompt) else
-                         "Retourne strictement un JSON {\"links\": [{\"cours_code\": str, \"competence_code\": str, \"type\": \"developpe|atteint|reinvesti\"}]} sans texte hors JSON.")
+        # System prompt strictly from DB (no hard-coded fallback)
+        system_prompt = (sa.system_prompt if (sa and sa.system_prompt) else '')
         # User message should only contain the data (courses/competences), no instructions
         user_payload = {
             'courses': course_items,

@@ -19,7 +19,9 @@ from ..forms import (
 from ..models import (
     db,
     Cours,
+    CoursProgramme,
     PlanCadre,
+    PlanDeCours,
     PlanCadreCapacites,
     PlanCadreCapaciteSavoirsNecessaires,
     PlanCadreCapaciteSavoirsFaire,
@@ -928,13 +930,34 @@ def delete_cours(cours_id):
         programme_id = cours.programme_id
 
         try:
+            # Supprimer explicitement les dépendances pour respecter les contraintes NOT NULL
+            # 1) Plans de cours et leurs enfants (cascade sur enfants déjà défini)
+            for pdc in PlanDeCours.query.filter_by(cours_id=cours.id).all():
+                db.session.delete(pdc)
+
+            # 2) Plan-cadre (cascade sur enfants déjà défini)
+            pc = PlanCadre.query.filter_by(cours_id=cours.id).first()
+            if pc:
+                db.session.delete(pc)
+
+            # 3) Associations diverses basées sur cours_id
+            ElementCompetenceParCours.query.filter_by(cours_id=cours.id).delete()
+            CompetenceParCours.query.filter_by(cours_id=cours.id).delete()
+            CoursPrealable.query.filter_by(cours_id=cours.id).delete()
+            CoursPrealable.query.filter_by(cours_prealable_id=cours.id).delete()
+            CoursCorequis.query.filter_by(cours_id=cours.id).delete()
+            CoursCorequis.query.filter_by(cours_corequis_id=cours.id).delete()
+            # Table d'association cours-programme
+            CoursProgramme.query.filter_by(cours_id=cours.id).delete()
+
+            # 4) Supprimer le cours
             db.session.delete(cours)
             db.session.commit()
             flash('Cours supprimé avec succès!')
         except SQLAlchemyError as e:
             db.session.rollback()
             flash(f'Erreur lors de la suppression du cours : {e}')
-        return redirect(url_for('main.view_programme', programme_id=programme_id))
+        return redirect(url_for('programme.view_programme', programme_id=programme_id))
     else:
         flash('Erreur lors de la soumission du formulaire de suppression.')
         return redirect(url_for('main.index'))

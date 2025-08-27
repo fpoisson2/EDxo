@@ -422,43 +422,7 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
 
         push("Préparation du texte et du prompt…", step='prepare', progress=5)
         prompt = (
-            "Tu es un assistant pédagogique. Analyse le plan-cadre fourni (texte brut extrait d'un DOCX) "
-            "et retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes). "
-            "Quand tu utilises des guillemets, emploie les guillemets français « » uniquement. "
-            'Conserve les paragraphes et retours de ligne réels; n\'insère PAS de littéraux "\\n" (utilise de vrais sauts de ligne). '
-            "Si le document contient un tableau/section des paramètres de l’évaluation avec des colonnes/sections 'Cible' et 'Seuil', "
-            "associe chaque entrée aux 'savoirs_faire' correspondants de la même capacité (même ordre, 1:1) et renseigne 'cible' et 'seuil_reussite' (ne pas laisser null si l’information est présente).\n"
-            "{{\n"
-            "  'place_intro': str | null,\n"
-            "  'objectif_terminal': str | null,\n"
-            "  'structure_intro': str | null,\n"
-            "  'structure_activites_theoriques': str | null,\n"
-            "  'structure_activites_pratiques': str | null,\n"
-            "  'structure_activites_prevues': str | null,\n"
-            "  'eval_evaluation_sommative': str | null,\n"
-            "  'eval_nature_evaluations_sommatives': str | null,\n"
-            "  'eval_evaluation_de_la_langue': str | null,\n"
-            "  'eval_evaluation_sommatives_apprentissages': str | null,\n"
-            "  'competences_developpees': [ {{ 'texte': str | null, 'description': str | null }} ],\n"
-            "  'competences_certifiees': [ {{ 'texte': str | null, 'description': str | null }} ],\n"
-            "  'cours_corequis': [ {{ 'texte': str | null, 'description': str | null }} ],\n"
-            "  'cours_prealables': [ {{ 'texte': str | null, 'description': str | null }} ],\n"
-            "  'cours_relies': [ {{ 'texte': str | null, 'description': str | null }} ],\n"
-            "  'objets_cibles': [ {{ 'texte': str | null, 'description': str | null }} ],\n"
-            "  'savoir_etre': [ str ],\n"
-            "  'capacites': [ {{\n"
-            "      'capacite': str | null,\n"
-            "      'description_capacite': str | null,\n"
-            "      'ponderation_min': int | null,\n"
-            "      'ponderation_max': int | null,\n"
-            "      'savoirs_necessaires': [ str ],\n"
-            "      'savoirs_faire': [ {{ 'texte': str | null, 'cible': str | null, 'seuil_reussite': str | null }} ],\n"
-            "      'moyens_evaluation': [ str ]\n"
-            "  }} ]\n"
-            "}}\n\n"
-            "- Si tu restitues plusieurs paragraphes dans un même champ, sépare-les par un simple saut de ligne (ou une ligne vide si nécessaire).\n"
-            "Renvoie uniquement le JSON, sans texte avant ni après.\n"
-            "Texte du plan-cadre:\n---\n{doc_text}\n---\n"
+            "Texte du plan-cadre (brut):\n---\n{doc_text}\n---\n"
         ).format(doc_text=doc_text[:150000])
 
         push("Appel au modèle IA…", step='ai_call', progress=20)
@@ -469,16 +433,9 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
         from ..models import SectionAISettings
         try:
             sa_impt = SectionAISettings.get_for('plan_cadre_import')
-            default_impt = (
-                "Tu es un assistant d'importation. Analyse un plan‑cadre et renvoie une sortie strictement conforme au schéma. "
-                "Le contenu des tableaux prévaut sur le texte libre. Mets null lorsqu'une information est absente."
-            )
-            system_prompt_text = (getattr(sa_impt, 'system_prompt', None) or '').strip() or default_impt
+            system_prompt_text = (getattr(sa_impt, 'system_prompt', None) or '').strip()
         except Exception:
-            system_prompt_text = (
-                "Tu es un assistant d'importation. Analyse un plan‑cadre et renvoie une sortie strictement conforme au schéma. "
-                "Le contenu des tableaux prévaut sur le texte libre. Mets null lorsqu'une information est absente."
-            )
+            system_prompt_text = ''
 
         parsed = None
         if file_path:
@@ -718,9 +675,7 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             template = (pc_settings.prompt_template if pc_settings else None)
             if not template or '{doc_text}' not in template:
                 template = (
-                    "Tu es un assistant pédagogique. Analyse le plan-cadre fourni (texte brut extrait d'un DOCX) "
-                    "et retourne un JSON strictement conforme au schéma attendu.\n\n"
-                    "Texte du plan-cadre:\n---\n{doc_text}\n---\n"
+                    "Texte du plan-cadre (brut):\n---\n{doc_text}\n---\n"
                 )
             prompt = _format_import_prompt(template, doc_text)
             response = client.responses.parse(

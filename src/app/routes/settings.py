@@ -91,6 +91,14 @@ def ocr_prompt_settings():
     sa = SectionAISettings.get_for('ocr')
     ai_form = SectionAISettingsForm(obj=sa)
 
+    # Pré-remplir un prompt d'extraction par défaut pour affichage si vide
+    if request.method == 'GET' and not (settings and (settings.extraction_prompt or '').strip()):
+        default_extraction = (
+            "Assistant d'extraction OCR: identifie chaque compétence (code, nom), extrait le Contexte de réalisation (listes hiérarchiques), "
+            "les Critères de performance et les Éléments avec leurs critères. Retourne un JSON strict 'competences' conforme au schéma affiché."
+        )
+        form.extraction_prompt.data = default_extraction
+
     if form.validate_on_submit():
         if settings is None:
             settings = OcrPromptSettings()
@@ -201,6 +209,14 @@ def _edit_section_ai_settings(section_key: str, title: str, description: str):
 @login_required
 @role_required('admin')
 def ai_plan_de_cours_settings():
+    # Prefill default for display if empty
+    s = SectionAISettings.get_for('plan_de_cours')
+    if not (s.system_prompt or '').strip():
+        s.system_prompt = (
+            "Tu es un assistant pédagogique qui génère des plans de cours en français. "
+            "Respecte le ton institutionnel, la clarté et la concision. Appuie‑toi sur les données disponibles, "
+            "n'invente pas d'informations. Lorsque tu dois structurer, respecte le schéma demandé."
+        )
     return _edit_section_ai_settings(
         'plan_de_cours',
         'Plans de cours – Paramètres IA',
@@ -212,6 +228,13 @@ def ai_plan_de_cours_settings():
 @login_required
 @role_required('admin')
 def ai_plan_de_cours_improve_settings():
+    s = SectionAISettings.get_for('plan_de_cours_improve')
+    if not (s.system_prompt or '').strip():
+        s.system_prompt = (
+            "Tu es un assistant qui améliore un plan de cours existant en français. "
+            "Améliore la lisibilité et la précision sans changer le sens ni inventer. "
+            "Préserve la structure et le vocabulaire institutionnel; corrige la langue et uniformise le style."
+        )
     return _edit_section_ai_settings(
         'plan_de_cours_improve',
         'Plans de cours – Paramètres IA (Amélioration)',
@@ -312,6 +335,12 @@ def plan_cadre_prompts():
 @login_required
 @role_required('admin')
 def ai_logigramme_settings():
+    s = SectionAISettings.get_for('logigramme')
+    if not (s.system_prompt or '').strip():
+        s.system_prompt = (
+            "À partir des cours et des compétences fournis (données JSON), déduis les liens cours→compétence avec un type parmi "
+            "'developpe', 'atteint', 'reinvesti'. Retourne strictement un JSON {\"links\": [{\"cours_code\": str, \"competence_code\": str, \"type\": str}]} sans texte hors JSON."
+        )
     return _edit_section_ai_settings(
         'logigramme',
         'Logigramme – Paramètres IA',
@@ -323,6 +352,13 @@ def ai_logigramme_settings():
 @login_required
 @role_required('admin')
 def ai_grille_settings():
+    s = SectionAISettings.get_for('grille')
+    if not (s.system_prompt or '').strip():
+        s.system_prompt = (
+            "Tu es un conseiller pédagogique. À partir des contraintes (heures totales, nombre de sessions, unités) et de la liste des compétences, "
+            "propose une grille de cours par session. Retourne un JSON strict avec 'sessions' (liste de {session, courses}) "
+            "où chaque cours contient 'nom', 'heures_theorie', 'heures_laboratoire', 'heures_travail_maison', 'nombre_unites', 'prealables', 'corequis'."
+        )
     return _edit_section_ai_settings(
         'grille',
         'Grille de cours – Paramètres IA',
@@ -345,10 +381,31 @@ def ai_ocr_settings():
 @login_required
 @role_required('admin')
 def ai_chat_settings():
+    s = SectionAISettings.get_for('chat')
+    if not (s.system_prompt or '').strip():
+        s.system_prompt = (
+            "Vous êtes EDxo, un assistant IA spécialisé dans les plans de cours et plans‑cadres. Répondez de manière concise et professionnelle en français."
+        )
     return _edit_section_ai_settings(
         'chat',
         'Chat IA – Paramètres IA',
         "Paramètres IA pour les conversations (SSE, outils)."
+    )
+
+@settings_bp.route('/grille/ai-import', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def ai_grille_import_settings():
+    s = SectionAISettings.get_for('grille_import')
+    if not (s.system_prompt or '').strip():
+        s.system_prompt = (
+            "Assistant d’importation de grille: à partir d’un PDF, extrais uniquement la formation spécifique et construis un JSON strictement conforme "
+            "au schéma 'programme_etudes' (sessions, cours avec pondérations X‑Y‑Z → théorie/labo/maison, préalables/corequis). Aucune invention."
+        )
+    return _edit_section_ai_settings(
+        'grille_import',
+        'Grille de cours – Paramètres IA (Importation)',
+        "Configurez le prompt système dédié à l'importation de grilles de cours depuis PDF."
     )
 
 

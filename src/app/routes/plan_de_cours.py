@@ -168,29 +168,8 @@ BulkPlanDeCoursResponse.model_rebuild()
 
 
 DEFAULT_ALL_PROMPT = (
-    "Tu es un assistant pédagogique. En te basant sur le plan-cadre et les "
-    "informations du cours ci-dessous, génère le contenu des sections du plan "
-    "de cours pour la session {session}.\n\n"
-    "Inclure et retourner un JSON strictement au format suivant (clés exactes):\n"
-    "{{\n"
-    "  'presentation_du_cours': str,\n"
-    "  'objectif_terminal_du_cours': str,\n"
-    "  'organisation_et_methodes': str,\n"
-    "  'accomodement': str,\n"
-    "  'evaluation_formative_apprentissages': str,\n"
-    "  'evaluation_expression_francais': str,\n"
-    "  'seuil_reussite': str,\n"
-    "  'materiel': str,\n"
-    "  'calendriers': [\n"
-    "    {{ 'semaine': int, 'sujet': str, 'activites': str, 'travaux_hors_classe': str, 'evaluations': str }}\n"
-    "  ],\n"
-    "  'evaluations': [\n"
-    "    {{ 'titre_evaluation': str | null, 'description': str | null, 'semaine': int | null, "
-    "       'capacites': [ {{ 'capacite': str | null, 'ponderation': str | null }} ] }}\n"
-    "  ]\n"
-    "}}\n\n"
-    "Règles: Si une information n'est pas trouvée, mets null; si conflit texte/tableau, privilégie le tableau.\n"
-    "Contexte cours: code={cours_code}, nom={cours_nom}.\n"
+    "Session: {session}\n"
+    "Cours: {cours_code} - {cours_nom}\n"
     "Plan-cadre (extraits):\n{sections}\n"
 )
 
@@ -573,17 +552,15 @@ def import_docx():
         current_app.logger.exception('Erreur lecture DOCX')
         return jsonify({'success': False, 'message': 'Impossible de lire le DOCX.'}), 400
 
-    # Build prompt
-    prompt = DEFAULT_IMPORT_PROMPT.format(
-        cours_code=getattr(cours, 'code', '') or '',
-        cours_nom=getattr(cours, 'nom', '') or '',
-        session=session,
-        doc_text=doc_text[:120000]  # guardrail to avoid excessive tokens
+    # Build user content: raw data only (no instructions)
+    user_input = (
+        f"Contexte: cours {getattr(cours, 'code', '') or ''} - {getattr(cours, 'nom', '') or ''}, session {session}.\n"
+        f"Texte du plan de cours (brut):\n---\n{doc_text[:120000]}\n---\n"
     )
 
     # Choose model (prefer explicit from form, fallback to saved settings + section settings)
     from ..models import SectionAISettings
-    sa = SectionAISettings.get_for('plan_de_cours')
+    sa = SectionAISettings.get_for('plan_de_cours_import')
     chosen_model = (request.form.get('ai_model') or '').strip()
     if not chosen_model:
         prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
@@ -594,8 +571,8 @@ def import_docx():
         client = OpenAI(api_key=current_user.openai_key)
         input_data = ([
             {"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]},
-            {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
-        ] if sa.system_prompt else prompt)
+            {"role": "user", "content": [{"type": "input_text", "text": user_input}]}
+        ] if sa.system_prompt else user_input)
         response = client.responses.parse(
             model=ai_model,
             input=input_data,
@@ -1001,9 +978,16 @@ def generate_calendar():
 
     try:
         client = OpenAI(api_key=current_user.openai_key)
+        # Ajouter le prompt système de la section Plan de cours s'il est défini
+        from ..models import SectionAISettings
+        sa = SectionAISettings.get_for('plan_de_cours')
+        input_data = ([
+            {"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]},
+            {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
+        ] if sa.system_prompt else prompt)
         response = client.responses.parse(
             model=ai_model,
-            input=prompt,
+            input=input_data,
             text_format=CalendarResponse,
         )
 
@@ -1094,9 +1078,15 @@ def generate_all():
 
     try:
         client = OpenAI(api_key=current_user.openai_key)
+        from ..models import SectionAISettings
+        sa = SectionAISettings.get_for('plan_de_cours')
+        input_data = ([
+            {"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]},
+            {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
+        ] if sa.system_prompt else prompt)
         response = client.responses.parse(
             model=ai_model,
-            input=prompt,
+            input=input_data,
             text_format=BulkPlanDeCoursResponse,
         )
 
@@ -2082,8 +2072,20 @@ def export_session_plans(programme_id, session):
             nom_enseignant = context['nom_enseignant']
             initiales = get_initials(nom_enseignant)
 
-            
-            
+            # Nouveau nom de fichier avec les initiales
+            filename = f"Plan_de_cours_{cours.code}_{session_code}_{initiales}.docx"
+            zf.writestr(filename, doc_bytes.getvalue())
+    
+    # Préparer le fichier ZIP pour l'envoi
+    memory_file.seek(0)
+    
+    return send_file(
+            memory_file,
+            download_name=f"Plans_de_cours_{programme.nom}_{session_code}.zip",
+            as_attachment=True,
+            mimetype='application/zip'
+        )
+
 
 @plan_de_cours_bp.route('/plans/<int:plan_id>/delete', methods=['POST'])
 @roles_required('admin', 'coordo')
@@ -2112,20 +2114,6 @@ def delete_plan_de_cours(plan_id):
     if programme_id:
         return redirect(url_for('programme.view_programme', programme_id=programme_id))
     return redirect(url_for('settings.gestion_plans_cours'))
-
-            # Nouveau nom de fichier avec les initiales
-            filename = f"Plan_de_cours_{cours.code}_{session_code}_{initiales}.docx"
-            zf.writestr(filename, doc_bytes.getvalue())
-    
-    # Préparer le fichier ZIP pour l'envoi
-    memory_file.seek(0)
-    
-    return send_file(
-            memory_file,
-            download_name=f"Plans_de_cours_{programme.nom}_{session_code}.zip",
-            as_attachment=True,
-            mimetype='application/zip'
-        )
 
 
 @plan_de_cours_bp.route(

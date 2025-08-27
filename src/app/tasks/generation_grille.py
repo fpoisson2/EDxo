@@ -100,43 +100,17 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
             for comp in programme.competences.order_by(Competence.code).all()
         ]
 
-        # Prompt système par défaut (si non configuré côté section)
-        base_system_prompt = (
-            "Tu es un conseiller pédagogique. À partir du nombre total d'heures, du nombre de sessions, "
-            "et éventuellement des unités totales, propose une grille de cours répartie par session pour le programme ci-dessous. "
-            "N'invente pas de données; respecte strictement les contraintes et le format demandé."
-        )
-        sa_prompt = (sa.system_prompt if sa and getattr(sa, 'system_prompt', None) else '').strip()
-        system_prompt = (sa_prompt + "\n\n" if sa_prompt else "") + base_system_prompt
-        user_prompt = (
-            "Contraintes et format (respect strict):\n"
-            "- Base-toi sur la liste des compétences du programme (ci-dessous).\n"
-            "- Pour chaque cours, fournis un 'nom' (sans code), et une ventilation en 'heures_theorie', 'heures_laboratoire', 'heures_travail_maison'.\n"
-            "- Un cours ne peut jamais comporter plus de 4h de théorie et 4h de labo. \n"
-            "- Calcule et inclus 'nombre_unites' = (heures_theorie + heures_laboratoire + heures_travail_maison)/3.\n"
-            "- Définition des heures totales d'un cours (pour le contrôle des heures): h_cours = (heures_theorie + heures_laboratoire) * 15.\n"
-            "- Somme stricte heures: la somme de tous les h_cours sur toutes les sessions DOIT être égale (pas proche) aux 'Heures totales à répartir'. Ajuste les 3 valeurs au besoin pour obtenir l'égalité exacte.\n"
-            + ("- Somme stricte unités: la somme de tous les 'nombre_unites' DOIT être égale aux 'Unités totales à répartir'.\n" if total_units > 0 else "") +
-            "- Répartis les heures et les unités sur les sessions de manière équilibrée et cohérente avec les compétences.\n"
-            "- Génère aussi les relations 'prealables' (cours antérieurs requis) et 'corequis' (cours à suivre simultanément).\n"
-            "  - Règle stricte: ne JAMAIS avoir plus de 2 cours dans 'prealables' pour un même cours.\n"
-            "  - Les 'prealables' doivent référencer des cours placés dans des sessions antérieures uniquement.\n"
-            "  - Limite au maximum le nombre de préalable et corequis, on doit se limiter à l'essentiel qui permet le développement des compétences. \n"
-            "  - Les 'corequis' doivent référencer des cours de la même session.\n"
-            "  - Assure une cohérence avec le développement/progression des compétences.\n"
-            "- Génère EN PLUS des 'fils_conducteurs' (thématiques transversales) avec:\n"
-            "  - 'description' (phrase courte),\n"
-            "  - 'couleur' (code hex ex: #1F77B4),\n"
-            "  - 'cours' (liste des noms exacts des cours concernés).\n"
-            "  - 3 à 6 fils max; chaque cours peut appartenir à 0 ou 1 fil.\n"
-            "- Retourne STRICTEMENT du JSON valide de la forme: {\"sessions\":[{\"session\":1,\"courses\":[{\"nom\":\"...\",\"heures_theorie\":3,\"heures_laboratoire\":2,\"heures_travail_maison\":2,\"nombre_unites\":7,\"prealables\":[\"Nom cours A\",\"Nom cours B\"],\"corequis\":[\"Nom cours C\"]}]}],\"fils_conducteurs\":[{\"description\":\"...\",\"couleur\":\"#AABBCC\",\"cours\":[\"Nom cours ...\"]}]}\n"
-            f"Programme: {programme.nom}\n"
-            f"Heures totales à répartir: {total_hours}\n"
-            f"Nombre de sessions: {nb_sessions}\n"
-            + (f"Unités totales à répartir: {total_units}\n" if total_units > 0 else "") +
-            f"Contexte additionnel (facultatif): {additional_info}\n\n"
-            f"Compétences du programme: {json.dumps(competences_list, ensure_ascii=False)}\n"
-        )
+        # System prompt: from settings only (no hard-coded defaults)
+        system_prompt = (sa.system_prompt if sa and getattr(sa, 'system_prompt', None) else '')
+        # User content: raw data only
+        user_payload = {
+            'programme': {'id': programme.id, 'nom': programme.nom},
+            'total_hours': total_hours,
+            'total_units': (total_units if total_units > 0 else None),
+            'nb_sessions': nb_sessions,
+            'additional_info': additional_info,
+            'competences': competences_list,
+        }
 
         self.update_state(state='PROGRESS', meta={'message': 'Appel du modèle…'})
         client = OpenAI(api_key=user.openai_key)
@@ -144,7 +118,7 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
             model=ai_model,
             input=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
+                {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)}
             ],
             metadata={'feature': 'generate_programme_grille', 'programme_id': str(programme.id)}
         )

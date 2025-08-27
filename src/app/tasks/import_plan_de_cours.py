@@ -216,18 +216,9 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
         if user.credits <= 0:
             return {"status": "error", "message": "Crédits insuffisants."}
 
-        # Prépare system prompt (SectionAISettings 'plan_de_cours_import' ou défaut) + message utilisateur (données brutes)
+        # Prépare system prompt (SectionAISettings 'plan_de_cours_import') + message utilisateur (données brutes)
         sa_impt = SectionAISettings.get_for('plan_de_cours_import')
-        default_impt = (
-            "Tu es un assistant d'importation. Analyse le plan de cours fourni (texte brut extrait d'un DOCX). "
-            "Le texte peut contenir des tableaux en Markdown (‘TABLE n:’ … ‘ENDTABLE’) qui priment sur le texte libre. "
-            "Retourne une sortie STRICTEMENT conforme au schéma Pydantic fourni au parsing. Si une information est absente, renvoie null.\n\n"
-            "Règles spécifiques:\n"
-            "- Les tableaux de calendrier: colonnes typiques Semaine, Sujet, Activités, Travaux hors classe, Évaluations → map vers 'calendriers'.\n"
-            "- Les tableaux d’évaluations: Titre, Description, Semaine et pondérations par Capacité → map vers 'evaluations' avec capacités [{'capacite','ponderation'}].\n"
-            "- Ne pas inventer; conserver fidèlement le contenu."
-        )
-        sys_prompt = (getattr(sa_impt, 'system_prompt', None) or '').strip() or default_impt
+        sys_prompt = (getattr(sa_impt, 'system_prompt', None) or '').strip()
         user_input = (
             "Contexte: cours {code} - {nom}, session {session}.\n"
             "Texte du plan de cours (brut):\n---\n{texte}\n---\n"
