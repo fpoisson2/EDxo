@@ -25,37 +25,6 @@
             <i class="bi bi-magic me-2"></i>
             <span>Améliorer le plan de cours</span>
         </a>
-        <!-- Démarrer (unifié) -->
-        <div class="btn-group">
-          <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-            Démarrer (unifié)
-          </button>
-          <ul class="dropdown-menu">
-            <li>
-              <a class="dropdown-item" href="#"
-                 data-task-start
-                 data-url="/api/plan_de_cours/{{ plan_de_cours.id }}/generate"
-                 data-title="Générer le plan de cours"
-                 data-mode="json"
-                 data-json='{"prompt":""}'>Générer (API)</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="#"
-                 data-task-start
-                 data-url="/api/plan_de_cours/{{ plan_de_cours.id }}/generate"
-                 data-title="Améliorer le plan de cours"
-                 data-mode="json"
-                 data-json='{"improve_only":true,"additional_info":""}'>Améliorer (API)</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="#"
-                 data-task-start
-                 data-url="{{ url_for('plan_de_cours.import_docx_start') }}"
-                 data-title="Importer Plan de cours (.docx)"
-                 data-mode="form">Importer DOCX</a>
-            </li>
-          </ul>
-        </div>
     </div>
 
     <div class="accordion" id="accordionPlanCours">
@@ -900,24 +869,18 @@ textarea.toast-ui-target:not(.toast-initialized) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Uniformiser l'import PDC: ouvrir le Start Modal (mode fichier)
+    // Importer un plan de cours: utiliser le modal fichier simplifié
     try {
       const btnImp = document.getElementById('openImportPlanCoursTask');
-      if (btnImp && window.EDxoTasks && window.EDxoTasks.openTaskStartModal) {
+      if (btnImp && window.EDxoTasks && window.EDxoTasks.openFileTask) {
         btnImp.addEventListener('click', (e) => {
           e.preventDefault();
-          window.EDxoTasks.openTaskStartModal({
+          window.EDxoTasks.openFileTask({
             url: "{{ url_for('plan_de_cours.import_docx_start') }}",
             title: 'Importer Plan de cours (.docx)',
-            mode: 'form'
+            startMessage: 'Import en cours…',
+            extraData: { cours_id: {{ cours.id }}, session: '{{ plan_de_cours.session }}' }
           });
-          // Préremplir les champs additionnels requis (cours_id, session)
-          setTimeout(() => {
-            try {
-              const extras = document.getElementById('task-start-form-extras');
-              if (extras) extras.value = `cours_id={{ cours.id }}\nsession={{ plan_de_cours.session }}`;
-            } catch(_) {}
-          }, 50);
         });
       }
     } catch(_) {}
@@ -966,6 +929,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       });
     } catch(_) {}
+
+
     // Fonction pour afficher les toasts
     function showToast(toastId) {
         const toastElement = document.getElementById(toastId);

@@ -70,14 +70,41 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
         self.update_state(state='PROGRESS', meta={'message': 'Appel au modèle IA en cours...'})
 
         client = OpenAI(api_key=user.openai_key)
-        response = client.responses.parse(
+        request_kwargs = dict(
             model=ai_model,
             input=prompt,
             text_format=BulkPlanDeCoursResponse,
+            reasoning={"summary": "auto"},
         )
+        streamed_text = ""
+        reasoning_summary_text = ""
+        final_response = None
+        try:
+            with client.responses.stream(**request_kwargs) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={'stream_chunk': delta, 'stream_buffer': streamed_text})
+                            except Exception:
+                                pass
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(event, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary_text += rs_delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                            except Exception:
+                                pass
+                final_response = stream.get_final_response()
+        except Exception:
+            final_response = client.responses.parse(**request_kwargs)
 
-        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
-        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
+        usage_prompt = final_response.usage.input_tokens if hasattr(final_response, 'usage') else 0
+        usage_completion = final_response.usage.output_tokens if hasattr(final_response, 'usage') else 0
         cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
 
         if user.credits < cost:
@@ -85,7 +112,7 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
 
         user.credits -= cost
 
-        parsed = _extract_first_parsed(response)
+        parsed = _extract_first_parsed(final_response)
         if parsed is None:
             return {"status": "error", "message": "Aucune donnée renvoyée par le modèle."}
 
@@ -159,7 +186,8 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
             "cours_id": plan.cours_id,
             "plan_id": plan.id,
             "session": plan.session,
-            "validation_url": f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}"
+            "validation_url": f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
+            "reasoning_summary": reasoning_summary_text,
         }
 
     except Exception as e:
@@ -253,21 +281,48 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
         self.update_state(state='PROGRESS', meta={'message': f"Génération de '{field_name}' en cours..."})
 
         client = OpenAI(api_key=user.openai_key)
-        response = client.responses.parse(
+        request_kwargs = dict(
             model=ai_model,
             input=prompt,
             text_format=SingleFieldResponse,
+            reasoning={"summary": "auto"},
         )
+        streamed_text = ""
+        reasoning_summary_text = ""
+        final_response = None
+        try:
+            with client.responses.stream(**request_kwargs) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={'stream_chunk': delta, 'stream_buffer': streamed_text})
+                            except Exception:
+                                pass
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(event, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary_text += rs_delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                            except Exception:
+                                pass
+                final_response = stream.get_final_response()
+        except Exception:
+            final_response = client.responses.parse(**request_kwargs)
 
-        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
-        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
+        usage_prompt = final_response.usage.input_tokens if hasattr(final_response, 'usage') else 0
+        usage_completion = final_response.usage.output_tokens if hasattr(final_response, 'usage') else 0
         cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
         if user.credits < cost:
             return {"status": "error", "message": "Crédits insuffisants pour cette opération."}
         user.credits -= cost
 
         # Récupération du champ généré
-        parsed = _extract_first_parsed(response)
+        parsed = _extract_first_parsed(final_response)
         value = None
         try:
             value = parsed and getattr(parsed, 'champ_description', None)
@@ -288,6 +343,7 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
             'cours_id': plan.cours_id,
             'session': plan.session,
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
+            'reasoning_summary': reasoning_summary_text,
         }
 
     except Exception as e:
@@ -335,20 +391,47 @@ def generate_plan_de_cours_calendar_task(self, plan_de_cours_id: int, additional
         self.update_state(state='PROGRESS', meta={'message': 'Génération du calendrier…'})
 
         client = OpenAI(api_key=user.openai_key)
-        response = client.responses.parse(
+        request_kwargs = dict(
             model=ai_model,
             input=prompt,
             text_format=CalendarOnlyResponse,
+            reasoning={"summary": "auto"},
         )
+        streamed_text = ""
+        reasoning_summary_text = ""
+        final_response = None
+        try:
+            with client.responses.stream(**request_kwargs) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={'stream_chunk': delta, 'stream_buffer': streamed_text})
+                            except Exception:
+                                pass
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(event, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary_text += rs_delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                            except Exception:
+                                pass
+                final_response = stream.get_final_response()
+        except Exception:
+            final_response = client.responses.parse(**request_kwargs)
 
-        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
-        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
+        usage_prompt = final_response.usage.input_tokens if hasattr(final_response, 'usage') else 0
+        usage_completion = final_response.usage.output_tokens if hasattr(final_response, 'usage') else 0
         cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
         if user.credits < cost:
             return {"status": "error", "message": "Crédits insuffisants pour cette opération."}
         user.credits -= cost
 
-        parsed = _extract_first_parsed(response)
+        parsed = _extract_first_parsed(final_response)
         entries: List[CalendarEntry] = (parsed.calendriers if parsed else []) or []
         if not entries:
             return {"status": "error", "message": "Aucune entrée générée pour le calendrier."}
@@ -382,6 +465,7 @@ def generate_plan_de_cours_calendar_task(self, plan_de_cours_id: int, additional
                 } for c in plan.calendriers
             ],
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
+            'reasoning_summary': reasoning_summary_text,
         }
     except Exception as e:
         logger.exception("Erreur dans la tâche generate_plan_de_cours_calendar_task")
@@ -450,20 +534,47 @@ def generate_plan_de_cours_evaluations_task(self, plan_de_cours_id: int, additio
 
         self.update_state(state='PROGRESS', meta={'message': 'Génération des évaluations…'})
         client = OpenAI(api_key=user.openai_key)
-        response = client.responses.parse(
+        request_kwargs = dict(
             model=ai_model,
             input=prompt,
             text_format=EvaluationsResponse,
+            reasoning={"summary": "auto"},
         )
+        streamed_text = ""
+        reasoning_summary_text = ""
+        final_response = None
+        try:
+            with client.responses.stream(**request_kwargs) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={'stream_chunk': delta, 'stream_buffer': streamed_text})
+                            except Exception:
+                                pass
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(event, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary_text += rs_delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                            except Exception:
+                                pass
+                final_response = stream.get_final_response()
+        except Exception:
+            final_response = client.responses.parse(**request_kwargs)
 
-        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
-        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
+        usage_prompt = final_response.usage.input_tokens if hasattr(final_response, 'usage') else 0
+        usage_completion = final_response.usage.output_tokens if hasattr(final_response, 'usage') else 0
         cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
         if user.credits < cost:
             return {"status": "error", "message": "Crédits insuffisants pour cette opération."}
         user.credits -= cost
 
-        parsed = _extract_first_parsed(response)
+        parsed = _extract_first_parsed(final_response)
         evals: List[EvaluationEntry] = (parsed.evaluations if parsed else []) or []
         if not evals:
             return {"status": "error", "message": "Aucune évaluation générée."}
@@ -530,6 +641,7 @@ def generate_plan_de_cours_evaluations_task(self, plan_de_cours_id: int, additio
             'session': plan.session,
             'evaluations': result_evals,
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
+            'reasoning_summary': reasoning_summary_text,
         }
     except Exception as e:
         logger.exception("Erreur dans la tâche generate_plan_de_cours_evaluations_task")

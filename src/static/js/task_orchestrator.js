@@ -123,6 +123,13 @@
       if (!file) { alert('Veuillez choisir un fichier.'); return; }
       const fd = new FormData();
       fd.append('file', file);
+      if (opts.extraData) {
+        try {
+          Object.entries(opts.extraData).forEach(([k, v]) => {
+            if (v !== undefined && v !== null) fd.append(k, v);
+          });
+        } catch {}
+      }
       const fetchOpts = { method: 'POST', credentials: 'same-origin', body: fd, headers: { 'Accept': 'application/json' } };
       try {
         const csrf = getCsrfToken();

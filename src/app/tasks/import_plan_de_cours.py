@@ -257,20 +257,47 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
         self.update_state(state='PROGRESS', meta={'message': "Analyse du .docx en cours..."})
 
         client = OpenAI(api_key=user.openai_key)
-        response = client.responses.parse(
+        request_kwargs = dict(
             model=ai_model,
             input=prompt,
             text_format=ImportPlanDeCoursResponse,
+            reasoning={"summary": "auto"},
         )
+        streamed_text = ""
+        reasoning_summary_text = ""
+        final_response = None
+        try:
+            with client.responses.stream(**request_kwargs) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={'stream_chunk': delta, 'stream_buffer': streamed_text})
+                            except Exception:
+                                pass
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(event, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary_text += rs_delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                            except Exception:
+                                pass
+                final_response = stream.get_final_response()
+        except Exception:
+            final_response = client.responses.parse(**request_kwargs)
 
-        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
-        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
+        usage_prompt = final_response.usage.input_tokens if hasattr(final_response, 'usage') else 0
+        usage_completion = final_response.usage.output_tokens if hasattr(final_response, 'usage') else 0
         cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
         if user.credits < cost:
             return {"status": "error", "message": "Crédits insuffisants pour cette opération."}
         user.credits -= cost
 
-        parsed = _extract_first_parsed(response)
+        parsed = _extract_first_parsed(final_response)
         if parsed is None:
             return {"status": "error", "message": "Aucune donnée renvoyée par le modèle."}
 
@@ -403,6 +430,7 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
             'validation_url': f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
             # Lien direct possible vers l'affichage du plan de cours (fallback)
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
+            'reasoning_summary': reasoning_summary_text,
         }
 
         return {"status": "success", **payload}
