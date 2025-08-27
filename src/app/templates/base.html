@@ -820,7 +820,16 @@
                   try {
                     const href = a.getAttribute('href') || '';
                     const tid = extractTaskId(href);
-                    if (!tid) return; // no validation for non-task links
+                    // Lien de suivi sans ID: supprimer l'entrée orpheline
+                    if (!tid && (href.indexOf('/tasks/track/') === 0 || href.indexOf((window.APP_PREFIX||'') + '/tasks/track/') === 0)) {
+                      ev.preventDefault();
+                      notifications = notifications.filter(n => !(n && n.link === href));
+                      saveNotifications();
+                      updateNotificationUI();
+                      try { window.flashMessageSystem && window.flashMessageSystem.warning('Lien de tâche invalide. Entrée supprimée.', 4000); } catch {}
+                      return;
+                    }
+                    if (!tid) return; // pas de validation pour les autres liens
                     const ok = await checkTaskExists(tid);
                     if (!ok) {
                       ev.preventDefault();
@@ -864,6 +873,18 @@
         pruningInFlight = true;
         try {
           const now = Date.now();
+          // Nettoyage immédiat: supprimer entrées avec lien /tasks/track/ sans ID
+          notifications = notifications.filter(n => {
+            if (!n || !n.link) return !!n;
+            try {
+              const isTrack = (n.link.indexOf('/tasks/track/') === 0) || (n.link.indexOf((window.APP_PREFIX||'') + '/tasks/track/') === 0);
+              if (isTrack) {
+                const m = String(n.link).match(/\/tasks\/track\/([^/]+)/);
+                if (!m || !m[1]) return false;
+              }
+            } catch {}
+            return true;
+          });
           // Drop very old non-active items
           notifications = notifications.filter(n => {
             if (!n) return false;
@@ -871,6 +892,14 @@
             const ts = new Date(n.timestamp || 0).getTime();
             if (!ts) return true;
             return (now - ts) <= maxAgeMs;
+          });
+          // Supprimer "in-progress" sans taskId trop anciens (> 30 minutes)
+          notifications = notifications.filter(n => {
+            if (!n) return false;
+            if (!(n.type === 'in-progress' && !n.taskId)) return true;
+            const ts = new Date(n.timestamp || 0).getTime();
+            if (!ts) return false;
+            return (now - ts) <= (1000 * 60 * 30);
           });
           if (validate) {
             let validated = 0;
@@ -934,6 +963,15 @@
             const cur = sessionStorage.getItem('currentTaskId');
             if (cur) tid = cur;
           }
+          // Si nous avons un tid mais un lien /tasks/track/ invalide, on le normalise
+          if (tid && typeof link === 'string') {
+            const extracted = (function(){ try { const m = String(link).match(/\/tasks\/track\/([^/]+)/); return m ? m[1] : null; } catch { return null; }})();
+            const isTrack = (link.indexOf('/tasks/track/') === 0) || (link.indexOf((window.APP_PREFIX||'') + '/tasks/track/') === 0);
+            if (isTrack && extracted !== tid) {
+              const prefix = (typeof window !== 'undefined' && window.APP_PREFIX) ? window.APP_PREFIX : '';
+              link = `${prefix}/tasks/track/${tid}`;
+            }
+          }
         } catch {}
         const nowIso = new Date().toISOString();
         if (tid) {
@@ -988,8 +1026,17 @@
       }
 
       function clearNotifications() {
-        // Ne jamais supprimer les tâches en cours (inclut la file d'attente)
-        notifications = notifications.filter(n => n && (n.type === 'in-progress' || n.type === 'queued'));
+        // Conserver seulement les tâches réellement en cours (avec un taskId ou un lien valide)
+        notifications = notifications.filter(n => {
+          if (!n) return false;
+          if (n.type === 'in-progress' || n.type === 'queued') {
+            try {
+              const tid = n.taskId || extractTaskId(n.link || '');
+              return !!tid; // supprimer les orphelines sans identifiant
+            } catch { return false; }
+          }
+          return false;
+        });
         saveNotifications();
         updateNotificationUI();
       }
