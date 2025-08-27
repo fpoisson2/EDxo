@@ -216,6 +216,8 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
                 'evaluations': c.evaluations,
             } for c in plan.calendriers
         ]
+        # Inclure l'instantané des évaluations avant modification pour permettre le revert
+        old_evaluations = _serialize_evaluations(plan)
         old_evaluations = _serialize_evaluations(plan)
 
         # Mettre à jour les champs
@@ -551,6 +553,8 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
                 'evaluations': c.evaluations,
             } for c in plan.calendriers
         ]
+        # Snapshot des évaluations avant modification (pour la page de review/revert)
+        old_evaluations = _serialize_evaluations(plan)
 
         # Mise à jour du plan
         setattr(plan, field_name, value)

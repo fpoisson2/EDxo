@@ -366,12 +366,31 @@
                             {{ form.evaluation_expression_francais(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="evaluation_expression_francais") }}
                         </div>
 
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="seuil_reussite" class="form-label fw-bold">{{ form.seuil_reussite.label.text }}</label>
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="seuil_reussite" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                            {{ form.seuil_reussite(
+                                class="form-control auto-resize border-0",
+                                oninput="autoResize(this)",
+                                style="overflow:hidden; resize:none;",
+                                id="seuil_reussite"
+                            ) }}
+                        </div>
+
                         <div class="mb-3">
                             {{ form.materiel.label(class="form-label fw-bold") }}
                             {{ form.materiel(
                                 class="form-control auto-resize border-0",
                                 oninput="autoResize(this)",
-                                style="overflow:hidden; resize:none;") }}
+                                style="overflow:hidden; resize:none;",
+                                id="materiel"
+                            ) }}
                         </div>
 
                         <hr>

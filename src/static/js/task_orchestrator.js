@@ -442,21 +442,25 @@
           <div class="modal-body">
             <div class="mb-2 small text-muted">ID: <span id="task-orch-id"></span> · État: <span id="task-orch-state">PENDING</span></div>
             <h6 class="mt-2 mb-1">Résumé du raisonnement</h6>
-            <div id="task-orch-reasoning-spinner" class="my-2" style="min-height:1.5rem;">
-              <div class="spinner-border spinner-border-sm text-primary" role="status" aria-label="Chargement"></div>
+            <div id="task-orch-reasoning-wrap" class="position-relative mb-2">
+              <div id="task-orch-reasoning-overlay" class="d-flex align-items-center justify-content-center" style="position:absolute;inset:0;pointer-events:none;z-index:10;display:flex;">
+                <div class="spinner-border spinner-border-sm text-primary" role="status" aria-label="Chargement"></div>
+              </div>
+              <div id="task-orch-reasoning" class="small" style="min-height:100px;max-height:25vh;overflow:auto;background:#f8f9fa;padding:8px;border-radius:6px;"></div>
             </div>
-            <div id="task-orch-reasoning" class="mb-2 small d-none" style="max-height:25vh;overflow:auto;background:#f8f9fa;padding:8px;border-radius:6px;"></div>
 
             <h6 class="mt-3 mb-1">Contenu généré</h6>
             <div class="d-flex gap-2 mb-2">
               <button class="btn btn-sm btn-outline-secondary active" id="task-orch-view-text" type="button">Texte</button>
               <button class="btn btn-sm btn-outline-secondary" id="task-orch-view-json" type="button" disabled>JSON</button>
             </div>
-            <div id="task-orch-stream-spinner" class="my-2" style="min-height:1.5rem;">
-              <div class="spinner-border spinner-border-sm text-primary" role="status" aria-label="Chargement"></div>
+            <div id="task-orch-stream-wrap" class="position-relative">
+              <div id="task-orch-stream-overlay" class="d-flex align-items-center justify-content-center" style="position:absolute;inset:0;pointer-events:none;z-index:10;display:flex;">
+                <div class="spinner-border spinner-border-sm text-primary" role="status" aria-label="Chargement"></div>
+              </div>
+              <div id="task-orch-stream-text" class="form-control" style="background:#0f172a;color:#e2e8f0;font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Cantarell, Noto Sans, Ubuntu, Helvetica Neue, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';font-size:0.95rem;line-height:1.3;min-height:140px;max-height:280px;overflow:auto;white-space:pre-wrap;position:relative;z-index:1;"></div>
+              <pre id="task-orch-stream-json" class="form-control" style="display:none;background:#0f172a;color:#e2e8f0;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;min-height:140px;max-height:280px;white-space:pre-wrap;overflow:auto;"></pre>
             </div>
-            <div id="task-orch-stream-text" class="form-control" style="background:#0f172a;color:#e2e8f0;font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Cantarell, Noto Sans, Ubuntu, Helvetica Neue, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';font-size:0.95rem;line-height:1.3;min-height:140px;max-height:280px;overflow:auto;white-space:pre-wrap;"></div>
-            <pre id="task-orch-stream-json" class="form-control" style="display:none;background:#0f172a;color:#e2e8f0;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;min-height:140px;max-height:280px;white-space:pre-wrap;overflow:auto;"></pre>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-danger me-auto" id="task-orch-cancel">Arrêter</button>
@@ -582,11 +586,12 @@
     const streamEl = opts.streamEl || document.getElementById('task-orch-stream-text');
     try { if (streamEl) streamEl.style.background = '#0f172a'; } catch {}
     const streamJsonPre = document.getElementById('task-orch-stream-json');
+    const streamOverlay = document.getElementById('task-orch-stream-overlay');
     const viewTextBtn = document.getElementById('task-orch-view-text');
     const viewJsonBtn = document.getElementById('task-orch-view-json');
-    const streamSpinner = document.getElementById('task-orch-stream-spinner');
+    
     const reasoningEl = opts.summaryEl || document.getElementById('task-orch-reasoning');
-    const reasoningSpinner = document.getElementById('task-orch-reasoning-spinner');
+    const reasoningOverlay = document.getElementById('task-orch-reasoning-overlay');
 
     // Local helper: make reasoning easier to read by turning bold titles into headings
     function formatReasoningMarkdown(text) {
@@ -613,7 +618,7 @@
       if (streamEl) {
         setStreamText(streamEl, cache.stream || '');
         scrollStreamToBottom(streamEl);
-        if (streamSpinner) streamSpinner.style.display = getStreamText(streamEl) ? 'none' : '';
+        if (streamOverlay) streamOverlay.style.display = (getStreamText(streamEl).trim() ? 'none' : 'flex');
       }
       try { if (typeof tryUpdateJsonView === 'function') tryUpdateJsonView(); } catch {}
       if (reasoningEl) {
@@ -628,13 +633,7 @@
         } catch (_) {
           reasoningEl.textContent = txt;
         }
-        if (txt) {
-          reasoningEl.classList.remove('d-none');
-          if (reasoningSpinner) reasoningSpinner.style.display = 'none';
-        } else {
-          reasoningEl.classList.add('d-none');
-          if (reasoningSpinner) reasoningSpinner.style.display = '';
-        }
+        if (reasoningOverlay) reasoningOverlay.style.display = (String(txt).trim() ? 'none' : 'flex');
       }
       // JSON pane removed
       if (cache.state) {
@@ -684,24 +683,55 @@
       try {
         if (obj === null || obj === undefined) return '';
         if (typeof obj !== 'object') return String(obj);
+
+        // Helper to prettify a single item with name/content
+        const renderNamed = (item) => {
+          try {
+            if (!item || typeof item !== 'object') return '';
+            const name = item.field_name || item.name || item.title || '';
+            const content = item.content || item.value || item.text || '';
+            if (name || content) {
+              const title = String(name || '').trim();
+              const body = String(content || '').trim();
+              const titleHtml = title ? `<div><strong>${title}</strong></div>` : '';
+              const bodyHtml = body ? `<div style="margin-left:10px">${body}</div>` : '';
+              return `<div style="margin:6px 0">${titleHtml}${bodyHtml}</div>`;
+            }
+            return '';
+          } catch { return ''; }
+        };
+
         if (Array.isArray(obj)) {
           if (obj.length === 0) return '<div class="text-muted">(vide)</div>';
-          const items = obj.map(it => {
+          // If array contains named items, render them as titled sections
+          const allNamed = obj.every(it => it && typeof it === 'object' && (('field_name' in it) || ('name' in it) || ('title' in it)));
+          if (allNamed) {
+            return obj.map(it => renderNamed(it)).join('');
+          }
+          // Fallback: bullet list
+          return obj.map(it => {
             if (typeof it === 'object' && it !== null) {
-              return `<div>• ${renderReadableFromJson(it, level + 1)}</div>`;
+              const inner = renderReadableFromJson(it, level + 1);
+              return `<div style="margin:4px 0">• ${inner}</div>`;
             }
             return `<div>• ${String(it)}</div>`;
           }).join('');
-          return items;
         }
+
+        // Object case
         const parts = [];
-        for (const [k, v] of Object.entries(obj)) {
-          const title = String(k).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-          if (typeof v === 'object' && v !== null) {
-            parts.push(`<div style="margin-top:${level?4:0}px"><strong>${title}</strong></div>`);
-            parts.push(`<div style="margin-left:10px">${renderReadableFromJson(v, level + 1)}</div>`);
-          } else {
-            parts.push(`<div><strong>${title}:</strong> ${String(v)}</div>`);
+        // If object itself looks like named item, render it succinctly
+        if ((('field_name' in obj) || ('name' in obj) || ('title' in obj)) && (('content' in obj) || ('value' in obj) || ('text' in obj))) {
+          parts.push(renderNamed(obj));
+        } else {
+          for (const [k, v] of Object.entries(obj)) {
+            const title = String(k).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            if (typeof v === 'object' && v !== null) {
+              parts.push(`<div style="margin-top:${level?4:0}px"><strong>${title}</strong></div>`);
+              parts.push(`<div style="margin-left:10px">${renderReadableFromJson(v, level + 1)}</div>`);
+            } else {
+              parts.push(`<div><strong>${title}:</strong> ${String(v)}</div>`);
+            }
           }
         }
         return parts.join('');
@@ -756,7 +786,7 @@
                 // Keep viewport near bottom
                 scrollStreamToBottom(streamEl);
               }
-              if (streamSpinner) streamSpinner.style.display = streamEl && getStreamText(streamEl) ? 'none' : '';
+              if (streamOverlay) streamOverlay.style.display = (streamEl && getStreamText(streamEl).trim()) ? 'none' : 'flex';
               tryUpdateJsonView();
               try { scheduleCacheSave(taskId); } catch {}
             } catch {}
@@ -787,8 +817,7 @@
               } catch (_) {
                 reasoningEl.textContent = lastReasoning;
               }
-              reasoningEl.classList.remove('d-none');
-              if (reasoningSpinner) reasoningSpinner.style.display = lastReasoning ? 'none' : '';
+              if (reasoningOverlay) reasoningOverlay.style.display = (String(lastReasoning).trim() ? 'none' : 'flex');
             }
           }, reasoningThrottleMs);
         }
@@ -1013,9 +1042,9 @@
             try { streamJsonPre.style.border = '2px solid #16a34a'; } catch {}
             try { streamJsonPre.style.color = '#064e3b'; } catch {}
           }
-          try { if (streamSpinner) streamSpinner.style.display = 'none'; } catch {}
+          try { if (streamOverlay) streamOverlay.style.display = 'none'; } catch {}
         }
-        if (reasoningSpinner) reasoningSpinner.style.display = 'none';
+        if (reasoningOverlay) reasoningOverlay.style.display = 'none';
       } catch {}
       try {
         if (payload && payload.reasoning_summary && reasoningEl) {
