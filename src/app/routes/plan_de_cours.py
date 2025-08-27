@@ -1272,8 +1272,10 @@ def review_plan_de_cours_generation(plan_id):
     task_id = request.args.get('task_id')
     old_fields = {}
     old_cal = []
+    old_evals = []
     new_fields = {}
     new_cal = []
+    new_evals = []
     reasoning_summary = None
     try:
         if task_id:
@@ -1281,8 +1283,10 @@ def review_plan_de_cours_generation(plan_id):
             data = res.result or {}
             old_fields = data.get('old_fields') or {}
             old_cal = data.get('old_calendriers') or []
+            old_evals = data.get('old_evaluations') or []
             new_fields = data.get('fields') or {}
             new_cal = data.get('calendriers') or []
+            new_evals = data.get('evaluations') or []
             reasoning_summary = data.get('reasoning_summary')
     except Exception:
         current_app.logger.exception('Erreur lecture résultat tâche plan de cours')
@@ -1307,6 +1311,22 @@ def review_plan_de_cours_generation(plan_id):
                 'travaux_hors_classe': c.travaux_hors_classe,
                 'evaluations': c.evaluations,
             } for c in plan.calendriers
+        ]
+    if plan and not new_evals:
+        new_evals = [
+            {
+                'id': e.id,
+                'titre': e.titre_evaluation,
+                'description': e.description,
+                'semaine': e.semaine,
+                'capacites': [
+                    {
+                        'capacite_id': c.capacite_id,
+                        'capacite': c.capacite.capacite if c.capacite else None,
+                        'ponderation': c.ponderation,
+                    } for c in e.capacites
+                ]
+            } for e in plan.evaluations
         ]
 
     # Construire un dict de "changes" compatible avec le template du plan-cadre
@@ -1340,11 +1360,34 @@ def review_plan_de_cours_generation(plan_id):
             out.append({'texte': titre, 'description': "\n".join(desc_parts) if desc_parts else ''})
         return out
 
+    def _eval_to_list(evals):
+        out = []
+        for e in evals or []:
+            titre = f"S{e.get('semaine')} — {e.get('titre') or ''}"
+            desc_parts = []
+            if e.get('description'):
+                desc_parts.append(e.get('description'))
+            caps = e.get('capacites') or []
+            if caps:
+                cap_desc = ", ".join([
+                    f"{c.get('capacite') or ''} ({c.get('ponderation') or ''})" for c in caps
+                ])
+                desc_parts.append(f"Capacités: {cap_desc}")
+            out.append({'texte': titre, 'description': "\n".join(desc_parts) if desc_parts else ''})
+        return out
+
     if (old_cal or new_cal) and (_cal_to_list(old_cal) != _cal_to_list(new_cal)):
         changes['calendrier'] = {
             'before': _cal_to_list(old_cal),
             'after': _cal_to_list(new_cal),
             'label': 'Calendrier'
+        }
+
+    if (old_evals or new_evals) and (_eval_to_list(old_evals) != _eval_to_list(new_evals)):
+        changes['evaluations'] = {
+            'before': _eval_to_list(old_evals),
+            'after': _eval_to_list(new_evals),
+            'label': 'Évaluations'
         }
 
     # Utiliser le template de revue plan-cadre, en mode confirmation simple (confirm/revert)
@@ -1385,6 +1428,7 @@ def apply_review_plan_de_cours(plan_id):
             payload = res.result or {}
             old_fields = payload.get('old_fields') or {}
             old_cal = payload.get('old_calendriers') or []
+            old_evals = payload.get('old_evaluations') or []
         except Exception:
             current_app.logger.exception('Erreur lecture résultat tâche pour revert plan de cours')
             return jsonify({'success': False, 'message': "Impossible de lire le résultat de la tâche."}), 500
@@ -1415,6 +1459,25 @@ def apply_review_plan_de_cours(plan_id):
                 travaux_hors_classe=entry.get('travaux_hors_classe'),
                 evaluations=entry.get('evaluations'),
             ))
+
+        # Restaurer les évaluations
+        for e in plan.evaluations:
+            db.session.delete(e)
+        for ev in (old_evals or []):
+            row = PlanDeCoursEvaluations(
+                plan_de_cours_id=plan.id,
+                titre_evaluation=ev.get('titre'),
+                description=ev.get('description'),
+                semaine=ev.get('semaine'),
+            )
+            db.session.add(row)
+            db.session.flush()
+            for ce in ev.get('capacites', []):
+                db.session.add(PlanDeCoursEvaluationsCapacites(
+                    evaluation_id=row.id,
+                    capacite_id=ce.get('capacite_id'),
+                    ponderation=ce.get('ponderation'),
+                ))
 
         db.session.commit()
 
