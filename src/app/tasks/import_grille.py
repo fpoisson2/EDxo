@@ -222,9 +222,54 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None):
                 "top_p": 1,
             })
 
-        # Appel non-stream
+        # Appel en streaming pour capturer le texte et le résumé de raisonnement
         self.update_state(state='PROGRESS', meta={'message': "Appel au modèle IA..."})
-        response = client.responses.create(**request_kwargs)
+        streamed_text = ""
+        reasoning_summary_text = ""
+        response = None
+        try:
+            with client.responses.stream(**request_kwargs) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={'stream_chunk': delta, 'stream_buffer': streamed_text})
+                            except Exception:
+                                pass
+                    elif etype.endswith('response.output_item.added') or etype == 'response.output_item.added':
+                        try:
+                            item = getattr(event, 'item', None)
+                            text_val = ''
+                            if item:
+                                if isinstance(item, dict):
+                                    text_val = item.get('text') or ''
+                                else:
+                                    text_val = getattr(item, 'text', '') or ''
+                            if text_val:
+                                streamed_text += text_val
+                        except Exception:
+                            pass
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        try:
+                            rs_delta = getattr(event, 'delta', '') or ''
+                            if rs_delta:
+                                reasoning_summary_text += rs_delta
+                                try:
+                                    self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
+                    elif etype.endswith('response.completed'):
+                        pass
+                    elif etype.endswith('response.error'):
+                        pass
+                response = stream.get_final_response()
+        except Exception:
+            response = client.responses.create(**request_kwargs)
         logger.info(f"[{task_id}] OpenAI response received successfully.")
 
         # Nettoyage du fichier chargé (bonnes pratiques)
@@ -246,7 +291,7 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None):
 
         if parsed_direct is not None:
             try:
-                return {
+                result = {
                     "status": "success",
                     "result": parsed_direct,
                     "usage": {
@@ -255,12 +300,29 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None):
                     },
                     "validation_url": f"/confirm_grille_import/{task_id}",
                 }
+                if reasoning_summary_text:
+                    result["reasoning_summary"] = reasoning_summary_text
+                return result
             except Exception:
                 # Continue vers tentative de parsing texte
                 pass
 
-        # Tentative de parsing à partir du texte (sans fallback de réparation)
+        # Tentative de parsing à partir du texte (avec fallback sur le stream)
         raw_text = getattr(response, 'output_text', '') or ''
+        if not raw_text and streamed_text:
+            raw_text = streamed_text
+        if not raw_text:
+            try:
+                for out in getattr(response, 'output', []) or []:
+                    for c in getattr(out, 'content', []) or []:
+                        t = getattr(c, 'text', None)
+                        if t:
+                            raw_text = t
+                            break
+                    if raw_text:
+                        break
+            except Exception:
+                raw_text = ''
 
         def _coerce_json(txt: str):
             s = (txt or '').strip()
@@ -289,7 +351,7 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None):
 
         try:
             parsed = _coerce_json(raw_text)
-            return {
+            result = {
                 "status": "success",
                 "result": parsed,
                 "usage": {
@@ -298,9 +360,12 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None):
                 },
                 "validation_url": f"/confirm_grille_import/{task_id}",
             }
+            if reasoning_summary_text:
+                result["reasoning_summary"] = reasoning_summary_text
+            return result
         except Exception as parse_err:
             logger.warning(f"[{task_id}] JSON non valide; retour du texte brut (pas de fallback). err={parse_err}")
-            return {
+            result = {
                 "status": "success",
                 "result": raw_text,
                 "usage": {
@@ -309,6 +374,9 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None):
                 },
                 "validation_url": f"/confirm_grille_import/{task_id}",
             }
+            if reasoning_summary_text:
+                result["reasoning_summary"] = reasoning_summary_text
+            return result
 
     except Exception as e:
         # Log the full error and traceback
