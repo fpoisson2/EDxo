@@ -217,6 +217,110 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
 
         db.session.commit()
 
+        # Génération de la grille d'évaluations (liste des évaluations + pondérations)
+        try:
+            cours: Cours = plan.cours
+            plan_cadre: PlanCadre = cours.plan_cadre if cours else None
+            if cours and plan_cadre:
+                # Construire un prompt pour les évaluations, similaire à la tâche dédiée
+                cap_lines = ", ".join([c.capacite for c in getattr(plan_cadre, 'capacites', []) or []])
+                sections = [
+                    f"Cours: {cours.code or ''} - {cours.nom or ''}",
+                    f"Objectif terminal: {plan_cadre.objectif_terminal or ''}",
+                    f"Capacités: {cap_lines}",
+                ]
+                eval_prompt = (
+                    "Tu es un assistant pédagogique. Propose une liste d'évaluations pour le plan de cours "
+                    f"de la session {plan.session}. Retourne un JSON sous la forme:\n"
+                    "{ 'evaluations': [ { 'titre': str, 'semaine': int, 'description': str, 'capacites': [ { 'capacite': str, 'ponderation': str } ] } ] }\n"
+                    "Le champ 'capacite' doit correspondre au libellé exact d'une capacité du plan-cadre.\n\n"
+                    "Contexte:\n" + "\n".join(sections)
+                )
+
+                # Feedback progression
+                self.update_state(state='PROGRESS', meta={'message': 'Génération des évaluations…'})
+
+                client = OpenAI(api_key=user.openai_key)
+                eval_response = client.responses.parse(
+                    model=ai_model or 'gpt-5',
+                    input=eval_prompt,
+                    text_format=EvaluationsResponse,
+                )
+
+                # Décompte des crédits pour cet appel également
+                e_usage_prompt = eval_response.usage.input_tokens if hasattr(eval_response, 'usage') else 0
+                e_usage_completion = eval_response.usage.output_tokens if hasattr(eval_response, 'usage') else 0
+                e_cost = calculate_call_cost(e_usage_prompt, e_usage_completion, ai_model or 'gpt-5')
+                if user.credits < e_cost:
+                    # Ne pas interrompre le flux global: retourner un succès partiel sans évaluations
+                    logger.warning("Crédits insuffisants pour générer les évaluations; champs/calendrier mis à jour.")
+                    generated_evals = []
+                else:
+                    user.credits -= e_cost
+
+                    parsed_eval = _extract_first_parsed(eval_response)
+                    evals = (parsed_eval.evaluations if parsed_eval else []) or []
+
+                    # Remplacer la liste d'évaluations existantes
+                    for e in plan.evaluations:
+                        db.session.delete(e)
+
+                    # Map libellé capacité -> id
+                    cap_by_name = {}
+                    try:
+                        for c in getattr(plan_cadre, 'capacites', []) or []:
+                            if c.capacite:
+                                cap_by_name[c.capacite.strip()] = c.id
+                    except Exception:
+                        pass
+
+                    for ev in evals:
+                        row = PlanDeCoursEvaluations(
+                            plan_de_cours_id=plan.id,
+                            titre_evaluation=getattr(ev, 'titre', None),
+                            description=getattr(ev, 'description', None),
+                            semaine=getattr(ev, 'semaine', None),
+                        )
+                        db.session.add(row)
+                        db.session.flush()
+                        for ce in (getattr(ev, 'capacites', None) or []):
+                            cap_id = None
+                            try:
+                                name = getattr(ce, 'capacite', None)
+                                if name:
+                                    cap_id = cap_by_name.get(name.strip())
+                            except Exception:
+                                cap_id = None
+                            db.session.add(PlanDeCoursEvaluationsCapacites(
+                                evaluation_id=row.id,
+                                capacite_id=cap_id,
+                                ponderation=getattr(ce, 'ponderation', None),
+                            ))
+
+                    db.session.commit()
+
+                    # Serialize évaluations pour le payload
+                    generated_evals = []
+                    for e in plan.evaluations:
+                        generated_evals.append({
+                            'id': e.id,
+                            'titre': e.titre_evaluation,
+                            'description': e.description,
+                            'semaine': e.semaine,
+                            'capacites': [
+                                {
+                                    'capacite_id': c.capacite_id,
+                                    'capacite': (db.session.get(PlanCadreCapacites, c.capacite_id).capacite if c.capacite_id else None),
+                                    'ponderation': c.ponderation,
+                                } for c in e.capacites
+                            ]
+                        })
+            else:
+                generated_evals = []
+        except Exception:
+            logger.exception("Erreur lors de la génération des évaluations intégrée à generate_all")
+            generated_evals = []
+
         return {
             "status": "success",
             "fields": {
@@ -237,6 +341,7 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
                     'evaluations': c.evaluations,
                 } for c in plan.calendriers
             ],
+            "evaluations": generated_evals,
             "old_fields": old_fields,
             "old_calendriers": old_calendriers,
             "cours_id": plan.cours_id,
@@ -417,6 +522,26 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
         if not value:
             return {"status": "error", "message": "Aucune description générée."}
 
+        # Snapshot avant modification pour comparaison (tous les champs + calendrier)
+        old_fields = {
+            'presentation_du_cours': plan.presentation_du_cours,
+            'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+            'organisation_et_methodes': plan.organisation_et_methodes,
+            'accomodement': plan.accomodement,
+            'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+            'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'materiel': plan.materiel,
+        }
+        old_calendriers = [
+            {
+                'semaine': c.semaine,
+                'sujet': c.sujet,
+                'activites': c.activites,
+                'travaux_hors_classe': c.travaux_hors_classe,
+                'evaluations': c.evaluations,
+            } for c in plan.calendriers
+        ]
+
         # Mise à jour du plan
         setattr(plan, field_name, value)
         db.session.commit()
@@ -429,6 +554,10 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
             'cours_id': plan.cours_id,
             'session': plan.session,
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
+            # Ajouts pour la page de validation unifiée Plan de cours
+            'old_fields': old_fields,
+            'old_calendriers': old_calendriers,
+            'validation_url': f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
             'reasoning_summary': reasoning_summary_text,
         }
 
@@ -552,6 +681,17 @@ def generate_plan_de_cours_calendar_task(self, plan_de_cours_id: int, additional
         if not entries:
             return {"status": "error", "message": "Aucune entrée générée pour le calendrier."}
 
+        # Snapshot calendrier avant remplacement
+        old_calendriers = [
+            {
+                'semaine': c.semaine,
+                'sujet': c.sujet,
+                'activites': c.activites,
+                'travaux_hors_classe': c.travaux_hors_classe,
+                'evaluations': c.evaluations,
+            } for c in plan.calendriers
+        ]
+
         # Mise à jour DB (remplace le calendrier courant)
         for cal in plan.calendriers:
             db.session.delete(cal)
@@ -581,6 +721,18 @@ def generate_plan_de_cours_calendar_task(self, plan_de_cours_id: int, additional
                 } for c in plan.calendriers
             ],
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
+            # Ajouts pour permettre la restauration via la page de review
+            'old_fields': {
+                'presentation_du_cours': plan.presentation_du_cours,
+                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+                'organisation_et_methodes': plan.organisation_et_methodes,
+                'accomodement': plan.accomodement,
+                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'materiel': plan.materiel,
+            },
+            'old_calendriers': old_calendriers,
+            'validation_url': f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
             'reasoning_summary': reasoning_summary_text,
         }
     except Exception as e:

@@ -590,6 +590,13 @@
             const msg = (data.message && data.message.trim()) ? data.message : 'Tâche en cours…';
             addNotification(`${t} — ${msg}`, "in-progress", link, currentTaskId);
             setTimeout(checkTaskStatus, 3000);
+          } else if (data.state === 'PENDING') {
+            // PENDING should show spinner like in-progress
+            const link = `/tasks/track/${currentTaskId}`;
+            const t = getTaskTitle(currentTaskId);
+            const msg = (data.message && data.message.trim()) ? data.message : 'Tâche en cours…';
+            addNotification(`${t} — ${msg}`, "in-progress", link, currentTaskId);
+            setTimeout(checkTaskStatus, 3000);
           } else {
             // For any other non-final states, keep polling with in-progress
             const link = `/tasks/track/${currentTaskId}`;
@@ -614,6 +621,7 @@
         currentTaskId = taskId;
         isPolling = true;
         const t = getTaskTitle(taskId);
+        // Initial state: treat as in-progress (spinner)
         addNotification(`${t} — Tâche en cours…`, "in-progress", `/tasks/track/${taskId}`, taskId);
         checkTaskStatus();
       }
@@ -785,6 +793,8 @@
               iconHtml = '<i class="bi bi-exclamation-triangle me-2 text-danger"></i>';
             } else if (notif.type === "warning") {
               iconHtml = '<i class="bi bi-exclamation-circle me-2 text-warning"></i>';
+            } else if (notif.type === "queued") {
+              iconHtml = '<i class="bi bi-clock me-2 text-secondary"></i>';
             } else if (notif.type === "in-progress") {
               iconHtml = '<span class="spinner-border spinner-border-sm me-2 text-primary"></span>';
             } else {
@@ -848,8 +858,8 @@
       }
 
       function clearNotifications() {
-        // Ne jamais supprimer les tâches en cours
-        notifications = notifications.filter(n => n && n.type === 'in-progress');
+        // Ne jamais supprimer les tâches en cours (inclut la file d'attente)
+        notifications = notifications.filter(n => n && (n.type === 'in-progress' || n.type === 'queued'));
         saveNotifications();
         updateNotificationUI();
       }

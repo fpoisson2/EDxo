@@ -53,7 +53,16 @@
         {{ form.csrf_token }}
         {{ form.task_id }}
         {{ form.grille_json }}
-        
+
+        {% if fixed_programme %}
+        <div class="form-group mb-3">
+          <label>Programme</label>
+          <input type="text" class="form-control" value="{{ (selected_programme.nom if selected_programme else nom_programme) }}" readonly>
+          <div style="display:none">
+            {{ form.programme_id }}
+          </div>
+        </div>
+        {% else %}
         <div class="form-group mb-3">
           <label for="{{ form.programme_id.id }}">Programme</label>
           {{ form.programme_id }}
@@ -65,6 +74,13 @@
           </div>
           {% endif %}
           <div class="form-text">Sélectionnez le programme auquel associer cette grille de cours.</div>
+        </div>
+        {% endif %}
+
+        <div class="form-group mb-3">
+          <label for="{{ form.import_mode.id }}">Mode d'import</label>
+          {{ form.import_mode }}
+          <div class="form-text">- Ajouter: fusionne avec les cours existants. - Écraser: remplace entièrement la grille du programme.</div>
         </div>
         
         <div class="form-group mb-3">

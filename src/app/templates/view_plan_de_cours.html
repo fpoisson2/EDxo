@@ -5,8 +5,8 @@
     <h1>Plan de cours</h1>
     <hr>
 
-    <!-- Export Button - Aligned Right -->
-    <div class="d-flex justify-content-start gap-2 mb-4">
+    <!-- Actions (responsive) -->
+    <div class="d-flex justify-content-start gap-2 mb-4 pdc-actions">
         <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" 
            class="btn btn-success d-flex align-items-center">
             <i class="bi bi-file-earmark-word me-2"></i>
@@ -679,6 +679,11 @@
 {% include '_easymde_assets.html' %}
 
 <style>
+.pdc-actions { flex-wrap: wrap; }
+.pdc-actions .btn { white-space: nowrap; }
+@media (max-width: 576px) {
+    .pdc-actions .btn { flex: 1 1 100%; justify-content: center; }
+}
 .calendar-item {
     cursor: move;
     transition: all 0.3s ease;
@@ -1022,6 +1027,9 @@ document.addEventListener('DOMContentLoaded', function() {
         'materiel'
     ];
 
+    // Stocker les éditeurs EasyMDE pour rafraîchir lors de l'ouverture d'un accordion
+    window.__pdcEditors = window.__pdcEditors || {};
+
     toastFields.forEach(fieldId => {
         const textarea = document.getElementById(fieldId);
         if (!textarea) {
@@ -1044,6 +1052,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Marquer comme initialisé et wrapper compatible
             textarea.classList.add('toast-initialized');
             textarea.toastEditor = { setMarkdown: (val) => mde.value(val) };
+
+            // Conserver une référence globale pour rafraîchir au besoin
+            window.__pdcEditors[fieldId] = mde;
 
             mde.codemirror.on('change', () => {
                 textarea.value = mde.value();
@@ -1087,10 +1098,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
 
+            // Si l'éditeur a été initialisé dans un panneau masqué, le rafraîchir légèrement après rendu
+            setTimeout(() => { try { mde.codemirror.refresh(); } catch(_) {} }, 0);
+
         } catch (error) {
             console.error(`Erreur lors de l'initialisation de l'éditeur pour ${fieldId}:`, error);
         }
     });
+
+    // Quand un accordion s'ouvre, rafraîchir les CodeMirror visibles pour afficher le contenu sans clic
+    try {
+        document.querySelectorAll('.accordion-collapse').forEach(col => {
+            col.addEventListener('shown.bs.collapse', () => {
+                if (!window.__pdcEditors) return;
+                Object.values(window.__pdcEditors).forEach(ed => {
+                    try { ed.codemirror.refresh(); } catch(_) {}
+                });
+            });
+        });
+    } catch(_) {}
 });
 
 document.addEventListener('DOMContentLoaded', function() {

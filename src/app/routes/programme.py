@@ -1469,8 +1469,38 @@ def review_programme_grille(programme_id, task_id):
         flash('Accès refusé.', 'danger')
         return redirect(url_for('main.index'))
 
+    # Préparer la grille ACTUELLE (en base) pour comparaison
+    # sessions -> liste de cours (code, nom, heures)
+    from ..models import CoursProgramme as CP, Cours
+    try:
+        # Récupérer toutes les associations pour ce programme
+        assocs = (CP.query
+                  .filter(CP.programme_id == programme.id)
+                  .join(Cours, CP.cours_id == Cours.id)
+                  .add_entity(Cours)
+                  .all())
+        sessions_map = {}
+        for assoc, cours in assocs:
+            s = int(getattr(assoc, 'session', 0) or 0)
+            sessions_map.setdefault(s, []).append({
+                'id': cours.id,
+                'code': cours.code,
+                'nom': cours.nom,
+                'heures_theorie': cours.heures_theorie or 0,
+                'heures_laboratoire': cours.heures_laboratoire or 0,
+                'heures_travail_maison': cours.heures_travail_maison or 0,
+                'nombre_unites': cours.nombre_unites or 0.0,
+            })
+        existing_sessions = [
+            {'session': s, 'courses': sorted(lst, key=lambda x: x['nom'].lower())}
+            for s, lst in sessions_map.items()
+        ]
+        existing_sessions.sort(key=lambda x: x['session'])
+    except Exception:
+        existing_sessions = []
+
     # La page charge les détails via /tasks/status/<task_id> côté client et affiche un aperçu + bouton d'application
-    return render_template('programme/review_grille_generation.html', programme=programme, task_id=task_id)
+    return render_template('programme/review_grille_generation.html', programme=programme, task_id=task_id, existing_sessions=existing_sessions)
 
 @programme_bp.route('/<int:programme_id>/grille/pdf')
 @login_required

@@ -206,6 +206,7 @@ def confirm_grille_import(task_id):
 
     # Si un programme a été fourni dans la requête, le sélectionner par défaut
     fixed_programme = False
+    selected_programme = None
     try:
         arg_prog_id = request.args.get('programme_id', type=int)
         if arg_prog_id:
@@ -214,6 +215,7 @@ def confirm_grille_import(task_id):
             if prog:
                 form.programme_id.data = prog.id
                 fixed_programme = True
+                selected_programme = prog
     except Exception:
         fixed_programme = False
     
@@ -272,5 +274,6 @@ def confirm_grille_import(task_id):
         apercu_sessions=apercu_sessions,
         nom_programme=nom_programme,
         task_id=task_id,
-        fixed_programme=fixed_programme
+        fixed_programme=fixed_programme,
+        selected_programme=selected_programme
     )

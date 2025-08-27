@@ -12,7 +12,7 @@ from src.extensions import db
 from src.utils.openai_pricing import calculate_call_cost
 from src.utils.datetime_utils import now_utc
 
-from src.app.models import Programme, User, ChatModelConfig
+from src.app.models import Programme, User, ChatModelConfig, ElementCompetence, ElementCompetenceParCours
 
 logger = logging.getLogger(__name__)
 
@@ -240,16 +240,118 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
         user.credits = new_credits
         db.session.commit()
 
+        # Persist directly in DB (overwrite existing links) — no validation step
+        self.update_state(state='PROGRESS', meta={'message': 'Préparation des écritures BD…'})
+
+        # Build lookups for cours and competences by code + set of course_ids in programme
+        course_code_to_id = {}
+        programme_course_ids = set()
+        for assoc in programme.cours_assocs:
+            c = assoc.cours
+            if not c or not (c.code or '').strip():
+                continue
+            programme_course_ids.add(c.id)
+            course_code_to_id[str(c.code).strip()] = c.id
+        comp_code_to_id = {}
+        try:
+            comps = programme.competences.order_by().all()
+        except Exception:
+            comps = []
+        for comp in comps:
+            if not (comp.code or '').strip():
+                continue
+            comp_code_to_id[str(comp.code).strip()] = comp.id
+
+        # Map generated links to IDs and filter invalids
+        desired = []
+        for l in cleaned:
+            cc = l.get('cours_code'); kc = l.get('competence_code'); tp = l.get('type')
+            cid = course_code_to_id.get(cc)
+            kid = comp_code_to_id.get(kc)
+            if not cid or not kid or cid not in programme_course_ids:
+                continue
+            desired.append({'cours_id': cid, 'competence_id': kid, 'type': tp})
+
+        if not desired:
+            raise RuntimeError("Génération valide mais aucune correspondance cours/compétence trouvée en BD.")
+
+        # Overwrite ElementCompetenceParCours similar to /programme/<id>/links route
+        allowed_types = {'developpe': 'Développé significativement', 'atteint': 'Atteint', 'reinvesti': 'Réinvesti'}
+
+        # Build competence_id -> [element ids] and global set of element ids for the programme
+        comp_to_elem_ids = {}
+        all_elem_ids = []
+        for comp in comps:
+            eids = [e.id for e in ElementCompetence.query.filter_by(competence_id=comp.id).all()]
+            comp_to_elem_ids[comp.id] = eids
+            all_elem_ids.extend(eids)
+
+        # Pairs present in generated result
+        payload_pairs = set()
+        updated_pairs = 0
+
+        self.update_state(state='PROGRESS', meta={'message': 'Écriture BD — application des liens…'})
+        for item in desired:
+            cours_id = int(item.get('cours_id') or 0)
+            competence_id = int(item.get('competence_id') or 0)
+            ltype = str(item.get('type') or '')
+            if ltype not in allowed_types:
+                continue
+            # Ensure competence is part of programme set
+            if competence_id not in comp_to_elem_ids:
+                continue
+            payload_pairs.add((cours_id, competence_id))
+            status_value = allowed_types[ltype]
+            elem_ids = comp_to_elem_ids.get(competence_id) or []
+            if not elem_ids:
+                continue
+            existing = { r.element_competence_id: r for r in ElementCompetenceParCours.query
+                         .filter_by(cours_id=cours_id)
+                         .filter(ElementCompetenceParCours.element_competence_id.in_(elem_ids))
+                         .all() }
+            for eid in elem_ids:
+                row = existing.get(eid)
+                if not row:
+                    row = ElementCompetenceParCours(cours_id=cours_id, element_competence_id=eid, status=status_value)
+                    db.session.add(row)
+                else:
+                    row.status = status_value
+            updated_pairs += 1
+
+        # Deletions: remove EPC rows for pairs that are no longer present
+        if all_elem_ids and programme_course_ids:
+            rows = (ElementCompetenceParCours.query
+                    .filter(ElementCompetenceParCours.cours_id.in_(list(programme_course_ids)))
+                    .filter(ElementCompetenceParCours.element_competence_id.in_(all_elem_ids))
+                    .all())
+            # Build reverse map element_id -> competence_id
+            elem_to_comp = {}
+            for cid, eids in comp_to_elem_ids.items():
+                for eid in eids:
+                    elem_to_comp[eid] = cid
+            for r in rows:
+                comp_id = elem_to_comp.get(r.element_competence_id)
+                if comp_id is None:
+                    continue
+                if (r.cours_id, comp_id) not in payload_pairs:
+                    db.session.delete(r)
+
+        db.session.commit()
+
         result = {
             'status': 'success',
-            'result': { 'links': cleaned, 'reasoning_summary': reasoning_summary },
-            'usage': { 'prompt_tokens': usage_prompt, 'completion_tokens': usage_completion, 'cost': cost }
+            'result': {
+                'links': cleaned,
+                'reasoning_summary': reasoning_summary,
+                'applied_pairs': updated_pairs,
+                'message': f"{updated_pairs} liens appliqués (écrasement effectué)",
+                'logigramme_url': f"/programme/{programme.id}/competences/logigramme"
+            },
+            'usage': { 'prompt_tokens': usage_prompt, 'completion_tokens': usage_completion, 'cost': cost },
+            # Convenience link: everything is already applied, so let the UI
+            # show the navigation button toward the logigramme page.
+            'validation_url': f"/programme/{programme.id}/competences/logigramme"
         }
-        try:
-            # Rediriger vers la vue interactive du logigramme pour validation/ajustement
-            result['validation_url'] = f"/programme/{programme.id}/competences/logigramme"
-        except Exception:
-            pass
         return result
     except Exception as e:
         logger.exception('Erreur génération logigramme')

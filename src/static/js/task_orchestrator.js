@@ -534,6 +534,7 @@
         if (typeof window.addNotification === 'function') {
           const link = `/tasks/track/${BG.taskId || ''}`;
           const msg = (data && data.message) ? data.message : (title ? `${title} en cours…` : 'Tâche en cours…');
+          // PENDING should still show spinner as in-progress
           window.addNotification(`${title ? title + ' — ' : ''}${msg}`, 'in-progress', link, (BG.taskId || null));
         }
       } catch {}
@@ -955,8 +956,12 @@
           scheduleReasoningUpdate();
         }
       } catch {}
-      // Validation/redirect link inference
-      let vurl = payload.validation_url || payload.reviewUrl || payload.plan_de_cours_url || payload.plan_cadre_url || null;
+      // Links for UI: separate validation link (button) from notification link
+      // - validateUrl: only for explicit validation/review flows
+      // - notifUrl: for notification click; accepts broader set including logigramme_url
+      let validateUrl = payload.validation_url || payload.reviewUrl || null;
+      let vurl = validateUrl || payload.plan_de_cours_url || payload.plan_cadre_url || payload.logigramme_url || null;
+      const isLogigramme = !!validateUrl && /\/competences\/logigramme(?:$|[\/?#])/i.test(validateUrl);
       try {
         const planId = payload.plan_id || payload.planId;
         const coursId = payload.cours_id || payload.coursId;
@@ -968,8 +973,9 @@
           vurl = `/cours/${coursId}/plan_cadre/${planId}`;
         }
       } catch {}
-      if (vurl) {
-        validateBtn.href = vurl;
+      if (validateUrl) {
+        validateBtn.href = validateUrl;
+        try { validateBtn.textContent = isLogigramme ? 'Voir le logigramme' : 'Aller à la validation'; } catch {}
         validateBtn.classList.remove('d-none');
       }
       // Final notification with contextual title and brief detail
@@ -987,7 +993,9 @@
           const finalMsg = `${baseTitle} — ${statusLabel}${detail}`;
           const type = (state === 'SUCCESS') ? 'success' : (state === 'FAILURE' ? 'error' : 'warning');
           if (vurl) {
-            window.addNotification(finalMsg + '. Cliquez pour valider.', type, vurl, taskId);
+            const isReview = !!validateUrl && !isLogigramme;
+            const noteSuffix = isReview ? '. Cliquez pour valider.' : '. Cliquez pour ouvrir.';
+            window.addNotification(finalMsg + noteSuffix, type, vurl, taskId);
           } else {
             const link = `/tasks/track/${sessionStorage.getItem('currentTaskId') || ''}`;
             window.addNotification(finalMsg + '.', type, link, taskId);
@@ -1079,6 +1087,7 @@
     if (typeof window.addNotification === 'function') {
       const link = `/tasks/track/${taskId}`;
       const msg = uiOpts.title ? `${uiOpts.title} en cours…` : (uiOpts.startMessage || 'Tâche en cours…');
+      // Show spinner immediately for PENDING (treat as in-progress)
       window.addNotification(msg, 'in-progress', link, taskId);
     }
     // Optionnellement ouvrir le modal et mettre à jour les éléments fournis

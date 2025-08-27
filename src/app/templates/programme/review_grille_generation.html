@@ -8,9 +8,37 @@
   <div id="status" class="mb-2 small"></div>
   <div id="stream" class="mb-3" style="background:#0f172a;color:#e2e8f0;border-radius:6px;padding:10px;min-height:100px;max-height:220px;overflow:auto;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;"></div>
 
-  <div class="card">
-    <div class="card-header">Aperçu</div>
-    <div class="card-body" id="preview">En attente du résultat…</div>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Grille actuelle</div>
+        <div class="card-body" id="current-grid">
+          {% if existing_sessions and existing_sessions|length > 0 %}
+            {% for s in existing_sessions %}
+              <div class="mb-3">
+                <h6 class="mb-2">Session {{ s.session }}</h6>
+                <ul class="list-group">
+                  {% for c in s.courses %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <span><code class="me-1">{{ c.code }}</code>{{ c.nom }}</span>
+                      <span class="badge bg-secondary">{{ c.heures_theorie }}-{{ c.heures_laboratoire }}-{{ c.heures_travail_maison }} h</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endfor %}
+          {% else %}
+            <em class="text-muted">Aucune grille existante n'est définie pour ce programme.</em>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Proposition générée</div>
+        <div class="card-body" id="preview">En attente du résultat…</div>
+      </div>
+    </div>
   </div>
 
   <div class="d-flex gap-2 mt-3">
@@ -30,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const stream = document.getElementById('stream');
   const preview = document.getElementById('preview');
   let finalData = null;
+  let currentGrid = ({{ (existing_sessions or [])|tojson }});
 
   function log(line) {
     const now = new Date();
@@ -53,8 +82,14 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const c of (s.courses||s.cours||[])) {
           const name = (c.nom||'Cours').replace(/</g,'&lt;');
           const ht = c.heures_theorie||0, hl=c.heures_laboratoire||0, hm=c.heures_travail_maison||0;
+          // Indique « nouveau » si le cours n'existe pas déjà dans la même session
+          let newTag = '';
+          try {
+            const exists = (currentGrid || []).some(gs => Number(gs.session||0) === Number(s.session||0) && (gs.courses||[]).some(x => String(x.nom||'').toLowerCase() === String(name).toLowerCase()));
+            if (!exists) newTag = '<span class="badge bg-info ms-2">nouveau</span>';
+          } catch {}
           html += `<li class="list-group-item d-flex justify-content-between align-items-center">`+
-                  `<span>${name}</span>`+
+                  `<span>${name}${newTag}</span>`+
                   `<span class="badge bg-secondary">${ht}-${hl}-${hm} h</span>`+
                   `</li>`;
         }
@@ -125,4 +160,3 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 {% endblock %}
-

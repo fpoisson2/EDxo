@@ -14,7 +14,7 @@
   {% if changes|length == 0 %}
     <div class="alert alert-info">Aucun changement proposé par rapport au contenu actuel.</div>
   {% else %}
-    <form method="POST" action="{{ url_for('plan_cadre.apply_improvement', plan_id=plan_id) }}" id="reviewForm">
+    <form method="POST" action="{{ apply_url or url_for('plan_cadre.apply_improvement', plan_id=plan_id) }}" id="reviewForm">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="task_id" value="{{ task_id }}">
 
@@ -225,8 +225,22 @@
         {% endfor %}
       </div>
 
-      <button type="submit" class="btn btn-success">Appliquer les modifications</button>
-      <a class="btn btn-secondary" href="{{ url_for('cours.view_plan_cadre', cours_id=cours.id, plan_id=plan_id) }}">Annuler</a>
+      {% if simple_confirm %}
+        <div class="d-flex gap-2">
+          {% if plan and plan.cours_id %}
+            <a class="btn btn-outline-secondary" href="/cours/{{ plan.cours_id }}/plan_de_cours/{{ plan.session }}/">Retour au plan</a>
+          {% else %}
+            <a class="btn btn-outline-secondary" href="{{ url_for('main.index') }}">Retour</a>
+          {% endif %}
+          <button type="button" id="pdcConfirmBtn" class="btn btn-success">Confirmer</button>
+          {% if task_id %}
+            <button type="button" id="pdcRevertBtn" class="btn btn-warning">Restaurer l'ancienne version</button>
+          {% endif %}
+        </div>
+      {% else %}
+        <button type="submit" class="btn btn-success">Appliquer les modifications</button>
+        <a class="btn btn-secondary" href="{{ url_for('cours.view_plan_cadre', cours_id=cours.id, plan_id=plan_id) }}">Annuler</a>
+      {% endif %}
     </form>
   {% endif %}
 {% endblock %}
@@ -388,6 +402,41 @@ document.addEventListener('DOMContentLoaded', function() {
     if (merge) merge.addEventListener('change', update);
     update();
   });
+
+  // Mode Plan de cours: boutons confirmer/restaurer (API JSON)
+  try {
+    const SIMPLE = {{ (simple_confirm or False)|tojson }};
+    if (SIMPLE) {
+      const applyUrl = {{ (apply_url or '')|tojson }};
+      const planId = {{ (plan_id or 0)|int }};
+      const taskId = {{ (task_id or '')|tojson }};
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+      async function callApply(action) {
+        if (!applyUrl) return;
+        const headers = { 'Content-Type': 'application/json' };
+        if (csrf) { headers['X-CSRFToken'] = csrf; headers['X-CSRF-Token'] = csrf; }
+        const res = await fetch(applyUrl + (taskId ? ('?task_id=' + encodeURIComponent(taskId)) : ''), {
+          method: 'POST',
+          headers,
+          credentials: 'same-origin',
+          body: JSON.stringify({ action, task_id: taskId })
+        });
+        const data = await res.json().catch(()=>({}));
+        if (!res.ok || !data.success) {
+          alert(data.message || 'Action échouée.');
+          return;
+        }
+        try { addNotification('Modifications enregistrées.', 'success', data.redirect_url || null); } catch(_) {}
+        if (data.redirect_url) window.location.href = data.redirect_url;
+      }
+
+      const confirmBtn = document.getElementById('pdcConfirmBtn');
+      if (confirmBtn) confirmBtn.addEventListener('click', () => callApply('confirm'));
+      const revertBtn = document.getElementById('pdcRevertBtn');
+      if (revertBtn) revertBtn.addEventListener('click', () => { if (confirm("Restaurer l'ancienne version ?")) callApply('revert'); });
+    }
+  } catch(_) {}
 });
 </script>
 {% endblock %}

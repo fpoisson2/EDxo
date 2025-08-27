@@ -280,7 +280,8 @@
           const start = () => window.EDxoTasks.openFileTask({
             url: '/grille/import',
             title: 'Importer une grille — {{ programme.nom }} (PDF)',
-            startMessage: 'Import en cours…'
+            startMessage: 'Import en cours…',
+            extraFormData: { programme_id: '{{ programme.id }}' }
           });
           if (window.EDxoTasks && typeof window.EDxoTasks.openFileTask === 'function') {
             start();

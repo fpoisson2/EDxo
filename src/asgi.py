@@ -5,11 +5,11 @@ import os
 # Ensure Flask side does not try to mount SSE endpoints; ASGI handles /sse
 os.environ.setdefault("EDXO_MCP_SSE_DISABLE", "1")
 
-from asgiref.wsgi import WsgiToAsgi
 from starlette.applications import Starlette
 from starlette.routing import Mount, Route
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
+from starlette.middleware.wsgi import WSGIMiddleware
 import asyncio
 import json
 
@@ -127,7 +127,7 @@ from src.utils.logging_config import get_logger
 
 # Create the Flask WSGI app and wrap it for ASGI
 flask_app = create_app(testing=False)
-flask_asgi = WsgiToAsgi(flask_app)
+flask_asgi = WSGIMiddleware(flask_app)
 
 # Obtain the MCP ASGI app (robust to missing integrations)
 mcp_asgi_app = get_mcp_asgi_app()

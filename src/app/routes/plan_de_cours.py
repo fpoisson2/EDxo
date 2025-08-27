@@ -151,6 +151,19 @@ class BulkPlanDeCoursResponse(BaseModel):
     evaluation_expression_francais: Optional[str] = None
     materiel: Optional[str] = None
     calendriers: List[CalendarEntry] = Field(default_factory=list)
+    # Inclure aussi les évaluations pour créer la grille d'évaluation
+    class _EvalCap(BaseModel):
+        capacite: Optional[str] = None
+        ponderation: Optional[str] = None
+    class _EvalItem(BaseModel):
+        titre_evaluation: Optional[str] = None
+        description: Optional[str] = None
+        semaine: Optional[int] = None
+        capacites: List['_EvalCap'] = Field(default_factory=list)
+    evaluations: List['_EvalItem'] = Field(default_factory=list)
+
+# Résoudre les références avant utilisation (Pydantic v2)
+BulkPlanDeCoursResponse.model_rebuild()
 
 
 DEFAULT_ALL_PROMPT = (
@@ -168,8 +181,13 @@ DEFAULT_ALL_PROMPT = (
     "  'materiel': str,\n"
     "  'calendriers': [\n"
     "    {{ 'semaine': int, 'sujet': str, 'activites': str, 'travaux_hors_classe': str, 'evaluations': str }}\n"
+    "  ],\n"
+    "  'evaluations': [\n"
+    "    {{ 'titre_evaluation': str | null, 'description': str | null, 'semaine': int | null, "
+    "       'capacites': [ {{ 'capacite': str | null, 'ponderation': str | null }} ] }}\n"
     "  ]\n"
     "}}\n\n"
+    "Règles: Si une information n'est pas trouvée, mets null; si conflit texte/tableau, privilégie le tableau.\n"
     "Contexte cours: code={cours_code}, nom={cours_nom}.\n"
     "Plan-cadre (extraits):\n{sections}\n"
 )
@@ -1103,6 +1121,28 @@ def generate_all():
                     evaluations=entry.evaluations,
                 ))
 
+        # Mettre à jour les évaluations (grille) si présentes
+        if parsed.evaluations is not None:
+            for ev in plan_de_cours.evaluations:
+                db.session.delete(ev)
+            for ev in parsed.evaluations:
+                if not (ev.titre_evaluation or ev.description or ev.semaine or ev.capacites):
+                    continue
+                new_ev = PlanDeCoursEvaluations(
+                    plan_de_cours_id=plan_de_cours.id,
+                    titre_evaluation=ev.titre_evaluation,
+                    description=ev.description,
+                    semaine=ev.semaine,
+                )
+                for cap_in in ev.capacites or []:
+                    cap_id = _resolve_capacity_id(cap_in.capacite, plan_cadre)
+                    if cap_id is not None:
+                        new_ev.capacites.append(PlanDeCoursEvaluationsCapacites(
+                            capacite_id=cap_id,
+                            ponderation=cap_in.ponderation,
+                        ))
+                db.session.add(new_ev)
+
         plan_de_cours.modified_at = now_utc()
         plan_de_cours.modified_by_id = current_user.id
         db.session.commit()
@@ -1125,6 +1165,20 @@ def generate_all():
                     'travaux_hors_classe': c.travaux_hors_classe,
                     'evaluations': c.evaluations,
                 } for c in plan_de_cours.calendriers
+            ],
+            'evaluations': [
+                {
+                    'titre_evaluation': e.titre_evaluation,
+                    'description': e.description,
+                    'semaine': e.semaine,
+                    'capacites': [
+                        {
+                            'capacite_id': c.capacite_id,
+                            'capacite_nom': (c.capacite.capacite if c.capacite else None),
+                            'ponderation': c.ponderation,
+                        } for c in e.capacites
+                    ]
+                } for e in plan_de_cours.evaluations
             ]
         })
 
@@ -1211,16 +1265,16 @@ def generate_all_status():
 @login_required
 @ensure_profile_completed
 def review_plan_de_cours_generation(plan_id):
-    """Affiche une page de comparaison avant/après pour une génération récente.
+    """Affiche une comparaison avant/après des améliorations du plan de cours.
 
-    Lit 'task_id' dans la query string pour récupérer old/new depuis le payload de la tâche.
-    Si indisponible, affiche uniquement l'état actuel.
+    Réutilise la page de revue du plan-cadre (template unifié) pour présenter les changements.
     """
     task_id = request.args.get('task_id')
     old_fields = {}
     old_cal = []
     new_fields = {}
     new_cal = []
+    reasoning_summary = None
     try:
         if task_id:
             res = AsyncResult(task_id, app=celery)
@@ -1229,11 +1283,12 @@ def review_plan_de_cours_generation(plan_id):
             old_cal = data.get('old_calendriers') or []
             new_fields = data.get('fields') or {}
             new_cal = data.get('calendriers') or []
+            reasoning_summary = data.get('reasoning_summary')
     except Exception:
         current_app.logger.exception('Erreur lecture résultat tâche plan de cours')
 
     plan = db.session.get(PlanDeCours, plan_id)
-    if not new_fields and plan:
+    if plan and not new_fields:
         new_fields = {
             'presentation_du_cours': plan.presentation_du_cours,
             'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
@@ -1243,6 +1298,7 @@ def review_plan_de_cours_generation(plan_id):
             'evaluation_expression_francais': plan.evaluation_expression_francais,
             'materiel': plan.materiel,
         }
+    if plan and not new_cal:
         new_cal = [
             {
                 'semaine': c.semaine,
@@ -1253,14 +1309,56 @@ def review_plan_de_cours_generation(plan_id):
             } for c in plan.calendriers
         ]
 
-    return render_template('plan_de_cours/review_generation.html',
-                           plan=plan,
-                           plan_id=plan_id,
-                           task_id=task_id,
-                           old_fields=old_fields,
-                           old_calendriers=old_cal,
-                           new_fields=new_fields,
-                           new_calendriers=new_cal)
+    # Construire un dict de "changes" compatible avec le template du plan-cadre
+    changes = {}
+    labels = {
+        'presentation_du_cours': 'Présentation du cours',
+        'objectif_terminal_du_cours': 'Objectif terminal',
+        'organisation_et_methodes': 'Organisation et méthodes',
+        'accomodement': 'Accommodement',
+        'evaluation_formative_apprentissages': 'Évaluation formative',
+        'evaluation_expression_francais': 'Évaluation expression français',
+        'materiel': 'Matériel',
+    }
+    def _norm(v):
+        return (v or '').strip() if isinstance(v, str) else v
+    for key, label in labels.items():
+        before = _norm(old_fields.get(key, ''))
+        after = _norm(new_fields.get(key, ''))
+        if before != after:
+            changes[key] = {'before': before or '', 'after': after or '', 'label': label}
+
+    # Calendrier: représenter chaque entrée comme texte/description
+    def _cal_to_list(cal):
+        out = []
+        for c in cal or []:
+            titre = f"S{c.get('semaine')} — {c.get('sujet') or ''}"
+            desc_parts = []
+            if c.get('activites'): desc_parts.append(f"Activités: {c.get('activites')}")
+            if c.get('travaux_hors_classe'): desc_parts.append(f"Travaux hors classe: {c.get('travaux_hors_classe')}")
+            if c.get('evaluations'): desc_parts.append(f"Évaluations: {c.get('evaluations')}")
+            out.append({'texte': titre, 'description': "\n".join(desc_parts) if desc_parts else ''})
+        return out
+
+    if (old_cal or new_cal) and (_cal_to_list(old_cal) != _cal_to_list(new_cal)):
+        changes['calendrier'] = {
+            'before': _cal_to_list(old_cal),
+            'after': _cal_to_list(new_cal),
+            'label': 'Calendrier'
+        }
+
+    # Utiliser le template de revue plan-cadre, en mode confirmation simple (confirm/revert)
+    return render_template(
+        'review_plan_cadre_improvement.html',
+        plan=plan,
+        cours=plan.cours if plan else None,
+        plan_id=plan_id,
+        task_id=task_id,
+        changes=changes,
+        reasoning_summary=reasoning_summary,
+        simple_confirm=True,
+        apply_url=url_for('plan_de_cours.apply_review_plan_de_cours', plan_id=plan_id)
+    )
 
 
 @plan_de_cours_bp.route('/plan_de_cours/review/<int:plan_id>/apply', methods=['POST'])
