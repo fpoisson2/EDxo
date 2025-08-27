@@ -123,17 +123,24 @@ def analyse_plan_de_cours_task(self, plan_id: int, user_id: int) -> dict:
                 reasoning=reasoning_params,
             ) as stream:
                 for event in stream:
-                    et = getattr(event, 'event', '') or ''
+                    # Newer SDKs expose event type via `type`; older ones via `event`.
+                    et = getattr(event, 'type', '') or getattr(event, 'event', '') or ''
                     if et.endswith('response.output_text.delta') or et == 'response.output_text.delta':
-                        delta = getattr(event, 'delta', '') or ''
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
                         if delta:
                             streamed_text += delta
-                            self.update_state(state='PROGRESS', meta={'stream_chunk': delta, 'stream_buffer': streamed_text})
+                            self.update_state(
+                                state='PROGRESS',
+                                meta={'stream_chunk': delta, 'stream_buffer': streamed_text}
+                            )
                     elif et.endswith('response.reasoning_summary_text.delta') or et == 'response.reasoning_summary_text.delta':
-                        rs_delta = getattr(event, 'delta', '') or ''
+                        rs_delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
                         if rs_delta:
                             reasoning_summary += rs_delta
-                            self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary.strip()})
+                            self.update_state(
+                                state='PROGRESS',
+                                meta={'reasoning_summary': reasoning_summary.strip()}
+                            )
                 completion = stream.get_final_response()
         except Exception:
             # Fallback non-stream

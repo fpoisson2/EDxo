@@ -841,7 +841,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                                     pass
                                 self.update_state(state='REVOKED', meta={'message': "Tâche annulée par l'utilisateur."})
                                 raise Ignore()
-                            etype = getattr(event, 'type', '') or ''
+                            etype = getattr(event, 'type', '') or getattr(event, 'event', '') or ''
                             # Handle text deltas for output text
                             if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
                                 delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
