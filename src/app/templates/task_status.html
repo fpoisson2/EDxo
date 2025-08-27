@@ -68,7 +68,7 @@
       <div class="alert alert-success mb-3">
         <strong>Extraction réussie !</strong> Vous pouvez maintenant confirmer l'importation de cette grille dans votre programme.
         <div class="mt-2">
-          <a href="{{ url_for('grille_bp.confirm_grille_import', task_id=task_id) }}" class="btn btn-primary">
+          <a href="{{ result.validation_url or url_for('grille_bp.confirm_grille_import', task_id=task_id) }}" class="btn btn-primary">
             <i class="fas fa-check-circle"></i> Confirmer l'importation
           </a>
         </div>
@@ -309,10 +309,11 @@ if (data.state === "SUCCESS") {
                     if (!document.querySelector('.confirm-import-btn')) {
                         const alertDiv = document.createElement('div');
                         alertDiv.className = 'alert alert-success mb-3';
+                        const url = (data.result && data.result.validation_url) || `/confirm_grille_import/${taskId}`;
                         alertDiv.innerHTML = `
                             <strong>Extraction réussie !</strong> Vous pouvez maintenant confirmer l'importation de cette grille dans votre programme.
                             <div class="mt-2">
-                                <a href="/confirm_grille_import/${taskId}" class="btn btn-primary confirm-import-btn">
+                                <a href="${url}" class="btn btn-primary confirm-import-btn">
                                     <i class="fas fa-check-circle"></i> Confirmer l'importation
                                 </a>
                             </div>
