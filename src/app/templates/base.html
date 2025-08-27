@@ -329,16 +329,16 @@
               </li>
             </ul>
             <div class="user-info ms-3 d-flex align-items-center">
-              <!-- Menu Notification -->
+              <!-- Tâches en cours -->
               <div class="dropdown me-3">
-                <a class="notification-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Ouvrir les notifications" title="Notifications">
-                  <i class="bi bi-bell"></i>
+                <a class="notification-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Ouvrir les tâches" title="Tâches">
+                  <i class="bi bi-list-task"></i>
                   <span id="notification-badge" style="display:none;"></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="min-width: 300px;">
-                  <li class="dropdown-header">Notifications</li>
+                  <li class="dropdown-header">Tâches</li>
                   <div id="notification-list">
-                    <li class="dropdown-item text-muted small">Aucune notification</li>
+                    <li class="dropdown-item text-muted small">Aucune tâche</li>
                   </div>
                 </ul>
               </div>
@@ -526,7 +526,8 @@
             const payload = data.result || data.meta || {};
             // Certains workers retournent {status:"error"} tout en ayant l'état SUCCESS côté Celery
             if (payload && payload.status === 'error') {
-              addNotification("La génération a échoué : " + (payload.message || "Une erreur est survenue."), "error");
+              const t = getTaskTitle(currentTaskId);
+              addNotification(`${t} — échouée — ` + (payload.message || "Une erreur est survenue."), "error", null, currentTaskId);
               stopPolling();
               clearTaskId();
               window.onTaskStreamUpdate = null;
@@ -535,7 +536,8 @@
             if (payload.preview) {
               const planId = payload.plan_id;
               const reviewUrl = `/plan_cadre/${planId}/review?task_id=` + currentTaskId;
-              addNotification("Proposition d'amélioration prête. Cliquez pour comparer et appliquer.", "success", reviewUrl);
+              const t = getTaskTitle(currentTaskId);
+              addNotification(`${t} — terminée — Proposition prête. Cliquez pour comparer.`, "success", reviewUrl, currentTaskId);
               if (typeof window.onTaskCompleted === 'function') {
                 try { window.onTaskCompleted({ ...payload, reviewUrl }); } catch (e) { console.warn('onTaskCompleted error', e); }
               }
@@ -544,7 +546,8 @@
               const planId = payload.plan_id;
               // Cas import/génération Plan de Cours: si une URL directe est fournie, l'utiliser
               if (payload.plan_de_cours_url) {
-                addNotification("Importation terminée. Cliquez pour voir le plan de cours.", "success", payload.plan_de_cours_url);
+                const t = getTaskTitle(currentTaskId);
+                addNotification(`${t} — terminée — Cliquez pour voir le plan de cours.`, "success", payload.plan_de_cours_url, currentTaskId);
                 if (typeof window.onTaskCompleted === 'function') {
                   try { window.onTaskCompleted({ ...payload, planDeCoursUrl: payload.plan_de_cours_url }); } catch (e) { console.warn('onTaskCompleted error', e); }
                 }
@@ -552,12 +555,14 @@
               // Cas Plan-Cadre existant (lien plan-cadre)
               else if (coursId && planId) {
                 const planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
-                addNotification("Génération terminée. Cliquez pour voir le plan-cadre.", "success", planCadreUrl);
+                const t = getTaskTitle(currentTaskId);
+                addNotification(`${t} — terminée — Cliquez pour voir le plan‑cadre.`, "success", planCadreUrl, currentTaskId);
                 if (typeof window.onTaskCompleted === 'function') {
                   try { window.onTaskCompleted({ ...payload, planCadreUrl }); } catch (e) { console.warn('onTaskCompleted error', e); }
                 }
               } else {
-                addNotification("Génération terminée.", "success");
+                const t = getTaskTitle(currentTaskId);
+                addNotification(`${t} — terminée.`, "success", null, currentTaskId);
                 if (typeof window.onTaskCompleted === 'function') {
                   try { window.onTaskCompleted(payload); } catch (e) { console.warn('onTaskCompleted error', e); }
                 }
@@ -567,17 +572,30 @@
             clearTaskId();
             window.onTaskStreamUpdate = null;
           } else if (data.state === 'FAILURE') {
-            addNotification("La génération a échoué : " + (data.result?.message || "Une erreur est survenue."), "error");
+            const t = getTaskTitle(currentTaskId);
+            addNotification(`${t} — échouée — ` + (data.result?.message || "Une erreur est survenue."), "error", null, currentTaskId);
+            stopPolling();
+            clearTaskId();
+            window.onTaskStreamUpdate = null;
+          } else if (data.state === 'REVOKED') {
+            const msg = data.message || (data.meta && data.meta.message) || "Tâche nettoyée après redémarrage.";
+            const t = getTaskTitle(currentTaskId);
+            addNotification(`${t} — arrêtée — ${msg}`, "warning", null, currentTaskId);
             stopPolling();
             clearTaskId();
             window.onTaskStreamUpdate = null;
           } else if (data.state === 'PROGRESS') {
             const link = `/tasks/track/${currentTaskId}`;
-            addNotification(data.message || "Tâche en cours...", "in-progress", link);
+            const t = getTaskTitle(currentTaskId);
+            const msg = (data.message && data.message.trim()) ? data.message : 'Tâche en cours…';
+            addNotification(`${t} — ${msg}`, "in-progress", link, currentTaskId);
             setTimeout(checkTaskStatus, 3000);
           } else {
+            // For any other non-final states, keep polling with in-progress
             const link = `/tasks/track/${currentTaskId}`;
-            addNotification("Tâche en cours...", "in-progress", link);
+            const t = getTaskTitle(currentTaskId);
+            const msg = (data.message && data.message.trim()) ? data.message : 'Tâche en cours…';
+            addNotification(`${t} — ${msg}`, "in-progress", link, currentTaskId);
             setTimeout(checkTaskStatus, 3000);
           }
         })
@@ -587,11 +605,16 @@
         });
       }
 
+      function getTaskTitle(taskId) {
+        try { return localStorage.getItem(`edxo_task_title_${taskId}`) || 'Tâche'; } catch { return 'Tâche'; }
+      }
+
       function startTaskPolling(taskId) {
         if (isPolling) return;
         currentTaskId = taskId;
         isPolling = true;
-        addNotification("Tâche en cours...", "in-progress", `/tasks/track/${taskId}`);
+        const t = getTaskTitle(taskId);
+        addNotification(`${t} — Tâche en cours…`, "in-progress", `/tasks/track/${taskId}`, taskId);
         checkTaskStatus();
       }
 
@@ -698,22 +721,45 @@
                 addNotification("Erreur de génération : " + data.message, "error");
               }
             })
-            .catch(error => console.error(error));
+            .catch(error => { console.error(error); try { addNotification('Erreur de génération : ' + (error.message||error), 'error', null, (sessionStorage.getItem('currentTaskId')||null)); } catch(_) {} });
           });
         }
       });
     </script>
 
-    <!-- Système de notifications avec persistance -->
+    <!-- Centre des tâches (persistance locale) -->
     <script>
       let notifications = [];
-      const STORAGE_KEY = "edxo_notifications";
+      const STORAGE_KEY = "edxo_tasks";
+
+      function extractTaskId(link) {
+        if (!link) return null;
+        try { const m = String(link).match(/\/tasks\/track\/([^/]+)/); return m ? m[1] : null; } catch { return null; }
+      }
 
       function loadNotifications() {
         const data = localStorage.getItem(STORAGE_KEY);
         if (data) {
           try {
-            notifications = JSON.parse(data);
+            const parsed = JSON.parse(data) || [];
+            const normed = parsed.map(n => {
+              if (!n) return null;
+              const tid = n.taskId || extractTaskId(n.link);
+              return Object.assign({}, n, tid ? { taskId: tid } : {});
+            }).filter(Boolean);
+            const byId = new Map();
+            const others = [];
+            for (const n of normed) {
+              if (n.taskId) {
+                const prev = byId.get(n.taskId);
+                if (!prev || (new Date(n.timestamp || 0) > new Date(prev.timestamp || 0))) {
+                  byId.set(n.taskId, n);
+                }
+              } else {
+                others.push(n);
+              }
+            }
+            notifications = [...byId.values(), ...others];
           } catch (e) {
             console.error("Erreur lors du chargement des notifications", e);
             notifications = [];
@@ -729,7 +775,7 @@
         const list = document.getElementById("notification-list");
         list.innerHTML = "";
         if (notifications.length === 0) {
-          list.innerHTML = '<li class="dropdown-item text-muted small">Aucune notification</li>';
+          list.innerHTML = '<li class="dropdown-item text-muted small">Aucune tâche</li>';
         } else {
           notifications.forEach(notif => {
             let iconHtml = "";
@@ -740,7 +786,7 @@
             } else if (notif.type === "warning") {
               iconHtml = '<i class="bi bi-exclamation-circle me-2 text-warning"></i>';
             } else if (notif.type === "in-progress") {
-              iconHtml = '<span class="spinner-border spinner-border-sm me-2 text-warning"></span>';
+              iconHtml = '<span class="spinner-border spinner-border-sm me-2 text-primary"></span>';
             } else {
               iconHtml = '<i class="bi bi-info-circle me-2 text-info"></i>';
             }
@@ -753,7 +799,7 @@
           });
           const clearBtnLi = document.createElement("li");
           clearBtnLi.className = "dropdown-item text-center";
-          clearBtnLi.innerHTML = '<button class="btn btn-sm btn-outline-secondary" id="clear-notifications-btn">Effacer les notifications</button>';
+          clearBtnLi.innerHTML = '<button class="btn btn-sm btn-outline-secondary" id="clear-notifications-btn" title="Conserve les tâches en cours">Effacer la liste</button>';
           list.appendChild(clearBtnLi);
           document.getElementById("clear-notifications-btn").addEventListener("click", () => {
             clearNotifications();
@@ -772,42 +818,71 @@
         }
       }
 
-      function addNotification(message, type = "info", link = null) {
-        if (type === "in-progress") {
-          const existingIndex = notifications.findIndex(notif => notif.type === "in-progress");
-          if (existingIndex !== -1) {
-            if (notifications[existingIndex].message !== message || notifications[existingIndex].link !== link) {
-              notifications[existingIndex].message = message;
-              notifications[existingIndex].link = link;
-              notifications[existingIndex].timestamp = new Date().toISOString();
-              saveNotifications();
-              updateNotificationUI();
-            }
-            return;
-          }
-        } else {
-          notifications = notifications.filter(n => n.type !== "in-progress");
+      function addNotification(message, type = "info", link = null, taskId = null) {
+        // Nouveau: une seule entrée par tâche (state), identifiée par taskId
+        let tid = taskId;
+        if (!tid && typeof link === 'string') {
+          const m = link.match(/\/tasks\/track\/([^/]+)/);
+          if (m) tid = m[1];
         }
-        const notif = {
-          id: Date.now(),
-          message: message,
-          type: type,
-          link: link,
-          timestamp: new Date().toISOString()
-        };
+        const nowIso = new Date().toISOString();
+        if (tid) {
+          const idx = notifications.findIndex(n => n.taskId === tid);
+          if (idx !== -1) {
+            notifications[idx].message = message;
+            notifications[idx].type = type;
+            notifications[idx].link = link;
+            notifications[idx].timestamp = nowIso;
+          } else {
+            notifications.push({ id: Date.now(), taskId: tid, message, type, link, timestamp: nowIso });
+          }
+          saveNotifications();
+          updateNotificationUI();
+          return;
+        }
+        // Fallback si pas de taskId
+        const notif = { id: Date.now(), message, type, link, timestamp: nowIso };
         notifications.push(notif);
         saveNotifications();
         updateNotificationUI();
       }
 
       function clearNotifications() {
-        notifications = [];
+        // Ne jamais supprimer les tâches en cours
+        notifications = notifications.filter(n => n && n.type === 'in-progress');
         saveNotifications();
         updateNotificationUI();
       }
 
       document.addEventListener('DOMContentLoaded', () => {
         loadNotifications();
+        // Ne pas supprimer automatiquement les notifications "in-progress"; elles restent épinglées
+        try {
+          const storedTaskId = sessionStorage.getItem('currentTaskId');
+          if (storedTaskId) {
+            // If orchestrator is loaded (legacy poller disabled), perform a one-shot status check
+            if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
+              fetch('/tasks/status/' + storedTaskId, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(data => {
+                  if (!data || !data.state) return;
+                  if (data.state === 'SUCCESS' || data.state === 'FAILURE' || data.state === 'REVOKED') {
+                    // Replace any in-progress with a final notification and clear session key
+                    const payload = data.result || data.meta || {};
+                    const link = `/tasks/track/${storedTaskId}`;
+                    const title = getTaskTitle(storedTaskId);
+                    const base = data.state === 'SUCCESS' ? 'terminée' : 'arrêtée';
+                    const detail = (data.message || payload.message || '').trim();
+                    const composed = detail ? `${title} — ${base} — ${detail}` : `${title} — ${base}`;
+                    addNotification(composed, data.state === 'SUCCESS' ? 'success' : 'warning', payload.validation_url || link, storedTaskId);
+                    // Clear session-stored task id on final state
+                    try { sessionStorage.removeItem('currentTaskId'); } catch {}
+                  }
+                })
+                .catch(() => {});
+            }
+          }
+        } catch {}
         updateNotificationUI();
         const notificationDropdown = document.getElementById('notificationDropdown');
         notificationDropdown.addEventListener('click', () => {

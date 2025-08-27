@@ -59,7 +59,7 @@ logger = get_logger(__name__)
 DATABASE = 'programme.db'
 
 
-def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
+def save_grille_to_database(grille_data, programme_id, programme_nom, user_id, import_mode: str = 'append'):
     """
     Sauvegarde les données de la grille de cours en base de données en utilisant les modèles existants.
     
@@ -97,7 +97,15 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
         
         # Commencer une transaction
         db.session.begin_nested()
-        
+
+        # Si demandé: effacer les associations existantes de ce programme (mode "overwrite")
+        if (import_mode or 'append') == 'overwrite':
+            try:
+                from app.models import CoursProgramme
+                db.session.query(CoursProgramme).filter_by(programme_id=programme_id).delete(synchronize_session=False)
+            except Exception as e:
+                logger.warning(f"Échec lors de l'effacement des associations existantes pour programme {programme_id}: {e}")
+
         # Dictionnaire pour suivre les codes de cours créés et leurs IDs
         created_courses = {}
         
@@ -116,25 +124,32 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                 titre_cours = cours_data.get('titre_cours')
                 
                 # Vérifier si le cours existe déjà (par code)
-                existing_cours = Cours.query.filter_by(
-                    programme_id=programme_id,
-                    code=code_cours
-                ).first()
+                # Recherche du cours existant selon le mode
+                existing_cours = None
+                try:
+                    if (import_mode or 'append') == 'append':
+                        existing_cours = Cours.query.filter_by(programme_id=programme_id, code=code_cours).first()
+                        if not existing_cours:
+                            existing_cours = Cours.query.filter_by(code=code_cours).first()
+                    else:
+                        existing_cours = Cours.query.filter_by(code=code_cours).first()
+                except Exception:
+                    existing_cours = Cours.query.filter_by(code=code_cours).first()
                 
                 if existing_cours:
-                # Stocker les anciennes valeurs pour le suivi des changements
+                    # Stocker les anciennes valeurs pour le suivi des changements
+                    old_session = (existing_cours.sessions_map or {}).get(programme_id, None)
                     old_values = {
                         "nom": existing_cours.nom,
-                        "session": existing_cours.session,
+                        "session": old_session,
                         "heures_theorie": existing_cours.heures_theorie,
                         "heures_laboratoire": existing_cours.heures_laboratoire,
                         "heures_travail_maison": existing_cours.heures_travail_maison,
                         "nombre_unites": existing_cours.nombre_unites
                     }
-                    
-                    # Mettre à jour le cours existant
+
+                    # Mettre à jour le cours existant (hors session/programme qui est géré via l'association)
                     existing_cours.nom = titre_cours
-                    existing_cours.session = session_num
                     existing_cours.heures_theorie = cours_data.get('heures_theorie', 0)
                     existing_cours.heures_laboratoire = cours_data.get('heures_labo', 0)
                     existing_cours.heures_travail_maison = cours_data.get('heures_maison', 0)
@@ -146,7 +161,19 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                     ) / 3
                     existing_cours.nombre_unites = new_unites
                     cours_id = existing_cours.id
-                    
+
+                    # Mettre à jour/ajouter l'association Cours-Programme (session)
+                    from app.models import CoursProgramme
+                    assoc = CoursProgramme.query.filter_by(cours_id=cours_id, programme_id=programme_id).first()
+                    if assoc:
+                        assoc.session = session_num
+                    else:
+                        assoc = CoursProgramme()
+                        assoc.cours_id = cours_id
+                        assoc.programme_id = programme_id
+                        assoc.session = session_num
+                        db.session.add(assoc)
+
                     # Créer une entrée DBChange manuellement
                     create_db_change(
                         "UPDATE",
@@ -171,10 +198,8 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                     heures_travail_maison=cours_data.get('heures_maison', 0)
                     nombre_unites = (heures_theorie+heures_laboratoire+heures_travail_maison)/3
                     nouveau_cours = Cours(
-                        programme_id=programme_id,
                         code=code_cours,
                         nom=titre_cours,
-                        session=session_num,
                         heures_theorie=cours_data.get('heures_theorie', 0),
                         heures_laboratoire=cours_data.get('heures_labo', 0),
                         heures_travail_maison=cours_data.get('heures_maison', 0),
@@ -183,6 +208,14 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                     db.session.add(nouveau_cours)
                     db.session.flush()  # Pour obtenir l'ID du cours
                     cours_id = nouveau_cours.id
+
+                    # Associer le cours au programme avec la session
+                    from app.models import CoursProgramme
+                    assoc = CoursProgramme()
+                    assoc.cours_id = cours_id
+                    assoc.programme_id = programme_id
+                    assoc.session = session_num
+                    db.session.add(assoc)
                     
                     # Créer une entrée DBChange manuellement
                     create_db_change(

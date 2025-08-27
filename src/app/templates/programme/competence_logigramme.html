@@ -43,9 +43,7 @@
         <div class="vr d-none d-md-block"></div>
         <a id="openGenerateLogigramBtn" class="btn btn-sm btn-success" href="#"
            data-url="{{ url_for('programme.generate_competence_logigramme', programme_id=programme.id) }}"
-           data-title="Générer le logigramme de compétences"
-           data-mode="json"
-           data-json='{"additional_info":"","reasoning_effort":"medium","verbosity":"medium"}'>
+           data-title="Générer le logigramme de compétences">
           <i class="bi bi-stars"></i> Générer
         </a>
         <button id="editModeToggle" class="btn btn-sm btn-outline-danger" type="button" aria-pressed="false">
@@ -162,62 +160,17 @@
 {% if current_user.role in ['admin','coordo'] %}
 <script id="gl-celery-overrides">
 document.addEventListener('DOMContentLoaded', function(){
-  const form = document.getElementById('generateLogigramForm');
-  if (!form) return;
-  const btn = document.getElementById('confirmGenerateLogigramBtn');
-  const spinner = document.getElementById('glSpinner');
-
   const startBtn = document.getElementById('openGenerateLogigramBtn');
-  if (startBtn) {
-    startBtn.addEventListener('click', function(e){
-      e.preventDefault();
-      window.EDxoTasks.openTaskStartModal({
-        url: startBtn.getAttribute('data-url'),
-        title: startBtn.getAttribute('data-title') || 'Générer le logigramme de compétences',
-        method: 'POST',
-        mode: startBtn.getAttribute('data-mode') || 'json',
-        defaultJsonText: startBtn.getAttribute('data-json') || ''
-      });
-    });
-  }
-
-  function getVal(id, fallbackId) {
-    const el = document.getElementById(id) || document.getElementById(fallbackId);
-    return el ? (el.value || '').trim() : '';
-  }
-
-  form.addEventListener('submit', async (e) => {
+  if (!startBtn) return;
+  if (!(window.EDxoTasks && typeof window.EDxoTasks.openQuickTask === 'function')) return;
+  startBtn.addEventListener('click', function(e){
     e.preventDefault();
-    try {
-      btn.disabled = true; spinner.classList.remove('d-none');
-      const ai_model = getVal('gl-ai-model', 'generate_form-ai_model');
-      const reasoning_effort = getVal('gl-reasoning', 'generate_form-reasoning_effort') || 'medium';
-      const verbosity = getVal('gl-verbosity', 'generate_form-verbosity') || 'medium';
-      const additional_info = (document.getElementById('generate_form-additional_info')?.value || document.getElementById('gl-additional')?.value || '').trim();
-      const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-      const startUrl = "{{ url_for('programme.generate_competence_logigramme', programme_id=programme.id) }}";
-      await window.EDxoTasks.startCeleryTask(startUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
-        body: JSON.stringify({ ai_model, reasoning_effort, verbosity, additional_info })
-      }, {
-        title: 'Génération du logigramme',
-        startMessage: 'Génération en cours…',
-        userPrompt: additional_info,
-        openModal: true,
-        onDone: (payload) => {
-          const link = (payload && payload.validation_url) ? payload.validation_url : ("/programme/{{ programme.id }}/competences/logigramme");
-          try { addNotification('Proposition de logigramme prête. Cliquez pour ouvrir.', 'success', link); } catch(_) {}
-        }
-      });
-      const modalEl = document.getElementById('generateLogigramModal');
-      if (modalEl) try { (bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl)).hide(); } catch(_) {}
-    } catch (err) {
-      console.error('Erreur génération logigramme', err);
-      try { addNotification('Erreur de génération: ' + (err.message||err), 'error'); } catch(_) {}
-    } finally {
-      btn.disabled = false; spinner.classList.add('d-none');
-    }
+    window.EDxoTasks.openQuickTask({
+      url: startBtn.getAttribute('data-url'),
+      title: 'Génération du logigramme — {{ programme.nom }}',
+      startMessage: 'Génération en cours…',
+      basePayload: { additional_info: '' }
+    });
   });
 });
 </script>

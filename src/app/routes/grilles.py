@@ -83,9 +83,18 @@ def import_grille_start():
         filepath = os.path.join(upload_dir, filename)
         file.save(filepath)
 
+        # Optional programme context
+        prog_id = None
+        try:
+            prog_val = request.form.get('programme_id') or request.values.get('programme_id')
+            if prog_val:
+                prog_id = int(prog_val)
+        except Exception:
+            prog_id = None
+
         # Enqueue Celery task
         openai_key = current_user.openai_key
-        task = extract_grille_from_pdf_task.delay(pdf_path=filepath, openai_key=openai_key)
+        task = extract_grille_from_pdf_task.delay(pdf_path=filepath, openai_key=openai_key, programme_id=prog_id)
         return jsonify({'task_id': task.id}), 202
     except Exception as e:
         logger.exception('Erreur lors du démarrage de l\'import de grille')
@@ -194,6 +203,19 @@ def confirm_grille_import(task_id):
     ).all() if current_user.department_id else Programme.query.all()
     
     form.programme_id.choices = [(p.id, f"{p.nom}") for p in programmes]
+
+    # Si un programme a été fourni dans la requête, le sélectionner par défaut
+    fixed_programme = False
+    try:
+        arg_prog_id = request.args.get('programme_id', type=int)
+        if arg_prog_id:
+            # Vérifier que le programme existe
+            prog = Programme.query.get(arg_prog_id)
+            if prog:
+                form.programme_id.data = prog.id
+                fixed_programme = True
+    except Exception:
+        fixed_programme = False
     
     # Pré-remplir avec le nom du programme détecté
     form.nom_programme.data = nom_programme
@@ -218,7 +240,8 @@ def confirm_grille_import(task_id):
                     grille_data=grille_data,
                     programme_id=programme_id,
                     programme_nom=programme.nom,
-                    user_id=current_user.id
+                    user_id=current_user.id,
+                    import_mode=(form.import_mode.data or 'append')
                 )
                 
                 if success:
@@ -248,5 +271,6 @@ def confirm_grille_import(task_id):
         form=form,
         apercu_sessions=apercu_sessions,
         nom_programme=nom_programme,
-        task_id=task_id
+        task_id=task_id,
+        fixed_programme=fixed_programme
     )

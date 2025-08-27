@@ -877,7 +877,7 @@ document.addEventListener('DOMContentLoaded', function() {
           e.preventDefault();
           window.EDxoTasks.openFileTask({
             url: "{{ url_for('plan_de_cours.import_docx_start') }}",
-            title: 'Importer Plan de cours (.docx)',
+            title: 'Importer Plan de cours — {{ cours.code }} (.docx)',
             startMessage: 'Import en cours…',
             extraFormData: { cours_id: "{{ cours.id }}", session: "{{ plan_de_cours.session }}" }
           });
@@ -893,7 +893,7 @@ document.addEventListener('DOMContentLoaded', function() {
           e.preventDefault();
           window.EDxoTasks.openQuickTask({
             url: "/api/plan_de_cours/{{ plan_de_cours.id }}/generate",
-            title: 'Générer le plan de cours',
+            title: 'Générer le plan de cours — {{ cours.code }}',
             startMessage: 'Génération en cours…',
             fieldLabels: { additional_info: 'Informations complémentaires' },
             fixedPayload: { stream: true }
@@ -910,7 +910,7 @@ document.addEventListener('DOMContentLoaded', function() {
           e.preventDefault();
           window.EDxoTasks.openQuickTask({
             url: "{{ url_for('plan_de_cours.generate_all_start') }}",
-            title: 'Améliorer le plan de cours',
+            title: 'Améliorer le plan de cours — {{ cours.code }}',
             startMessage: 'Amélioration en cours…',
             basePayload: { additional_info: '' },
             fixedPayload: {
@@ -933,13 +933,14 @@ document.addEventListener('DOMContentLoaded', function() {
           const field = btn.getAttribute('data-target-column');
           if (!field) return;
           const url = `/api/plan_de_cours/{{ plan_de_cours.id }}/improve/${encodeURIComponent(field)}`;
-          const title = btn.getAttribute('title') || `Améliorer: ${field}`;
+          const baseTitle = btn.getAttribute('title') || `Améliorer: ${field}`;
+          const title = `${baseTitle} — {{ cours.code }}`;
           if (window.EDxoTasks && typeof window.EDxoTasks.openQuickTask === 'function') {
             window.EDxoTasks.openQuickTask({
               url,
               title,
               startMessage: 'Amélioration en cours…',
-              basePayload: { stream: true }
+              fixedPayload: { stream: true }
             });
           } else {
             // Fallback minimal si orchestrateur indisponible
@@ -1261,7 +1262,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 url: "/api/plan_de_cours/{{ plan_de_cours.id }}/generate_calendar",
                 title: 'Générer le calendrier',
                 startMessage: 'Génération en cours…',
-                basePayload: { stream: true },
+                fixedPayload: { stream: true },
                 onDone: (data) => { try { populateCalendarFromPayload(data); showToast('generateSuccessToast'); } catch(_) {} }
             });
         }
@@ -1356,7 +1357,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 url: "/api/plan_de_cours/{{ plan_de_cours.id }}/generate_evaluations",
                 title: 'Générer les évaluations',
                 startMessage: 'Génération en cours…',
-                basePayload: { stream: true },
+                fixedPayload: { stream: true },
                 onDone: (data) => { try { populateEvaluationsFromPayload(data); showToast('generateSuccessToast'); } catch(_) {} }
             });
         }

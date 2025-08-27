@@ -59,7 +59,7 @@
     </div>
   </div>
 
-  <div id="improve-hint" class="small text-muted mt-2">Une notification s'affichera et un suivi s'ouvrira automatiquement.</div>
+  <div id="improve-hint" class="small text-muted mt-2">Une tâche en cours s'affichera et un suivi s'ouvrira automatiquement.</div>
 </div>
 {% endblock %}
 
@@ -92,19 +92,19 @@ document.addEventListener('DOMContentLoaded', function(){
         body: params.toString(),
         credentials: 'same-origin'
       }, {
-        title: 'Amélioration du plan de cours',
+        title: 'Amélioration du plan de cours — {{ cours.code }}',
         startMessage: 'Amélioration en cours…',
         openModal: true,
         onDone: (payload) => {
           const reviewUrl = payload && payload.validation_url
             ? payload.validation_url
             : (`/plan_de_cours/review/${payload?.plan_id || ''}?task_id=${sessionStorage.getItem('currentTaskId')||''}`);
-          try { addNotification('Proposition prête. Cliquez pour comparer.', 'success', reviewUrl); } catch(_) {}
+          try { addNotification('Proposition prête. Cliquez pour comparer.', 'success', reviewUrl, (sessionStorage.getItem('currentTaskId')||null)); } catch(_) {}
         }
       });
     } catch (e) {
       console.error('Erreur déclenchement amélioration plan de cours', e);
-      try { addNotification('Erreur: ' + (e.message||e), 'error'); } catch(_) {}
+      try { addNotification('Erreur: ' + (e.message||e), 'error', null, (sessionStorage.getItem('currentTaskId')||null)); } catch(_) {}
     }
   });
 });

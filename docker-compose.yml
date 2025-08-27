@@ -24,12 +24,13 @@ services:
     # No host port mapping needed; used only on internal network
   celery:
     build: .
-    command: celery -A src.celery_app:celery worker --loglevel=info --concurrency=4 --hostname=worker2@%h
+    command: celery -A src.celery_app:celery worker --loglevel=info --autoscale=8,2 -Ofair --prefetch-multiplier=1 --hostname=worker2@%h
     env_file:
       - .env
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_WORKER=1
     volumes:
       - txt_outputs:/app/src/txt_outputs
       - pdfs:/app/src/pdfs_downloaded

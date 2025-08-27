@@ -60,6 +60,13 @@ class ConfirmationGrilleForm(FlaskForm):
         coerce=int,
         render_kw={"class": "form-select"}
     )
+    import_mode = SelectField(
+        'Mode d\'import',
+        choices=[('append', 'Ajouter aux cours existants'), ('overwrite', 'Écraser les cours existants du programme')],
+        default='append',
+        validators=[DataRequired()],
+        render_kw={"class": "form-select"}
+    )
     
     nom_programme = StringField(
         'Nom du programme (tel que détecté dans le PDF)', 

@@ -961,9 +961,9 @@
               e.preventDefault();
               window.EDxoTasks.openQuickTask({
                 url: "/api/plan_cadre/{{ plan.id }}/generate",
-                title: 'Générer le plan‑cadre',
+                title: 'Générer le plan‑cadre — {{ cours.code }}',
                 startMessage: 'Génération en cours…',
-                basePayload: { stream: true },
+                fixedPayload: { stream: true },
                 summaryEl: document.getElementById('reasoningSummary'),
                 streamEl: document.getElementById('streamOutput')
               });
@@ -974,9 +974,9 @@
               e.preventDefault();
               window.EDxoTasks.openQuickTask({
                 url: "/api/plan_cadre/{{ plan.id }}/improve",
-                title: 'Améliorer le plan‑cadre',
+                title: 'Améliorer le plan‑cadre — {{ cours.code }}',
                 startMessage: 'Amélioration en cours…',
-                basePayload: { improve_only: true, stream: true },
+                fixedPayload: { improve_only: true, stream: true },
                 summaryEl: document.getElementById('reasoningSummary'),
                 streamEl: document.getElementById('streamOutput')
               });
@@ -993,7 +993,7 @@
               const endpoint = "{{ url_for('plan_cadre.import_plan_cadre_docx_start', plan_id=plan.id) }}";
               const start = () => window.EDxoTasks.openFileTask({
                 url: endpoint,
-                title: 'Importer Plan‑cadre (.docx)',
+                title: 'Importer Plan‑cadre — {{ cours.code }} (.docx)',
                 startMessage: 'Import en cours…'
               });
               const waitForOrchestrator = (retries = 15) => {
@@ -1020,13 +1020,14 @@
               const section = btn.getAttribute('data-target-column');
               if (!section) return;
               const url = `/api/plan_cadre/{{ plan.id }}/improve/${encodeURIComponent(section)}`;
-              const title = btn.getAttribute('title') || `Améliorer: ${section}`;
+              const baseTitle = btn.getAttribute('title') || `Améliorer: ${section}`;
+              const title = `${baseTitle} — {{ cours.code }}`;
               if (window.EDxoTasks && typeof window.EDxoTasks.openQuickTask === 'function') {
                 window.EDxoTasks.openQuickTask({
                   url,
                   title,
                   startMessage: 'Amélioration en cours…',
-                  basePayload: { stream: true },
+                  fixedPayload: { stream: true },
                   summaryEl: document.getElementById('reasoningSummary'),
                   streamEl: document.getElementById('streamOutput')
                 });

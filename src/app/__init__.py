@@ -427,6 +427,76 @@ def create_app(testing=False):
                 worker_id = GUNICORN_WORKER_ID
                 is_primary_worker = worker_id == '0' or worker_id is None
 
+                # On primary worker startup, purge Celery queues and cleanup lingering task states
+                def perform_celery_cleanup(tag: str = "startup"):
+                    try:
+                        logger.info(f"🧹 Celery cleanup ({tag}) – purge queues, revoke in-flight, clear results…")
+                        # 1) Purge broker queues (queued tasks)
+                        try:
+                            purged = celery.control.purge()
+                            logger.info(f"Celery purge: removed {purged} queued messages.")
+                        except Exception as e:
+                            logger.warning(f"Celery queue purge failed: {e}")
+
+                        # 2) Revoke any active/reserved/scheduled tasks (best-effort)
+                        try:
+                            insp = celery.control.inspect(timeout=1.0)
+                            ids = set()
+                            active = (insp.active() or {}) if insp else {}
+                            for w, tasks in (active or {}).items():
+                                for t in tasks or []:
+                                    tid = None
+                                    if isinstance(t, dict):
+                                        tid = t.get('id') or (t.get('request') or {}).get('id')
+                                        if not tid and 'request' in t and hasattr(t['request'], 'id'):
+                                            tid = getattr(t['request'], 'id', None)
+                                    if tid:
+                                        ids.add(tid)
+                            reserved = (insp.reserved() or {}) if insp else {}
+                            for w, tasks in (reserved or {}).items():
+                                for t in tasks or []:
+                                    tid = None
+                                    if isinstance(t, dict):
+                                        tid = t.get('id') or (t.get('request') or {}).get('id')
+                                        if not tid and 'request' in t and hasattr(t['request'], 'id'):
+                                            tid = getattr(t['request'], 'id', None)
+                                    if tid:
+                                        ids.add(tid)
+                            scheduled = (insp.scheduled() or {}) if insp else {}
+                            for w, tasks in (scheduled or {}).items():
+                                for t in tasks or []:
+                                    req = t.get('request') if isinstance(t, dict) else None
+                                    tid = (req or {}).get('id') if req else (t.get('id') if isinstance(t, dict) else None)
+                                    if tid:
+                                        ids.add(tid)
+                            for tid in ids:
+                                try:
+                                    celery.control.revoke(tid, terminate=True, signal="SIGTERM")
+                                except Exception:
+                                    pass
+                            if ids:
+                                logger.info(f"Revoked {len(ids)} in-flight tasks: {', '.join(list(ids)[:5])}{'…' if len(ids)>5 else ''}")
+                        except Exception as e:
+                            logger.warning(f"Celery revoke/inspect failed: {e}")
+
+                        # 3) Clear Celery result backend keys and our cancel flags in Redis
+                        try:
+                            import redis
+                            backend_url = celery.conf.result_backend
+                            r = redis.Redis.from_url(backend_url)
+                            deleted = 0
+                            for pattern in ['celery-task-meta-*', 'celery-task-set-meta*', 'celery-group-meta*', 'celery-task-cache*', 'edxo:cancel:*']:
+                                for key in r.scan_iter(match=pattern, count=1000):
+                                    r.delete(key); deleted += 1
+                            logger.info(f"Cleared {deleted} result/flag keys in Redis backend.")
+                        except Exception as e:
+                            logger.warning(f"Redis backend cleanup skipped/failed: {e}")
+                    except Exception as e:
+                        logger.warning(f"Celery cleanup ({tag}) encountered an issue: {e}")
+
+                if is_primary_worker:
+                    perform_celery_cleanup(tag="startup")
+
                 if not scheduler.running and is_primary_worker:
                     start_scheduler()
                     result = db.session.execute(text(
@@ -438,6 +508,17 @@ def create_app(testing=False):
                     else:
                         logger.warning(
                             "⚠️ Table 'backup_config' introuvable, planification des sauvegardes est désactivée.")
+
+            # After scheduler starts, schedule a couple of delayed cleanup retries
+            try:
+                if is_primary_worker and scheduler.running:
+                    from datetime import datetime, timezone
+                    now = datetime.now(timezone.utc)
+                    # Retry shortly after startup to catch workers that connected later
+                    scheduler.add_job(lambda: perform_celery_cleanup(tag="retry+5s"), 'date', run_date=now + timedelta(seconds=5), id='celery_cleanup_retry_1', replace_existing=True)
+                    scheduler.add_job(lambda: perform_celery_cleanup(tag="retry+15s"), 'date', run_date=now + timedelta(seconds=15), id='celery_cleanup_retry_2', replace_existing=True)
+            except Exception as e:
+                logger.warning(f"Unable to schedule delayed Celery cleanup retries: {e}")
 
             # Register atexit handlers for graceful shutdown and checkpointing
             atexit.register(shutdown_scheduler)

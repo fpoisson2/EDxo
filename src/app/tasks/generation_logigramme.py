@@ -12,7 +12,7 @@ from src.extensions import db
 from src.utils.openai_pricing import calculate_call_cost
 from src.utils.datetime_utils import now_utc
 
-from src.app.models import Programme, User
+from src.app.models import Programme, User, ChatModelConfig
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +38,16 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
         if not user.openai_key:
             return { 'status': 'error', 'message': "Aucune clé OpenAI configurée dans votre profil." }
 
-        ai_model = (form or {}).get('ai_model') or 'gpt-5'
+        # Modèle et paramètres IA: priorité au formulaire, sinon config centrale
+        cfg = None
+        try:
+            cfg = ChatModelConfig.get_current()
+        except Exception:
+            cfg = None
+        ai_model = (form or {}).get('ai_model') or (cfg.chat_model if cfg and cfg.chat_model else 'gpt-5')
         additional_info = (form or {}).get('additional_info') or ''
-        reasoning_effort = (form or {}).get('reasoning_effort') or 'medium'
-        verbosity = (form or {}).get('verbosity') or 'medium'
+        reasoning_effort = (form or {}).get('reasoning_effort') or ((cfg.reasoning_effort or 'medium') if cfg else 'medium')
+        verbosity = (form or {}).get('verbosity') or ((cfg.verbosity or 'medium') if cfg else 'medium')
 
         # Collect inputs
         course_items = []
@@ -99,18 +105,23 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
         self.update_state(state='PROGRESS', meta={'message': 'Préparation des données…'})
         client = OpenAI(api_key=user.openai_key)
 
-        # Prepare request
+        # Prepare request (do not include stream flag here; pass it only to .stream())
         request_kwargs = dict(
             model=ai_model,
             input=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            # Explicitly request streaming and a reasoning summary from OpenAI.
-            stream=True,
-            reasoning={"effort": reasoning_effort, "summary": "auto"},
-            metadata={'feature': 'generate_programme_logigramme', 'programme_id': str(programme.id)},
+            metadata={'feature': 'generate_programme_logigramme', 'programme_id': str(programme.id)}
         )
+        try:
+            request_kwargs["reasoning"] = {"effort": reasoning_effort, "summary": "auto"}
+        except Exception:
+            pass
+        try:
+            request_kwargs["text"] = {"verbosity": verbosity}
+        except Exception:
+            pass
 
         output_text = ''
         streamed_text = ''
@@ -128,54 +139,49 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
                         delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
                         if delta:
                             streamed_text += delta
-                            self.update_state(state='PROGRESS', meta={
-                                'stream_chunk': delta,
-                                'stream_buffer': streamed_text
-                            })
+                            try:
+                                self.update_state(state='PROGRESS', meta={'stream_chunk': delta, 'stream_buffer': streamed_text})
+                            except Exception:
+                                pass
+                    elif et.endswith('response.output_item.added') or et == 'response.output_item.added':
+                        # Some models emit items with text rather than output_text deltas
+                        try:
+                            item = getattr(event, 'item', None)
+                            tval = ''
+                            if item:
+                                if isinstance(item, dict):
+                                    tval = item.get('text') or ''
+                                else:
+                                    tval = getattr(item, 'text', '') or ''
+                            if tval:
+                                streamed_text += tval
+                        except Exception:
+                            pass
                     elif et.endswith('response.reasoning_summary_text.delta') or et == 'response.reasoning_summary_text.delta':
                         rs_delta = getattr(event, 'delta', '') or ''
                         if rs_delta:
                             reasoning_summary += rs_delta
-                            self.update_state(state='PROGRESS', meta={
-                                'reasoning_summary': reasoning_summary.strip()
-                            })
-                    elif getattr(event, 'summary', None):
-                        try:
-                            for s in event.summary:
-                                if getattr(s, 'type', '') == 'summary_text':
-                                    reasoning_summary += getattr(s, 'text', '') or ''
-                        except Exception:
-                            pass
-                        if reasoning_summary:
-                            self.update_state(state='PROGRESS', meta={
-                                'reasoning_summary': reasoning_summary.strip()
-                            })
-                    elif et.endswith('response.completed') or et == 'response.completed':
-                        break
+                            try:
+                                self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary.strip()})
+                            except Exception:
+                                pass
                 resp = stream.get_final_response()
-                output_text = streamed_text or getattr(resp, 'output_text', '') or ''
-                if hasattr(resp, 'usage'):
-                    usage_prompt = resp.usage.input_tokens
-                    usage_completion = resp.usage.output_tokens
         except Exception as se:
             logger.warning(f"Streaming non dispo, fallback non-stream: {se}")
             self.update_state(state='PROGRESS', meta={'message': 'Appel du modèle…'})
             resp = client.responses.create(**request_kwargs)
-            output_text = getattr(resp, 'output_text', '') or ''
-            if hasattr(resp, 'usage'):
-                usage_prompt = resp.usage.input_tokens
-                usage_completion = resp.usage.output_tokens
-            # Tentative d'extraction d'un résumé de raisonnement
             try:
-                summary_obj = getattr(resp, 'summary', None) or getattr(resp, 'reasoning', None)
-                if summary_obj:
-                    reasoning_summary = getattr(summary_obj, 'text', '') or getattr(summary_obj, 'summary_text', '') or ''
-                    if reasoning_summary:
-                        self.update_state(state='PROGRESS', meta={
-                            'reasoning_summary': reasoning_summary.strip()
-                        })
+                # Try to extract reasoning summary similarly to grille task
+                if hasattr(resp, "reasoning") and resp.reasoning:
+                    for r in resp.reasoning:
+                        for item in getattr(r, "summary", []) or []:
+                            if getattr(item, "type", "") == "summary_text":
+                                reasoning_summary += getattr(item, "text", "") or ""
             except Exception:
                 pass
+        output_text = streamed_text or getattr(resp, 'output_text', '') or ''
+        usage_prompt = getattr(getattr(resp, 'usage', None), 'input_tokens', 0) or 0
+        usage_completion = getattr(getattr(resp, 'usage', None), 'output_tokens', 0) or 0
 
         # Parse
         self.update_state(state='PROGRESS', meta={'message': 'Analyse de la réponse…'})
@@ -214,6 +220,13 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
             if not cc or not kc or tp not in allowed:
                 continue
             cleaned.append({'cours_code': cc, 'competence_code': kc, 'type': tp})
+
+        # If the model returned nothing usable, fail the task explicitly to avoid SUCCESS with empty data
+        if not cleaned:
+            # Provide a helpful error depending on what we got
+            if not (output_text or '').strip():
+                raise RuntimeError("Aucune réponse utile du modèle (sortie vide).")
+            raise RuntimeError("Réponse du modèle invalide ou sans liens exploitables.")
 
         # Credits calculation
         try:

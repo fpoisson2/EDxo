@@ -42,12 +42,12 @@
             openModal: true,
             onDone: (payload) => {
               const link = (payload && payload.validation_url) ? payload.validation_url : (`/confirm_grille_import/${sessionStorage.getItem('currentTaskId')||''}`);
-              try { addNotification("Import terminé. Cliquez pour valider l'import.", 'success', link); } catch(_) {}
+              try { addNotification("Import terminé. Cliquez pour valider l'import.", 'success', link, (sessionStorage.getItem('currentTaskId')||null)); } catch(_) {}
             }
           });
         } catch (err) {
           console.error('Erreur import grille', err);
-          try { addNotification('Erreur import: ' + (err.message||err), 'error'); } catch(_) {}
+          try { addNotification('Erreur import: ' + (err.message||err), 'error', null, (sessionStorage.getItem('currentTaskId')||null)); } catch(_) {}
         }
       });
     });

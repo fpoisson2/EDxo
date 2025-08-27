@@ -21,6 +21,70 @@
     } catch {}
     return '';
   }
+  // --- Task UI cache persisted in sessionStorage ---
+  const TaskCache = {};
+  const CacheSaveTimers = {};
+  const STORAGE_PREFIX = 'edxo_task_cache_';
+  const STORE_STREAM_LIMIT = 160000; // ~160KB tail
+  const STORE_REASON_LIMIT = 120000; // ~120KB tail
+  function clampTail(str, maxLen) {
+    try {
+      const s = String(str || '');
+      if (s.length <= maxLen) return s;
+      return '…\n' + s.slice(s.length - maxLen);
+    } catch { return str; }
+  }
+  function loadCacheFromSession(taskId) {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_PREFIX + taskId);
+      if (!raw) return null;
+      const j = JSON.parse(raw);
+      return {
+        stream: typeof j.stream === 'string' ? j.stream : '',
+        reasoning: typeof j.reasoning === 'string' ? j.reasoning : '',
+        meta: (j.meta && typeof j.meta === 'object') ? j.meta : null,
+        state: typeof j.state === 'string' ? j.state : 'PENDING'
+      };
+    } catch { return null; }
+  }
+  function saveCacheToSession(taskId) {
+    try {
+      const c = TaskCache[taskId];
+      if (!c) return;
+      const payload = {
+        stream: clampTail(c.stream || '', STORE_STREAM_LIMIT),
+        reasoning: clampTail(c.reasoning || '', STORE_REASON_LIMIT),
+        meta: c.meta || null,
+        state: c.state || 'PENDING'
+      };
+      sessionStorage.setItem(STORAGE_PREFIX + taskId, JSON.stringify(payload));
+    } catch {}
+  }
+  function scheduleCacheSave(taskId) {
+    try {
+      if (CacheSaveTimers[taskId]) return;
+      CacheSaveTimers[taskId] = setTimeout(() => {
+        CacheSaveTimers[taskId] = null;
+        saveCacheToSession(taskId);
+      }, 300);
+    } catch {}
+  }
+  function getCache(taskId) {
+    if (!taskId) return null;
+    if (!TaskCache[taskId]) {
+      TaskCache[taskId] = loadCacheFromSession(taskId) || { stream: '', reasoning: '', meta: null, state: 'PENDING' };
+    }
+    return TaskCache[taskId];
+  }
+  function sanitizeMetaForCache(meta) {
+    try {
+      if (!meta || typeof meta !== 'object') return meta;
+      const clone = { ...meta };
+      delete clone.stream_buffer;
+      delete clone.stream_chunk;
+      return clone;
+    } catch { return meta; }
+  }
   // ---------- Quick Modal: only "Informations complémentaires" ----------
   function ensureQuickModal() {
     let modal = document.getElementById('taskQuickModal');
@@ -55,7 +119,6 @@
     const fields = Object.assign({}, opts.basePayload || {});
     const fixedPayload = Object.assign({}, opts.fixedPayload || {});
     if (!('additional_info' in fields)) fields.additional_info = '';
-    const fixedPayload = Object.assign({}, opts.fixedPayload || {});
 
     const fieldLabels = Object.assign({
       nb_sessions: 'Nombre de sessions',
@@ -438,6 +501,17 @@
     try {
       const r = await fetch(statusUrl, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
       const data = await r.json();
+      try {
+        if (BG.taskId && data) {
+          const tc = getCache(BG.taskId);
+          if (data.state) tc.state = data.state;
+          const meta = data.meta || {};
+          if (typeof meta.stream_buffer === 'string') tc.stream = String(meta.stream_buffer);
+          if (typeof meta.reasoning_summary === 'string') tc.reasoning = String(meta.reasoning_summary);
+          if (meta && typeof meta === 'object') tc.meta = sanitizeMetaForCache(meta);
+          scheduleCacheSave(BG.taskId);
+        }
+      } catch {}
       if (data && (data.state === 'SUCCESS' || data.state === 'FAILURE' || data.state === 'REVOKED')) {
         // Final notification
         try {
@@ -448,7 +522,7 @@
             const payload = data.result || data.meta || {};
             const vurl = payload.validation_url || payload.reviewUrl || payload.plan_de_cours_url || `/tasks/track/${data.task_id || ''}`;
             const msg = data.state === 'SUCCESS' ? 'Tâche terminée.' : 'Tâche arrêtée.';
-            window.addNotification(`${title ? title + ' — ' : ''}${msg}`, data.state === 'SUCCESS' ? 'success' : 'warning', vurl);
+            window.addNotification(`${title ? title + ' — ' : ''}${msg}`, data.state === 'SUCCESS' ? 'success' : 'warning', vurl, (BG.taskId || null));
             try { if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(key, '1'); } catch {}
           }
         } catch {}
@@ -459,12 +533,12 @@
       try {
         if (typeof window.addNotification === 'function') {
           const link = `/tasks/track/${BG.taskId || ''}`;
-          const msg = (data && data.message) ? data.message : 'Tâche en cours...';
-          window.addNotification(`${title ? title + ' — ' : ''}${msg}`, 'in-progress', link);
+          const msg = (data && data.message) ? data.message : (title ? `${title} en cours…` : 'Tâche en cours…');
+          window.addNotification(`${title ? title + ' — ' : ''}${msg}`, 'in-progress', link, (BG.taskId || null));
         }
       } catch {}
     } catch {}
-    BG.timer = setTimeout(() => backgroundPoll(statusUrl, title), 3000);
+    BG.timer = setTimeout(() => backgroundPoll(statusUrl, title), 1000);
   }
 
   function startBackgroundWatch(taskId, opts = {}) {
@@ -492,10 +566,56 @@
     const logEl = document.getElementById('task-orch-log');
     if (logEl) logEl.innerHTML = '';
     const streamEl = opts.streamEl || document.getElementById('task-orch-stream');
-    if (streamEl) streamEl.value = '';
     const reasoningEl = opts.summaryEl || document.getElementById('task-orch-reasoning');
-    if (reasoningEl) { reasoningEl.textContent = ''; reasoningEl.classList.add('d-none'); }
-    document.getElementById('task-orch-json').textContent = '';
+
+    // Local helper: make reasoning easier to read by turning bold titles into headings
+    function formatReasoningMarkdown(text) {
+      if (!text) return '';
+      let t = String(text).replace(/\r\n/g, '\n');
+      // Normalize broken bold across lines: **Title\n** -> **Title**
+      t = t.replace(/\*\*([\s\S]*?)\n+\*\*/g, '**$1**');
+      // Convert a bold title at start-of-line followed by text into a heading + paragraph
+      t = t.replace(/(^|\n)\s*\*\*([^*\n][^*]*?)\*\*\s+([^\n]+)/g, '$1\n\n### $2\n\n$3');
+      // If a bold "title" appears right after text (no newline), force blank line before
+      t = t.replace(/([^\n])\s*\*\*([A-Za-zÀ-ÿ0-9][^*]{0,118}?)\*\*(?=\s*(\n|$))/g, '$1\n\n**$2**');
+      // Normalize existing ATX headings to level-3 with spacing
+      t = t.replace(/(^|\n+)\s*#{1,6}\s+([^\n]+?)\s*(?=\n|$)/g, '$1\n\n### $2\n\n');
+      // Convert standalone bold lines to level-3 headings
+      t = t.replace(/(^|\n+)\s*\*\*([^*\n][^*]*?)\*\*\s*(?=\n|$)/g, '$1\n\n### $2\n\n');
+      // Collapse excessive blank lines
+      t = t.replace(/\n{3,}/g, '\n\n');
+      if (!t.startsWith('\n')) t = '\n' + t;
+      return t;
+    }
+    // Preload from cache if available
+    try {
+      const cache = getCache(taskId);
+      if (streamEl) {
+        streamEl.value = cache.stream || '';
+        streamEl.scrollTop = streamEl.scrollHeight;
+      }
+      if (reasoningEl) {
+        const txt = cache.reasoning || '';
+        try {
+          if (window.marked && txt) {
+            const mdText = formatReasoningMarkdown(txt);
+            reasoningEl.innerHTML = window.marked.parse(mdText, { breaks: true });
+          } else {
+            reasoningEl.textContent = txt;
+          }
+        } catch (_) {
+          reasoningEl.textContent = txt;
+        }
+        if (txt) reasoningEl.classList.remove('d-none'); else reasoningEl.classList.add('d-none');
+      }
+      const jp = document.getElementById('task-orch-json');
+      if (jp) {
+        jp.textContent = cache.meta ? JSON.stringify(cache.meta, null, 2) : '';
+      }
+      if (cache.state) {
+        document.getElementById('task-orch-state').textContent = cache.state;
+      }
+    } catch {}
     const validateBtn = document.getElementById('task-orch-validate');
     validateBtn.classList.add('d-none');
     // Popout button removed
@@ -531,9 +651,9 @@
     }
     unblockPage();
     setTimeout(unblockPage, 50);
-    // Ensure cleanup also happens on hide/hidden (covers all paths)
-    modalEl.addEventListener('hide.bs.modal', unblockPage);
-    modalEl.addEventListener('hidden.bs.modal', unblockPage);
+    // Ensure cleanup also happens on hide/hidden (covers all paths) — attach once per open
+    modalEl.addEventListener('hide.bs.modal', unblockPage, { once: true });
+    modalEl.addEventListener('hidden.bs.modal', unblockPage, { once: true });
 
     // SSE stream (can be disabled via settings.disableSSE to avoid dev-server blocking)
     const eventsUrl = opts.eventsUrl || `/tasks/events/${taskId}`;
@@ -541,9 +661,115 @@
     let sawAnyMeaningfulProgress = false;
     let completed = false;
     let doneFired = false;
-    let streamBuf = '';
-    let lastReasoning = '';
+    let streamBuf = (getCache(taskId) || {}).stream || '';
+    const MAX_STREAM_LEN = 120000; // ~120KB tail to avoid UI freezes
+    let streamTimer = null;
+    let streamDirty = false;
+    function clampAndMarkStreamDirty() {
+      try {
+        if (!streamBuf) return;
+        if (streamBuf.length > MAX_STREAM_LEN) {
+          streamBuf = '…\n' + streamBuf.slice(streamBuf.length - MAX_STREAM_LEN);
+        }
+        streamDirty = true;
+        if (!streamTimer) {
+          streamTimer = setTimeout(() => {
+            try {
+              streamTimer = null;
+              if (!streamDirty) return;
+              streamDirty = false;
+              if (streamEl) {
+                streamEl.value = streamBuf;
+                // Keep viewport near bottom
+                streamEl.scrollTop = streamEl.scrollHeight;
+              }
+              try { scheduleCacheSave(taskId); } catch {}
+            } catch {}
+          }, 250);
+        }
+      } catch {}
+    }
+    let lastReasoning = (getCache(taskId) || {}).reasoning || '';
+    let reasoningTimer = null;
+    let reasoningDirty = false;
+    const reasoningThrottleMs = 120;
+    function scheduleReasoningUpdate() {
+      try {
+        reasoningDirty = true;
+        if (!reasoningTimer) {
+          reasoningTimer = setTimeout(() => {
+            reasoningTimer = null;
+            if (!reasoningDirty) return;
+            reasoningDirty = false;
+            if (reasoningEl) {
+              try {
+                if (window.marked) {
+                  const mdText = formatReasoningMarkdown(lastReasoning);
+                  reasoningEl.innerHTML = window.marked.parse(mdText, { breaks: true });
+                } else {
+                  reasoningEl.textContent = lastReasoning;
+                }
+              } catch (_) {
+                reasoningEl.textContent = lastReasoning;
+              }
+              reasoningEl.classList.remove('d-none');
+            }
+          }, reasoningThrottleMs);
+        }
+      } catch {}
+    }
     const allowSSE = !((window.EDxoTasks && window.EDxoTasks.settings && window.EDxoTasks.settings.disableSSE) === true);
+    // Helper: sanitize meta for JSON pane (skip large streaming buffers)
+    function sanitizeMeta(meta) {
+      try {
+        if (!meta || typeof meta !== 'object') return meta;
+        const clone = { ...meta };
+        if ('stream_buffer' in clone) delete clone.stream_buffer;
+        if ('stream_chunk' in clone) delete clone.stream_chunk;
+        return clone;
+      } catch { return meta; }
+    }
+
+    // Throttled JSON rendering only when visible
+    const jsonPre = document.getElementById('task-orch-json');
+    const jsonToggleBtn = document.getElementById('task-orch-toggle-json');
+    let latestSanitized = null;
+    let jsonTimer = null;
+    let jsonLastTs = 0;
+    const jsonThrottleMs = 700;
+    function doJsonRender(obj) {
+      if (!jsonPre) return;
+      try { jsonPre.textContent = JSON.stringify(obj || {}, null, 2); } catch {}
+    }
+    function requestJsonUpdate(meta) {
+      latestSanitized = sanitizeMeta(meta);
+      try { getCache(taskId).meta = latestSanitized; scheduleCacheSave(taskId); } catch {}
+      if (!jsonPre) return;
+      // Only render if JSON pane is visible
+      if (jsonPre.style.display === 'none') return;
+      const now = Date.now();
+      const elapsed = now - jsonLastTs;
+      if (elapsed >= jsonThrottleMs && !jsonTimer) {
+        doJsonRender(latestSanitized);
+        jsonLastTs = now;
+      } else if (!jsonTimer) {
+        const wait = Math.max(0, jsonThrottleMs - elapsed);
+        jsonTimer = setTimeout(() => {
+          jsonTimer = null;
+          if (jsonPre.style.display !== 'none') {
+            doJsonRender(latestSanitized);
+            jsonLastTs = Date.now();
+          }
+        }, wait);
+      }
+    }
+    // If user reveals JSON, push an immediate refresh of latest snapshot
+    if (jsonToggleBtn) {
+      jsonToggleBtn.addEventListener('click', () => {
+        try { setTimeout(() => { if (jsonPre && jsonPre.style.display !== 'none' && latestSanitized) doJsonRender(latestSanitized); }, 0); } catch {}
+      });
+    }
+
     try {
       if (allowSSE) {
         es = new EventSource(eventsUrl);
@@ -554,7 +780,7 @@
           const data = JSON.parse(ev.data || '{}');
             if (data && data.meta) {
               const { state, meta } = data;
-              if (state) document.getElementById('task-orch-state').textContent = state;
+              if (state) { document.getElementById('task-orch-state').textContent = state; try { getCache(taskId).state = state; scheduleCacheSave(taskId); } catch {} }
               if (meta && (meta.message || meta.step || typeof meta.progress === 'number')) {
                 sawAnyMeaningfulProgress = true;
                 const bits = [];
@@ -567,24 +793,27 @@
               try {
                 if (meta.stream_chunk) {
                   streamBuf += String(meta.stream_chunk);
+                  clampAndMarkStreamDirty();
+                  try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
                 } else if (meta.stream_buffer) {
                   streamBuf = String(meta.stream_buffer);
+                  clampAndMarkStreamDirty();
+                  try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
                 }
-                if (streamBuf && streamEl) {
-                  streamEl.value = streamBuf;
-                  streamEl.scrollTop = streamEl.scrollHeight;
-                }
-                if (meta.reasoning_summary && reasoningEl) {
+                if (meta.reasoning_chunk && reasoningEl) {
+                  lastReasoning += String(meta.reasoning_chunk);
+                  try { getCache(taskId).reasoning = lastReasoning; scheduleCacheSave(taskId); } catch {}
+                  scheduleReasoningUpdate();
+                } else if (meta.reasoning_summary && reasoningEl) {
                   if (String(meta.reasoning_summary) !== lastReasoning) {
                     lastReasoning = String(meta.reasoning_summary);
-                    appendLog('Résumé du raisonnement mis à jour.');
+                    try { getCache(taskId).reasoning = lastReasoning; scheduleCacheSave(taskId); } catch {}
+                    scheduleReasoningUpdate();
                   }
-                  reasoningEl.textContent = lastReasoning;
-                  reasoningEl.classList.remove('d-none');
                 }
               } catch {}
-              // Update JSON snapshot
-              try { document.getElementById('task-orch-json').textContent = JSON.stringify(meta || {}, null, 2); } catch {}
+              // Update JSON snapshot (sanitized, throttled, and only when visible)
+              try { requestJsonUpdate(meta || {}); } catch {}
             }
         } catch {}
       });
@@ -592,7 +821,14 @@
         try { const data = JSON.parse(ev.data || '{}'); handleDone(data); } catch { handleDone({}); }
         es.close();
       });
-      if (es) es.addEventListener('error', () => { /* Silent; fallback will handle */ });
+      if (es) es.addEventListener('error', () => {
+        // If SSE errors, fallback to polling
+        try { es.close(); } catch {}
+        es = null;
+        if (!stopped && !pollTimer) {
+          poll();
+        }
+      });
     } catch (e) { /* SSE not available */ }
 
     // Polling fallback (and completion handling)
@@ -607,20 +843,22 @@
         const d0 = await r0.json();
         if (d0 && d0.state) {
           try { document.getElementById('task-orch-state').textContent = d0.state; } catch {}
+          try { getCache(taskId).state = d0.state; scheduleCacheSave(taskId); } catch {}
         }
         if (d0 && d0.meta) {
-          try { document.getElementById('task-orch-json').textContent = JSON.stringify(d0.meta || {}, null, 2); } catch {}
+          try { requestJsonUpdate(d0.meta || {}); } catch {}
           try {
             const sb = d0.meta.stream_buffer;
             if (sb && streamEl) {
-              try { streamEl.value = JSON.stringify(JSON.parse(sb), null, 2); } catch { streamEl.value = String(sb); }
-              streamEl.scrollTop = streamEl.scrollHeight;
+              streamBuf = String(sb);
+              clampAndMarkStreamDirty();
+              try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
             }
             const rs0 = d0.meta.reasoning_summary;
             if (rs0 && reasoningEl) {
-              reasoningEl.textContent = String(rs0);
-              reasoningEl.classList.remove('d-none');
               lastReasoning = String(rs0);
+              try { getCache(taskId).reasoning = lastReasoning; scheduleCacheSave(taskId); } catch {}
+              scheduleReasoningUpdate();
             }
           } catch {}
         }
@@ -635,19 +873,24 @@
           if (data.message) appendLog(data.message);
           try {
             const meta = data.meta || {};
-            if (meta.stream_buffer && streamEl) {
-              streamBuf = String(meta.stream_buffer);
-              streamEl.value = streamBuf;
-              streamEl.scrollTop = streamEl.scrollHeight;
+            if (meta.stream_buffer) {
+              const sb = String(meta.stream_buffer);
+              if (streamEl) { streamBuf = sb; clampAndMarkStreamDirty(); }
+              try { getCache(taskId).stream = sb; scheduleCacheSave(taskId); } catch {}
             }
-            if (meta.reasoning_summary && reasoningEl) {
+            if (meta.reasoning_chunk) {
+              lastReasoning += String(meta.reasoning_chunk);
+              try { getCache(taskId).reasoning = lastReasoning; scheduleCacheSave(taskId); } catch {}
+              if (reasoningEl) scheduleReasoningUpdate();
+            } else if (meta.reasoning_summary) {
               lastReasoning = String(meta.reasoning_summary);
-              reasoningEl.textContent = lastReasoning;
-              reasoningEl.classList.remove('d-none');
+              try { getCache(taskId).reasoning = lastReasoning; scheduleCacheSave(taskId); } catch {}
+              if (reasoningEl) scheduleReasoningUpdate();
             }
           } catch {}
-          try { document.getElementById('task-orch-json').textContent = JSON.stringify(data.meta || {}, null, 2); } catch {}
+          try { requestJsonUpdate(data.meta || {}); } catch {}
         }
+        try { if (data && data.state) { getCache(taskId).state = data.state; scheduleCacheSave(taskId); } } catch {}
         // Detect long-standing PENDING with no meaningful progress
         if (data && data.state === 'PENDING') {
           const hasMeta = data && data.meta && Object.keys(data.meta || {}).length > 0;
@@ -675,7 +918,10 @@
       } catch {}
       pollTimer = setTimeout(poll, 1500);
     }
-    poll();
+    // If SSE is connected, skip continuous polling to reduce load
+    if (!es) {
+      poll();
+    }
 
     function handleDone(data) {
       if (doneFired) return; // idempotent guard
@@ -683,6 +929,7 @@
       const payload = data.result || data.meta || {};
       const state = data.state || payload.state || 'DONE';
       document.getElementById('task-orch-state').textContent = state;
+      try { getCache(taskId).state = state; scheduleCacheSave(taskId); } catch {}
       appendLog(`Terminé avec état ${state}.`);
       completed = true;
       // Stop streams/polls immediately to avoid double notifications
@@ -698,12 +945,14 @@
             streamEl.value = JSON.stringify(obj, null, 2);
           } catch { streamEl.value = streamBuf; }
           streamEl.scrollTop = streamEl.scrollHeight;
+          try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
         }
       } catch {}
       try {
         if (payload && payload.reasoning_summary && reasoningEl) {
-          reasoningEl.textContent = String(payload.reasoning_summary);
-          reasoningEl.classList.remove('d-none');
+          lastReasoning = String(payload.reasoning_summary);
+          try { getCache(taskId).reasoning = lastReasoning; scheduleCacheSave(taskId); } catch {}
+          scheduleReasoningUpdate();
         }
       } catch {}
       // Validation/redirect link inference
@@ -723,16 +972,25 @@
         validateBtn.href = vurl;
         validateBtn.classList.remove('d-none');
       }
-      // Success notification with tracking/validation link
+      // Final notification with contextual title and brief detail
       try {
         // Mark task as notified to suppress duplicates from background watcher
         try { if (sessionStorage) sessionStorage.setItem(`edxo_done_notified_${taskId}`, '1'); } catch {}
         if (typeof window.addNotification === 'function') {
+          const baseTitle = (opts && opts.title) ? String(opts.title) : 'Tâche';
+          const statusLabel = (state === 'SUCCESS') ? 'terminée' : (state === 'FAILURE' ? 'échouée' : 'arrêtée');
+          let detail = '';
+          try {
+            const dmsg = (payload && (payload.message || payload.summary || payload.reasoning_summary)) || '';
+            detail = dmsg ? ` — ${String(dmsg)}` : '';
+          } catch {}
+          const finalMsg = `${baseTitle} — ${statusLabel}${detail}`;
+          const type = (state === 'SUCCESS') ? 'success' : (state === 'FAILURE' ? 'error' : 'warning');
           if (vurl) {
-            window.addNotification('Tâche terminée. Cliquez pour valider.', 'success', vurl);
+            window.addNotification(finalMsg + '. Cliquez pour valider.', type, vurl, taskId);
           } else {
             const link = `/tasks/track/${sessionStorage.getItem('currentTaskId') || ''}`;
-            window.addNotification('Tâche terminée.', 'success', link);
+            window.addNotification(finalMsg + '.', type, link, taskId);
           }
         }
       } catch {}
@@ -779,6 +1037,12 @@
       try { stopped = true; } catch {}
       try { if (es) es.close(); } catch {}
       try { if (pollTimer) clearTimeout(pollTimer); } catch {}
+      try { if (streamTimer) clearTimeout(streamTimer); } catch {}
+      streamTimer = null; streamDirty = false;
+      try { if (jsonTimer) clearTimeout(jsonTimer); } catch {}
+      jsonTimer = null; latestSanitized = null;
+      try { if (reasoningTimer) clearTimeout(reasoningTimer); } catch {}
+      reasoningTimer = null; reasoningDirty = false;
       // If not completed, keep watching in background and keep notifications alive
       if (!completed) {
         startBackgroundWatch(taskId, { statusUrl, title: opts.title });
@@ -807,11 +1071,15 @@
     try {
       sessionStorage.setItem('currentTaskId', taskId);
       sessionStorage.removeItem(`edxo_done_notified_${taskId}`);
+      // Persist human-friendly title for notifications
+      const t = (uiOpts && uiOpts.title) ? String(uiOpts.title) : 'Tâche';
+      try { localStorage.setItem(`edxo_task_title_${taskId}`, t); } catch {}
     } catch {}
     // Enrich notifications with tracking link
     if (typeof window.addNotification === 'function') {
       const link = `/tasks/track/${taskId}`;
-      window.addNotification(uiOpts.startMessage || 'Tâche en cours...', 'in-progress', link);
+      const msg = uiOpts.title ? `${uiOpts.title} en cours…` : (uiOpts.startMessage || 'Tâche en cours…');
+      window.addNotification(msg, 'in-progress', link, taskId);
     }
     // Optionnellement ouvrir le modal et mettre à jour les éléments fournis
     if (uiOpts.openModal === true || uiOpts.summaryEl || uiOpts.streamEl) {

@@ -228,6 +228,8 @@ document.addEventListener("DOMContentLoaded", function() {
             taskStatusElement.classList.add("status-success");
         } else if (status === "FAILURE") {
             taskStatusElement.classList.add("status-error");
+        } else if (status === "REVOKED") {
+            taskStatusElement.classList.add("status-error");
         } else if (status === "PROGRESS") {
             taskStatusElement.classList.add("status-progress");
         } else {
@@ -329,6 +331,14 @@ if (data.state === "SUCCESS") {
                 // Afficher le message d'erreur en cas d'échec
                 displayError(data.message || "La tâche a échoué sans message d'erreur spécifique");
                 
+                // Arrêter les vérifications
+                return false;
+            } else if (data.state === "REVOKED") {
+                // Tâche annulée/nettoyée: afficher un message clair et arrêter
+                const msg = data.message || (data.meta && data.meta.message) || "Tâche nettoyée après redémarrage.";
+                resultPlaceholder.textContent = msg;
+                resultPre.style.display = "none";
+                errorAlert.style.display = "none";
                 // Arrêter les vérifications
                 return false;
             } else {

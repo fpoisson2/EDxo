@@ -119,7 +119,7 @@ GRILLE_JSON_SCHEMA = {
 
 
 @celery.task(bind=True)
-def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None):
+def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None, programme_id=None):
     """
     Tâche Celery qui :
      1. Charge un fichier PDF via OpenAI.
@@ -298,7 +298,7 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None):
                         "input_tokens": getattr(response.usage, 'input_tokens', 0),
                         "output_tokens": getattr(response.usage, 'output_tokens', 0),
                     },
-                    "validation_url": f"/confirm_grille_import/{task_id}",
+                    "validation_url": f"/confirm_grille_import/{task_id}" + (f"?programme_id={programme_id}" if programme_id else ""),
                 }
                 if reasoning_summary_text:
                     result["reasoning_summary"] = reasoning_summary_text
@@ -358,7 +358,7 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None):
                     "input_tokens": getattr(response.usage, 'input_tokens', 0),
                     "output_tokens": getattr(response.usage, 'output_tokens', 0),
                 },
-                "validation_url": f"/confirm_grille_import/{task_id}",
+                "validation_url": f"/confirm_grille_import/{task_id}" + (f"?programme_id={programme_id}" if programme_id else ""),
             }
             if reasoning_summary_text:
                 result["reasoning_summary"] = reasoning_summary_text
@@ -372,7 +372,7 @@ def extract_grille_from_pdf_task(self, pdf_path, model=None, openai_key=None):
                     "input_tokens": getattr(response.usage, 'input_tokens', 0),
                     "output_tokens": getattr(response.usage, 'output_tokens', 0),
                 },
-                "validation_url": f"/confirm_grille_import/{task_id}",
+                "validation_url": f"/confirm_grille_import/{task_id}" + (f"?programme_id={programme_id}" if programme_id else ""),
             }
             if reasoning_summary_text:
                 result["reasoning_summary"] = reasoning_summary_text

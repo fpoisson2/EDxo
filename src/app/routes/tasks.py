@@ -1,6 +1,6 @@
 import json
 import time
-from flask import Blueprint, jsonify, current_app, render_template, url_for, request
+from flask import Blueprint, jsonify, current_app, render_template, url_for, request, stream_with_context
 from flask_login import login_required
 
 from ...celery_app import celery
@@ -18,6 +18,47 @@ def _is_cancel_requested(task_id: str) -> bool:
         return bool(r.get(f"edxo:cancel:{task_id}"))
     except Exception:
         return False
+
+
+def _is_task_known(task_id: str) -> bool:
+    """Return True if the task appears anywhere (active/reserved/scheduled) or has a result key.
+
+    This helps us treat unknown PENDING tasks (e.g., after server restart) as cleaned up.
+    """
+    try:
+        # Check workers for any mention of the task
+        insp = celery.control.inspect(timeout=0.5)
+        for getter in (insp.active, insp.reserved, insp.scheduled):
+            try:
+                snapshot = getter() or {}
+            except Exception:
+                snapshot = {}
+            for _w, tasks in (snapshot or {}).items():
+                for t in tasks or []:
+                    # Various shapes depending on Celery version
+                    tid = None
+                    if isinstance(t, dict):
+                        tid = t.get('id') or (t.get('request') or {}).get('id')
+                        if not tid and 'request' in t and hasattr(t['request'], 'id'):
+                            tid = getattr(t['request'], 'id', None)
+                    if tid and tid == task_id:
+                        return True
+        # Check Redis result backend for stored state
+        try:
+            import redis
+            backend_url = celery.conf.result_backend
+            r = redis.Redis.from_url(backend_url)
+            # Common Celery backend key patterns
+            if r.exists(f"celery-task-meta-{task_id}"):
+                return True
+            if r.exists(f"celery-task-set-meta-{task_id}"):
+                return True
+        except Exception:
+            # If backend not accessible, we cannot assert existence; fall through
+            pass
+    except Exception:
+        pass
+    return False
 
 @tasks_bp.get("/status/<task_id>")
 @login_required
@@ -38,17 +79,33 @@ def unified_task_status(task_id):
 
     # If user requested cancel while task never started, Celery may keep PENDING forever.
     # Surface a REVOKED state for UX if our cancel flag is set.
-    if state == "PENDING" and _is_cancel_requested(task_id):
-        state = "REVOKED"
-        if isinstance(meta, dict):
-            meta = {**meta, "message": meta.get("message") or "Tâche annulée (avant démarrage)."}
-        else:
-            meta = {"message": "Tâche annulée (avant démarrage)."}
+    if state == "PENDING":
+        if _is_cancel_requested(task_id):
+            state = "REVOKED"
+            if isinstance(meta, dict):
+                meta = {**meta, "message": meta.get("message") or "Tâche annulée (avant démarrage)."}
+            else:
+                meta = {"message": "Tâche annulée (avant démarrage)."}
+        elif not _is_task_known(task_id):
+            # Treat unknown PENDING tasks (e.g., after restart cleanup) as revoked
+            state = "REVOKED"
+            meta = {**meta, "message": meta.get("message") or "Tâche nettoyée après redémarrage."} if isinstance(meta, dict) else {"message": "Tâche nettoyée après redémarrage."}
     message = meta.get("message") if isinstance(meta, dict) else None
 
     result_payload = res.result if state == "SUCCESS" else None
     if state == "SUCCESS" and not result_payload:
         result_payload = meta if isinstance(meta, dict) else None
+    # Map logical error payloads to FAILURE for better UX
+    try:
+        if state == "SUCCESS":
+            payload = result_payload if isinstance(result_payload, dict) else {}
+            # Some tasks return {'status': 'error', 'message': '...'} on exceptions
+            if isinstance(payload, dict) and (payload.get('status') == 'error'):
+                state = "FAILURE"
+                if not message:
+                    message = payload.get('message') or ''
+    except Exception:
+        pass
 
     current_app.logger.info("[tasks.status] %s -> %s", task_id, state)
     return jsonify({
@@ -72,6 +129,14 @@ def unified_task_events(task_id):
     def event_stream():
         last_snapshot = None
         yield "event: open\ndata: {}\n\n"
+        # Prefer a cooperative sleep when available (gevent), else fallback
+        try:
+            from gevent import sleep as _sleep
+        except Exception:
+            _sleep = time.sleep
+
+        # Avoid expensive Celery inspect on every loop when PENDING
+        pending_ticks = 0
         while True:
             try:
                 res = AsyncResult(task_id, app=celery)
@@ -79,12 +144,18 @@ def unified_task_events(task_id):
                 meta = res.info if isinstance(res.info, dict) else {}
 
                 # Mirror the status endpoint: if cancel flag is set and still PENDING, treat as REVOKED
-                if state == "PENDING" and _is_cancel_requested(task_id):
-                    state = "REVOKED"
-                    if isinstance(meta, dict):
-                        meta = {**meta, "message": meta.get("message") or "Tâche annulée (avant démarrage)."}
-                    else:
-                        meta = {"message": "Tâche annulée (avant démarrage)."}
+                if state == "PENDING":
+                    pending_ticks += 1
+                    if _is_cancel_requested(task_id):
+                        state = "REVOKED"
+                        if isinstance(meta, dict):
+                            meta = {**meta, "message": meta.get("message") or "Tâche annulée (avant démarrage)."}
+                        else:
+                            meta = {"message": "Tâche annulée (avant démarrage)."}
+                    elif (pending_ticks % 15) == 0:  # check at most ~ every 15s
+                        if not _is_task_known(task_id):
+                            state = "REVOKED"
+                            meta = {**meta, "message": meta.get("message") or "Tâche nettoyée après redémarrage."} if isinstance(meta, dict) else {"message": "Tâche nettoyée après redémarrage."}
                 snapshot = (state, json.dumps(meta, sort_keys=True, ensure_ascii=False))
                 if snapshot != last_snapshot:
                     payload = {"state": state, "meta": meta}
@@ -95,13 +166,22 @@ def unified_task_events(task_id):
                     yield f"event: done\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
                     break
                 yield "event: ping\ndata: {}\n\n"
-                time.sleep(1.0)
+                _sleep(1.0)
+            except GeneratorExit:
+                # Client disconnected; stop the generator quickly
+                break
             except Exception as e:
                 yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
                 break
 
-    headers = {"Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive"}
-    return current_app.response_class(event_stream(), headers=headers)
+    headers = {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
+        # Disable buffering if behind Nginx
+        "X-Accel-Buffering": "no",
+    }
+    return current_app.response_class(stream_with_context(event_stream()), headers=headers)
 
 
 @tasks_bp.post("/cancel/<task_id>")

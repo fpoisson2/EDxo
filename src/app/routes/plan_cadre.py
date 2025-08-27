@@ -205,7 +205,8 @@ def generate_plan_cadre_content(plan_id):
     
     # Forcer le mode amélioration si demandé explicitement
     # mode déjà défini ci-dessus
-    improved_mode = (mode in ('improve', 'wand')) or bool(form.improve_only.data)
+    # Forcer désormais un flux d'aperçu/validation pour la génération
+    improved_mode = True
     payload = dict(form.data)
     payload['improve_only'] = bool(improved_mode)
     payload['mode'] = mode

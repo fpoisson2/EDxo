@@ -279,7 +279,7 @@
           e.preventDefault();
           const start = () => window.EDxoTasks.openFileTask({
             url: '/grille/import',
-            title: 'Importer une grille (PDF)',
+            title: 'Importer une grille — {{ programme.nom }} (PDF)',
             startMessage: 'Import en cours…'
           });
           if (window.EDxoTasks && typeof window.EDxoTasks.openFileTask === 'function') {
@@ -324,7 +324,7 @@
           if (window.EDxoTasks && typeof window.EDxoTasks.openQuickTask === 'function' && nbSessions > 0 && totalHours > 0) {
             window.EDxoTasks.openQuickTask({
               url,
-              title: 'Générer la grille (IA)',
+              title: 'Générer la grille — {{ programme.nom }}',
               startMessage: 'Génération de la grille en cours…',
               basePayload: {
                 nb_sessions: nbSessions,
@@ -345,7 +345,7 @@
           if (window.EDxoTasks && typeof window.EDxoTasks.openTaskStartModal === 'function') {
             window.EDxoTasks.openTaskStartModal({
               url,
-              title: 'Générer la grille (IA)',
+              title: 'Générer la grille — {{ programme.nom }}',
               method: 'POST',
               mode: 'json',
               defaultJson

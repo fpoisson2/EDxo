@@ -23,7 +23,7 @@
             e.preventDefault();
             window.EDxoTasks.openFileTask({
               url: `{{ url_for('programme.import_competences_pdf_start', programme_id=programme.id) }}`,
-              title: 'Importer le devis ministériel (PDF)',
+              title: 'Importer le devis ministériel — {{ programme.nom }} (PDF)',
               startMessage: 'Import en cours…'
             });
           });
