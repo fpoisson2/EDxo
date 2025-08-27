@@ -10,6 +10,29 @@ from src.app.models import Programme, User, Competence, ChatModelConfig
 logger = logging.getLogger(__name__)
 
 
+def _extract_reasoning_summary_from_response(response):
+    """Extract reasoning summary text from a Responses API result."""
+    summary = ""
+    try:
+        if hasattr(response, "reasoning") and response.reasoning:
+            for r in response.reasoning:
+                for item in getattr(r, "summary", []) or []:
+                    if getattr(item, "type", "") == "summary_text":
+                        summary += getattr(item, "text", "") or ""
+    except Exception:
+        pass
+    if not summary:
+        try:
+            for out in getattr(response, "output", []) or []:
+                if getattr(out, "type", "") == "reasoning":
+                    for item in getattr(out, "summary", []) or []:
+                        if getattr(item, "type", "") == "summary_text":
+                            summary += getattr(item, "text", "") or ""
+        except Exception:
+            pass
+    return summary.strip()
+
+
 @shared_task(bind=True, name='src.app.tasks.generation_grille.generate_programme_grille_task')
 def generate_programme_grille_task(self, programme_id: int, user_id: int, form: dict):
     """Génère une proposition de grille de cours par session via l'IA.
@@ -128,9 +151,60 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
         except Exception:
             pass
 
-        resp = client.responses.create(**request_kwargs)
-
-        output_text = getattr(resp, 'output_text', '') or ''
+        streamed_text = ""
+        reasoning_summary_text = ""
+        usage_prompt = 0
+        usage_completion = 0
+        try:
+            with client.responses.stream(**request_kwargs) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={
+                                    'stream_chunk': delta,
+                                    'stream_buffer': streamed_text
+                                })
+                            except Exception:
+                                pass
+                    elif etype.endswith('response.output_item.added') or etype == 'response.output_item.added':
+                        try:
+                            item = getattr(event, 'item', None)
+                            text_val = ''
+                            if item:
+                                if isinstance(item, dict):
+                                    text_val = item.get('text') or ''
+                                else:
+                                    text_val = getattr(item, 'text', '') or ''
+                            if text_val:
+                                streamed_text += text_val
+                        except Exception:
+                            pass
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        try:
+                            rs_delta = getattr(event, 'delta', '') or ''
+                            if rs_delta:
+                                reasoning_summary_text += rs_delta
+                                try:
+                                    self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
+                resp = stream.get_final_response()
+        except Exception:
+            resp = client.responses.create(**request_kwargs)
+            streamed_text = getattr(resp, 'output_text', '') or ''
+            try:
+                reasoning_summary_text = _extract_reasoning_summary_from_response(resp)
+                if reasoning_summary_text:
+                    self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+            except Exception:
+                pass
+        output_text = streamed_text or getattr(resp, 'output_text', '') or ''
         usage_prompt = getattr(getattr(resp, 'usage', None), 'input_tokens', 0) or 0
         usage_completion = getattr(getattr(resp, 'usage', None), 'output_tokens', 0) or 0
 
@@ -274,12 +348,15 @@ def generate_programme_grille_task(self, programme_id: int, user_id: int, form: 
         user.credits = new_credits
         db.session.commit()
 
+        result_payload = {
+            'sessions': cleaned,
+            'fils_conducteurs': fils_conducteurs
+        }
+        if reasoning_summary_text:
+            result_payload['reasoning_summary'] = reasoning_summary_text
         return {
             'status': 'success',
-            'result': {
-                'sessions': cleaned,
-                'fils_conducteurs': fils_conducteurs
-            },
+            'result': result_payload,
             'usage': { 'prompt_tokens': usage_prompt, 'completion_tokens': usage_completion, 'cost': cost },
             # Lien standardisé vers la page de validation (comparaison/édition)
             # Utiliser la variante avec paramètre de chemin, alignée sur la route Flask
