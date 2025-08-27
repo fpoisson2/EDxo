@@ -4,7 +4,6 @@ Ce document recense tous les points du code qui appellent l’API OpenAI, le typ
 
 | Chemin | Endpoint / Tâche / Fonction | API OpenAI | Méthodes | Fonctionnalité | Utilisé |
 |---|---|---|---|---|---|
-| src/ocr_processing/api_clients.py | — | — | — | Fonctions legacy retirées: find_competences_pages, extraire_toutes_les_competences, find_section_with_openai, extraire_competences_depuis_txt | Retiré |
 | src/ocr_processing/api_clients.py | extraire_competences_depuis_pdf | Responses, Files | responses.stream, responses.create, files.create | OCR: extraction directe JSON compétences depuis PDF | Oui (appelé par src/app/tasks/ocr.py) |
 | src/app/routes/chat.py | SSE chat streaming | Responses | responses.create (stream/non-stream) | Chat IA (SSE, suivi de thread) | Oui |
 | src/app/routes/gestion_programme.py | update_verifier_plan_cours | Chat Completions (beta) | beta.chat.completions.parse | Vérification de plan de cours en 2 passes (o3-mini → gpt-5) | Oui |
@@ -21,15 +20,6 @@ Ce document recense tous les points du code qui appellent l’API OpenAI, le typ
 | src/app/tasks/import_plan_de_cours.py | import_plan_de_cours_task | Responses | responses.parse | Import texte DOCX → plan de cours (structuré) | Oui (appelé par route d’import DOCX plan de cours) |
 | src/app/tasks/import_plan_cadre.py | import_plan_cadre_preview_task | Responses, Files | files.create, responses.stream, responses.create, responses.parse | Import DOCX plan‑cadre (aperçu/validation) | Oui (déclenché par /plan_cadre/<id>/import_docx_start) |
 | src/app/tasks/generation_plan_cadre.py | generate_plan_cadre_content_task | Responses | responses.stream, responses.create | Génération/amélioration du plan‑cadre (aperçu/validation) | Oui (déclenché par /plan_cadre/<id>/generate_content) |
-
-Notes d’usage et portée
-- “Oui” signifie que l’appel est relié à un endpoint Flask ou une tâche Celery effectivement déclenchée depuis l’UI/flux documenté.
-- “Partiel” signifie utilitaire ou fonction intermédiaire appelée par d’autres helpers dans le module, mais pas directement exposée à l’UI ; encore utilisée dans des chemins secondaires.
-- Tests: les fichiers de tests patchent `OpenAI` mais n’appellent pas l’API réelle (pas listés ici comme “utilisés”).
-
-Catégorisation par API
-- Responses: principal canal (création, streaming, parsing structuré avec Pydantic/JSON schema).
-- Chat Completions (beta): utilisé dans deux endpoints (gestion programme, grille 6 niveaux).
 - Assistants: aucun usage trouvé.
 - Files: upload de PDF pour les tâches d’import/ocr.
 
