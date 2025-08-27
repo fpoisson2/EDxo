@@ -31,6 +31,7 @@ class BulkPlanDeCoursResponse(BaseModel):
     accomodement: Optional[str] = None
     evaluation_formative_apprentissages: Optional[str] = None
     evaluation_expression_francais: Optional[str] = None
+    seuil_reussite: Optional[str] = None
     materiel: Optional[str] = None
     calendriers: List[CalendarEntry] = Field(default_factory=list)
 
@@ -205,6 +206,7 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
             'accomodement': plan.accomodement,
             'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
             'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'seuil_reussite': plan.seuil_reussite,
             'materiel': plan.materiel,
         }
         old_calendriers = [
@@ -227,6 +229,7 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
         plan.accomodement = parsed.accomodement or plan.accomodement
         plan.evaluation_formative_apprentissages = parsed.evaluation_formative_apprentissages or plan.evaluation_formative_apprentissages
         plan.evaluation_expression_francais = parsed.evaluation_expression_francais or plan.evaluation_expression_francais
+        plan.seuil_reussite = parsed.seuil_reussite or plan.seuil_reussite
         plan.materiel = parsed.materiel or plan.materiel
 
         # Calendrier
@@ -341,6 +344,7 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
                 'accomodement': plan.accomodement,
                 'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
                 'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'seuil_reussite': plan.seuil_reussite,
                 'materiel': plan.materiel,
             },
             "calendriers": [
@@ -392,6 +396,7 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
             'accomodement',
             'evaluation_formative_apprentissages',
             'evaluation_expression_francais',
+            'seuil_reussite',
             'materiel',
         }
         if field_name not in allowed_fields:
@@ -542,6 +547,7 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
             'accomodement': plan.accomodement,
             'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
             'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'seuil_reussite': plan.seuil_reussite,
             'materiel': plan.materiel,
         }
         old_calendriers = [
@@ -946,6 +952,7 @@ def generate_plan_de_cours_evaluations_task(
             'accomodement': plan.accomodement,
             'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
             'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'seuil_reussite': plan.seuil_reussite,
             'materiel': plan.materiel,
         }
         old_calendriers = [
@@ -1007,6 +1014,7 @@ def generate_plan_de_cours_evaluations_task(
                 'accomodement': plan.accomodement,
                 'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
                 'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'seuil_reussite': plan.seuil_reussite,
                 'materiel': plan.materiel,
             },
             'calendriers': [

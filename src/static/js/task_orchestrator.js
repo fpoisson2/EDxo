@@ -106,6 +106,15 @@
       </div>
     </div>`;
     document.body.insertAdjacentHTML('beforeend', html);
+    // Ensure spinner CSS is available (independent of Bootstrap)
+    try {
+      if (!document.getElementById('edxo-task-spinner-style')) {
+        const style = document.createElement('style');
+        style.id = 'edxo-task-spinner-style';
+        style.textContent = `@keyframes edxo-spin{to{transform:rotate(360deg)}} .edxo-spinner{width:28px;height:28px;border:3px solid rgba(13,110,253,.2);border-top-color:#0d6efd;border-radius:50%;animation:edxo-spin .9s linear infinite}`;
+        document.head.appendChild(style);
+      }
+    } catch {}
     modal = document.getElementById('taskQuickModal');
     return modal;
   }
@@ -444,7 +453,7 @@
             <h6 class="mt-2 mb-1">Résumé du raisonnement</h6>
             <div id="task-orch-reasoning-wrap" class="position-relative mb-2">
               <div id="task-orch-reasoning-overlay" class="d-flex align-items-center justify-content-center" style="position:absolute;inset:0;pointer-events:none;z-index:10;display:flex;">
-                <div class="spinner-border spinner-border-sm text-primary" role="status" aria-label="Chargement"></div>
+                <div class="edxo-spinner" aria-label="Chargement"></div>
               </div>
               <div id="task-orch-reasoning" class="small" style="min-height:100px;max-height:25vh;overflow:auto;background:#f8f9fa;padding:8px;border-radius:6px;"></div>
             </div>
@@ -456,7 +465,7 @@
             </div>
             <div id="task-orch-stream-wrap" class="position-relative">
               <div id="task-orch-stream-overlay" class="d-flex align-items-center justify-content-center" style="position:absolute;inset:0;pointer-events:none;z-index:10;display:flex;">
-                <div class="spinner-border spinner-border-sm text-primary" role="status" aria-label="Chargement"></div>
+                <div class="edxo-spinner" aria-label="Chargement"></div>
               </div>
               <div id="task-orch-stream-text" class="form-control" style="background:#0f172a;color:#e2e8f0;font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Cantarell, Noto Sans, Ubuntu, Helvetica Neue, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';font-size:0.95rem;line-height:1.3;min-height:140px;max-height:280px;overflow:auto;white-space:pre-wrap;position:relative;z-index:1;"></div>
               <pre id="task-orch-stream-json" class="form-control" style="display:none;background:#0f172a;color:#e2e8f0;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;min-height:140px;max-height:280px;white-space:pre-wrap;overflow:auto;"></pre>
@@ -1237,6 +1246,13 @@
         if (!el) return;
         if ('value' in el) { el.value = text || ''; } else { el.textContent = text || ''; }
       } catch {}
+    }
+    function hasStreamAnyContent() {
+      try {
+        const a = streamEl ? (('value' in streamEl) ? (streamEl.value || '') : (streamEl.textContent || '')) : '';
+        const b = streamJsonPre && typeof streamJsonPre.textContent === 'string' ? streamJsonPre.textContent : '';
+        return !!(String(a).trim() || String(b).trim());
+      } catch { return false; }
     }
     function getStreamText(el) {
       try { if (!el) return ''; return ('value' in el) ? (el.value || '') : (el.textContent || ''); } catch { return ''; }

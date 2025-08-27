@@ -149,6 +149,7 @@ class BulkPlanDeCoursResponse(BaseModel):
     accomodement: Optional[str] = None
     evaluation_formative_apprentissages: Optional[str] = None
     evaluation_expression_francais: Optional[str] = None
+    seuil_reussite: Optional[str] = None
     materiel: Optional[str] = None
     calendriers: List[CalendarEntry] = Field(default_factory=list)
     # Inclure aussi les évaluations pour créer la grille d'évaluation
@@ -178,6 +179,7 @@ DEFAULT_ALL_PROMPT = (
     "  'accomodement': str,\n"
     "  'evaluation_formative_apprentissages': str,\n"
     "  'evaluation_expression_francais': str,\n"
+    "  'seuil_reussite': str,\n"
     "  'materiel': str,\n"
     "  'calendriers': [\n"
     "    {{ 'semaine': int, 'sujet': str, 'activites': str, 'travaux_hors_classe': str, 'evaluations': str }}\n"
@@ -612,6 +614,7 @@ def import_docx():
         plan_de_cours.accomodement = parsed.accomodement or plan_de_cours.accomodement
         plan_de_cours.evaluation_formative_apprentissages = parsed.evaluation_formative_apprentissages or plan_de_cours.evaluation_formative_apprentissages
         plan_de_cours.evaluation_expression_francais = parsed.evaluation_expression_francais or plan_de_cours.evaluation_expression_francais
+        plan_de_cours.seuil_reussite = parsed.seuil_reussite or plan_de_cours.seuil_reussite
         plan_de_cours.materiel = parsed.materiel or plan_de_cours.materiel
 
         # Teacher
@@ -1300,6 +1303,7 @@ def review_plan_de_cours_generation(plan_id):
             'accomodement': plan.accomodement,
             'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
             'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'seuil_reussite': plan.seuil_reussite,
             'materiel': plan.materiel,
         }
     if plan and not new_cal:
@@ -1338,6 +1342,7 @@ def review_plan_de_cours_generation(plan_id):
         'accomodement': 'Accommodement',
         'evaluation_formative_apprentissages': 'Évaluation formative',
         'evaluation_expression_francais': 'Évaluation expression français',
+        'seuil_reussite': 'Seuil de réussite',
         'materiel': 'Matériel',
     }
     def _norm(v):
@@ -1441,6 +1446,7 @@ def apply_review_plan_de_cours(plan_id):
             'accomodement',
             'evaluation_formative_apprentissages',
             'evaluation_expression_francais',
+            'seuil_reussite',
             'materiel',
         ]
         for fn in field_names:
