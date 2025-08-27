@@ -109,6 +109,7 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
         )
 
         output_text = ''
+        streamed_text = ''
         reasoning_summary = ''
         usage_prompt = 0
         usage_completion = 0
@@ -119,9 +120,21 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
             with client.responses.stream(**request_kwargs) as stream:
                 for event in stream:
                     et = getattr(event, 'type', '') or ''
-                    if et.endswith('message.delta') or et.endswith('output_text.delta'):
-                        # Optionally, we can append minimal progress here
-                        pass
+                    if et.endswith('response.output_text.delta') or et == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            self.update_state(state='PROGRESS', meta={
+                                'stream_chunk': delta,
+                                'stream_buffer': streamed_text
+                            })
+                    elif et.endswith('response.reasoning_summary_text.delta') or et == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(event, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary += rs_delta
+                            self.update_state(state='PROGRESS', meta={
+                                'reasoning_summary': reasoning_summary.strip()
+                            })
                     elif getattr(event, 'summary', None):
                         try:
                             for s in event.summary:
@@ -129,10 +142,14 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
                                     reasoning_summary += getattr(s, 'text', '') or ''
                         except Exception:
                             pass
-                    elif et.endswith('response.completed'):
+                        if reasoning_summary:
+                            self.update_state(state='PROGRESS', meta={
+                                'reasoning_summary': reasoning_summary.strip()
+                            })
+                    elif et.endswith('response.completed') or et == 'response.completed':
                         break
                 resp = stream.get_final_response()
-                output_text = getattr(resp, 'output_text', '') or ''
+                output_text = streamed_text or getattr(resp, 'output_text', '') or ''
                 if hasattr(resp, 'usage'):
                     usage_prompt = resp.usage.input_tokens
                     usage_completion = resp.usage.output_tokens
@@ -144,6 +161,17 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
             if hasattr(resp, 'usage'):
                 usage_prompt = resp.usage.input_tokens
                 usage_completion = resp.usage.output_tokens
+            # Tentative d'extraction d'un résumé de raisonnement
+            try:
+                summary_obj = getattr(resp, 'summary', None) or getattr(resp, 'reasoning', None)
+                if summary_obj:
+                    reasoning_summary = getattr(summary_obj, 'text', '') or getattr(summary_obj, 'summary_text', '') or ''
+                    if reasoning_summary:
+                        self.update_state(state='PROGRESS', meta={
+                            'reasoning_summary': reasoning_summary.strip()
+                        })
+            except Exception:
+                pass
 
         # Parse
         self.update_state(state='PROGRESS', meta={'message': 'Analyse de la réponse…'})
