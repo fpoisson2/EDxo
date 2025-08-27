@@ -820,6 +820,41 @@ def generate_plan_de_cours_evaluations_task(self, plan_de_cours_id: int, additio
         if not evals:
             return {"status": "error", "message": "Aucune évaluation générée."}
 
+        # Snapshot avant modifications pour permettre la restauration
+        old_fields = {
+            'presentation_du_cours': plan.presentation_du_cours,
+            'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+            'organisation_et_methodes': plan.organisation_et_methodes,
+            'accomodement': plan.accomodement,
+            'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+            'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'materiel': plan.materiel,
+        }
+        old_calendriers = [
+            {
+                'semaine': c.semaine,
+                'sujet': c.sujet,
+                'activites': c.activites,
+                'travaux_hors_classe': c.travaux_hors_classe,
+                'evaluations': c.evaluations,
+            } for c in plan.calendriers
+        ]
+        old_evaluations = []
+        for e in plan.evaluations:
+            old_evaluations.append({
+                'id': e.id,
+                'titre': e.titre_evaluation,
+                'description': e.description,
+                'semaine': e.semaine,
+                'capacites': [
+                    {
+                        'capacite_id': c.capacite_id,
+                        'capacite': (db.session.get(PlanCadreCapacites, c.capacite_id).capacite if c.capacite_id else None),
+                        'ponderation': c.ponderation,
+                    } for c in e.capacites
+                ]
+            })
+
         # Remplacer la liste d'évaluations existantes
         for e in plan.evaluations:
             # Capacités supprimées via cascade
@@ -882,6 +917,10 @@ def generate_plan_de_cours_evaluations_task(self, plan_de_cours_id: int, additio
             'session': plan.session,
             'evaluations': result_evals,
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
+            'old_fields': old_fields,
+            'old_calendriers': old_calendriers,
+            'old_evaluations': old_evaluations,
+            'validation_url': f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
         }
     except Exception as e:
         logger.exception("Erreur dans la tâche generate_plan_de_cours_evaluations_task")

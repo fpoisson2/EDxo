@@ -23,7 +23,7 @@ from ..models import (
     db, Cours, PlanCadre, User,
     PlanDeCours, PlanDeCoursCalendrier, PlanDeCoursMediagraphie,
     PlanDeCoursDisponibiliteEnseignant, PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, Programme,
-    PlanDeCoursPromptSettings
+    PlanDeCoursPromptSettings, PlanCadreCapacites
 )
 from ...utils.decorator import ensure_profile_completed
 from ...utils.openai_pricing import calculate_call_cost
@@ -1272,8 +1272,10 @@ def review_plan_de_cours_generation(plan_id):
     task_id = request.args.get('task_id')
     old_fields = {}
     old_cal = []
+    old_eval = []
     new_fields = {}
     new_cal = []
+    new_eval = []
     reasoning_summary = None
     try:
         if task_id:
@@ -1281,8 +1283,10 @@ def review_plan_de_cours_generation(plan_id):
             data = res.result or {}
             old_fields = data.get('old_fields') or {}
             old_cal = data.get('old_calendriers') or []
+            old_eval = data.get('old_evaluations') or []
             new_fields = data.get('fields') or {}
             new_cal = data.get('calendriers') or []
+            new_eval = data.get('evaluations') or []
             reasoning_summary = data.get('reasoning_summary')
     except Exception:
         current_app.logger.exception('Erreur lecture résultat tâche plan de cours')
@@ -1307,6 +1311,21 @@ def review_plan_de_cours_generation(plan_id):
                 'travaux_hors_classe': c.travaux_hors_classe,
                 'evaluations': c.evaluations,
             } for c in plan.calendriers
+        ]
+    if plan and not new_eval:
+        new_eval = [
+            {
+                'titre': e.titre_evaluation,
+                'description': e.description,
+                'semaine': e.semaine,
+                'capacites': [
+                    {
+                        'capacite_id': c.capacite_id,
+                        'capacite': (db.session.get(PlanCadreCapacites, c.capacite_id).capacite if c.capacite_id else None),
+                        'ponderation': c.ponderation,
+                    } for c in e.capacites
+                ]
+            } for e in plan.evaluations
         ]
 
     # Construire un dict de "changes" compatible avec le template du plan-cadre
@@ -1347,6 +1366,32 @@ def review_plan_de_cours_generation(plan_id):
             'label': 'Calendrier'
         }
 
+    # Évaluations: représenter chaque évaluation avec titre, description et capacités
+    def _eval_to_list(lst):
+        out = []
+        for e in lst or []:
+            titre = f"S{e.get('semaine')} — {e.get('titre') or ''}"
+            desc_parts = []
+            if e.get('description'):
+                desc_parts.append(e.get('description'))
+            caps = e.get('capacites') or []
+            cap_lines = []
+            for c in caps:
+                lbl = c.get('capacite') or ''
+                pond = c.get('ponderation')
+                cap_lines.append(f"{lbl} ({pond})" if lbl and pond else lbl or '')
+            if cap_lines:
+                desc_parts.append("Capacités: " + ", ".join([cl for cl in cap_lines if cl]))
+            out.append({'texte': titre, 'description': "\n".join(desc_parts) if desc_parts else ''})
+        return out
+
+    if (old_eval or new_eval) and (_eval_to_list(old_eval) != _eval_to_list(new_eval)):
+        changes['evaluations'] = {
+            'before': _eval_to_list(old_eval),
+            'after': _eval_to_list(new_eval),
+            'label': 'Évaluations'
+        }
+
     # Utiliser le template de revue plan-cadre, en mode confirmation simple (confirm/revert)
     return render_template(
         'review_plan_cadre_improvement.html',
@@ -1385,6 +1430,7 @@ def apply_review_plan_de_cours(plan_id):
             payload = res.result or {}
             old_fields = payload.get('old_fields') or {}
             old_cal = payload.get('old_calendriers') or []
+            old_eval = payload.get('old_evaluations') or []
         except Exception:
             current_app.logger.exception('Erreur lecture résultat tâche pour revert plan de cours')
             return jsonify({'success': False, 'message': "Impossible de lire le résultat de la tâche."}), 500
@@ -1415,6 +1461,25 @@ def apply_review_plan_de_cours(plan_id):
                 travaux_hors_classe=entry.get('travaux_hors_classe'),
                 evaluations=entry.get('evaluations'),
             ))
+
+        # Remplacer évaluations
+        for e in plan.evaluations:
+            db.session.delete(e)
+        for ev in (old_eval or []):
+            row = PlanDeCoursEvaluations(
+                plan_de_cours_id=plan.id,
+                titre_evaluation=ev.get('titre'),
+                description=ev.get('description'),
+                semaine=ev.get('semaine'),
+            )
+            db.session.add(row)
+            db.session.flush()
+            for cap in ev.get('capacites') or []:
+                db.session.add(PlanDeCoursEvaluationsCapacites(
+                    evaluation_id=row.id,
+                    capacite_id=cap.get('capacite_id'),
+                    ponderation=cap.get('ponderation'),
+                ))
 
         db.session.commit()
 

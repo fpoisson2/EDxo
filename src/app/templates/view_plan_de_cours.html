@@ -336,14 +336,9 @@
 
                         <!-- Calendrier -->
                         <div class="mb-3">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <h4 class="mb-0">Calendrier des activités</h4>
-                                <button type="button" class="btn btn-secondary btn-sm generate-calendar" id="generate-calendar" title="Générer le calendrier">
-                                    <i class="bi bi-magic"></i>Générer le calendrier
-                                </button>
-                            </div>
+                            <h4 class="mb-0">Calendrier des activités</h4>
                             <div id="calendrier-container" class="mb-3" {% if not form.calendriers %}style="display: none;"{% endif %}>
-                                 {% for subform in form.calendriers %}
+                                {% for subform in form.calendriers %}
                                     <div class="calendar-item border p-2 mb-2 {% if loop.index0 is even %}bg-light{% else %}bg-secondary text-white{% endif %}" draggable="true">
                                         <div class="row align-items-end">
                                             <div class="col-auto pe-0">
@@ -452,12 +447,7 @@
 
                         <!-- Évaluations -->
                         <div class="mb-3">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <h4 class="mb-0">Évaluations</h4>
-                                <button type="button" class="btn btn-secondary btn-sm" id="generate-evaluations" title="Générer les évaluations">
-                                    <i class="bi bi-magic"></i>Générer les évaluations
-                                </button>
-                            </div>
+                            <h4 class="mb-0">Évaluations</h4>
                             <div id="evaluations-container" class="mb-3" {% if not form.evaluations %}style="display: none;"{% endif %}>
                                 {% for evaluation_subform in form.evaluations %}
                                     <div class="card mb-3 evaluation-item {% if loop.index0 is even %}bg-light{% else %}bg-secondary text-white{% endif %}" data-eval-index="{{ loop.index0 }}">
@@ -531,6 +521,14 @@
                             <i class="bi bi-x-lg"></i>
                         </button>
                         <div class="mt-4">
+                            <div class="d-flex gap-2 mb-2">
+                                <button type="button" class="btn btn-outline-success" id="improve-calendar">
+                                    <i class="bi bi-magic"></i> Améliorer le calendrier
+                                </button>
+                                <button type="button" class="btn btn-outline-success" id="improve-evaluations">
+                                    <i class="bi bi-magic"></i> Améliorer les évaluations
+                                </button>
+                            </div>
                             <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" class="btn btn-success" role="button">
                                 Exporter le Plan de Cours en .docx
                             </a>
@@ -1436,6 +1434,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.showFloatingButtons();
             }
         }
+    });
+
+    // Amélioration du calendrier via EDxoTasks
+    document.getElementById('improve-calendar')?.addEventListener('click', async function() {
+        const entries = [];
+        document.querySelectorAll('#calendrier-container .calendar-item').forEach(item => {
+            entries.push({
+                semaine: item.querySelector('[name$="-semaine"]')?.value || '',
+                sujet: item.querySelector('[name$="-sujet"]')?.value || '',
+                activites: item.querySelector('[name$="-activites"]')?.value || '',
+                travaux_hors_classe: item.querySelector('[name$="-travaux_hors_classe"]')?.value || '',
+                evaluations: item.querySelector('[name$="-evaluations"]')?.value || '',
+            });
+        });
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const payload = { additional_info: { calendrier_actuel: entries }, stream: true };
+        await window.EDxoTasks.startCeleryTask(
+            "/api/plan_de_cours/{{ plan_de_cours.id }}/generate_calendar",
+            { method:'POST', headers:{ 'Content-Type':'application/json','X-CSRFToken':csrf,'X-CSRF-Token':csrf }, body: JSON.stringify(payload), credentials:'same-origin' },
+            { title:'Améliorer le calendrier', startMessage:'Amélioration en cours…', openModal:true, onDone:(data)=>{ const reviewUrl = data && data.validation_url ? data.validation_url : (`/plan_de_cours/review/${data?.plan_id || ''}?task_id=${sessionStorage.getItem('currentTaskId')||''}`); try { addNotification('Proposition prête. Cliquez pour comparer.', 'success', reviewUrl, (sessionStorage.getItem('currentTaskId')||null)); } catch(_) {} } }
+        );
+    });
+
+    // Amélioration des évaluations via EDxoTasks
+    document.getElementById('improve-evaluations')?.addEventListener('click', async function() {
+        const evals = [];
+        document.querySelectorAll('#evaluations-container .evaluation-item').forEach(item => {
+            const idx = item.getAttribute('data-eval-index');
+            const ev = {
+                titre: item.querySelector(`[name="evaluations-${idx}-titre_evaluation"]`)?.value || '',
+                semaine: item.querySelector(`[name="evaluations-${idx}-semaine"]`)?.value || '',
+                description: item.querySelector(`[name="evaluations-${idx}-texte_description"]`)?.value || '',
+                capacites: []
+            };
+            item.querySelectorAll('.capacite-item').forEach((capItem, capIndex) => {
+                const select = capItem.querySelector('select');
+                ev.capacites.push({
+                    capacite_id: select?.value || null,
+                    capacite: select?.selectedOptions[0]?.text || '',
+                    ponderation: capItem.querySelector(`[name="evaluations-${idx}-capacites-${capIndex}-ponderation"]`)?.value || ''
+                });
+            });
+            evals.push(ev);
+        });
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const payload = { additional_info: { evaluations_actuelles: evals }, stream: true };
+        await window.EDxoTasks.startCeleryTask(
+            "/api/plan_de_cours/{{ plan_de_cours.id }}/generate_evaluations",
+            { method:'POST', headers:{ 'Content-Type':'application/json','X-CSRFToken':csrf,'X-CSRF-Token':csrf }, body: JSON.stringify(payload), credentials:'same-origin' },
+            { title:'Améliorer les évaluations', startMessage:'Amélioration en cours…', openModal:true, onDone:(data)=>{ const reviewUrl = data && data.validation_url ? data.validation_url : (`/plan_de_cours/review/${data?.plan_id || ''}?task_id=${sessionStorage.getItem('currentTaskId')||''}`); try { addNotification('Proposition prête. Cliquez pour comparer.', 'success', reviewUrl, (sessionStorage.getItem('currentTaskId')||null)); } catch(_) {} } }
+        );
     });
 
 // Modification de la fonction d'ajout de capacité
