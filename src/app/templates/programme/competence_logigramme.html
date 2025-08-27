@@ -42,7 +42,6 @@
       {% if current_user.role in ['admin','coordo'] %}
         <div class="vr d-none d-md-block"></div>
         <a id="openGenerateLogigramBtn" class="btn btn-sm btn-success" href="#"
-           data-task-start
            data-url="{{ url_for('programme.generate_competence_logigramme', programme_id=programme.id) }}"
            data-title="Générer le logigramme de compétences"
            data-mode="json"
@@ -168,6 +167,20 @@ document.addEventListener('DOMContentLoaded', function(){
   const btn = document.getElementById('confirmGenerateLogigramBtn');
   const spinner = document.getElementById('glSpinner');
 
+  const startBtn = document.getElementById('openGenerateLogigramBtn');
+  if (startBtn) {
+    startBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      window.EDxoTasks.openTaskStartModal({
+        url: startBtn.getAttribute('data-url'),
+        title: startBtn.getAttribute('data-title') || 'Générer le logigramme de compétences',
+        method: 'POST',
+        mode: startBtn.getAttribute('data-mode') || 'json',
+        defaultJsonText: startBtn.getAttribute('data-json') || ''
+      });
+    });
+  }
+
   function getVal(id, fallbackId) {
     const el = document.getElementById(id) || document.getElementById(fallbackId);
     return el ? (el.value || '').trim() : '';
@@ -191,6 +204,7 @@ document.addEventListener('DOMContentLoaded', function(){
         title: 'Génération du logigramme',
         startMessage: 'Génération en cours…',
         userPrompt: additional_info,
+        openModal: true,
         onDone: (payload) => {
           const link = (payload && payload.validation_url) ? payload.validation_url : ("/programme/{{ programme.id }}/competences/logigramme");
           try { addNotification('Proposition de logigramme prête. Cliquez pour ouvrir.', 'success', link); } catch(_) {}
