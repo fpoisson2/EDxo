@@ -173,6 +173,32 @@ def _extract_first_parsed(response):
     return None
 
 
+def _collect_summary(items):
+    """Return concatenated summary_text from items."""
+    text = ""
+    if not items:
+        return text
+    if not isinstance(items, (list, tuple)):
+        items = [items]
+    for item in items:
+        if getattr(item, "type", "") == "summary_text":
+            text += getattr(item, "text", "")
+    return text
+
+
+def _extract_reasoning_summary_from_response(response):
+    """Extract reasoning summary from a Responses API result."""
+    summary = ""
+    if hasattr(response, "reasoning") and response.reasoning:
+        for r in response.reasoning:
+            summary += _collect_summary(getattr(r, "summary", None))
+    if not summary and hasattr(response, "output"):
+        for item in getattr(response, "output", []):
+            if getattr(item, "type", "") == "reasoning":
+                summary += _collect_summary(getattr(item, "summary", None))
+    return summary.strip()
+
+
 # -----------------------------
 # Fallback extraction helpers
 # -----------------------------
@@ -367,6 +393,7 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
     try:
         # Streaming buffer to display live progress in the unified modal
         stream_buf = ""
+        reasoning_summary_text = ""
         def push(step_msg: str, step: str = "", progress: int = None):
             nonlocal stream_buf
             try:
@@ -607,9 +634,22 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
                                 elif etype.endswith('response.error'):
                                     pass
                             final_response = stream.get_final_response()
+                            if not reasoning_summary_text:
+                                reasoning_summary_text = _extract_reasoning_summary_from_response(final_response)
+                                if reasoning_summary_text:
+                                    try:
+                                        self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                                    except Exception:
+                                        pass
                     except Exception:
                         # Fallback non-stream
                         final_response = client.responses.create(**request_kwargs)
+                        reasoning_summary_text = _extract_reasoning_summary_from_response(final_response)
+                        if reasoning_summary_text:
+                            try:
+                                self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                            except Exception:
+                                pass
 
                     # Parse final response
                     json_text = None
@@ -674,6 +714,13 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
                 text_format=ImportPlanCadreResponse,
             )
             parsed = _extract_first_parsed(response)
+            if not reasoning_summary_text:
+                reasoning_summary_text = _extract_reasoning_summary_from_response(response)
+                if reasoning_summary_text:
+                    try:
+                        self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                    except Exception:
+                        pass
 
         usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
         usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
@@ -788,6 +835,8 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
         try:
             stream_buf += "Pré-analyse terminée. Ouverture de la revue…\n"
             result['stream_buffer'] = stream_buf
+            if reasoning_summary_text:
+                result['reasoning_summary'] = reasoning_summary_text
         except Exception:
             pass
         self.update_state(state='SUCCESS', meta=result)

@@ -963,7 +963,9 @@
                 url: "/api/plan_cadre/{{ plan.id }}/generate",
                 title: 'Générer le plan‑cadre',
                 startMessage: 'Génération en cours…',
-                basePayload: { stream: true }
+                basePayload: { stream: true },
+                summaryEl: document.getElementById('reasoningSummary'),
+                streamEl: document.getElementById('streamOutput')
               });
             });
           }
@@ -974,7 +976,9 @@
                 url: "/api/plan_cadre/{{ plan.id }}/improve",
                 title: 'Améliorer le plan‑cadre',
                 startMessage: 'Amélioration en cours…',
-                basePayload: { improve_only: true, stream: true }
+                basePayload: { improve_only: true, stream: true },
+                summaryEl: document.getElementById('reasoningSummary'),
+                streamEl: document.getElementById('streamOutput')
               });
             });
           }
@@ -1022,7 +1026,9 @@
                   url,
                   title,
                   startMessage: 'Amélioration en cours…',
-                  basePayload: { stream: true }
+                  basePayload: { stream: true },
+                  summaryEl: document.getElementById('reasoningSummary'),
+                  streamEl: document.getElementById('streamOutput')
                 });
               } else {
                 // Fallback: démarrer directement avec payload minimal
@@ -1035,7 +1041,7 @@
                     if (taskId) {
                       try { sessionStorage.setItem('currentTaskId', taskId); } catch {}
                       if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
-                        window.EDxoTasks.openTaskModal(taskId, { title });
+                        window.EDxoTasks.openTaskModal(taskId, { title, summaryEl: document.getElementById('reasoningSummary'), streamEl: document.getElementById('streamOutput') });
                       } else {
                         window.location.href = `/tasks/track/${taskId}`;
                       }
@@ -1091,8 +1097,8 @@
               if (j && j.task_id) {
                 try { sessionStorage.setItem('currentTaskId', j.task_id); } catch{}
                 // If orchestrator is ready now, open modal; otherwise navigate to track page
-                if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
-                  window.EDxoTasks.openTaskModal(j.task_id, { title: 'Import Plan‑cadre' });
+              if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
+                  window.EDxoTasks.openTaskModal(j.task_id, { title: 'Import Plan‑cadre', summaryEl: document.getElementById('reasoningSummary'), streamEl: document.getElementById('streamOutput') });
                 } else {
                   window.location.href = `/tasks/track/${j.task_id}`;
                 }
