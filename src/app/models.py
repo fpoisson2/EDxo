@@ -188,7 +188,7 @@ class OcrPromptSettings(db.Model):
 
 
 class PlanCadreImportPromptSettings(db.Model):
-    """Paramètres configurables pour l'import DOCX de plan-cadre (prompt système et modèle)."""
+    """Paramètres pour l'import DOCX du plan-cadre (prompt système et modèle)."""
     __tablename__ = 'plan_cadre_import_prompt_settings'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -198,18 +198,16 @@ class PlanCadreImportPromptSettings(db.Model):
 
     @classmethod
     def get_current(cls):
-        """Return current settings, creating table and a default record if needed."""
+        """Return current settings, creating a default record if missing."""
         try:
             obj = cls.query.first()
         except Exception:
-            # Ensure table exists, then retry
             try:
                 cls.__table__.create(db.engine, checkfirst=True)
             except Exception:
                 pass
             obj = None
         if not obj:
-            # Default template mirrors current import preview prompt; must include {doc_text}
             default_template = (
                 "Tu es un assistant pédagogique. Analyse le plan-cadre fourni (texte brut extrait d'un DOCX) "
                 "et retourne un JSON STRICTEMENT au format requis (clés exactes, valeurs nulles si absentes). "
@@ -260,6 +258,7 @@ class PlanCadreImportPromptSettings(db.Model):
             except Exception:
                 db.session.rollback()
         return obj
+
 
 class EvaluationSavoirFaire(db.Model):
     __tablename__ = 'evaluation_savoirfaire'

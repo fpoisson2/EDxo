@@ -39,10 +39,10 @@ from ..models import (
     AnalysePlanCoursPrompt,
     ListeCegep,
     Department,
+    PlanCadreImportPromptSettings,
     OpenAIModel,
     ChatModelConfig,
     OcrPromptSettings,
-    PlanCadreImportPromptSettings,
 )
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
@@ -130,6 +130,7 @@ def plan_cadre_import_prompt_settings():
             flash("Erreur lors de l'enregistrement.", 'danger')
 
     return render_template('settings/plan_cadre_import_prompt.html', form=form)
+
 
 @settings_bp.route('/openai_models/delete/<int:model_id>', methods=['POST'])
 @login_required

@@ -5,14 +5,11 @@ from datetime import datetime, UTC
 
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
-from flask_wtf.csrf import validate_csrf, CSRFError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from ..forms import (
     DeleteForm,
     PlanCadreForm,
-    CapaciteItemForm,
-    ImportPlanCadreForm,
     GenerateContentForm
 )
 # Import all necessary models and the db session
@@ -193,8 +190,6 @@ def view_plan_cadre(cours_id, plan_id):
     print("DEBUG => request.method:", request.method)
     print("DEBUG => request.form:", request.form.to_dict())
 
-    # Formulaire d'import de plan-cadre (externe)
-    import_form = ImportPlanCadreForm()
 
     plan = get_plan_cadre(plan_id, cours_id)
     cours = get_cours_details(cours_id)
@@ -312,7 +307,6 @@ def view_plan_cadre(cours_id, plan_id):
             plan_form=plan_form,
             capacites_data=plan.capacites,  # Just passing them out
             generate_form=generate_form,
-            import_form=import_form,
             competences_developpees_from_cours=competences_developpees_from_cours,
             competences_atteintes=competences_atteintes,
             elements_competence_par_cours=elements_competence_par_cours
@@ -629,43 +623,6 @@ def view_plan_cadre(cours_id, plan_id):
             return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
 
 
-# --------------------------------------------------------------------------
-# Route pour mettre à jour l'introduction via AJAX
-# --------------------------------------------------------------------------
-@cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>/update_intro', methods=['POST'])
-@login_required
-@ensure_profile_completed
-def update_intro(cours_id, plan_id):
-    try:
-        # Validate CSRF token
-        csrf_token = request.headers.get('X-CSRFToken')
-        validate_csrf(csrf_token)
-
-        data = request.get_json()
-        new_intro = data.get('place_intro', '').strip()
-
-        if not new_intro:
-            return jsonify({'success': False, 'message': "Le texte de l'introduction ne peut pas être vide."}), 400
-
-        plan = get_plan_cadre(plan_id, cours_id)
-        if not plan:
-            return jsonify({'success': False, 'message': "PlanCadre introuvable."}), 404
-
-        plan.place_intro = new_intro
-        db.session.commit()
-        return jsonify({'success': True}), 200
-
-    except CSRFError:
-        return jsonify({'success': False, 'message': 'CSRF token invalide.'}), 400
-    except Exception as e:
-        db.session.rollback()
-        logging.error(f"Erreur update_intro: {str(e)}")
-        return jsonify({'success': False, 'message': 'Une erreur est survenue.'}), 500
-
-
-# --------------------------------------------------------------------------
-# Route pour vue ou ajout direct d'un plan-cadre (si non existant)
-# --------------------------------------------------------------------------
 @cours_bp.route('/<int:cours_id>/plan_cadre', methods=['GET'])
 @login_required
 @ensure_profile_completed
@@ -799,122 +756,6 @@ def view_cours(cours_id):
     )
 
 
-# --------------------------------------------------------------------------
-# Route pour éditer une capacité (EXEMPLE conservé, usage SQAlchemy direct)
-# --------------------------------------------------------------------------
-@cours_bp.route('/<int:cours_id>/plan_cadre/<int:plan_id>/capacite/<int:capacite_id>/edit', methods=['GET', 'POST'])
-@role_required('admin')
-@ensure_profile_completed
-def edit_capacite(cours_id, plan_id, capacite_id):
-    form = CapaciteItemForm()
-
-    # Récupérer plan et capacité
-    plan = PlanCadre.query.filter_by(id=plan_id, cours_id=cours_id).first()
-    if not plan:
-        flash('Plan Cadre non trouvé.', 'danger')
-        return redirect(url_for('main.index'))
-
-    capacite = PlanCadreCapacites.query.filter_by(id=capacite_id, plan_cadre_id=plan_id).first()
-    if not capacite:
-        flash('Capacité non trouvée pour ce Plan Cadre.', 'danger')
-        return redirect(url_for('main.index'))
-
-    if request.method == 'GET':
-        # Pré-remplir le formulaire
-        form.capacite.data = capacite.capacite
-        form.description_capacite.data = capacite.description_capacite
-        form.ponderation_min.data = capacite.ponderation_min
-        form.ponderation_max.data = capacite.ponderation_max
-
-        # Vider les entrées existantes
-        form.savoirs_necessaires.entries = []
-        form.savoirs_faire.entries = []
-        form.moyens_evaluation.entries = []
-
-        # Ajouter les savoirs nécessaires existants
-        for sn in capacite.savoirs_necessaires:
-            entry_form = form.savoirs_necessaires.append_entry()
-            entry_form.data = sn.texte
-
-        # Ajouter les savoirs faire existants
-        for sf in capacite.savoirs_faire:
-            entry_form = form.savoirs_faire.append_entry()
-            entry_form.texte.data = sf.texte
-            entry_form.cible.data = sf.cible if sf.cible else ''
-            entry_form.seuil_reussite.data = sf.seuil_reussite if sf.seuil_reussite else ''
-
-        # Ajouter les moyens d'évaluation existants
-        for me in capacite.moyens_evaluation:
-            entry_form = form.moyens_evaluation.append_entry()
-            entry_form.texte.data = me.texte
-
-    if form.validate_on_submit():
-        try:
-            # Mise à jour de la capacité
-            capacite.capacite = form.capacite.data.strip()
-            capacite.description_capacite = form.description_capacite.data.strip()
-            capacite.ponderation_min = form.ponderation_min.data
-            capacite.ponderation_max = form.ponderation_max.data
-
-            if capacite.ponderation_min > capacite.ponderation_max:
-                flash('La pondération minimale ne peut pas être supérieure à la pondération maximale.', 'danger')
-                return redirect(url_for('cours_bp.edit_capacite', cours_id=cours_id, plan_id=plan_id, capacite_id=capacite_id))
-
-            # Supprimer les anciens
-            capacite.savoirs_necessaires.clear()
-            capacite.savoirs_faire.clear()
-            capacite.moyens_evaluation.clear()
-
-            # Réinsérer les savoirs nécessaires
-            for sav in form.savoirs_necessaires.data:
-                if sav.strip():
-                    capacite.savoirs_necessaires.append(
-                        PlanCadreCapaciteSavoirsNecessaires(texte=sav.strip())
-                    )
-
-            # Réinsérer les savoirs faire
-            for sf_form in form.savoirs_faire.entries:
-                texte_val = sf_form.texte.data.strip()
-                if texte_val:
-                    cible_val = sf_form.cible.data.strip() if sf_form.cible.data else None
-                    seuil_val = sf_form.seuil_reussite.data.strip() if sf_form.seuil_reussite.data else None
-                    capacite.savoirs_faire.append(
-                        PlanCadreCapaciteSavoirsFaire(
-                            texte=texte_val,
-                            cible=cible_val,
-                            seuil_reussite=seuil_val
-                        )
-                    )
-
-            # Réinsérer les moyens d'évaluation
-            for me_form in form.moyens_evaluation.entries:
-                val = me_form.texte.data.strip()
-                if val:
-                    capacite.moyens_evaluation.append(
-                        PlanCadreCapaciteMoyensEvaluation(texte=val)
-                    )
-
-            db.session.commit()
-            flash('Capacité mise à jour avec succès!', 'success')
-            return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
-
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            flash(f'Erreur lors de la mise à jour de la capacité : {e}', 'danger')
-            return redirect(url_for('cours_bp.edit_capacite', cours_id=cours_id, plan_id=plan_id, capacite_id=capacite_id))
-
-    return render_template(
-        'edit_capacite.html',
-        form=form,
-        plan_id=plan_id,
-        capacite_id=capacite_id,
-        cours_id=cours_id
-    )
-
-
-# --------------------------------------------------------------------------
-# Nouvelle Route pour Supprimer un Cours
-# --------------------------------------------------------------------------
 @cours_bp.route('/<int:cours_id>/delete', methods=['POST'])
 @role_required('admin')
 @ensure_profile_completed

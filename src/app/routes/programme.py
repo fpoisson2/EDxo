@@ -9,9 +9,6 @@ import os
 
 import html
 
-import json
-import re
-import time
 from flask_login import login_required, current_user
 
 from ..forms import (
@@ -474,161 +471,6 @@ def view_competences_programme(programme_id):
         competences=competences
     )
 
-
-@programme_bp.route('/review_import', methods=['POST'])
-@login_required
-def review_competencies_import():
-    """
-    Prépare un comparatif côte-à-côte pour chaque compétence identifiée par son code,
-    entre la version en base de données et celle extraite du fichier JSON, en
-    particulier pour le champ "Contexte" qui sera transformé pour ressembler à la version BD.
-    """
-    # Récupération des paramètres
-    programme_id = request.form.get('programme_id')
-    base_filename = request.form.get('base_filename')
-    if not programme_id or not base_filename:
-        flash("Informations manquantes (programme ou devis) pour démarrer la révision.", "danger")
-        return redirect(url_for('ocr.show_trigger_page'))
-    
-    try:
-        programme_id = int(programme_id)
-    except ValueError:
-        flash("ID de programme invalide.", "danger")
-        return redirect(url_for('ocr.show_trigger_page'))
-    
-    programme = db.session.get(Programme, programme_id)
-    if not programme:
-        flash(f"Programme avec l'ID {programme_id} non trouvé.", "danger")
-        abort(404)
-    
-    # Chemins vers les fichiers
-    txt_output_dir = current_app.config.get('TXT_OUTPUT_DIR')
-    ocr_file_path = os.path.join(txt_output_dir, f"{base_filename}_ocr.md")
-    competencies_file_path = os.path.join(txt_output_dir, f"{base_filename}_competences.json")
-    
-    # Lecture du fichier OCR (bien que non utilisé dans le comparatif)
-    ocr_text = ""
-    try:
-        with open(ocr_file_path, 'r', encoding='utf-8') as f:
-            ocr_text = f.read()
-    except Exception as e:
-        logger.error(f"Erreur lors de la lecture OCR {ocr_file_path}: {e}", exc_info=True)
-    
-    # Lecture du fichier JSON de compétences (avec stratégie de repli si le fichier exact n'existe pas)
-    competencies_data = None
-    has_competencies_file = False
-    try:
-        with open(competencies_file_path, 'r', encoding='utf-8') as f:
-            competencies_data = json.load(f)
-        if not isinstance(competencies_data, dict) or 'competences' not in competencies_data:
-            raise ValueError("Structure JSON invalide: clé 'competences' manquante.")
-        has_competencies_file = True
-    except Exception as e:
-        logger.warning(f"Lecture initiale échouée pour {competencies_file_path}: {e}")
-        # Tentative de repli: rechercher un fichier _competences.json correspondant dans le dossier
-        try:
-            candidates = []
-            if os.path.isdir(txt_output_dir):
-                base_lower = base_filename.lower()
-                for fname in os.listdir(txt_output_dir):
-                    if not fname.endswith('_competences.json'):
-                        continue
-                    f_lower = fname.lower()
-                    # Correspondances permissives: préfixe identique ou inclusion du code de programme
-                    if f_lower.startswith(base_lower) or base_lower.startswith(f_lower.replace('_competences.json','')):
-                        candidates.append(os.path.join(txt_output_dir, fname))
-                # Si aucune correspondance stricte, tenter une correspondance contenant le code (avant le premier '_')
-                if not candidates and '_' in base_lower:
-                    code_prefix = base_lower.split('_', 1)[0]
-                    for fname in os.listdir(txt_output_dir):
-                        if fname.lower().endswith('_competences.json') and fname.lower().startswith(code_prefix):
-                            candidates.append(os.path.join(txt_output_dir, fname))
-            if len(candidates) == 1:
-                fallback_path = candidates[0]
-                logger.info(f"Utilisation du JSON de repli détecté: {fallback_path}")
-                competencies_file_path = fallback_path
-                with open(competencies_file_path, 'r', encoding='utf-8') as f:
-                    competencies_data = json.load(f)
-                if not isinstance(competencies_data, dict) or 'competences' not in competencies_data:
-                    raise ValueError("Structure JSON invalide dans le fichier de repli: clé 'competences' manquante.")
-                has_competencies_file = True
-                flash("Fichier des compétences introuvable sous le nom attendu; utilisation d'une correspondance trouvée.", "info")
-            elif len(candidates) > 1:
-                logger.warning(f"Plusieurs fichiers candidats trouvés pour base '{base_filename}': {candidates}")
-                flash("Plusieurs fichiers de compétences possibles trouvés. Merci de relancer en sélectionnant le bon devis.", "warning")
-            else:
-                logger.error(f"Aucun fichier JSON correspondant trouvé dans {txt_output_dir} pour base '{base_filename}'.")
-                flash(f"Erreur lors de la lecture ou du parsing du fichier JSON des compétences: {e}", "warning")
-        except Exception as e2:
-            logger.error(f"Erreur lors de la recherche/sélection d'un fichier JSON de repli: {e2}", exc_info=True)
-            flash(f"Erreur lors de la lecture ou du parsing du fichier JSON des compétences: {e}", "warning")
-    
-    # Construction du comparatif pour chaque compétence
-    comparisons = []
-    if has_competencies_file and competencies_data and "competences" in competencies_data:
-        for comp in competencies_data["competences"]:
-            # Récupérer le code (dans "code" ou "Code")
-            code = comp.get("code") or comp.get("Code")
-            if not code:
-                continue
-            # Recherche en BD par code et programme
-            db_comp = Competence.query.filter_by(code=code, programme_id=programme.id).first()
-            db_version = None
-            if db_comp:
-                db_elements = []
-                for elem in db_comp.elements:
-                    criteria_list = [crit.criteria for crit in elem.criteria] if elem.criteria else []
-                    db_elements.append({
-                        "nom": elem.nom,
-                        "criteres": criteria_list
-                    })
-                # Conversion du champ texte en une liste de critères à partir des lignes du texte
-                db_criteres = db_comp.criteria_de_performance
-
-                db_version = {
-                    "code": db_comp.code,
-                    "nom": db_comp.nom,
-                    "contexte": db_comp.contexte_de_realisation,
-                    "criteres": db_criteres,
-                    "elements": db_elements
-                }
-            # Traitement de la version JSON
-            json_elements = []
-            if comp.get("Éléments"):
-                for elem in comp["Éléments"]:
-                    if isinstance(elem, str):
-                        json_elements.append({
-                            "nom": elem,
-                            "criteres": None
-                        })
-                    elif isinstance(elem, dict):
-                        json_elements.append({
-                            "nom": elem.get("element") or elem.get("nom"),
-                            "criteres": elem.get("criteres")
-                        })
-            json_version = {
-                "code": comp.get("Code") or comp.get("code"),
-                "nom": comp.get("Nom de la compétence") or comp.get("nom"),
-                "contexte": comp.get("Contexte de réalisation"),
-                "criteres": comp.get("Critères de performance pour l’ensemble de la compétence"),
-                "elements": json_elements
-            }
-            comparisons.append({
-                "code": code,
-                "db": db_version,
-                "json": json_version
-            })
-    
-    form = ReviewImportConfirmForm()
-    form.programme_id.data = programme_id
-    form.base_filename.data = base_filename
-    form.import_structured.data = 'true' if has_competencies_file and competencies_data else 'false'
-    
-    return render_template('programme/review_import.html',
-                           programme=programme,
-                           comparisons=comparisons,
-                           base_filename=base_filename,
-                           form=form)
 
 
 def json_to_html_list(data):
@@ -1137,31 +979,6 @@ def generate_programme_grille(programme_id):
     task = generate_programme_grille_task.delay(programme_id, user.id, form)
     return jsonify({'task_id': task.id}), 202
 
-@programme_bp.route('/<int:programme_id>/competences/import_pdf/start', methods=['POST'])
-@login_required
-@ensure_profile_completed
-def import_competences_pdf_start(programme_id):
-    """Démarre l'import simplifié de compétences depuis un PDF pour un programme.
-
-    Reçoit un formulaire multipart avec 'file' et retourne {task_id}.
-    """
-    from ..tasks.ocr import simple_import_competences_pdf
-    programme = Programme.query.get_or_404(programme_id)
-    if current_user.role not in ('admin', 'coordo') and programme not in current_user.programmes:
-        return jsonify({'error': 'Accès refusé'}), 403
-    if 'file' not in request.files:
-        return jsonify({'error': 'Aucun fichier fourni.'}), 400
-    f = request.files['file']
-    if not f or not f.filename.lower().endswith('.pdf'):
-        return jsonify({'error': 'Veuillez fournir un fichier PDF.'}), 400
-    upload_dir = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'uploads'))
-    os.makedirs(upload_dir, exist_ok=True)
-    safe_name = re.sub(r'[^A-Za-z0-9_.-]+', '_', f.filename)
-    filename = f"prog{programme_id}_{int(time.time())}_{safe_name}"
-    pdf_path = os.path.join(upload_dir, filename)
-    f.save(pdf_path)
-    task = simple_import_competences_pdf.delay(programme_id, pdf_path, current_user.id)
-    return jsonify({'task_id': task.id}), 202
 
 @programme_bp.route('/<int:programme_id>/competences/import/review')
 @login_required

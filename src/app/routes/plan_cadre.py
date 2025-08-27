@@ -1,4 +1,4 @@
-# plan_de_cours.py
+# plan_cadre.py
 import traceback
 
 from flask import (
@@ -15,11 +15,7 @@ from flask import (
 )
 from flask_login import login_required, current_user
 
-from ..forms import (
-    DeleteForm,
-    PlanCadreForm,
-    GenerateContentForm
-)
+from ..forms import PlanCadreForm
 # Import SQLAlchemy DB and models
 from ..models import (
     db,
@@ -42,12 +38,9 @@ from ...utils import (
     # Note: remove if no longer needed: get_db_connection
 )
 from ...utils.logging_config import get_logger
-from bs4 import BeautifulSoup
 import os
 import re
 import time
-import zipfile
-from io import BytesIO
 
 logger = get_logger(__name__)
 
@@ -57,193 +50,6 @@ logger = get_logger(__name__)
 plan_cadre_bp = Blueprint('plan_cadre', __name__, url_prefix='/plan_cadre')
 
 
-def _read_docx_text(file_storage) -> str:
-    """Extraction robuste du texte d'un DOCX avec tables Markdown.
-
-    - Lit le document de manière sûre (BytesIO si nécessaire).
-    - Rend les paragraphes avec titres/listes.
-    - Rend les tableaux en Markdown avec une ligne d'entête et un séparateur.
-    """
-    # Lire les octets du fichier de façon sûre
-    try:
-        if hasattr(file_storage, 'stream'):
-            try:
-                file_storage.stream.seek(0)
-            except Exception:
-                pass
-            data_bytes = file_storage.stream.read()
-        else:
-            try:
-                file_storage.seek(0)
-            except Exception:
-                pass
-            data_bytes = file_storage.read()
-    except Exception:
-        return ''
-
-    if not data_bytes:
-        return ''
-
-    # Ouvrir le zip à partir d'un buffer mémoire
-    try:
-        with zipfile.ZipFile(BytesIO(data_bytes)) as z:
-            data = z.read('word/document.xml')
-    except Exception:
-        return ''
-
-    soup = BeautifulSoup(data, 'xml')
-
-    def _with_soft_breaks(node) -> str:
-        parts = []
-        # Walk only relevant descendants in order to preserve soft line breaks
-        for el in node.descendants:
-            name = getattr(el, 'name', None)
-            if name == 'w:t':
-                parts.append(el.get_text())
-            elif name in ('w:br', 'w:cr'):  # explicit line breaks inside a paragraph/cell
-                parts.append('\n')
-        # Join while preserving explicit newlines, then normalize whitespace around
-        s = ''.join(parts)
-        # Collapse spaces around newlines but keep the line breaks
-        s = '\n'.join([' '.join(line.split()) for line in s.splitlines()])
-        return s.strip()
-
-    def para_to_text(p) -> str:
-        text = _with_soft_breaks(p)
-        if not text:
-            return ''
-        prefix = ''
-        ppr = p.find('w:pPr')
-        if ppr:
-            pstyle = ppr.find('w:pStyle')
-            if pstyle:
-                val = pstyle.get('w:val') or pstyle.get('val') or ''
-                lvl = None
-                if isinstance(val, str) and val.lower().startswith('heading'):
-                    try:
-                        lvl = int(''.join(ch for ch in val if ch.isdigit()) or '1')
-                    except Exception:
-                        lvl = 1
-                if lvl:
-                    prefix = '#' * max(1, min(lvl, 6)) + ' '
-            if ppr.find('w:numPr') is not None and not prefix:
-                prefix = '- '
-        return f"{prefix}{text}" if text else ''
-
-    def cell_text(tc) -> str:
-        # Preserve in-cell soft breaks as actual newlines
-        return _with_soft_breaks(tc)
-
-    def table_to_markdown(tbl, idx: int) -> str:
-        rows = []
-        for tr in tbl.find_all('w:tr', recursive=False):
-            row = []
-            for tc in tr.find_all('w:tc', recursive=False):
-                row.append(cell_text(tc))
-            if any(cell.strip() for cell in row):
-                rows.append(row)
-        if not rows:
-            return ''
-        width = max((len(r) for r in rows), default=0)
-        rows = [r + [''] * (width - len(r)) for r in rows]
-        out = []
-        out.append(f"TABLE {idx}:")
-        header = rows[0]
-        out.append('| ' + ' | '.join(h or '' for h in header) + ' |')
-        out.append('|' + '|'.join([' --- ' for _ in header]) + '|')
-        for r in rows[1:]:
-            out.append('| ' + ' | '.join(c or '' for c in r) + ' |')
-        out.append('ENDTABLE')
-        return '\n'.join(out)
-
-    body = soup.find('w:body')
-    if not body:
-        # Fallback: return a simple concatenation of all text nodes
-        all_texts = [t.get_text(strip=True) for t in soup.find_all('w:t')]
-        simple = '\n'.join([t for t in all_texts if t])
-        return simple
-    lines = []
-    table_count = 0
-    for el in body.children:
-        if getattr(el, 'name', None) == 'w:p':
-            t = para_to_text(el)
-            if t:
-                lines.append(t)
-        elif getattr(el, 'name', None) == 'w:tbl':
-            table_count += 1
-            md = table_to_markdown(el, table_count)
-            if md:
-                lines.append(md)
-
-    out = '\n\n'.join(lines)
-    if not out.strip():
-        # Ultimate fallback: join every text run if structured parsing yielded nothing
-        all_texts = [t.get_text(strip=True) for t in soup.find_all('w:t')]
-        out = '\n'.join([t for t in all_texts if t])
-    # Normalize line ending variants
-    out = out.replace('\r\n', '\n').replace('\r', '\n')
-    return out
-
-@plan_cadre_bp.route('/<int:plan_id>/generate_content', methods=['POST'])
-@roles_required('admin', 'coordo')
-@ensure_profile_completed
-def generate_plan_cadre_content(plan_id):
-    from ..tasks.generation_plan_cadre import generate_plan_cadre_content_task
-    from ...celery_app import celery
-    from celery.result import AsyncResult
-
-    plan = db.session.get(PlanCadre, plan_id)
-    if not plan:
-        return jsonify(success=False, message='Plan Cadre non trouvé.')
-
-    form = GenerateContentForm()
-    mode = request.form.get('mode')
-    # Validation: en mode 'wand', le champ distinct est utilisé, on évite d'exiger additional_info
-    if mode != 'wand':
-        if not form.validate_on_submit():
-            return jsonify(success=False, message='Erreur de validation du formulaire.')
-    
-    # Forcer le mode amélioration si demandé explicitement
-    # mode déjà défini ci-dessus
-    improved_mode = (mode in ('improve', 'wand')) or bool(form.improve_only.data)
-    payload = dict(form.data)
-    payload['improve_only'] = bool(improved_mode)
-    payload['mode'] = mode
-    # Activer le streaming si demandé par le client (hidden input "stream")
-    stream_flag = request.form.get('stream')
-    if stream_flag is not None:
-        payload['stream'] = stream_flag.lower() in ('1', 'true', 'yes', 'on')
-    # Instruction spécifique à la baguette magique (facultative)
-    wand_instruction = request.form.get('wand_instruction')
-    if wand_instruction is not None:
-        payload['wand_instruction'] = wand_instruction
-    # Propager un périmètre ciblé si présent (nettoyer les valeurs vides)
-    target_cols = request.form.getlist('target_columns') or []
-    # Nettoyage: retirer les chaînes vides/espaces qui peuvent provenir d'un champ hidden
-    target_cols = [s.strip() for s in target_cols if isinstance(s, str) and s.strip()]
-    if not target_cols:
-        raw = request.form.get('target_columns')
-        if raw:
-            target_cols = [s.strip() for s in raw.split(',') if s.strip()]
-    # N'inclure la clé que si des colonnes valides sont réellement ciblées
-    if target_cols:
-        payload['target_columns'] = target_cols
-
-    # Oublier une éventuelle tâche précédente pour ne conserver que la plus récente
-    old_task_id = session.pop('task_id', None)
-    if old_task_id:
-        try:
-            AsyncResult(old_task_id, app=celery).forget()
-        except Exception as e:
-            current_app.logger.warning('Impossible de supprimer l\'ancienne tâche %s: %s', old_task_id, e)
-
-    # Lancer la nouvelle tâche Celery
-    task = generate_plan_cadre_content_task.delay(plan_id, payload, current_user.id)
-    session['task_id'] = task.id  # mémoriser uniquement la dernière tâche
-
-    # Retourner le task id dans la réponse AJAX
-    return jsonify(success=True, message='La génération est en cours. Vous serez notifié une fois terminée.', task_id=task.id)
-
 
 ###############################################################################
 # Importation DOCX du plan-cadre (asynchrone via Celery)
@@ -252,9 +58,6 @@ def generate_plan_cadre_content(plan_id):
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def import_plan_cadre_docx_start(plan_id):
-    from ...celery_app import celery
-    from celery.result import AsyncResult
-    # Utilise la tâche en mode "aperçu" pour permettre une comparaison avant application
     from ..tasks.import_plan_cadre import import_plan_cadre_preview_task
 
     plan = db.session.get(PlanCadre, plan_id)
@@ -291,16 +94,13 @@ def import_plan_cadre_docx_start(plan_id):
         current_app.logger.warning('Lecture texte DOCX de secours échouée; on poursuivra via fichier côté worker.', exc_info=True)
         doc_text = ''
 
-    # Choisir le modèle (préfère la valeur du formulaire, sinon modèle du plan ou défaut)
     ai_model = (request.form.get('ai_model') or '').strip() or (plan.ai_model or 'gpt-5')
 
     try:
-        # Lancer la tâche d'import en mode APERÇU (ne modifie pas la BD)
         task = import_plan_cadre_preview_task.delay(plan.id, doc_text, ai_model, current_user.id, stored_path)
-        # Mémoriser pour le polling global
         session['task_id'] = task.id
         return jsonify(success=True, task_id=task.id)
-    except Exception as e:
+    except Exception:
         current_app.logger.exception('Erreur lors du lancement de la tâche import_plan_cadre')
         return jsonify(success=False, message='Erreur interne lors du lancement de la tâche.'), 500
 
@@ -852,35 +652,6 @@ def edit_plan_cadre(plan_id):
 
 
 ###############################################################################
-# Supprimer un plan-cadre
-###############################################################################
-@plan_cadre_bp.route('/<int:plan_id>/delete', methods=['POST'])
-@role_required('admin')
-@ensure_profile_completed
-def delete_plan_cadre(plan_id):
-    form = DeleteForm()
-    if form.validate_on_submit():
-        plan_cadre = PlanCadre.query.get(plan_id)
-        if not plan_cadre:
-            flash('Plan Cadre non trouvé.', 'danger')
-            return redirect(url_for('main.index'))
-
-        cours_id = plan_cadre.cours_id
-        try:
-            db.session.delete(plan_cadre)
-            db.session.commit()
-            flash('Plan Cadre supprimé avec succès!', 'success')
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erreur lors de la suppression du Plan Cadre : {e}', 'danger')
-
-        return redirect(url_for('cours.view_cours', cours_id=cours_id))
-    else:
-        flash('Erreur lors de la soumission du formulaire de suppression.', 'danger')
-        return redirect(url_for('main.index'))
-
-
-###############################################################################
 # Ajouter une Capacité
 ###############################################################################
 @plan_cadre_bp.route('/<int:plan_id>/add_capacite', methods=['GET', 'POST'])
@@ -933,39 +704,3 @@ def add_capacite(plan_id):
         cours_id=plan_cadre.cours_id
     )
 
-
-###############################################################################
-# Supprimer une Capacité
-###############################################################################
-@plan_cadre_bp.route('/<int:plan_id>/capacite/<int:capacite_id>/delete', methods=['POST'])
-@role_required('admin')
-@ensure_profile_completed
-def delete_capacite(plan_id, capacite_id):
-    form = DeleteForm(prefix=f"capacite-{capacite_id}")
-    if form.validate_on_submit():
-        plan_cadre = PlanCadre.query.get(plan_id)
-        if not plan_cadre:
-            flash('Plan Cadre non trouvé.', 'danger')
-            return redirect(url_for('main.index'))
-
-        cours_id = plan_cadre.cours_id
-
-        try:
-            cap = PlanCadreCapacites.query.filter_by(id=capacite_id, plan_cadre_id=plan_id).first()
-            if cap:
-                db.session.delete(cap)
-                db.session.commit()
-                flash('Capacité supprimée avec succès!', 'success')
-            else:
-                flash('Capacité introuvable.', 'danger')
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erreur lors de la suppression de la capacité : {e}', 'danger')
-
-        return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
-    else:
-        flash('Erreur lors de la soumission du formulaire de suppression.', 'danger')
-        plan_cadre = PlanCadre.query.get(plan_id)
-        if plan_cadre:
-            return redirect(url_for('cours.view_plan_cadre', cours_id=plan_cadre.cours_id, plan_id=plan_id))
-        return redirect(url_for('main.index'))

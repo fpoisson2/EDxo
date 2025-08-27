@@ -489,7 +489,7 @@ class ImportPlanCadreForm(FlaskForm):
         FileAllowed(['json'], 'Seuls les fichiers JSON sont autorisés.')
     ])
     submit = SubmitField('Importer JSON')
-    
+
 class MultiCheckboxField(SelectMultipleField):
     widget = ListWidget(prefix_label=False)
     option_widget = CheckboxInput()

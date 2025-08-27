@@ -109,7 +109,6 @@ await EDxoTasks.startCeleryTask('/api/.../start', {
 - Génération Plan‑cadre: `POST /api/plan_cadre/<plan_id>/generate`
 - Amélioration Plan‑cadre: `POST /api/plan_cadre/<plan_id>/improve` (ou section ciblée)
 - Génération Plan de cours: `POST /api/plan_de_cours/<plan_id>/generate` → `validation_url=/plan_de_cours/review/<id>?task_id=...`
-- Import Plan‑cadre (DOCX): `POST /plan_cadre/<plan_id>/import_docx_start` → `validation_url=/plan_cadre/<id>/review?task_id=...`
 - Génération Grille de cours: `POST /programme/<programme_id>/grille/generate` → `validation_url=/programme/<id>/grille/review?task_id=...`
 - Génération Logigramme compétences: `POST /programme/<programme_id>/competences/logigramme/generate` → `validation_url=/programme/<id>/competences/logigramme`
 - Import Grille PDF: `POST /grille/import` → `validation_url=/confirm_grille_import/<task_id>`

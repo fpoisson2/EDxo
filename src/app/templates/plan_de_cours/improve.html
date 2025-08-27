@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function(){
       const verbosity = document.getElementById('ai_verbosity')?.value || 'medium';
       const additional_info = document.getElementById('additional_info')?.value || '';
       const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-      const startUrl = "{{ url_for('plan_de_cours.generate_all_start') }}";
+      const startUrl = "{{ url_for('api.generate_plan_de_cours', plan_id=plan.id) }}";
       const params = new URLSearchParams();
       params.append('cours_id', String({{ cours.id }}));
       params.append('session', "{{ plan.session }}");
