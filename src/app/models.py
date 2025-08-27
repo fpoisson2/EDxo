@@ -71,8 +71,8 @@ class ChatModelConfig(db.Model):
     __tablename__ = 'chat_model_config'
 
     id = db.Column(db.Integer, primary_key=True)
-    chat_model = db.Column(db.String(64), nullable=False, default='gpt-4.1-mini')
-    tool_model = db.Column(db.String(64), nullable=False, default='gpt-4.1-mini')
+    chat_model = db.Column(db.String(64), nullable=False, default='gpt-5-mini')
+    tool_model = db.Column(db.String(64), nullable=False, default='gpt-5-mini')
     reasoning_effort = db.Column(db.String(16))
     verbosity = db.Column(db.String(16))
     updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)

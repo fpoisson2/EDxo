@@ -75,7 +75,6 @@ from ..config.env import (
     SECRET_KEY,
     RECAPTCHA_PUBLIC_KEY,
     RECAPTCHA_PRIVATE_KEY,
-    MISTRAL_API_KEY,
     OPENAI_API_KEY,
     OPENAI_MODEL_SECTION,
     OPENAI_MODEL_EXTRACTION,
@@ -169,9 +168,7 @@ def create_app(testing=False):
             SECRET_KEY=SECRET_KEY,
             RECAPTCHA_SITE_KEY=RECAPTCHA_PUBLIC_KEY,
             RECAPTCHA_SECRET_KEY=RECAPTCHA_PRIVATE_KEY,
-            MISTRAL_API_KEY=MISTRAL_API_KEY,
             OPENAI_API_KEY=OPENAI_API_KEY,
-            MISTRAL_MODEL_OCR="mistral-ocr-latest",
             # Forcer l'utilisation de gpt-5 partout, ignorer les variables d'environnement
             OPENAI_MODEL_SECTION='gpt-5',
             OPENAI_MODEL_EXTRACTION='gpt-5',

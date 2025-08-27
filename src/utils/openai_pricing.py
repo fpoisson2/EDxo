@@ -6,15 +6,10 @@ from app.models import OpenAIModel
 # Ces valeurs servent de filet de sécurité pour éviter une 500.
 # Mettez à jour via l'UI Admin dès que possible.
 DEFAULT_PRICING = {
-    # Multimodal 4o
-    "gpt-4o": {"input": 5.0, "output": 15.0},
-    # Modèle mini économique
-    "gpt-4o-mini": {"input": 0.15, "output": 0.60},
-    # Raccourci de secours: aligne o3-mini sur 4o-mini (approx.)
-    # pour éviter un crash si non présent en base.
-    "o3-mini": {"input": 0.15, "output": 0.60},
-    # Historique
-    "gpt-4.1-mini": {"input": 0.30, "output": 1.20},
+    # Famille gpt-5 uniquement
+    "gpt-5": {"input": 5.00, "output": 15.00},
+    "gpt-5-mini": {"input": 0.30, "output": 1.20},
+    "gpt-5-nano": {"input": 0.05, "output": 0.20},
 }
 logger = logging.getLogger(__name__)
 
@@ -54,24 +49,24 @@ def get_model_pricing(model_name: str):
         )
         return DEFAULT_PRICING[model_name]
 
-    # 3) Heuristique simple: si nom se termine par '-mini', caler sur 4o-mini
-    if model_name.endswith("-mini") and "gpt-4o-mini" in DEFAULT_PRICING:
+    # 3) Heuristique simple: si nom se termine par '-mini', caler sur gpt-5-mini
+    if model_name.endswith("-mini") and "gpt-5-mini" in DEFAULT_PRICING:
         logger.warning(
-            "Tarif du modèle '%s' introuvable. Fallback heuristique sur 'gpt-4o-mini'.",
+            "Tarif du modèle '%s' introuvable. Fallback heuristique sur 'gpt-5-mini'.",
             model_name,
         )
-        return DEFAULT_PRICING["gpt-4o-mini"]
+        return DEFAULT_PRICING["gpt-5-mini"]
 
     # 4) Heuristique pour la famille gpt-5 (et variantes)
     # Beaucoup de variantes (ex: gpt-5, gpt-5.1, gpt-5-preview) peuvent ne pas
-    # être encore enregistrées en base. On cale par défaut sur gpt-4o pour éviter
+    # être encore enregistrées en base. On cale par défaut sur gpt-5 pour éviter
     # une erreur 500 côté application, tout en journalisant le fallback.
-    if model_name.startswith("gpt-5") and "gpt-4o" in DEFAULT_PRICING:
+    if model_name.startswith("gpt-5") and "gpt-5" in DEFAULT_PRICING:
         logger.warning(
-            "Tarif du modèle '%s' introuvable. Fallback heuristique sur 'gpt-4o'.",
+            "Tarif du modèle '%s' introuvable. Fallback heuristique sur 'gpt-5'.",
             model_name,
         )
-        return DEFAULT_PRICING["gpt-4o"]
+        return DEFAULT_PRICING["gpt-5"]
 
     # Sinon: erreur explicite pour signaler un vrai manque de configuration
     raise ValueError(f"Modèle '{model_name}' non trouvé dans la base de données.")

@@ -468,7 +468,7 @@ def index():
         )
 
     cfg = ChatModelConfig.get_current()
-    current_model = (cfg.chat_model or "gpt-4.1-mini") if cfg else "gpt-4.1-mini"
+    current_model = (cfg.chat_model or "gpt-5-mini") if cfg else "gpt-5-mini"
     prev_id = current_user.last_openai_response_id
     return render_template(
         "chat/index.html",
@@ -494,7 +494,7 @@ def send_message():
 
     client = OpenAI(api_key=current_user.openai_key)
     cfg = ChatModelConfig.get_current()
-    chat_model = cfg.chat_model or "gpt-4.1-mini"
+    chat_model = cfg.chat_model or "gpt-5-mini"
     # Règle stricte: tool_model = chat_model (même modèle pour initial et follow-up)
     tool_model = chat_model
     reasoning_effort = cfg.reasoning_effort

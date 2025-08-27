@@ -24,7 +24,6 @@ google-auth-oauthlib
 gunicorn
 mammoth
 markdown
-mistralai
 openai
 openpyxl
 pypdf2

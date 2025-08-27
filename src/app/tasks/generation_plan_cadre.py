@@ -190,7 +190,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         except Exception:
             cfg = None
         if not ai_model:
-            ai_model = (cfg.chat_model if cfg and getattr(cfg, 'chat_model', None) else 'gpt-4.1-mini')
+            ai_model = (cfg.chat_model if cfg and getattr(cfg, 'chat_model', None) else 'gpt-5-mini')
         if not reasoning_effort and cfg and getattr(cfg, 'reasoning_effort', None):
             reasoning_effort = cfg.reasoning_effort
         if not verbosity and cfg and getattr(cfg, 'verbosity', None):

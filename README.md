@@ -82,9 +82,8 @@ SECRET_KEY='votre_cle_secrete'
 RECAPTCHA_PUBLIC_KEY='votre_cle_public recaptcha'
 RECAPTCHA_PRIVATE_KEY='votre_cle_secrete recaptcha'
 RECAPTCHA_THRESHOLD=0.5
-MISTRAL_API_KEY='votre_cle_mistral'
-OPENAI_MODEL_SECTION='gpt-4.1'
-OPENAI_MODEL_EXTRACTION='gpt-4.1-mini'
+OPENAI_MODEL_SECTION='gpt-5'
+OPENAI_MODEL_EXTRACTION='gpt-5-mini'
 ```
 
 Vous pouvez définir d'autres variables spécifiques à votre environnement
@@ -282,5 +281,4 @@ Le serveur FastMCP (« <code>src/mcp_server/server.py</code> ») expose les mêm
 Ce projet est sous licence MIT.
 
 N'hésitez pas à contribuer en ouvrant des issues ou en soumettant des pull requests. Pour toute question, veuillez contacter francis.poisson2@gmail.com.
-
 

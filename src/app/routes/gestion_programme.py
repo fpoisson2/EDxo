@@ -80,10 +80,8 @@ def get_verifier_plan_cours(plan_id):
 @ensure_profile_completed
 def update_verifier_plan_cours(plan_id):
     """
-    Route qui illustre l'approche en deux appels :
-      - Premier appel (o1-preview ou tout autre modèle O1)
-      - Deuxième appel (gpt-4o)
-    en suivant exactement la structure de plan-cadre.
+    Vérifie un plan de cours en un seul appel gpt-5
+    et met à jour les champs de vérification.
     """
     plan = PlanDeCours.query.get_or_404(plan_id)
 
@@ -128,73 +126,24 @@ def update_verifier_plan_cours(plan_id):
     total_prompt_tokens = 0
     total_completion_tokens = 0
 
-    # ----------------------------------------------------------
-    # 1) Premier appel : model = "o3-mini" (ou autre modèle O1)
-    # ----------------------------------------------------------
-    ai_model = "o3-mini"  # Correction : chaîne de caractères
-
-    try:
-        o1_response = client.beta.chat.completions.parse(
-            model=ai_model,
-            messages=[{"role": "user", "content": json.dumps(structured_request)}]
-        )
-    except Exception as e:
-        logger.error(f"OpenAI error (premier appel): {e}")
-        return jsonify({'error': f"Erreur API OpenAI premier appel: {str(e)}"}), 500
-
-    # Récupérer les tokens du premier appel
-    if hasattr(o1_response, 'usage'):
-        total_prompt_tokens += o1_response.usage.prompt_tokens
-        total_completion_tokens += o1_response.usage.completion_tokens
-
-    o1_response_content = (
-        o1_response.choices[0].message.content if o1_response.choices else ""
-    )
-
-    print(o1_response_content)
-    # ----------------------------------------------------------
-    # 2) Deuxième appel : model = "gpt-5"
-    # ----------------------------------------------------------
+    # Appel unique: gpt-5
     try:
         completion = client.beta.chat.completions.parse(
             model="gpt-5",
-            messages=[
-                {
-                    "role": "user",
-                    "content": (
-                        f"Formatte selon PlanDeCoursAIResponse ce qui suit: {o1_response_content}"
-                    )
-                }
-            ],
+            messages=[{"role": "user", "content": json.dumps(structured_request)}],
             response_format=PlanDeCoursAIResponse,
         )
     except Exception as e:
-        logger.error(f"OpenAI error (second appel): {e}")
-        return jsonify({'error': f"Erreur API OpenAI second appel: {str(e)}"}), 500
+        logger.error(f"OpenAI error: {e}")
+        return jsonify({'error': f"Erreur API OpenAI: {str(e)}"}), 500
 
-    # Récupérer les tokens du deuxième appel
-    if hasattr(completion, 'usage'):
-        total_prompt_tokens += completion.usage.prompt_tokens
-        total_completion_tokens += completion.usage.completion_tokens
-
-    # ----------------------------------------------------------
-    # Calculer le coût total
-    # ----------------------------------------------------------
-    usage_1_prompt = o1_response.usage.prompt_tokens if hasattr(o1_response, 'usage') else 0
-    usage_1_completion = o1_response.usage.completion_tokens if hasattr(o1_response, 'usage') else 0
-    cost_first_call = calculate_call_cost(usage_1_prompt, usage_1_completion, ai_model)
-
-    usage_2_prompt = completion.usage.prompt_tokens if hasattr(completion, 'usage') else 0
-    usage_2_completion = completion.usage.completion_tokens if hasattr(completion, 'usage') else 0
-    cost_second_call = calculate_call_cost(usage_2_prompt, usage_2_completion, "gpt-5")
-
-    total_cost = cost_first_call + cost_second_call
-
-    print(f"Premier appel ({ai_model}): {cost_first_call:.6f}$ "
-          f"({usage_1_prompt} prompt, {usage_1_completion} completion)")
-    print(f"Second appel (gpt-5): {cost_second_call:.6f}$ "
-          f"({usage_2_prompt} prompt, {usage_2_completion} completion)")
-    print(f"Coût total: {total_cost:.6f}$")
+    # Tokens et coût
+    usage_prompt = completion.usage.prompt_tokens if hasattr(completion, 'usage') else 0
+    usage_completion = completion.usage.completion_tokens if hasattr(completion, 'usage') else 0
+    total_prompt_tokens += usage_prompt
+    total_completion_tokens += usage_completion
+    total_cost = calculate_call_cost(usage_prompt, usage_completion, "gpt-5")
+    print(f"Appel gpt-5: {total_cost:.6f}$ (prompt {usage_prompt}, completion {usage_completion})")
 
     # Vérifier si l'utilisateur a suffisamment de crédits
     new_credits = user_credits - total_cost
@@ -208,14 +157,12 @@ def update_verifier_plan_cours(plan_id):
     # ----------------------------------------------------------
     # 3) Parser et mettre à jour le plan de cours avec la réponse finale
     # ----------------------------------------------------------
-    second_response_content = completion.choices[0].message.content if completion.choices else ""
-    print(second_response_content)
-
     if hasattr(completion.choices[0].message, 'parsed'):
         ai_response = completion.choices[0].message.parsed
     else:
+        content = completion.choices[0].message.content if completion.choices else ""
         try:
-            ai_response = PlanDeCoursAIResponse.parse_raw(second_response_content)
+            ai_response = PlanDeCoursAIResponse.parse_raw(content)
         except ValidationError as e:
             logger.error(f"Validation Pydantic error: {e}")
             return jsonify({'error': "Erreur de structuration des données par l'IA."}), 500

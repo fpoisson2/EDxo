@@ -24,7 +24,7 @@
 - Python 3.x, PEP 8, indentation 4 espaces.
 - Fichiers/modules/fonctions: `snake_case`; classes: `PascalCase`; constantes: `UPPER_SNAKE_CASE`.
 - Ajoutez les nouvelles routes sous `src/app/routes/` et les templates HTML dans `src/app/templates/`.
-- Pas de secrets en dur. Utilisez `.env` (ignoré par Git) pour `SECRET_KEY`, `RECAPTCHA_PUBLIC_KEY`, `RECAPTCHA_PRIVATE_KEY`, `MISTRAL_API_KEY`, `OPENAI_API_KEY`, ainsi que `CELERY_BROKER_URL` et `CELERY_RESULT_BACKEND`.
+- Pas de secrets en dur. Utilisez `.env` (ignoré par Git) pour `SECRET_KEY`, `RECAPTCHA_PUBLIC_KEY`, `RECAPTCHA_PRIVATE_KEY`, `OPENAI_API_KEY`, ainsi que `CELERY_BROKER_URL` et `CELERY_RESULT_BACKEND`.
 
 ## Lignes directrices pour les tests
 - Framework: `pytest`. Placez les tests dans `tests/` avec le préfixe `test_`.
