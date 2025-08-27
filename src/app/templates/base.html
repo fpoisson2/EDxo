@@ -502,13 +502,15 @@
 
     <!-- Gestion du polling pour les tâches (unifié) -->
     <script>
+      // Prefix-aware base path (supports reverse proxies setting SCRIPT_NAME / X-Forwarded-Prefix)
+      const APP_PREFIX = (function(){ try { return {{ request.script_root|tojson }} || ''; } catch(_) { return ''; } })();
       let currentTaskId = null;
       let isPolling = false;
 
       function checkTaskStatus() {
         if (!currentTaskId) return;
 
-        fetch('/tasks/status/' + currentTaskId, {
+        fetch(`${APP_PREFIX}/tasks/status/` + currentTaskId, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           credentials: 'same-origin'
@@ -631,7 +633,7 @@
 
       function clearTaskId() {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        fetch('/clear_task_id', {
+        fetch(`${APP_PREFIX}/clear_task_id`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -691,7 +693,8 @@
               if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
                 window.EDxoTasks.openTaskModal(taskId, { title: 'Suivi de la tâche' });
               } else {
-                window.location.href = url.href;
+                // Fallback prefix-aware navigation
+                window.location.href = `${APP_PREFIX}/tasks/track/${taskId}`;
               }
             }
           }
@@ -846,7 +849,7 @@
       // Quick server-side existence check
       async function checkTaskExists(taskId) {
         try {
-          const r = await fetch('/tasks/status/' + taskId, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+          const r = await fetch(`${APP_PREFIX}/tasks/status/` + taskId, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
           if (!r.ok) return false;
           const d = await r.json();
           return !!(d && d.state);
@@ -876,10 +879,29 @@
               const tid = n.taskId || extractTaskId(n.link);
               if (!tid) continue;
               validated++;
-              const ok = await checkTaskExists(tid);
-              if (!ok) {
-                notifications = notifications.filter(x => !(x && (x.taskId === tid || (x.link && x.link.indexOf(`/tasks/track/${tid}`) !== -1))));
-              }
+              try {
+                const r = await fetch(`${APP_PREFIX}/tasks/status/` + tid, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+                if (!r.ok) {
+                  // Remove stale if endpoint not reachable or task truly missing
+                  notifications = notifications.filter(x => !(x && (x.taskId === tid || (x.link && x.link.indexOf(`/tasks/track/${tid}`) !== -1))));
+                  continue;
+                }
+                const data = await r.json();
+                const state = (data && data.state) || 'PENDING';
+                if (state === 'SUCCESS' || state === 'FAILURE' || state === 'REVOKED') {
+                  const payload = (data.result || data.meta || {});
+                  const title = getTaskTitle(tid);
+                  const base = state === 'SUCCESS' ? 'terminée' : 'arrêtée';
+                  const detail = (data.message || payload.message || '').trim();
+                  const composed = detail ? `${title} — ${base} — ${detail}` : `${title} — ${base}`;
+                  const link = (payload && payload.validation_url) ? payload.validation_url : `/tasks/track/${tid}`;
+                  const type = state === 'SUCCESS' ? 'success' : (state === 'FAILURE' ? 'error' : 'warning');
+                  // Replace existing notification for this task id
+                  notifications = notifications.filter(x => !(x && (x.taskId === tid || (x.link && x.link.indexOf(`/tasks/track/${tid}`) !== -1))));
+                  notifications.push({ id: Date.now(), taskId: tid, message: composed, type, link, timestamp: new Date().toISOString() });
+                  try { if (sessionStorage.getItem('currentTaskId') === tid) sessionStorage.removeItem('currentTaskId'); } catch {}
+                }
+              } catch { /* ignore validation error */ }
             }
           }
           saveNotifications();
@@ -970,7 +992,7 @@
           if (storedTaskId) {
             // If orchestrator is loaded (legacy poller disabled), perform a one-shot status check
             if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
-              fetch('/tasks/status/' + storedTaskId, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+              fetch(`${APP_PREFIX}/tasks/status/` + storedTaskId, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(data => {
                   if (!data || !data.state) return;
@@ -998,6 +1020,8 @@
           // On open, validate a handful and prune stale
           await pruneNotifications({ validate: true, validateLimit: 6, maxAgeMs: 1000 * 60 * 60 * 24 });
         });
+        // Perform an initial quick validation to clear stale in-progress items
+        pruneNotifications({ validate: true, validateLimit: 6 });
         // Background prune for age only
         pruneNotifications({ validate: false });
       });

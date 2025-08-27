@@ -134,25 +134,25 @@ def update_verifier_plan_cours(plan_id):
     if not prompt_template:
         return jsonify({'error': "Le template de prompt n'est pas configuré."}), 500
 
-    # Formater le prompt avec les variables
-    instruction = prompt_template.prompt_template.format(
-        plan_cours_id=plan_de_cours.id,
-        plan_cours_json=json.dumps(plan_de_cours.to_dict(), indent=4, ensure_ascii=False),
-        plan_cadre_id=plan_cadre.id,
-        plan_cadre_json=json.dumps(plan_cadre.to_dict(), indent=4, ensure_ascii=False),
-        schema_json=schema_json
-    )
-
+    # Formater le prompt d'instructions (système) et regrouper les données utilisateur à part
+    instruction = prompt_template.prompt_template
     structured_request = {
-        "instruction": instruction
+        "plan_cours_id": plan_de_cours.id,
+        "plan_cours": plan_de_cours.to_dict(),
+        "plan_cadre_id": plan_cadre.id,
+        "plan_cadre": plan_cadre.to_dict(),
+        # Le schéma est déjà passé via text.format, mais on peut aussi l'inclure dans les données
+        "schema_json": json.loads(schema_json)
     }
 
     # Construction du client et paramètres IA
     client = OpenAI(api_key=openai_key)
     sa = SectionAISettings.get_for('analyse_plan_cours')
     model_name = sa.ai_model or 'gpt-5'
-    input_data = [
-        {"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]}] if sa.system_prompt else []
+    sys_text = (sa.system_prompt or '')
+    if instruction:
+        sys_text = (sys_text + "\n\n" + instruction).strip()
+    input_data = [{"role": "system", "content": [{"type": "input_text", "text": sys_text}]}] if sys_text else []
     input_data += [{"role": "user", "content": [{"type": "input_text", "text": json.dumps(structured_request, ensure_ascii=False)}]}]
     reasoning_params = {"summary": "auto"}
     if sa.reasoning_effort in {"minimal", "low", "medium", "high"}:

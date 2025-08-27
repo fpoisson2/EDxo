@@ -496,7 +496,8 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             if '{doc_text}' in (template or ''):
                 compact_prompt = _format_import_prompt(template, '(document joint)')
             else:
-                compact_prompt = template or "Analyse le document DOCX joint et retourne le JSON attendu."
+                # Si aucun template configuré, ne pas injecter d'instructions côté user/system
+                compact_prompt = template or ''
 
             # Define JSON schema expected
             json_schema = {
@@ -539,13 +540,13 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             try:
                 if file_id:
                     # Build request
+                    # Déplacer les consignes dans le prompt système; l'utilisateur ne fournit que le fichier
+                    sys_text = (system_prompt_text or '')
+                    if compact_prompt:
+                        sys_text = (sys_text + "\n\n" + compact_prompt).strip()
                     request_input = [
-                        {"role": "system", "content": [{"type": "input_text", "text": system_prompt_text}]},
-                        {"role": "user",
-                         "content": [
-                            {"type": "input_file", "file_id": file_id},
-                            {"type": "input_text", "text": compact_prompt}
-                         ]}
+                        {"role": "system", "content": [{"type": "input_text", "text": sys_text}]},
+                        {"role": "user", "content": [{"type": "input_file", "file_id": file_id}]}
                     ]
                     request_kwargs = dict(
                         model=model_name,

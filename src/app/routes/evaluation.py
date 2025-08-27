@@ -464,14 +464,22 @@ def generate_six_level_grid():
 
     schema_json = json.dumps(AISixLevelGridResponse.get_schema_with_descriptions(), indent=4, ensure_ascii=False)
     
-    prompt = settings.prompt_template.format(
-        savoir_faire=savoir_faire,
-        capacite=capacite, 
-        seuil=seuil,
-        cible=cible,
-        description_eval=evaluation_description,
-        schema=schema_json  # Ajout du schéma
+    # Construire un message système (instructions) depuis le template, et un payload utilisateur avec les données uniquement
+    system_instructions = settings.prompt_template.format(
+        savoir_faire="{savoir_faire}",
+        capacite="{capacite}", 
+        seuil="{seuil}",
+        cible="{cible}",
+        description_eval="{description_eval}",
+        schema=schema_json
     )
+    user_payload = {
+        'savoir_faire': savoir_faire,
+        'capacite': capacite,
+        'seuil': seuil,
+        'cible': cible,
+        'description_eval': evaluation_description
+    }
 
     # Vérification des crédits de l'utilisateur
     user = db.session.get(User, current_user.id)
@@ -495,9 +503,12 @@ def generate_six_level_grid():
         client = OpenAI(api_key=current_user.openai_key)
 
         input_data = []
-        if sa.system_prompt:
-            input_data.append({"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]})
-        input_data.append({"role": "user", "content": [{"type": "input_text", "text": prompt}]})
+        sys_text = (sa.system_prompt or '')
+        if system_instructions:
+            sys_text = (sys_text + "\n\n" + system_instructions).strip()
+        if sys_text:
+            input_data.append({"role": "system", "content": [{"type": "input_text", "text": sys_text}]})
+        input_data.append({"role": "user", "content": [{"type": "input_text", "text": json.dumps(user_payload, ensure_ascii=False)}]})
         reasoning_params = {"summary": "auto"}
         if sa.reasoning_effort in {"minimal", "low", "medium", "high"}:
             reasoning_params["effort"] = sa.reasoning_effort

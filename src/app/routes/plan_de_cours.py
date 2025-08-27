@@ -264,37 +264,8 @@ class ImportPlanDeCoursResponse(BaseModel):
 
 
 DEFAULT_IMPORT_PROMPT = (
-    "Tu es un assistant pédagogique. Analyse le plan de cours fourni (texte brut extrait d'un DOCX). "
-    "Le texte peut contenir des tableaux rendus en Markdown, encadrés par ‘TABLE n:’ et ‘ENDTABLE’. "
-    "TIENS ABSOLUMENT COMPTE du contenu des tableaux (ils prévalent sur le texte libre en cas de doublon). "
-    "Retourne un JSON STRICTEMENT au format suivant (clés exactes, valeurs nulles si absentes):\n"
-    "{{\n"
-    "  'presentation_du_cours': str | null,\n"
-    "  'objectif_terminal_du_cours': str | null,\n"
-    "  'organisation_et_methodes': str | null,\n"
-    "  'accomodement': str | null,\n"
-    "  'evaluation_formative_apprentissages': str | null,\n"
-    "  'evaluation_expression_francais': str | null,\n"
-    "  'materiel': str | null,\n"
-    "  'calendriers': [ {{ 'semaine': int | null, 'sujet': str | null, 'activites': str | null, 'travaux_hors_classe': str | null, 'evaluations': str | null }} ],\n"
-    "  'nom_enseignant': str | null,\n"
-    "  'telephone_enseignant': str | null,\n"
-    "  'courriel_enseignant': str | null,\n"
-    "  'bureau_enseignant': str | null,\n"
-    "  'disponibilites': [ {{ 'jour_semaine': str | null, 'plage_horaire': str | null, 'lieu': str | null }} ],\n"
-    "  'mediagraphies': [ {{ 'reference_bibliographique': str | null }} ],\n"
-    "  'evaluations': [ {{ 'titre_evaluation': str | null, 'description': str | null, 'semaine': int | null, 'capacites': [ {{ 'capacite': str | null, 'ponderation': str | null }} ] }} ]\n"
-    "}}\n\n"
-    "Si certaines données sont introuvables dans le texte, mets la valeur à null. \n"
-    "Important: Renvoie uniquement le JSON, sans texte avant ou après.\n"
-    "Consignes d'extraction précises: \n"
-    "- Les tableaux (Markdown) peuvent décrire le calendrier: colonnes typiques ‘Semaine’, ‘Sujet’, ‘Activités’, ‘Travaux hors classe’, ‘Évaluations’. Mappe chaque ligne vers 'calendriers'.\n"
-    "- Pour les évaluations, repère les sections intitulées 'ÉVALUATION(S) SOMMATIVE(S)', 'Évaluations sommatives', 'Évaluation sommative des apprentissages', 'MODALITÉS D’ÉVALUATION DES APPRENTISSAGES'.\n"
-    "  Les tableaux d’évaluation peuvent indiquer ‘Titre’, ‘Description’, ‘Semaine’, et des pondérations par ‘Capacité’. Crée les objets 'evaluations' et leurs 'capacites' avec les pondérations correspondantes.\n"
-    "- Si la semaine est uniquement mentionnée dans le calendrier, recoupe pour remplir 'semaine' lorsque possible.\n"
-    "- Conserve la casse et le libellé exacts des titres d’évaluations lorsqu’ils apparaissent explicitement.\n\n"
     "Contexte: cours {cours_code} - {cours_nom}, session {session}.\n"
-    "Texte du plan de cours:\n---\n{doc_text}\n---\n"
+    "Texte du plan de cours (brut):\n---\n{doc_text}\n---\n"
 )
 
 

@@ -733,11 +733,11 @@ def extraire_competences_depuis_pdf(pdf_path, output_json_filename, openai_key=N
             try:
                 route_used = "file_url"
                 _progress(f"[EXTRACTION] Appel API via URL de fichier | url='{pdf_url}'")
+                # L'utilisateur fournit uniquement le fichier; les consignes résident dans le prompt système
                 request_input.append({
                     "role": "user",
                     "content": [
-                        {"type": "input_file", "file_url": pdf_url},
-                        {"type": "input_text", "text": "Extrais et retourne le JSON strict 'competences'."}
+                        {"type": "input_file", "file_url": pdf_url}
                     ]
                 })
             except Exception as e:
@@ -753,8 +753,7 @@ def extraire_competences_depuis_pdf(pdf_path, output_json_filename, openai_key=N
             request_input.append({
                 "role": "user",
                 "content": [
-                    {"type": "input_file", "file_id": file_id},
-                    {"type": "input_text", "text": "Extrais et retourne le JSON strict 'competences'."}
+                    {"type": "input_file", "file_id": file_id}
                 ]
             })
 

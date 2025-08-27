@@ -760,20 +760,9 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 + ("Exigences pour chaque capacité: inclure 'description_capacite', une plage 'ponderation_min'/'ponderation_max',\n"
                    "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
             )
-            if improve_only:
-                base = (
-                    f"Tu es un assistant qui améliore un plan‑cadre existant pour le cours '{cours_nom}', session {cours_session}. "
-                    f"Consignes: {additional_info}. Améliore la lisibilité et la précision sans changer le sens ni inventer. "
-                    "Préserve la structure et le vocabulaire institutionnel. Fais ton raisonnement en français."
-                )
-            else:
-                base = (
-                    f"Tu es un rédacteur pour un plan‑cadre de cours '{cours_nom}', session {cours_session}. "
-                    f"Informations importantes: {additional_info}. Fais ton raisonnement en français."
-                )
-            system_message = base
-            if sa and getattr(sa, 'system_prompt', None):
-                system_message = f"{sa.system_prompt}\n\n{system_message}"
+            # Prompt système exclusivement via SectionAISettings
+            system_message = (sa.system_prompt if (sa and getattr(sa, 'system_prompt', None)) else '')
+            # Laisser les consignes au paramétrage (SectionAISettings). Pas d'instructions en dur ici.
         # combined_instruction can be large; avoid noisy stdout
         logger.debug(combined_instruction)
 
@@ -807,11 +796,22 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             if verbosity in {"low", "medium", "high"}:
                 text_params["verbosity"] = verbosity
 
+            user_payload = {
+                'fields': ai_fields,
+                'fields_with_description': ai_fields_with_description,
+                'savoir_etre': ai_savoir_etre,
+                'capacites': ai_capacites_prompt,
+                'course_context': course_context_compact,
+                'previous_sections_context': previous_sections_context,
+                'current_capacites_snapshot': current_capacites_snapshot,
+                'improve_only': improve_only,
+                'additional_info': additional_info,
+            }
             request_kwargs = dict(
                 model=ai_model,
                 input=[
                     {"role": "system", "content": system_message},
-                    {"role": "user", "content": combined_instruction}
+                    {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)}
                 ],
                 text=text_params,
                 store=True,
