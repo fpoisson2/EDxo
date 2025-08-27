@@ -21,41 +21,10 @@
             <i class="bi bi-box-arrow-up-right me-2"></i>
             <span>Générer le plan de cours</span>
         </button>
-        <a href="{{ url_for('plan_de_cours.improve_plan_de_cours_page', plan_id=plan_de_cours.id) }}" class="btn btn-outline-success d-flex align-items-center">
+        <button type="button" id="openImprovePdcBtn" class="btn btn-outline-success d-flex align-items-center">
             <i class="bi bi-magic me-2"></i>
             <span>Améliorer le plan de cours</span>
-        </a>
-        <!-- Démarrer (unifié) -->
-        <div class="btn-group">
-          <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-            Démarrer (unifié)
-          </button>
-          <ul class="dropdown-menu">
-            <li>
-              <a class="dropdown-item" href="#"
-                 data-task-start
-                 data-url="/api/plan_de_cours/{{ plan_de_cours.id }}/generate"
-                 data-title="Générer le plan de cours"
-                 data-mode="json"
-                 data-json='{"prompt":""}'>Générer (API)</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="#"
-                 data-task-start
-                 data-url="/api/plan_de_cours/{{ plan_de_cours.id }}/generate"
-                 data-title="Améliorer le plan de cours"
-                 data-mode="json"
-                 data-json='{"improve_only":true,"additional_info":""}'>Améliorer (API)</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="#"
-                 data-task-start
-                 data-url="{{ url_for('plan_de_cours.import_docx_start') }}"
-                 data-title="Importer Plan de cours (.docx)"
-                 data-mode="form">Importer DOCX</a>
-            </li>
-          </ul>
-        </div>
+        </button>
     </div>
 
     <div class="accordion" id="accordionPlanCours">
@@ -900,24 +869,18 @@ textarea.toast-ui-target:not(.toast-initialized) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Uniformiser l'import PDC: ouvrir le Start Modal (mode fichier)
+    // Importer le plan de cours via le modal fichier simplifié
     try {
       const btnImp = document.getElementById('openImportPlanCoursTask');
-      if (btnImp && window.EDxoTasks && window.EDxoTasks.openTaskStartModal) {
+      if (btnImp && window.EDxoTasks && window.EDxoTasks.openFileTask) {
         btnImp.addEventListener('click', (e) => {
           e.preventDefault();
-          window.EDxoTasks.openTaskStartModal({
+          window.EDxoTasks.openFileTask({
             url: "{{ url_for('plan_de_cours.import_docx_start') }}",
             title: 'Importer Plan de cours (.docx)',
-            mode: 'form'
+            startMessage: 'Import en cours…',
+            extraFormData: { cours_id: "{{ cours.id }}", session: "{{ plan_de_cours.session }}" }
           });
-          // Préremplir les champs additionnels requis (cours_id, session)
-          setTimeout(() => {
-            try {
-              const extras = document.getElementById('task-start-form-extras');
-              if (extras) extras.value = `cours_id={{ cours.id }}\nsession={{ plan_de_cours.session }}`;
-            } catch(_) {}
-          }, 50);
         });
       }
     } catch(_) {}
@@ -937,6 +900,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       }
     } catch(_) {}
+
+    // Bouton Améliorer: démarrer la tâche globale via modal simplifié
+    try {
+      const btnImprove = document.getElementById('openImprovePdcBtn');
+      if (btnImprove && window.EDxoTasks && window.EDxoTasks.startCeleryTask) {
+        btnImprove.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+          const params = new URLSearchParams();
+          params.append('cours_id', "{{ cours.id }}");
+          params.append('session', "{{ plan_de_cours.session }}");
+          params.append('improve_only', 'true');
+          await window.EDxoTasks.startCeleryTask("{{ url_for('plan_de_cours.generate_all_start') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf },
+            body: params.toString(),
+            credentials: 'same-origin'
+          }, {
+            title: 'Améliorer le plan de cours',
+            startMessage: 'Amélioration en cours…',
+            openModal: true
+          });
+        });
+      }
+    } catch(_) {}
+
     // Amélioration ciblée: utiliser le Quick Modal unifié pour lancer une tâche Celery par champ
     try {
       const magicBtns = document.querySelectorAll('.magic-generate[data-target-column]');
