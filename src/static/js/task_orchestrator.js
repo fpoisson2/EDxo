@@ -606,7 +606,8 @@
   function startBackgroundWatch(taskId, opts = {}) {
     stopBackgroundWatch();
     BG.taskId = taskId;
-    const statusUrl = opts.statusUrl || `/tasks/status/${taskId}`;
+    const prefix = (typeof window !== 'undefined' && window.APP_PREFIX) ? window.APP_PREFIX : '';
+    const statusUrl = opts.statusUrl || `${prefix}/tasks/status/${taskId}`;
     const title = opts.title || 'Suivi de la tâche';
     BG.timer = setTimeout(() => backgroundPoll(statusUrl, title), 1500);
   }
@@ -616,7 +617,8 @@
     try {
       const preferPage = !!(window.EDxoTasks && window.EDxoTasks.settings && window.EDxoTasks.settings.preferPage);
       if (preferPage) {
-        window.location.href = `/tasks/track/${taskId}`;
+        const prefix = (typeof window !== 'undefined' && window.APP_PREFIX) ? window.APP_PREFIX : '';
+        window.location.href = `${prefix}/tasks/track/${taskId}`;
         return null;
       }
     } catch {}
@@ -761,7 +763,8 @@
     modalEl.addEventListener('hidden.bs.modal', unblockPage, { once: true });
 
     // SSE stream (can be disabled via settings.disableSSE to avoid dev-server blocking)
-    const eventsUrl = opts.eventsUrl || `/tasks/events/${taskId}`;
+    const prefix = (typeof window !== 'undefined' && window.APP_PREFIX) ? window.APP_PREFIX : '';
+    const eventsUrl = opts.eventsUrl || `${prefix}/tasks/events/${taskId}`;
     let es;
     let sawAnyMeaningfulProgress = false;
     let completed = false;
@@ -1015,7 +1018,8 @@
     } catch (e) { /* SSE not available */ }
 
     // Polling fallback (and completion handling)
-    const statusUrl = opts.statusUrl || `/tasks/status/${taskId}`;
+    const prefix = (typeof window !== 'undefined' && window.APP_PREFIX) ? window.APP_PREFIX : '';
+    const statusUrl = opts.statusUrl || `${prefix}/tasks/status/${taskId}`;
     let stopped = false;
     let pollTimer = null;
     let pendingStreak = 0;

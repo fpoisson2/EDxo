@@ -504,6 +504,7 @@
     <script>
       // Prefix-aware base path (supports reverse proxies setting SCRIPT_NAME / X-Forwarded-Prefix)
       const APP_PREFIX = (function(){ try { return {{ request.script_root|tojson }} || ''; } catch(_) { return ''; } })();
+      try { window.APP_PREFIX = APP_PREFIX; } catch(_) {}
       let currentTaskId = null;
       let isPolling = false;
 
@@ -928,6 +929,11 @@
             const m = link.match(/\/tasks\/track\/([^/]+)/);
             if (m) tid = m[1];
           }
+          // Dernier recours: si rien n'est fourni, utiliser la tâche active en session
+          if (!tid && typeof sessionStorage !== 'undefined') {
+            const cur = sessionStorage.getItem('currentTaskId');
+            if (cur) tid = cur;
+          }
         } catch {}
         const nowIso = new Date().toISOString();
         if (tid) {
@@ -950,6 +956,10 @@
               if (n.link && typeof n.link === 'string' && n.link.indexOf(trackLink) !== -1) return false;
               return true;
             });
+            // Supprimer anciennes entrées "en cours" sans taskId qui doublonnent le même message
+            notifications = notifications.filter(n => !(
+              !n.taskId && n.type === 'in-progress' && typeof n.message === 'string' && typeof message === 'string' && n.message.indexOf('Tâche en cours') !== -1
+            ));
           } catch {}
           saveNotifications();
           updateNotificationUI();
