@@ -46,12 +46,10 @@
     {% endif %}
 
     {% if config['USE_LOCAL_ICONS'] %}
-      <link rel="preload" href="{{ asset_url('vendor/bootstrap-icons/font/fonts/bootstrap-icons.woff2') }}" as="font" type="font/woff2" crossorigin>
       <link rel="stylesheet" href="{{ asset_url('vendor/bootstrap-icons/font/bootstrap-icons.css') }}" />
     {% else %}
-      <!-- Bootstrap Icons (defer apply via preload) -->
+      <!-- Bootstrap Icons stylesheet; avoid preloading font to prevent warnings on pages not using icons immediately -->
       <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-      <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/fonts/bootstrap-icons.woff2" as="font" type="font/woff2" crossorigin>
       <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" /></noscript>
     {% endif %}
 

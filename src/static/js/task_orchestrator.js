@@ -192,7 +192,25 @@
         alert('Erreur lors du démarrage: ' + (e && e.message ? e.message : e));
       }
     });
-    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    // Autofocus the complementary info textarea once the modal is visible
+    const infoEl = body.querySelector('#task-quick-additional_info');
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    try {
+      modalEl.addEventListener('shown.bs.modal', () => {
+        try {
+          if (infoEl) {
+            infoEl.focus();
+            // Place caret at end for immediate typing continuation
+            if (typeof infoEl.selectionStart === 'number') {
+              const len = infoEl.value ? infoEl.value.length : 0;
+              infoEl.selectionStart = len;
+              infoEl.selectionEnd = len;
+            }
+          }
+        } catch {}
+      }, { once: true });
+    } catch {}
+    inst.show();
   }
 
   // ---------- Quick File Modal: only file field ----------
@@ -434,7 +452,24 @@
     modeJson.dispatchEvent(ev);
     modeForm.dispatchEvent(ev);
     modalEl._extraOpts = { summaryEl: opts.summaryEl || null, streamEl: opts.streamEl || null, onDone: opts.onDone };
-    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    // Autofocus the user prompt ("Informations complémentaires") to allow immediate typing
+    try {
+      modalEl.addEventListener('shown.bs.modal', () => {
+        try {
+          const up = document.getElementById('task-start-user-prompt');
+          if (up) {
+            up.focus();
+            if (typeof up.selectionStart === 'number') {
+              const len = up.value ? up.value.length : 0;
+              up.selectionStart = len;
+              up.selectionEnd = len;
+            }
+          }
+        } catch {}
+      }, { once: true });
+    } catch {}
+    inst.show();
   }
 
   function ensureModal() {
@@ -452,7 +487,7 @@
             <div class="mb-2 small text-muted">ID: <span id="task-orch-id"></span> · État: <span id="task-orch-state">PENDING</span></div>
             <h6 class="mt-2 mb-1">Résumé du raisonnement</h6>
             <div id="task-orch-reasoning-wrap" class="position-relative mb-2">
-              <div id="task-orch-reasoning-overlay" class="d-flex align-items-center justify-content-center" style="position:absolute;inset:0;pointer-events:none;z-index:10;display:flex;">
+              <div id="task-orch-reasoning-overlay" style="position:absolute;inset:0;pointer-events:none;z-index:10;display:flex;align-items:center;justify-content:center;">
                 <div class="edxo-spinner" aria-label="Chargement"></div>
               </div>
               <div id="task-orch-reasoning" class="small" style="min-height:100px;max-height:25vh;overflow:auto;background:#f8f9fa;padding:8px;border-radius:6px;"></div>
@@ -464,7 +499,7 @@
               <button class="btn btn-sm btn-outline-secondary" id="task-orch-view-json" type="button" disabled>JSON</button>
             </div>
             <div id="task-orch-stream-wrap" class="position-relative">
-              <div id="task-orch-stream-overlay" class="d-flex align-items-center justify-content-center" style="position:absolute;inset:0;pointer-events:none;z-index:10;display:flex;">
+              <div id="task-orch-stream-overlay" style="position:absolute;inset:0;pointer-events:none;z-index:10;display:flex;align-items:center;justify-content:center;">
                 <div class="edxo-spinner" aria-label="Chargement"></div>
               </div>
               <div id="task-orch-stream-text" class="form-control" style="background:#0f172a;color:#e2e8f0;font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Cantarell, Noto Sans, Ubuntu, Helvetica Neue, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';font-size:0.95rem;line-height:1.3;min-height:140px;max-height:280px;overflow:auto;white-space:pre-wrap;position:relative;z-index:1;"></div>
@@ -593,6 +628,7 @@
     // Log UI removed (status and progress are reflected elsewhere)
     try { const logEl = document.getElementById('task-orch-log'); if (logEl) logEl.remove(); } catch {}
     const streamEl = opts.streamEl || document.getElementById('task-orch-stream-text');
+    const usingExternalStream = !!opts.streamEl;
     try { if (streamEl) streamEl.style.background = '#0f172a'; } catch {}
     const streamJsonPre = document.getElementById('task-orch-stream-json');
     const streamOverlay = document.getElementById('task-orch-stream-overlay');
@@ -600,7 +636,32 @@
     const viewJsonBtn = document.getElementById('task-orch-view-json');
     
     const reasoningEl = opts.summaryEl || document.getElementById('task-orch-reasoning');
+    const usingExternalReason = !!opts.summaryEl;
     const reasoningOverlay = document.getElementById('task-orch-reasoning-overlay');
+
+    // Helpers: text access + overlay visibility (scoped to this modal instance)
+    function setStreamText(el, text) {
+      try { if (!el) return; if ('value' in el) { el.value = text || ''; } else { el.textContent = text || ''; } } catch {}
+    }
+    function getStreamText(el) {
+      try { if (!el) return ''; return ('value' in el) ? (el.value || '') : (el.textContent || ''); } catch { return ''; }
+    }
+    function scrollStreamToBottom(el) { try { if (el) el.scrollTop = el.scrollHeight; } catch {} }
+    function getElText(el) { try { return el ? (('innerText' in el) ? (el.innerText || '') : (('value' in el) ? (el.value || '') : (el.textContent || ''))) : ''; } catch { return ''; } }
+    function updateOverlaysVisibility() {
+      try {
+        // Consider current DOM content plus in-flight buffers (to avoid throttle delay)
+        const streamTextNow = String(getElText(streamEl)).trim();
+        const hasJsonPre = (!usingExternalStream) && !!String((streamJsonPre && streamJsonPre.textContent) || '').trim();
+        const bufHasStream = (() => { try { return !!(typeof streamBuf === 'string' && streamBuf.trim().length); } catch { return false; } })();
+        const hasStream = !!(streamTextNow || hasJsonPre || bufHasStream);
+        const domHasReason = !!String(getElText(reasoningEl)).trim();
+        const bufHasReason = (() => { try { return !!(typeof lastReasoning === 'string' && lastReasoning.trim().length); } catch { return false; } })();
+        const hasReason = domHasReason || bufHasReason;
+        if (streamOverlay) streamOverlay.style.display = hasStream ? 'none' : 'flex';
+        if (reasoningOverlay) reasoningOverlay.style.display = (hasReason || hasStream) ? 'none' : 'flex';
+      } catch {}
+    }
 
     // Local helper: make reasoning easier to read by turning bold titles into headings
     function formatReasoningMarkdown(text) {
@@ -624,10 +685,31 @@
     // Preload from cache if available
     try {
       const cache = getCache(taskId);
+      // Reset view toggles to Text by default on every open
+      try {
+        const btnText = document.getElementById('task-orch-view-text');
+        const btnJson = document.getElementById('task-orch-view-json');
+        if (btnText && btnJson) {
+          btnText.classList.add('active');
+          btnJson.classList.remove('active');
+        }
+      } catch {}
+      // Reset stream areas on open to avoid stale JSON/text from previous tasks
+      if (streamJsonPre) { try { streamJsonPre.textContent = ''; } catch {} }
+      if (viewJsonBtn) { try { viewJsonBtn.disabled = true; } catch {} }
       if (streamEl) {
         setStreamText(streamEl, cache.stream || '');
         scrollStreamToBottom(streamEl);
-        if (streamOverlay) streamOverlay.style.display = (getStreamText(streamEl).trim() ? 'none' : 'flex');
+        // If cached stream looks like JSON, prefill JSON pane and enable toggle
+        try {
+          if (cache.stream) {
+            try {
+              const obj = JSON.parse(cache.stream);
+              if (streamJsonPre) streamJsonPre.textContent = JSON.stringify(obj, null, 2);
+              if (viewJsonBtn) viewJsonBtn.disabled = false;
+            } catch {}
+          }
+        } catch {}
       }
       try { if (typeof tryUpdateJsonView === 'function') tryUpdateJsonView(); } catch {}
       if (reasoningEl) {
@@ -642,8 +724,9 @@
         } catch (_) {
           reasoningEl.textContent = txt;
         }
-        if (reasoningOverlay) reasoningOverlay.style.display = (String(txt).trim() ? 'none' : 'flex');
+        // Overlay visibility handled globally
       }
+      updateOverlaysVisibility();
       // JSON pane removed
       if (cache.state) {
         document.getElementById('task-orch-state').textContent = cache.state;
@@ -795,7 +878,8 @@
                 // Keep viewport near bottom
                 scrollStreamToBottom(streamEl);
               }
-              if (streamOverlay) streamOverlay.style.display = (streamEl && getStreamText(streamEl).trim()) ? 'none' : 'flex';
+              // When generated content starts, hide both spinners; otherwise, only update content spinner
+              updateOverlaysVisibility();
               tryUpdateJsonView();
               try { scheduleCacheSave(taskId); } catch {}
             } catch {}
@@ -826,7 +910,7 @@
               } catch (_) {
                 reasoningEl.textContent = lastReasoning;
               }
-              if (reasoningOverlay) reasoningOverlay.style.display = (String(lastReasoning).trim() ? 'none' : 'flex');
+              updateOverlaysVisibility();
             }
           }, reasoningThrottleMs);
         }
@@ -881,20 +965,33 @@
                   streamBuf += String(meta.stream_chunk);
                   clampAndMarkStreamDirty();
                   try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
+                  // As soon as generated content starts, hide both spinners
+                  try {
+                    if (streamOverlay) streamOverlay.style.display = 'none';
+                    if (reasoningOverlay) reasoningOverlay.style.display = 'none';
+                  } catch {}
                 } else if (meta.stream_buffer) {
                   streamBuf = String(meta.stream_buffer);
                   clampAndMarkStreamDirty();
                   try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
+                  // Buffer present implies content; hide both spinners immediately
+                  try {
+                    if (streamOverlay) streamOverlay.style.display = 'none';
+                    if (reasoningOverlay) reasoningOverlay.style.display = 'none';
+                  } catch {}
                 }
+                updateOverlaysVisibility();
                 if (meta.reasoning_chunk && reasoningEl) {
                   lastReasoning += String(meta.reasoning_chunk);
                   try { getCache(taskId).reasoning = lastReasoning; scheduleCacheSave(taskId); } catch {}
                   scheduleReasoningUpdate();
+                  try { if (reasoningOverlay && String(lastReasoning).trim()) reasoningOverlay.style.display = 'none'; } catch {}
                 } else if (meta.reasoning_summary && reasoningEl) {
                   if (String(meta.reasoning_summary) !== lastReasoning) {
                     lastReasoning = String(meta.reasoning_summary);
                     try { getCache(taskId).reasoning = lastReasoning; scheduleCacheSave(taskId); } catch {}
                     scheduleReasoningUpdate();
+                    try { if (reasoningOverlay && String(lastReasoning).trim()) reasoningOverlay.style.display = 'none'; } catch {}
                   }
                 }
               } catch {}
@@ -948,6 +1045,7 @@
             }
           } catch {}
         }
+        updateOverlaysVisibility();
       } catch {}
     })();
     async function poll() {
@@ -963,18 +1061,26 @@
               const sb = String(meta.stream_buffer);
               if (streamEl) { streamBuf = sb; clampAndMarkStreamDirty(); }
               try { getCache(taskId).stream = sb; scheduleCacheSave(taskId); } catch {}
+              // Hide both overlays as soon as content exists
+              try {
+                if (streamOverlay) streamOverlay.style.display = 'none';
+                if (reasoningOverlay) reasoningOverlay.style.display = 'none';
+              } catch {}
             }
             if (meta.reasoning_chunk) {
               lastReasoning += String(meta.reasoning_chunk);
               try { getCache(taskId).reasoning = lastReasoning; scheduleCacheSave(taskId); } catch {}
               if (reasoningEl) scheduleReasoningUpdate();
+              try { if (reasoningOverlay && String(lastReasoning).trim()) reasoningOverlay.style.display = 'none'; } catch {}
             } else if (meta.reasoning_summary) {
               lastReasoning = String(meta.reasoning_summary);
               try { getCache(taskId).reasoning = lastReasoning; scheduleCacheSave(taskId); } catch {}
               if (reasoningEl) scheduleReasoningUpdate();
+              try { if (reasoningOverlay && String(lastReasoning).trim()) reasoningOverlay.style.display = 'none'; } catch {}
             }
           } catch {}
           try { requestJsonUpdate(data.meta || {}); } catch {}
+          try { updateOverlaysVisibility(); } catch {}
         }
         try { if (data && data.state) { getCache(taskId).state = data.state; scheduleCacheSave(taskId); } } catch {}
         // Detect long-standing PENDING with no meaningful progress
@@ -1034,6 +1140,7 @@
           try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
         }
       } catch {}
+      try { updateOverlaysVisibility(); } catch {}
       try { if (typeof tryUpdateJsonView === 'function') tryUpdateJsonView(); } catch {}
       // Pretty-print JSON if the final content looks like JSON; then apply light green background + border
       try {
@@ -1241,20 +1348,3 @@
     openTaskStartModal({ url, title, method, mode, defaultJsonText });
   });
 })();
-    function setStreamText(el, text) {
-      try {
-        if (!el) return;
-        if ('value' in el) { el.value = text || ''; } else { el.textContent = text || ''; }
-      } catch {}
-    }
-    function hasStreamAnyContent() {
-      try {
-        const a = streamEl ? (('value' in streamEl) ? (streamEl.value || '') : (streamEl.textContent || '')) : '';
-        const b = streamJsonPre && typeof streamJsonPre.textContent === 'string' ? streamJsonPre.textContent : '';
-        return !!(String(a).trim() || String(b).trim());
-      } catch { return false; }
-    }
-    function getStreamText(el) {
-      try { if (!el) return ''; return ('value' in el) ? (el.value || '') : (el.textContent || ''); } catch { return ''; }
-    }
-    function scrollStreamToBottom(el) { try { if (el) el.scrollTop = el.scrollHeight; } catch {} }

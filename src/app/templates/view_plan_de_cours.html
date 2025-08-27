@@ -270,11 +270,11 @@
         <!-- Accordéon : Contenu du cours (édition) -->
         <div class="accordion-item" id="section-contenu">
             <h2 class="accordion-header" id="headingEdition">
-                <button class="accordion-button collapsed bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEdition" aria-expanded="false" aria-controls="collapseEdition">
+                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEdition" aria-expanded="true" aria-controls="collapseEdition">
                     Contenu du cours
                 </button>
             </h2>
-            <div id="collapseEdition" class="accordion-collapse collapse" aria-labelledby="headingEdition">
+            <div id="collapseEdition" class="accordion-collapse collapse show" aria-labelledby="headingEdition">
                 <div class="accordion-body">
                     
                     <form method="POST" action="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=cours.id) }}" id="planDeCoursForm">
