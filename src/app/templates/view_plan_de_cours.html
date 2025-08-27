@@ -895,7 +895,8 @@ document.addEventListener('DOMContentLoaded', function() {
             url: "/api/plan_de_cours/{{ plan_de_cours.id }}/generate",
             title: 'Générer le plan de cours',
             startMessage: 'Génération en cours…',
-            basePayload: { stream: true }
+            fieldLabels: { additional_info: 'Informations complémentaires' },
+            fixedPayload: { stream: true }
           });
         });
       }
