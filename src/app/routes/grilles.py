@@ -151,7 +151,6 @@ def liste_grilles():
 def confirm_grille_import(task_id):
     """
     Affiche un formulaire permettant de confirmer l'importation d'une grille de cours extraite.
-    L'utilisateur peut choisir le programme auquel associer la grille.
     """
     # Récupérer le résultat de la tâche
     task_result = AsyncResult(task_id, app=celery)
@@ -196,31 +195,14 @@ def confirm_grille_import(task_id):
     
     # Créer le formulaire
     form = ConfirmationGrilleForm()
-    
-    # Remplir la liste déroulante des programmes disponibles
-    programmes = Programme.query.join(Department).filter(
-        Department.id == current_user.department_id
-    ).all() if current_user.department_id else Programme.query.all()
-    
-    form.programme_id.choices = [(p.id, f"{p.nom}") for p in programmes]
 
-    # Si un programme a été fourni dans la requête, le sélectionner par défaut
-    fixed_programme = False
-    selected_programme = None
-    try:
-        arg_prog_id = request.args.get('programme_id', type=int)
-        if arg_prog_id:
-            # Vérifier que le programme existe
-            prog = Programme.query.get(arg_prog_id)
-            if prog:
-                form.programme_id.data = prog.id
-                fixed_programme = True
-                selected_programme = prog
-    except Exception:
-        fixed_programme = False
-    
-    # Pré-remplir avec le nom du programme détecté
-    form.nom_programme.data = nom_programme
+    # Récupérer le programme depuis les paramètres de requête
+    programme_id = request.args.get('programme_id', type=int)
+    if not programme_id:
+        flash("Programme non spécifié.", "warning")
+        return redirect(url_for('tasks.track_task', task_id=task_id))
+
+    programme = Programme.query.get_or_404(programme_id)
     
     # Stocker l'ID de la tâche et le JSON pour soumission
     form.task_id.data = task_id
@@ -233,10 +215,6 @@ def confirm_grille_import(task_id):
         
         if form.confirmer.data:
             try:
-                # Récupérer les données du formulaire
-                programme_id = form.programme_id.data
-                programme = Programme.query.get_or_404(programme_id)
-                
                 # Sauvegarder en base de données
                 success = save_grille_to_database(
                     grille_data=grille_data,
@@ -274,6 +252,5 @@ def confirm_grille_import(task_id):
         apercu_sessions=apercu_sessions,
         nom_programme=nom_programme,
         task_id=task_id,
-        fixed_programme=fixed_programme,
-        selected_programme=selected_programme
+        programme=programme
     )
