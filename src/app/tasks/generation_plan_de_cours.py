@@ -74,6 +74,30 @@ def _extract_reasoning_summary_from_response(response):
     return summary.strip()
 
 
+def _serialize_evaluations(plan: PlanDeCours) -> List[dict]:
+    """Sérialise les évaluations du plan de cours."""
+    evaluations = []
+    for e in getattr(plan, "evaluations", []) or []:
+        evaluations.append({
+            "id": e.id,
+            "titre": e.titre_evaluation,
+            "description": e.description,
+            "semaine": e.semaine,
+            "capacites": [
+                {
+                    "capacite_id": c.capacite_id,
+                    "capacite": (
+                        db.session.get(PlanCadreCapacites, c.capacite_id).capacite
+                        if c.capacite_id else None
+                    ),
+                    "ponderation": c.ponderation,
+                }
+                for c in getattr(e, "capacites", [])
+            ],
+        })
+    return evaluations
+
+
 @shared_task(bind=True, name='src.app.tasks.generation_plan_de_cours.generate_plan_de_cours_all_task')
 def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai_model: str, user_id: int):
     """Celery task qui génère toutes les sections du plan de cours et met à jour la BD."""
@@ -191,6 +215,7 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
                 'evaluations': c.evaluations,
             } for c in plan.calendriers
         ]
+        old_evaluations = _serialize_evaluations(plan)
 
         # Mettre à jour les champs
         plan.presentation_du_cours = parsed.presentation_du_cours or plan.presentation_du_cours
@@ -252,9 +277,8 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
                 e_usage_completion = eval_response.usage.output_tokens if hasattr(eval_response, 'usage') else 0
                 e_cost = calculate_call_cost(e_usage_prompt, e_usage_completion, ai_model or 'gpt-5')
                 if user.credits < e_cost:
-                    # Ne pas interrompre le flux global: retourner un succès partiel sans évaluations
+                    # Ne pas interrompre le flux global: retourner un succès partiel sans nouvelles évaluations
                     logger.warning("Crédits insuffisants pour générer les évaluations; champs/calendrier mis à jour.")
-                    generated_evals = []
                 else:
                     user.credits -= e_cost
 
@@ -298,28 +322,12 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
                             ))
 
                     db.session.commit()
-
-                    # Serialize évaluations pour le payload
-                    generated_evals = []
-                    for e in plan.evaluations:
-                        generated_evals.append({
-                            'id': e.id,
-                            'titre': e.titre_evaluation,
-                            'description': e.description,
-                            'semaine': e.semaine,
-                            'capacites': [
-                                {
-                                    'capacite_id': c.capacite_id,
-                                    'capacite': (db.session.get(PlanCadreCapacites, c.capacite_id).capacite if c.capacite_id else None),
-                                    'ponderation': c.ponderation,
-                                } for c in e.capacites
-                            ]
-                        })
             else:
-                generated_evals = []
+                pass
         except Exception:
             logger.exception("Erreur lors de la génération des évaluations intégrée à generate_all")
-            generated_evals = []
+
+        generated_evals = _serialize_evaluations(plan)
 
         return {
             "status": "success",
@@ -344,6 +352,7 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
             "evaluations": generated_evals,
             "old_fields": old_fields,
             "old_calendriers": old_calendriers,
+            "old_evaluations": old_evaluations,
             "cours_id": plan.cours_id,
             "plan_id": plan.id,
             "session": plan.session,
@@ -546,6 +555,8 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
         setattr(plan, field_name, value)
         db.session.commit()
 
+        evaluations = _serialize_evaluations(plan)
+
         return {
             'status': 'success',
             'field_name': field_name,
@@ -557,6 +568,8 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
             # Ajouts pour la page de validation unifiée Plan de cours
             'old_fields': old_fields,
             'old_calendriers': old_calendriers,
+            'old_evaluations': old_evaluations,
+            'evaluations': evaluations,
             'validation_url': f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
             'reasoning_summary': reasoning_summary_text,
         }
@@ -706,6 +719,8 @@ def generate_plan_de_cours_calendar_task(self, plan_de_cours_id: int, additional
             ))
         db.session.commit()
 
+        evaluations = _serialize_evaluations(plan)
+
         return {
             'status': 'success',
             'plan_id': plan.id,
@@ -720,6 +735,7 @@ def generate_plan_de_cours_calendar_task(self, plan_de_cours_id: int, additional
                     'evaluations': c.evaluations,
                 } for c in plan.calendriers
             ],
+            'evaluations': evaluations,
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
             # Ajouts pour permettre la restauration via la page de review
             'old_fields': {
@@ -732,6 +748,7 @@ def generate_plan_de_cours_calendar_task(self, plan_de_cours_id: int, additional
                 'materiel': plan.materiel,
             },
             'old_calendriers': old_calendriers,
+            'old_evaluations': old_evaluations,
             'validation_url': f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
             'reasoning_summary': reasoning_summary_text,
         }
@@ -820,9 +837,29 @@ def generate_plan_de_cours_evaluations_task(self, plan_de_cours_id: int, additio
         if not evals:
             return {"status": "error", "message": "Aucune évaluation générée."}
 
+        # Snapshot avant remplacement pour revert
+        old_fields = {
+            'presentation_du_cours': plan.presentation_du_cours,
+            'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+            'organisation_et_methodes': plan.organisation_et_methodes,
+            'accomodement': plan.accomodement,
+            'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+            'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'materiel': plan.materiel,
+        }
+        old_calendriers = [
+            {
+                'semaine': c.semaine,
+                'sujet': c.sujet,
+                'activites': c.activites,
+                'travaux_hors_classe': c.travaux_hors_classe,
+                'evaluations': c.evaluations,
+            } for c in plan.calendriers
+        ]
+        old_evaluations = _serialize_evaluations(plan)
+
         # Remplacer la liste d'évaluations existantes
         for e in plan.evaluations:
-            # Capacités supprimées via cascade
             db.session.delete(e)
 
         # Map libellé capacité -> id
@@ -834,7 +871,6 @@ def generate_plan_de_cours_evaluations_task(self, plan_de_cours_id: int, additio
         except Exception:
             pass
 
-        created = []
         for ev in evals:
             row = PlanDeCoursEvaluations(
                 plan_de_cours_id=plan.id,
@@ -844,7 +880,6 @@ def generate_plan_de_cours_evaluations_task(self, plan_de_cours_id: int, additio
             )
             db.session.add(row)
             db.session.flush()
-            # Capacités évaluées
             for ce in (ev.capacites or []):
                 cap_id = None
                 if ce.capacite:
@@ -854,34 +889,40 @@ def generate_plan_de_cours_evaluations_task(self, plan_de_cours_id: int, additio
                     capacite_id=cap_id,
                     ponderation=ce.ponderation,
                 ))
-            created.append(row)
 
         db.session.commit()
 
-        # Serialize back
-        result_evals = []
-        for e in plan.evaluations:
-            result_evals.append({
-                'id': e.id,
-                'titre': e.titre_evaluation,
-                'description': e.description,
-                'semaine': e.semaine,
-                'capacites': [
-                    {
-                        'capacite_id': c.capacite_id,
-                        'capacite': (db.session.get(PlanCadreCapacites, c.capacite_id).capacite if c.capacite_id else None),
-                        'ponderation': c.ponderation,
-                    } for c in e.capacites
-                ]
-            })
+        evaluations = _serialize_evaluations(plan)
 
         return {
             'status': 'success',
             'plan_id': plan.id,
             'cours_id': plan.cours_id,
             'session': plan.session,
-            'evaluations': result_evals,
+            'fields': {
+                'presentation_du_cours': plan.presentation_du_cours,
+                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+                'organisation_et_methodes': plan.organisation_et_methodes,
+                'accomodement': plan.accomodement,
+                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'materiel': plan.materiel,
+            },
+            'calendriers': [
+                {
+                    'semaine': c.semaine,
+                    'sujet': c.sujet,
+                    'activites': c.activites,
+                    'travaux_hors_classe': c.travaux_hors_classe,
+                    'evaluations': c.evaluations,
+                } for c in plan.calendriers
+            ],
+            'evaluations': evaluations,
+            'old_fields': old_fields,
+            'old_calendriers': old_calendriers,
+            'old_evaluations': old_evaluations,
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
+            'validation_url': f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
         }
     except Exception as e:
         logger.exception("Erreur dans la tâche generate_plan_de_cours_evaluations_task")
