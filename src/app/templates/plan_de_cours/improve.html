@@ -94,6 +94,7 @@ document.addEventListener('DOMContentLoaded', function(){
       }, {
         title: 'Amélioration du plan de cours',
         startMessage: 'Amélioration en cours…',
+        openModal: true,
         onDone: (payload) => {
           const reviewUrl = payload && payload.validation_url
             ? payload.validation_url
