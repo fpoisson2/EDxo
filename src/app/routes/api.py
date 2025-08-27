@@ -308,8 +308,11 @@ def generate_plan_de_cours_calendar(plan_id):
     from ..tasks.generation_plan_de_cours import generate_plan_de_cours_calendar_task
     payload = request.get_json(silent=True) or {}
     additional_info = payload.get('additional_info') or ''
+    current_cal = payload.get('existing_calendriers')
     plan = PlanDeCours.query.get_or_404(plan_id)
-    task = generate_plan_de_cours_calendar_task.delay(plan.id, additional_info, g.api_user.id)
+    task = generate_plan_de_cours_calendar_task.delay(
+        plan.id, additional_info, g.api_user.id, current_cal
+    )
     return jsonify({'task_id': task.id}), 202
 
 
@@ -320,6 +323,9 @@ def generate_plan_de_cours_evaluations(plan_id):
     from ..tasks.generation_plan_de_cours import generate_plan_de_cours_evaluations_task
     payload = request.get_json(silent=True) or {}
     additional_info = payload.get('additional_info') or ''
+    current_evals = payload.get('existing_evaluations')
     plan = PlanDeCours.query.get_or_404(plan_id)
-    task = generate_plan_de_cours_evaluations_task.delay(plan.id, additional_info, g.api_user.id)
+    task = generate_plan_de_cours_evaluations_task.delay(
+        plan.id, additional_info, g.api_user.id, current_evals
+    )
     return jsonify({'task_id': task.id}), 202

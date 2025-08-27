@@ -4,6 +4,7 @@ from typing import List, Optional
 from celery import shared_task
 from openai import OpenAI
 from pydantic import BaseModel, Field
+import json
 
 from src.extensions import db
 from src.utils.openai_pricing import calculate_call_cost
@@ -584,7 +585,13 @@ class CalendarOnlyResponse(BaseModel):
 
 
 @shared_task(bind=True, name='src.app.tasks.generation_plan_de_cours.generate_plan_de_cours_calendar_task')
-def generate_plan_de_cours_calendar_task(self, plan_de_cours_id: int, additional_info: Optional[str], user_id: int):
+def generate_plan_de_cours_calendar_task(
+    self,
+    plan_de_cours_id: int,
+    additional_info: Optional[str],
+    user_id: int,
+    current_calendrier: Optional[List[dict]] = None,
+):
     """Génère uniquement le calendrier des activités du plan de cours."""
     try:
         plan = db.session.get(PlanDeCours, plan_de_cours_id)
@@ -611,6 +618,8 @@ def generate_plan_de_cours_calendar_task(self, plan_de_cours_id: int, additional
         prompt = build_calendar_prompt(plan_cadre, session=plan.session)
         if additional_info:
             prompt = prompt + "\n\nPrécisions: " + str(additional_info)
+        if current_calendrier:
+            prompt += "\n\nCalendrier actuel:\n" + json.dumps(current_calendrier, ensure_ascii=False)
 
         # Choix du modèle (reuse 'all' if set)
         ps = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
@@ -704,6 +713,7 @@ def generate_plan_de_cours_calendar_task(self, plan_de_cours_id: int, additional
                 'evaluations': c.evaluations,
             } for c in plan.calendriers
         ]
+        old_evaluations = _serialize_evaluations(plan)
 
         # Mise à jour DB (remplace le calendrier courant)
         for cal in plan.calendriers:
@@ -774,7 +784,13 @@ class EvaluationsResponse(BaseModel):
 
 
 @shared_task(bind=True, name='src.app.tasks.generation_plan_de_cours.generate_plan_de_cours_evaluations_task')
-def generate_plan_de_cours_evaluations_task(self, plan_de_cours_id: int, additional_info: Optional[str], user_id: int):
+def generate_plan_de_cours_evaluations_task(
+    self,
+    plan_de_cours_id: int,
+    additional_info: Optional[str],
+    user_id: int,
+    current_evaluations: Optional[List[dict]] = None,
+):
     """Génère la liste d'évaluations (titre, semaine, description, capacités + pondérations)."""
     try:
         plan = db.session.get(PlanDeCours, plan_de_cours_id)
@@ -813,6 +829,8 @@ def generate_plan_de_cours_evaluations_task(self, plan_de_cours_id: int, additio
         )
         if additional_info:
             prompt += "\n\nContraintes/Précisions: " + str(additional_info)
+        if current_evaluations:
+            prompt += "\n\nÉvaluations actuelles:\n" + json.dumps(current_evaluations, ensure_ascii=False)
 
         ps = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
         ai_model = (ps.ai_model if ps and ps.ai_model else None) or 'gpt-5'

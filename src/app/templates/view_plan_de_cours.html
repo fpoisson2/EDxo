@@ -338,9 +338,6 @@
                         <div class="mb-3">
                             <div class="d-flex align-items-center justify-content-between">
                                 <h4 class="mb-0">Calendrier des activités</h4>
-                                <button type="button" class="btn btn-secondary btn-sm generate-calendar" id="generate-calendar" title="Générer le calendrier">
-                                    <i class="bi bi-magic"></i>Générer le calendrier
-                                </button>
                             </div>
                             <div id="calendrier-container" class="mb-3" {% if not form.calendriers %}style="display: none;"{% endif %}>
                                  {% for subform in form.calendriers %}
@@ -454,9 +451,6 @@
                         <div class="mb-3">
                             <div class="d-flex align-items-center justify-content-between">
                                 <h4 class="mb-0">Évaluations</h4>
-                                <button type="button" class="btn btn-secondary btn-sm" id="generate-evaluations" title="Générer les évaluations">
-                                    <i class="bi bi-magic"></i>Générer les évaluations
-                                </button>
                             </div>
                             <div id="evaluations-container" class="mb-3" {% if not form.evaluations %}style="display: none;"{% endif %}>
                                 {% for evaluation_subform in form.evaluations %}
@@ -524,17 +518,21 @@
                             </div>
                         </div>
 
+                        <div class="d-flex justify-content-end gap-2 mb-3">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="improve-calendar" title="Améliorer le calendrier">
+                                <i class="bi bi-magic"></i>Améliorer le calendrier
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="improve-evaluations" title="Améliorer les évaluations">
+                                <i class="bi bi-magic"></i>Améliorer les évaluations
+                            </button>
+                        </div>
+
                         <button type="submit" id="floatingSaveBtn" class="btn d-none">
                             <i class="bi bi-check-lg"></i>
                         </button>
                         <button type="button" id="floatingCancelBtn" class="btn d-none">
                             <i class="bi bi-x-lg"></i>
                         </button>
-                        <div class="mt-4">
-                            <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" class="btn btn-success" role="button">
-                                Exporter le Plan de Cours en .docx
-                            </a>
-                        </div>
                     </form>
 
                     <!-- Modal Import DOCX moved below to avoid collapse visibility issues -->
@@ -810,8 +808,8 @@ textarea.toast-ui-target:not(.toast-initialized) {
     position: relative;
 }
 
-.generate-button.loading,
-.generate-calendar.loading {
+
+.generate-button.loading {
     pointer-events: none;
     opacity: 0.7;
 }
@@ -1281,19 +1279,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.showFloatingButtons) window.showFloatingButtons();
     }
 
-    // Génération calendrier via EDxoTasks
-    document.getElementById('generate-calendar')?.addEventListener('click', function() {
-        if (window.EDxoTasks && window.EDxoTasks.openQuickTask) {
-            window.EDxoTasks.openQuickTask({
-                url: "/api/plan_de_cours/{{ plan_de_cours.id }}/generate_calendar",
-                title: 'Générer le calendrier',
-                startMessage: 'Génération en cours…',
-                fixedPayload: { stream: true },
-                onDone: (data) => { try { populateCalendarFromPayload(data); showToast('generateSuccessToast'); } catch(_) {} }
-            });
-        }
-    });
-
     // Gestion du bouton d'ajout de calendrier
     document.getElementById('add-calendrier')?.addEventListener('click', function() {
         const container = document.getElementById('calendrier-container');
@@ -1376,14 +1361,65 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.showFloatingButtons) window.showFloatingButtons();
     }
 
-    // Génération des évaluations via EDxoTasks
-    document.getElementById('generate-evaluations')?.addEventListener('click', function() {
+    // Récupère le calendrier actuel depuis le DOM
+    function collectCalendarData() {
+        const items = [];
+        document.querySelectorAll('#calendrier-container .calendar-item').forEach((item) => {
+            items.push({
+                semaine: item.querySelector('[name$="-semaine"]')?.value || '',
+                sujet: item.querySelector('[name$="-sujet"]')?.value || '',
+                activites: item.querySelector('[name$="-activites"]')?.value || '',
+                travaux_hors_classe: item.querySelector('[name$="-travaux_hors_classe"]')?.value || '',
+                evaluations: item.querySelector('[name$="-evaluations"]')?.value || '',
+            });
+        });
+        return items;
+    }
+
+    // Récupère les évaluations actuelles depuis le DOM
+    function collectEvaluationsData() {
+        const list = [];
+        document.querySelectorAll('#evaluations-container .evaluation-item').forEach((item) => {
+            const ev = {
+                titre: item.querySelector('[name$="-titre_evaluation"]')?.value || '',
+                semaine: item.querySelector('[name$="-semaine"]')?.value || '',
+                description: item.querySelector('[name$="-texte_description"]')?.value || '',
+                capacites: []
+            };
+            item.querySelectorAll('.capacite-item').forEach(cap => {
+                ev.capacites.push({
+                    capacite_id: cap.querySelector('[name$="-capacite_id"]')?.value || '',
+                    ponderation: cap.querySelector('[name$="-ponderation"]')?.value || ''
+                });
+            });
+            list.push(ev);
+        });
+        return list;
+    }
+
+    // Amélioration du calendrier
+    document.getElementById('improve-calendar')?.addEventListener('click', function() {
+        const existing = collectCalendarData();
+        if (window.EDxoTasks && window.EDxoTasks.openQuickTask) {
+            window.EDxoTasks.openQuickTask({
+                url: "/api/plan_de_cours/{{ plan_de_cours.id }}/generate_calendar",
+                title: 'Améliorer le calendrier',
+                startMessage: 'Amélioration en cours…',
+                fixedPayload: { stream: true, existing_calendriers: existing },
+                onDone: (data) => { try { populateCalendarFromPayload(data); showToast('generateSuccessToast'); } catch(_) {} }
+            });
+        }
+    });
+
+    // Amélioration des évaluations
+    document.getElementById('improve-evaluations')?.addEventListener('click', function() {
+        const existing = collectEvaluationsData();
         if (window.EDxoTasks && window.EDxoTasks.openQuickTask) {
             window.EDxoTasks.openQuickTask({
                 url: "/api/plan_de_cours/{{ plan_de_cours.id }}/generate_evaluations",
-                title: 'Générer les évaluations',
-                startMessage: 'Génération en cours…',
-                fixedPayload: { stream: true },
+                title: 'Améliorer les évaluations',
+                startMessage: 'Amélioration en cours…',
+                fixedPayload: { stream: true, existing_evaluations: existing },
                 onDone: (data) => { try { populateEvaluationsFromPayload(data); showToast('generateSuccessToast'); } catch(_) {} }
             });
         }
