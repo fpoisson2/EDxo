@@ -48,6 +48,32 @@ def _extract_first_parsed(response):
     return None
 
 
+def _collect_summary(items):
+    """Concatène les textes de résumé fournis par l'API Responses."""
+    text = ""
+    if not items:
+        return text
+    if not isinstance(items, (list, tuple)):
+        items = [items]
+    for item in items:
+        if getattr(item, "type", "") == "summary_text":
+            text += getattr(item, "text", "")
+    return text
+
+
+def _extract_reasoning_summary_from_response(response):
+    """Extrait le résumé de raisonnement de la réponse finale."""
+    summary = ""
+    if hasattr(response, "reasoning") and response.reasoning:
+        for r in response.reasoning:
+            summary += _collect_summary(getattr(r, "summary", None))
+    if not summary and hasattr(response, "output"):
+        for item in getattr(response, "output", []):
+            if getattr(item, "type", "") == "reasoning":
+                summary += _collect_summary(getattr(item, "summary", None))
+    return summary.strip()
+
+
 @shared_task(bind=True, name='src.app.tasks.generation_plan_de_cours.generate_plan_de_cours_all_task')
 def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai_model: str, user_id: int):
     """Celery task qui génère toutes les sections du plan de cours et met à jour la BD."""
@@ -70,11 +96,68 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
         self.update_state(state='PROGRESS', meta={'message': 'Appel au modèle IA en cours...'})
 
         client = OpenAI(api_key=user.openai_key)
-        response = client.responses.parse(
-            model=ai_model,
-            input=prompt,
-            text_format=BulkPlanDeCoursResponse,
-        )
+        streamed_text = ""
+        reasoning_summary_text = ""
+        try:
+            with client.responses.stream(
+                model=ai_model,
+                input=prompt,
+                text_format=BulkPlanDeCoursResponse,
+                reasoning={"summary": "auto"},
+            ) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Génération en cours...',
+                                'stream_chunk': delta,
+                                'stream_buffer': streamed_text,
+                            })
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(event, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary_text += rs_delta
+                            reasoning_summary_text = reasoning_summary_text.strip()
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif etype.endswith('reasoning.summary.delta') or etype == 'reasoning.summary.delta':
+                        reasoning_summary_text += _collect_summary(getattr(event, 'delta', None))
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif getattr(event, 'summary', None):
+                        reasoning_summary_text += _collect_summary(event.summary)
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif etype.endswith('response.completed') or etype == 'response.completed':
+                        break
+                response = stream.get_final_response()
+        except Exception as se:
+            logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
+            streamed_text = None
+            response = client.responses.parse(
+                model=ai_model,
+                input=prompt,
+                text_format=BulkPlanDeCoursResponse,
+            )
+            reasoning_summary_text = _extract_reasoning_summary_from_response(response)
+            if reasoning_summary_text:
+                self.update_state(state='PROGRESS', meta={
+                    'message': 'Résumé du raisonnement',
+                    'reasoning_summary': reasoning_summary_text,
+                })
 
         usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
         usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
@@ -159,7 +242,8 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
             "cours_id": plan.cours_id,
             "plan_id": plan.id,
             "session": plan.session,
-            "validation_url": f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}"
+            "validation_url": f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
+            "reasoning_summary": reasoning_summary_text
         }
 
     except Exception as e:
@@ -253,11 +337,68 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
         self.update_state(state='PROGRESS', meta={'message': f"Génération de '{field_name}' en cours..."})
 
         client = OpenAI(api_key=user.openai_key)
-        response = client.responses.parse(
-            model=ai_model,
-            input=prompt,
-            text_format=SingleFieldResponse,
-        )
+        streamed_text = ""
+        reasoning_summary_text = ""
+        try:
+            with client.responses.stream(
+                model=ai_model,
+                input=prompt,
+                text_format=SingleFieldResponse,
+                reasoning={"summary": "auto"},
+            ) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            self.update_state(state='PROGRESS', meta={
+                                'message': f"Génération de '{field_name}' en cours...",
+                                'stream_chunk': delta,
+                                'stream_buffer': streamed_text,
+                            })
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(event, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary_text += rs_delta
+                            reasoning_summary_text = reasoning_summary_text.strip()
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif etype.endswith('reasoning.summary.delta') or etype == 'reasoning.summary.delta':
+                        reasoning_summary_text += _collect_summary(getattr(event, 'delta', None))
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif getattr(event, 'summary', None):
+                        reasoning_summary_text += _collect_summary(event.summary)
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif etype.endswith('response.completed') or etype == 'response.completed':
+                        break
+                response = stream.get_final_response()
+        except Exception as se:
+            logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
+            streamed_text = None
+            response = client.responses.parse(
+                model=ai_model,
+                input=prompt,
+                text_format=SingleFieldResponse,
+            )
+            reasoning_summary_text = _extract_reasoning_summary_from_response(response)
+            if reasoning_summary_text:
+                self.update_state(state='PROGRESS', meta={
+                    'message': 'Résumé du raisonnement',
+                    'reasoning_summary': reasoning_summary_text,
+                })
 
         usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
         usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
@@ -288,6 +429,7 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
             'cours_id': plan.cours_id,
             'session': plan.session,
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
+            'reasoning_summary': reasoning_summary_text,
         }
 
     except Exception as e:
@@ -335,11 +477,68 @@ def generate_plan_de_cours_calendar_task(self, plan_de_cours_id: int, additional
         self.update_state(state='PROGRESS', meta={'message': 'Génération du calendrier…'})
 
         client = OpenAI(api_key=user.openai_key)
-        response = client.responses.parse(
-            model=ai_model,
-            input=prompt,
-            text_format=CalendarOnlyResponse,
-        )
+        streamed_text = ""
+        reasoning_summary_text = ""
+        try:
+            with client.responses.stream(
+                model=ai_model,
+                input=prompt,
+                text_format=CalendarOnlyResponse,
+                reasoning={"summary": "auto"},
+            ) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Génération du calendrier…',
+                                'stream_chunk': delta,
+                                'stream_buffer': streamed_text,
+                            })
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(event, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary_text += rs_delta
+                            reasoning_summary_text = reasoning_summary_text.strip()
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif etype.endswith('reasoning.summary.delta') or etype == 'reasoning.summary.delta':
+                        reasoning_summary_text += _collect_summary(getattr(event, 'delta', None))
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif getattr(event, 'summary', None):
+                        reasoning_summary_text += _collect_summary(event.summary)
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif etype.endswith('response.completed') or etype == 'response.completed':
+                        break
+                response = stream.get_final_response()
+        except Exception as se:
+            logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
+            streamed_text = None
+            response = client.responses.parse(
+                model=ai_model,
+                input=prompt,
+                text_format=CalendarOnlyResponse,
+            )
+            reasoning_summary_text = _extract_reasoning_summary_from_response(response)
+            if reasoning_summary_text:
+                self.update_state(state='PROGRESS', meta={
+                    'message': 'Résumé du raisonnement',
+                    'reasoning_summary': reasoning_summary_text,
+                })
 
         usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
         usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
@@ -382,6 +581,7 @@ def generate_plan_de_cours_calendar_task(self, plan_de_cours_id: int, additional
                 } for c in plan.calendriers
             ],
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
+            'reasoning_summary': reasoning_summary_text,
         }
     except Exception as e:
         logger.exception("Erreur dans la tâche generate_plan_de_cours_calendar_task")
