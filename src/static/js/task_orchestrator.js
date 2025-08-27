@@ -441,17 +441,18 @@
           </div>
           <div class="modal-body">
             <div class="mb-2 small text-muted">ID: <span id="task-orch-id"></span> · État: <span id="task-orch-state">PENDING</span></div>
-            <div id="task-orch-user-prompt" class="mb-2 d-none">
-              <button class="btn btn-sm btn-outline-secondary mb-2" type="button" id="task-orch-toggle-prompt">Afficher le prompt</button>
-              <pre id="task-orch-prompt" class="small" style="display:none;max-height:25vh;overflow:auto;background:#f8f9fa;padding:8px;border-radius:6px;"></pre>
+            <h6 class="mt-2 mb-1">Résumé du raisonnement</h6>
+            <div id="task-orch-reasoning-spinner" class="my-2" style="min-height:1.5rem;">
+              <div class="spinner-border spinner-border-sm text-primary" role="status" aria-label="Chargement"></div>
             </div>
             <div id="task-orch-reasoning" class="mb-2 small d-none" style="max-height:25vh;overflow:auto;background:#f8f9fa;padding:8px;border-radius:6px;"></div>
+
+            <h6 class="mt-3 mb-1">Contenu généré</h6>
+            <div id="task-orch-stream-spinner" class="my-2" style="min-height:1.5rem;">
+              <div class="spinner-border spinner-border-sm text-primary" role="status" aria-label="Chargement"></div>
+            </div>
             <textarea id="task-orch-stream" class="form-control" rows="6" readonly style="background:#0f172a;color:#e2e8f0;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;min-height:140px;max-height:280px;"></textarea>
             <div id="task-orch-log" class="mt-2" style="background:#0f172a;color:#e2e8f0;border-radius:6px;padding:10px;max-height:120px;overflow:auto;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;"></div>
-            <div class="mt-3">
-              <button class="btn btn-sm btn-outline-secondary" type="button" id="task-orch-toggle-json">Afficher JSON</button>
-              <pre id="task-orch-json" class="mt-2" style="display:none;max-height:30vh;overflow:auto;background:#f8f9fa;padding:8px;border-radius:6px;"></pre>
-            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-danger me-auto" id="task-orch-cancel">Arrêter</button>
@@ -464,17 +465,12 @@
     document.body.insertAdjacentHTML('beforeend', html);
     modal = document.getElementById('taskOrchestratorModal');
     const toggleBtn = document.getElementById('task-orch-toggle-json');
-    toggleBtn.addEventListener('click', () => {
-      const pre = document.getElementById('task-orch-json');
-      pre.style.display = pre.style.display === 'none' ? 'block' : 'none';
-      toggleBtn.textContent = pre.style.display === 'none' ? 'Afficher JSON' : 'Masquer JSON';
-    });
-    const togglePromptBtn = document.getElementById('task-orch-toggle-prompt');
-    if (togglePromptBtn) {
-      togglePromptBtn.addEventListener('click', () => {
-        const pre = document.getElementById('task-orch-prompt');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        const pre = document.getElementById('task-orch-json');
+        if (!pre) return;
         pre.style.display = pre.style.display === 'none' ? 'block' : 'none';
-        togglePromptBtn.textContent = pre.style.display === 'none' ? 'Afficher le prompt' : 'Masquer le prompt';
+        toggleBtn.textContent = pre.style.display === 'none' ? 'Afficher JSON' : 'Masquer JSON';
       });
     }
     return modal;
@@ -567,7 +563,10 @@
     const logEl = document.getElementById('task-orch-log');
     if (logEl) logEl.innerHTML = '';
     const streamEl = opts.streamEl || document.getElementById('task-orch-stream');
+    try { if (streamEl) streamEl.style.background = '#0f172a'; } catch {}
+    const streamSpinner = document.getElementById('task-orch-stream-spinner');
     const reasoningEl = opts.summaryEl || document.getElementById('task-orch-reasoning');
+    const reasoningSpinner = document.getElementById('task-orch-reasoning-spinner');
 
     // Local helper: make reasoning easier to read by turning bold titles into headings
     function formatReasoningMarkdown(text) {
@@ -594,6 +593,7 @@
       if (streamEl) {
         streamEl.value = cache.stream || '';
         streamEl.scrollTop = streamEl.scrollHeight;
+        if (streamSpinner) streamSpinner.style.display = streamEl.value ? 'none' : '';
       }
       if (reasoningEl) {
         const txt = cache.reasoning || '';
@@ -607,12 +607,15 @@
         } catch (_) {
           reasoningEl.textContent = txt;
         }
-        if (txt) reasoningEl.classList.remove('d-none'); else reasoningEl.classList.add('d-none');
+        if (txt) {
+          reasoningEl.classList.remove('d-none');
+          if (reasoningSpinner) reasoningSpinner.style.display = 'none';
+        } else {
+          reasoningEl.classList.add('d-none');
+          if (reasoningSpinner) reasoningSpinner.style.display = '';
+        }
       }
-      const jp = document.getElementById('task-orch-json');
-      if (jp) {
-        jp.textContent = cache.meta ? JSON.stringify(cache.meta, null, 2) : '';
-      }
+      // JSON pane removed
       if (cache.state) {
         document.getElementById('task-orch-state').textContent = cache.state;
       }
@@ -623,18 +626,7 @@
     if (opts.title) {
       document.getElementById('taskOrchestratorLabel').textContent = opts.title;
     }
-    // Optional user prompt display
-    try {
-      const promptWrap = document.getElementById('task-orch-user-prompt');
-      const promptPre = document.getElementById('task-orch-prompt');
-      if (opts.userPrompt) {
-        promptPre.textContent = String(opts.userPrompt || '');
-        promptWrap.classList.remove('d-none');
-      } else {
-        promptPre.textContent = '';
-        promptWrap.classList.add('d-none');
-      }
-    } catch {}
+    // Prompt UI removed
     // Show modal in non-blocking mode (no backdrop, no focus trap) and keep page interactive
     const bsModal = new bootstrap.Modal(modalEl, { backdrop: false, keyboard: true, focus: false });
     bsModal.show();
@@ -684,6 +676,7 @@
                 // Keep viewport near bottom
                 streamEl.scrollTop = streamEl.scrollHeight;
               }
+              if (streamSpinner) streamSpinner.style.display = streamEl && streamEl.value ? 'none' : '';
               try { scheduleCacheSave(taskId); } catch {}
             } catch {}
           }, 250);
@@ -714,6 +707,7 @@
                 reasoningEl.textContent = lastReasoning;
               }
               reasoningEl.classList.remove('d-none');
+              if (reasoningSpinner) reasoningSpinner.style.display = lastReasoning ? 'none' : '';
             }
           }, reasoningThrottleMs);
         }
@@ -731,44 +725,16 @@
       } catch { return meta; }
     }
 
-    // Throttled JSON rendering only when visible
-    const jsonPre = document.getElementById('task-orch-json');
-    const jsonToggleBtn = document.getElementById('task-orch-toggle-json');
+    // JSON pane removed: keep sanitized meta in cache without rendering
     let latestSanitized = null;
     let jsonTimer = null;
-    let jsonLastTs = 0;
     const jsonThrottleMs = 700;
-    function doJsonRender(obj) {
-      if (!jsonPre) return;
-      try { jsonPre.textContent = JSON.stringify(obj || {}, null, 2); } catch {}
-    }
     function requestJsonUpdate(meta) {
       latestSanitized = sanitizeMeta(meta);
       try { getCache(taskId).meta = latestSanitized; scheduleCacheSave(taskId); } catch {}
-      if (!jsonPre) return;
-      // Only render if JSON pane is visible
-      if (jsonPre.style.display === 'none') return;
-      const now = Date.now();
-      const elapsed = now - jsonLastTs;
-      if (elapsed >= jsonThrottleMs && !jsonTimer) {
-        doJsonRender(latestSanitized);
-        jsonLastTs = now;
-      } else if (!jsonTimer) {
-        const wait = Math.max(0, jsonThrottleMs - elapsed);
-        jsonTimer = setTimeout(() => {
-          jsonTimer = null;
-          if (jsonPre.style.display !== 'none') {
-            doJsonRender(latestSanitized);
-            jsonLastTs = Date.now();
-          }
-        }, wait);
+      if (!jsonTimer) {
+        jsonTimer = setTimeout(() => { jsonTimer = null; /* no UI render */ }, jsonThrottleMs);
       }
-    }
-    // If user reveals JSON, push an immediate refresh of latest snapshot
-    if (jsonToggleBtn) {
-      jsonToggleBtn.addEventListener('click', () => {
-        try { setTimeout(() => { if (jsonPre && jsonPre.style.display !== 'none' && latestSanitized) doJsonRender(latestSanitized); }, 0); } catch {}
-      });
     }
 
     try {
@@ -948,6 +914,19 @@
           streamEl.scrollTop = streamEl.scrollHeight;
           try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
         }
+      } catch {}
+      // Pretty-print JSON if the final content looks like JSON; then turn background green
+      try {
+        if (streamEl) {
+          const current = streamEl.value || '';
+          if (current) {
+            try { const obj = JSON.parse(current); streamEl.value = JSON.stringify(obj, null, 2); } catch {}
+          }
+          // Green background to indicate completion
+          try { streamEl.style.background = '#14532d'; } catch {}
+          try { if (streamSpinner) streamSpinner.style.display = 'none'; } catch {}
+        }
+        if (reasoningSpinner) reasoningSpinner.style.display = 'none';
       } catch {}
       try {
         if (payload && payload.reasoning_summary && reasoningEl) {
