@@ -233,8 +233,8 @@ def run_improve_field(dummy, plan_id, user_id):
             setup_generate_plan_user,
             run_generate,
             "src.app.tasks.generation_plan_cadre.OpenAI",
-            '{"fields":[{"field_name":"Intro et place du cours","content":"Salut"}]}',
-            '{"fields":[{"field_name":"Intro et place du cours","content":"Salut"}]}',
+            '{"place_intro":"Salut"}',
+            '{"place_intro":"Salut"}',
         ),
         (
             setup_improve_field_user,

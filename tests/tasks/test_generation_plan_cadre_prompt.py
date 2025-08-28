@@ -290,5 +290,5 @@ def test_full_schema_is_sent(app, monkeypatch):
     if not schema:
         pytest.skip("Schema not captured")
     props = schema.get('properties', {})
-    for key in ['fields', 'fields_with_description', 'savoir_etre', 'capacites']:
+    for key in ['place_intro', 'competences_developpees', 'savoir_etre', 'capacites']:
         assert key in props

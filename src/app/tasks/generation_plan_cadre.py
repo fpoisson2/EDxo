@@ -113,17 +113,9 @@ class OpenAIFunctionModel(BaseModel):
         json_schema_extra=lambda schema, _: _postprocess_openai_schema(schema)
     )
 
-class AIField(OpenAIFunctionModel):
-    field_name: Optional[str] = None
-    content: Optional[str] = None
-
 class AIContentDetail(OpenAIFunctionModel):
     texte: Optional[str] = None
     description: Optional[str] = None
-
-class AIFieldWithDescription(OpenAIFunctionModel):
-    field_name: Optional[str] = None
-    content: Optional[List[AIContentDetail]] = None
 
 class AISavoirFaire(OpenAIFunctionModel):
     texte: Optional[str] = None
@@ -141,8 +133,22 @@ class AICapacite(OpenAIFunctionModel):
 
 
 class PlanCadreAIResponse(OpenAIFunctionModel):
-    fields: Optional[List[AIField]] = None
-    fields_with_description: Optional[List[AIFieldWithDescription]] = None
+    place_intro: Optional[str] = None
+    objectif_terminal: Optional[str] = None
+    structure_intro: Optional[str] = None
+    structure_activites_theoriques: Optional[str] = None
+    structure_activites_pratiques: Optional[str] = None
+    structure_activites_prevues: Optional[str] = None
+    eval_evaluation_sommative: Optional[str] = None
+    eval_nature_evaluations_sommatives: Optional[str] = None
+    eval_evaluation_de_la_langue: Optional[str] = None
+    eval_evaluation_sommatives_apprentissages: Optional[str] = None
+    competences_developpees: Optional[List[AIContentDetail]] = None
+    competences_certifiees: Optional[List[AIContentDetail]] = None
+    cours_corequis: Optional[List[AIContentDetail]] = None
+    objets_cibles: Optional[List[AIContentDetail]] = None
+    cours_relies: Optional[List[AIContentDetail]] = None
+    cours_prealables: Optional[List[AIContentDetail]] = None
     savoir_etre: Optional[List[str]] = None
     capacites: Optional[List[AICapacite]] = None
 
@@ -1050,53 +1056,62 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         }
 
         # 3.a Champs simples
-        for fobj in (getattr(parsed_data, "fields", []) or []):
-            fname = fobj.field_name
-            fcontent = clean_text(fobj.content)
-            if fname in field_to_plan_cadre_column:
-                col = field_to_plan_cadre_column[fname]
-                if improve_only or preview:
-                    proposed['fields'][col] = fcontent
-                else:
-                    setattr(plan, col, fcontent)
+        simple_columns = [
+            'place_intro',
+            'objectif_terminal',
+            'structure_intro',
+            'structure_activites_theoriques',
+            'structure_activites_pratiques',
+            'structure_activites_prevues',
+            'eval_evaluation_sommative',
+            'eval_nature_evaluations_sommatives',
+            'eval_evaluation_de_la_langue',
+            'eval_evaluation_sommatives_apprentissages',
+        ]
+        for col in simple_columns:
+            val = clean_text(getattr(parsed_data, col, None))
+            if not val:
+                continue
+            if improve_only or preview:
+                proposed['fields'][col] = val
+            else:
+                setattr(plan, col, val)
 
-        table_mapping = {
-            "Description des compétences développées": "PlanCadreCompetencesDeveloppees",
-            "Description des Compétences certifiées": "PlanCadreCompetencesCertifiees",
-            "Description des cours corequis": "PlanCadreCoursCorequis",
-            "Description des cours préalables": "PlanCadreCoursPrealables",
-            "Objets cibles": "PlanCadreObjetsCibles"
+        table_mapping_attr = {
+            'competences_developpees': ('PlanCadreCompetencesDeveloppees', 'Description des compétences développées'),
+            'competences_certifiees': ('PlanCadreCompetencesCertifiees', 'Description des Compétences certifiées'),
+            'cours_corequis': ('PlanCadreCoursCorequis', 'Description des cours corequis'),
+            'cours_prealables': ('PlanCadreCoursPrealables', 'Description des cours préalables'),
+            'objets_cibles': ('PlanCadreObjetsCibles', 'Objets cibles'),
+            'cours_relies': ('PlanCadreCoursRelies', 'Description des cours reliés'),
         }
+        table_mapping = {display: table for table, display in [
+            (v[0], v[1]) for v in table_mapping_attr.values()
+        ]}
 
         # 3.b Champs avec description (listes)
-        for fobj in (getattr(parsed_data, "fields_with_description", []) or []):
-            fname = fobj.field_name
-            if not fname:
+        for attr, (table_name, display_name) in table_mapping_attr.items():
+            items = getattr(parsed_data, attr, None) or []
+            if not items:
                 continue
             elements_to_insert = []
-            if isinstance(fobj.content, list):
-                for item in fobj.content:
-                    texte_comp = clean_text(item.texte) if item.texte else ""
-                    desc_comp = clean_text(item.description) if item.description else ""
-                    if texte_comp or desc_comp:
-                        elements_to_insert.append({"texte": texte_comp, "description": desc_comp})
-            elif isinstance(fobj.content, str):
-                elements_to_insert.append({"texte": clean_text(fobj.content), "description": ""})
+            for item in items:
+                texte_comp = clean_text(getattr(item, 'texte', None))
+                desc_comp = clean_text(getattr(item, 'description', None))
+                if texte_comp or desc_comp:
+                    elements_to_insert.append({'texte': texte_comp, 'description': desc_comp})
 
             if improve_only or preview:
                 proposed.setdefault('fields_with_description', {})
-                proposed['fields_with_description'][fname] = elements_to_insert
+                proposed['fields_with_description'][display_name] = elements_to_insert
             else:
-                table_name = table_mapping.get(fname)
-                if not table_name:
-                    continue
                 for el in elements_to_insert:
                     db.session.execute(
                         text(f"""
                             INSERT OR REPLACE INTO {table_name} (plan_cadre_id, texte, description)
                             VALUES (:pid, :txt, :desc)
                         """),
-                        {"pid": plan.id, "txt": el["texte"], "desc": el["description"]}
+                        {"pid": plan.id, "txt": el['texte'], "desc": el['description']}
                     )
 
         # 3.c Savoir-être
