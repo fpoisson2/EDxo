@@ -13,6 +13,7 @@ RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
        libpango-1.0-0 libpangoft2-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 \
        fonts-dejavu-core fonts-liberation \
+       libreoffice-writer \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --upgrade pip && pip install -r requirements.txt
 

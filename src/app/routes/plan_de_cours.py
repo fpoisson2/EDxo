@@ -559,14 +559,53 @@ def import_docx():
         # Convertir en PDF (Mammoth+WeasyPrint) puis upload; fallback PDF texte
         uploaded_file_id = None
         pdf_path = stored_path[:-5] + '.pdf'
+        # 1) Try LibreOffice if available
         try:
-            import mammoth
-            from weasyprint import HTML
-            with open(stored_path, 'rb') as df:
-                res = mammoth.convert_to_html(df)
-                html = res.value
-            HTML(string=html).write_pdf(pdf_path)
-            current_app.logger.info('[import_docx] Conversion DOCX→PDF (WeasyPrint) OK: %s', pdf_path)
+            import shutil, subprocess
+            if shutil.which('soffice'):
+                subprocess.run([
+                    'soffice', '--headless', '--convert-to', 'pdf', '--outdir', os.path.dirname(pdf_path), stored_path
+                ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if os.path.exists(pdf_path):
+                    try:
+                        from PyPDF2 import PdfReader
+                        with open(pdf_path, 'rb') as pf:
+                            pages = len(PdfReader(pf).pages)
+                        size = os.stat(pdf_path).st_size if os.path.exists(pdf_path) else -1
+                        current_app.logger.info('[import_docx] Conversion DOCX→PDF via LibreOffice OK: %s (pages=%d, taille=%d)', pdf_path, pages, size)
+                    except Exception:
+                        current_app.logger.info('[import_docx] Conversion DOCX→PDF via LibreOffice OK: %s', pdf_path)
+                else:
+                    raise RuntimeError('LibreOffice did not produce PDF')
+            else:
+                raise RuntimeError('LibreOffice not available')
+        except Exception:
+            # 2) Fallback to Mammoth + WeasyPrint
+            try:
+                import mammoth
+                from weasyprint import HTML
+                with open(stored_path, 'rb') as df:
+                    res = mammoth.convert_to_html(df)
+                    html = res.value
+                current_app.logger.info('[import_docx] HTML Mammoth longueur=%d', len(html or ''))
+                HTML(string=html).write_pdf(pdf_path)
+                try:
+                    from PyPDF2 import PdfReader
+                    with open(pdf_path, 'rb') as pf:
+                        pages = len(PdfReader(pf).pages)
+                    size = os.stat(pdf_path).st_size if os.path.exists(pdf_path) else -1
+                    current_app.logger.info('[import_docx] Conversion DOCX→PDF (WeasyPrint) OK: %s (pages=%d, taille=%d)', pdf_path, pages, size)
+                except Exception:
+                    current_app.logger.info('[import_docx] Conversion DOCX→PDF (WeasyPrint) OK: %s', pdf_path)
+            except Exception:
+                current_app.logger.warning('[import_docx] Conversion DOCX→PDF (HTML) échouée; création PDF texte', exc_info=True)
+                try:
+                    from ..tasks.import_plan_cadre import _create_pdf_from_text
+                    _create_pdf_from_text(doc_text or 'Document importé', pdf_path)
+                    current_app.logger.info('[import_docx] PDF texte créé: %s', pdf_path)
+                except Exception:
+                    current_app.logger.exception('[import_docx] Échec création PDF de secours')
+                    pdf_path = None
         except Exception:
             current_app.logger.warning('[import_docx] Conversion DOCX→PDF (HTML) échouée; création PDF texte', exc_info=True)
             try:
@@ -591,7 +630,15 @@ def import_docx():
         if uploaded_file_id:
             compact_input = (
                 f"Contexte: cours {getattr(cours, 'code', '') or ''} - {getattr(cours, 'nom', '') or ''}, session {session}.\n"
-                f"Le plan de cours est joint en PDF. Extrait et structure les sections demandées."
+                "Le plan de cours est joint en PDF.\n"
+                "Extrait et structure les éléments suivants si présents, sinon laisse vides: \n"
+                "- presentation_du_cours, objectif_terminal_du_cours, organisation_et_methodes, accomodement, evaluation_formative_apprentissages, evaluation_expression_francais, materiel, seuil_reussite;\n"
+                "- calendriers: liste d'entrées (semaine:int, sujet, activites, travaux_hors_classe, evaluations);\n"
+                "- enseignant: nom_enseignant, telephone_enseignant, courriel_enseignant, bureau_enseignant;\n"
+                "- disponibilites: (jour_semaine, plage_horaire, lieu); mediagraphies: (reference_bibliographique);\n"
+                "- evaluations: (titre_evaluation, description, semaine:int, capacites: [{capacite, ponderation}]).\n"
+                "Repère les semaines et évaluations dans le document (mots-clés: 'Semaine', 'Évaluation', 'pondération', 'travaux', 'projet').\n"
+                "Rends un objet conforme à ce schéma, sans texte explicatif hors structure."
             )
             input_data = []
             if sa.system_prompt:
@@ -762,6 +809,12 @@ def import_docx():
                 } for e in plan_de_cours.evaluations
             ],
         }
+        # Expose local PDF path for verification when available
+        try:
+            if uploaded_file_id and pdf_path and os.path.exists(pdf_path):
+                result['pdf_local_path'] = pdf_path
+        except Exception:
+            pass
         return jsonify(result)
 
     except OpenAIError:

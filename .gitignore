@@ -43,3 +43,4 @@ add_user.py
 docker-compose.override.yml
 
 /pdfs_downloaded
+/uploads

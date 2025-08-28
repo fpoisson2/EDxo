@@ -6,6 +6,8 @@ from typing import Dict, Optional
 from celery import shared_task
 from openai import OpenAI
 from pydantic import BaseModel, Field
+import shutil
+import subprocess
 
 from src.extensions import db
 from src.utils.openai_pricing import calculate_call_cost
@@ -213,7 +215,8 @@ def import_plan_de_cours_task(
         cours = plan.cours
         plan_cadre = cours.plan_cadre if cours else None
 
-        user = db.session.query(User).with_for_update().get(user_id)
+        # Avoid SQLAlchemy legacy get(); simple session.get is fine here
+        user = db.session.get(User, user_id)
         if not user:
             return {"status": "error", "message": "Utilisateur introuvable."}
         if not user.openai_key:
@@ -235,6 +238,7 @@ def import_plan_de_cours_task(
 
         # Si un chemin de fichier est fourni, tenter l'upload (DOCX -> PDF) vers OpenAI
         file_id = None
+        pdf_local_path = None
         if file_path:
             try:
                 import os as _os
@@ -243,26 +247,72 @@ def import_plan_de_cours_task(
                     # Reuse PDF conversion helper used by plan-cadre import
                     from .import_plan_cadre import _create_pdf_from_text  # local import avoids cycles
                     pdf_path = file_path[:-5] + '.pdf'
-                    html = None
+                    # 1) Try LibreOffice if available (best fidelity incl. tables)
+                    used_soffice = False
                     try:
-                        import mammoth
-                        with open(file_path, 'rb') as df:
-                            res = mammoth.convert_to_html(df)
-                            html = res.value
+                        if shutil.which('soffice'):
+                            subprocess.run([
+                                'soffice', '--headless', '--convert-to', 'pdf', '--outdir', _os.path.dirname(pdf_path), file_path
+                            ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            used_soffice = _os.path.exists(pdf_path)
+                            if used_soffice:
+                                try:
+                                    from PyPDF2 import PdfReader
+                                    with open(pdf_path, 'rb') as pf:
+                                        pages = len(PdfReader(pf).pages)
+                                    size = _os.stat(pdf_path).st_size if _os.path.exists(pdf_path) else -1
+                                    logger.info("[import_plan_de_cours_task] Conversion DOCX→PDF via LibreOffice OK: %s (pages=%d, taille=%d)", pdf_path, pages, size)
+                                except Exception:
+                                    logger.info("[import_plan_de_cours_task] Conversion DOCX→PDF via LibreOffice OK: %s", pdf_path)
                     except Exception:
+                        used_soffice = False
+                    if not used_soffice:
+                        # 2) Mammoth (DOCX->HTML) + WeasyPrint
                         html = None
-                    if html:
                         try:
-                            from weasyprint import HTML
-                            HTML(string=html).write_pdf(pdf_path)
+                            import mammoth
+                            with open(file_path, 'rb') as df:
+                                res = mammoth.convert_to_html(df)
+                                html = res.value
                         except Exception:
+                            html = None
+                        if html:
+                            try:
+                                from weasyprint import HTML
+                                HTML(string=html).write_pdf(pdf_path)
+                                try:
+                                    from PyPDF2 import PdfReader
+                                    with open(pdf_path, 'rb') as pf:
+                                        pages = len(PdfReader(pf).pages)
+                                    size = _os.stat(pdf_path).st_size if _os.path.exists(pdf_path) else -1
+                                    logger.info("[import_plan_de_cours_task] Conversion DOCX→PDF (HTML) OK: %s (pages=%d, taille=%d)", pdf_path, pages, size)
+                                except Exception:
+                                    logger.info("[import_plan_de_cours_task] Conversion DOCX→PDF (HTML) OK: %s", pdf_path)
+                            except Exception:
+                                _create_pdf_from_text(doc_text or 'Document importé', pdf_path)
+                                try:
+                                    size = _os.stat(pdf_path).st_size if _os.path.exists(pdf_path) else -1
+                                    logger.info("[import_plan_de_cours_task] PDF texte créé: %s (taille=%d)", pdf_path, size)
+                                except Exception:
+                                    logger.info("[import_plan_de_cours_task] PDF texte créé: %s", pdf_path)
+                        else:
                             _create_pdf_from_text(doc_text or 'Document importé', pdf_path)
-                    else:
-                        _create_pdf_from_text(doc_text or 'Document importé', pdf_path)
+                            try:
+                                size = _os.stat(pdf_path).st_size if _os.path.exists(pdf_path) else -1
+                                logger.info("[import_plan_de_cours_task] PDF texte créé: %s (taille=%d)", pdf_path, size)
+                            except Exception:
+                                logger.info("[import_plan_de_cours_task] PDF texte créé: %s", pdf_path)
                     upload_path = pdf_path
+                    pdf_local_path = pdf_path if _os.path.exists(pdf_path) else None
                 with open(upload_path, 'rb') as f:
                     up = client.files.create(file=f, purpose='user_data')
                     file_id = getattr(up, 'id', None)
+                if file_id:
+                    try:
+                        size = _os.stat(upload_path).st_size if _os.path.exists(upload_path) else -1
+                        logger.info("[import_plan_de_cours_task] Upload OpenAI OK file_id=%s (taille=%d)", file_id, size)
+                    except Exception:
+                        logger.info("[import_plan_de_cours_task] Upload OpenAI OK file_id=%s", file_id)
             except Exception:
                 logger.exception("Échec upload fichier vers OpenAI (plan de cours); repli en mode texte brut")
                 file_id = None
@@ -271,7 +321,23 @@ def import_plan_de_cours_task(
         if file_id:
             compact_instruction = (
                 f"Contexte: cours {getattr(cours, 'code', '') or ''} - {getattr(cours, 'nom', '') or ''}, session {plan.session}.\n"
-                f"Le plan de cours est joint en PDF. Analyse et structure les champs du modèle."
+                "Le plan de cours est joint en PDF.\n"
+                "Extrait les informations et renvoie un objet strictement conforme au schéma suivant (tous les champs sont facultatifs, mais remplis si l'information est présente):\n"
+                "- presentation_du_cours (string)\n"
+                "- objectif_terminal_du_cours (string)\n"
+                "- organisation_et_methodes (string)\n"
+                "- accomodement (string)\n"
+                "- evaluation_formative_apprentissages (string)\n"
+                "- evaluation_expression_francais (string)\n"
+                "- materiel (string)\n"
+                "- seuil_reussite (string)\n"
+                "- calendriers (array d'objets: semaine:int, sujet:string, activites:string, travaux_hors_classe:string, evaluations:string)\n"
+                "- nom_enseignant, telephone_enseignant, courriel_enseignant, bureau_enseignant (strings)\n"
+                "- disponibilites (array d'objets: jour_semaine, plage_horaire, lieu)\n"
+                "- mediagraphies (array d'objets: reference_bibliographique)\n"
+                "- evaluations (array d'objets: titre_evaluation, description, semaine:int, capacites: array d'objets {capacite:string, ponderation:string})\n"
+                "Repère les semaines et évaluations dans le document (mots-clés: 'Semaine', 'Évaluation', 'pondération', 'travaux', 'projet', etc.).\n"
+                "Si une donnée n'est pas trouvée, omets-la ou rends-la vide (listes vides)."
             )
             input_blocks = []
             if sys_prompt:
@@ -298,11 +364,9 @@ def import_plan_de_cours_task(
                 input_blocks.append({"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]})
             input_blocks.append({"role": "user", "content": [{"type": "input_text", "text": user_input}]})
 
-        response = client.responses.parse(
-            model=ai_model,
-            input=input_blocks,
-            text_format=ImportPlanDeCoursResponse,
-        )
+        # Appel OpenAI via Responses.parse (aligné sur l'import plan-cadre)
+        request_kwargs = dict(model=ai_model, input=input_blocks, text_format=ImportPlanDeCoursResponse)
+        response = client.responses.parse(**request_kwargs)
 
         usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
         usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
@@ -310,6 +374,18 @@ def import_plan_de_cours_task(
         if user.credits < cost:
             return {"status": "error", "message": "Crédits insuffisants pour cette opération."}
         user.credits -= cost
+
+        # Publier un résumé du raisonnement si exposé par Responses (comme plan-cadre)
+        try:
+            from .import_plan_cadre import _extract_reasoning_summary_from_response
+            rs_text = _extract_reasoning_summary_from_response(response)
+        except Exception:
+            rs_text = ""
+        if rs_text:
+            try:
+                self.update_state(state='PROGRESS', meta={'message': 'Résumé du raisonnement', 'reasoning_summary': rs_text})
+            except Exception:
+                pass
 
         parsed = _extract_first_parsed(response)
         if parsed is None:
@@ -446,6 +522,12 @@ def import_plan_de_cours_task(
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
         }
 
+        # Include local PDF path for diagnostics if available
+        if pdf_local_path:
+            payload['pdf_local_path'] = pdf_local_path
+
+        if rs_text:
+            payload['reasoning_summary'] = rs_text
         return {"status": "success", **payload}
 
     except Exception as e:
