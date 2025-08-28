@@ -597,7 +597,13 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
                                         if rs_delta:
                                             reasoning_summary_text += rs_delta
                                             try:
-                                                self.update_state(state='PROGRESS', meta={ 'reasoning_summary': reasoning_summary_text })
+                                                self.update_state(
+                                                    state='PROGRESS',
+                                                    meta={
+                                                        'message': 'Résumé du raisonnement',
+                                                        'reasoning_summary': reasoning_summary_text
+                                                    }
+                                                )
                                             except Exception:
                                                 pass
                                     except Exception:
@@ -611,7 +617,10 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
                                 reasoning_summary_text = _extract_reasoning_summary_from_response(final_response)
                                 if reasoning_summary_text:
                                     try:
-                                        self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                                        self.update_state(
+                                            state='PROGRESS',
+                                            meta={'message': 'Résumé du raisonnement', 'reasoning_summary': reasoning_summary_text}
+                                        )
                                     except Exception:
                                         pass
                     except Exception:
@@ -620,7 +629,10 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
                         reasoning_summary_text = _extract_reasoning_summary_from_response(final_response)
                         if reasoning_summary_text:
                             try:
-                                self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                                self.update_state(
+                                    state='PROGRESS',
+                                    meta={'message': 'Résumé du raisonnement', 'reasoning_summary': reasoning_summary_text}
+                                )
                             except Exception:
                                 pass
 
@@ -692,7 +704,10 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
                 reasoning_summary_text = _extract_reasoning_summary_from_response(response)
                 if reasoning_summary_text:
                     try:
-                        self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                        self.update_state(
+                            state='PROGRESS',
+                            meta={'message': 'Résumé du raisonnement', 'reasoning_summary': reasoning_summary_text}
+                        )
                     except Exception:
                         pass
 
