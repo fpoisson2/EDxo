@@ -7,7 +7,7 @@ from typing import List, Optional
 
 # Import your OpenAI client (adjust this import according to your library)
 from openai import OpenAI
-from pydantic import BaseModel, ConfigDict, create_model
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import text
 
 # Import your models – adjust these imports as needed:
@@ -138,6 +138,13 @@ class AICapacite(OpenAIFunctionModel):
     savoirs_necessaires: Optional[List[str]] = None
     savoirs_faire: Optional[List[AISavoirFaire]] = None
     moyens_evaluation: Optional[List[str]] = None
+
+
+class PlanCadreAIResponse(OpenAIFunctionModel):
+    fields: Optional[List[AIField]] = None
+    fields_with_description: Optional[List[AIFieldWithDescription]] = None
+    savoir_etre: Optional[List[str]] = None
+    capacites: Optional[List[AICapacite]] = None
 
 
 # Register with a stable, fully-qualified name so producers and workers match
@@ -811,19 +818,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             system_message = (sa.system_prompt if (sa and getattr(sa, 'system_prompt', None)) else '')
         logger.debug(combined_instruction)
 
-        # Construire dynamiquement le modèle Pydantic selon les sections demandées
-        model_fields = {}
-        if ai_fields:
-            model_fields["fields"] = (List[AIField], ...)
-        if ai_fields_with_description:
-            model_fields["fields_with_description"] = (List[AIFieldWithDescription], ...)
-        if ai_savoir_etre:
-            model_fields["savoir_etre"] = (List[str], ...)
-        if ai_capacites_prompt:
-            model_fields["capacites"] = (List[AICapacite], ...)
-        PlanCadreAIResponse = create_model(
-            "PlanCadreAIResponse", __base__=OpenAIFunctionModel, **model_fields
-        )
+        # Utiliser un schéma complet pour la réponse de l'IA
+        # (toutes les sections potentielles sont incluses dans PlanCadreAIResponse)
 
         client = OpenAI(api_key=openai_key)
         total_prompt_tokens = 0

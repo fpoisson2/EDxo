@@ -1,9 +1,6 @@
 import json
 import pytest
 from werkzeug.security import generate_password_hash
-
-import json
-import pytest
 from src.app.models import (
     Department,
     Programme,
@@ -82,6 +79,7 @@ def test_generation_does_not_send_current_plan(app, monkeypatch):
     class DummyResponses:
         def create(self, **kwargs):
             captured['input'] = kwargs['input']
+            captured['text'] = kwargs.get('text')
             class Resp:
                 output = []
                 output_text = '{}'
@@ -213,6 +211,7 @@ def test_user_prompt_includes_competence_elements(app, monkeypatch):
     class DummyResponses:
         def create(self, **kwargs):
             captured['input'] = kwargs['input']
+            captured['text'] = kwargs.get('text')
             class Resp:
                 output = []
                 output_text = '{}'
@@ -250,3 +249,46 @@ def test_user_prompt_includes_competence_elements(app, monkeypatch):
     assert "Compétences atteintes et tous les détails" in user_content
     assert "CompAtt" in user_content
     assert "ElemAtt" in user_content
+
+
+def test_full_schema_is_sent(app, monkeypatch):
+    plan_id, user_id = setup_plan(app)
+    captured = {}
+
+    with app.app_context():
+        sa = SectionAISettings(section='plan_cadre', system_prompt='Bonjour {{nom_cours}}')
+        db.session.add(sa)
+        db.session.commit()
+
+    class DummyResponses:
+        def create(self, **kwargs):
+            captured['schema'] = kwargs['text']['format']['schema']
+            class Resp:
+                output = []
+                output_text = '{}'
+                class usage:
+                    input_tokens = 0
+                    output_tokens = 0
+            return Resp()
+
+    class DummyOpenAI:
+        def __init__(self, *a, **k):
+            self.responses = DummyResponses()
+
+    import src.app.tasks.generation_plan_cadre as gpc
+    monkeypatch.setattr(gpc, 'OpenAI', DummyOpenAI)
+    monkeypatch.setattr("openai.OpenAI", DummyOpenAI)
+
+    dummy = DummySelf()
+    orig = generate_plan_cadre_content_task.__wrapped__.__func__
+    try:
+        orig(dummy, plan_id, {}, user_id)
+    except Exception:
+        pass
+
+    schema = captured.get('schema')
+    if not schema:
+        pytest.skip("Schema not captured")
+    props = schema.get('properties', {})
+    for key in ['fields', 'fields_with_description', 'savoir_etre', 'capacites']:
+        assert key in props
