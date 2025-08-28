@@ -1,14 +1,19 @@
 import textwrap
 
-from src.app.tasks.import_plan_cadre import ImportPlanCadreResponse, AICapacite, AISavoirFaire, _fallback_fill_cible_seuil
+from src.app.tasks.import_plan_cadre import (
+    ImportPlanCadreResponse,
+    AICapacite,
+    AISavoirFaire,
+    _fallback_fill_performance_critere,
+)
 
 
 def make_sf_list(n):
     return [AISavoirFaire(texte=f"SF {i+1}") for i in range(n)]
 
 
-def test_fallback_fills_cible_and_seuil_by_order():
-    # Build a minimal doc_text containing a Capacité 1 block with 5 cibles then 5 seuils
+def test_fallback_fills_performance_and_critere_by_order():
+    # Build a minimal doc_text containing a Capacité 1 block with 5 performances then 5 critères
     doc_text = textwrap.dedent(
         """
         Capacité 1 - Concevoir et planifier un projet de réseau et technologies de l’information 30 % - 40 %
@@ -40,11 +45,14 @@ def test_fallback_fills_cible_and_seuil_by_order():
     )
 
     # Ensure initially null
-    assert all(sf.cible is None and sf.seuil_reussite is None for sf in parsed.capacites[0].savoirs_faire)
+    assert all(
+        sf.seuil_performance is None and sf.critere_reussite is None
+        for sf in parsed.capacites[0].savoirs_faire
+    )
 
-    _fallback_fill_cible_seuil(doc_text, parsed)
+    _fallback_fill_performance_critere(doc_text, parsed)
 
     filled = parsed.capacites[0].savoirs_faire
-    assert all(sf.cible for sf in filled), "All cible should be filled"
-    assert all(sf.seuil_reussite for sf in filled), "All seuil_reussite should be filled"
+    assert all(sf.seuil_performance for sf in filled), "All seuil_performance should be filled"
+    assert all(sf.critere_reussite for sf in filled), "All critere_reussite should be filled"
 

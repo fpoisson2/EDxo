@@ -40,8 +40,8 @@ class AIContentDetail(BaseModel):
 
 class AISavoirFaire(BaseModel):
     texte: Optional[str] = None
-    cible: Optional[str] = None
-    seuil_reussite: Optional[str] = None
+    seuil_performance: Optional[str] = None
+    critere_reussite: Optional[str] = None
 
 
 class AICapacite(BaseModel):
@@ -259,19 +259,19 @@ def _split_sentences(text: str) -> List[str]:
     return out
 
 
-def _fallback_fill_cible_seuil(doc_text: str, parsed: ImportPlanCadreResponse) -> None:
-    """If AI missed cible/seuil for savoir_faire, try to infer from doc_text.
+def _fallback_fill_performance_critere(doc_text: str, parsed: ImportPlanCadreResponse) -> None:
+    """If AI missed performance/critère for savoir_faire, try to infer from doc_text.
 
-    Heuristic mapping by order inside each capacité block: first k sentences are cibles,
-    next k sentences are seuils. We stop the block before common markers like 'Moyens'.
+    Heuristic mapping by order inside each capacité block: first k sentences are performances,
+    next k sentences are critères. We stop the block before common markers like 'Moyens'.
     """
     if not doc_text or not parsed or not getattr(parsed, 'capacites', None):
         return
     for cap_idx, cap in enumerate(parsed.capacites, start=1):
         if not cap or not cap.savoirs_faire:
             continue
-        # Check if all cible/seuil are already present; if yes, skip
-        if any(sf and (sf.cible or sf.seuil_reussite) for sf in cap.savoirs_faire):
+        # Check if all performance/critère are already present; if yes, skip
+        if any(sf and (sf.seuil_performance or sf.critere_reussite) for sf in cap.savoirs_faire):
             # Partial presence: still try to fill missing ones, continue
             pass
         # Locate block by capacity index if present in label; fallback to enumerated order
@@ -308,16 +308,16 @@ def _fallback_fill_cible_seuil(doc_text: str, parsed: ImportPlanCadreResponse) -
         # Heuristic: need at least 2*k sentences to align
         if len(sentences) < 2 * k:
             continue
-        cibles = sentences[:k]
-        seuils = sentences[k:2 * k]
+        performances = sentences[:k]
+        criteres = sentences[k:2 * k]
         # Assign if missing
         for i, sf in enumerate(cap.savoirs_faire):
             if not sf:
                 continue
-            if not sf.cible and i < len(cibles):
-                sf.cible = cibles[i]
-            if not sf.seuil_reussite and i < len(seuils):
-                sf.seuil_reussite = seuils[i]
+            if not sf.seuil_performance and i < len(performances):
+                sf.seuil_performance = performances[i]
+            if not sf.critere_reussite and i < len(criteres):
+                sf.critere_reussite = criteres[i]
 
 
 def _heuristic_extract_basic_fields(doc_text: str) -> dict:
@@ -528,8 +528,8 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
                         "savoirs_necessaires": {"type": "array", "items": {"type": "string"}},
                         "savoirs_faire": {"type": "array", "items": {"type": "object", "properties": {
                             "texte": {"type": ["string", "null"]},
-                            "cible": {"type": ["string", "null"]},
-                            "seuil_reussite": {"type": ["string", "null"]},
+                            "seuil_performance": {"type": ["string", "null"]},
+                            "critere_reussite": {"type": ["string", "null"]},
                         } }},
                         "moyens_evaluation": {"type": "array", "items": {"type": "string"}}
                     }}}
@@ -721,11 +721,11 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
         if not parsed:
             return {"status": "error", "message": "Réponse IA invalide."}
 
-        # Fallback: enrich cible/seuil à partir du texte si manquants
+        # Fallback: enrich performance/critère à partir du texte si manquants
         try:
-            _fallback_fill_cible_seuil(doc_text, parsed)
+            _fallback_fill_performance_critere(doc_text, parsed)
         except Exception:
-            logger.debug("Fallback cible/seuil non appliqué (preview)")
+            logger.debug("Fallback performance/critère non appliqué (preview)")
 
         push("Construction de l'aperçu des modifications…", step='build_preview', progress=75)
         # Construire la structure 'proposed' compatible avec la vue de revue
@@ -781,8 +781,8 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
                 'savoirs_faire': [
                     {
                         'texte': _sanitize_str(sf.texte) if sf else '',
-                        'cible': _sanitize_str(sf.cible) if sf else '',
-                        'seuil_reussite': _sanitize_str(sf.seuil_reussite) if sf else ''
+                        'seuil_performance': _sanitize_str(sf.seuil_performance) if sf else '',
+                        'critere_reussite': _sanitize_str(sf.critere_reussite) if sf else ''
                     } for sf in (cap.savoirs_faire or []) if sf
                 ],
                 'moyens_evaluation': [ (_sanitize_str(me) or '') for me in (cap.moyens_evaluation or []) if (_sanitize_str(me) or '').strip() ]

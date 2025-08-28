@@ -123,8 +123,8 @@ class AIContentDetail(OpenAIFunctionModel):
 
 class AISavoirFaire(OpenAIFunctionModel):
     texte: str
-    cible: str
-    seuil_reussite: str
+    seuil_performance: str
+    critere_reussite: str
 
 class AICapacite(OpenAIFunctionModel):
     capacite: str
@@ -547,8 +547,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     'savoirs_faire': [
                         {
                             'texte': (sf.texte or '')[:200],
-                            'cible': (sf.cible or '')[:200],
-                            'seuil_reussite': (sf.seuil_reussite or '')[:200]
+                            'seuil_performance': (sf.cible or '')[:200],
+                            'critere_reussite': (sf.seuil_reussite or '')[:200]
                         } for sf in list(cap.savoirs_faire)[:8]
                     ],
                     'moyens_evaluation': [(me.texte or '')[:200] for me in list(cap.moyens_evaluation)[:6]]
@@ -1143,8 +1143,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                         'savoirs_faire': [
                             {
                                 'texte': clean_text(sf.texte),
-                                'cible': clean_text(sf.cible),
-                                'seuil_reussite': clean_text(sf.seuil_reussite)
+                                'seuil_performance': clean_text(sf.seuil_performance),
+                                'critere_reussite': clean_text(sf.critere_reussite)
                             } for sf in (cap.savoirs_faire or [])
                         ],
                         'moyens_evaluation': [clean_text(me) for me in (cap.moyens_evaluation or [])]
@@ -1172,8 +1172,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                             sf_obj = PlanCadreCapaciteSavoirsFaire(
                                 capacite_id=new_cap.id,
                                 texte=clean_text(sf.texte),
-                                cible=clean_text(sf.cible),
-                                seuil_reussite=clean_text(sf.seuil_reussite)
+                                cible=clean_text(sf.seuil_performance),
+                                seuil_reussite=clean_text(sf.critere_reussite)
                             )
                             db.session.add(sf_obj)
                     if cap.moyens_evaluation:
