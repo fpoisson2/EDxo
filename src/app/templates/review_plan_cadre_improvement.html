@@ -179,8 +179,10 @@
                                         <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites][{{ cap_index }}][savoirs_faire]" value="{{ loop.index0 }}" disabled>
                                         <label class="form-check-label">
                                           <strong>{{ sf.texte }}</strong>
-                                          {% if sf.cible %}<div class="small">Cible: {{ sf.cible }}</div>{% endif %}
-                                          {% if sf.seuil_reussite %}<div class="small">Seuil: {{ sf.seuil_reussite }}</div>{% endif %}
+                                          {% set _cible = sf.cible or sf.seuil_performance %}
+                                          {% set _seuil = sf.seuil_reussite or sf.critere_reussite %}
+                                          {% if _cible %}<div class="small">Cible: {{ _cible }}</div>{% endif %}
+                                          {% if _seuil %}<div class="small">Seuil: {{ _seuil }}</div>{% endif %}
                                         </label>
                                       </div>
                                     </li>

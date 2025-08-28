@@ -10,6 +10,11 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Preformatted
 from xml.sax.saxutils import escape as xml_escape
 from pydantic import BaseModel, Field
+try:
+    # pydantic v2
+    from pydantic import AliasChoices
+except Exception:  # pragma: no cover
+    AliasChoices = None  # type: ignore
 
 from src.extensions import db
 from src.utils.openai_pricing import calculate_call_cost
@@ -40,8 +45,13 @@ class AIContentDetail(BaseModel):
 
 class AISavoirFaire(BaseModel):
     texte: Optional[str] = None
-    seuil_performance: Optional[str] = None
-    critere_reussite: Optional[str] = None
+    # Accept both new keys and legacy AI keys (cible/seuil_reussite)
+    if AliasChoices is not None:
+        seuil_performance: Optional[str] = Field(default=None, validation_alias=AliasChoices('seuil_performance', 'cible'))
+        critere_reussite: Optional[str] = Field(default=None, validation_alias=AliasChoices('critere_reussite', 'seuil_reussite'))
+    else:  # Fallback without AliasChoices
+        seuil_performance: Optional[str] = None
+        critere_reussite: Optional[str] = None
 
 
 class AICapacite(BaseModel):
@@ -318,6 +328,48 @@ def _fallback_fill_performance_critere(doc_text: str, parsed: ImportPlanCadreRes
                 sf.seuil_performance = performances[i]
             if not sf.critere_reussite and i < len(criteres):
                 sf.critere_reussite = criteres[i]
+
+
+def _fallback_extract_labeled_targets(doc_text: str, parsed: ImportPlanCadreResponse) -> None:
+    """If still missing, parse 'Cible:' and 'Seuil:' labels near each savoir-faire
+    inside the capacity block and assign them as performance/critère.
+    """
+    if not doc_text or not parsed or not getattr(parsed, 'capacites', None):
+        return
+    for cap_idx, cap in enumerate(parsed.capacites, start=1):
+        if not cap or not cap.savoirs_faire:
+            continue
+        # Try to locate the relevant block of text for this capacity
+        cap_number = None
+        if cap.capacite:
+            mnum = re.search(r"Capacit[eé]\s*(\d+)", cap.capacite, flags=re.IGNORECASE)
+            if mnum:
+                try:
+                    cap_number = int(mnum.group(1))
+                except Exception:
+                    cap_number = None
+        block = _find_capacity_block(doc_text, cap_number or cap_idx)
+        if not block:
+            continue
+        for sf in cap.savoirs_faire:
+            if not sf or not (sf.texte or '').strip():
+                continue
+            # Skip if both fields already present
+            if (sf.seuil_performance and sf.seuil_performance.strip()) and (sf.critere_reussite and sf.critere_reussite.strip()):
+                continue
+            # Find the SF text (approximate, limited to first 80 chars for safety)
+            pat = re.escape(sf.texte.strip()[:80])
+            m = re.search(pat, block, flags=re.IGNORECASE)
+            if not m:
+                continue
+            # Scan a window after the match for explicit labels
+            window = block[m.end(): m.end() + 800]
+            mc = re.search(r"Cible\s*:\s*(.+?)\s*(?:\n|$)", window, flags=re.IGNORECASE)
+            ms = re.search(r"Seuil\s*:\s*(.+?)\s*(?:\n|$)", window, flags=re.IGNORECASE)
+            if mc and not (sf.seuil_performance and sf.seuil_performance.strip()):
+                sf.seuil_performance = mc.group(1).strip()
+            if ms and not (sf.critere_reussite and sf.critere_reussite.strip()):
+                sf.critere_reussite = ms.group(1).strip()
 
 
 def _heuristic_extract_basic_fields(doc_text: str) -> dict:
@@ -726,6 +778,10 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             _fallback_fill_performance_critere(doc_text, parsed)
         except Exception:
             logger.debug("Fallback performance/critère non appliqué (preview)")
+        try:
+            _fallback_extract_labeled_targets(doc_text, parsed)
+        except Exception:
+            logger.debug("Fallback 'Cible/Seuil' non appliqué (preview)")
 
         push("Construction de l'aperçu des modifications…", step='build_preview', progress=75)
         # Construire la structure 'proposed' compatible avec la vue de revue

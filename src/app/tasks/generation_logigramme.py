@@ -83,7 +83,9 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
 
         # System prompt strictly from DB (no hard-coded fallback)
         system_prompt = (sa.system_prompt if (sa and sa.system_prompt) else '')
-        # User message should only contain the data (courses/competences), no instructions
+        # User message should contain the data (courses/competences).
+        # If an "additional_info" text is provided by the UI, append it as
+        # a separate user message so the model can take it into account.
         user_payload = {
             'courses': course_items,
             'competences': comp_list
@@ -93,12 +95,17 @@ def generate_programme_logigramme_task(self, programme_id: int, user_id: int, fo
         client = OpenAI(api_key=user.openai_key)
 
         # Prepare request (do not include stream flag here; pass it only to .stream())
+        # Build input messages
+        input_messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)}
+        ]
+        if additional_info and str(additional_info).strip():
+            input_messages.append({"role": "user", "content": str(additional_info).strip()})
+
         request_kwargs = dict(
             model=ai_model,
-            input=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)}
-            ],
+            input=input_messages,
             metadata={'feature': 'generate_programme_logigramme', 'programme_id': str(programme.id)}
         )
         try:

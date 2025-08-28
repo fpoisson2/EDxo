@@ -990,7 +990,9 @@
               const start = () => window.EDxoTasks.openFileTask({
                 url: endpoint,
                 title: 'Importer Plan‑cadre — {{ cours.code }} (.docx)',
-                startMessage: 'Import en cours…'
+                startMessage: 'Import en cours…',
+                // Mute log-like buffer updates; stream only generated content chunks
+                muteLogBuffer: true
               });
               const waitForOrchestrator = (retries = 15) => {
                 if (window.EDxoTasks && typeof window.EDxoTasks.openFileTask === 'function') {
