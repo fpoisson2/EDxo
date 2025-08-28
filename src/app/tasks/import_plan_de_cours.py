@@ -369,10 +369,23 @@ def import_plan_de_cours_task(
         try:
             schema = ImportPlanDeCoursResponse.model_json_schema()
         except Exception:
-            schema = {
-                "type": "object",
-                "properties": {},
-            }
+            schema = {"type": "object", "properties": {}}
+        # OpenAI Responses JSON schema strict mode expects additionalProperties: false at least at root
+        def _enforce_no_extra_props(s):
+            try:
+                if isinstance(s, dict):
+                    if s.get("type") == "object" and "additionalProperties" not in s:
+                        s["additionalProperties"] = False
+                    # Recurse properties
+                    for v in (s.get("properties") or {}).values():
+                        _enforce_no_extra_props(v)
+                    # Recurse array items
+                    if isinstance(s.get("items"), dict):
+                        _enforce_no_extra_props(s["items"])
+            except Exception:
+                pass
+            return s
+        schema = _enforce_no_extra_props(schema)
         # Paramètres text/format
         text_params = {
             "format": {
