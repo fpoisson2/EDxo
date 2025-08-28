@@ -819,28 +819,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             if verbosity in {"low", "medium", "high"}:
                 text_params["verbosity"] = verbosity
 
-            fields_payload = {
-                'fields': ai_fields,
-                'fields_with_description': ai_fields_with_description,
-                'savoir_etre': ai_savoir_etre,
-                'capacites': ai_capacites_prompt,
-                'improve_only': improve_only,
-                'additional_info': additional_info,
-            }
-            if improve_only:
-                fields_payload.update({
-                    'course_context': course_context_compact,
-                    'previous_sections_context': previous_sections_context,
-                    'current_capacites_snapshot': current_capacites_snapshot,
-                })
-            # Remove empty keys to avoid leaking empty context
-            fields_payload = {k: v for k, v in fields_payload.items() if v}
             combined_system_message = system_message or ''
-            if fields_payload:
-                payload_text = json.dumps(fields_payload, ensure_ascii=False)
-                combined_system_message = (
-                    f"{combined_system_message}\n{payload_text}" if combined_system_message else payload_text
-                )
 
             request_kwargs = dict(
                 model=ai_model,

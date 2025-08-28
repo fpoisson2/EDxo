@@ -69,6 +69,12 @@ def test_generation_does_not_send_current_plan(app, monkeypatch):
     plan_id, user_id = setup_plan(app)
     captured = {}
 
+    with app.app_context():
+        sa = SectionAISettings(section='plan_cadre', system_prompt='Bonjour {{nom_cours}}')
+        db.session.add(sa)
+        db.session.commit()
+        expected_system = sa.system_prompt
+
     class DummyResponses:
         def create(self, **kwargs):
             captured['input'] = kwargs['input']
@@ -104,9 +110,8 @@ def test_generation_does_not_send_current_plan(app, monkeypatch):
     joined = json.dumps(messages)
     assert "EXISTING INTRO" not in joined
     system_content = messages[0]['content']
-    json_part = system_content[system_content.rfind('{'):]
-    payload = json.loads(json_part)
-    assert 'course_context' not in payload
+    assert system_content == expected_system
+    assert '{{nom_cours}}' in system_content
     user_content = messages[1]['content']
     for forbidden in [
         "Tu es un rédacteur",
