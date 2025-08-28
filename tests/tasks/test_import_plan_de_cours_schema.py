@@ -76,3 +76,10 @@ def test_schema_has_no_defs(app):
         assert schema
         assert '$defs' not in schema
         assert schema.get('additionalProperties') is False
+        cal_item = schema['properties']['calendriers']['items']
+        assert set(cal_item['required']) == set(cal_item['properties'].keys())
+        for prop in ['disponibilites', 'mediagraphies', 'evaluations']:
+            item = schema['properties'][prop]['items']
+            assert set(item['required']) == set(item['properties'].keys())
+        cap_item = schema['properties']['evaluations']['items']['properties']['capacites']['items']
+        assert set(cap_item['required']) == set(cap_item['properties'].keys())

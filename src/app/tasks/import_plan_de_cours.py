@@ -79,34 +79,74 @@ PLAN_DE_COURS_JSON_SCHEMA = {
         "evaluation_formative_apprentissages": {"type": ["string", "null"]},
         "evaluation_expression_francais": {"type": ["string", "null"]},
         "materiel": {"type": ["string", "null"]},
-        "calendriers": {"type": "array", "items": {"type": "object", "properties": {
-            "semaine": {"type": ["integer", "null"]},
-            "sujet": {"type": ["string", "null"]},
-            "activites": {"type": ["string", "null"]},
-            "travaux_hors_classe": {"type": ["string", "null"]},
-            "evaluations": {"type": ["string", "null"]}
-        }, "additionalProperties": False}},
+        "calendriers": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "semaine": {"type": ["integer", "null"]},
+                    "sujet": {"type": ["string", "null"]},
+                    "activites": {"type": ["string", "null"]},
+                    "travaux_hors_classe": {"type": ["string", "null"]},
+                    "evaluations": {"type": ["string", "null"]}
+                },
+                "required": ["semaine", "sujet", "activites", "travaux_hors_classe", "evaluations"],
+                "additionalProperties": False,
+            },
+        },
         "nom_enseignant": {"type": ["string", "null"]},
         "telephone_enseignant": {"type": ["string", "null"]},
         "courriel_enseignant": {"type": ["string", "null"]},
         "bureau_enseignant": {"type": ["string", "null"]},
-        "disponibilites": {"type": "array", "items": {"type": "object", "properties": {
-            "jour_semaine": {"type": ["string", "null"]},
-            "plage_horaire": {"type": ["string", "null"]},
-            "lieu": {"type": ["string", "null"]}
-        }, "additionalProperties": False}},
-        "mediagraphies": {"type": "array", "items": {"type": "object", "properties": {
-            "reference_bibliographique": {"type": ["string", "null"]}
-        }, "additionalProperties": False}},
-        "evaluations": {"type": "array", "items": {"type": "object", "properties": {
-            "titre_evaluation": {"type": ["string", "null"]},
-            "description": {"type": ["string", "null"]},
-            "semaine": {"type": ["integer", "null"]},
-            "capacites": {"type": "array", "items": {"type": "object", "properties": {
-                "capacite": {"type": ["string", "null"]},
-                "ponderation": {"type": ["string", "null"]}
-            }, "additionalProperties": False}}
-        }, "additionalProperties": False}}
+        "disponibilites": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "jour_semaine": {"type": ["string", "null"]},
+                    "plage_horaire": {"type": ["string", "null"]},
+                    "lieu": {"type": ["string", "null"]}
+                },
+                "required": ["jour_semaine", "plage_horaire", "lieu"],
+                "additionalProperties": False,
+            },
+        },
+        "mediagraphies": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "reference_bibliographique": {"type": ["string", "null"]}
+                },
+                "required": ["reference_bibliographique"],
+                "additionalProperties": False,
+            },
+        },
+        "evaluations": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "titre_evaluation": {"type": ["string", "null"]},
+                    "description": {"type": ["string", "null"]},
+                    "semaine": {"type": ["integer", "null"]},
+                    "capacites": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "capacite": {"type": ["string", "null"]},
+                                "ponderation": {"type": ["string", "null"]},
+                            },
+                            "required": ["capacite", "ponderation"],
+                            "additionalProperties": False,
+                        },
+                    },
+                },
+                "required": ["titre_evaluation", "description", "semaine", "capacites"],
+                "additionalProperties": False,
+            },
+        },
     },
     "additionalProperties": False
 }
