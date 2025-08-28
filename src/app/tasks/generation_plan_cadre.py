@@ -769,8 +769,6 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if improve_only and course_context_compact else "")
                 + (f"{previous_sections_context}\n\n" if improve_only and previous_sections_context else "")
                 + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if improve_only and current_capacites_snapshot else "")
-                + ("Exigences pour chaque capacité: inclure 'description_capacite', une plage 'ponderation_min'/'ponderation_max',\n"
-                   "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
             )
             system_message = (sa.system_prompt if (sa and getattr(sa, 'system_prompt', None)) else '')
         else:
@@ -782,16 +780,11 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             )
             combined_instruction = (
                 f"{prompt_header}\n"
-                "Tu es un rédacteur pour un plan-cadre de cours. "
-                f"Informations importantes à considérer avant tout: {additional_info}\n\n"
+                f"Instruction: {additional_info}\n\n"
                 f"{improve_clause}"
-                "Utilise un langage neutre (par ex. 'personne étudiante').\n"
-                "Si tu utilises des guillemets, utilise « » (français).\n\n"
                 + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if improve_only and course_context_compact else "")
                 + (f"{previous_sections_context}\n\n" if improve_only and previous_sections_context else "")
                 + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if improve_only and current_capacites_snapshot else "")
-                + ("Exigences pour chaque capacité: inclure 'description_capacite', une plage 'ponderation_min'/'ponderation_max',\n"
-                   "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
             )
             system_message = (sa.system_prompt if (sa and getattr(sa, 'system_prompt', None)) else '')
         logger.debug(combined_instruction)
@@ -842,13 +835,18 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 })
             # Remove empty keys to avoid leaking empty context
             fields_payload = {k: v for k, v in fields_payload.items() if v}
+            combined_system_message = system_message or ''
+            if fields_payload:
+                payload_text = json.dumps(fields_payload, ensure_ascii=False)
+                combined_system_message = (
+                    f"{combined_system_message}\n{payload_text}" if combined_system_message else payload_text
+                )
 
             request_kwargs = dict(
                 model=ai_model,
                 input=[
-                    {"role": "system", "content": system_message},
+                    {"role": "system", "content": combined_system_message},
                     {"role": "user", "content": combined_instruction},
-                    {"role": "system", "content": json.dumps(fields_payload, ensure_ascii=False)},
                 ],
                 text=text_params,
                 store=True,

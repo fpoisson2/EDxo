@@ -98,12 +98,23 @@ def test_generation_does_not_send_current_plan(app, monkeypatch):
         pytest.skip("OpenAI call not captured")
 
     messages = captured['input']
+    assert len(messages) == 2
+    assert messages[0]['role'] == 'system'
     assert messages[1]['role'] == 'user'
-    assert messages[2]['role'] == 'system'
     joined = json.dumps(messages)
     assert "EXISTING INTRO" not in joined
-    payload = json.loads(messages[2]['content'])
+    system_content = messages[0]['content']
+    json_part = system_content[system_content.rfind('{'):]
+    payload = json.loads(json_part)
     assert 'course_context' not in payload
+    user_content = messages[1]['content']
+    for forbidden in [
+        "Tu es un rédacteur",
+        "personne étudiante",
+        "guillemets",
+        "Exigences pour chaque capacité",
+    ]:
+        assert forbidden not in user_content
 
 
 def test_user_prompt_contains_context(app):
