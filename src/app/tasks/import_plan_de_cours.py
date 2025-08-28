@@ -69,6 +69,48 @@ class ImportPlanDeCoursResponse(BaseModel):
     disponibilites: list[ImportDisponibiliteItem] = Field(default_factory=list)
     mediagraphies: list[ImportMediagraphieItem] = Field(default_factory=list)
     evaluations: list[ImportEvaluationItem] = Field(default_factory=list)
+PLAN_DE_COURS_JSON_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "presentation_du_cours": {"type": ["string", "null"]},
+        "objectif_terminal_du_cours": {"type": ["string", "null"]},
+        "organisation_et_methodes": {"type": ["string", "null"]},
+        "accomodement": {"type": ["string", "null"]},
+        "evaluation_formative_apprentissages": {"type": ["string", "null"]},
+        "evaluation_expression_francais": {"type": ["string", "null"]},
+        "materiel": {"type": ["string", "null"]},
+        "calendriers": {"type": "array", "items": {"type": "object", "properties": {
+            "semaine": {"type": ["integer", "null"]},
+            "sujet": {"type": ["string", "null"]},
+            "activites": {"type": ["string", "null"]},
+            "travaux_hors_classe": {"type": ["string", "null"]},
+            "evaluations": {"type": ["string", "null"]}
+        }, "additionalProperties": False}},
+        "nom_enseignant": {"type": ["string", "null"]},
+        "telephone_enseignant": {"type": ["string", "null"]},
+        "courriel_enseignant": {"type": ["string", "null"]},
+        "bureau_enseignant": {"type": ["string", "null"]},
+        "disponibilites": {"type": "array", "items": {"type": "object", "properties": {
+            "jour_semaine": {"type": ["string", "null"]},
+            "plage_horaire": {"type": ["string", "null"]},
+            "lieu": {"type": ["string", "null"]}
+        }, "additionalProperties": False}},
+        "mediagraphies": {"type": "array", "items": {"type": "object", "properties": {
+            "reference_bibliographique": {"type": ["string", "null"]}
+        }, "additionalProperties": False}},
+        "evaluations": {"type": "array", "items": {"type": "object", "properties": {
+            "titre_evaluation": {"type": ["string", "null"]},
+            "description": {"type": ["string", "null"]},
+            "semaine": {"type": ["integer", "null"]},
+            "capacites": {"type": "array", "items": {"type": "object", "properties": {
+                "capacite": {"type": ["string", "null"]},
+                "ponderation": {"type": ["string", "null"]}
+            }, "additionalProperties": False}}
+        }, "additionalProperties": False}}
+    },
+    "additionalProperties": False
+}
+
 
 
 def _normalize_text(s: Optional[str]) -> str:
@@ -366,26 +408,7 @@ def import_plan_de_cours_task(
 
         # Aligner l'appel OpenAI sur import_grille: streaming + JSON schema strict
         # Construire paramètres text/JSON schema à partir du modèle Pydantic
-        try:
-            schema = ImportPlanDeCoursResponse.model_json_schema()
-        except Exception:
-            schema = {"type": "object", "properties": {}}
-        # OpenAI Responses JSON schema strict mode expects additionalProperties: false at least at root
-        def _enforce_no_extra_props(s):
-            try:
-                if isinstance(s, dict):
-                    if s.get("type") == "object" and "additionalProperties" not in s:
-                        s["additionalProperties"] = False
-                    # Recurse properties
-                    for v in (s.get("properties") or {}).values():
-                        _enforce_no_extra_props(v)
-                    # Recurse array items
-                    if isinstance(s.get("items"), dict):
-                        _enforce_no_extra_props(s["items"])
-            except Exception:
-                pass
-            return s
-        schema = _enforce_no_extra_props(schema)
+        schema = PLAN_DE_COURS_JSON_SCHEMA
         # Paramètres text/format
         text_params = {
             "format": {
