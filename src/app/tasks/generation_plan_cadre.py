@@ -3,7 +3,7 @@ import os
 import re
 import json
 import logging
-from typing import List, Optional
+from typing import List
 
 # Import your OpenAI client (adjust this import according to your library)
 from openai import OpenAI
@@ -118,43 +118,43 @@ class OpenAIFunctionModel(BaseModel):
     )
 
 class AIContentDetail(OpenAIFunctionModel):
-    texte: Optional[str] = None
-    description: Optional[str] = None
+    texte: str
+    description: str
 
 class AISavoirFaire(OpenAIFunctionModel):
-    texte: Optional[str] = None
-    cible: Optional[str] = None
-    seuil_reussite: Optional[str] = None
+    texte: str
+    cible: str
+    seuil_reussite: str
 
 class AICapacite(OpenAIFunctionModel):
-    capacite: Optional[str] = None
-    description_capacite: Optional[str] = None
-    ponderation_min: Optional[int] = None
-    ponderation_max: Optional[int] = None
-    savoirs_necessaires: Optional[List[str]] = None
-    savoirs_faire: Optional[List[AISavoirFaire]] = None
-    moyens_evaluation: Optional[List[str]] = None
+    capacite: str
+    description_capacite: str
+    ponderation_min: int
+    ponderation_max: int
+    savoirs_necessaires: List[str]
+    savoirs_faire: List[AISavoirFaire]
+    moyens_evaluation: List[str]
 
 
 class PlanCadreAIResponse(OpenAIFunctionModel):
-    place_intro: Optional[str] = None
-    objectif_terminal: Optional[str] = None
-    structure_intro: Optional[str] = None
-    structure_activites_theoriques: Optional[str] = None
-    structure_activites_pratiques: Optional[str] = None
-    structure_activites_prevues: Optional[str] = None
-    eval_evaluation_sommative: Optional[str] = None
-    eval_nature_evaluations_sommatives: Optional[str] = None
-    eval_evaluation_de_la_langue: Optional[str] = None
-    eval_evaluation_sommatives_apprentissages: Optional[str] = None
-    competences_developpees: Optional[List[AIContentDetail]] = None
-    competences_certifiees: Optional[List[AIContentDetail]] = None
-    cours_corequis: Optional[List[AIContentDetail]] = None
-    objets_cibles: Optional[List[AIContentDetail]] = None
-    cours_relies: Optional[List[AIContentDetail]] = None
-    cours_prealables: Optional[List[AIContentDetail]] = None
-    savoir_etre: Optional[List[str]] = None
-    capacites: Optional[List[AICapacite]] = None
+    place_intro: str
+    objectif_terminal: str
+    structure_intro: str
+    structure_activites_theoriques: str
+    structure_activites_pratiques: str
+    structure_activites_prevues: str
+    eval_evaluation_sommative: str
+    eval_nature_evaluations_sommatives: str
+    eval_evaluation_de_la_langue: str
+    eval_evaluation_sommatives_apprentissages: str
+    competences_developpees: List[AIContentDetail]
+    competences_certifiees: List[AIContentDetail]
+    cours_corequis: List[AIContentDetail]
+    objets_cibles: List[AIContentDetail]
+    cours_relies: List[AIContentDetail]
+    cours_prealables: List[AIContentDetail]
+    savoir_etre: List[str]
+    capacites: List[AICapacite]
 
 
 # Register with a stable, fully-qualified name so producers and workers match
