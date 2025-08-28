@@ -292,3 +292,6 @@ def test_full_schema_is_sent(app, monkeypatch):
     props = schema.get('properties', {})
     for key in ['place_intro', 'competences_developpees', 'savoir_etre', 'capacites']:
         assert key in props
+    # Aucun champ ne doit être explicitement requis afin d'éviter que le modèle
+    # ne renvoie des valeurs nulles pour satisfaire le schéma.
+    assert schema.get('required') == []

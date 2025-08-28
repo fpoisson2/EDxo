@@ -90,7 +90,11 @@ def _postprocess_openai_schema(schema: dict) -> None:
 
     props = schema.get('properties')
     if props:
-        schema['required'] = list(props.keys())
+        # Preserve only explicitly required fields and avoid forcing all
+        # properties to appear in the model output. This prevents the model
+        # from returning every field with a null value just to satisfy a
+        # blanket "required" list.
+        schema['required'] = schema.get('required', [])
         for prop_schema in props.values():
             _postprocess_openai_schema(prop_schema)
 
