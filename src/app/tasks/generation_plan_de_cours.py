@@ -144,7 +144,7 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
                 reasoning=reasoning_params,
             ) as stream:
                 for event in stream:
-                    etype = getattr(event, 'type', '') or ''
+                    etype = getattr(event, 'type', '') or getattr(event, 'event', '') or ''
                     if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
                         delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
                         if delta:
@@ -492,7 +492,7 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
                 reasoning=reasoning_params,
             ) as stream:
                 for event in stream:
-                    etype = getattr(event, 'type', '') or ''
+                    etype = getattr(event, 'type', '') or getattr(event, 'event', '') or ''
                     if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
                         delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
                         if delta:
