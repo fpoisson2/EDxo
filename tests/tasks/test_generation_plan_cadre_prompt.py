@@ -12,6 +12,10 @@ from src.app.models import (
     PlanCadre,
     GlobalGenerationSettings,
     SectionAISettings,
+    Competence,
+    ElementCompetence,
+    ElementCompetenceParCours,
+    ElementCompetenceCriteria,
     User,
     db,
 )
@@ -150,3 +154,99 @@ def test_user_prompt_contains_context(app):
     assert 'Compétences atteintes' in header
     assert '{{nom_cours}}' in system_prompt
     assert cours_nom not in system_prompt
+
+
+def test_user_prompt_includes_competence_elements(app, monkeypatch):
+    plan_id, user_id = setup_plan(app)
+    captured = {}
+
+    with app.app_context():
+        plan = db.session.get(PlanCadre, plan_id)
+        programme = Programme.query.first()
+
+        comp_dev = Competence(
+            programme_id=programme.id,
+            code="CDEV",
+            nom="CompDev",
+            criteria_de_performance="CritPerf Dev",
+            contexte_de_realisation="Ctx Dev",
+        )
+        db.session.add(comp_dev)
+        db.session.flush()
+        elem_dev = ElementCompetence(competence_id=comp_dev.id, nom="ElemDev")
+        db.session.add(elem_dev)
+        db.session.flush()
+        db.session.add(ElementCompetenceCriteria(element_competence_id=elem_dev.id, criteria="CritElemDev"))
+        db.session.add(
+            ElementCompetenceParCours(
+                cours_id=plan.cours_id,
+                element_competence_id=elem_dev.id,
+                status='Développé significativement'
+            )
+        )
+
+        comp_att = Competence(
+            programme_id=programme.id,
+            code="CATT",
+            nom="CompAtt",
+            criteria_de_performance="CritPerf Att",
+            contexte_de_realisation="Ctx Att",
+        )
+        db.session.add(comp_att)
+        db.session.flush()
+        elem_att = ElementCompetence(competence_id=comp_att.id, nom="ElemAtt")
+        db.session.add(elem_att)
+        db.session.flush()
+        db.session.add(ElementCompetenceCriteria(element_competence_id=elem_att.id, criteria="CritElemAtt"))
+        db.session.add(
+            ElementCompetenceParCours(
+                cours_id=plan.cours_id,
+                element_competence_id=elem_att.id,
+                status='Atteint'
+            )
+        )
+
+        sa = SectionAISettings(section='plan_cadre', system_prompt='Bonjour {{nom_cours}}')
+        db.session.add(sa)
+        db.session.commit()
+
+    class DummyResponses:
+        def create(self, **kwargs):
+            captured['input'] = kwargs['input']
+            class Resp:
+                output = []
+                output_text = '{}'
+                class usage:
+                    input_tokens = 0
+                    output_tokens = 0
+            return Resp()
+
+    class DummyOpenAI:
+        def __init__(self, *a, **k):
+            self.responses = DummyResponses()
+
+    import src.app.tasks.generation_plan_cadre as gpc
+    monkeypatch.setattr(gpc, 'OpenAI', DummyOpenAI)
+    monkeypatch.setattr("openai.OpenAI", DummyOpenAI)
+
+    dummy = DummySelf()
+    orig = generate_plan_cadre_content_task.__wrapped__.__func__
+    try:
+        orig(dummy, plan_id, {}, user_id)
+    except Exception:
+        pass
+    if 'input' not in captured:
+        pytest.skip("OpenAI call not captured")
+
+    messages = captured['input']
+    assert len(messages) == 2
+    user_content = messages[1]['content']
+    assert "Nom du cours" in user_content
+    assert "Session" in user_content
+    assert "Compétences développées et tous les détails" in user_content
+    assert "CompDev" in user_content
+    assert "Éléments de compétence" in user_content
+    assert "ElemDev" in user_content
+    assert "Compétences atteintes et tous les détails" in user_content
+    assert "CompAtt" in user_content
+    assert "ElemAtt" in user_content

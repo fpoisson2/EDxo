@@ -733,18 +733,40 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         if not related_plans_text:
             related_plans_text = '(Aucun)'
 
-        def _format_competences(comps):
+        def _format_competences(comps, elements, status_filter):
             text_ = ''
             for comp in comps or []:
                 text_ += (
                     f"- {comp.get('competence_nom')}:\n"
                     f"  Critère de performance: {comp.get('critere_performance')}\n"
                     f"  Contexte de réalisation: {comp.get('contexte_realisation')}\n"
+                    f"  Éléments de compétence:\n"
                 )
+                elems = [
+                    e for e in (elements or [])
+                    if e.get('competence_id') == comp.get('competence_id')
+                    and (status_filter is None or e.get('status') == status_filter)
+                ]
+                if elems:
+                    for el in elems:
+                        crit = el.get('critere_performance')
+                        crit_part = f" (Critère de performance: {crit})" if crit else ''
+                        text_ += f"    - {el.get('element_nom')}{crit_part}\n"
+                else:
+                    text_ += "    (Aucun)\n"
             return text_ or '(Aucune)'
 
-        comp_dev_text = _format_competences(plan_cadre_data.get('competences_developpees'))
-        comp_att_text = _format_competences(plan_cadre_data.get('competences_atteintes'))
+        elements = plan_cadre_data.get('elements_competences_developpees')
+        comp_dev_text = _format_competences(
+            plan_cadre_data.get('competences_developpees'),
+            elements,
+            'Développé significativement'
+        )
+        comp_att_text = _format_competences(
+            plan_cadre_data.get('competences_atteintes'),
+            elements,
+            'Atteint'
+        )
 
         prompt_header = (
             f"Nom du cours: {cours_nom}\n"
@@ -819,12 +841,10 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             if verbosity in {"low", "medium", "high"}:
                 text_params["verbosity"] = verbosity
 
-            combined_system_message = system_message or ''
-
             request_kwargs = dict(
                 model=ai_model,
                 input=[
-                    {"role": "system", "content": combined_system_message},
+                    {"role": "system", "content": system_message or ''},
                     {"role": "user", "content": combined_instruction},
                 ],
                 text=text_params,
