@@ -727,25 +727,35 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         # Note: The JSON schema est déjà imposé via l'API Responses.
         # Construire le contexte d'instruction pour l'utilisateur.
         programme_nom = plan_cadre_data.get('programme', 'Non défini')
-        related_ids = set()
+        related_courses = {}
         for c in plan_cadre_data.get('cours_corequis', []) or []:
             cid = c.get('cours_corequis_id')
             if cid:
-                related_ids.add(cid)
+                related_courses[cid] = {
+                    'code': c.get('cours_corequis_code'),
+                    'nom': c.get('cours_corequis_nom'),
+                }
         for c in plan_cadre_data.get('cours_prealables', []) or []:
             cid = c.get('cours_prealable_id')
             if cid:
-                related_ids.add(cid)
+                related_courses[cid] = {
+                    'code': c.get('cours_prealable_code'),
+                    'nom': c.get('cours_prealable_nom'),
+                }
         related_plans_text = ''
-        for rcid in related_ids:
+        for rcid, meta in related_courses.items():
             try:
                 rc_data = get_plan_cadre_data(rcid)
             except Exception:
                 rc_data = None
             if rc_data:
                 related_plans_text += (
-                    f"- {rc_data['cours']['code']} {rc_data['cours']['nom']}: "
+                    f"- {meta['code']} {meta['nom']}: "
                     f"{json.dumps(rc_data, ensure_ascii=False)}\n"
+                )
+            else:
+                related_plans_text += (
+                    f"- {meta['code']} {meta['nom']}: (Plan cadre non disponible)\n"
                 )
         if not related_plans_text:
             related_plans_text = '(Aucun)'

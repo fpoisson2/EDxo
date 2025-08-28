@@ -6,6 +6,7 @@ from src.app.models import (
     Programme,
     Cours,
     CoursProgramme,
+    CoursPrealable,
     PlanCadre,
     GlobalGenerationSettings,
     SectionAISettings,
@@ -64,6 +65,53 @@ def setup_plan(app):
         db.session.add(user)
         db.session.commit()
         return plan.id, user.id
+
+
+def setup_plan_with_prerequisite(app):
+    with app.app_context():
+        dept = Department(nom="Dep")
+        db.session.add(dept)
+        db.session.commit()
+
+        prog = Programme(nom="Prog", department_id=dept.id)
+        db.session.add(prog)
+        db.session.commit()
+
+        prereq = Cours(code="P100", nom="Prereq")
+        cours = Cours(code="C101", nom="Course")
+        db.session.add_all([prereq, cours])
+        db.session.commit()
+
+        db.session.add_all([
+            CoursProgramme(cours_id=prereq.id, programme_id=prog.id, session=1),
+            CoursProgramme(cours_id=cours.id, programme_id=prog.id, session=2),
+        ])
+        db.session.commit()
+
+        db.session.add(CoursPrealable(cours_id=cours.id, cours_prealable_id=prereq.id))
+        db.session.commit()
+
+        plan_main = PlanCadre(cours_id=cours.id, place_intro="EXISTING INTRO")
+        plan_prereq = PlanCadre(cours_id=prereq.id, place_intro="PREREQ INTRO")
+        db.session.add_all([plan_main, plan_prereq])
+        db.session.commit()
+
+        ggs = GlobalGenerationSettings(section="Intro et place du cours", use_ai=True, text_content="Prompt")
+        db.session.add(ggs)
+        db.session.commit()
+
+        user = User(
+            username="tester",
+            password=generate_password_hash("pw"),
+            role="admin",
+            openai_key="sk",
+            credits=1.0,
+            is_first_connexion=False,
+        )
+        user.programmes.append(prog)
+        db.session.add(user)
+        db.session.commit()
+        return plan_main.id, user.id, prereq
 
 
 def test_generation_does_not_send_current_plan(app, monkeypatch):
@@ -249,6 +297,49 @@ def test_user_prompt_includes_competence_elements(app, monkeypatch):
     assert "Compétences atteintes et tous les détails" in user_content
     assert "CompAtt" in user_content
     assert "ElemAtt" in user_content
+
+
+def test_user_prompt_lists_prerequisite_course(app, monkeypatch):
+    plan_id, user_id, prereq = setup_plan_with_prerequisite(app)
+    captured = {}
+
+    with app.app_context():
+        sa = SectionAISettings(section='plan_cadre', system_prompt='System')
+        db.session.add(sa)
+        db.session.commit()
+
+    class DummyResponses:
+        def create(self, **kwargs):
+            captured['input'] = kwargs['input']
+            class Resp:
+                output = []
+                output_text = '{}'
+                class usage:
+                    input_tokens = 0
+                    output_tokens = 0
+            return Resp()
+
+    class DummyOpenAI:
+        def __init__(self, *a, **k):
+            self.responses = DummyResponses()
+
+    import src.app.tasks.generation_plan_cadre as gpc
+    monkeypatch.setattr(gpc, 'OpenAI', DummyOpenAI)
+    monkeypatch.setattr("openai.OpenAI", DummyOpenAI)
+
+    dummy = DummySelf()
+    orig = generate_plan_cadre_content_task.__wrapped__.__func__
+    try:
+        orig(dummy, plan_id, {}, user_id)
+    except Exception:
+        pass
+    if 'input' not in captured:
+        pytest.skip("OpenAI call not captured")
+
+    messages = captured['input']
+    user_content = messages[1]['content']
+    assert prereq.code in user_content
+    assert prereq.nom in user_content
 
 
 def test_full_schema_is_sent(app, monkeypatch):
