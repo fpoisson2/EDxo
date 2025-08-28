@@ -173,9 +173,10 @@ def generate_plan_cadre(plan_id):
             payload = dict(request.form) if request.form else {}
         except Exception:
             payload = {}
-    # Aligner la génération sur le flux d'amélioration: passer en mode aperçu (review)
-    # pour atterrir sur la même page de validation que l'amélioration.
-    payload = {**(payload or {}), 'improve_only': True}
+    # Aligner la génération sur le flux d'amélioration : passer en mode aperçu (review)
+    # pour atterrir sur la même page de validation que l'amélioration sans activer
+    # le mode "improve_only" côté IA.
+    payload = {**(payload or {}), 'preview': True}
     task = generate_plan_cadre_content_task.delay(plan_id, payload, g.api_user.id)
     return jsonify({'task_id': task.id}), 202
 

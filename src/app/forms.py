@@ -652,13 +652,6 @@ class MoyenEvaluationFieldForm(Form):
 #class GenerateContentForm(FlaskForm):
 #    submit = SubmitField('Générer le Contenu')
 
-class GenerationSettingForm(FlaskForm):
-    use_ai = BooleanField('Utiliser l\'IA')
-    text_content = TextAreaField('Texte / Prompt', validators=[Optional()])
-
-    class Meta:
-        csrf = False  # Assurez-vous que le CSRF est activé
-
 class ChangePasswordForm(FlaskForm):
     current_password = PasswordField('Mot de passe actuel', validators=[DataRequired()])
     new_password = PasswordField('Nouveau mot de passe', validators=[
@@ -693,11 +686,6 @@ class WelcomeChangePasswordForm(FlaskForm):
 
 class CombinedWelcomeForm(ProfileEditForm, WelcomeChangePasswordForm):
     pass
-
-class GlobalGenerationSettingsForm(FlaskForm):
-    sections = FieldList(FormField(GenerationSettingForm), min_entries=21, max_entries=21)
-    openai_key = StringField('Clé OpenAI', validators=[Optional()])
-    submit = SubmitField('Enregistrer les Paramètres')
 
 class CapaciteItemForm(Form):
     class Meta:

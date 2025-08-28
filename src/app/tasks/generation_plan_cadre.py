@@ -170,6 +170,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         additional_info = form_data.get("additional_info", "")
         ai_model = form_data.get("ai_model", "")
         improve_only = form_data.get("improve_only", False)
+        preview = form_data.get("preview", False)
         target_columns = form_data.get("target_columns") or []
         if isinstance(target_columns, str):
             target_columns = [c.strip() for c in target_columns.split(',') if c.strip()]
@@ -501,7 +502,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     if is_ai:
                         ai_savoir_etre = replaced_text
                     else:
-                        if improve_only:
+                        if improve_only or preview:
                             # Reporter dans l'aperçu; pas de modification BD immédiate
                             ai_savoir_etre = replaced_text
                         else:
@@ -535,8 +536,8 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     ],
                     'moyens_evaluation': [(me.texte or '')[:200] for me in list(cap.moyens_evaluation)[:6]]
                 })
-        # Appliquer les mises à jour non-AI sur le plan (sauf si mode amélioration)
-        if not improve_only:
+        # Appliquer les mises à jour non-AI sur le plan (sauf si mode amélioration ou prévisualisation)
+        if not (improve_only or preview):
             for col_name, val in non_ai_updates_plan_cadre:
                 setattr(plan, col_name, val)
             # Exécuter les insertions non-AI dans les autres tables
@@ -706,36 +707,72 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         except Exception as _:
             previous_sections_context = None
 
-        # Note: The JSON schema is already enforced via the Responses API (text.format with strict schema).
-        # Avoid embedding the full schema in the prompt to reduce input size.
+        # Note: The JSON schema est déjà imposé via l'API Responses.
+        # Construire le contexte d'instruction pour l'utilisateur.
+        programme_nom = plan_cadre_data.get('programme', 'Non défini')
+        related_ids = set()
+        for c in plan_cadre_data.get('cours_corequis', []) or []:
+            cid = c.get('cours_corequis_id')
+            if cid:
+                related_ids.add(cid)
+        for c in plan_cadre_data.get('cours_prealables', []) or []:
+            cid = c.get('cours_prealable_id')
+            if cid:
+                related_ids.add(cid)
+        related_plans_text = ''
+        for rcid in related_ids:
+            try:
+                rc_data = get_plan_cadre_data(rcid)
+            except Exception:
+                rc_data = None
+            if rc_data:
+                related_plans_text += (
+                    f"- {rc_data['cours']['code']} {rc_data['cours']['nom']}: "
+                    f"{json.dumps(rc_data, ensure_ascii=False)}\n"
+                )
+        if not related_plans_text:
+            related_plans_text = '(Aucun)'
+
+        def _format_competences(comps):
+            text_ = ''
+            for comp in comps or []:
+                text_ += (
+                    f"- {comp.get('competence_nom')}:\n"
+                    f"  Critère de performance: {comp.get('critere_performance')}\n"
+                    f"  Contexte de réalisation: {comp.get('contexte_realisation')}\n"
+                )
+            return text_ or '(Aucune)'
+
+        comp_dev_text = _format_competences(plan_cadre_data.get('competences_developpees'))
+        comp_att_text = _format_competences(plan_cadre_data.get('competences_atteintes'))
+
+        prompt_header = (
+            f"Nom du cours: {cours_nom}\n"
+            f"Session: {cours_session}\n"
+            f"Nom du programme: {programme_nom}\n"
+            f"Plan cadre des cours reliés (corequis, préalables):\n{related_plans_text}\n"
+            f"Compétences développées et tous les détails:\n{comp_dev_text}\n"
+            f"Compétences atteintes et tous les détails:\n{comp_att_text}\n"
+        )
+
         if mode == 'wand':
-            # Prompt minimaliste et ciblé pour la baguette magique
             improve_clause = (
                 "Si un 'current_content' est fourni pour la section ciblée, améliore-le. "
                 "Sinon, produis un contenu complet et concis respectant le schéma demandé pour cette section. "
                 "Objectifs: clarté, simplicité, concision. N'ajoute aucune information hors périmètre et ne modifie aucune autre section.\n\n"
             )
             combined_instruction = (
-                f"Contexte: cours '{cours_nom}', session {cours_session}. Instruction: {additional_info}\n\n"
+                f"{prompt_header}\n"
+                f"Instruction: {additional_info}\n\n"
                 f"{improve_clause}"
                 "Réponds au format JSON attendu (schéma imposé par l'API).\n"
-                "Prompts fournis pour les sections ciblées uniquement:\n"
-                f"- fields: {ai_fields}\n\n"
-                f"- fields_with_description: {ai_fields_with_description}\n\n"
-                f"- savoir_etre: {ai_savoir_etre}\n\n"
-                f"- capacites: {ai_capacites_prompt}\n\n"
-                + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if course_context_compact else "")
-                + (f"{previous_sections_context}\n\n" if previous_sections_context else "")
-                + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if current_capacites_snapshot else "")
+                + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if improve_only and course_context_compact else "")
+                + (f"{previous_sections_context}\n\n" if improve_only and previous_sections_context else "")
+                + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if improve_only and current_capacites_snapshot else "")
                 + ("Exigences pour chaque capacité: inclure 'description_capacite', une plage 'ponderation_min'/'ponderation_max',\n"
                    "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
             )
-            system_message = (
-                f"Assistant de rédaction concis. Améliore uniquement la section ciblée. Instruction: {additional_info}. "
-                "Fais ton raisonnement en français."
-            )
-            if sa and getattr(sa, 'system_prompt', None):
-                system_message = f"{sa.system_prompt}\n\n{system_message}"
+            system_message = (sa.system_prompt if (sa and getattr(sa, 'system_prompt', None)) else '')
         else:
             improve_clause = (
                 "S'il y a un 'current_content', améliore-le. Sinon, génère un contenu approprié pour les sections ciblées. "
@@ -744,26 +781,19 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             else ""
             )
             combined_instruction = (
-                f"Tu es un rédacteur pour un plan-cadre de cours '{cours_nom}', session {cours_session}. "
+                f"{prompt_header}\n"
+                "Tu es un rédacteur pour un plan-cadre de cours. "
                 f"Informations importantes à considérer avant tout: {additional_info}\n\n"
                 f"{improve_clause}"
                 "Utilise un langage neutre (par ex. 'personne étudiante').\n"
                 "Si tu utilises des guillemets, utilise « » (français).\n\n"
-                "Voici différents prompts (seules les sections pertinentes sont fournies) :\n"
-                f"- fields: {ai_fields}\n\n"
-                f"- fields_with_description: {ai_fields_with_description}\n\n"
-                f"- savoir_etre: {ai_savoir_etre}\n\n"
-                f"- capacites: {ai_capacites_prompt}\n\n"
-                + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if course_context_compact else "")
-                + (f"{previous_sections_context}\n\n" if previous_sections_context else "")
-                + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if current_capacites_snapshot else "")
+                + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if improve_only and course_context_compact else "")
+                + (f"{previous_sections_context}\n\n" if improve_only and previous_sections_context else "")
+                + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if improve_only and current_capacites_snapshot else "")
                 + ("Exigences pour chaque capacité: inclure 'description_capacite', une plage 'ponderation_min'/'ponderation_max',\n"
                    "au moins 5 'savoirs_necessaires', au moins 5 'savoirs_faire' (avec 'cible' et 'seuil_reussite'), et au moins 3 'moyens_evaluation'.")
             )
-            # Prompt système exclusivement via SectionAISettings
             system_message = (sa.system_prompt if (sa and getattr(sa, 'system_prompt', None)) else '')
-            # Laisser les consignes au paramétrage (SectionAISettings). Pas d'instructions en dur ici.
-        # combined_instruction can be large; avoid noisy stdout
         logger.debug(combined_instruction)
 
         # Construire dynamiquement le modèle Pydantic selon les sections demandées
@@ -796,22 +826,29 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             if verbosity in {"low", "medium", "high"}:
                 text_params["verbosity"] = verbosity
 
-            user_payload = {
+            fields_payload = {
                 'fields': ai_fields,
                 'fields_with_description': ai_fields_with_description,
                 'savoir_etre': ai_savoir_etre,
                 'capacites': ai_capacites_prompt,
-                'course_context': course_context_compact,
-                'previous_sections_context': previous_sections_context,
-                'current_capacites_snapshot': current_capacites_snapshot,
                 'improve_only': improve_only,
                 'additional_info': additional_info,
             }
+            if improve_only:
+                fields_payload.update({
+                    'course_context': course_context_compact,
+                    'previous_sections_context': previous_sections_context,
+                    'current_capacites_snapshot': current_capacites_snapshot,
+                })
+            # Remove empty keys to avoid leaking empty context
+            fields_payload = {k: v for k, v in fields_payload.items() if v}
+
             request_kwargs = dict(
                 model=ai_model,
                 input=[
                     {"role": "system", "content": system_message},
-                    {"role": "user", "content": json.dumps(user_payload, ensure_ascii=False)}
+                    {"role": "user", "content": combined_instruction},
+                    {"role": "system", "content": json.dumps(fields_payload, ensure_ascii=False)},
                 ],
                 text=text_params,
                 store=True,
@@ -1012,7 +1049,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
         def clean_text(val):
             return val.strip().strip('"').strip("'") if val else ""
 
-        # Construire une proposition (aperçu) si improve_only
+        # Construire une proposition (aperçu) si amélioration ou prévisualisation
         proposed = {
             'fields': {},
             'fields_with_description': {},
@@ -1025,7 +1062,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             fcontent = clean_text(fobj.content)
             if fname in field_to_plan_cadre_column:
                 col = field_to_plan_cadre_column[fname]
-                if improve_only:
+                if improve_only or preview:
                     proposed['fields'][col] = fcontent
                 else:
                     setattr(plan, col, fcontent)
@@ -1053,7 +1090,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             elif isinstance(fobj.content, str):
                 elements_to_insert.append({"texte": clean_text(fobj.content), "description": ""})
 
-            if improve_only:
+            if improve_only or preview:
                 proposed.setdefault('fields_with_description', {})
                 proposed['fields_with_description'][fname] = elements_to_insert
             else:
@@ -1071,7 +1108,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
 
         # 3.c Savoir-être
         if getattr(parsed_data, "savoir_etre", None):
-            if improve_only:
+            if improve_only or preview:
                 proposed['savoir_etre'] = [clean_text(se_item) for se_item in parsed_data.savoir_etre]
             else:
                 for se_item in parsed_data.savoir_etre:
@@ -1083,7 +1120,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
 
         # 3.d Capacités
         if getattr(parsed_data, "capacites", None):
-            if improve_only:
+            if improve_only or preview:
                 for cap in parsed_data.capacites:
                     proposed['capacites'].append({
                         'capacite': clean_text(cap.capacite),
@@ -1135,7 +1172,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                             )
                             db.session.add(me_obj)
 
-        if improve_only:
+        if improve_only or preview:
             # Ajouter aussi les sections non-AI préparées dans l'aperçu
             for col_name, val in non_ai_updates_plan_cadre:
                 proposed['fields'][col_name] = val

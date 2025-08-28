@@ -110,6 +110,37 @@ def test_api_endpoints(app, client):
     assert "place_intro" in resp.get_json()
 
 
+def test_generate_plan_cadre_sets_preview(app, client, monkeypatch):
+    prog_id, cours_id, plan_cadre_id, _, _ = setup_data(app)
+    user_id, token = create_user(app, programmes=[prog_id])
+    headers = {"X-API-Token": token}
+
+    captured = {}
+
+    def fake_delay(pid, payload, uid):
+        captured["pid"] = pid
+        captured["payload"] = payload
+        captured["uid"] = uid
+
+        class Dummy:
+            id = "tid"
+
+        return Dummy()
+
+    monkeypatch.setattr(
+        "src.app.tasks.generation_plan_cadre.generate_plan_cadre_content_task.delay",
+        fake_delay,
+    )
+
+    resp = client.post(
+        f"/api/plan_cadre/{plan_cadre_id}/generate", json={}, headers=headers
+    )
+
+    assert resp.status_code == 202
+    assert captured["payload"].get("preview") is True
+    assert captured["payload"].get("improve_only") is not True
+
+
 def test_api_token_lifecycle(app, client, monkeypatch):
     # allow login without real recaptcha
     from src.app.routes import routes as routes_module

@@ -203,12 +203,10 @@ def generate_plan_cadre_content(plan_id):
         if not form.validate_on_submit():
             return jsonify(success=False, message='Erreur de validation du formulaire.')
     
-    # Forcer le mode amélioration si demandé explicitement
-    # mode déjà défini ci-dessus
-    # Forcer désormais un flux d'aperçu/validation pour la génération
-    improved_mode = True
+    # Forcer désormais un flux d'aperçu/validation pour la génération sans passer
+    # par le mode "improve_only" qui induit l'IA en erreur
     payload = dict(form.data)
-    payload['improve_only'] = bool(improved_mode)
+    payload['preview'] = True
     payload['mode'] = mode
     # Activer le streaming si demandé par le client (hidden input "stream")
     stream_flag = request.form.get('stream')

@@ -63,9 +63,6 @@
                       <a href="{{ url_for('settings.plan_cadre_prompts') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.plan_cadre_prompts' %}active{% endif %}">
                         <i class="bi bi-gear me-2"></i>Plan-cadre — Prompts IA
                       </a>
-                      <a href="{{ url_for('settings.edit_global_generation_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.edit_global_generation_settings' %}active{% endif %}">
-                        <i class="bi bi-list-check me-2"></i>Plan-cadre — Sections (granularité)
-                      </a>
                       <a href="{{ url_for('settings.plan_de_cours_prompt_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.plan_de_cours_prompt_settings' %}active{% endif %}">
                         <i class="bi bi-file-earmark-text me-2"></i>Plans de cours
                       </a>

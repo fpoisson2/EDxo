@@ -7,7 +7,6 @@ from flask_login import login_required, current_user
 from flask_wtf.csrf import CSRFProtect
 
 from ..forms import (
-    GlobalGenerationSettingsForm,
     DeletePlanForm,
     UploadForm,
     ProfileEditForm,
@@ -21,17 +20,15 @@ from ..forms import (
     PlanCadreImportPromptSettingsForm,
 )
 from .evaluation import AISixLevelGridResponse
-from ...config.constants import SECTIONS  # Importer la liste des sections
 from ...utils.decorator import role_required, roles_required, ensure_profile_completed
 
 csrf = CSRFProtect()
 
 
-# Importez bien sûr db, User et GlobalGenerationSettings depuis vos modèles
+# Importez bien sûr db et User depuis vos modèles
 from ..models import (
     db,
     User,
-    GlobalGenerationSettings,
     GrillePromptSettings,
     PlanDeCours,
     Cours,
@@ -926,86 +923,3 @@ def prompt_settings():
     
     return render_template('settings/prompt_settings.html', settings=settings, schema_json=schema_json, ai_form=ai_form)
 
-@settings_bp.route('/plan_cadre', methods=['GET', 'POST'])
-@roles_required('admin', 'coordo')
-@ensure_profile_completed
-def edit_global_generation_settings():
-    form = GlobalGenerationSettingsForm()
-    sa = SectionAISettings.get_for('plan_cadre')
-    ai_form = SectionAISettingsForm(obj=sa)
-
-    if request.method == 'GET':
-        # Récupérer la clé OpenAI de l'utilisateur connecté via SQLAlchemy
-        user = db.session.get(User, current_user.id)
-        if user:
-            form.openai_key.data = user.openai_key
-
-        # Vérifier la cohérence entre le formulaire et le nombre de SECTIONS
-        current_entries = len(form.sections)
-        required_entries = len(SECTIONS)
-        if current_entries < required_entries:
-            for _ in range(required_entries - current_entries):
-                form.sections.append_entry()
-        elif current_entries > required_entries:
-            for _ in range(current_entries - required_entries):
-                form.sections.pop_entry()
-
-        # Charger les réglages existants
-        settings = GlobalGenerationSettings.query.all()
-
-        for i, section in enumerate(SECTIONS):
-            setting = next((s for s in settings if s.section == section), None)
-            if setting:
-                form.sections[i].use_ai.data = bool(setting.use_ai)
-                form.sections[i].text_content.data = setting.text_content
-            else:
-                form.sections[i].use_ai.data = False
-                form.sections[i].text_content.data = ''
-
-    if form.validate_on_submit():
-        try:
-            # Mettre à jour (ou créer) les entrées GlobalGenerationSettings
-            for i, section in enumerate(SECTIONS):
-                # Tous les champs doivent être générés par IA maintenant
-                use_ai = True
-                text_content = form.sections[i].text_content.data.strip()
-
-                existing_setting = GlobalGenerationSettings.query.filter_by(section=section).first()
-                if existing_setting:
-                    existing_setting.use_ai = use_ai
-                    existing_setting.text_content = text_content
-                else:
-                    new_setting = GlobalGenerationSettings(
-                        section=section,
-                        use_ai=use_ai,
-                        text_content=text_content
-                    )
-                    db.session.add(new_setting)
-
-            # Mettre à jour la config IA de section (modèle / prompt système / etc.)
-            ai_form = SectionAISettingsForm(formdata=request.form, obj=sa)
-            if ai_form.validate():
-                sa.system_prompt = ai_form.system_prompt.data or None
-                sa.ai_model = ai_form.ai_model.data or None
-                sa.reasoning_effort = ai_form.reasoning_effort.data or None
-                sa.verbosity = ai_form.verbosity.data or None
-
-            db.session.commit()
-            flash('Paramètres Plan-cadre mis à jour avec succès!', 'success')
-            return redirect(url_for('settings.edit_global_generation_settings'))
-
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erreur lors de la mise à jour des paramètres : {e}', 'danger')
-
-    else:
-        if request.method == 'POST':
-            # Debugging form validation errors
-            for field_name, field in form._fields.items():
-                if field.errors:
-                    print(f"Erreurs dans le champ '{field_name}': {field.errors}")
-            flash('Validation du formulaire échouée. Veuillez vérifier vos entrées.', 'danger')
-
-    # Préparer la liste des sections pour le rendu
-    sections_with_forms = list(zip(form.sections, SECTIONS))
-    return render_template('edit_global_generation_settings.html', form=form, sections_with_forms=sections_with_forms, ai_form=ai_form)
