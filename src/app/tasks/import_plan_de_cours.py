@@ -148,6 +148,23 @@ PLAN_DE_COURS_JSON_SCHEMA = {
             },
         },
     },
+    "required": [
+        "presentation_du_cours",
+        "objectif_terminal_du_cours",
+        "organisation_et_methodes",
+        "accomodement",
+        "evaluation_formative_apprentissages",
+        "evaluation_expression_francais",
+        "materiel",
+        "calendriers",
+        "nom_enseignant",
+        "telephone_enseignant",
+        "courriel_enseignant",
+        "bureau_enseignant",
+        "disponibilites",
+        "mediagraphies",
+        "evaluations",
+    ],
     "additionalProperties": False
 }
 

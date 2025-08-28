@@ -24,6 +24,10 @@ class FakeResponses:
                 "evaluation_expression_francais": "",
                 "materiel": "",
                 "calendriers": [],
+                "nom_enseignant": "",
+                "telephone_enseignant": "",
+                "courriel_enseignant": "",
+                "bureau_enseignant": "",
                 "disponibilites": [],
                 "mediagraphies": [],
                 "evaluations": [],
@@ -76,6 +80,7 @@ def test_schema_has_no_defs(app):
         assert schema
         assert '$defs' not in schema
         assert schema.get('additionalProperties') is False
+        assert set(schema['required']) == set(schema['properties'].keys())
         cal_item = schema['properties']['calendriers']['items']
         assert set(cal_item['required']) == set(cal_item['properties'].keys())
         for prop in ['disponibilites', 'mediagraphies', 'evaluations']:
