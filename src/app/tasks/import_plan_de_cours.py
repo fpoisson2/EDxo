@@ -195,7 +195,15 @@ def _extract_first_parsed(response):
 
 
 @shared_task(bind=True, name='src.app.tasks.import_plan_de_cours.import_plan_de_cours_task')
-def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_model: str, user_id: int):
+def import_plan_de_cours_task(
+    self,
+    plan_de_cours_id: int,
+    doc_text: str,
+    ai_model: str,
+    user_id: int,
+    file_path: Optional[str] = None,
+    openai_client_cls=None,
+):
     """Celery task: parse DOCX text via OpenAI, update PlanDeCours and return UI payload."""
     try:
         plan = db.session.get(PlanDeCours, plan_de_cours_id)
@@ -216,28 +224,83 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
         if user.credits <= 0:
             return {"status": "error", "message": "Crédits insuffisants."}
 
-        # Prépare system prompt (SectionAISettings 'plan_de_cours_import') + message utilisateur (données brutes)
+        # Prépare system prompt (SectionAISettings 'plan_de_cours_import')
         sa_impt = SectionAISettings.get_for('plan_de_cours_import')
         sys_prompt = (getattr(sa_impt, 'system_prompt', None) or '').strip()
-        user_input = (
-            "Contexte: cours {code} - {nom}, session {session}.\n"
-            "Texte du plan de cours (brut):\n---\n{texte}\n---\n"
-        ).format(
-            code=getattr(cours, 'code', '') or '',
-            nom=getattr(cours, 'nom', '') or '',
-            session=plan.session,
-            texte=(doc_text or '')[:120000],
-        )
 
         self.update_state(state='PROGRESS', meta={'message': "Analyse du .docx en cours..."})
 
-        client = OpenAI(api_key=user.openai_key)
+        ClientCls = openai_client_cls or OpenAI
+        client = ClientCls(api_key=user.openai_key)
+
+        # Si un chemin de fichier est fourni, tenter l'upload (DOCX -> PDF) vers OpenAI
+        file_id = None
+        if file_path:
+            try:
+                import os as _os
+                upload_path = file_path
+                if file_path.lower().endswith('.docx'):
+                    # Reuse PDF conversion helper used by plan-cadre import
+                    from .import_plan_cadre import _create_pdf_from_text  # local import avoids cycles
+                    pdf_path = file_path[:-5] + '.pdf'
+                    html = None
+                    try:
+                        import mammoth
+                        with open(file_path, 'rb') as df:
+                            res = mammoth.convert_to_html(df)
+                            html = res.value
+                    except Exception:
+                        html = None
+                    if html:
+                        try:
+                            from weasyprint import HTML
+                            HTML(string=html).write_pdf(pdf_path)
+                        except Exception:
+                            _create_pdf_from_text(doc_text or 'Document importé', pdf_path)
+                    else:
+                        _create_pdf_from_text(doc_text or 'Document importé', pdf_path)
+                    upload_path = pdf_path
+                with open(upload_path, 'rb') as f:
+                    up = client.files.create(file=f, purpose='user_data')
+                    file_id = getattr(up, 'id', None)
+            except Exception:
+                logger.exception("Échec upload fichier vers OpenAI (plan de cours); repli en mode texte brut")
+                file_id = None
+
+        # Construire l'input pour Responses API
+        if file_id:
+            compact_instruction = (
+                f"Contexte: cours {getattr(cours, 'code', '') or ''} - {getattr(cours, 'nom', '') or ''}, session {plan.session}.\n"
+                f"Le plan de cours est joint en PDF. Analyse et structure les champs du modèle."
+            )
+            input_blocks = []
+            if sys_prompt:
+                input_blocks.append({"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]})
+            input_blocks.append({
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": compact_instruction},
+                    {"type": "input_file", "file_id": file_id},
+                ]
+            })
+        else:
+            user_input = (
+                "Contexte: cours {code} - {nom}, session {session}.\n"
+                "Texte du plan de cours (brut):\n---\n{texte}\n---\n"
+            ).format(
+                code=getattr(cours, 'code', '') or '',
+                nom=getattr(cours, 'nom', '') or '',
+                session=plan.session,
+                texte=(doc_text or '')[:120000],
+            )
+            input_blocks = []
+            if sys_prompt:
+                input_blocks.append({"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]})
+            input_blocks.append({"role": "user", "content": [{"type": "input_text", "text": user_input}]})
+
         response = client.responses.parse(
             model=ai_model,
-            input=[
-                {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
-                {"role": "user", "content": [{"type": "input_text", "text": user_input}]}
-            ],
+            input=input_blocks,
             text_format=ImportPlanDeCoursResponse,
         )
 

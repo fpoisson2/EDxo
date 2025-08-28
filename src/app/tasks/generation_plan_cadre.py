@@ -287,6 +287,88 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
 
         plan_cadre_data = get_plan_cadre_data(plan.cours_id)
 
+        def _render_full_plan_text(plan_: PlanCadre) -> str:
+            """Build a comprehensive plaintext for a PlanCadre object (local copy).
+
+            Keeps in sync with the MCP preview, but remains internal to the task
+            to avoid cross-module imports.
+            """
+            try:
+                cours_info = None
+                if getattr(plan_, "cours", None):
+                    cours_info = f"{plan_.cours.code} — {plan_.cours.nom}"
+                header = f"Plan-cadre{(' — ' + cours_info) if cours_info else ''}".strip()
+
+                sections_txt: list[str] = []
+                sections_txt.append(header)
+                sections_txt.append("")
+                sections_txt.append("Objectif terminal:")
+                sections_txt.append(plan_.objectif_terminal or "")
+                sections_txt.append("")
+                sections_txt.append("Place et structure:")
+                def _sj(parts):
+                    return "\n".join([p for p in parts if p])
+                sections_txt.append(_sj([
+                    plan_.place_intro or "",
+                    plan_.structure_intro or "",
+                    plan_.structure_activites_theoriques or "",
+                    plan_.structure_activites_pratiques or "",
+                    plan_.structure_activites_prevues or "",
+                ]))
+                sections_txt.append("")
+                sections_txt.append("Évaluation:")
+                sections_txt.append(_sj([
+                    plan_.eval_evaluation_sommative or "",
+                    plan_.eval_nature_evaluations_sommatives or "",
+                    plan_.eval_evaluation_de_la_langue or "",
+                    plan_.eval_evaluation_sommatives_apprentissages or "",
+                ]))
+                # Capacités
+                if getattr(plan_, "capacites", None):
+                    sections_txt.append("")
+                    sections_txt.append("Capacités:")
+                    for cap in plan_.capacites:
+                        sections_txt.append(f"- {cap.capacite or ''}")
+                        if cap.description_capacite:
+                            sections_txt.append(f"  Description: {cap.description_capacite}")
+                        if getattr(cap, "savoirs_necessaires", None):
+                            for sn in cap.savoirs_necessaires:
+                                sections_txt.append(f"  Savoir nécessaire: {sn.texte}")
+                        if getattr(cap, "savoirs_faire", None):
+                            for sf in cap.savoirs_faire:
+                                sf_line = f"  Savoir-faire: {sf.texte}"
+                                if sf.seuil_reussite:
+                                    sf_line += f" (Seuil: {sf.seuil_reussite})"
+                                if sf.cible:
+                                    sf_line += f" (Cible: {sf.cible})"
+                                sections_txt.append(sf_line)
+                        if getattr(cap, "moyens_evaluation", None):
+                            for me in cap.moyens_evaluation:
+                                sections_txt.append(f"  Moyen d'évaluation: {me.texte}")
+                def _add_list(title, items, attr):
+                    if items:
+                        sections_txt.append("")
+                        sections_txt.append(f"{title}:")
+                        for it in items:
+                            val = getattr(it, attr, None)
+                            if val:
+                                sections_txt.append(f"- {val}")
+                _add_list("Savoirs être", getattr(plan_, "savoirs_etre", None), "texte")
+                _add_list("Objets cibles", getattr(plan_, "objets_cibles", None), "texte")
+                _add_list("Cours préalables", getattr(plan_, "cours_prealables", None), "texte")
+                _add_list("Cours corequis", getattr(plan_, "cours_corequis", None), "texte")
+                _add_list("Compétences certifiées", getattr(plan_, "competences_certifiees", None), "texte")
+                _add_list("Compétences développées", getattr(plan_, "competences_developpees", None), "texte")
+                txt = "\n".join([s for s in sections_txt if s is not None])
+                return txt.strip() or header
+            except Exception:
+                parts = []
+                for attr in ("objectif_terminal", "structure_intro", "structure_activites_prevues"):
+                    val = getattr(plan_, attr, None)
+                    if val:
+                        parts.append(f"{attr}: {val}")
+                return "\n\n".join(parts) or "Plan-cadre"
+
         field_to_plan_cadre_column = {
             'Intro et place du cours': 'place_intro',
             'Objectif terminal': 'objectif_terminal',
@@ -810,15 +892,25 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                 "Sinon, produis un contenu complet et concis respectant le schéma demandé pour cette section. "
                 "Objectifs: clarté, simplicité, concision. N'ajoute aucune information hors périmètre et ne modifie aucune autre section.\n\n"
             )
-            combined_instruction = (
-                f"{prompt_header}\n"
-                f"Instruction: {additional_info}\n\n"
-                f"{improve_clause}"
-                "Réponds au format JSON attendu (schéma imposé par l'API).\n"
-                + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if improve_only and course_context_compact else "")
-                + (f"{previous_sections_context}\n\n" if improve_only and previous_sections_context else "")
-                + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if improve_only and current_capacites_snapshot else "")
-            )
+            if improve_only and target_columns:
+                full_plan_text = _render_full_plan_text(plan)
+                combined_instruction = (
+                    f"Plan-cadre actuel (complet):\n{full_plan_text}\n\n"
+                    f"Section(s) à améliorer: {', '.join(target_columns)}\n"
+                    f"Instruction additionnelle: {additional_info}\n\n"
+                    f"{improve_clause}"
+                    "Réponds au format JSON attendu (schéma imposé par l'API).\n"
+                )
+            else:
+                combined_instruction = (
+                    f"{prompt_header}\n"
+                    f"Instruction: {additional_info}\n\n"
+                    f"{improve_clause}"
+                    "Réponds au format JSON attendu (schéma imposé par l'API).\n"
+                    + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if improve_only and course_context_compact else "")
+                    + (f"{previous_sections_context}\n\n" if improve_only and previous_sections_context else "")
+                    + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if improve_only and current_capacites_snapshot else "")
+                )
             system_message = (sa.system_prompt if (sa and getattr(sa, 'system_prompt', None)) else '')
         else:
             improve_clause = (
@@ -827,14 +919,23 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             if improve_only
             else ""
             )
-            combined_instruction = (
-                f"{prompt_header}\n"
-                f"Instruction: {additional_info}\n\n"
-                f"{improve_clause}"
-                + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if improve_only and course_context_compact else "")
-                + (f"{previous_sections_context}\n\n" if improve_only and previous_sections_context else "")
-                + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if improve_only and current_capacites_snapshot else "")
-            )
+            if improve_only and target_columns:
+                full_plan_text = _render_full_plan_text(plan)
+                combined_instruction = (
+                    f"Plan-cadre actuel (complet):\n{full_plan_text}\n\n"
+                    f"Section(s) à améliorer: {', '.join(target_columns)}\n"
+                    f"Instruction additionnelle: {additional_info}\n\n"
+                    f"{improve_clause}"
+                )
+            else:
+                combined_instruction = (
+                    f"{prompt_header}\n"
+                    f"Instruction: {additional_info}\n\n"
+                    f"{improve_clause}"
+                    + (f"Contexte additionnel du cours:\n{course_context_compact}\n\n" if improve_only and course_context_compact else "")
+                    + (f"{previous_sections_context}\n\n" if improve_only and previous_sections_context else "")
+                    + (f"Contenu actuel des capacités (si présent): {current_capacites_snapshot}\n" if improve_only and current_capacites_snapshot else "")
+                )
             system_message = (sa.system_prompt if (sa and getattr(sa, 'system_prompt', None)) else '')
         logger.debug(combined_instruction)
 
@@ -854,6 +955,19 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     "strict": True
                 }
             }
+            # If a single-section improvement is requested, restrict the schema
+            if improve_only and target_columns:
+                try:
+                    schema = text_params["format"]["schema"]
+                    props = schema.get("properties", {})
+                    allowed = [k for k in list(props.keys()) if k in set(target_columns)]
+                    if allowed:
+                        schema["properties"] = {k: props[k] for k in allowed}
+                        schema["required"] = list(allowed)
+                        text_params["format"]["schema"] = schema
+                except Exception:
+                    # Fallback silently if schema shaping fails; better a broader schema than a crash
+                    pass
             if verbosity in {"low", "medium", "high"}:
                 text_params["verbosity"] = verbosity
 
@@ -1057,7 +1171,14 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             parsed_json = json.loads(response.output_text)
         if reasoning_summary_text:
             logger.info("OpenAI reasoning summary: %s", reasoning_summary_text)
-        parsed_data = PlanCadreAIResponse(**parsed_json)
+        # If we requested a targeted improvement with a restricted schema,
+        # accept partial JSON without validating against the full model.
+        is_partial = False
+        if improve_only and target_columns:
+            parsed_data = parsed_json
+            is_partial = True
+        else:
+            parsed_data = PlanCadreAIResponse(**parsed_json)
 
         def clean_text(val):
             return val.strip().strip('"').strip("'") if val else ""
@@ -1068,6 +1189,13 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             'fields_with_description': {},
             'capacites': []
         }
+
+        # Utility getters that support both Pydantic objects and plain dicts
+        def _get_val(key):
+            return (parsed_data.get(key) if is_partial else getattr(parsed_data, key, None))
+
+        def _item_val(item, key):
+            return (item.get(key) if isinstance(item, dict) else getattr(item, key, None))
 
         # 3.a Champs simples
         simple_columns = [
@@ -1083,7 +1211,7 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             'eval_evaluation_sommatives_apprentissages',
         ]
         for col in simple_columns:
-            val = clean_text(getattr(parsed_data, col, None))
+            val = clean_text(_get_val(col))
             if not val:
                 continue
             if improve_only or preview:
@@ -1105,13 +1233,13 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
 
         # 3.b Champs avec description (listes)
         for attr, (table_name, display_name) in table_mapping_attr.items():
-            items = getattr(parsed_data, attr, None) or []
+            items = _get_val(attr) or []
             if not items:
                 continue
             elements_to_insert = []
             for item in items:
-                texte_comp = clean_text(getattr(item, 'texte', None))
-                desc_comp = clean_text(getattr(item, 'description', None))
+                texte_comp = clean_text(_item_val(item, 'texte'))
+                desc_comp = clean_text(_item_val(item, 'description'))
                 if texte_comp or desc_comp:
                     elements_to_insert.append({'texte': texte_comp, 'description': desc_comp})
 
@@ -1129,11 +1257,11 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     )
 
         # 3.c Savoir-être
-        if getattr(parsed_data, "savoir_etre", None):
+        if _get_val("savoir_etre"):
             if improve_only or preview:
-                proposed['savoir_etre'] = [clean_text(se_item) for se_item in parsed_data.savoir_etre]
+                proposed['savoir_etre'] = [clean_text(se_item) for se_item in _get_val("savoir_etre")]
             else:
-                for se_item in parsed_data.savoir_etre:
+                for se_item in _get_val("savoir_etre"):
                     se_obj = PlanCadreSavoirEtre(
                         plan_cadre_id=plan.id,
                         texte=clean_text(se_item)
@@ -1141,53 +1269,53 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
                     db.session.add(se_obj)
 
         # 3.d Capacités
-        if getattr(parsed_data, "capacites", None):
+        if _get_val("capacites"):
             if improve_only or preview:
-                for cap in parsed_data.capacites:
+                for cap in _get_val("capacites"):
                     proposed['capacites'].append({
-                        'capacite': clean_text(cap.capacite),
-                        'description_capacite': clean_text(cap.description_capacite),
-                        'ponderation_min': int(cap.ponderation_min) if cap.ponderation_min else 0,
-                        'ponderation_max': int(cap.ponderation_max) if cap.ponderation_max else 0,
-                        'savoirs_necessaires': [clean_text(sn) for sn in (cap.savoirs_necessaires or [])],
+                        'capacite': clean_text(_item_val(cap, 'capacite')),
+                        'description_capacite': clean_text(_item_val(cap, 'description_capacite')),
+                        'ponderation_min': int(_item_val(cap, 'ponderation_min') or 0),
+                        'ponderation_max': int(_item_val(cap, 'ponderation_max') or 0),
+                        'savoirs_necessaires': [clean_text(sn) for sn in (_item_val(cap, 'savoirs_necessaires') or [])],
                         'savoirs_faire': [
                             {
-                                'texte': clean_text(sf.texte),
-                                'seuil_performance': clean_text(sf.seuil_performance),
-                                'critere_reussite': clean_text(sf.critere_reussite)
-                            } for sf in (cap.savoirs_faire or [])
+                                'texte': clean_text(_item_val(sf, 'texte')),
+                                'seuil_performance': clean_text(_item_val(sf, 'seuil_performance')),
+                                'critere_reussite': clean_text(_item_val(sf, 'critere_reussite'))
+                            } for sf in (_item_val(cap, 'savoirs_faire') or [])
                         ],
-                        'moyens_evaluation': [clean_text(me) for me in (cap.moyens_evaluation or [])]
+                        'moyens_evaluation': [clean_text(me) for me in (_item_val(cap, 'moyens_evaluation') or [])]
                     })
             else:
-                for cap in parsed_data.capacites:
+                for cap in _get_val("capacites"):
                     new_cap = PlanCadreCapacites(
                         plan_cadre_id=plan.id,
-                        capacite=clean_text(cap.capacite),
-                        description_capacite=clean_text(cap.description_capacite),
-                        ponderation_min=int(cap.ponderation_min) if cap.ponderation_min else 0,
-                        ponderation_max=int(cap.ponderation_max) if cap.ponderation_max else 0
+                        capacite=clean_text(_item_val(cap, 'capacite')),
+                        description_capacite=clean_text(_item_val(cap, 'description_capacite')),
+                        ponderation_min=int(_item_val(cap, 'ponderation_min') or 0),
+                        ponderation_max=int(_item_val(cap, 'ponderation_max') or 0)
                     )
                     db.session.add(new_cap)
                     db.session.flush()
-                    if cap.savoirs_necessaires:
-                        for sn in cap.savoirs_necessaires:
+                    if _item_val(cap, 'savoirs_necessaires'):
+                        for sn in _item_val(cap, 'savoirs_necessaires'):
                             sn_obj = PlanCadreCapaciteSavoirsNecessaires(
                                 capacite_id=new_cap.id,
                                 texte=clean_text(sn)
                             )
                             db.session.add(sn_obj)
-                    if cap.savoirs_faire:
-                        for sf in cap.savoirs_faire:
+                    if _item_val(cap, 'savoirs_faire'):
+                        for sf in _item_val(cap, 'savoirs_faire'):
                             sf_obj = PlanCadreCapaciteSavoirsFaire(
                                 capacite_id=new_cap.id,
-                                texte=clean_text(sf.texte),
-                                cible=clean_text(sf.seuil_performance),
-                                seuil_reussite=clean_text(sf.critere_reussite)
+                                texte=clean_text(_item_val(sf, 'texte')),
+                                cible=clean_text(_item_val(sf, 'seuil_performance')),
+                                seuil_reussite=clean_text(_item_val(sf, 'critere_reussite'))
                             )
                             db.session.add(sf_obj)
-                    if cap.moyens_evaluation:
-                        for me in cap.moyens_evaluation:
+                    if _item_val(cap, 'moyens_evaluation'):
+                        for me in _item_val(cap, 'moyens_evaluation'):
                             me_obj = PlanCadreCapaciteMoyensEvaluation(
                                 capacite_id=new_cap.id,
                                 texte=clean_text(me)

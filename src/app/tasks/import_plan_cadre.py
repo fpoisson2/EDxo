@@ -443,17 +443,18 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
     sans appliquer directement sur la base de données, pour permettre une comparaison.
     """
     try:
-        # Streaming buffer to display live progress in the unified modal
-        stream_buf = ""
+        # Keep minimal progress updates (no verbose messages sent to orchestrator)
         reasoning_summary_text = ""
         def push(step_msg: str, step: str = "", progress: int = None):
-            nonlocal stream_buf
             try:
-                stream_buf += (step_msg + "\n")
-                meta = { 'message': step_msg, 'stream_buffer': stream_buf }
-                if step: meta['step'] = step
-                if progress is not None: meta['progress'] = progress
-                self.update_state(state='PROGRESS', meta=meta)
+                meta = {}
+                if step:
+                    meta['step'] = step
+                if progress is not None:
+                    meta['progress'] = progress
+                # Do not include 'message' or 'stream_buffer' here to avoid leaking details
+                if meta:
+                    self.update_state(state='PROGRESS', meta=meta)
             except Exception:
                 pass
         push("Initialisation de l'import (aperçu)…", step='init', progress=1)
@@ -878,8 +879,6 @@ def import_plan_cadre_preview_task(self, plan_cadre_id: int, doc_text: str, ai_m
             pass
         # Final streaming update before marking success
         try:
-            stream_buf += "Pré-analyse terminée. Ouverture de la revue…\n"
-            result['stream_buffer'] = stream_buf
             if reasoning_summary_text:
                 result['reasoning_summary'] = reasoning_summary_text
         except Exception:

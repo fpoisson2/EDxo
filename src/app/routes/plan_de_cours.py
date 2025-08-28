@@ -247,6 +247,7 @@ class ImportPlanDeCoursResponse(BaseModel):
     evaluation_formative_apprentissages: Optional[str] = None
     evaluation_expression_francais: Optional[str] = None
     materiel: Optional[str] = None
+    seuil_reussite: Optional[str] = None
 
     # Calendrier
     calendriers: List[CalendarEntry] = Field(default_factory=list)
@@ -516,18 +517,33 @@ def import_docx():
     if user.credits <= 0:
         return jsonify({'success': False, 'message': 'Crédits insuffisants.'}), 403
 
-    # Read docx text
+    # Sauvegarder le fichier pour pouvoir le convertir et l'uploader à OpenAI
+    import os, re, time
     try:
-        doc_text = _read_docx_text(file)
+        upload_dir = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+        os.makedirs(upload_dir, exist_ok=True)
+        safe_name = re.sub(r'[^A-Za-z0-9_.-]+', '_', file.filename)
+        stored_name = f"plan_de_cours_sync_{plan_de_cours.id}_{int(time.time())}_{safe_name}"
+        stored_path = os.path.join(upload_dir, stored_name)
+        file.stream.seek(0, os.SEEK_SET)
+        file.save(stored_path)
+        st = os.stat(stored_path)
+        current_app.logger.info("[import_docx] DOCX sauvegardé: %s (%s octets)", stored_path, st.st_size)
     except Exception:
-        current_app.logger.exception('Erreur lecture DOCX')
-        return jsonify({'success': False, 'message': 'Impossible de lire le DOCX.'}), 400
+        current_app.logger.exception('[import_docx] Échec sauvegarde du DOCX')
+        return jsonify({'success': False, 'message': 'Impossible de sauvegarder le fichier.'}), 400
 
-    # Build user content: raw data only (no instructions)
-    user_input = (
-        f"Contexte: cours {getattr(cours, 'code', '') or ''} - {getattr(cours, 'nom', '') or ''}, session {session}.\n"
-        f"Texte du plan de cours (brut):\n---\n{doc_text[:120000]}\n---\n"
-    )
+    # Lecture de secours du texte, utile en cas de fallback (qualité moindre)
+    try:
+        with open(stored_path, 'rb') as fh:
+            from docx import Document
+            _doc = Document(fh)
+            paragraphs = [p.text for p in _doc.paragraphs if p.text and p.text.strip()]
+            doc_text = '\n\n'.join(paragraphs)
+        current_app.logger.info('[import_docx] Texte extrait pour fallback (%d caractères)', len(doc_text))
+    except Exception:
+        current_app.logger.warning('[import_docx] Extraction texte DOCX échouée; fallback texte indisponible', exc_info=True)
+        doc_text = ''
 
     # Choose model (prefer explicit from form, fallback to saved settings + section settings)
     from ..models import SectionAISettings
@@ -540,10 +556,63 @@ def import_docx():
 
     try:
         client = OpenAI(api_key=current_user.openai_key)
-        input_data = ([
-            {"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]},
-            {"role": "user", "content": [{"type": "input_text", "text": user_input}]}
-        ] if sa.system_prompt else user_input)
+        # Convertir en PDF (Mammoth+WeasyPrint) puis upload; fallback PDF texte
+        uploaded_file_id = None
+        pdf_path = stored_path[:-5] + '.pdf'
+        try:
+            import mammoth
+            from weasyprint import HTML
+            with open(stored_path, 'rb') as df:
+                res = mammoth.convert_to_html(df)
+                html = res.value
+            HTML(string=html).write_pdf(pdf_path)
+            current_app.logger.info('[import_docx] Conversion DOCX→PDF (WeasyPrint) OK: %s', pdf_path)
+        except Exception:
+            current_app.logger.warning('[import_docx] Conversion DOCX→PDF (HTML) échouée; création PDF texte', exc_info=True)
+            try:
+                from ..tasks.import_plan_cadre import _create_pdf_from_text
+                _create_pdf_from_text(doc_text or 'Document importé', pdf_path)
+                current_app.logger.info('[import_docx] PDF texte créé: %s', pdf_path)
+            except Exception:
+                current_app.logger.exception('[import_docx] Échec création PDF de secours')
+                pdf_path = None
+
+        if pdf_path and os.path.exists(pdf_path):
+            try:
+                with open(pdf_path, 'rb') as fh:
+                    up = client.files.create(file=fh, purpose='user_data')
+                uploaded_file_id = getattr(up, 'id', None)
+                size = os.stat(pdf_path).st_size if os.path.exists(pdf_path) else -1
+                current_app.logger.info('[import_docx] Upload OpenAI OK file_id=%s (taille=%s)', uploaded_file_id, size)
+            except Exception:
+                current_app.logger.exception('[import_docx] Upload fichier vers OpenAI échoué; repli texte')
+
+        # Construire la requête Responses: priorité au fichier, sinon texte
+        if uploaded_file_id:
+            compact_input = (
+                f"Contexte: cours {getattr(cours, 'code', '') or ''} - {getattr(cours, 'nom', '') or ''}, session {session}.\n"
+                f"Le plan de cours est joint en PDF. Extrait et structure les sections demandées."
+            )
+            input_data = []
+            if sa.system_prompt:
+                input_data.append({"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]})
+            input_data.append({
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": compact_input},
+                    {"type": "input_file", "file_id": uploaded_file_id},
+                ]
+            })
+        else:
+            user_input = (
+                f"Contexte: cours {getattr(cours, 'code', '') or ''} - {getattr(cours, 'nom', '') or ''}, session {session}.\n"
+                f"Texte du plan de cours (brut):\n---\n{(doc_text or '')[:120000]}\n---\n"
+            )
+            input_data = ([
+                {"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]},
+                {"role": "user", "content": [{"type": "input_text", "text": user_input}]}
+            ] if sa.system_prompt else user_input)
+
         response = client.responses.parse(
             model=ai_model,
             input=input_data,
@@ -723,11 +792,32 @@ def import_docx_start():
     if not plan_de_cours:
         return jsonify({'success': False, 'message': 'Plan de cours non trouvé.'}), 404
 
+    # Sauvegarder le fichier afin de pouvoir l'envoyer à OpenAI côté worker
+    import os
+    import re
+    import time
     try:
-        doc_text = _read_docx_text(file)
+        upload_dir = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+        os.makedirs(upload_dir, exist_ok=True)
+        safe_name = re.sub(r'[^A-Za-z0-9_.-]+', '_', file.filename)
+        stored_name = f"plan_de_cours_{plan_de_cours.id}_{int(time.time())}_{safe_name}"
+        stored_path = os.path.join(upload_dir, stored_name)
+        file.stream.seek(0, os.SEEK_SET)
+        file.save(stored_path)
     except Exception:
-        current_app.logger.exception('Erreur lecture DOCX (start)')
-        return jsonify({'success': False, 'message': 'Impossible de lire le DOCX.'}), 400
+        current_app.logger.exception('Erreur lors de la sauvegarde du DOCX (plan de cours)')
+        return jsonify({'success': False, 'message': 'Impossible de sauvegarder le fichier.'}), 400
+
+    # Lecture de secours du texte (pour fallback si upload échoue côté worker)
+    try:
+        with open(stored_path, 'rb') as fh:
+            from docx import Document  # python-docx
+            doc = Document(fh)
+            paragraphs = [p.text for p in doc.paragraphs if p.text and p.text.strip()]
+            doc_text = '\n\n'.join(paragraphs)
+    except Exception:
+        current_app.logger.warning('Lecture texte DOCX de secours échouée; on poursuivra via fichier côté worker.', exc_info=True)
+        doc_text = ''
 
     # Choose model (reuse 'all' settings if present)
     prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
@@ -735,7 +825,7 @@ def import_docx_start():
 
     try:
         from ..tasks.import_plan_de_cours import import_plan_de_cours_task
-        task = import_plan_de_cours_task.delay(plan_de_cours.id, doc_text, ai_model, current_user.id)
+        task = import_plan_de_cours_task.delay(plan_de_cours.id, doc_text, ai_model, current_user.id, stored_path)
         return jsonify({'success': True, 'task_id': task.id})
     except KombuOperationalError as e:
         current_app.logger.error(
