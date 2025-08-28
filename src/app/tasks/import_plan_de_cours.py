@@ -364,10 +364,102 @@ def import_plan_de_cours_task(
                 input_blocks.append({"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]})
             input_blocks.append({"role": "user", "content": [{"type": "input_text", "text": user_input}]})
 
-        # Appel OpenAI via Responses.parse (aligné sur l'import plan-cadre)
-        request_kwargs = dict(model=ai_model, input=input_blocks, text_format=ImportPlanDeCoursResponse)
-        response = client.responses.parse(**request_kwargs)
+        # Aligner l'appel OpenAI sur import_grille: streaming + JSON schema strict
+        # Construire paramètres text/JSON schema à partir du modèle Pydantic
+        try:
+            schema = ImportPlanDeCoursResponse.model_json_schema()
+        except Exception:
+            schema = {
+                "type": "object",
+                "properties": {},
+            }
+        # Paramètres text/format
+        text_params = {
+            "format": {
+                "type": "json_schema",
+                "name": "plan_de_cours",
+                "strict": True,
+                "schema": schema,
+            }
+        }
+        # Paramètres de raisonnement depuis SectionAISettings si disponibles
+        reasoning_params = {"summary": "auto"}
+        try:
+            if sa_impt and getattr(sa_impt, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
+                reasoning_params["effort"] = sa_impt.reasoning_effort
+        except Exception:
+            pass
+        try:
+            if sa_impt and getattr(sa_impt, 'verbosity', None) in {"low", "medium", "high"}:
+                text_params["verbosity"] = sa_impt.verbosity
+        except Exception:
+            pass
 
+        request_kwargs = dict(
+            model=ai_model,
+            input=input_blocks,
+            text=text_params,
+            reasoning=reasoning_params,
+            tools=[],
+            store=True,
+        )
+        # Décodage conservateur si pas un modèle gpt-5
+        if not (isinstance(ai_model, str) and ai_model.startswith("gpt-5")):
+            request_kwargs.update({
+                "temperature": 0.1,
+                "top_p": 1,
+            })
+
+        # Appel en streaming pour capturer le texte et le résumé de raisonnement
+        self.update_state(state='PROGRESS', meta={'message': "Appel au modèle IA..."})
+        streamed_text = ""
+        reasoning_summary_text = ""
+        response = None
+        try:
+            with client.responses.stream(**request_kwargs) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={'stream_chunk': delta, 'stream_buffer': streamed_text})
+                            except Exception:
+                                pass
+                    elif etype.endswith('response.output_item.added') or etype == 'response.output_item.added':
+                        try:
+                            item = getattr(event, 'item', None)
+                            text_val = ''
+                            if item:
+                                if isinstance(item, dict):
+                                    text_val = item.get('text') or ''
+                                else:
+                                    text_val = getattr(item, 'text', '') or ''
+                            if text_val:
+                                streamed_text += text_val
+                        except Exception:
+                            pass
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        try:
+                            rs_delta = getattr(event, 'delta', '') or ''
+                            if rs_delta:
+                                reasoning_summary_text += rs_delta
+                                try:
+                                    self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
+                    elif etype.endswith('response.completed'):
+                        pass
+                    elif etype.endswith('response.error'):
+                        pass
+                response = stream.get_final_response()
+        except Exception:
+            response = client.responses.create(**request_kwargs)
+
+        # Comptabiliser les coûts
         usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
         usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
         cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
@@ -375,19 +467,23 @@ def import_plan_de_cours_task(
             return {"status": "error", "message": "Crédits insuffisants pour cette opération."}
         user.credits -= cost
 
-        # Publier un résumé du raisonnement si exposé par Responses (comme plan-cadre)
-        try:
-            from .import_plan_cadre import _extract_reasoning_summary_from_response
-            rs_text = _extract_reasoning_summary_from_response(response)
-        except Exception:
-            rs_text = ""
-        if rs_text:
-            try:
-                self.update_state(state='PROGRESS', meta={'message': 'Résumé du raisonnement', 'reasoning_summary': rs_text})
-            except Exception:
-                pass
+        # Résumé du raisonnement (si pas déjà poussé en stream, on garde la dernière valeur)
+        rs_text = reasoning_summary_text or ""
 
-        parsed = _extract_first_parsed(response)
+        # Essayer de récupérer la sortie structurée
+        parsed = None
+        try:
+            parsed = getattr(response, 'output_parsed', None)
+        except Exception:
+            parsed = None
+        if parsed is None:
+            parsed = _extract_first_parsed(response)
+        # Si dict -> valider via Pydantic pour logique en aval
+        try:
+            if isinstance(parsed, dict):
+                parsed = ImportPlanDeCoursResponse.model_validate(parsed)
+        except Exception:
+            pass
         if parsed is None:
             return {"status": "error", "message": "Aucune donnée renvoyée par le modèle."}
 

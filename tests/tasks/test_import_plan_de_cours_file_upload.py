@@ -22,36 +22,53 @@ class FakeFiles:
         return type('Up', (), {'id': 'file-test-id'})()
 
 
-def make_fake_response(text_format):
-    parsed_obj = text_format(
-        presentation_du_cours="Texte PDC",
-        objectif_terminal_du_cours="Obj",
-        organisation_et_methodes="Org",
-        accomodement="Acc",
-        evaluation_formative_apprentissages="Form",
-        evaluation_expression_francais="Lang",
-        materiel="Mat",
-        calendriers=[],
-        disponibilites=[],
-        mediagraphies=[],
-        evaluations=[],
-    )
-
-    content = type('Cont', (), {'parsed': parsed_obj})()
-    out = type('Out', (), {'content': [content]})()
+def make_final_response_dict():
+    # Simulate Responses API structured output
     usage = type('U', (), {'input_tokens': 10, 'output_tokens': 20})()
-    return type('Resp', (), {'usage': usage, 'output': [out]})()
+    output_parsed = {
+        "presentation_du_cours": "Texte PDC",
+        "objectif_terminal_du_cours": "Obj",
+        "organisation_et_methodes": "Org",
+        "accomodement": "Acc",
+        "evaluation_formative_apprentissages": "Form",
+        "evaluation_expression_francais": "Lang",
+        "materiel": "Mat",
+        "calendriers": [],
+        "disponibilites": [],
+        "mediagraphies": [],
+        "evaluations": [],
+    }
+    return type('Resp', (), {'usage': usage, 'output_parsed': output_parsed})()
 
 
 class FakeResponses:
     def __init__(self, recorder):
         self.recorder = recorder
 
-    def parse(self, model=None, input=None, text_format=None):  # noqa: A002
-        # record the input structure
-        self.recorder['input'] = input
-        self.recorder['model'] = model
-        return make_fake_response(text_format)
+    class _Stream:
+        def __init__(self, recorder):
+            self.recorder = recorder
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc, tb):
+            return False
+        def __iter__(self):
+            # No streaming events needed for this test
+            return iter(())
+        def get_final_response(self):
+            return make_final_response_dict()
+
+    def stream(self, **kwargs):
+        # record the input/model for assertions
+        self.recorder['input'] = kwargs.get('input')
+        self.recorder['model'] = kwargs.get('model')
+        return FakeResponses._Stream(self.recorder)
+
+    def create(self, **kwargs):
+        # fallback
+        self.recorder['input'] = kwargs.get('input')
+        self.recorder['model'] = kwargs.get('model')
+        return make_final_response_dict()
 
 
 class FakeOpenAI:
