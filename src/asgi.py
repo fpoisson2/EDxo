@@ -133,8 +133,9 @@ from src.utils.logging_config import get_logger
 flask_app = create_app(testing=False)
 flask_asgi = WSGIMiddleware(flask_app)
 
-# Obtain the MCP ASGI app (robust to missing integrations), then wrap with CORS
+# Obtain the MCP ASGI app (robust to missing integrations), capture lifespan, then wrap with CORS
 mcp_asgi_app = get_mcp_asgi_app()
+mcp_lifespan = getattr(mcp_asgi_app, "lifespan", None)
 
 # Configure permissive CORS for the MCP mount to support browser clients
 # Allowed origins can be tuned via EDXO_MCP_CORS_ORIGINS (comma-separated)
@@ -152,6 +153,13 @@ mcp_asgi_app = CORSMiddleware(
     expose_headers=["*"],
     allow_credentials=False,
 )
+
+# Preserve lifespan reference for parent Starlette app construction
+if mcp_lifespan is not None:
+    try:
+        setattr(mcp_asgi_app, "lifespan", mcp_lifespan)
+    except Exception:
+        pass
 
 
 class InjectAuthFromQuery:
@@ -202,7 +210,7 @@ except Exception:
     pass
 
 # Compose the ASGI hub
-lifespan = getattr(mcp_asgi_app, "lifespan", None)
+lifespan = mcp_lifespan if mcp_lifespan is not None else getattr(mcp_asgi_app, "lifespan", None)
 kwargs = {"routes": [
     # ASGI-native SSE for Celery task events; declared before Flask mount to take precedence
     Route("/tasks/events/{task_id}", endpoint=sse_task_events),
