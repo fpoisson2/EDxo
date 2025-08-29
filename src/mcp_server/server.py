@@ -953,7 +953,15 @@ if mcp:
                 logger.info("MCP tool: search called", extra={"query": q})
             except Exception:
                 pass
-            ids = [r["id"] for r in search(q)]
+            try:
+                ids = [r["id"] for r in search(q)]
+            except Exception as e:
+                # Defensive: never let an exception bubble to ASGI/TaskGroup
+                try:
+                    logger.warning("MCP tool: search failed", extra={"err": str(e)})
+                except Exception:
+                    pass
+                return {"results": [], "error": str(e)}
             # Build MCP-compliant items; limit to a reasonable preview size
             # Show a larger preview for broad listings (all programmes/cours/plan-cadre)
             ql = q.lower()
@@ -1005,7 +1013,15 @@ if mcp:
                 logger.info("MCP tool: fetch called", extra={"id": id})
             except Exception:
                 pass
-            result = fetch(id)
+            try:
+                result = fetch(id)
+            except Exception as e:
+                # Defensive: return a structured error instead of raising
+                try:
+                    logger.info("MCP tool: fetch failed", extra={"id": id, "err": str(e)})
+                except Exception:
+                    pass
+                return {"error": str(e), "id": id}
             try:
                 logger.info("MCP tool: fetch returned", extra={"id": id, "title": result.get("title")})
             except Exception:
