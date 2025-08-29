@@ -22,7 +22,8 @@ services:
       # Bind-mount uploads to a host folder so PDFs are visible on the host
       - ./uploads:/app/src/uploads
       # Bind-mount the SQLite DB directory from host for dev/debug
-      - ./src/database:/app/src/database
+      # Use env var to avoid surprises if running compose from another CWD
+      - ${EDXO_DB_HOST_DIR:-./src/database}:/app/src/database
     depends_on:
       - redis
     restart: unless-stopped
@@ -47,7 +48,7 @@ services:
       - txt_outputs:/app/src/txt_outputs
       - pdfs:/app/src/pdfs_downloaded
       - ./uploads:/app/src/uploads
-      - ./src/database:/app/src/database
+      - ${EDXO_DB_HOST_DIR:-./src/database}:/app/src/database
     depends_on:
       - redis
     restart: unless-stopped
