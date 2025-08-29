@@ -268,7 +268,10 @@
         if (csrf) { fetchOpts.headers['X-CSRFToken'] = csrf; fetchOpts.headers['X-CSRF-Token'] = csrf; }
       } catch {}
       try {
-        const taskId = await startCeleryTask(opts.url, fetchOpts, { title: opts.title, startMessage: opts.startMessage || 'Import en cours…', openModal: true });
+        const uiExtra = {};
+        if (opts && opts.noSuccessHighlight === true) uiExtra.noSuccessHighlight = true;
+        if (opts && opts.displayPreviewAsJson === true) uiExtra.displayPreviewAsJson = true;
+        const taskId = await startCeleryTask(opts.url, fetchOpts, { title: opts.title, startMessage: opts.startMessage || 'Import en cours…', openModal: true, ...uiExtra });
         try { if (document.activeElement) document.activeElement.blur(); } catch {}
         bootstrap.Modal.getOrCreateInstance(modalEl).hide();
         return taskId;
@@ -518,6 +521,15 @@
     </div>`;
     document.body.insertAdjacentHTML('beforeend', html);
     modal = document.getElementById('taskOrchestratorModal');
+    // Ensure spinner CSS exists even if quick/file modals were not used first
+    try {
+      if (!document.getElementById('edxo-task-spinner-style')) {
+        const style = document.createElement('style');
+        style.id = 'edxo-task-spinner-style';
+        style.textContent = `@keyframes edxo-spin{to{transform:rotate(360deg)}} .edxo-spinner{width:28px;height:28px;border:3px solid rgba(13,110,253,.2);border-top-color:#0d6efd;border-radius:50%;animation:edxo-spin .9s linear infinite}`;
+        document.head.appendChild(style);
+      }
+    } catch {}
     // Wire view toggle buttons for content
     try {
       const btnText = document.getElementById('task-orch-view-text');
@@ -700,18 +712,23 @@
       if (streamJsonPre) { try { streamJsonPre.textContent = ''; } catch {} }
       if (viewJsonBtn) { try { viewJsonBtn.disabled = true; } catch {} }
       if (streamEl) {
-        setStreamText(streamEl, cache.stream || '');
-        scrollStreamToBottom(streamEl);
-        // If cached stream looks like JSON, prefill JSON pane and enable toggle
-        try {
-          if (cache.stream) {
-            try {
-              const obj = JSON.parse(cache.stream);
-              if (streamJsonPre) streamJsonPre.textContent = JSON.stringify(obj, null, 2);
-              if (viewJsonBtn) viewJsonBtn.disabled = false;
-            } catch {}
-          }
-        } catch {}
+        if (opts && opts.muteLogBuffer === true) {
+          // For preview imports where we only want generated content, do not preload cached buffer
+          setStreamText(streamEl, '');
+        } else {
+          setStreamText(streamEl, cache.stream || '');
+          scrollStreamToBottom(streamEl);
+          // If cached stream looks like JSON, prefill JSON pane and enable toggle
+          try {
+            if (cache.stream) {
+              try {
+                const obj = JSON.parse(cache.stream);
+                if (streamJsonPre) streamJsonPre.textContent = JSON.stringify(obj, null, 2);
+                if (viewJsonBtn) viewJsonBtn.disabled = false;
+              } catch {}
+            }
+          } catch {}
+        }
       }
       try { if (typeof tryUpdateJsonView === 'function') tryUpdateJsonView(); } catch {}
       if (reasoningEl) {
@@ -769,6 +786,11 @@
     let completed = false;
     let doneFired = false;
     let streamBuf = (getCache(taskId) || {}).stream || '';
+    if (opts && opts.muteLogBuffer === true) {
+      // Reset any cached stream to avoid showing previous buffered logs
+      streamBuf = '';
+      try { getCache(taskId).stream = ''; scheduleCacheSave(taskId); } catch {}
+    }
     const MAX_STREAM_LEN = 120000; // ~120KB tail to avoid UI freezes
     let streamTimer = null;
     let streamDirty = false;
@@ -964,15 +986,26 @@
               // Live JSON stream buffer/chunks
               try {
                 if (meta.stream_chunk) {
-                  streamBuf += String(meta.stream_chunk);
-                  clampAndMarkStreamDirty();
-                  try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
+                  // When muting log buffer for preview imports, ignore chunks that are clearly logs
+                  const hasLogMeta = !!(meta.message || meta.step || typeof meta.progress === 'number');
+                  const isLogLike = (txt) => { try { const s = String(txt||''); return /^(Initialisation de l'import|Préparation du texte|Appel au modèle IA|Fichier prêt:|Conversion DOCX|PDF prêt:|Upload OpenAI réussi|Erreur analyse fichier)/i.test(s.trim()); } catch { return false; } };
+                  if (!(opts && opts.muteLogBuffer === true && (hasLogMeta || isLogLike(meta.stream_chunk)))) {
+                    streamBuf += String(meta.stream_chunk);
+                    clampAndMarkStreamDirty();
+                    try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
+                  }
                   // As soon as generated content starts, hide both spinners
                   try {
                     if (streamOverlay) streamOverlay.style.display = 'none';
                     if (reasoningOverlay) reasoningOverlay.style.display = 'none';
                   } catch {}
                 } else if (meta.stream_buffer) {
+                  // Allow muting stream_buffer (log-like) for preview imports
+                  if (opts && opts.muteLogBuffer === true) {
+                    // Do not update the content area from pure buffer; wait for chunks
+                    // Still hide overlays if any chunk already came via cache
+                    updateOverlaysVisibility();
+                  } else {
                   streamBuf = String(meta.stream_buffer);
                   clampAndMarkStreamDirty();
                   try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
@@ -981,6 +1014,7 @@
                     if (streamOverlay) streamOverlay.style.display = 'none';
                     if (reasoningOverlay) reasoningOverlay.style.display = 'none';
                   } catch {}
+                  }
                 }
                 updateOverlaysVisibility();
                 if (meta.reasoning_chunk && reasoningEl) {
@@ -1035,9 +1069,11 @@
           try {
             const sb = d0.meta.stream_buffer;
             if (sb && streamEl) {
-              streamBuf = String(sb);
-              clampAndMarkStreamDirty();
-              try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
+              if (!(opts && opts.muteLogBuffer === true)) {
+                streamBuf = String(sb);
+                clampAndMarkStreamDirty();
+                try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
+              }
             }
             const rs0 = d0.meta.reasoning_summary;
             if (rs0 && reasoningEl) {
@@ -1061,13 +1097,30 @@
             const meta = data.meta || {};
             if (meta.stream_buffer) {
               const sb = String(meta.stream_buffer);
-              if (streamEl) { streamBuf = sb; clampAndMarkStreamDirty(); }
-              try { getCache(taskId).stream = sb; scheduleCacheSave(taskId); } catch {}
-              // Hide both overlays as soon as content exists
-              try {
-                if (streamOverlay) streamOverlay.style.display = 'none';
-                if (reasoningOverlay) reasoningOverlay.style.display = 'none';
-              } catch {}
+              const isLogLike = (txt) => { try { const s = String(txt||''); return /^(Initialisation de l'import|Préparation du texte|Appel au modèle IA|Fichier prêt:|Conversion DOCX|PDF prêt:|Upload OpenAI réussi|Erreur analyse fichier)/i.test(s.trim()); } catch { return false; } };
+              if (!(opts && opts.muteLogBuffer === true) && !isLogLike(sb)) {
+                if (streamEl) { streamBuf = sb; clampAndMarkStreamDirty(); }
+                try { getCache(taskId).stream = sb; scheduleCacheSave(taskId); } catch {}
+                // Hide both overlays as soon as content exists
+                try {
+                  if (streamOverlay) streamOverlay.style.display = 'none';
+                  if (reasoningOverlay) reasoningOverlay.style.display = 'none';
+                } catch {}
+              }
+            }
+            // Also consider stream_chunk in polling responses
+            if (meta.stream_chunk) {
+              const hasLogMeta = !!(meta.message || meta.step || typeof meta.progress === 'number');
+              const isLogLike = (txt) => { try { const s = String(txt||''); return /^(Initialisation de l'import|Préparation du texte|Appel au modèle IA|Fichier prêt:|Conversion DOCX|PDF prêt:|Upload OpenAI réussi|Erreur analyse fichier)/i.test(s.trim()); } catch { return false; } };
+              if (!(opts && opts.muteLogBuffer === true && (hasLogMeta || isLogLike(meta.stream_chunk)))) {
+                streamBuf += String(meta.stream_chunk);
+                clampAndMarkStreamDirty();
+                try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
+                try {
+                  if (streamOverlay) streamOverlay.style.display = 'none';
+                  if (reasoningOverlay) reasoningOverlay.style.display = 'none';
+                } catch {}
+              }
             }
             if (meta.reasoning_chunk) {
               lastReasoning += String(meta.reasoning_chunk);
@@ -1131,15 +1184,26 @@
       try { if (es) es.close(); } catch {}
       try { if (pollTimer) clearTimeout(pollTimer); } catch {}
       try {
-        if (!streamBuf && payload && payload.stream_buffer && streamEl) {
-          streamBuf = String(payload.stream_buffer);
-          // Try to pretty format JSON if applicable
-          try {
-            const obj = JSON.parse(streamBuf);
-            setStreamText(streamEl, JSON.stringify(obj, null, 2));
-          } catch { setStreamText(streamEl, streamBuf); }
+        const isPreview = !!(payload && payload.preview);
+        if (isPreview && payload && payload.proposed && streamEl) {
+          // For preview imports: show only generated content (proposed) and suppress logs
+          let jsonText = '';
+          try { jsonText = JSON.stringify(payload.proposed, null, 2); } catch { jsonText = String(payload.proposed || ''); }
+          setStreamText(streamEl, jsonText);
+          streamBuf = jsonText;
           scrollStreamToBottom(streamEl);
           try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
+        } else if (!streamBuf && payload && payload.stream_buffer && streamEl) {
+          // Do not inject final log buffer when muted (preview import); only show generated content
+          if (!(opts && opts.muteLogBuffer === true)) {
+            streamBuf = String(payload.stream_buffer);
+            try {
+              const obj = JSON.parse(streamBuf);
+              setStreamText(streamEl, JSON.stringify(obj, null, 2));
+            } catch { setStreamText(streamEl, streamBuf); }
+            scrollStreamToBottom(streamEl);
+            try { getCache(taskId).stream = streamBuf; scheduleCacheSave(taskId); } catch {}
+          }
         }
       } catch {}
       try { updateOverlaysVisibility(); } catch {}
@@ -1151,7 +1215,7 @@
           if (current) {
             try { const obj = JSON.parse(current); setStreamText(streamEl, JSON.stringify(obj, null, 2)); if (streamJsonPre) streamJsonPre.textContent = JSON.stringify(obj, null, 2); if (viewJsonBtn) viewJsonBtn.disabled = false; } catch {}
           }
-          // Light green background and emphasized green border to indicate completion
+          // Always apply success highlight at completion (green background)
           try { streamEl.style.background = '#dcfce7'; } catch {}
           try { streamEl.style.border = '2px solid #16a34a'; } catch {}
           try { streamEl.style.color = '#064e3b'; } catch {}
@@ -1207,11 +1271,12 @@
           } catch {}
           const finalMsg = `${baseTitle} — ${statusLabel}${detail}`;
           const type = (state === 'SUCCESS') ? 'success' : (state === 'FAILURE' ? 'error' : 'warning');
+          const suppressSuccessNotif = !!(payload && payload.preview) || !!(opts && opts.noSuccessHighlight);
           if (vurl) {
             const isReview = !!validateUrl && !isLogigramme;
             const noteSuffix = isReview ? '. Cliquez pour valider.' : '. Cliquez pour ouvrir.';
             window.addNotification(finalMsg + noteSuffix, type, vurl, taskId);
-          } else {
+          } else if (!suppressSuccessNotif) {
             const link = `/tasks/track/${sessionStorage.getItem('currentTaskId') || ''}`;
             window.addNotification(finalMsg + '.', type, link, taskId);
           }

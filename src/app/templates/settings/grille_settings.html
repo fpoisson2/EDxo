@@ -1,19 +1,27 @@
 {% extends "parametres.html" %}
 {% block parametres_content %}
 <div class="container-fluid px-2">
-  <h2 class="mb-3">Grille de cours – Paramètres</h2>
+  <h1 class="mb-3">Grille de cours – Paramètres IA</h1>
 
   <form method="POST">
     {{ form_gen.csrf_token }}
 
-    <div class="row g-4">
-      <div class="col-12 col-xl-6">
-        <div class="card shadow-sm h-100">
-          <div class="card-header bg-light"><strong>Génération (IA)</strong></div>
-          <div class="card-body">
+    <div class="card mb-4">
+      <div class="card-header bg-light"><strong>Paramètres IA</strong></div>
+      <div class="card-body">
+        <ul class="nav nav-tabs" id="grilleTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-gen" data-bs-toggle="tab" data-bs-target="#pane-gen" type="button" role="tab">Génération</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-imp" data-bs-toggle="tab" data-bs-target="#pane-imp" type="button" role="tab">Importation</button>
+          </li>
+        </ul>
+        <div class="tab-content pt-3">
+          <div class="tab-pane fade show active" id="pane-gen" role="tabpanel">
             <div class="mb-3">
               <label class="form-label">{{ form_gen.system_prompt.label }}</label>
-              {{ form_gen.system_prompt(class_='form-control font-monospace', rows=8) }}
+              {{ form_gen.system_prompt(class_='form-control font-monospace', rows=12) }}
             </div>
             <div class="row g-3">
               <div class="col-md-4">
@@ -30,16 +38,11 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div class="col-12 col-xl-6">
-        <div class="card shadow-sm h-100">
-          <div class="card-header bg-light"><strong>Importation PDF (IA)</strong></div>
-          <div class="card-body">
+          <div class="tab-pane fade" id="pane-imp" role="tabpanel">
             <div class="mb-3">
               <label class="form-label">{{ form_imp.system_prompt.label }}</label>
-              {{ form_imp.system_prompt(class_='form-control font-monospace', rows=8) }}
+              {{ form_imp.system_prompt(class_='form-control font-monospace', rows=12) }}
             </div>
             <div class="row g-3">
               <div class="col-md-4">
@@ -60,12 +63,10 @@
       </div>
     </div>
 
-    <div class="mt-4 d-flex justify-content-end">
+    <div class="d-flex justify-content-end">
       <button type="submit" class="btn btn-primary">
-        <i class="bi bi-save me-2"></i>Enregistrer
-      </button>
+        <i class="bi bi-save me-2"></i>Enregistrer</button>
     </div>
   </form>
 </div>
 {% endblock %}
-

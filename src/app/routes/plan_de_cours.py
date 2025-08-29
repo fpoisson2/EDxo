@@ -247,6 +247,7 @@ class ImportPlanDeCoursResponse(BaseModel):
     evaluation_formative_apprentissages: Optional[str] = None
     evaluation_expression_francais: Optional[str] = None
     materiel: Optional[str] = None
+    seuil_reussite: Optional[str] = None
 
     # Calendrier
     calendriers: List[CalendarEntry] = Field(default_factory=list)
@@ -516,18 +517,33 @@ def import_docx():
     if user.credits <= 0:
         return jsonify({'success': False, 'message': 'Crédits insuffisants.'}), 403
 
-    # Read docx text
+    # Sauvegarder le fichier pour pouvoir le convertir et l'uploader à OpenAI
+    import os, re, time
     try:
-        doc_text = _read_docx_text(file)
+        upload_dir = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+        os.makedirs(upload_dir, exist_ok=True)
+        safe_name = re.sub(r'[^A-Za-z0-9_.-]+', '_', file.filename)
+        stored_name = f"plan_de_cours_sync_{plan_de_cours.id}_{int(time.time())}_{safe_name}"
+        stored_path = os.path.join(upload_dir, stored_name)
+        file.stream.seek(0, os.SEEK_SET)
+        file.save(stored_path)
+        st = os.stat(stored_path)
+        current_app.logger.info("[import_docx] DOCX sauvegardé: %s (%s octets)", stored_path, st.st_size)
     except Exception:
-        current_app.logger.exception('Erreur lecture DOCX')
-        return jsonify({'success': False, 'message': 'Impossible de lire le DOCX.'}), 400
+        current_app.logger.exception('[import_docx] Échec sauvegarde du DOCX')
+        return jsonify({'success': False, 'message': 'Impossible de sauvegarder le fichier.'}), 400
 
-    # Build user content: raw data only (no instructions)
-    user_input = (
-        f"Contexte: cours {getattr(cours, 'code', '') or ''} - {getattr(cours, 'nom', '') or ''}, session {session}.\n"
-        f"Texte du plan de cours (brut):\n---\n{doc_text[:120000]}\n---\n"
-    )
+    # Lecture de secours du texte, utile en cas de fallback (qualité moindre)
+    try:
+        with open(stored_path, 'rb') as fh:
+            from docx import Document
+            _doc = Document(fh)
+            paragraphs = [p.text for p in _doc.paragraphs if p.text and p.text.strip()]
+            doc_text = '\n\n'.join(paragraphs)
+        current_app.logger.info('[import_docx] Texte extrait pour fallback (%d caractères)', len(doc_text))
+    except Exception:
+        current_app.logger.warning('[import_docx] Extraction texte DOCX échouée; fallback texte indisponible', exc_info=True)
+        doc_text = ''
 
     # Choose model (prefer explicit from form, fallback to saved settings + section settings)
     from ..models import SectionAISettings
@@ -540,10 +556,110 @@ def import_docx():
 
     try:
         client = OpenAI(api_key=current_user.openai_key)
-        input_data = ([
-            {"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]},
-            {"role": "user", "content": [{"type": "input_text", "text": user_input}]}
-        ] if sa.system_prompt else user_input)
+        # Convertir en PDF (Mammoth+WeasyPrint) puis upload; fallback PDF texte
+        uploaded_file_id = None
+        pdf_path = stored_path[:-5] + '.pdf'
+        # 1) Try LibreOffice if available
+        try:
+            import shutil, subprocess
+            if shutil.which('soffice'):
+                subprocess.run([
+                    'soffice', '--headless', '--convert-to', 'pdf', '--outdir', os.path.dirname(pdf_path), stored_path
+                ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if os.path.exists(pdf_path):
+                    try:
+                        from PyPDF2 import PdfReader
+                        with open(pdf_path, 'rb') as pf:
+                            pages = len(PdfReader(pf).pages)
+                        size = os.stat(pdf_path).st_size if os.path.exists(pdf_path) else -1
+                        current_app.logger.info('[import_docx] Conversion DOCX→PDF via LibreOffice OK: %s (pages=%d, taille=%d)', pdf_path, pages, size)
+                    except Exception:
+                        current_app.logger.info('[import_docx] Conversion DOCX→PDF via LibreOffice OK: %s', pdf_path)
+                else:
+                    raise RuntimeError('LibreOffice did not produce PDF')
+            else:
+                raise RuntimeError('LibreOffice not available')
+        except Exception:
+            # 2) Fallback to Mammoth + WeasyPrint
+            try:
+                import mammoth
+                from weasyprint import HTML
+                with open(stored_path, 'rb') as df:
+                    res = mammoth.convert_to_html(df)
+                    html = res.value
+                current_app.logger.info('[import_docx] HTML Mammoth longueur=%d', len(html or ''))
+                HTML(string=html).write_pdf(pdf_path)
+                try:
+                    from PyPDF2 import PdfReader
+                    with open(pdf_path, 'rb') as pf:
+                        pages = len(PdfReader(pf).pages)
+                    size = os.stat(pdf_path).st_size if os.path.exists(pdf_path) else -1
+                    current_app.logger.info('[import_docx] Conversion DOCX→PDF (WeasyPrint) OK: %s (pages=%d, taille=%d)', pdf_path, pages, size)
+                except Exception:
+                    current_app.logger.info('[import_docx] Conversion DOCX→PDF (WeasyPrint) OK: %s', pdf_path)
+            except Exception:
+                current_app.logger.warning('[import_docx] Conversion DOCX→PDF (HTML) échouée; création PDF texte', exc_info=True)
+                try:
+                    from ..tasks.import_plan_cadre import _create_pdf_from_text
+                    _create_pdf_from_text(doc_text or 'Document importé', pdf_path)
+                    current_app.logger.info('[import_docx] PDF texte créé: %s', pdf_path)
+                except Exception:
+                    current_app.logger.exception('[import_docx] Échec création PDF de secours')
+                    pdf_path = None
+        except Exception:
+            current_app.logger.warning('[import_docx] Conversion DOCX→PDF (HTML) échouée; création PDF texte', exc_info=True)
+            try:
+                from ..tasks.import_plan_cadre import _create_pdf_from_text
+                _create_pdf_from_text(doc_text or 'Document importé', pdf_path)
+                current_app.logger.info('[import_docx] PDF texte créé: %s', pdf_path)
+            except Exception:
+                current_app.logger.exception('[import_docx] Échec création PDF de secours')
+                pdf_path = None
+
+        if pdf_path and os.path.exists(pdf_path):
+            try:
+                with open(pdf_path, 'rb') as fh:
+                    up = client.files.create(file=fh, purpose='user_data')
+                uploaded_file_id = getattr(up, 'id', None)
+                size = os.stat(pdf_path).st_size if os.path.exists(pdf_path) else -1
+                current_app.logger.info('[import_docx] Upload OpenAI OK file_id=%s (taille=%s)', uploaded_file_id, size)
+            except Exception:
+                current_app.logger.exception('[import_docx] Upload fichier vers OpenAI échoué; repli texte')
+
+        # Construire la requête Responses: priorité au fichier, sinon texte
+        if uploaded_file_id:
+            compact_input = (
+                f"Contexte: cours {getattr(cours, 'code', '') or ''} - {getattr(cours, 'nom', '') or ''}, session {session}.\n"
+                "Le plan de cours est joint en PDF.\n"
+                "Extrait et structure les éléments suivants si présents, sinon laisse vides: \n"
+                "- presentation_du_cours, objectif_terminal_du_cours, organisation_et_methodes, accomodement, evaluation_formative_apprentissages, evaluation_expression_francais, materiel, seuil_reussite;\n"
+                "- calendriers: liste d'entrées (semaine:int, sujet, activites, travaux_hors_classe, evaluations);\n"
+                "- enseignant: nom_enseignant, telephone_enseignant, courriel_enseignant, bureau_enseignant;\n"
+                "- disponibilites: (jour_semaine, plage_horaire, lieu); mediagraphies: (reference_bibliographique);\n"
+                "- evaluations: (titre_evaluation, description, semaine:int, capacites: [{capacite, ponderation}]).\n"
+                "Repère les semaines et évaluations dans le document (mots-clés: 'Semaine', 'Évaluation', 'pondération', 'travaux', 'projet').\n"
+                "Rends un objet conforme à ce schéma, sans texte explicatif hors structure."
+            )
+            input_data = []
+            if sa.system_prompt:
+                input_data.append({"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]})
+            input_data.append({
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": compact_input},
+                    {"type": "input_file", "file_id": uploaded_file_id},
+                ]
+            })
+        else:
+            user_input = (
+                f"Contexte: cours {getattr(cours, 'code', '') or ''} - {getattr(cours, 'nom', '') or ''}, session {session}.\n"
+                f"Texte du plan de cours (brut):\n---\n{(doc_text or '')[:120000]}\n---\n"
+            )
+            input_data = ([
+                {"role": "system", "content": [{"type": "input_text", "text": sa.system_prompt}]},
+                {"role": "user", "content": [{"type": "input_text", "text": user_input}]}
+            ] if sa.system_prompt else user_input)
+
         response = client.responses.parse(
             model=ai_model,
             input=input_data,
@@ -693,6 +809,12 @@ def import_docx():
                 } for e in plan_de_cours.evaluations
             ],
         }
+        # Expose local PDF path for verification when available
+        try:
+            if uploaded_file_id and pdf_path and os.path.exists(pdf_path):
+                result['pdf_local_path'] = pdf_path
+        except Exception:
+            pass
         return jsonify(result)
 
     except OpenAIError:
@@ -723,11 +845,32 @@ def import_docx_start():
     if not plan_de_cours:
         return jsonify({'success': False, 'message': 'Plan de cours non trouvé.'}), 404
 
+    # Sauvegarder le fichier afin de pouvoir l'envoyer à OpenAI côté worker
+    import os
+    import re
+    import time
     try:
-        doc_text = _read_docx_text(file)
+        upload_dir = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+        os.makedirs(upload_dir, exist_ok=True)
+        safe_name = re.sub(r'[^A-Za-z0-9_.-]+', '_', file.filename)
+        stored_name = f"plan_de_cours_{plan_de_cours.id}_{int(time.time())}_{safe_name}"
+        stored_path = os.path.join(upload_dir, stored_name)
+        file.stream.seek(0, os.SEEK_SET)
+        file.save(stored_path)
     except Exception:
-        current_app.logger.exception('Erreur lecture DOCX (start)')
-        return jsonify({'success': False, 'message': 'Impossible de lire le DOCX.'}), 400
+        current_app.logger.exception('Erreur lors de la sauvegarde du DOCX (plan de cours)')
+        return jsonify({'success': False, 'message': 'Impossible de sauvegarder le fichier.'}), 400
+
+    # Lecture de secours du texte (pour fallback si upload échoue côté worker)
+    try:
+        with open(stored_path, 'rb') as fh:
+            from docx import Document  # python-docx
+            doc = Document(fh)
+            paragraphs = [p.text for p in doc.paragraphs if p.text and p.text.strip()]
+            doc_text = '\n\n'.join(paragraphs)
+    except Exception:
+        current_app.logger.warning('Lecture texte DOCX de secours échouée; on poursuivra via fichier côté worker.', exc_info=True)
+        doc_text = ''
 
     # Choose model (reuse 'all' settings if present)
     prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
@@ -735,7 +878,7 @@ def import_docx_start():
 
     try:
         from ..tasks.import_plan_de_cours import import_plan_de_cours_task
-        task = import_plan_de_cours_task.delay(plan_de_cours.id, doc_text, ai_model, current_user.id)
+        task = import_plan_de_cours_task.delay(plan_de_cours.id, doc_text, ai_model, current_user.id, stored_path)
         return jsonify({'success': True, 'task_id': task.id})
     except KombuOperationalError as e:
         current_app.logger.error(
@@ -1018,6 +1161,7 @@ def generate_all():
     session = data.get('session')
     additional_info = data.get('additional_info')
     ai_model_override = data.get('ai_model')
+    improve_only = bool(data.get('improve_only'))
 
     if not cours_id or not session:
         return jsonify({'error': 'cours_id et session requis.'}), 400
@@ -1042,10 +1186,11 @@ def generate_all():
     if user.credits <= 0:
         return jsonify({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}), 403
 
-    prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
-    ai_model = (ai_model_override or (prompt_settings.ai_model if prompt_settings else None)) or 'gpt-5'
-    prompt_template = prompt_settings.prompt_template if prompt_settings else None
-    prompt = build_all_prompt(plan_cadre, cours, session, prompt_template, additional_info=additional_info)
+    # Dépendance aux PromptSettings supprimée: utiliser le template défaut et le modèle de section
+    from ..models import SectionAISettings
+    sa = SectionAISettings.get_for('plan_de_cours')
+    ai_model = (ai_model_override or sa.ai_model or 'gpt-5')
+    prompt = build_all_prompt(plan_cadre, cours, session, None, additional_info=additional_info)
 
     try:
         client = OpenAI(api_key=current_user.openai_key)
@@ -1179,6 +1324,7 @@ def generate_all_start():
     session = data.get('session')
     additional_info = data.get('additional_info')
     ai_model_override = data.get('ai_model')
+    improve_only = bool(data.get('improve_only'))
 
     if not cours_id or not session:
         return jsonify({'success': False, 'message': 'cours_id et session requis.'}), 400
@@ -1198,7 +1344,7 @@ def generate_all_start():
     prompt = build_all_prompt(plan_cadre, cours, session, prompt_template, additional_info=additional_info)
 
     try:
-        task = generate_plan_de_cours_all_task.delay(plan_de_cours.id, prompt, ai_model, current_user.id)
+        task = generate_plan_de_cours_all_task.delay(plan_de_cours.id, prompt, ai_model, current_user.id, improve_only)
         return jsonify({'success': True, 'task_id': task.id})
     except KombuOperationalError as e:
         current_app.logger.error(
@@ -1250,10 +1396,14 @@ def review_plan_de_cours_generation(plan_id):
     old_fields = {}
     old_cal = []
     old_evals = []
+    old_media = []
+    old_dispo = []
     new_fields = {}
     new_cal = []
     new_evals = []
     reasoning_summary = None
+    new_media = []
+    new_dispo_list = []
     try:
         if task_id:
             res = AsyncResult(task_id, app=celery)
@@ -1265,6 +1415,10 @@ def review_plan_de_cours_generation(plan_id):
             new_cal = data.get('calendriers') or []
             new_evals = data.get('evaluations') or []
             reasoning_summary = data.get('reasoning_summary')
+            old_media = data.get('old_mediagraphies') or []
+            old_dispo = data.get('old_disponibilites') or []
+            new_media = data.get('mediagraphies') or []
+            new_dispo_list = data.get('disponibilites') or []
     except Exception:
         current_app.logger.exception('Erreur lecture résultat tâche plan de cours')
 
@@ -1307,6 +1461,17 @@ def review_plan_de_cours_generation(plan_id):
             } for e in plan.evaluations
         ]
 
+    if plan and not new_media:
+        new_media = [
+            {'reference_bibliographique': m.reference_bibliographique} for m in plan.mediagraphies
+        ]
+    if plan and not new_dispo_list:
+        new_dispo_list = [
+            {'jour_semaine': d.jour_semaine, 'plage_horaire': d.plage_horaire, 'lieu': d.lieu} for d in plan.disponibilites
+        ]
+
+    # Helpers to normalize lists for diff presentation
+
     # Construire un dict de "changes" compatible avec le template du plan-cadre
     changes = {}
     labels = {
@@ -1318,6 +1483,10 @@ def review_plan_de_cours_generation(plan_id):
         'evaluation_expression_francais': 'Évaluation expression français',
         'seuil_reussite': 'Seuil de réussite',
         'materiel': 'Matériel',
+        'nom_enseignant': 'Nom enseignant',
+        'telephone_enseignant': 'Téléphone enseignant',
+        'courriel_enseignant': 'Courriel enseignant',
+        'bureau_enseignant': 'Bureau enseignant',
     }
     def _norm(v):
         return (v or '').strip() if isinstance(v, str) else v
@@ -1355,6 +1524,18 @@ def review_plan_de_cours_generation(plan_id):
             out.append({'texte': titre, 'description': "\n".join(desc_parts) if desc_parts else ''})
         return out
 
+    def _media_to_list(items):
+        return [{'texte': (m.get('reference_bibliographique') or ''), 'description': ''} for m in (items or [])]
+
+    def _dispo_to_list(items):
+        out = []
+        for d in items or []:
+            t = " - ".join(filter(None, [d.get('jour_semaine') or '', d.get('plage_horaire') or '']))
+            if d.get('lieu'):
+                t = f"{t} @ {d.get('lieu')}" if t else d.get('lieu')
+            out.append({'texte': t, 'description': ''})
+        return out
+
     if (old_cal or new_cal) and (_cal_to_list(old_cal) != _cal_to_list(new_cal)):
         changes['calendrier'] = {
             'before': _cal_to_list(old_cal),
@@ -1367,6 +1548,19 @@ def review_plan_de_cours_generation(plan_id):
             'before': _eval_to_list(old_evals),
             'after': _eval_to_list(new_evals),
             'label': 'Évaluations'
+        }
+
+    if (old_media or new_media) and (_media_to_list(old_media) != _media_to_list(new_media)):
+        changes['mediagraphies'] = {
+            'before': _media_to_list(old_media),
+            'after': _media_to_list(new_media),
+            'label': 'Médiagraphie'
+        }
+    if (old_dispo or new_dispo_list) and (_dispo_to_list(old_dispo) != _dispo_to_list(new_dispo_list)):
+        changes['disponibilites'] = {
+            'before': _dispo_to_list(old_dispo),
+            'after': _dispo_to_list(new_dispo_list),
+            'label': 'Disponibilités'
         }
 
     # Utiliser le template de revue plan-cadre, en mode confirmation simple (confirm/revert)
@@ -1461,7 +1655,103 @@ def apply_review_plan_de_cours(plan_id):
 
         db.session.commit()
 
-    # En cas de confirmation: rien à faire car la génération a déjà écrit en BD
+    if action == 'confirm':
+        if not task_id:
+            return jsonify({'success': False, 'message': 'task_id requis pour confirmer.'}), 400
+        try:
+            res = AsyncResult(task_id, app=celery)
+            payload = res.result or {}
+        except Exception:
+            current_app.logger.exception('Erreur lecture résultat tâche pour confirm plan de cours')
+            return jsonify({'success': False, 'message': "Impossible de lire le résultat de la tâche."}), 500
+
+        # Appliquer les nouveaux champs à partir du payload
+        new_fields = (payload.get('fields') or {})
+        field_names = [
+            'presentation_du_cours',
+            'objectif_terminal_du_cours',
+            'organisation_et_methodes',
+            'accomodement',
+            'evaluation_formative_apprentissages',
+            'evaluation_expression_francais',
+            'seuil_reussite',
+            'materiel',
+            'nom_enseignant',
+            'telephone_enseignant',
+            'courriel_enseignant',
+            'bureau_enseignant',
+        ]
+        for fn in field_names:
+            if fn in new_fields:
+                setattr(plan, fn, new_fields.get(fn))
+
+        # Remplacer calendrier/médiagraphie/disponibilités/évaluations depuis payload
+        # Calendrier
+        for c in plan.calendriers:
+            db.session.delete(c)
+        for entry in (payload.get('calendriers') or []):
+            db.session.add(PlanDeCoursCalendrier(
+                plan_de_cours_id=plan.id,
+                semaine=entry.get('semaine'),
+                sujet=entry.get('sujet'),
+                activites=entry.get('activites'),
+                travaux_hors_classe=entry.get('travaux_hors_classe'),
+                evaluations=entry.get('evaluations'),
+            ))
+
+        # Médiagraphies
+        for m in plan.mediagraphies:
+            db.session.delete(m)
+        for itm in (payload.get('mediagraphies') or []):
+            ref = (itm.get('reference_bibliographique') if isinstance(itm, dict) else None)
+            if ref:
+                db.session.add(PlanDeCoursMediagraphie(
+                    plan_de_cours_id=plan.id,
+                    reference_bibliographique=ref,
+                ))
+
+        # Disponibilités
+        for d in plan.disponibilites:
+            db.session.delete(d)
+        for disp in (payload.get('disponibilites') or []):
+            if any(disp.get(k) for k in ('jour_semaine', 'plage_horaire', 'lieu')):
+                db.session.add(PlanDeCoursDisponibiliteEnseignant(
+                    plan_de_cours_id=plan.id,
+                    jour_semaine=disp.get('jour_semaine'),
+                    plage_horaire=disp.get('plage_horaire'),
+                    lieu=disp.get('lieu'),
+                ))
+
+        # Évaluations
+        for e in plan.evaluations:
+            db.session.delete(e)
+        plan_cadre = plan.cours.plan_cadre if plan and plan.cours else None
+        try:
+            from src.app.tasks.import_plan_de_cours import _resolve_capacity_id  # reuse resolver
+        except Exception:
+            _resolve_capacity_id = None
+        for ev in (payload.get('evaluations') or []):
+            if not any(ev.get(k) for k in ('titre', 'description', 'semaine', 'capacites')):
+                continue
+            row = PlanDeCoursEvaluations(
+                plan_de_cours_id=plan.id,
+                titre_evaluation=ev.get('titre'),
+                description=ev.get('description'),
+                semaine=ev.get('semaine'),
+            )
+            db.session.add(row)
+            db.session.flush()
+            for cap in (ev.get('capacites') or []):
+                cap_id = None
+                if _resolve_capacity_id is not None:
+                    cap_id = _resolve_capacity_id(cap.get('capacite'), plan_cadre)
+                db.session.add(PlanDeCoursEvaluationsCapacites(
+                    evaluation_id=row.id,
+                    capacite_id=cap_id,
+                    ponderation=cap.get('ponderation'),
+                ))
+        db.session.commit()
+
     redirect_url = f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/"
     return jsonify({'success': True, 'redirect_url': redirect_url})
 

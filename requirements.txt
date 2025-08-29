@@ -28,6 +28,8 @@ openai
 openpyxl
 pypdf2
 pytest
+pytest-playwright
+playwright
 python-dotenv
 pytz
 redis

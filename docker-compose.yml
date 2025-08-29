@@ -14,7 +14,8 @@ services:
     volumes:
       - txt_outputs:/app/src/txt_outputs
       - pdfs:/app/src/pdfs_downloaded
-      - uploads:/app/src/uploads
+      # Bind-mount uploads to a host folder so PDFs are visible on the host
+      - ./uploads:/app/src/uploads
       - db_data:/app/src/database
     depends_on:
       - redis
@@ -39,7 +40,7 @@ services:
     volumes:
       - txt_outputs:/app/src/txt_outputs
       - pdfs:/app/src/pdfs_downloaded
-      - uploads:/app/src/uploads
+      - ./uploads:/app/src/uploads
       - db_data:/app/src/database
     depends_on:
       - redis
@@ -48,5 +49,4 @@ services:
 volumes:
   txt_outputs: {}
   pdfs: {}
-  uploads: {}
   db_data: {}

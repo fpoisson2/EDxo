@@ -1,25 +1,35 @@
 {% extends "parametres.html" %}
 {% block parametres_content %}
-  <h1>Paramètres du chat IA</h1>
+  <h1 class="mb-3">Chat – Paramètres IA</h1>
+
   <form method="post">
     {{ form.hidden_tag() }}
+
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <strong>Paramètres IA</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">{{ form.chat_model.label }}</label>
+            {{ form.chat_model(class="form-select") }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">{{ form.reasoning_effort.label }}</label>
+            {{ form.reasoning_effort(class="form-select") }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">{{ form.verbosity.label }}</label>
+            {{ form.verbosity(class="form-select") }}
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div>
-      {{ form.chat_model.label }}<br>
-      {{ form.chat_model(class="form-select") }}
-    </div>
-    <div class="mt-3" style="font-size:0.95rem;color:#555;background:#f8f9fa;border:1px solid #eee;border-radius:8px;padding:10px">
-      Note: l'appel d'outils utilise exactement le même modèle que le chat. Le champ « Modèle pour l'appel d'outils » est désormais couplé automatiquement à « Modèle pour le chat ».
-    </div>
-    <div class="mt-3">
-      {{ form.reasoning_effort.label }}<br>
-      {{ form.reasoning_effort(class="form-select") }}
-    </div>
-    <div class="mt-3">
-      {{ form.verbosity.label }}<br>
-      {{ form.verbosity(class="form-select") }}
-    </div>
-    <div class="mt-3">
-      {{ form.submit(class="btn btn-primary") }}
+      {{ form.submit(class_='btn btn-primary') }}
+      <a href="{{ url_for('settings.parametres') }}" class="btn btn-outline-secondary">Retour</a>
     </div>
   </form>
 {% endblock %}

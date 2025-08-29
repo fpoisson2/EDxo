@@ -1,38 +1,8 @@
 {% extends "parametres.html" %}
 {% block parametres_content %}
-<!-- Ajout du token CSRF caché -->
-
-<!-- Toast Container -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3">
-    <!-- Success Toast -->
-    <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body">
-                Configuration sauvegardée avec succès
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    </div>
-    
-    <!-- Error Toast -->
-    <div id="errorToast" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body" id="errorToastMessage">
-                Une erreur s'est produite
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    </div>
-</div>
-
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-
-<div class="container-fluid px-4">
-    <h1 class="mt-4">Configuration des Prompts IA - Plans de cours</h1>
+    <h1 class="mb-3">Plans de cours – Paramètres IA</h1>
     <div class="card mb-4">
-        <div class="card-header bg-light">
-            <strong>Paramètres IA – Plans de cours</strong>
-        </div>
+        <div class="card-header bg-light"><strong>Paramètres IA</strong></div>
         <div class="card-body">
             <ul class="nav nav-tabs" id="pdcTabs" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -51,7 +21,7 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="mb-3">
                             <label class="form-label">{{ ai_form_gen.system_prompt.label }}</label>
-                            {{ ai_form_gen.system_prompt(class_='form-control font-monospace', rows=6) }}
+                            {{ ai_form_gen.system_prompt(class_='form-control font-monospace', rows=12) }}
                         </div>
                         <div class="row g-3">
                             <div class="col-md-4">
@@ -77,7 +47,7 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="mb-3">
                             <label class="form-label">{{ ai_form_impv.system_prompt.label }}</label>
-                            {{ ai_form_impv.system_prompt(class_='form-control font-monospace', rows=6) }}
+                            {{ ai_form_impv.system_prompt(class_='form-control font-monospace', rows=12) }}
                         </div>
                         <div class="row g-3">
                             <div class="col-md-4">
@@ -103,7 +73,7 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="mb-3">
                             <label class="form-label">{{ ai_form_impt.system_prompt.label }}</label>
-                            {{ ai_form_impt.system_prompt(class_='form-control font-monospace', rows=6) }}
+                            {{ ai_form_impt.system_prompt(class_='form-control font-monospace', rows=12) }}
                         </div>
                         <div class="row g-3">
                             <div class="col-md-4">
@@ -127,243 +97,5 @@
             </div>
         </div>
     </div>
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="alert alert-info">
-                <h5>Variables disponibles pour les prompts :</h5>
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Informations de base :</h6>
-                        <ul class="list-unstyled">
-                            <li><code>{current_value}</code> - Valeur actuelle du champ</li>
-                            <li><code>{cours_id}</code> - ID du cours</li>
-                            <li><code>{session}</code> - Session actuelle</li>
-                            <li><code>{cours_nom}</code> - Nom du cours</li>
-                            <li><code>{cours_code}</code> - Code du cours</li>
-                        </ul>
-                        
-                        <h6>Données du plan cadre :</h6>
-                        <ul class="list-unstyled">
-                            <li><code>{place_intro}</code> - Place dans le programme</li>
-                            <li><code>{objectif_terminal}</code> - Objectif terminal</li>
-                            <li><code>{structure_intro}</code> - Structure (introduction)</li>
-                            <li><code>{structure_activites_theoriques}</code> - Activités théoriques</li>
-                            <li><code>{structure_activites_pratiques}</code> - Activités pratiques</li>
-                            <li><code>{structure_activites_prevues}</code> - Activités prévues</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Évaluations :</h6>
-                        <ul class="list-unstyled">
-                            <li><code>{eval_evaluation_sommative}</code> - Évaluation sommative</li>
-                            <li><code>{eval_nature_evaluations_sommatives}</code> - Nature des évaluations</li>
-                            <li><code>{eval_evaluation_de_la_langue}</code> - Évaluation de la langue</li>
-                            <li><code>{eval_evaluation_sommatives_apprentissages}</code> - Apprentissages évalués</li>
-                        </ul>
-                        
-                        <h6>Relations :</h6>
-                        <ul class="list-unstyled">
-                            <li><code>{capacites}</code> - Liste des capacités</li>
-                            <li><code>{savoirs_etre}</code> - Savoirs-être</li>
-                            <li><code>{objets_cibles}</code> - Objets cibles</li>
-                            <li><code>{cours_relies}</code> - Cours reliés</li>
-                            <li><code>{cours_prealables}</code> - Cours préalables</li>
-                            <li><code>{cours_corequis}</code> - Cours corequis</li>
-                            <li><code>{competences_certifiees}</code> - Compétences certifiées</li>
-                            <li><code>{competences_developpees}</code> - Compétences développées</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="table-responsive" id="granular-prompts-section">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th style="width: 20%">Champ du plan de cours</th>
-                            <th style="width: 80%">Template du Prompt</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for prompt in prompts %}
-                        <tr data-prompt-id="{{ prompt.id }}" data-csrf-token="{{ csrf_token() }}">
-                            <td>{{ prompt.field_name }}</td>
-                            <td>
-                                <textarea class="form-control prompt-template" rows="4">{{ prompt.prompt_template }}</textarea>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <div class="d-flex justify-content-end mb-4" id="save-all-wrapper">
-        <button id="save-all" class="btn btn-primary">
-            <i class="bi bi-save me-2"></i>Enregistrer tout
-        </button>
-    </div>
-</div>
-
-<!-- Modal de test -->
-<div class="modal fade" id="testPromptModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Tester le Prompt</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">Données de test (JSON)</label>
-                    <textarea class="form-control test-context" rows="4">
-{
-    "current_value": "Exemple de contenu actuel",
-    "cours_id": "123",
-    "session": "H2024"
-}</textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Résultat</label>
-                    <div class="test-result p-3 border rounded"></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                <button type="button" class="btn btn-primary run-test">Tester</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-function showToast(type, message) {
-    const toastId = type === 'success' ? 'successToast' : 'errorToast';
-    const toastElement = document.getElementById(toastId);
-    
-    if (!toastElement) {
-        console.error(`Toast element with id '${toastId}' not found`);
-        return;
-    }
-
-    if (type === 'error') {
-        const messageElement = document.getElementById('errorToastMessage');
-        if (messageElement) {
-            messageElement.textContent = message;
-        }
-    }
-
-    const bsToast = new bootstrap.Toast(toastElement);
-    bsToast.show();
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Hide granular prompts section when Importation tab is active
-    const granularSection = document.getElementById('granular-prompts-section');
-    const saveAllWrapper = document.getElementById('save-all-wrapper');
-    function updateGranularVisibility(activeId) {
-        const isImport = activeId === 'tab-impt';
-        if (granularSection) granularSection.style.display = isImport ? 'none' : '';
-        if (saveAllWrapper) saveAllWrapper.style.display = isImport ? 'none' : '';
-    }
-    ['tab-gen','tab-impv','tab-impt'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('shown.bs.tab', function (evt) {
-                updateGranularVisibility(evt.target.id);
-            });
-        }
-    });
-    updateGranularVisibility('tab-gen');
-
-    // Test prompt handler
-    let currentTemplate = '';
-    
-    document.querySelectorAll('.test-prompt').forEach(button => {
-        button.addEventListener('click', function() {
-            const row = this.closest('tr');
-            currentTemplate = row.querySelector('.prompt-template').value;
-        });
-    });
-
-    document.querySelector('.run-test').addEventListener('click', async function() {
-        const contextInput = document.querySelector('.test-context');
-        const resultDiv = document.querySelector('.test-result');
-        
-        try {
-            const context = JSON.parse(contextInput.value);
-            const response = await fetch('/settings/plan-de-cours/prompts/test', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': document.querySelector('tr[data-csrf-token]').dataset.csrfToken
-                },
-                body: JSON.stringify({
-                    template: currentTemplate,
-                    context: context
-                })
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                resultDiv.textContent = data.result;
-                resultDiv.classList.remove('text-danger');
-                showToast('success', 'Test effectué avec succès');
-            } else {
-                resultDiv.textContent = data.error;
-                resultDiv.classList.add('text-danger');
-                showToast('error', data.error);
-            }
-        } catch (error) {
-            resultDiv.textContent = 'Erreur: Format JSON invalide';
-            resultDiv.classList.add('text-danger');
-            showToast('error', 'Erreur: Format JSON invalide');
-        }
-    });
-    // Global save-all handler
-    const saveAllBtn = document.getElementById('save-all');
-    if (saveAllBtn) {
-        saveAllBtn.addEventListener('click', async function() {
-            const rows = Array.from(document.querySelectorAll('tr[data-prompt-id]'));
-            const csrf = document.querySelector('input[name="csrf_token"]').value;
-            try {
-                // 1) Save IA section settings
-                const aiForm = document.getElementById('ai-settings-form');
-                const formData = new FormData(aiForm);
-                const aiResp = await fetch(aiForm.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-CSRF-Token': csrf }
-                });
-                if (!aiResp.ok) {
-                    throw new Error('Échec enregistrement paramètres IA');
-                }
-                // 2) Save all prompts sequentially
-                for (const row of rows) {
-                    const promptId = row.dataset.promptId;
-                    const template = row.querySelector('.prompt-template').value;
-                    const resp = await fetch(`/settings/plan-de-cours/prompts/${promptId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-Token': csrf
-                        },
-                        body: JSON.stringify({ prompt_template: template, context_variables: [] })
-                    });
-                    if (!resp.ok) {
-                        const data = await resp.json();
-                        throw new Error(data.error || `Erreur HTTP: ${resp.status}`);
-                    }
-                }
-                showToast('success', 'Tous les paramètres ont été enregistrés');
-            } catch (e) {
-                console.error(e);
-                showToast('error', e.message || 'Erreur lors de la sauvegarde');
-            }
-        });
-    }
-});
-</script>
+    {# Section granulaire supprimée: tout est inclus dans le prompt système maintenant. #}
 {% endblock %}

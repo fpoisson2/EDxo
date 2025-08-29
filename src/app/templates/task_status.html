@@ -268,16 +268,28 @@ document.addEventListener("DOMContentLoaded", function() {
                         if (reasoningOverlay && rs) reasoningOverlay.style.display = 'none';
                         scheduleReasoningUpdate();
                     }
+                    // Heuristic: suppress log-like buffers/chunks (with step/message/progress)
+                    const hasLogMeta = !!(meta.message || meta.step || typeof meta.progress === 'number');
+                    const isLogLike = (txt) => {
+                        try {
+                            const s = String(txt || '');
+                            return /^(Initialisation de l'import|Préparation du texte|Appel au modèle IA|Fichier prêt:|Conversion DOCX|PDF prêt:|Upload OpenAI réussi|Erreur analyse fichier)/i.test(s.trim());
+                        } catch { return false; }
+                    };
                     if (meta.stream_chunk) {
-                        streamBuf += String(meta.stream_chunk);
-                        streamDirty = true;
-                        if (streamOverlay) streamOverlay.style.display = 'none';
-                        scheduleStreamUpdate();
+                        if (!hasLogMeta && !isLogLike(meta.stream_chunk)) {
+                            streamBuf += String(meta.stream_chunk);
+                            streamDirty = true;
+                            if (streamOverlay) streamOverlay.style.display = 'none';
+                            scheduleStreamUpdate();
+                        }
                     } else if (meta.stream_buffer) {
-                        streamBuf = String(meta.stream_buffer);
-                        streamDirty = true;
-                        if (streamOverlay) streamOverlay.style.display = 'none';
-                        scheduleStreamUpdate();
+                        if (!hasLogMeta && !isLogLike(meta.stream_buffer)) {
+                            streamBuf = String(meta.stream_buffer);
+                            streamDirty = true;
+                            if (streamOverlay) streamOverlay.style.display = 'none';
+                            scheduleStreamUpdate();
+                        }
                     }
                 }
                 if (data.state) {

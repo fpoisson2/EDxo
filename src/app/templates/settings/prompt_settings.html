@@ -2,15 +2,21 @@
 {% extends "parametres.html" %}
 {% block parametres_content %}
 <div class="container">
-    <h2 class="mb-4">Paramètres des prompts d'évaluation</h2>
+    <h1 class="mb-3">Grille d'évaluation – Paramètres IA</h1>
     
     <form method="POST" class="needs-validation" novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         
         <div class="card mb-4">
-            <div class="card-header bg-light">
-                <h3 class="mb-0">Paramètres IA – Grille d'évaluation</h3>
+            <div class="card-header bg-light"><strong>Prompt système</strong></div>
+            <div class="card-body">
+                <label class="form-label" for="prompt_template">Prompt système</label>
+                <textarea id="prompt_template" name="prompt_template" rows="12" class="form-control font-monospace">{{ settings.prompt_template }}</textarea>
             </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-light"><strong>Paramètres IA</strong></div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-4">
@@ -25,62 +31,6 @@
                         <label class="form-label">{{ ai_form.verbosity.label }}</label>
                         {{ ai_form.verbosity(class_='form-select') }}
                     </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="mb-0">Template du prompt</h3>
-            </div>
-            <div class="card-body">
-                <div class="form-group">
-                    <label for="prompt_template" class="form-label">Template</label>
-                    <textarea 
-                        id="prompt_template"
-                        name="prompt_template" 
-                        rows="6" 
-                        class="form-control"
-                    >{{ settings.prompt_template }}</textarea>
-                    <div class="form-text text-muted">
-                        Variables disponibles: {savoir_faire}, {capacite}, {seuil}, {cible}, {schema} et {description_eval}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="mb-0">Descriptions des niveaux</h3>
-            </div>
-            <div class="card-body">
-                {% for i in range(1, 7) %}
-                <div class="form-group mb-3">
-                    <label for="level{{ i }}_description" class="form-label fw-bold">Niveau {{ i }}</label>
-                    <textarea 
-                        id="level{{ i }}_description"
-                        name="level{{ i }}_description" 
-                        rows="3"
-                        class="form-control"
-                    >{{ settings['level' ~ i ~ '_description'] }}</textarea>
-                </div>
-                {% if not loop.last %}
-                <hr class="my-3">
-                {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h3 class="mb-0">Schéma JSON généré</h3>
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#schemaCollapse">
-                    <i class="bi bi-code-square me-1"></i>Afficher/Masquer
-                </button>
-            </div>
-            <div id="schemaCollapse" class="collapse">
-                <div class="card-body">
-                    <pre class="bg-light p-3 rounded"><code>{{ schema_json }}</code></pre>
                 </div>
             </div>
         </div>

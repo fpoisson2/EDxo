@@ -173,9 +173,10 @@ def generate_plan_cadre(plan_id):
             payload = dict(request.form) if request.form else {}
         except Exception:
             payload = {}
-    # Aligner la génération sur le flux d'amélioration: passer en mode aperçu (review)
-    # pour atterrir sur la même page de validation que l'amélioration.
-    payload = {**(payload or {}), 'improve_only': True}
+    # Aligner la génération sur le flux d'amélioration : passer en mode aperçu (review)
+    # pour atterrir sur la même page de validation que l'amélioration sans activer
+    # le mode "improve_only" côté IA.
+    payload = {**(payload or {}), 'preview': True}
     task = generate_plan_cadre_content_task.delay(plan_id, payload, g.api_user.id)
     return jsonify({'task_id': task.id}), 202
 
@@ -189,7 +190,7 @@ def generate_plan_de_cours(plan_id):
     Construit le prompt via build_all_prompt et enfile la tâche Celery.
     """
     from ..tasks.generation_plan_de_cours import generate_plan_de_cours_all_task
-    from ..models import PlanDeCours
+    from ..models import PlanDeCours, SectionAISettings
     # Charger payload
     payload = request.get_json(silent=True)
     if payload is None:
@@ -199,23 +200,26 @@ def generate_plan_de_cours(plan_id):
             payload = {}
     additional_info = payload.get('additional_info') or ''
     ai_model = payload.get('ai_model') or ''
+    improve_only = bool(payload.get('improve_only'))
     # Récupérer PlanDeCours et contexte pour construire le prompt
     plan = db.session.get(PlanDeCours, plan_id) or abort(404)
     cours = plan.cours
     plan_cadre = cours.plan_cadre if cours else None
     try:
-        # Réutiliser la logique de prompt depuis le routeur PDC
-        from ..routes.plan_de_cours import PlanDeCoursPromptSettings, build_all_prompt
-        prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
-        prompt_template = prompt_settings.prompt_template if prompt_settings else None
-        ai_model = (ai_model or (prompt_settings.ai_model if prompt_settings else None) or 'gpt-5')
+        # Construire le prompt avec le template défaut et le plan-cadre du même cours
+        from ..routes.plan_de_cours import build_all_prompt
+        prompt_template = None
+        # Si aucun modèle fourni, utiliser celui des paramètres de section
+        if not ai_model:
+            sa = SectionAISettings.get_for('plan_de_cours')
+            ai_model = sa.ai_model or 'gpt-5'
         prompt = build_all_prompt(plan_cadre, cours, plan.session, prompt_template, additional_info=additional_info)
     except Exception:
         # Fallback minimal si import échoue
         prompt = additional_info or ''
         if not ai_model:
             ai_model = 'gpt-5'
-    task = generate_plan_de_cours_all_task.delay(plan.id, prompt, ai_model, g.api_user.id)
+    task = generate_plan_de_cours_all_task.delay(plan.id, prompt, ai_model, g.api_user.id, improve_only)
     return jsonify({'task_id': task.id}), 202
 
 

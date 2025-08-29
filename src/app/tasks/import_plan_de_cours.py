@@ -1,4 +1,5 @@
 import logging
+import json
 import re
 import unicodedata
 from typing import Dict, Optional
@@ -6,6 +7,8 @@ from typing import Dict, Optional
 from celery import shared_task
 from openai import OpenAI
 from pydantic import BaseModel, Field
+import shutil
+import subprocess
 
 from src.extensions import db
 from src.utils.openai_pricing import calculate_call_cost
@@ -67,6 +70,105 @@ class ImportPlanDeCoursResponse(BaseModel):
     disponibilites: list[ImportDisponibiliteItem] = Field(default_factory=list)
     mediagraphies: list[ImportMediagraphieItem] = Field(default_factory=list)
     evaluations: list[ImportEvaluationItem] = Field(default_factory=list)
+PLAN_DE_COURS_JSON_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "presentation_du_cours": {"type": ["string", "null"]},
+        "objectif_terminal_du_cours": {"type": ["string", "null"]},
+        "organisation_et_methodes": {"type": ["string", "null"]},
+        "accomodement": {"type": ["string", "null"]},
+        "evaluation_formative_apprentissages": {"type": ["string", "null"]},
+        "evaluation_expression_francais": {"type": ["string", "null"]},
+        "materiel": {"type": ["string", "null"]},
+        "calendriers": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "semaine": {"type": ["integer", "null"]},
+                    "sujet": {"type": ["string", "null"]},
+                    "activites": {"type": ["string", "null"]},
+                    "travaux_hors_classe": {"type": ["string", "null"]},
+                    "evaluations": {"type": ["string", "null"]}
+                },
+                "required": ["semaine", "sujet", "activites", "travaux_hors_classe", "evaluations"],
+                "additionalProperties": False,
+            },
+        },
+        "nom_enseignant": {"type": ["string", "null"]},
+        "telephone_enseignant": {"type": ["string", "null"]},
+        "courriel_enseignant": {"type": ["string", "null"]},
+        "bureau_enseignant": {"type": ["string", "null"]},
+        "disponibilites": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "jour_semaine": {"type": ["string", "null"]},
+                    "plage_horaire": {"type": ["string", "null"]},
+                    "lieu": {"type": ["string", "null"]}
+                },
+                "required": ["jour_semaine", "plage_horaire", "lieu"],
+                "additionalProperties": False,
+            },
+        },
+        "mediagraphies": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "reference_bibliographique": {"type": ["string", "null"]}
+                },
+                "required": ["reference_bibliographique"],
+                "additionalProperties": False,
+            },
+        },
+        "evaluations": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "titre_evaluation": {"type": ["string", "null"]},
+                    "description": {"type": ["string", "null"]},
+                    "semaine": {"type": ["integer", "null"]},
+                    "capacites": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "capacite": {"type": ["string", "null"]},
+                                "ponderation": {"type": ["string", "null"]},
+                            },
+                            "required": ["capacite", "ponderation"],
+                            "additionalProperties": False,
+                        },
+                    },
+                },
+                "required": ["titre_evaluation", "description", "semaine", "capacites"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": [
+        "presentation_du_cours",
+        "objectif_terminal_du_cours",
+        "organisation_et_methodes",
+        "accomodement",
+        "evaluation_formative_apprentissages",
+        "evaluation_expression_francais",
+        "materiel",
+        "calendriers",
+        "nom_enseignant",
+        "telephone_enseignant",
+        "courriel_enseignant",
+        "bureau_enseignant",
+        "disponibilites",
+        "mediagraphies",
+        "evaluations",
+    ],
+    "additionalProperties": False
+}
+
 
 
 def _normalize_text(s: Optional[str]) -> str:
@@ -183,10 +285,21 @@ def _resolve_capacity_id(name: Optional[str], plan_cadre) -> Optional[int]:
 def _extract_first_parsed(response):
     try:
         outputs = getattr(response, 'output', None) or []
+        if isinstance(outputs, dict):
+            outputs = [outputs]
         for item in outputs:
-            contents = getattr(item, 'content', None) or []
+            contents = []
+            if isinstance(item, dict):
+                contents = item.get('content') or []
+            else:
+                contents = getattr(item, 'content', None) or []
+            if isinstance(contents, dict):
+                contents = [contents]
             for c in contents:
-                parsed = getattr(c, 'parsed', None)
+                if isinstance(c, dict):
+                    parsed = c.get('parsed')
+                else:
+                    parsed = getattr(c, 'parsed', None)
                 if parsed is not None:
                     return parsed
     except Exception:
@@ -194,8 +307,62 @@ def _extract_first_parsed(response):
     return None
 
 
+def _extract_json_like_text(response) -> Optional[dict]:
+    """Conservative fallback: try to parse JSON from text fields.
+
+    Handles shapes like:
+    - response.output_text (string JSON)
+    - response.text (string JSON)
+    - response.output[*].content[*].text (string JSON)
+    Returns a dict if JSON-decoding succeeds, else None.
+    """
+    # 1) Direct fields commonly present in SDKs
+    for attr in ("output_text", "text"):
+        try:
+            txt = getattr(response, attr, None)
+            if isinstance(txt, str) and txt.strip():
+                return json.loads(txt)
+        except Exception:
+            pass
+
+    # 2) Scan output -> content -> text
+    try:
+        outputs = getattr(response, 'output', None) or []
+        if isinstance(outputs, dict):
+            outputs = [outputs]
+        for item in outputs:
+            contents = []
+            if isinstance(item, dict):
+                contents = item.get('content') or []
+            else:
+                contents = getattr(item, 'content', None) or []
+            if isinstance(contents, dict):
+                contents = [contents]
+            for c in contents:
+                try:
+                    if isinstance(c, dict):
+                        txt = c.get('text')
+                    else:
+                        txt = getattr(c, 'text', None)
+                    if isinstance(txt, str) and txt.strip():
+                        return json.loads(txt)
+                except Exception:
+                    continue
+    except Exception:
+        pass
+    return None
+
+
 @shared_task(bind=True, name='src.app.tasks.import_plan_de_cours.import_plan_de_cours_task')
-def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_model: str, user_id: int):
+def import_plan_de_cours_task(
+    self,
+    plan_de_cours_id: int,
+    doc_text: str,
+    ai_model: str,
+    user_id: int,
+    file_path: Optional[str] = None,
+    openai_client_cls=None,
+):
     """Celery task: parse DOCX text via OpenAI, update PlanDeCours and return UI payload."""
     try:
         plan = db.session.get(PlanDeCours, plan_de_cours_id)
@@ -205,7 +372,8 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
         cours = plan.cours
         plan_cadre = cours.plan_cadre if cours else None
 
-        user = db.session.query(User).with_for_update().get(user_id)
+        # Avoid SQLAlchemy legacy get(); simple session.get is fine here
+        user = db.session.get(User, user_id)
         if not user:
             return {"status": "error", "message": "Utilisateur introuvable."}
         if not user.openai_key:
@@ -216,31 +384,212 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
         if user.credits <= 0:
             return {"status": "error", "message": "Crédits insuffisants."}
 
-        # Prépare system prompt (SectionAISettings 'plan_de_cours_import') + message utilisateur (données brutes)
+        # Prépare system prompt (SectionAISettings 'plan_de_cours_import')
         sa_impt = SectionAISettings.get_for('plan_de_cours_import')
         sys_prompt = (getattr(sa_impt, 'system_prompt', None) or '').strip()
-        user_input = (
-            "Contexte: cours {code} - {nom}, session {session}.\n"
-            "Texte du plan de cours (brut):\n---\n{texte}\n---\n"
-        ).format(
-            code=getattr(cours, 'code', '') or '',
-            nom=getattr(cours, 'nom', '') or '',
-            session=plan.session,
-            texte=(doc_text or '')[:120000],
-        )
 
         self.update_state(state='PROGRESS', meta={'message': "Analyse du .docx en cours..."})
 
-        client = OpenAI(api_key=user.openai_key)
-        response = client.responses.parse(
-            model=ai_model,
-            input=[
-                {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
-                {"role": "user", "content": [{"type": "input_text", "text": user_input}]}
-            ],
-            text_format=ImportPlanDeCoursResponse,
-        )
+        ClientCls = openai_client_cls or OpenAI
+        client = ClientCls(api_key=user.openai_key)
 
+        # Si un chemin de fichier est fourni, tenter l'upload (DOCX -> PDF) vers OpenAI
+        file_id = None
+        pdf_local_path = None
+        if file_path:
+            try:
+                import os as _os
+                upload_path = file_path
+                if file_path.lower().endswith('.docx'):
+                    # Reuse PDF conversion helper used by plan-cadre import
+                    from .import_plan_cadre import _create_pdf_from_text  # local import avoids cycles
+                    pdf_path = file_path[:-5] + '.pdf'
+                    # 1) Try LibreOffice if available (best fidelity incl. tables)
+                    used_soffice = False
+                    try:
+                        if shutil.which('soffice'):
+                            subprocess.run([
+                                'soffice', '--headless', '--convert-to', 'pdf', '--outdir', _os.path.dirname(pdf_path), file_path
+                            ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            used_soffice = _os.path.exists(pdf_path)
+                            if used_soffice:
+                                try:
+                                    from PyPDF2 import PdfReader
+                                    with open(pdf_path, 'rb') as pf:
+                                        pages = len(PdfReader(pf).pages)
+                                    size = _os.stat(pdf_path).st_size if _os.path.exists(pdf_path) else -1
+                                    logger.info("[import_plan_de_cours_task] Conversion DOCX→PDF via LibreOffice OK: %s (pages=%d, taille=%d)", pdf_path, pages, size)
+                                except Exception:
+                                    logger.info("[import_plan_de_cours_task] Conversion DOCX→PDF via LibreOffice OK: %s", pdf_path)
+                    except Exception:
+                        used_soffice = False
+                    if not used_soffice:
+                        # 2) Mammoth (DOCX->HTML) + WeasyPrint
+                        html = None
+                        try:
+                            import mammoth
+                            with open(file_path, 'rb') as df:
+                                res = mammoth.convert_to_html(df)
+                                html = res.value
+                        except Exception:
+                            html = None
+                        if html:
+                            try:
+                                from weasyprint import HTML
+                                HTML(string=html).write_pdf(pdf_path)
+                                try:
+                                    from PyPDF2 import PdfReader
+                                    with open(pdf_path, 'rb') as pf:
+                                        pages = len(PdfReader(pf).pages)
+                                    size = _os.stat(pdf_path).st_size if _os.path.exists(pdf_path) else -1
+                                    logger.info("[import_plan_de_cours_task] Conversion DOCX→PDF (HTML) OK: %s (pages=%d, taille=%d)", pdf_path, pages, size)
+                                except Exception:
+                                    logger.info("[import_plan_de_cours_task] Conversion DOCX→PDF (HTML) OK: %s", pdf_path)
+                            except Exception:
+                                _create_pdf_from_text(doc_text or 'Document importé', pdf_path)
+                                try:
+                                    size = _os.stat(pdf_path).st_size if _os.path.exists(pdf_path) else -1
+                                    logger.info("[import_plan_de_cours_task] PDF texte créé: %s (taille=%d)", pdf_path, size)
+                                except Exception:
+                                    logger.info("[import_plan_de_cours_task] PDF texte créé: %s", pdf_path)
+                        else:
+                            _create_pdf_from_text(doc_text or 'Document importé', pdf_path)
+                            try:
+                                size = _os.stat(pdf_path).st_size if _os.path.exists(pdf_path) else -1
+                                logger.info("[import_plan_de_cours_task] PDF texte créé: %s (taille=%d)", pdf_path, size)
+                            except Exception:
+                                logger.info("[import_plan_de_cours_task] PDF texte créé: %s", pdf_path)
+                    upload_path = pdf_path
+                    pdf_local_path = pdf_path if _os.path.exists(pdf_path) else None
+                with open(upload_path, 'rb') as f:
+                    up = client.files.create(file=f, purpose='user_data')
+                    file_id = getattr(up, 'id', None)
+                if file_id:
+                    try:
+                        size = _os.stat(upload_path).st_size if _os.path.exists(upload_path) else -1
+                        logger.info("[import_plan_de_cours_task] Upload OpenAI OK file_id=%s (taille=%d)", file_id, size)
+                    except Exception:
+                        logger.info("[import_plan_de_cours_task] Upload OpenAI OK file_id=%s", file_id)
+            except Exception:
+                logger.exception("Échec upload fichier vers OpenAI (plan de cours); repli en mode texte brut")
+                file_id = None
+
+        # Construire l'input pour Responses API
+        if file_id:
+            input_blocks = []
+            if sys_prompt:
+                input_blocks.append({"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]})
+            input_blocks.append({
+                "role": "user",
+                "content": [
+                    {"type": "input_file", "file_id": file_id},
+                ]
+            })
+        else:
+            user_input = (
+                "Contexte: cours {code} - {nom}, session {session}.\n"
+                "Texte du plan de cours (brut):\n---\n{texte}\n---\n"
+            ).format(
+                code=getattr(cours, 'code', '') or '',
+                nom=getattr(cours, 'nom', '') or '',
+                session=plan.session,
+                texte=(doc_text or '')[:120000],
+            )
+            input_blocks = []
+            if sys_prompt:
+                input_blocks.append({"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]})
+            input_blocks.append({"role": "user", "content": [{"type": "input_text", "text": user_input}]})
+
+        # Aligner l'appel OpenAI sur import_grille: streaming + JSON schema strict
+        # Construire paramètres text/JSON schema à partir du modèle Pydantic
+        schema = PLAN_DE_COURS_JSON_SCHEMA
+        # Paramètres text/format
+        text_params = {
+            "format": {
+                "type": "json_schema",
+                "name": "plan_de_cours",
+                "strict": True,
+                "schema": schema,
+            }
+        }
+        # Paramètres de raisonnement depuis SectionAISettings si disponibles
+        reasoning_params = {"summary": "auto"}
+        try:
+            if sa_impt and getattr(sa_impt, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
+                reasoning_params["effort"] = sa_impt.reasoning_effort
+        except Exception:
+            pass
+        try:
+            if sa_impt and getattr(sa_impt, 'verbosity', None) in {"low", "medium", "high"}:
+                text_params["verbosity"] = sa_impt.verbosity
+        except Exception:
+            pass
+
+        request_kwargs = dict(
+            model=ai_model,
+            input=input_blocks,
+            text=text_params,
+            reasoning=reasoning_params,
+            tools=[],
+            store=True,
+        )
+        # Décodage conservateur si pas un modèle gpt-5
+        if not (isinstance(ai_model, str) and ai_model.startswith("gpt-5")):
+            request_kwargs.update({
+                "temperature": 0.1,
+                "top_p": 1,
+            })
+
+        # Appel en streaming pour capturer le texte et le résumé de raisonnement
+        self.update_state(state='PROGRESS', meta={'message': "Appel au modèle IA..."})
+        streamed_text = ""
+        reasoning_summary_text = ""
+        response = None
+        try:
+            with client.responses.stream(**request_kwargs) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={'stream_chunk': delta, 'stream_buffer': streamed_text})
+                            except Exception:
+                                pass
+                    elif etype.endswith('response.output_item.added') or etype == 'response.output_item.added':
+                        try:
+                            item = getattr(event, 'item', None)
+                            text_val = ''
+                            if item:
+                                if isinstance(item, dict):
+                                    text_val = item.get('text') or ''
+                                else:
+                                    text_val = getattr(item, 'text', '') or ''
+                            if text_val:
+                                streamed_text += text_val
+                        except Exception:
+                            pass
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        try:
+                            rs_delta = getattr(event, 'delta', '') or ''
+                            if rs_delta:
+                                reasoning_summary_text += rs_delta
+                                try:
+                                    self.update_state(state='PROGRESS', meta={'reasoning_summary': reasoning_summary_text})
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
+                    elif etype.endswith('response.completed'):
+                        pass
+                    elif etype.endswith('response.error'):
+                        pass
+                response = stream.get_final_response()
+        except Exception:
+            response = client.responses.create(**request_kwargs)
+
+        # Comptabiliser les coûts
         usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
         usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
         cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
@@ -248,97 +597,99 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
             return {"status": "error", "message": "Crédits insuffisants pour cette opération."}
         user.credits -= cost
 
-        parsed = _extract_first_parsed(response)
+        # Résumé du raisonnement (si pas déjà poussé en stream, on garde la dernière valeur)
+        rs_text = reasoning_summary_text or ""
+
+        # Essayer de récupérer la sortie structurée
+        parsed = None
+        try:
+            parsed = getattr(response, 'output_parsed', None)
+        except Exception:
+            parsed = None
+        if parsed is None:
+            parsed = _extract_first_parsed(response)
+        if parsed is None:
+            parsed = _extract_json_like_text(response)
+        # Si dict -> valider via Pydantic pour logique en aval
+        try:
+            if isinstance(parsed, dict):
+                parsed = ImportPlanDeCoursResponse.model_validate(parsed)
+        except Exception:
+            pass
         if parsed is None:
             return {"status": "error", "message": "Aucune donnée renvoyée par le modèle."}
 
-        # Update fields
-        plan.presentation_du_cours = parsed.presentation_du_cours or plan.presentation_du_cours
-        plan.objectif_terminal_du_cours = parsed.objectif_terminal_du_cours or plan.objectif_terminal_du_cours
-        plan.organisation_et_methodes = parsed.organisation_et_methodes or plan.organisation_et_methodes
-        plan.accomodement = parsed.accomodement or plan.accomodement
-        plan.evaluation_formative_apprentissages = parsed.evaluation_formative_apprentissages or plan.evaluation_formative_apprentissages
-        plan.evaluation_expression_francais = parsed.evaluation_expression_francais or plan.evaluation_expression_francais
-        plan.materiel = parsed.materiel or plan.materiel
+        # Snapshot des anciennes données pour l'écran de validation
+        old_fields = {
+            'presentation_du_cours': plan.presentation_du_cours,
+            'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+            'organisation_et_methodes': plan.organisation_et_methodes,
+            'accomodement': plan.accomodement,
+            'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+            'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'seuil_reussite': getattr(plan, 'seuil_reussite', None),
+            'materiel': plan.materiel,
+            'nom_enseignant': plan.nom_enseignant,
+            'telephone_enseignant': plan.telephone_enseignant,
+            'courriel_enseignant': plan.courriel_enseignant,
+            'bureau_enseignant': plan.bureau_enseignant,
+        }
+        old_calendriers = [
+            {
+                'semaine': c.semaine,
+                'sujet': c.sujet,
+                'activites': c.activites,
+                'travaux_hors_classe': c.travaux_hors_classe,
+                'evaluations': c.evaluations,
+            } for c in plan.calendriers
+        ]
+        old_mediagraphies = [
+            {
+                'reference_bibliographique': m.reference_bibliographique,
+            } for m in plan.mediagraphies
+        ]
+        old_disponibilites = [
+            {
+                'jour_semaine': d.jour_semaine,
+                'plage_horaire': d.plage_horaire,
+                'lieu': d.lieu,
+            } for d in plan.disponibilites
+        ]
+        old_evaluations = [
+            {
+                'id': e.id,
+                'titre': e.titre_evaluation,
+                'description': e.description,
+                'semaine': e.semaine,
+                'capacites': [
+                    {
+                        'capacite_id': c.capacite_id,
+                        'capacite': (c.capacite.capacite if c.capacite else None),
+                        'ponderation': c.ponderation,
+                    } for c in e.capacites
+                ]
+            } for e in plan.evaluations
+        ]
 
-        plan.nom_enseignant = parsed.nom_enseignant or plan.nom_enseignant
-        plan.telephone_enseignant = parsed.telephone_enseignant or plan.telephone_enseignant
-        plan.courriel_enseignant = parsed.courriel_enseignant or plan.courriel_enseignant
-        plan.bureau_enseignant = parsed.bureau_enseignant or plan.bureau_enseignant
-
-        # Calendriers (replace)
-        for cal in plan.calendriers:
-            db.session.delete(cal)
-        for entry in parsed.calendriers or []:
-            db.session.add(PlanDeCoursCalendrier(
-                plan_de_cours_id=plan.id,
-                semaine=entry.semaine,
-                sujet=entry.sujet,
-                activites=entry.activites,
-                travaux_hors_classe=entry.travaux_hors_classe,
-                evaluations=entry.evaluations,
-            ))
-
-        # Médiagraphies (replace)
-        for m in plan.mediagraphies:
-            db.session.delete(m)
-        for itm in parsed.mediagraphies or []:
-            if itm.reference_bibliographique:
-                db.session.add(PlanDeCoursMediagraphie(
-                    plan_de_cours_id=plan.id,
-                    reference_bibliographique=itm.reference_bibliographique,
-                ))
-
-        # Disponibilités (replace)
-        for d in plan.disponibilites:
-            db.session.delete(d)
-        for disp in parsed.disponibilites or []:
-            if disp.jour_semaine or disp.plage_horaire or disp.lieu:
-                db.session.add(PlanDeCoursDisponibiliteEnseignant(
-                    plan_de_cours_id=plan.id,
-                    jour_semaine=disp.jour_semaine,
-                    plage_horaire=disp.plage_horaire,
-                    lieu=disp.lieu,
-                ))
-
-        # Évaluations (replace)
-        for ev in plan.evaluations:
-            db.session.delete(ev)
-        for ev in parsed.evaluations or []:
-            if not (ev.titre_evaluation or ev.description or ev.semaine or ev.capacites):
-                continue
-            new_ev = PlanDeCoursEvaluations(
-                plan_de_cours_id=plan.id,
-                titre_evaluation=ev.titre_evaluation,
-                description=ev.description,
-                semaine=ev.semaine,
-            )
-            for cap_in in ev.capacites or []:
-                cap_id = _resolve_capacity_id(cap_in.capacite, plan_cadre)
-                # N'ajoute le lien que si on a une résolution valide
-                if cap_id is not None:
-                    new_ev.capacites.append(PlanDeCoursEvaluationsCapacites(
-                        capacite_id=cap_id,
-                        ponderation=cap_in.ponderation,
-                    ))
-            db.session.add(new_ev)
-
-        db.session.commit()
+        # Ne pas écraser la BD ici: on prépare seulement un aperçu (preview).
+        # Les écritures ne seront appliquées que lors de la confirmation côté UI.
+        db.session.commit()  # conserver uniquement la décrémentation des crédits utilisateur
 
         # Build payload for UI
         payload = {
             'fields': {
-                'presentation_du_cours': plan.presentation_du_cours,
-                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
-                'organisation_et_methodes': plan.organisation_et_methodes,
-                'accomodement': plan.accomodement,
-                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
-                'evaluation_expression_francais': plan.evaluation_expression_francais,
-                'materiel': plan.materiel,
-                'nom_enseignant': plan.nom_enseignant,
-                'telephone_enseignant': plan.telephone_enseignant,
-                'courriel_enseignant': plan.courriel_enseignant,
-                'bureau_enseignant': plan.bureau_enseignant,
+                'presentation_du_cours': parsed.presentation_du_cours,
+                'objectif_terminal_du_cours': parsed.objectif_terminal_du_cours,
+                'organisation_et_methodes': parsed.organisation_et_methodes,
+                'accomodement': parsed.accomodement,
+                'evaluation_formative_apprentissages': parsed.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': parsed.evaluation_expression_francais,
+                'seuil_reussite': getattr(plan, 'seuil_reussite', None),
+                'materiel': parsed.materiel,
+                'nom_enseignant': parsed.nom_enseignant,
+                'telephone_enseignant': parsed.telephone_enseignant,
+                'courriel_enseignant': parsed.courriel_enseignant,
+                'bureau_enseignant': parsed.bureau_enseignant,
             },
             'calendriers': [
                 {
@@ -347,31 +698,30 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
                     'activites': c.activites,
                     'travaux_hors_classe': c.travaux_hors_classe,
                     'evaluations': c.evaluations,
-                } for c in plan.calendriers
+                } for c in (parsed.calendriers or [])
             ],
             'mediagraphies': [
-                {'reference_bibliographique': m.reference_bibliographique} for m in plan.mediagraphies
+                {'reference_bibliographique': m.reference_bibliographique} for m in (parsed.mediagraphies or [])
             ],
             'disponibilites': [
                 {
                     'jour_semaine': d.jour_semaine,
                     'plage_horaire': d.plage_horaire,
                     'lieu': d.lieu,
-                } for d in plan.disponibilites
+                } for d in (parsed.disponibilites or [])
             ],
             'evaluations': [
                 {
-                    'titre_evaluation': e.titre_evaluation,
+                    'titre': e.titre_evaluation,
                     'description': e.description,
                     'semaine': e.semaine,
                     'capacites': [
                         {
-                            'capacite_id': c.capacite_id,
-                            'capacite_nom': (c.capacite.capacite if c.capacite else None),
-                            'ponderation': c.ponderation,
-                        } for c in e.capacites
+                            'capacite': cap.capacite,
+                            'ponderation': cap.ponderation,
+                        } for cap in (e.capacites or [])
                     ]
-                } for e in plan.evaluations
+                } for e in (parsed.evaluations or [])
             ],
             # Identifiants utiles pour la notification + lien direct
             'cours_id': plan.cours_id,
@@ -383,6 +733,19 @@ def import_plan_de_cours_task(self, plan_de_cours_id: int, doc_text: str, ai_mod
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
         }
 
+        # Injecter les anciennes données pour l'écran de validation/annulation
+        payload['old_fields'] = old_fields
+        payload['old_calendriers'] = old_calendriers
+        payload['old_evaluations'] = old_evaluations
+        payload['old_mediagraphies'] = old_mediagraphies
+        payload['old_disponibilites'] = old_disponibilites
+
+        # Include local PDF path for diagnostics if available
+        if pdf_local_path:
+            payload['pdf_local_path'] = pdf_local_path
+
+        if rs_text:
+            payload['reasoning_summary'] = rs_text
         return {"status": "success", **payload}
 
     except Exception as e:

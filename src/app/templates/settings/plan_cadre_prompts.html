@@ -1,17 +1,9 @@
 {% extends "parametres.html" %}
 {% block parametres_content %}
-<div class="container-fluid px-4">
-  <h1 class="mt-4">Configuration des Prompts IA — Plan‑cadre</h1>
+  <h1 class="mb-3">Plan‑cadre – Paramètres IA</h1>
   <div class="card mb-4">
-    <div class="card-header bg-light">
-      <strong>Paramètres IA — Plan‑cadre</strong>
-    </div>
+    <div class="card-header bg-light"><strong>Paramètres IA</strong></div>
     <div class="card-body">
-      <div class="alert alert-info">
-        Besoin d'ajuster la granularité par section (prompts/activation par champ) ?
-        Ouvrir la page « Plan‑cadre — Sections (granularité) » dans Paramètres IA, ou cliquez
-        <a href="{{ url_for('settings.edit_global_generation_settings') }}">ici</a>.
-      </div>
       <ul class="nav nav-tabs" id="pcTabs" role="tablist">
         <li class="nav-item" role="presentation">
           <button class="nav-link active" id="tab-gen" data-bs-toggle="tab" data-bs-target="#pane-gen" type="button" role="tab">Génération</button>
@@ -29,7 +21,7 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="mb-3">
               <label class="form-label">{{ ai_form_gen.system_prompt.label }}</label>
-              {{ ai_form_gen.system_prompt(class_='form-control font-monospace', rows=6) }}
+              {{ ai_form_gen.system_prompt(class_='form-control font-monospace', rows=12) }}
             </div>
             <div class="row g-3">
               <div class="col-md-4">
@@ -55,7 +47,7 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="mb-3">
               <label class="form-label">{{ ai_form_impv.system_prompt.label }}</label>
-              {{ ai_form_impv.system_prompt(class_='form-control font-monospace', rows=6) }}
+              {{ ai_form_impv.system_prompt(class_='form-control font-monospace', rows=12) }}
             </div>
             <div class="row g-3">
               <div class="col-md-4">
@@ -81,7 +73,7 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="mb-3">
               <label class="form-label">{{ ai_form_impt.system_prompt.label }}</label>
-              {{ ai_form_impt.system_prompt(class_='form-control font-monospace', rows=6) }}
+              {{ ai_form_impt.system_prompt(class_='form-control font-monospace', rows=12) }}
             </div>
             <div class="row g-3">
               <div class="col-md-4">
@@ -101,12 +93,8 @@
               <button class="btn btn-primary" type="submit">Enregistrer (Importation)</button>
             </div>
           </form>
-          <div class="alert alert-info mt-3">
-            Astuce: le prompt de mapping détaillé (schéma, règles d'extraction) se règle dans « Plan‑cadre • Import DOCX ».
-          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 {% endblock %}

@@ -203,12 +203,10 @@ def generate_plan_cadre_content(plan_id):
         if not form.validate_on_submit():
             return jsonify(success=False, message='Erreur de validation du formulaire.')
     
-    # Forcer le mode amélioration si demandé explicitement
-    # mode déjà défini ci-dessus
-    # Forcer désormais un flux d'aperçu/validation pour la génération
-    improved_mode = True
+    # Forcer désormais un flux d'aperçu/validation pour la génération sans passer
+    # par le mode "improve_only" qui induit l'IA en erreur
     payload = dict(form.data)
-    payload['improve_only'] = bool(improved_mode)
+    payload['preview'] = True
     payload['mode'] = mode
     # Activer le streaming si demandé par le client (hidden input "stream")
     stream_flag = request.form.get('stream')
@@ -292,8 +290,15 @@ def import_plan_cadre_docx_start(plan_id):
         current_app.logger.warning('Lecture texte DOCX de secours échouée; on poursuivra via fichier côté worker.', exc_info=True)
         doc_text = ''
 
-    # Choisir le modèle (préfère la valeur du formulaire, sinon modèle du plan ou défaut)
-    ai_model = (request.form.get('ai_model') or '').strip() or (plan.ai_model or 'gpt-5')
+    # Choisir le modèle pour l'IMPORT (préfère le paramètre spécifique d'import; éviter les modèles reasoning non compatibles Responses)
+    try:
+        from ..models import PlanCadreImportPromptSettings
+        pc_settings = PlanCadreImportPromptSettings.get_current()
+        default_model = (pc_settings.ai_model or 'gpt-5') if pc_settings else 'gpt-5'
+    except Exception:
+        default_model = 'gpt-5'
+    # Ne pas hériter aveuglément du modèle du plan (qui peut être un modèle reasoning incompatible)
+    ai_model = (request.form.get('ai_model') or '').strip() or default_model
 
     try:
         # Lancer la tâche d'import en mode APERÇU (ne modifie pas la BD)
@@ -551,8 +556,9 @@ def apply_improvement(plan_id):
                         new_cap.savoirs_faire.append(
                             PlanCadreCapaciteSavoirsFaire(
                                 texte=sf.get('texte') or '',
-                                cible=sf.get('cible') or '',
-                                seuil_reussite=sf.get('seuil_reussite') or ''
+                                # Support both key styles from generator/preview
+                                cible=sf.get('cible') or sf.get('seuil_performance') or '',
+                                seuil_reussite=sf.get('seuil_reussite') or sf.get('critere_reussite') or ''
                             )
                         )
                     for me in (cap.get('moyens_evaluation') or []):
@@ -612,8 +618,8 @@ def apply_improvement(plan_id):
                                 new_cap.savoirs_faire.append(
                                     PlanCadreCapaciteSavoirsFaire(
                                         texte=sf.get('texte') or '',
-                                        cible=sf.get('cible') or '',
-                                        seuil_reussite=sf.get('seuil_reussite') or ''
+                                        cible=sf.get('cible') or sf.get('seuil_performance') or '',
+                                        seuil_reussite=sf.get('seuil_reussite') or sf.get('critere_reussite') or ''
                                     )
                                 )
                     else:
@@ -621,8 +627,8 @@ def apply_improvement(plan_id):
                             new_cap.savoirs_faire.append(
                                 PlanCadreCapaciteSavoirsFaire(
                                     texte=sf.get('texte') or '',
-                                    cible=sf.get('cible') or '',
-                                    seuil_reussite=sf.get('seuil_reussite') or ''
+                                    cible=sf.get('cible') or sf.get('seuil_performance') or '',
+                                    seuil_reussite=sf.get('seuil_reussite') or sf.get('critere_reussite') or ''
                                 )
                             )
                     # moyens_evaluation

@@ -8,20 +8,27 @@ Ce référentiel utilise des agents/outils pour automatiser des modifications de
 
 ## Détails pratiques
 - Emplacement des tests: placez-les sous `tests/` avec le préfixe `test_*.py`.
-- Fixtures disponibles: utilisez celles de `tests/conftest.py` (`app`, `client`).
+- Fixtures disponibles: `tests/conftest.py` expose `app` et `client` (Flask, SQLite en mémoire, CSRF désactivé, rate‑limit en mémoire).
+- Les tests n’exigent ni Redis ni clé OpenAI: la `TestConfig` interne isole les dépendances externes.
 - Si un bug est reproduit par un test, commencez par écrire le test qui échoue, puis corrigez le code jusqu'à ce que le test passe.
 - Ne modifiez pas de parties non liées; concentrez-vous sur la portée de la demande.
 - Si des avertissements perturbent la lisibilité, nettoyez-les ou filtrez-les de manière ciblée, sans masquer des problèmes réels.
 
 ## Commandes utiles
-- Lancer les tests: `pytest -q`
+- Lancer toute la suite: `pytest -q`
 - Exécuter un seul fichier: `pytest -q tests/test_mon_module.py`
 - Exécuter un seul test: `pytest -q tests/test_mon_module.py::test_cas_specifique`
+- Compter les tests rapidement (collect only): `pytest -q --collect-only | awk -F': ' '{s+=$2} END{print s}'`
 
 ## Sortie attendue
 - À la fin de la tâche, indiquez brièvement:
   - Les fichiers modifiés/ajoutés.
   - Les tests ajoutés/ajustés.
   - Le résultat de `pytest -q` (nombre de tests passés, durée, et absence de warnings si demandé).
+
+Notes spécifiques à EDxo
+
+- Les tâches Celery exposent un suivi unifié (`/tasks/status|events|cancel|track`). Les tests couvrent déjà ces routes; n’ajoutez des mocks qu’au besoin.
+- Le hub ASGI (Starlette) sert le SSE; si vous touchez à l’ASGI, gardez la compatibilité des routes existantes.
 
 Merci de maintenir une base de code fiable et testée.
