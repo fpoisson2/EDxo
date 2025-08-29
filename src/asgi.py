@@ -11,6 +11,7 @@ from starlette.requests import Request
 from starlette.responses import StreamingResponse
 from urllib.parse import parse_qs
 from starlette.middleware.wsgi import WSGIMiddleware
+from starlette.middleware.cors import CORSMiddleware
 import asyncio
 import json
 
@@ -116,6 +117,8 @@ async def sse_task_events(request: Request):
             "Cache-Control": "no-cache, no-transform",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
+            # Allow cross-origin EventSource consumers
+            "Access-Control-Allow-Origin": "*",
         }
         return StreamingResponse(event_iter(), media_type="text/event-stream", headers=headers)
     except Exception:
@@ -130,8 +133,25 @@ from src.utils.logging_config import get_logger
 flask_app = create_app(testing=False)
 flask_asgi = WSGIMiddleware(flask_app)
 
-# Obtain the MCP ASGI app (robust to missing integrations)
+# Obtain the MCP ASGI app (robust to missing integrations), then wrap with CORS
 mcp_asgi_app = get_mcp_asgi_app()
+
+# Configure permissive CORS for the MCP mount to support browser clients
+# Allowed origins can be tuned via EDXO_MCP_CORS_ORIGINS (comma-separated)
+try:
+    cors_origins_env = os.getenv("EDXO_MCP_CORS_ORIGINS", "*").strip()
+    allow_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()] or ["*"]
+except Exception:
+    allow_origins = ["*"]
+
+mcp_asgi_app = CORSMiddleware(
+    mcp_asgi_app,
+    allow_origins=allow_origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+    allow_credentials=False,
+)
 
 
 class InjectAuthFromQuery:
