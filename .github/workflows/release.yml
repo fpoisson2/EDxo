@@ -22,35 +22,78 @@ jobs:
         run: |
           git fetch --tags --force --prune
 
-      - name: "Calculate version (CALVER: YYYY.MM.PATCH)"
+      - name: "Calculate versions (CALVER: YYYY.M.PATCH / betas as bN)"
         id: calver
         shell: bash
         run: |
-          YEAR=$(date +%Y)
-          MONTH=$(date +%m)
-          BASE="$YEAR.$MONTH"
+          set -euo pipefail
 
-          # Récupère le dernier patch de ce mois/année (robuste, tri numérique)
-          LAST=$(git tag --list "${BASE}.*" | sed -E "s#^${BASE}\.##" | sort -n | tail -n 1)
-          if [ -z "$LAST" ]; then
-            PATCH=0
+          YEAR=$(date +%Y)
+          # Month without leading zero (portable)
+          if MONTH=$(date +%-m 2>/dev/null); then
+            :
           else
-            PATCH=$((LAST + 1))
+            MONTH=$(date +%m | sed 's/^0*//')
+          fi
+          BASE_NOPAD="$YEAR.$MONTH"
+          MONTH_PAD=$(printf "%02d" "$MONTH")
+          BASE_PAD="$YEAR.$MONTH_PAD"
+
+          # Collect tags possibly created with padded or non-padded months
+          TAGS=$( { git tag --list "${BASE_NOPAD}.*" || true; git tag --list "${BASE_PAD}.*" || true; } | sort -u)
+
+          # Latest *stable* patch this month (exclude betas)
+          STABLE_PATCHES=$(echo "$TAGS" | grep -E "^((${BASE_NOPAD})|(${BASE_PAD}))\.[0-9]+$" || true | sed -E "s/^(${BASE_NOPAD}|${BASE_PAD})\.([0-9]+)$/\2/" | sort -n)
+          if [ -z "${STABLE_PATCHES}" ]; then
+            STABLE_LAST=-1
+          else
+            STABLE_LAST=$(echo "$STABLE_PATCHES" | tail -n1)
           fi
 
-          VERSION="${BASE}.${PATCH}"
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          # Target patch for new work = next after latest *stable*
+          TARGET_PATCH=$((STABLE_LAST + 1))
+
+          # Next beta number for that target patch
+          BETA_TAGS=$(echo "$TAGS" | grep -E "^(${BASE_NOPAD}|${BASE_PAD})\.${TARGET_PATCH}b[0-9]+$" || true)
+          if [ -z "${BETA_TAGS}" ]; then
+            NEXT_BETA=1
+          else
+            LAST_BETA=$(echo "$BETA_TAGS" | sed -E "s/^(${BASE_NOPAD}|${BASE_PAD})\.${TARGET_PATCH}b([0-9]+)$/\2/" | sort -n | tail -n1)
+            NEXT_BETA=$((LAST_BETA + 1))
+          fi
+
+          RELEASE_VERSION="${BASE_NOPAD}.${TARGET_PATCH}"
+          PRERELEASE_VERSION="${BASE_NOPAD}.${TARGET_PATCH}b${NEXT_BETA}"
+
+          {
+            echo "release=$RELEASE_VERSION"
+            echo "prerelease=$PRERELEASE_VERSION"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: "Select version for current branch"
+        id: select
+        shell: bash
+        run: |
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            echo "VERSION=${{ steps.calver.outputs.release }}" >> "$GITHUB_ENV"
+            echo "KIND=release" >> "$GITHUB_ENV"
+          else
+            echo "VERSION=${{ steps.calver.outputs.prerelease }}" >> "$GITHUB_ENV"
+            echo "KIND=prerelease" >> "$GITHUB_ENV"
+          fi
+          echo "Using version: ${VERSION} (${KIND})"
 
       - name: Update src/config/version.py
+        shell: bash
         run: |
           mkdir -p src/config
-          cat > src/config/version.py <<'EOF'
+          cat > src/config/version.py <<EOF
           # version.py
           """Application version information.
 
           This file is automatically updated by the release workflow.
           """
-          __version__ = "${{ steps.calver.outputs.version }}"
+          __version__ = "${VERSION}"
           EOF
 
       - name: Commit version file (no-op safe)
@@ -61,28 +104,37 @@ jobs:
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
         run: |
           git add src/config/version.py
-          git commit -m "chore: bump version to ${{ steps.calver.outputs.version }}" || echo "No changes to commit"
+          git commit -m "chore: bump version to ${VERSION}" || echo "No changes to commit"
           git push || echo "Nothing to push"
 
-      # On ne crée le tag et la release QUE sur main
       - name: Create tag
-        if: github.ref == 'refs/heads/main'
+        shell: bash
         run: |
-          if git rev-parse -q --verify "refs/tags/${{ steps.calver.outputs.version }}" >/dev/null; then
-            echo "Tag already exists, skipping tag creation."
+          if git rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null; then
+            echo "Tag ${VERSION} already exists, skipping tag creation."
           else
-            git tag ${{ steps.calver.outputs.version }}
-            git push origin ${{ steps.calver.outputs.version }}
+            git tag "${VERSION}"
+            git push origin "${VERSION}"
           fi
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release (main)
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.calver.outputs.version }}
-          name: ${{ steps.calver.outputs.version }}
+          tag_name: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create GitHub Pre-release (dev)
+        if: github.ref == 'refs/heads/dev'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
