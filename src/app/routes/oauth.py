@@ -18,6 +18,7 @@ from flask_login import login_required, current_user
 from ..models import (
     OAuthClient,
     OAuthToken,
+    OAuthAuthorizationCode,
     db,
 )
 from ...extensions import csrf
@@ -27,7 +28,6 @@ oauth_bp = Blueprint('oauth', __name__)
 logger = get_logger(__name__)
 
 
-AUTH_CODES: Dict[str, Dict[str, object]] = {}
 TOKEN_RESOURCES: Dict[str, str] = {}
 
 
@@ -52,17 +52,30 @@ def b64url_no_pad(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
 
 
-def issue_auth_code(client_id: str, redirect_uri: str, code_challenge: str, scope: str, user_id: int) -> str:
-    """Generate and store a short-lived authorization code."""
+def issue_auth_code(
+    client_id: str,
+    redirect_uri: str,
+    code_challenge: str,
+    scope: str,
+    user_id: int,
+    resource: str | None,
+) -> str:
+    """Generate and persist a short-lived authorization code.
+
+    Persisting in DB ensures multi-worker/process consistency behind a proxy.
+    """
     code = secrets.token_urlsafe(32)
-    AUTH_CODES[code] = {
-        "client_id": client_id,
-        "redirect_uri": redirect_uri,
-        "code_challenge": code_challenge,
-        "scope": scope,
-        "user_id": user_id,
-        "expires_at": now_utc() + timedelta(minutes=5),
-    }
+    record = OAuthAuthorizationCode(
+        code=code,
+        client_id=client_id,
+        user_id=user_id,
+        code_challenge=code_challenge,
+        expires_at=now_utc() + timedelta(minutes=5),
+        redirect_uri=redirect_uri,
+        resource=(resource.rstrip('/') if resource else None),
+    )
+    db.session.add(record)
+    db.session.commit()
     return code
 
 
@@ -228,12 +241,18 @@ def issue_token():
                 "has_redirect": bool(redirect_uri),
             })
             return _json_error(401, 'unauthorized', 'Invalid code')
-        record = AUTH_CODES.pop(code, None)
+        # Look up and invalidate one-time code in DB
+        record = OAuthAuthorizationCode.query.filter_by(code=code).first()
+        if not record:
+            logger.info("OAuth: invalid or expired code", extra={
+                "client_id": client_id,
+                "redirect_uri": redirect_uri,
+            })
+            return _json_error(401, 'unauthorized', 'Invalid code')
         if (
-            not record
-            or record['client_id'] != client_id
-            or record['redirect_uri'] != redirect_uri
-            or ensure_aware_utc(record['expires_at']) <= now_utc()
+            record.client_id != client_id
+            or (record.redirect_uri and record.redirect_uri != redirect_uri)
+            or ensure_aware_utc(record.expires_at) <= now_utc()
         ):
             logger.info("OAuth: invalid or expired code", extra={
                 "client_id": client_id,
@@ -241,20 +260,26 @@ def issue_token():
             })
             return _json_error(401, 'unauthorized', 'Invalid code')
         calc_challenge = b64url_no_pad(hashlib.sha256(code_verifier.encode()).digest())
-        if calc_challenge != record['code_challenge']:
+        if calc_challenge != record.code_challenge:
             logger.info("OAuth: PKCE verifier mismatch", extra={
                 "client_id": client_id,
             })
             return _json_error(401, 'unauthorized', 'Bad PKCE verifier')
         # Enforce audience binding by matching the resource
-        if record.get('resource') and record['resource'] != resource:
+        if getattr(record, 'resource', None) and record.resource != resource:
             logger.info("OAuth: audience mismatch", extra={
                 "client_id": client_id,
                 "requested_resource": resource,
-                "bound_resource": record.get('resource'),
+                "bound_resource": record.resource,
             })
             return _json_error(401, 'unauthorized', 'Bad resource audience')
-        user_id = record['user_id']
+        user_id = record.user_id
+        # Invalidate one-time code
+        try:
+            db.session.delete(record)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
     else:
         user_id = None
 
@@ -305,10 +330,8 @@ def authorize():
             code_challenge=code_challenge,
             scope=scope,
             user_id=current_user.id,
+            resource=(resource.rstrip('/') if resource else None),
         )
-        # Also persist the resource for this short-lived code
-        if resource:
-            AUTH_CODES[code]['resource'] = resource.rstrip('/')
         logger.info("OAuth: authorization code issued", extra={
             "client_id": client_id,
             "has_state": bool(state),

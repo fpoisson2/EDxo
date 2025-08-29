@@ -421,6 +421,10 @@ class OAuthAuthorizationCode(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=False)
     code_challenge = db.Column(db.String(128), nullable=False)
     expires_at = db.Column(db.DateTime, nullable=False)
+    # Conserver l'URI de redirection utilisée lors de /authorize pour valider /token
+    redirect_uri = db.Column(db.String(255), nullable=True)
+    # Optionnel: lier l'audience (resource) au code pour validation ultérieure
+    resource = db.Column(db.String(255), nullable=True)
 
     user = db.relationship('User')
 
