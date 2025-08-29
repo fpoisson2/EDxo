@@ -497,6 +497,7 @@ def grille_settings():
 
 @settings_bp.route('/developer', methods=['GET', 'POST'])
 @login_required
+@role_required('admin')
 def developer():
     form = APITokenForm()
     if form.validate_on_submit():

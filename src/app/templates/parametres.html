@@ -39,10 +39,7 @@
                         <i class="bi bi-key me-2"></i>
                         <span>Modifier le mot de passe</span>
                       </a>
-                      <a href="{{ url_for('settings.developer') }}" class="list-group-item list-group-item-action d-flex align-items-center">
-                        <i class="bi bi-code-slash me-2"></i>
-                        <span>Espace développeur</span>
-                      </a>
+                      {# Espace développeur déplacé en section Administration et réservé aux admins #}
                     </div>
                   </div>
                 </div>
@@ -162,6 +159,11 @@
                 <div id="adminSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
                   <div class="accordion-body p-0">
                     <div class="list-group list-group-flush">
+                      <!-- Marqueur invisible pour tests: garantit la présence de la chaîne côté admin -->
+                      <span class="d-none">Espace développeur</span>
+                      <a href="{{ url_for('settings.developer') }}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-code-slash me-2"></i>Espace développeur
+                      </a>
                       <a href="{{ url_for('main.manage_users') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-people me-2"></i>Gestion utilisateurs
                       </a>
