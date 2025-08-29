@@ -21,7 +21,8 @@ services:
       - pdfs:/app/src/pdfs_downloaded
       # Bind-mount uploads to a host folder so PDFs are visible on the host
       - ./uploads:/app/src/uploads
-      - db_data:/app/src/database
+      # Bind-mount the SQLite DB directory from host for dev/debug
+      - ./src/database:/app/src/database
     depends_on:
       - redis
     restart: unless-stopped
@@ -46,7 +47,7 @@ services:
       - txt_outputs:/app/src/txt_outputs
       - pdfs:/app/src/pdfs_downloaded
       - ./uploads:/app/src/uploads
-      - db_data:/app/src/database
+      - ./src/database:/app/src/database
     depends_on:
       - redis
     restart: unless-stopped
@@ -54,4 +55,3 @@ services:
 volumes:
   txt_outputs: {}
   pdfs: {}
-  db_data: {}
