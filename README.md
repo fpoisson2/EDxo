@@ -1,6 +1,8 @@
 # EDxo — Assistant pédagogique
 
-EDxo automatise la création des plans‑cadres, des plans de cours et des grilles d’évaluation grâce à l’IA (OpenAI Responses). L’application web met l’accent sur des workflows guidés, un suivi de tâches unifié (Celery) et une configuration IA par domaine.
+EDxo automatise la création des plans‑cadres, des plans de cours et des grilles d’évaluation grâce à l’IA (OpenAI Responses). 
+
+L’application web met l’accent sur des workflows guidés, un suivi de tâches unifié (Celery) et une configuration IA par domaine.
 
 - Composants clés: Flask (application), Celery (tâches), Starlette (hub ASGI pour SSE), serveur MCP (Model Context Protocol) et OAuth 2.1.
 
