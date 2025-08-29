@@ -1161,6 +1161,7 @@ def generate_all():
     session = data.get('session')
     additional_info = data.get('additional_info')
     ai_model_override = data.get('ai_model')
+    improve_only = bool(data.get('improve_only'))
 
     if not cours_id or not session:
         return jsonify({'error': 'cours_id et session requis.'}), 400
@@ -1341,7 +1342,7 @@ def generate_all_start():
     prompt = build_all_prompt(plan_cadre, cours, session, prompt_template, additional_info=additional_info)
 
     try:
-        task = generate_plan_de_cours_all_task.delay(plan_de_cours.id, prompt, ai_model, current_user.id)
+        task = generate_plan_de_cours_all_task.delay(plan_de_cours.id, prompt, ai_model, current_user.id, improve_only)
         return jsonify({'success': True, 'task_id': task.id})
     except KombuOperationalError as e:
         current_app.logger.error(

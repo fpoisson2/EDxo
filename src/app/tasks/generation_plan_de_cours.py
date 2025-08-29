@@ -34,6 +34,19 @@ class BulkPlanDeCoursResponse(BaseModel):
     seuil_reussite: Optional[str] = None
     materiel: Optional[str] = None
     calendriers: List[CalendarEntry] = Field(default_factory=list)
+    # Inclure aussi les évaluations pour créer la grille d'évaluation
+    class _EvalCap(BaseModel):
+        capacite: Optional[str] = None
+        ponderation: Optional[str] = None
+    class _EvalItem(BaseModel):
+        titre_evaluation: Optional[str] = None
+        description: Optional[str] = None
+        semaine: Optional[int] = None
+        capacites: List['_EvalCap'] = Field(default_factory=list)
+    evaluations: List['_EvalItem'] = Field(default_factory=list)
+
+# Résoudre les références avant utilisation (Pydantic v2)
+BulkPlanDeCoursResponse.model_rebuild()
 
 
 def _extract_first_parsed(response):
@@ -101,7 +114,7 @@ def _serialize_evaluations(plan: PlanDeCours) -> List[dict]:
 
 
 @shared_task(bind=True, name='src.app.tasks.generation_plan_de_cours.generate_plan_de_cours_all_task')
-def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai_model: str, user_id: int):
+def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai_model: str, user_id: int, improve_only: bool = False):
     """Celery task qui génère toutes les sections du plan de cours et met à jour la BD."""
     try:
         plan = db.session.get(PlanDeCours, plan_de_cours_id)
@@ -122,17 +135,86 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
         self.update_state(state='PROGRESS', meta={'message': 'Appel au modèle IA en cours...'})
 
         client = OpenAI(api_key=user.openai_key)
-        # Section-level IA settings (génération)
-        sa = SectionAISettings.get_for('plan_de_cours')
+        # Section-level IA settings (génération ou amélioration)
+        sa = SectionAISettings.get_for('plan_de_cours_improve' if improve_only else 'plan_de_cours')
         final_model = (ai_model or '').strip() or (sa.ai_model or 'gpt-5')
         reasoning_params = {"summary": "auto"}
         if getattr(sa, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
             reasoning_params["effort"] = sa.reasoning_effort
+
+        # Construire le prompt utilisateur
+        cours: Cours = plan.cours
+        plan_cadre: PlanCadre = cours.plan_cadre if cours else None
+        try:
+            # Extraire 'Informations complémentaires' depuis le prompt fourni (quand appelé via les routes)
+            addl = None
+            try:
+                marker = "Informations complémentaires:"
+                if isinstance(prompt, str) and marker in prompt:
+                    addl = prompt.split(marker, 1)[1].strip()
+            except Exception:
+                addl = None
+
+            if improve_only:
+                # Construire un snapshot du plan de cours courant pour amélioration
+                current_payload = {
+                    'session': plan.session,
+                    'cours': {'code': getattr(cours, 'code', None), 'nom': getattr(cours, 'nom', None)},
+                    'fields': {
+                        'presentation_du_cours': plan.presentation_du_cours,
+                        'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+                        'organisation_et_methodes': plan.organisation_et_methodes,
+                        'accomodement': plan.accomodement,
+                        'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+                        'evaluation_expression_francais': plan.evaluation_expression_francais,
+                        'seuil_reussite': plan.seuil_reussite,
+                        'materiel': plan.materiel,
+                    },
+                    'calendriers': [
+                        {
+                            'semaine': c.semaine,
+                            'sujet': c.sujet,
+                            'activites': c.activites,
+                            'travaux_hors_classe': c.travaux_hors_classe,
+                            'evaluations': c.evaluations,
+                        } for c in plan.calendriers
+                    ],
+                    'evaluations': [
+                        {
+                            'titre_evaluation': e.titre_evaluation,
+                            'description': e.description,
+                            'semaine': e.semaine,
+                            'capacites': [
+                                {
+                                    'capacite': (db.session.get(PlanCadreCapacites, ce.capacite_id).capacite if ce.capacite_id else None),
+                                    'ponderation': ce.ponderation,
+                                } for ce in e.capacites
+                            ],
+                        } for e in plan.evaluations
+                    ],
+                }
+                if addl:
+                    current_payload['informations_complementaires'] = addl
+                import json as _json
+                user_prompt = _json.dumps(current_payload, ensure_ascii=False)
+            else:
+                from src.app.routes.plan_de_cours import build_all_prompt, PlanDeCoursPromptSettings as _PPS
+                pps = _PPS.query.filter_by(field_name='all').first()
+                prompt_template = pps.prompt_template if pps else None
+                user_prompt = build_all_prompt(plan_cadre, cours, plan.session, prompt_template, additional_info=addl)
+        except Exception:
+            # Fallback strict: ne pas utiliser le paramètre 'prompt' reçu, mais un contexte minimal
+            # basé uniquement sur le plan-cadre
+            sections = []
+            if plan_cadre:
+                sections.append(f"Objectif terminal: {getattr(plan_cadre, 'objectif_terminal', '') or ''}")
+            user_prompt = "\n".join(sections)
+
         # Build input with optional system prompt (from settings only)
         sys_prompt = (sa.system_prompt or '').strip()
         input_data = ([
             {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
-            {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
+            {"role": "user", "content": [{"type": "input_text", "text": user_prompt}]}
         ])
         streamed_text = ""
         reasoning_summary_text = ""
@@ -260,88 +342,50 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
 
         db.session.commit()
 
-        # Génération de la grille d'évaluations (liste des évaluations + pondérations)
+        # Traitement des évaluations provenant de la première réponse (pas de second appel)
         try:
             cours: Cours = plan.cours
             plan_cadre: PlanCadre = cours.plan_cadre if cours else None
-            if cours and plan_cadre:
-                # Données utilisateur uniquement (contexte JSON)
-                eval_payload = {
-                    'cours': {'code': cours.code, 'nom': cours.nom, 'session': plan.session},
-                    'plan_cadre': {
-                        'objectif_terminal': plan_cadre.objectif_terminal,
-                        'capacites': [c.capacite for c in getattr(plan_cadre, 'capacites', []) or []]
-                    }
-                }
+            evals = (getattr(parsed, 'evaluations', None) or [])
+            if evals is not None and (cours and plan_cadre):
+                # Remplacer la liste d'évaluations existantes
+                for e in plan.evaluations:
+                    db.session.delete(e)
 
-                # Feedback progression
-                self.update_state(state='PROGRESS', meta={'message': 'Génération des évaluations…'})
+                # Map libellé capacité -> id
+                cap_by_name = {}
+                try:
+                    for c in getattr(plan_cadre, 'capacites', []) or []:
+                        if c.capacite:
+                            cap_by_name[c.capacite.strip()] = c.id
+                except Exception:
+                    pass
 
-                client = OpenAI(api_key=user.openai_key)
-                eval_input = ([
-                    {"role": "system", "content": [{"type": "input_text", "text": (sa.system_prompt or '')}]},
-                    {"role": "user", "content": [{"type": "input_text", "text": json.dumps(eval_payload, ensure_ascii=False)}]}
-                ])
-                eval_response = client.responses.parse(
-                    model=final_model or 'gpt-5',
-                    input=eval_input,
-                    text_format=EvaluationsResponse,
-                )
-
-                # Décompte des crédits pour cet appel également
-                e_usage_prompt = eval_response.usage.input_tokens if hasattr(eval_response, 'usage') else 0
-                e_usage_completion = eval_response.usage.output_tokens if hasattr(eval_response, 'usage') else 0
-                e_cost = calculate_call_cost(e_usage_prompt, e_usage_completion, final_model or 'gpt-5')
-                if user.credits < e_cost:
-                    # Ne pas interrompre le flux global: retourner un succès partiel sans nouvelles évaluations
-                    logger.warning("Crédits insuffisants pour générer les évaluations; champs/calendrier mis à jour.")
-                else:
-                    user.credits -= e_cost
-
-                    parsed_eval = _extract_first_parsed(eval_response)
-                    evals = (parsed_eval.evaluations if parsed_eval else []) or []
-
-                    # Remplacer la liste d'évaluations existantes
-                    for e in plan.evaluations:
-                        db.session.delete(e)
-
-                    # Map libellé capacité -> id
-                    cap_by_name = {}
-                    try:
-                        for c in getattr(plan_cadre, 'capacites', []) or []:
-                            if c.capacite:
-                                cap_by_name[c.capacite.strip()] = c.id
-                    except Exception:
-                        pass
-
-                    for ev in evals:
-                        row = PlanDeCoursEvaluations(
-                            plan_de_cours_id=plan.id,
-                            titre_evaluation=getattr(ev, 'titre', None),
-                            description=getattr(ev, 'description', None),
-                            semaine=getattr(ev, 'semaine', None),
-                        )
-                        db.session.add(row)
-                        db.session.flush()
-                        for ce in (getattr(ev, 'capacites', None) or []):
+                for ev in evals or []:
+                    row = PlanDeCoursEvaluations(
+                        plan_de_cours_id=plan.id,
+                        titre_evaluation=getattr(ev, 'titre_evaluation', None) or getattr(ev, 'titre', None),
+                        description=getattr(ev, 'description', None),
+                        semaine=getattr(ev, 'semaine', None),
+                    )
+                    db.session.add(row)
+                    db.session.flush()
+                    for ce in (getattr(ev, 'capacites', None) or []):
+                        cap_id = None
+                        try:
+                            name = getattr(ce, 'capacite', None)
+                            if name:
+                                cap_id = cap_by_name.get(name.strip())
+                        except Exception:
                             cap_id = None
-                            try:
-                                name = getattr(ce, 'capacite', None)
-                                if name:
-                                    cap_id = cap_by_name.get(name.strip())
-                            except Exception:
-                                cap_id = None
-                            db.session.add(PlanDeCoursEvaluationsCapacites(
-                                evaluation_id=row.id,
-                                capacite_id=cap_id,
-                                ponderation=getattr(ce, 'ponderation', None),
-                            ))
-
-                    db.session.commit()
-            else:
-                pass
+                        db.session.add(PlanDeCoursEvaluationsCapacites(
+                            evaluation_id=row.id,
+                            capacite_id=cap_id,
+                            ponderation=getattr(ce, 'ponderation', None),
+                        ))
+                db.session.commit()
         except Exception:
-            logger.exception("Erreur lors de la génération des évaluations intégrée à generate_all")
+            logger.exception("Erreur lors du traitement des évaluations (réponse unique)")
 
         generated_evals = _serialize_evaluations(plan)
 

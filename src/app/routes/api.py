@@ -200,6 +200,7 @@ def generate_plan_de_cours(plan_id):
             payload = {}
     additional_info = payload.get('additional_info') or ''
     ai_model = payload.get('ai_model') or ''
+    improve_only = bool(payload.get('improve_only'))
     # Récupérer PlanDeCours et contexte pour construire le prompt
     plan = db.session.get(PlanDeCours, plan_id) or abort(404)
     cours = plan.cours
@@ -216,7 +217,7 @@ def generate_plan_de_cours(plan_id):
         prompt = additional_info or ''
         if not ai_model:
             ai_model = 'gpt-5'
-    task = generate_plan_de_cours_all_task.delay(plan.id, prompt, ai_model, g.api_user.id)
+    task = generate_plan_de_cours_all_task.delay(plan.id, prompt, ai_model, g.api_user.id, improve_only)
     return jsonify({'task_id': task.id}), 202
 
 
