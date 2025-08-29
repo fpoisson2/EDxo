@@ -1135,8 +1135,11 @@ def build_plan_cadre_docx_context(plan_id):
 
     # 9. Cours développant une même compétence avant, pendant et après
     #    On refait une requête similaire pour lister tous les cours liés
-    subq = db.session.query(ElementCompetenceParCours.element_competence_id).filter_by(cours_id=plan.cours_id).subquery()
-    from sqlalchemy import literal
+    #    Utilise un Select explicite pour éviter l'avertissement SQLAlchemy 2.x
+    from sqlalchemy import select, literal
+    subq = select(ElementCompetenceParCours.element_competence_id).where(
+        ElementCompetenceParCours.cours_id == plan.cours_id
+    )
     cours_meme_competence = db.session.query(
         Cours.id.label('cours_id'),
         Cours.nom.label('cours_nom'),

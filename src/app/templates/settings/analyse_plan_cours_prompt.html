@@ -1,55 +1,32 @@
 {% extends "parametres.html" %}
 {% block parametres_content %}
 <div class="container">
-    <h2 class="mb-4">Configuration du prompt d'analyse des plans de cours</h2>
-    
+    <h1 class="mb-3">Analyse des plans de cours – Paramètres IA</h1>
+
     <form method="POST" class="needs-validation" novalidate>
         {{ form.csrf_token }}
-        
+
         <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="mb-0">Template du prompt</h3>
-            </div>
+            <div class="card-header bg-light"><strong>Prompt système</strong></div>
             <div class="card-body">
-                <div class="form-group">
-                    {{ form.prompt_template.label }}
-                    {{ form.prompt_template }}
-                    <div class="form-text text-muted mt-2">
-                        Variables disponibles : {plan_cours_id}, {plan_cours_json}, {plan_cadre_id}, {plan_cadre_json}, {schema_json}
-                    </div>
-                    {% for error in form.prompt_template.errors %}
-                        <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
-                </div>
+                <label class="form-label">{{ form.prompt_template.label }}</label>
+                {{ form.prompt_template(class_='form-control font-monospace', rows=12) }}
             </div>
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="mb-0">Sélection du modèle d'IA</h3>
-            </div>
-            <div class="card-body">
-                <div class="form-group">
-                    {{ form.ai_model.label }}
-                    {{ form.ai_model }}
-                    {% for error in form.ai_model.errors %}
-                        <div class="text-danger">{{ error }}</div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="mb-0">Paramètres IA</h3>
-            </div>
+            <div class="card-header bg-light"><strong>Paramètres IA</strong></div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <label class="form-label">{{ form.ai_model.label }}</label>
+                        {{ form.ai_model(class_='form-select') }}
+                    </div>
+                    <div class="col-md-4">
                         <label class="form-label">{{ ai_form.reasoning_effort.label }}</label>
                         {{ ai_form.reasoning_effort(class_='form-select') }}
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label">{{ ai_form.verbosity.label }}</label>
                         {{ ai_form.verbosity(class_='form-select') }}
                     </div>
@@ -58,7 +35,8 @@
         </div>
 
         <div class="d-flex justify-content-end">
-            {{ form.submit }}
+            {{ form.submit(class_='btn btn-primary') }}
+            <a href="{{ url_for('settings.parametres') }}" class="btn btn-outline-secondary ms-2">Retour</a>
         </div>
     </form>
 </div>

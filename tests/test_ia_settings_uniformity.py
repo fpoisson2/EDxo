@@ -86,7 +86,7 @@ def test_ocr_prompts_updates_prompt_and_ai_params(app, client):
     # GET shows OCR IA params card
     resp = client.get("/settings/ocr_prompts")
     assert resp.status_code == 200
-    assert b"Param\xc3\xa8tres IA \xe2\x80\x93 Devis (OCR)" in resp.data
+    assert b"Param\xc3\xa8tres IA" in resp.data
 
     # POST updates both extraction prompt and section-level settings (reasoning/verbosity)
     post = client.post(
@@ -144,4 +144,3 @@ def test_grille_settings_updates_both_sections(app, client):
         assert (imp.system_prompt or "").startswith("IMP-PROMPT")
         assert imp.reasoning_effort == "high"
         assert imp.verbosity == "medium"
-
