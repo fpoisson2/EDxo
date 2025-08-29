@@ -3,4 +3,4 @@
 
 This file is automatically updated by the release workflow.
 """
-__version__ = "2025.08.0"
+__version__ = "2025.8.0b1"
