@@ -1,8 +1,13 @@
 services:
   edxo:
     build: .
-    # Run multiple ASGI workers; preload to avoid duplicate app init per worker
-    command: gunicorn -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:8000 -c src/config/gunicorn.conf.py --preload --timeout 500 --keep-alive 75 src.asgi:app
+    # IMPORTANT: Use a single ASGI worker for SSE/MCP.
+    # FastMCP's SSE transport keeps session state in-process; with multiple workers,
+    # subsequent requests may hit a different worker and fail with
+    # "Could not find session for ID" → 424 (Failed Dependency).
+    # If you need more capacity, scale replicas at the reverse-proxy level and use
+    # sticky routing for the /sse/ path instead of increasing Gunicorn workers.
+    command: gunicorn -k uvicorn.workers.UvicornWorker -w 1 -b 0.0.0.0:8000 -c src/config/gunicorn.conf.py --preload --timeout 500 --keep-alive 75 src.asgi:app
     ports:
       - "8000:8000"
     env_file:
