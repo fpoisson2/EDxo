@@ -284,10 +284,21 @@ def _resolve_capacity_id(name: Optional[str], plan_cadre) -> Optional[int]:
 def _extract_first_parsed(response):
     try:
         outputs = getattr(response, 'output', None) or []
+        if isinstance(outputs, dict):
+            outputs = [outputs]
         for item in outputs:
-            contents = getattr(item, 'content', None) or []
+            contents = []
+            if isinstance(item, dict):
+                contents = item.get('content') or []
+            else:
+                contents = getattr(item, 'content', None) or []
+            if isinstance(contents, dict):
+                contents = [contents]
             for c in contents:
-                parsed = getattr(c, 'parsed', None)
+                if isinstance(c, dict):
+                    parsed = c.get('parsed')
+                else:
+                    parsed = getattr(c, 'parsed', None)
                 if parsed is not None:
                     return parsed
     except Exception:
