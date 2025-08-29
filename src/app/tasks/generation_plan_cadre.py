@@ -1171,6 +1171,17 @@ def generate_plan_cadre_content_task(self, plan_id, form_data, user_id):
             parsed_json = json.loads(response.output_text)
         if reasoning_summary_text:
             logger.info("OpenAI reasoning summary: %s", reasoning_summary_text)
+        # Si la réponse est du type {"fields": [{"field_name": ..., "content": ...}, ...]}
+        # considérer qu'il s'agit d'une amélioration partielle ciblée pour éviter
+        # la validation stricte du schéma complet.
+        if isinstance(parsed_json, dict) and isinstance(parsed_json.get('fields'), list):
+            try:
+                target_columns = [
+                    f.get('field_name') for f in parsed_json.get('fields') if isinstance(f, dict) and f.get('field_name')
+                ] or target_columns
+            except Exception:
+                pass
+            improve_only = True
         # If we requested a targeted improvement with a restricted schema,
         # accept partial JSON without validating against the full model.
         is_partial = False

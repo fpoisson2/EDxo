@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, request
+from flask import render_template, redirect, url_for, request, flash, abort
 from flask_login import current_user
 from ...utils.decorator import roles_required, ensure_profile_completed
 
@@ -13,13 +13,26 @@ from .routes import main
 def edit_fil_conducteur(fil_id):
     fil = db.session.get(FilConducteur, fil_id) or abort(404)
     form = FilConducteurForm(obj=fil)
-    programmes = Programme.query.all()
+    # Restreindre la liste des programmes
+    if current_user.role == 'admin':
+        programmes = Programme.query.all()
+    else:
+        programmes = Programme.query.filter(Programme.id.in_([p.id for p in current_user.programmes])).all()
+        # Vérifier l'accès au fil existant
+        if fil.programme_id not in [p.id for p in current_user.programmes]:
+            flash("Vous n'avez pas accès à ce programme.", 'danger')
+            return redirect(url_for('main.index'))
     form.programme.choices = [(p.id, p.nom) for p in programmes]
 
     if request.method == 'GET':
         form.programme.data = fil.programme_id
 
     if form.validate_on_submit():
+        # Protéger contre une sélection en dehors des choix autorisés
+        allowed_ids = {pid for pid, _ in form.programme.choices}
+        if form.programme.data not in allowed_ids:
+            flash("Sélection de programme non autorisée.", 'danger')
+            return redirect(url_for('main.index'))
         fil.programme_id = form.programme.data
         fil.description = form.description.data
         fil.couleur = form.couleur.data or '#FFFFFF'
@@ -61,6 +74,10 @@ def delete_fil_conducteur(fil_id):
         return redirect(url_for('main.index'))
 
     fil = db.session.get(FilConducteur, fil_id) or abort(404)
+    # Vérifier l'accès pour les non-admin
+    if current_user.role != 'admin' and fil.programme_id not in [p.id for p in current_user.programmes]:
+        flash("Vous n'avez pas accès à ce programme.", 'danger')
+        return redirect(url_for('main.index'))
     programme_id = fil.programme_id
 
     # Détacher les cours associés pour éviter les contraintes d'intégrité
