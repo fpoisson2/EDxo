@@ -9,7 +9,7 @@ import json
 from src.extensions import db
 from src.utils.openai_pricing import calculate_call_cost
 from src.app.models import (
-    PlanDeCours, PlanDeCoursCalendrier, User, PlanDeCoursPromptSettings, Cours, PlanCadre,
+    PlanDeCours, PlanDeCoursCalendrier, User, Cours, PlanCadre,
     PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, PlanCadreCapacites, SectionAISettings
 )
 
@@ -198,9 +198,8 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
                 import json as _json
                 user_prompt = _json.dumps(current_payload, ensure_ascii=False)
             else:
-                from src.app.routes.plan_de_cours import build_all_prompt, PlanDeCoursPromptSettings as _PPS
-                pps = _PPS.query.filter_by(field_name='all').first()
-                prompt_template = pps.prompt_template if pps else None
+                from src.app.routes.plan_de_cours import build_all_prompt
+                prompt_template = None
                 user_prompt = build_all_prompt(plan_cadre, cours, plan.session, prompt_template, additional_info=addl)
         except Exception:
             # Fallback strict: ne pas utiliser le paramètre 'prompt' reçu, mais un contexte minimal
@@ -467,51 +466,58 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
         if user.credits <= 0:
             return {"status": "error", "message": "Crédits insuffisants."}
 
-        # Prompt settings pour le champ
-        prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name=field_name).first()
-        if not prompt_settings:
-            return {"status": "error", "message": "Configuration de prompt introuvable pour ce champ."}
-        # Amélioration: prompt système spécifique si configuré, sinon fallback génération
+        # Prompt système: même que l'amélioration globale
         sa_impv = SectionAISettings.get_for('plan_de_cours_improve')
         sa = sa_impv if (sa_impv and (sa_impv.system_prompt or sa_impv.ai_model or sa_impv.reasoning_effort or sa_impv.verbosity)) else SectionAISettings.get_for('plan_de_cours')
-        ai_model = (prompt_settings.ai_model or '').strip() or (sa.ai_model or 'gpt-5')
+        # IMPORTANT: ignorer l'override éventuel au niveau du champ pour éviter des modèles obsolètes (ex: gpt-4o)
+        ai_model = (sa.ai_model or 'gpt-5')
 
-        # Contexte issu du plan-cadre/cours (similaire à route sync generate_content)
+        # Construire le prompt user avec l'intégralité du plan actuel, + info complémentaire, + cible du champ
         cours: Cours = plan.cours
-        plan_cadre: PlanCadre = cours.plan_cadre if cours else None
-        if not cours or not plan_cadre:
-            return {"status": "error", "message": "Contexte cours/plan-cadre indisponible."}
-
-        ctx = {
-            'additional_info': additional_info or '',
-            'cours_id': cours.id,
+        if not cours:
+            return {"status": "error", "message": "Contexte cours indisponible."}
+        payload = {
+            'mode': 'improve_field',
+            'target_field': field_name,
             'session': plan.session,
-            'cours_nom': cours.nom,
-            'cours_code': cours.code,
-            'place_intro': plan_cadre.place_intro,
-            'objectif_terminal': plan_cadre.objectif_terminal,
-            'structure_intro': plan_cadre.structure_intro,
-            'structure_activites_theoriques': plan_cadre.structure_activites_theoriques,
-            'structure_activites_pratiques': plan_cadre.structure_activites_pratiques,
-            'structure_activites_prevues': plan_cadre.structure_activites_prevues,
-            'eval_evaluation_sommative': plan_cadre.eval_evaluation_sommative,
-            'eval_nature_evaluations_sommatives': plan_cadre.eval_nature_evaluations_sommatives,
-            'eval_evaluation_de_la_langue': plan_cadre.eval_evaluation_de_la_langue,
-            'eval_evaluation_sommatives_apprentissages': plan_cadre.eval_evaluation_sommatives_apprentissages,
-            'capacites': [c.capacite for c in getattr(plan_cadre, 'capacites', [])],
-            'savoirs_etre': [x.texte for x in getattr(plan_cadre, 'savoirs_etre', [])],
-            'objets_cibles': [x.texte for x in getattr(plan_cadre, 'objets_cibles', [])],
-            'cours_relies': [x.texte for x in getattr(plan_cadre, 'cours_relies', [])],
-            'cours_prealables': [x.texte for x in getattr(plan_cadre, 'cours_prealables', [])],
-            'cours_corequis': [x.texte for x in getattr(plan_cadre, 'cours_corequis', [])],
-            'competences_certifiees': [x.texte for x in getattr(plan_cadre, 'competences_certifiees', [])],
-            'competences_developpees': [x.texte for x in getattr(plan_cadre, 'competences_developpees', [])],
+            'cours': {'code': getattr(cours, 'code', None), 'nom': getattr(cours, 'nom', None)},
+            'fields': {
+                'presentation_du_cours': plan.presentation_du_cours,
+                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+                'organisation_et_methodes': plan.organisation_et_methodes,
+                'accomodement': plan.accomodement,
+                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'seuil_reussite': plan.seuil_reussite,
+                'materiel': plan.materiel,
+            },
+            'calendriers': [
+                {
+                    'semaine': c.semaine,
+                    'sujet': c.sujet,
+                    'activites': c.activites,
+                    'travaux_hors_classe': c.travaux_hors_classe,
+                    'evaluations': c.evaluations,
+                } for c in plan.calendriers
+            ],
+            'evaluations': [
+                {
+                    'titre_evaluation': e.titre_evaluation,
+                    'description': e.description,
+                    'semaine': e.semaine,
+                    'capacites': [
+                        {
+                            'capacite': (db.session.get(PlanCadreCapacites, ce.capacite_id).capacite if ce.capacite_id else None),
+                            'ponderation': ce.ponderation,
+                        } for ce in e.capacites
+                    ],
+                } for e in plan.evaluations
+            ],
         }
-
-        try:
-            prompt = (prompt_settings.prompt_template or '').format(**ctx)
-        except Exception as e:
-            return {"status": "error", "message": f"Erreur dans le template du prompt: {e}"}
+        if additional_info:
+            payload['informations_complementaires'] = additional_info
+        import json as _json
+        prompt = _json.dumps(payload, ensure_ascii=False)
 
         self.update_state(state='PROGRESS', meta={'message': f"Génération de '{field_name}' en cours..."})
 
@@ -522,7 +528,7 @@ def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: s
         reasoning_params = {"summary": "auto"}
         if getattr(sa, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
             reasoning_params["effort"] = sa.reasoning_effort
-        # System prompt from settings only (no hard-coded default)
+        # System prompt: improve settings (same as globale amélioration)
         sys_prompt = (getattr(sa, 'system_prompt', None) or '').strip()
         input_data = ([
             {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
@@ -686,22 +692,47 @@ def generate_plan_de_cours_calendar_task(
         if user.credits <= 0:
             return {"status": "error", "message": "Crédits insuffisants."}
 
-        # Contexte / prompt
+        # Contexte / prompt: amélioration de section -> prompt user = plan actuel (+ infos), système = improve
         cours: Cours = plan.cours
-        plan_cadre: PlanCadre = cours.plan_cadre if cours else None
-        if not cours or not plan_cadre:
-            return {"status": "error", "message": "Contexte cours/plan-cadre indisponible."}
-        from src.utils.calendar_generator import build_calendar_prompt
-        prompt = build_calendar_prompt(plan_cadre, session=plan.session)
+        if not cours:
+            return {"status": "error", "message": "Contexte cours indisponible."}
+        payload = {
+            'mode': 'improve_calendar',
+            'session': plan.session,
+            'cours': {'code': getattr(cours, 'code', None), 'nom': getattr(cours, 'nom', None)},
+            'expected_output': {
+                'only': 'calendriers',
+                'strict': True,
+                'exclude_sections': ['mediagraphies', 'disponibilites']
+            },
+            'fields': {
+                'presentation_du_cours': plan.presentation_du_cours,
+                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+                'organisation_et_methodes': plan.organisation_et_methodes,
+                'accomodement': plan.accomodement,
+                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'seuil_reussite': plan.seuil_reussite,
+                'materiel': plan.materiel,
+            },
+            'calendriers': [
+                {
+                    'semaine': c.semaine,
+                    'sujet': c.sujet,
+                    'activites': c.activites,
+                    'travaux_hors_classe': c.travaux_hors_classe,
+                    'evaluations': c.evaluations,
+                } for c in plan.calendriers
+            ],
+            'evaluations': _serialize_evaluations(plan),
+        }
         if additional_info:
-            prompt = prompt + "\n\nPrécisions: " + str(additional_info)
-        if current_calendrier:
-            prompt += "\n\nCalendrier actuel:\n" + json.dumps(current_calendrier, ensure_ascii=False)
+            payload['informations_complementaires'] = additional_info
+        prompt = json.dumps(payload, ensure_ascii=False)
 
-        # Choix du modèle (reuse 'all' if set) + section settings override
-        sa = SectionAISettings.get_for('plan_de_cours')
-        ps = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
-        ai_model = (ps.ai_model if ps and ps.ai_model else None) or (sa.ai_model or 'gpt-5')
+        # Choix du modèle + section settings (improve)
+        sa = SectionAISettings.get_for('plan_de_cours_improve')
+        ai_model = (sa.ai_model or 'gpt-5')
 
         self.update_state(state='PROGRESS', meta={'message': 'Génération du calendrier…'})
 
@@ -899,37 +930,49 @@ def generate_plan_de_cours_evaluations_task(
         if user.credits <= 0:
             return {"status": "error", "message": "Crédits insuffisants."}
 
+        # Contexte: amélioration de section -> user prompt = plan actuel (+ infos), système = improve
         cours: Cours = plan.cours
-        plan_cadre: PlanCadre = cours.plan_cadre if cours else None
-        if not cours or not plan_cadre:
-            return {"status": "error", "message": "Contexte cours/plan-cadre indisponible."}
-
-        # Construire prompt pour évaluations
-        cap_lines = ", ".join([c.capacite for c in getattr(plan_cadre, 'capacites', []) or []])
-        sections = [
-            f"Cours: {cours.code or ''} - {cours.nom or ''}",
-            f"Objectif terminal: {plan_cadre.objectif_terminal or ''}",
-            f"Capacités: {cap_lines}",
-        ]
-        # Données utilisateur uniquement (contexte JSON)
-        prompt = json.dumps({
-            'cours': {'code': cours.code, 'nom': cours.nom, 'session': plan.session},
-            'plan_cadre': {
-                'objectif_terminal': plan_cadre.objectif_terminal,
-                'capacites': [c.capacite for c in getattr(plan_cadre, 'capacites', []) or []]
-            }
-        }, ensure_ascii=False)
+        if not cours:
+            return {"status": "error", "message": "Contexte cours indisponible."}
+        payload = {
+            'mode': 'improve_evaluations',
+            'session': plan.session,
+            'cours': {'code': getattr(cours, 'code', None), 'nom': getattr(cours, 'nom', None)},
+            'expected_output': {
+                'only': 'evaluations',
+                'strict': True,
+                'exclude_sections': ['mediagraphies', 'disponibilites']
+            },
+            'fields': {
+                'presentation_du_cours': plan.presentation_du_cours,
+                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+                'organisation_et_methodes': plan.organisation_et_methodes,
+                'accomodement': plan.accomodement,
+                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'seuil_reussite': plan.seuil_reussite,
+                'materiel': plan.materiel,
+            },
+            'calendriers': [
+                {
+                    'semaine': c.semaine,
+                    'sujet': c.sujet,
+                    'activites': c.activites,
+                    'travaux_hors_classe': c.travaux_hors_classe,
+                    'evaluations': c.evaluations,
+                } for c in plan.calendriers
+            ],
+            'evaluations': _serialize_evaluations(plan),
+        }
         if additional_info:
-            prompt += "\n\nContraintes/Précisions: " + str(additional_info)
-        if current_evaluations:
-            prompt += "\n\nÉvaluations actuelles:\n" + json.dumps(current_evaluations, ensure_ascii=False)
+            payload['informations_complementaires'] = additional_info
+        prompt = json.dumps(payload, ensure_ascii=False)
 
-        ps = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
-        ai_model = (ps.ai_model if ps and ps.ai_model else None) or 'gpt-5'
+        sa = SectionAISettings.get_for('plan_de_cours_improve')
+        ai_model = (sa.ai_model or 'gpt-5')
 
         self.update_state(state='PROGRESS', meta={'message': 'Génération des évaluations…'})
         client = OpenAI(api_key=user.openai_key)
-        sa = SectionAISettings.get_for('plan_de_cours')
         sys_prompt = (sa.system_prompt or '').strip()
         eval_input = ([
             {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},

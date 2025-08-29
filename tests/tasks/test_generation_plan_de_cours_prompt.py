@@ -12,7 +12,6 @@ from src.app.models import (
     PlanDeCours,
     CoursProgramme,
     SectionAISettings,
-    PlanDeCoursPromptSettings,
     db,
 )
 from src.app.tasks.generation_plan_de_cours import generate_plan_de_cours_all_task
@@ -176,8 +175,6 @@ def setup_two_courses(app):
 
         # Ensure SectionAISettings exists to avoid None
         db.session.add(SectionAISettings(section='plan_de_cours'))
-        # Optional: prompt template exists but content shouldn't include additional info
-        db.session.add(PlanDeCoursPromptSettings(field_name='all', prompt_template=""))
         db.session.commit()
 
         user = User(

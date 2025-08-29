@@ -917,22 +917,13 @@ def process_ai_prompt(prompt, role):
         return None
 
 
-def generate_docx_with_template(plan_id):
+def build_plan_cadre_docx_context(plan_id):
+    """Construit le contexte (dict) utilisé pour le rendu du plan‑cadre DOCX.
+
+    Extrait de l'ancienne fonction generate_docx_with_template afin de pouvoir
+    être testé sans dépendre d'un fichier DOCX. Retourne un dict prêt à être
+    injecté dans le canevas Jinja de docxtpl.
     """
-    Génère un fichier DOCX à partir d'un modèle et des informations d'un PlanCadre, via SQLAlchemy.
-    """
-    base_path = Path(__file__).parent.parent
-    template_path = os.path.join(base_path, 'static', 'docs', 'plan_cadre_template.docx')
-
-    # Ajoutons du logging pour déboguer
-    current_app.logger.info(f"Base path: {base_path}")
-    current_app.logger.info(f"Template path: {template_path}")
-    current_app.logger.info(f"File exists: {os.path.exists(template_path)}")
-
-    if not os.path.exists(template_path):
-        current_app.logger.error(f"Template not found at: {template_path}")
-        return None
-
     # Récupérer le plan-cadre
     plan = db.session.query(PlanCadre).filter_by(id=plan_id).first()
     if not plan:
@@ -943,7 +934,7 @@ def generate_docx_with_template(plan_id):
     if not cours:
         return None
 
-    # Récupérer le programme associé
+    # Récupérer le programme associé (premier programme du cours)
     programme = None
     if cours.programme_id:
         programme = db.session.query(Programme).filter_by(id=cours.programme_id).first()
@@ -1012,11 +1003,19 @@ def generate_docx_with_template(plan_id):
                 ).filter(ElementCompetenceParCours.element_competence_id == ec_item.id).all()
 
                 for (cours_assoc, ecpc_assoc) in assoc_cours:
+                    # Calculer la session du cours associé pour le même programme que le cours exporté
+                    prog_id = primary_prog.id if primary_prog else None
+                    try:
+                        assoc_session_map = {a.programme_id: a.session for a in getattr(cours_assoc, 'programme_assocs', [])}
+                    except Exception:
+                        assoc_session_map = {}
+                    cours_session = assoc_session_map.get(prog_id)
                     element_competence["cours_associes"].append({
                         "cours_id": cours_assoc.id,
                         "cours_code": cours_assoc.code,
                         "cours_nom": cours_assoc.nom,
-                        "status": ecpc_assoc.status
+                        "status": ecpc_assoc.status,
+                        "cours_session": cours_session,
                     })
 
                 competence_info_developes[c.id]["elements"].append(element_competence)
@@ -1071,11 +1070,19 @@ def generate_docx_with_template(plan_id):
                 ).filter(ElementCompetenceParCours.element_competence_id == ec_item.id).all()
 
                 for (cours_assoc, ecpc_assoc) in assoc_cours:
+                    # Calculer la session du cours associé pour le même programme que le cours exporté
+                    prog_id = primary_prog.id if primary_prog else None
+                    try:
+                        assoc_session_map = {a.programme_id: a.session for a in getattr(cours_assoc, 'programme_assocs', [])}
+                    except Exception:
+                        assoc_session_map = {}
+                    cours_session = assoc_session_map.get(prog_id)
                     element_competence["cours_associes"].append({
                         "cours_id": cours_assoc.id,
                         "cours_code": cours_assoc.code,
                         "cours_nom": cours_assoc.nom,
-                        "status": ecpc_assoc.status
+                        "status": ecpc_assoc.status,
+                        "cours_session": cours_session,
                     })
 
                 competence_info_atteint[c.id]["elements"].append(element_competence)
@@ -1212,6 +1219,29 @@ def generate_docx_with_template(plan_id):
             } for co in cp
         ]
     }
+
+    return context
+
+
+def generate_docx_with_template(plan_id):
+    """
+    Génère un fichier DOCX à partir d'un modèle et des informations d'un PlanCadre, via SQLAlchemy.
+    """
+    base_path = Path(__file__).parent.parent
+    template_path = os.path.join(base_path, 'static', 'docs', 'plan_cadre_template.docx')
+
+    # Ajoutons du logging pour déboguer
+    current_app.logger.info(f"Base path: {base_path}")
+    current_app.logger.info(f"Template path: {template_path}")
+    current_app.logger.info(f"File exists: {os.path.exists(template_path)}")
+
+    if not os.path.exists(template_path):
+        current_app.logger.error(f"Template not found at: {template_path}")
+        return None
+
+    context = build_plan_cadre_docx_context(plan_id)
+    if not context:
+        return None
 
     tpl = DocxTemplate(template_path)
     tpl.render(context)

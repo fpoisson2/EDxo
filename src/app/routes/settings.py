@@ -708,7 +708,7 @@ def plan_de_cours_prompt_settings():
     """Page de gestion des prompts Plan de cours.
 
     - Trois formulaires: Génération, Amélioration, Importation (prompts système distincts).
-    - Table de prompts granulaires par champ (non pertinente pour l'import).
+    - La configuration granulaire par champ a été retirée; tout est désormais couvert par le prompt système.
     """
     prompts = PlanDeCoursPromptSettings.query.all()
 
@@ -889,7 +889,6 @@ def supprimer_plan_cours(plan_id):
 def prompt_settings():
     """Paramétrage de la Grille d'évaluation + paramètres IA de la section 'evaluation'."""
     settings = GrillePromptSettings.get_current()
-    schema_json = json.dumps(AISixLevelGridResponse.get_schema_with_descriptions(), indent=4, ensure_ascii=False)
     sa = SectionAISettings.get_for('evaluation')
     ai_form = SectionAISettingsForm(obj=sa)
 
@@ -897,12 +896,11 @@ def prompt_settings():
         try:
             # 1) Mettre à jour la Grille
             settings.prompt_template = request.form.get('prompt_template')
-            settings.level1_description = request.form.get('level1_description')
-            settings.level2_description = request.form.get('level2_description')
-            settings.level3_description = request.form.get('level3_description')
-            settings.level4_description = request.form.get('level4_description')
-            settings.level5_description = request.form.get('level5_description')
-            settings.level6_description = request.form.get('level6_description')
+
+            # Copier le template comme prompt système de la section 'evaluation'
+            # afin qu'il soit utilisé comme prompt système effectif.
+            if settings.prompt_template:
+                sa.system_prompt = settings.prompt_template
 
             # 2) Mettre à jour la config IA de section
             ai_form = SectionAISettingsForm(formdata=request.form, obj=sa)
@@ -920,6 +918,5 @@ def prompt_settings():
         except Exception as e:
             db.session.rollback()
             flash(f'Erreur lors de la mise à jour : {str(e)}', 'error')
-    
-    return render_template('settings/prompt_settings.html', settings=settings, schema_json=schema_json, ai_form=ai_form)
 
+    return render_template('settings/prompt_settings.html', settings=settings, ai_form=ai_form)

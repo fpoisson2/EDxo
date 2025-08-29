@@ -27,7 +27,7 @@ from wtforms.validators import DataRequired, InputRequired, NumberRange, Optiona
 from wtforms.widgets import ListWidget, CheckboxInput
 
 from .models import User
-from ..utils.openai_pricing import get_all_models
+from ..utils.openai_pricing import get_all_models, DEFAULT_PRICING
 
 # Liste des régions disponibles
 REGIONS = [
@@ -128,7 +128,8 @@ class OpenAIModelForm(FlaskForm):
 
 class ChatSettingsForm(FlaskForm):
     chat_model = SelectField('Modèle pour le chat', validators=[DataRequired()])
-    tool_model = SelectField("Modèle pour l'appel d'outils", validators=[DataRequired()])
+    # Couplé automatiquement à chat_model; non requis dans le formulaire
+    tool_model = SelectField("Modèle pour l'appel d'outils", validators=[Optional()])
     reasoning_effort = SelectField(
         "Effort de raisonnement",
         choices=[
@@ -153,8 +154,13 @@ class ChatSettingsForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         models = get_all_models()
-        self.chat_model.choices = [(model.name, model.name) for model in models]
-        self.tool_model.choices = [(model.name, model.name) for model in models]
+        if models:
+            choices = [(model.name, model.name) for model in models]
+        else:
+            # Fallback to known defaults so the page remains usable without DB seeding
+            choices = [(name, name) for name in DEFAULT_PRICING.keys()]
+        self.chat_model.choices = choices
+        self.tool_model.choices = choices
 
 
 class SectionAISettingsForm(FlaskForm):
@@ -188,7 +194,11 @@ class SectionAISettingsForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         models = get_all_models()
-        self.ai_model.choices = [('', '— par défaut —')] + [(m.name, m.name) for m in models]
+        if models:
+            model_choices = [(m.name, m.name) for m in models]
+        else:
+            model_choices = [(name, name) for name in DEFAULT_PRICING.keys()]
+        self.ai_model.choices = [('', '— par défaut —')] + model_choices
 
 class MultiCheckboxField(SelectMultipleField):
     widget = widgets.ListWidget(prefix_label=False)

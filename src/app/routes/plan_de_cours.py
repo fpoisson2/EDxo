@@ -1186,10 +1186,11 @@ def generate_all():
     if user.credits <= 0:
         return jsonify({'error': 'Crédits insuffisants. Veuillez recharger votre compte.'}), 403
 
-    prompt_settings = PlanDeCoursPromptSettings.query.filter_by(field_name='all').first()
-    ai_model = (ai_model_override or (prompt_settings.ai_model if prompt_settings else None)) or 'gpt-5'
-    prompt_template = prompt_settings.prompt_template if prompt_settings else None
-    prompt = build_all_prompt(plan_cadre, cours, session, prompt_template, additional_info=additional_info)
+    # Dépendance aux PromptSettings supprimée: utiliser le template défaut et le modèle de section
+    from ..models import SectionAISettings
+    sa = SectionAISettings.get_for('plan_de_cours')
+    ai_model = (ai_model_override or sa.ai_model or 'gpt-5')
+    prompt = build_all_prompt(plan_cadre, cours, session, None, additional_info=additional_info)
 
     try:
         client = OpenAI(api_key=current_user.openai_key)
@@ -1323,6 +1324,7 @@ def generate_all_start():
     session = data.get('session')
     additional_info = data.get('additional_info')
     ai_model_override = data.get('ai_model')
+    improve_only = bool(data.get('improve_only'))
 
     if not cours_id or not session:
         return jsonify({'success': False, 'message': 'cours_id et session requis.'}), 400

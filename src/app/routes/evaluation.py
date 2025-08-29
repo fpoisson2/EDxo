@@ -462,24 +462,21 @@ def generate_six_level_grid():
         cible = "Réalisation complète et autonome de la tâche"
         seuil = "Réalisation minimale acceptable de la tâche"
 
-    schema_json = json.dumps(AISixLevelGridResponse.get_schema_with_descriptions(), indent=4, ensure_ascii=False)
-    
-    # Construire un message système (instructions) depuis le template, et un payload utilisateur avec les données uniquement
-    system_instructions = settings.prompt_template.format(
-        savoir_faire="{savoir_faire}",
-        capacite="{capacite}", 
-        seuil="{seuil}",
-        cible="{cible}",
-        description_eval="{description_eval}",
-        schema=schema_json
+    # Préparer les prompts: prompt système = template configuré, prompt user = champs demandés
+    # Utilise le prompt système de la section; s'il est vide, fallback au template enregistré
+    # dans GrillePromptSettings pour compatibilité.
+    user_eval_title = ""
+    if evaluation_id and 'evaluation' in locals() and evaluation:
+        user_eval_title = evaluation.titre_evaluation or ""
+
+    user_text = (
+        f"Titre de l'évaluation: {user_eval_title}\n"
+        f"Description de l'évaluation: {evaluation_description}\n"
+        f"Capacité: {capacite}\n"
+        f"Savoir-faire: {savoir_faire}\n"
+        f"Cible (niveau 6): {cible}\n"
+        f"Seuil de réussite (niveau 4): {seuil}"
     )
-    user_payload = {
-        'savoir_faire': savoir_faire,
-        'capacite': capacite,
-        'seuil': seuil,
-        'cible': cible,
-        'description_eval': evaluation_description
-    }
 
     # Vérification des crédits de l'utilisateur
     user = db.session.get(User, current_user.id)
@@ -503,12 +500,11 @@ def generate_six_level_grid():
         client = OpenAI(api_key=current_user.openai_key)
 
         input_data = []
-        sys_text = (sa.system_prompt or '')
-        if system_instructions:
-            sys_text = (sys_text + "\n\n" + system_instructions).strip()
+        # prompt système prioritaire: SectionAISettings; sinon, fallback au template par défaut
+        sys_text = (sa.system_prompt or settings.prompt_template or '').strip()
         if sys_text:
             input_data.append({"role": "system", "content": [{"type": "input_text", "text": sys_text}]})
-        input_data.append({"role": "user", "content": [{"type": "input_text", "text": json.dumps(user_payload, ensure_ascii=False)}]})
+        input_data.append({"role": "user", "content": [{"type": "input_text", "text": user_text}]})
         reasoning_params = {"summary": "auto"}
         if sa.reasoning_effort in {"minimal", "low", "medium", "high"}:
             reasoning_params["effort"] = sa.reasoning_effort
