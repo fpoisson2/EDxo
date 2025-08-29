@@ -10,11 +10,25 @@
         </a>
     </div>
     {% if current_user.role in ['admin', 'coordo'] %}
-        <div class="mt-4">
-            <a href="{{ url_for('ocr.show_trigger_page') }}" class="btn btn-success">
-                <i class="fas fa-upload"></i> Importer les compétences du devis ministériel
-            </a>
+        <div class="mt-4 d-flex gap-2">
+            <button id="btnImportDevis" class="btn btn-success">
+                <i class="fas fa-upload"></i> Importer les compétences (PDF)
+            </button>
         </div>
+        <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          const btn = document.getElementById('btnImportDevis');
+          if (!btn || !(window.EDxoTasks && window.EDxoTasks.openFileTask)) return;
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.EDxoTasks.openFileTask({
+              url: `{{ url_for('programme.import_competences_pdf_start', programme_id=programme.id) }}`,
+              title: 'Importer le devis ministériel — {{ programme.nom }} (PDF)',
+              startMessage: 'Import en cours…'
+            });
+          });
+        });
+        </script>
     {% endif %}
     <hr>
 

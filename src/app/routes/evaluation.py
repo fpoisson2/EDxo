@@ -5,7 +5,7 @@ import json
 import os
 from functools import wraps
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from docxtpl import DocxTemplate
 from flask import (
@@ -22,7 +22,7 @@ from flask import (
 from flask_login import login_required, current_user
 from openai import OpenAI
 from openai import OpenAIError
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import text
 
 from ..forms import (
@@ -49,33 +49,56 @@ from ...utils.decorator import roles_required, ensure_profile_completed
 from ...utils.openai_pricing import calculate_call_cost
 
 
+def _postprocess_openai_schema(schema: dict) -> None:
+    """Recursively tailor a Pydantic schema for OpenAI JSON responses."""
+    schema.pop('default', None)
+    if '$ref' in schema:
+        return
+    if schema.get('type') == 'object' or 'properties' in schema:
+        schema['additionalProperties'] = False
+    props = schema.get('properties')
+    if props:
+        # Force all declared properties to be required
+        schema['required'] = list(props.keys())
+        for prop_schema in props.values():
+            _postprocess_openai_schema(prop_schema)
+    if 'items' in schema:
+        items = schema['items']
+        if isinstance(items, dict):
+            _postprocess_openai_schema(items)
+        elif isinstance(items, list):
+            for item in items:
+                _postprocess_openai_schema(item)
+    if '$defs' in schema:
+        for def_schema in schema['$defs'].values():
+            _postprocess_openai_schema(def_schema)
+
+
 class AISixLevelGridResponse(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+        json_schema_extra=lambda schema, _: _postprocess_openai_schema(schema)
+    )
     """
     Représente la réponse structurée d'OpenAI pour une grille à six niveaux.
     """
-    level1_description: Optional[str] = Field(
-        None,
-        description="Niveau 1 - Aucun travail réalisé"
+    level1_description: List[str] = Field(
+        ..., description="Niveau 1 - Aucun travail réalisé"
     )
-    level2_description: Optional[str] = Field(
-        None,
-        description="Niveau 2 - Performance très insuffisante"
+    level2_description: List[str] = Field(
+        ..., description="Niveau 2 - Performance très insuffisante"
     )
-    level3_description: Optional[str] = Field(
-        None,
-        description="Niveau 3 - Performance insuffisante"
+    level3_description: List[str] = Field(
+        ..., description="Niveau 3 - Performance insuffisante"
     )
-    level4_description: Optional[str] = Field(
-        None,
-        description="Niveau 4 - Seuil de réussite minimal"
+    level4_description: List[str] = Field(
+        ..., description="Niveau 4 - Seuil de réussite minimal"
     )
-    level5_description: Optional[str] = Field(
-        None,
-        description="Niveau 5 - Performance supérieure"
+    level5_description: List[str] = Field(
+        ..., description="Niveau 5 - Performance supérieure"
     )
-    level6_description: Optional[str] = Field(
-        None,
-        description="Niveau 6 - Cible visée atteinte"
+    level6_description: List[str] = Field(
+        ..., description="Niveau 6 - Cible visée atteinte"
     )
 
     @classmethod
@@ -105,7 +128,7 @@ def admin_required(f):
 @ensure_profile_completed
 def get_description(evaluation_id):
     try:
-        evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
+        evaluation = db.session.get(PlanDeCoursEvaluations, evaluation_id) or abort(404)
         return jsonify({
             'success': True,
             'description': evaluation.description or ''
@@ -167,7 +190,7 @@ def select_plan(course_id):
 @login_required
 @ensure_profile_completed
 def select_evaluation(plan_id):
-    plan = PlanDeCours.query.get_or_404(plan_id)
+    plan = db.session.get(PlanDeCours, plan_id) or abort(404)
     evaluations = PlanDeCoursEvaluations.query.filter_by(plan_de_cours_id=plan_id).all()
     
     if not evaluations:
@@ -180,14 +203,14 @@ def select_evaluation(plan_id):
     # Ajout du champ description
     selected_evaluation = None
     if request.method == 'GET' and request.args.get('evaluation_id'):
-        selected_evaluation = PlanDeCoursEvaluations.query.get(request.args.get('evaluation_id'))
+        selected_evaluation = db.session.get(PlanDeCoursEvaluations, request.args.get('evaluation_id'))
     
     if form.validate_on_submit():
         selected_evaluation_id = form.evaluation.data
         description = request.form.get('description', '')
         
         # Mise à jour de la description
-        evaluation = PlanDeCoursEvaluations.query.get(selected_evaluation_id)
+        evaluation = db.session.get(PlanDeCoursEvaluations, selected_evaluation_id)
         if evaluation:
             evaluation.description = description
             db.session.commit()
@@ -208,7 +231,7 @@ from collections import defaultdict
 @login_required
 @ensure_profile_completed
 def configure_grid(evaluation_id):
-    evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
+    evaluation = db.session.get(PlanDeCoursEvaluations, evaluation_id) or abort(404)
     plan = evaluation.plan_de_cours
     plan_id = plan.id
 
@@ -322,7 +345,7 @@ def configure_grid(evaluation_id):
 @login_required
 @ensure_profile_completed
 def configure_six_level_grid(evaluation_id):
-    evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
+    evaluation = db.session.get(PlanDeCoursEvaluations, evaluation_id) or abort(404)
     form = SixLevelGridForm()
     
     if request.method == 'GET':
@@ -416,7 +439,7 @@ def generate_six_level_grid():
     evaluation_description = ""
     if evaluation_id:
         try:
-            evaluation = PlanDeCoursEvaluations.query.get(evaluation_id)
+            evaluation = db.session.get(PlanDeCoursEvaluations, evaluation_id)
             if evaluation:
                 evaluation_description = evaluation.description or ""
         except Exception as e:
@@ -429,7 +452,7 @@ def generate_six_level_grid():
     if savoir_faire_id:
         try:
             savoir_faire_id = int(savoir_faire_id)
-            sf_info = PlanCadreCapaciteSavoirsFaire.query.get(savoir_faire_id)
+            sf_info = db.session.get(PlanCadreCapaciteSavoirsFaire, savoir_faire_id)
             cible = sf_info.cible if sf_info and sf_info.cible else "Réalisation complète et autonome de la tâche"
             seuil = sf_info.seuil_reussite if sf_info and sf_info.seuil_reussite else "Réalisation minimale acceptable de la tâche"
         except (ValueError, TypeError):
@@ -439,15 +462,20 @@ def generate_six_level_grid():
         cible = "Réalisation complète et autonome de la tâche"
         seuil = "Réalisation minimale acceptable de la tâche"
 
-    schema_json = json.dumps(AISixLevelGridResponse.get_schema_with_descriptions(), indent=4, ensure_ascii=False)
-    
-    prompt = settings.prompt_template.format(
-        savoir_faire=savoir_faire,
-        capacite=capacite, 
-        seuil=seuil,
-        cible=cible,
-        description_eval=evaluation_description,
-        schema=schema_json  # Ajout du schéma
+    # Préparer les prompts: prompt système = template configuré, prompt user = champs demandés
+    # Utilise le prompt système de la section; s'il est vide, fallback au template enregistré
+    # dans GrillePromptSettings pour compatibilité.
+    user_eval_title = ""
+    if evaluation_id and 'evaluation' in locals() and evaluation:
+        user_eval_title = evaluation.titre_evaluation or ""
+
+    user_text = (
+        f"Titre de l'évaluation: {user_eval_title}\n"
+        f"Description de l'évaluation: {evaluation_description}\n"
+        f"Capacité: {capacite}\n"
+        f"Savoir-faire: {savoir_faire}\n"
+        f"Cible (niveau 6): {cible}\n"
+        f"Seuil de réussite (niveau 4): {seuil}"
     )
 
     # Vérification des crédits de l'utilisateur
@@ -460,7 +488,10 @@ def generate_six_level_grid():
     if not user or not user.openai_key:
         return jsonify({'error': 'Clé OpenAI non configurée'}), 400
 
-    ai_model = "gpt-4o"
+    # Section-level settings for evaluation
+    from ..models import SectionAISettings
+    sa = SectionAISettings.get_for('evaluation')
+    ai_model = sa.ai_model or "gpt-5"
 
     user_credits = user.credits
     user_id = current_user.id
@@ -468,21 +499,31 @@ def generate_six_level_grid():
     try:
         client = OpenAI(api_key=current_user.openai_key)
 
-        response = client.beta.chat.completions.parse(
+        input_data = []
+        # prompt système prioritaire: SectionAISettings; sinon, fallback au template par défaut
+        sys_text = (sa.system_prompt or settings.prompt_template or '').strip()
+        if sys_text:
+            input_data.append({"role": "system", "content": [{"type": "input_text", "text": sys_text}]})
+        input_data.append({"role": "user", "content": [{"type": "input_text", "text": user_text}]})
+        reasoning_params = {"summary": "auto"}
+        if sa.reasoning_effort in {"minimal", "low", "medium", "high"}:
+            reasoning_params["effort"] = sa.reasoning_effort
+        response = client.responses.create(
             model=ai_model,
-            messages=[{"role": "user", "content": prompt}],
-            response_format=AISixLevelGridResponse,
+            input=input_data,
+            text={"format": {"type": "json_schema", "name": "AISixLevelGridResponse", "schema": AISixLevelGridResponse.model_json_schema(), "strict": True}, **({"verbosity": sa.verbosity} if sa.verbosity in {"low","medium","high"} else {})},
+            reasoning=reasoning_params,
         )
         total_prompt_tokens = 0
         total_completion_tokens = 0
 
         # Récupérer la consommation (tokens) du premier appel
         if hasattr(response, 'usage'):
-            total_prompt_tokens += response.usage.prompt_tokens
-            total_completion_tokens += response.usage.completion_tokens
+            total_prompt_tokens += getattr(response.usage, 'input_tokens', 0) or 0
+            total_completion_tokens += getattr(response.usage, 'output_tokens', 0) or 0
 
-        usage_prompt = response.usage.prompt_tokens if hasattr(response, 'usage') else 0
-        usage_completion = response.usage.completion_tokens if hasattr(response, 'usage') else 0
+        usage_prompt = getattr(getattr(response, 'usage', None), 'input_tokens', 0) or 0
+        usage_completion = getattr(getattr(response, 'usage', None), 'output_tokens', 0) or 0
         cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
 
         new_credits = user_credits - cost
@@ -493,9 +534,60 @@ def generate_six_level_grid():
         )
         db.session.commit()
 
-        structured_data = response.choices[0].message.parsed
+        # Extract parsed schema (fallback to raw JSON text if needed)
+        structured_data = None
+        raw_json_text = None
+        try:
+            for out in getattr(response, 'output', []) or []:
+                for c in getattr(out, 'content', []) or []:
+                    if getattr(c, 'parsed', None):
+                        structured_data = c.parsed
+                        break
+                    # Capture raw text in case parsed is unavailable
+                    text_val = getattr(c, 'text', None)
+                    if isinstance(text_val, str) and text_val.strip():
+                        raw_json_text = text_val
+        except Exception:
+            structured_data = None
 
-        return jsonify(structured_data.model_dump())  # Convertir en dict JSON
+        if structured_data is None:
+            # Try to parse raw JSON if available
+            if raw_json_text:
+                try:
+                    structured_data = json.loads(raw_json_text)
+                except Exception:
+                    structured_data = None
+            if structured_data is None:
+                structured_data = AISixLevelGridResponse(
+                    level1_description=[],
+                    level2_description=[],
+                    level3_description=[],
+                    level4_description=[],
+                    level5_description=[],
+                    level6_description=[],
+                )
+
+        # Normalize to plain strings for UI textareas
+        try:
+            if isinstance(structured_data, BaseModel):
+                data_dict = structured_data.model_dump()
+            elif isinstance(structured_data, dict):
+                data_dict = structured_data
+            else:
+                data_dict = {}
+        except Exception:
+            data_dict = {}
+
+        resp = {}
+        for i in range(1, 7):
+            key = f"level{i}_description"
+            val = data_dict.get(key) or []
+            if isinstance(val, list):
+                resp[key] = "\n".join([str(x) for x in val if x is not None])
+            else:
+                resp[key] = str(val)
+
+        return jsonify(resp)
 
     except OpenAIError as e:
         return jsonify({'error': f'Erreur API OpenAI: {str(e)}'}), 500
@@ -553,7 +645,7 @@ def evaluation_wizard():
         if 'submit_evaluation' in request.form:
             evaluation_id = request.form.get('evaluation')
             if evaluation_id:
-                selected_evaluation = PlanDeCoursEvaluations.query.get_or_404(int(evaluation_id))
+                selected_evaluation = db.session.get(PlanDeCoursEvaluations, int(evaluation_id)) or abort(404)
                 
                 # Récupérer les capacités et savoirs-faire
                 eval_capacites = (
@@ -685,7 +777,7 @@ def get_grid():
     if not evaluation_id:
         return ""
         
-    evaluation = PlanDeCoursEvaluations.query.get_or_404(int(evaluation_id))
+    evaluation = db.session.get(PlanDeCoursEvaluations, int(evaluation_id)) or abort(404)
     
     # Récupérer les capacités et savoirs-faire
     eval_capacites = (
@@ -755,7 +847,7 @@ def save_grid():
         except ValueError:
             raise ValueError("ID d'évaluation invalide.")
         
-        evaluation = PlanDeCoursEvaluations.query.get(evaluation_id)
+        evaluation = db.session.get(PlanDeCoursEvaluations, evaluation_id)
         if not evaluation:
             raise ValueError("Évaluation non trouvée.")
         
@@ -812,7 +904,7 @@ def save_grid():
 @ensure_profile_completed
 def export_evaluation_docx(evaluation_id):
     # 1. Récupérer l'évaluation
-    evaluation = PlanDeCoursEvaluations.query.get_or_404(evaluation_id)
+    evaluation = db.session.get(PlanDeCoursEvaluations, evaluation_id) or abort(404)
     
     # 2. Récupérer les capacités et savoirs-faire associés
     eval_capacites = (

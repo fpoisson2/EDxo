@@ -39,7 +39,7 @@ def gestion_departements():
         elif 'modifier_depart' in request.form:
             department_id = request.form.get('department_id')
             if department_id:
-                department = Department.query.get(department_id)
+                department = db.session.get(Department, department_id)
                 if department:
                     department.nom = request.form.get('nom')
                     department.cegep_id = request.form.get('cegep_id')
@@ -59,7 +59,7 @@ def gestion_departements():
             department_id = request.form.get('department_id')
             regle_form = DepartmentRegleForm()
             if regle_form.regle.data and regle_form.contenu.data:
-                department = Department.query.get(department_id)
+                department = db.session.get(Department, department_id)
                 if department:
                     nouvelle_regle = DepartmentRegles(regle=regle_form.regle.data, contenu=regle_form.contenu.data, department_id=department.id)
                     db.session.add(nouvelle_regle)
@@ -79,7 +79,7 @@ def gestion_departements():
             department_id = request.form.get('department_id')
             piea_form = DepartmentPIEAForm()
             if piea_form.article.data and piea_form.contenu.data:
-                department = Department.query.get(department_id)
+                department = db.session.get(Department, department_id)
                 if department:
                     nouvelle_piea = DepartmentPIEA(article=piea_form.article.data, contenu=piea_form.contenu.data, department_id=department.id)
                     db.session.add(nouvelle_piea)
@@ -117,7 +117,7 @@ def gestion_departements():
 @login_required
 @ensure_profile_completed
 def supprimer_departement(departement_id):
-    department = Department.query.get_or_404(departement_id)
+    department = db.session.get(Department, departement_id) or abort(404)
     try:
         db.session.delete(department)
         db.session.commit()
@@ -133,7 +133,7 @@ def supprimer_departement(departement_id):
 @login_required
 @ensure_profile_completed
 def supprimer_regle(regle_id):
-    regle = DepartmentRegles.query.get_or_404(regle_id)
+    regle = db.session.get(DepartmentRegles, regle_id) or abort(404)
     try:
         db.session.delete(regle)
         db.session.commit()
@@ -149,7 +149,7 @@ def supprimer_regle(regle_id):
 @login_required
 @ensure_profile_completed
 def supprimer_piea(piea_id):
-    piea = DepartmentPIEA.query.get_or_404(piea_id)
+    piea = db.session.get(DepartmentPIEA, piea_id) or abort(404)
     try:
         db.session.delete(piea)
         db.session.commit()

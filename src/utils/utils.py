@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from src.utils.datetime_utils import now_utc
 from io import BytesIO
 
 import re
@@ -59,7 +59,7 @@ logger = get_logger(__name__)
 DATABASE = 'programme.db'
 
 
-def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
+def save_grille_to_database(grille_data, programme_id, programme_nom, user_id, import_mode: str = 'append'):
     """
     Sauvegarde les données de la grille de cours en base de données en utilisant les modèles existants.
     
@@ -80,7 +80,7 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
         # Fonction pour créer manuellement des entrées DBChange
         def create_db_change(operation, table_name, record_id, changes_dict):
             new_change = DBChange(
-                timestamp=datetime.utcnow(),  # Utiliser l'objet datetime directement, pas sa représentation en chaîne
+                timestamp=now_utc(),  # Utiliser l'objet datetime directement, pas sa représentation en chaîne
                 user_id=user_id,
                 operation=operation,
                 table_name=table_name,
@@ -90,14 +90,22 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
             db.session.add(new_change)
         
         # Vérifier que le programme existe
-        programme = Programme.query.get(programme_id)
+        programme = db.session.get(Programme, programme_id)
         if not programme:
             logger.error(f"Programme avec ID {programme_id} introuvable")
             return False
         
         # Commencer une transaction
         db.session.begin_nested()
-        
+
+        # Si demandé: effacer les associations existantes de ce programme (mode "overwrite")
+        if (import_mode or 'append') == 'overwrite':
+            try:
+                from app.models import CoursProgramme
+                db.session.query(CoursProgramme).filter_by(programme_id=programme_id).delete(synchronize_session=False)
+            except Exception as e:
+                logger.warning(f"Échec lors de l'effacement des associations existantes pour programme {programme_id}: {e}")
+
         # Dictionnaire pour suivre les codes de cours créés et leurs IDs
         created_courses = {}
         
@@ -116,25 +124,32 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                 titre_cours = cours_data.get('titre_cours')
                 
                 # Vérifier si le cours existe déjà (par code)
-                existing_cours = Cours.query.filter_by(
-                    programme_id=programme_id,
-                    code=code_cours
-                ).first()
+                # Recherche du cours existant selon le mode
+                existing_cours = None
+                try:
+                    if (import_mode or 'append') == 'append':
+                        existing_cours = Cours.query.filter_by(programme_id=programme_id, code=code_cours).first()
+                        if not existing_cours:
+                            existing_cours = Cours.query.filter_by(code=code_cours).first()
+                    else:
+                        existing_cours = Cours.query.filter_by(code=code_cours).first()
+                except Exception:
+                    existing_cours = Cours.query.filter_by(code=code_cours).first()
                 
                 if existing_cours:
-                # Stocker les anciennes valeurs pour le suivi des changements
+                    # Stocker les anciennes valeurs pour le suivi des changements
+                    old_session = (existing_cours.sessions_map or {}).get(programme_id, None)
                     old_values = {
                         "nom": existing_cours.nom,
-                        "session": existing_cours.session,
+                        "session": old_session,
                         "heures_theorie": existing_cours.heures_theorie,
                         "heures_laboratoire": existing_cours.heures_laboratoire,
                         "heures_travail_maison": existing_cours.heures_travail_maison,
                         "nombre_unites": existing_cours.nombre_unites
                     }
-                    
-                    # Mettre à jour le cours existant
+
+                    # Mettre à jour le cours existant (hors session/programme qui est géré via l'association)
                     existing_cours.nom = titre_cours
-                    existing_cours.session = session_num
                     existing_cours.heures_theorie = cours_data.get('heures_theorie', 0)
                     existing_cours.heures_laboratoire = cours_data.get('heures_labo', 0)
                     existing_cours.heures_travail_maison = cours_data.get('heures_maison', 0)
@@ -146,7 +161,19 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                     ) / 3
                     existing_cours.nombre_unites = new_unites
                     cours_id = existing_cours.id
-                    
+
+                    # Mettre à jour/ajouter l'association Cours-Programme (session)
+                    from app.models import CoursProgramme
+                    assoc = CoursProgramme.query.filter_by(cours_id=cours_id, programme_id=programme_id).first()
+                    if assoc:
+                        assoc.session = session_num
+                    else:
+                        assoc = CoursProgramme()
+                        assoc.cours_id = cours_id
+                        assoc.programme_id = programme_id
+                        assoc.session = session_num
+                        db.session.add(assoc)
+
                     # Créer une entrée DBChange manuellement
                     create_db_change(
                         "UPDATE",
@@ -171,10 +198,8 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                     heures_travail_maison=cours_data.get('heures_maison', 0)
                     nombre_unites = (heures_theorie+heures_laboratoire+heures_travail_maison)/3
                     nouveau_cours = Cours(
-                        programme_id=programme_id,
                         code=code_cours,
                         nom=titre_cours,
-                        session=session_num,
                         heures_theorie=cours_data.get('heures_theorie', 0),
                         heures_laboratoire=cours_data.get('heures_labo', 0),
                         heures_travail_maison=cours_data.get('heures_maison', 0),
@@ -183,6 +208,14 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
                     db.session.add(nouveau_cours)
                     db.session.flush()  # Pour obtenir l'ID du cours
                     cours_id = nouveau_cours.id
+
+                    # Associer le cours au programme avec la session
+                    from app.models import CoursProgramme
+                    assoc = CoursProgramme()
+                    assoc.cours_id = cours_id
+                    assoc.programme_id = programme_id
+                    assoc.session = session_num
+                    db.session.add(assoc)
                     
                     # Créer une entrée DBChange manuellement
                     create_db_change(
@@ -270,7 +303,7 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
         all_prerequisites = CoursPrealable.query.filter_by(cours_prealable_id=0).all()
         for prereq in all_prerequisites:
             # Trouver le cours parent
-            parent_cours = Cours.query.get(prereq.cours_id)
+            parent_cours = db.session.get(Cours, prereq.cours_id)
             if parent_cours:
                 # Rechercher le code du cours préalable dans la grille JSON
                 for session_data in grille_data.get('sessions', []):
@@ -338,7 +371,7 @@ def save_grille_to_database(grille_data, programme_id, programme_nom, user_id):
         all_corequisites = CoursCorequis.query.filter_by(cours_corequis_id=0).all()
         for coreq in all_corequisites:
             # Trouver le cours parent
-            parent_cours = Cours.query.get(coreq.cours_id)
+            parent_cours = db.session.get(Cours, coreq.cours_id)
             if parent_cours:
                 # Rechercher le code du cours corequis dans la grille JSON
                 for session_data in grille_data.get('sessions', []):
@@ -800,7 +833,7 @@ def get_plan_cadre_data(cours_id, db_path='programme.db'):
         subquery = db.session.query(ElementCompetenceParCours.element_competence_id).filter_by(cours_id=cours_id).subquery()
         # 9. Cours développant une même compétence avant, pendant et après
         # Suppression de l'ancien champ session, on renvoie None
-        from sqlalchemy import literal
+        from sqlalchemy import literal, select
         cours_developpant = db.session.query(
             Cours.id.label('cours_id'),
             Cours.nom.label('cours_nom'),
@@ -808,7 +841,11 @@ def get_plan_cadre_data(cours_id, db_path='programme.db'):
             literal(None).label('session')
         ) \
         .join(ElementCompetenceParCours, Cours.id == ElementCompetenceParCours.cours_id) \
-        .filter(ElementCompetenceParCours.element_competence_id.in_(subquery)) \
+        .filter(
+            ElementCompetenceParCours.element_competence_id.in_(
+                select(subquery.c.element_competence_id)
+            )
+        ) \
         .filter(Cours.id != cours_id) \
         .distinct().all()
 
@@ -880,22 +917,13 @@ def process_ai_prompt(prompt, role):
         return None
 
 
-def generate_docx_with_template(plan_id):
+def build_plan_cadre_docx_context(plan_id):
+    """Construit le contexte (dict) utilisé pour le rendu du plan‑cadre DOCX.
+
+    Extrait de l'ancienne fonction generate_docx_with_template afin de pouvoir
+    être testé sans dépendre d'un fichier DOCX. Retourne un dict prêt à être
+    injecté dans le canevas Jinja de docxtpl.
     """
-    Génère un fichier DOCX à partir d'un modèle et des informations d'un PlanCadre, via SQLAlchemy.
-    """
-    base_path = Path(__file__).parent.parent
-    template_path = os.path.join(base_path, 'static', 'docs', 'plan_cadre_template.docx')
-
-    # Ajoutons du logging pour déboguer
-    current_app.logger.info(f"Base path: {base_path}")
-    current_app.logger.info(f"Template path: {template_path}")
-    current_app.logger.info(f"File exists: {os.path.exists(template_path)}")
-
-    if not os.path.exists(template_path):
-        current_app.logger.error(f"Template not found at: {template_path}")
-        return None
-
     # Récupérer le plan-cadre
     plan = db.session.query(PlanCadre).filter_by(id=plan_id).first()
     if not plan:
@@ -906,7 +934,7 @@ def generate_docx_with_template(plan_id):
     if not cours:
         return None
 
-    # Récupérer le programme associé
+    # Récupérer le programme associé (premier programme du cours)
     programme = None
     if cours.programme_id:
         programme = db.session.query(Programme).filter_by(id=cours.programme_id).first()
@@ -975,11 +1003,19 @@ def generate_docx_with_template(plan_id):
                 ).filter(ElementCompetenceParCours.element_competence_id == ec_item.id).all()
 
                 for (cours_assoc, ecpc_assoc) in assoc_cours:
+                    # Calculer la session du cours associé pour le même programme que le cours exporté
+                    prog_id = primary_prog.id if primary_prog else None
+                    try:
+                        assoc_session_map = {a.programme_id: a.session for a in getattr(cours_assoc, 'programme_assocs', [])}
+                    except Exception:
+                        assoc_session_map = {}
+                    cours_session = assoc_session_map.get(prog_id)
                     element_competence["cours_associes"].append({
                         "cours_id": cours_assoc.id,
                         "cours_code": cours_assoc.code,
                         "cours_nom": cours_assoc.nom,
-                        "status": ecpc_assoc.status
+                        "status": ecpc_assoc.status,
+                        "cours_session": cours_session,
                     })
 
                 competence_info_developes[c.id]["elements"].append(element_competence)
@@ -1034,11 +1070,19 @@ def generate_docx_with_template(plan_id):
                 ).filter(ElementCompetenceParCours.element_competence_id == ec_item.id).all()
 
                 for (cours_assoc, ecpc_assoc) in assoc_cours:
+                    # Calculer la session du cours associé pour le même programme que le cours exporté
+                    prog_id = primary_prog.id if primary_prog else None
+                    try:
+                        assoc_session_map = {a.programme_id: a.session for a in getattr(cours_assoc, 'programme_assocs', [])}
+                    except Exception:
+                        assoc_session_map = {}
+                    cours_session = assoc_session_map.get(prog_id)
                     element_competence["cours_associes"].append({
                         "cours_id": cours_assoc.id,
                         "cours_code": cours_assoc.code,
                         "cours_nom": cours_assoc.nom,
-                        "status": ecpc_assoc.status
+                        "status": ecpc_assoc.status,
+                        "cours_session": cours_session,
                     })
 
                 competence_info_atteint[c.id]["elements"].append(element_competence)
@@ -1091,8 +1135,11 @@ def generate_docx_with_template(plan_id):
 
     # 9. Cours développant une même compétence avant, pendant et après
     #    On refait une requête similaire pour lister tous les cours liés
-    subq = db.session.query(ElementCompetenceParCours.element_competence_id).filter_by(cours_id=plan.cours_id).subquery()
-    from sqlalchemy import literal
+    #    Utilise un Select explicite pour éviter l'avertissement SQLAlchemy 2.x
+    from sqlalchemy import select, literal
+    subq = select(ElementCompetenceParCours.element_competence_id).where(
+        ElementCompetenceParCours.cours_id == plan.cours_id
+    )
     cours_meme_competence = db.session.query(
         Cours.id.label('cours_id'),
         Cours.nom.label('cours_nom'),
@@ -1175,6 +1222,29 @@ def generate_docx_with_template(plan_id):
             } for co in cp
         ]
     }
+
+    return context
+
+
+def generate_docx_with_template(plan_id):
+    """
+    Génère un fichier DOCX à partir d'un modèle et des informations d'un PlanCadre, via SQLAlchemy.
+    """
+    base_path = Path(__file__).parent.parent
+    template_path = os.path.join(base_path, 'static', 'docs', 'plan_cadre_template.docx')
+
+    # Ajoutons du logging pour déboguer
+    current_app.logger.info(f"Base path: {base_path}")
+    current_app.logger.info(f"Template path: {template_path}")
+    current_app.logger.info(f"File exists: {os.path.exists(template_path)}")
+
+    if not os.path.exists(template_path):
+        current_app.logger.error(f"Template not found at: {template_path}")
+        return None
+
+    context = build_plan_cadre_docx_context(plan_id)
+    if not context:
+        return None
 
     tpl = DocxTemplate(template_path)
     tpl.render(context)

@@ -1,0 +1,10 @@
+{# Centralized EasyMDE asset loader (cookie-free via jsDelivr by default) #}
+{% if config.get('EASYMDE_USE_CDN', True) %}
+  {% set mde_ver = config.get('EASYMDE_VERSION', '2.18.0') %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde@{{ mde_ver }}/dist/easymde.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/easymde@{{ mde_ver }}/dist/easymde.min.js" defer></script>
+{% else %}
+  <link rel="stylesheet" href="{{ asset_url('vendor/easymde/easymde.min.css') }}" />
+  <script src="{{ asset_url('vendor/easymde/easymde.min.js') }}" defer></script>
+{% endif %}
+

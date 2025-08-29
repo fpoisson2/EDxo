@@ -1,5 +1,6 @@
 from flask import render_template, redirect, url_for, request, flash
 from flask_login import current_user
+from collections import OrderedDict
 
 from ..forms import (
     CoursForm,
@@ -19,6 +20,7 @@ from ..models import (
     CoursCorequis,
     CompetenceParCours,
     ElementCompetenceParCours,
+    FilConducteur,
 )
 from .routes import main
 from ...utils.decorator import roles_required, ensure_profile_completed
@@ -243,7 +245,7 @@ def add_element_competence_par_cours():
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_cours(cours_id):
-    cours = Cours.query.get_or_404(cours_id)
+    cours = db.session.get(Cours, cours_id) or abort(404)
 
     user_prog_ids = [p.id for p in current_user.programmes]
     accessible_programmes = Programme.query \

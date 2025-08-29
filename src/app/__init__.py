@@ -22,6 +22,7 @@ from datetime import timedelta, datetime, timezone
 from pathlib import Path
 
 from flask_session import Session
+from cachelib import FileSystemCache
 
 from flask import Flask, session, jsonify, redirect, url_for, request, current_app
 from flask_login import current_user, logout_user, UserMixin
@@ -54,11 +55,16 @@ from .routes.settings import settings_bp
 from .routes.system import system_bp
 from .routes.ocr_routes import ocr_bp
 from .routes.grilles import grille_bp
+from .routes.api import api_bp
+from .routes.oauth import oauth_bp
+from .routes.tasks import tasks_bp
+from ..mcp_server.server import init_app as init_mcp_server
 
 # Import version
 from ..config.version import __version__
 # Import centralized extensions
 from ..extensions import db, login_manager, ckeditor, csrf, limiter, bcrypt
+from flask_wtf.csrf import generate_csrf
 from ..utils.db_tracking import init_change_tracking
 from ..utils.scheduler_instance import scheduler, start_scheduler, shutdown_scheduler, schedule_backup
 
@@ -69,7 +75,6 @@ from ..config.env import (
     SECRET_KEY,
     RECAPTCHA_PUBLIC_KEY,
     RECAPTCHA_PRIVATE_KEY,
-    MISTRAL_API_KEY,
     OPENAI_API_KEY,
     OPENAI_MODEL_SECTION,
     OPENAI_MODEL_EXTRACTION,
@@ -99,6 +104,8 @@ class TestConfig:
     SECRET_KEY = 'test_key'
     RECAPTCHA_PUBLIC_KEY = 'test_public'
     RECAPTCHA_SECRET_KEY = 'test_secret'
+    # Avoid Flask-Limiter warning by explicitly setting storage backend in tests
+    RATELIMIT_STORAGE_URI = 'memory://'
     # Add other testing-specific configurations here
 
 
@@ -116,7 +123,24 @@ def create_app(testing=False):
         static_folder=os.path.join(base_path, "static")
     )
 
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+    # Enable response compression for text assets if Flask-Compress is available
+    try:
+        from flask_compress import Compress
+        app.config.setdefault('COMPRESS_ALGORITHM', 'br,gzip')
+        app.config.setdefault('COMPRESS_LEVEL', 6)
+        app.config.setdefault('COMPRESS_BR_LEVEL', 5)
+        app.config.setdefault('COMPRESS_MIMETYPES', [
+            'text/html', 'text/css', 'text/xml', 'text/plain',
+            'application/javascript', 'application/x-javascript', 'application/json',
+            'image/svg+xml'
+        ])
+        Compress(app)
+        logger.info("Compression enabled (Flask-Compress)")
+    except Exception as e:
+        logger.info(f"Compression not enabled: {e}")
+
+    # Respect reverse proxy headers for scheme, host and path prefix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_prefix=1)
 
     # Configuration based on environment
     if testing:
@@ -133,30 +157,46 @@ def create_app(testing=False):
         base_path = Path(__file__).parent.parent
 
         SESS_DIR = os.path.join(BASE_DIR, "flask_sessions")
-        os.makedirs(SESS_DIR, exist_ok=True)      # ← avant Session(app)
+        os.makedirs(SESS_DIR, exist_ok=True)      # ensure dir exists for FileSystemCache
+        # Shared upload directory (bind-mounted volume recommended)
+        UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
         app.config.update(
             PREFERRED_URL_SCHEME='https',
             SQLALCHEMY_DATABASE_URI=f"sqlite:///{DB_PATH}?timeout=30",
             SQLALCHEMY_TRACK_MODIFICATIONS=False,
             DB_PATH=DB_PATH,
-            UPLOAD_FOLDER=os.path.join(base_path, 'static', 'docs'),
+            UPLOAD_FOLDER=UPLOAD_DIR,
             SECRET_KEY=SECRET_KEY,
             RECAPTCHA_SITE_KEY=RECAPTCHA_PUBLIC_KEY,
             RECAPTCHA_SECRET_KEY=RECAPTCHA_PRIVATE_KEY,
-            MISTRAL_API_KEY=MISTRAL_API_KEY,
             OPENAI_API_KEY=OPENAI_API_KEY,
-            MISTRAL_MODEL_OCR="mistral-ocr-latest",
-            OPENAI_MODEL_SECTION=OPENAI_MODEL_SECTION,  # Modèle pour la détection de section
-            OPENAI_MODEL_EXTRACTION=OPENAI_MODEL_EXTRACTION,  # Modèle pour l'extraction de compétences
+            # Forcer l'utilisation de gpt-5 partout, ignorer les variables d'environnement
+            OPENAI_MODEL_SECTION='gpt-5',
+            OPENAI_MODEL_EXTRACTION='gpt-5',
             WTF_CSRF_ENABLED=True,
+            SEND_FILE_MAX_AGE_DEFAULT=timedelta(days=30),
+            # Prefer CDN for Toast UI assets by default; set TOASTUI_USE_CDN=0 to self-host
+            TOASTUI_USE_CDN=(os.getenv('TOASTUI_USE_CDN', '1') == '1'),
+            TOASTUI_CDN_PROVIDER=os.getenv('TOASTUI_CDN_PROVIDER', 'jsdelivr'),  # 'toast' | 'jsdelivr'
+            TOASTUI_VERSION=os.getenv('TOASTUI_VERSION', '3.2.2'),
+            # EasyMDE (Markdown editor) config
+            EASYMDE_USE_CDN=(os.getenv('EASYMDE_USE_CDN', '1') == '1'),
+            EASYMDE_VERSION=os.getenv('EASYMDE_VERSION', '2.18.0'),
+            # Asset hosting switches
+            USE_LOCAL_BOOTSTRAP=(os.getenv('USE_LOCAL_BOOTSTRAP', '0') == '1'),
+            USE_LOCAL_ICONS=(os.getenv('USE_LOCAL_ICONS', '0') == '1'),
             CKEDITOR_PKG_TYPE='standard',
             PERMANENT_SESSION_LIFETIME=timedelta(days=30),
             SESSION_COOKIE_SECURE = False,
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Lax',
-            SESSION_TYPE='filesystem',
-            SESSION_FILE_DIR=os.path.join(BASE_DIR, 'flask_sessions'),  # si filesystem
+            # Use CacheLib backend to avoid Flask-Session deprecation warnings
+            SESSION_TYPE='cachelib',
+            SESSION_CACHELIB=FileSystemCache(SESS_DIR, threshold=500, mode=0o700),
             SESSION_PERMANENT=False,
+            # Configure limiter storage explicitly to avoid in-memory warning; override via env
+            RATELIMIT_STORAGE_URI=os.getenv('RATELIMIT_STORAGE_URI', 'memory://'),
             CELERY_BROKER_URL=CELERY_BROKER_URL,
             CELERY_RESULT_BACKEND=CELERY_RESULT_BACKEND,
             TXT_OUTPUT_DIR=os.path.join(BASE_DIR, 'txt_outputs')
@@ -190,7 +230,7 @@ def create_app(testing=False):
     @login_manager.user_loader
     def load_user(user_id):
         try:
-            return User.query.get(int(user_id))
+            return db.session.get(User, int(user_id))
         except Exception:
             return None
 
@@ -201,7 +241,12 @@ def create_app(testing=False):
     db.init_app(app)
     ckeditor.init_app(app)
     csrf.init_app(app)
+    app.config.setdefault("WTF_CSRF_CHECK_DEFAULT", True)
+    app.config.setdefault("WTF_CSRF_TIME_LIMIT", None)
     init_change_tracking(db)
+
+    # Bind Flask app to MCP server for OAuth verification
+    init_mcp_server(app)
 
     if not testing:
         migrate = Migrate(app, db)
@@ -224,11 +269,33 @@ def create_app(testing=False):
     app.register_blueprint(gestion_programme_bp)
     app.register_blueprint(ocr_bp)
     app.register_blueprint(grille_bp)
+    app.register_blueprint(api_bp)
+    app.register_blueprint(oauth_bp)
+    app.register_blueprint(tasks_bp)
 
     # Register helpers and handlers
     @app.context_processor
     def inject_version():
         return dict(version=__version__)
+
+    @app.context_processor
+    def inject_template_helpers():
+        # Helper accessible dans les templates: has_endpoint('blueprint.endpoint')
+        def has_endpoint(name: str) -> bool:
+            try:
+                return name in current_app.view_functions
+            except Exception:
+                return False
+        # Cache-busting helper: build static URL with file mtime as version
+        def asset_url(path: str) -> str:
+            try:
+                full_path = os.path.join(app.static_folder or "", path)
+                ver = int(os.path.getmtime(full_path)) if os.path.exists(full_path) else int(datetime.now(timezone.utc).timestamp())
+            except Exception:
+                ver = int(datetime.now(timezone.utc).timestamp())
+            return url_for('static', filename=path, v=ver)
+        # Expose csrf_token() helper globally for templates
+        return dict(has_endpoint=has_endpoint, asset_url=asset_url, csrf_token=generate_csrf)
 
     @app.before_request
     def before_request():
@@ -237,6 +304,10 @@ def create_app(testing=False):
         if (
             request.endpoint == 'static' or
             request.path.startswith('/static/') or
+            request.path.startswith('/api/') or
+            request.path.startswith('/sse/') or  # MCP SSE endpoint is public (uses Bearer token)
+            request.path in ('/token', '/register') or
+            request.path.startswith('/.well-known/') or
             (view_func is not None and getattr(view_func, 'is_public', False))
         ):
             return
@@ -294,8 +365,20 @@ def create_app(testing=False):
 
     @app.after_request
     def after_request(response):
+        if response.status_code == 401:
+            response.headers[
+                'WWW-Authenticate'
+            ] = (
+                f'Bearer resource_metadata="{request.url_root.rstrip('/')}/.well-known/oauth-protected-resource"'
+            )
         if current_user.is_authenticated and session.modified:
             session.modified = True
+        # Ensure CSRF token is generated and available to JS via cookie
+        try:
+            token = generate_csrf()
+            response.set_cookie('csrf_token', token, samesite='Lax', secure=False, httponly=False)
+        except Exception:
+            pass
         return response
 
     # '/version' is now served by the main blueprint
@@ -343,6 +426,96 @@ def create_app(testing=False):
                 worker_id = GUNICORN_WORKER_ID
                 is_primary_worker = worker_id == '0' or worker_id is None
 
+                # On primary worker startup, purge Celery queues and cleanup lingering task states
+                def perform_celery_cleanup(tag: str = "startup"):
+                    try:
+                        logger.info(f"🧹 Celery cleanup ({tag}) – purge queues, revoke in-flight, clear results…")
+                        # 1) Purge broker queues (queued tasks)
+                        try:
+                            purged = celery.control.purge()
+                            logger.info(f"Celery purge: removed {purged} queued messages.")
+                        except Exception as e:
+                            logger.warning(f"Celery queue purge failed: {e}")
+
+                        # 2) Revoke any active/reserved/scheduled tasks (best-effort)
+                        try:
+                            insp = celery.control.inspect(timeout=1.0)
+                            ids = set()
+                            active = (insp.active() or {}) if insp else {}
+                            for w, tasks in (active or {}).items():
+                                for t in tasks or []:
+                                    tid = None
+                                    if isinstance(t, dict):
+                                        tid = t.get('id') or (t.get('request') or {}).get('id')
+                                        if not tid and 'request' in t and hasattr(t['request'], 'id'):
+                                            tid = getattr(t['request'], 'id', None)
+                                    if tid:
+                                        ids.add(tid)
+                            reserved = (insp.reserved() or {}) if insp else {}
+                            for w, tasks in (reserved or {}).items():
+                                for t in tasks or []:
+                                    tid = None
+                                    if isinstance(t, dict):
+                                        tid = t.get('id') or (t.get('request') or {}).get('id')
+                                        if not tid and 'request' in t and hasattr(t['request'], 'id'):
+                                            tid = getattr(t['request'], 'id', None)
+                                    if tid:
+                                        ids.add(tid)
+                            scheduled = (insp.scheduled() or {}) if insp else {}
+                            for w, tasks in (scheduled or {}).items():
+                                for t in tasks or []:
+                                    req = t.get('request') if isinstance(t, dict) else None
+                                    tid = (req or {}).get('id') if req else (t.get('id') if isinstance(t, dict) else None)
+                                    if tid:
+                                        ids.add(tid)
+                            for tid in ids:
+                                try:
+                                    celery.control.revoke(tid, terminate=True, signal="SIGTERM")
+                                except Exception:
+                                    pass
+                            if ids:
+                                logger.info(f"Revoked {len(ids)} in-flight tasks: {', '.join(list(ids)[:5])}{'…' if len(ids)>5 else ''}")
+                        except Exception as e:
+                            logger.warning(f"Celery revoke/inspect failed: {e}")
+
+                        # 3) Clear Celery result backend keys and our cancel flags in Redis
+                        try:
+                            import redis
+                            backend_url = celery.conf.result_backend
+                            r = redis.Redis.from_url(backend_url)
+                            deleted = 0
+                            for pattern in ['celery-task-meta-*', 'celery-task-set-meta*', 'celery-group-meta*', 'celery-task-cache*', 'edxo:cancel:*']:
+                                for key in r.scan_iter(match=pattern, count=1000):
+                                    r.delete(key); deleted += 1
+                            logger.info(f"Cleared {deleted} result/flag keys in Redis backend.")
+                        except Exception as e:
+                            logger.warning(f"Redis backend cleanup skipped/failed: {e}")
+
+                        # 4) Clear residual broker-side Redis keys (unacked, pidbox, stray queues)
+                        try:
+                            import redis
+                            broker_url = celery.conf.broker_url
+                            rb = redis.Redis.from_url(broker_url)
+                            bdel = 0
+                            # Target only Celery-related broker keys; safe in dev/startup
+                            for pattern in [
+                                'celery',               # default queue list
+                                'celery.*',
+                                'unacked', 'unacked*',  # redis transport bookkeeping
+                                'pidbox', 'celery.pidbox*',
+                            ]:
+                                for key in rb.scan_iter(match=pattern, count=1000):
+                                    rb.delete(key); bdel += 1
+                            if bdel:
+                                logger.info(f"Cleared {bdel} broker-side Redis keys (queues/unacked/pidbox).")
+                        except Exception as e:
+                            logger.warning(f"Redis broker cleanup skipped/failed: {e}")
+                    except Exception as e:
+                        logger.warning(f"Celery cleanup ({tag}) encountered an issue: {e}")
+
+                if is_primary_worker:
+                    perform_celery_cleanup(tag="startup")
+
                 if not scheduler.running and is_primary_worker:
                     start_scheduler()
                     result = db.session.execute(text(
@@ -354,6 +527,16 @@ def create_app(testing=False):
                     else:
                         logger.warning(
                             "⚠️ Table 'backup_config' introuvable, planification des sauvegardes est désactivée.")
+
+            # After scheduler starts, schedule a couple of delayed cleanup retries
+            try:
+                if is_primary_worker and scheduler.running:
+                    now = datetime.now(timezone.utc)
+                    # Retry shortly after startup to catch workers that connected later
+                    scheduler.add_job(lambda: perform_celery_cleanup(tag="retry+5s"), 'date', run_date=now + timedelta(seconds=5), id='celery_cleanup_retry_1', replace_existing=True)
+                    scheduler.add_job(lambda: perform_celery_cleanup(tag="retry+15s"), 'date', run_date=now + timedelta(seconds=15), id='celery_cleanup_retry_2', replace_existing=True)
+            except Exception as e:
+                logger.warning(f"Unable to schedule delayed Celery cleanup retries: {e}")
 
             # Register atexit handlers for graceful shutdown and checkpointing
             atexit.register(shutdown_scheduler)

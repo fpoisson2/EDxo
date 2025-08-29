@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import app.tasks.ocr as ocr_tasks
 
 
-def run_task(competence, download_path_local, txt_output_dir, base_filename_local, openai_key, model="gpt-test"):
+def run_task(competence, download_path_local, txt_output_dir, base_filename_local, openai_key, model="gpt-5-mini"):
     original_request = ocr_tasks.extract_json_competence.request
     object.__setattr__(
         ocr_tasks.extract_json_competence, "request", SimpleNamespace(id="test-task")
@@ -36,7 +36,7 @@ def test_pdf_inexistant_declenche_exception(app, tmp_path, monkeypatch):
 
         monkeypatch.setattr(ocr_tasks.pdf_tools, "extract_pdf_section", fake_extract_pdf_section)
         monkeypatch.setattr(ocr_tasks.pdf_tools, "convert_pdf_to_txt", lambda *args, **kwargs: "")
-        monkeypatch.setattr(ocr_tasks.api_clients, "extraire_competences_depuis_txt", lambda *args, **kwargs: {})
+        monkeypatch.setattr(ocr_tasks.api_clients, "extraire_competences_depuis_pdf", lambda *args, **kwargs: {})
 
         competence = {"code": "C1", "page_debut": 1, "page_fin": 2}
         with pytest.raises(FileNotFoundError):
@@ -55,14 +55,14 @@ def test_retour_vide_si_conversion_vide(app, tmp_path, monkeypatch):
 
         monkeypatch.setattr(ocr_tasks.pdf_tools, "extract_pdf_section", lambda *args, **kwargs: True)
         monkeypatch.setattr(ocr_tasks.pdf_tools, "convert_pdf_to_txt", lambda *args, **kwargs: "   ")
-        monkeypatch.setattr(ocr_tasks.api_clients, "extraire_competences_depuis_txt", lambda *args, **kwargs: {})
+        monkeypatch.setattr(ocr_tasks.api_clients, "extraire_competences_depuis_pdf", lambda *args, **kwargs: {})
 
         competence = {"code": "C1", "page_debut": 1, "page_fin": 2}
         result = run_task(competence, "dummy.pdf", str(txt_dir), "base", "key")
         assert result == {
             "competences": [],
             "code": "C1",
-            "api_usage": {"prompt_tokens": 0, "completion_tokens": 0, "model": "gpt-test"},
+            "api_usage": {"prompt_tokens": 0, "completion_tokens": 0, "model": "gpt-5-mini"},
         }
 
 
@@ -83,7 +83,7 @@ def test_succes_retourne_usages_api(app, tmp_path, monkeypatch):
         mock_response = {"result": '{"competences": [{"Code": "C1"}]}', "usage": usage}
         monkeypatch.setattr(
             ocr_tasks.api_clients,
-            "extraire_competences_depuis_txt",
+            "extraire_competences_depuis_pdf",
             lambda *args, **kwargs: mock_response,
         )
 
@@ -92,7 +92,7 @@ def test_succes_retourne_usages_api(app, tmp_path, monkeypatch):
         assert result["api_usage"] == {
             "prompt_tokens": 7,
             "completion_tokens": 3,
-            "model": "gpt-test",
+            "model": "gpt-5-mini",
         }
         assert result["competences"] == [{"Code": "C1"}]
         assert result["code"] == "C1"

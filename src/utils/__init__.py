@@ -38,6 +38,7 @@ _LAZY_IMPORTS: Dict[str, str] = {
     "get_plan_cadre_data": ".utils",
     "replace_tags_jinja2": ".utils",
     "generate_docx_with_template": ".utils",
+    "generate_programme_grille_pdf": ".grille_pdf",
 }
 
 

@@ -1,4 +1,6 @@
-from datetime import datetime
+from datetime import timedelta
+from src.utils.datetime_utils import now_utc, ensure_aware_utc
+import secrets
 
 import sys
 
@@ -69,11 +71,11 @@ class ChatModelConfig(db.Model):
     __tablename__ = 'chat_model_config'
 
     id = db.Column(db.Integer, primary_key=True)
-    chat_model = db.Column(db.String(64), nullable=False, default='gpt-4.1-mini')
-    tool_model = db.Column(db.String(64), nullable=False, default='gpt-4.1-mini')
+    chat_model = db.Column(db.String(64), nullable=False, default='gpt-5-mini')
+    tool_model = db.Column(db.String(64), nullable=False, default='gpt-5-mini')
     reasoning_effort = db.Column(db.String(16))
     verbosity = db.Column(db.String(16))
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
 
     @classmethod
     def get_current(cls):
@@ -83,6 +85,44 @@ class ChatModelConfig(db.Model):
             db.session.add(config)
             db.session.commit()
         return config
+    
+class SectionAISettings(db.Model):
+    """Paramètres IA par section (pas de page globale).
+
+    Champs: system_prompt, ai_model, reasoning_effort, verbosity
+    La clé "section" est unique (ex.: 'plan_de_cours', 'plan_cadre', 'logigramme',
+    'grille', 'ocr', 'chat', 'evaluation').
+    """
+    __tablename__ = 'section_ai_settings'
+
+    id = db.Column(db.Integer, primary_key=True)
+    section = db.Column(db.String(64), unique=True, nullable=False)
+    system_prompt = db.Column(db.Text, nullable=True)
+    ai_model = db.Column(db.String(64), nullable=True)
+    reasoning_effort = db.Column(db.String(16), nullable=True)
+    verbosity = db.Column(db.String(16), nullable=True)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
+
+    @classmethod
+    def get_for(cls, section: str):
+        """Récupère ou crée (table incluse si manquante) la config d'une section."""
+        try:
+            obj = cls.query.filter_by(section=section).first()
+        except Exception:
+            # Si la table n'existe pas encore (pas de migration), tente de la créer
+            try:
+                cls.__table__.create(db.engine, checkfirst=True)
+            except Exception:
+                pass
+            obj = None
+        if not obj:
+            obj = cls(section=section)
+            try:
+                db.session.add(obj)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+        return obj
 
 class AnalysePlanCoursPrompt(db.Model):
     __tablename__ = 'analyse_plan_cours_prompt'
@@ -92,10 +132,10 @@ class AnalysePlanCoursPrompt(db.Model):
     ai_model = db.Column(
         db.String(50), 
         nullable=False, 
-        server_default='gpt-4o'  # Utiliser server_default au lieu de default
+        server_default='gpt-5'  # Utiliser server_default au lieu de default
     )
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_utc)
+    updated_at = db.Column(db.DateTime, onupdate=now_utc)
 
 
 class PlanDeCoursPromptSettings(db.Model):
@@ -106,11 +146,11 @@ class PlanDeCoursPromptSettings(db.Model):
     ai_model = db.Column(
         db.String(50),
         nullable=False,
-        server_default='gpt-4o'
+        server_default='gpt-5'
     )
     context_variables = db.Column(db.JSON, default=list)  # Liste des variables contextuelles requises
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=now_utc)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
 
     def __repr__(self):
         return f'<PlanDeCoursPromptSettings {self.field_name}>'
@@ -128,7 +168,7 @@ class GrillePromptSettings(db.Model):
     level4_description = db.Column(db.Text, nullable=False)
     level5_description = db.Column(db.Text, nullable=False)
     level6_description = db.Column(db.Text, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
     
     @classmethod
     def get_current(cls):
@@ -154,6 +194,67 @@ class GrillePromptSettings(db.Model):
             db.session.add(settings)
             db.session.commit()
         return settings
+
+
+class OcrPromptSettings(db.Model):
+    """Paramètres configurables pour l'extraction des compétences depuis un devis ministériel (OCR/IA)."""
+    __tablename__ = 'ocr_prompt_settings'
+
+    id = db.Column(db.Integer, primary_key=True)
+    # Prompt pour la segmentation/repérage des pages des compétences (section/borne)
+    segmentation_prompt = db.Column(db.Text, nullable=True)
+    # Prompt pour l'extraction structurée des compétences (JSON)
+    extraction_prompt = db.Column(db.Text, nullable=True)
+    # Modèles à utiliser (facultatif; sinon on prend la config appli)
+    model_section = db.Column(db.String(64), nullable=True)
+    model_extraction = db.Column(db.String(64), nullable=True)
+    # Dernière mise à jour
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
+
+    @classmethod
+    def get_current(cls):
+        try:
+            obj = cls.query.first()
+            if not obj:
+                obj = cls()
+                db.session.add(obj)
+                db.session.commit()
+            return obj
+        except Exception:
+            # Si la table n'existe pas encore, retourner None pour fallback
+            return None
+
+
+class PlanCadreImportPromptSettings(db.Model):
+    """Paramètres configurables pour l'import DOCX de plan-cadre (prompt système et modèle)."""
+    __tablename__ = 'plan_cadre_import_prompt_settings'
+
+    id = db.Column(db.Integer, primary_key=True)
+    prompt_template = db.Column(db.Text, nullable=False)
+    ai_model = db.Column(db.String(50), nullable=False, server_default='gpt-5')
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
+
+    @classmethod
+    def get_current(cls):
+        """Return current settings, creating table and a default record if needed."""
+        try:
+            obj = cls.query.first()
+        except Exception:
+            # Ensure table exists, then retry
+            try:
+                cls.__table__.create(db.engine, checkfirst=True)
+            except Exception:
+                pass
+            obj = None
+        if not obj:
+            # Créer une entrée par défaut sans consignes (configurable via /settings)
+            obj = cls(prompt_template='', ai_model='gpt-5')
+            try:
+                db.session.add(obj)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+        return obj
 
 class EvaluationSavoirFaire(db.Model):
     __tablename__ = 'evaluation_savoirfaire'
@@ -198,7 +299,7 @@ class EvaluationSavoirFaire(db.Model):
 class DBChange(db.Model):
     __tablename__ = "DBChange"
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=now_utc)
     user_id = db.Column(db.Integer, db.ForeignKey('User.id', name='fk_dbchange_user_id'))
     operation = db.Column(db.String(10))
     table_name = db.Column(db.String(50))
@@ -234,6 +335,8 @@ class User(UserMixin, db.Model):
     credits = db.Column(db.Float, nullable=False, default=0.0)
     email = db.Column(db.String(120), nullable=True)
     last_login = db.Column(db.DateTime, nullable=True)
+    api_token = db.Column(db.String(64), unique=True, nullable=True)
+    api_token_expires_at = db.Column(db.DateTime, nullable=True)
 
     reset_version = db.Column(db.Integer, default=0)  # Champ pour invalider les anciens tokens
 
@@ -257,20 +360,74 @@ class User(UserMixin, db.Model):
             token_reset_version = data.get('reset_version')
         except Exception:
             return None
-        user = User.query.get(user_id)
+        user = db.session.get(User, user_id)
         # Vérifier que la version du token correspond à celle de l'utilisateur
         if user and user.reset_version == token_reset_version:
             return user
         return None
+
+    def generate_api_token(self, expires_in=30 * 24 * 3600):
+        self.api_token = secrets.token_hex(16)
+        self.api_token_expires_at = now_utc() + timedelta(seconds=expires_in)
+        db.session.commit()
+        return self.api_token
     
     __table_args__ = (
         UniqueConstraint('email', name='uq_user_email'),
     )
 
     # Relations
-    programmes = db.relationship('Programme', 
+    programmes = db.relationship('Programme',
                                secondary=user_programme,
                                backref=db.backref('users', lazy='dynamic'))
+
+
+class OAuthClient(db.Model):
+    """Client OAuth enregistré dynamiquement."""
+
+    __tablename__ = 'oauth_client'
+    id = db.Column(db.Integer, primary_key=True)
+    client_id = db.Column(db.String(64), unique=True, nullable=False)
+    client_secret = db.Column(db.String(64), nullable=False)
+    name = db.Column(db.String(120), nullable=True)
+    redirect_uri = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=now_utc)
+
+
+class OAuthToken(db.Model):
+    """Jeton d'accès OAuth simple."""
+
+    __tablename__ = 'oauth_token'
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(64), unique=True, nullable=False)
+    client_id = db.Column(db.String(64), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=True)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    user = db.relationship('User')
+
+    def is_valid(self):
+        exp = ensure_aware_utc(self.expires_at)
+        return bool(exp and exp > now_utc())
+
+
+class OAuthAuthorizationCode(db.Model):
+    """Code d'autorisation temporaire pour le flux Authorization Code."""
+
+    __tablename__ = 'oauth_authorization_code'
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(64), unique=True, nullable=False)
+    client_id = db.Column(db.String(64), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=False)
+    code_challenge = db.Column(db.String(128), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    # Conserver l'URI de redirection utilisée lors de /authorize pour valider /token
+    redirect_uri = db.Column(db.String(255), nullable=True)
+    # Optionnel: lier l'audience (resource) au code pour validation ultérieure
+    resource = db.Column(db.String(255), nullable=True)
+
+    user = db.relationship('User')
+
 
 # ------------------------------------------------------------------------------
 # Modèles liés aux compétences et éléments de compétences
@@ -413,7 +570,7 @@ class PlanCadre(db.Model):
     eval_evaluation_de_la_langue = db.Column(db.Text, nullable=True)
     eval_evaluation_sommatives_apprentissages = db.Column(db.Text, nullable=True)
     additional_info = db.Column(db.Text, nullable=True)
-    ai_model = db.Column(db.Text, nullable=True, server_default="gpt-4o")
+    ai_model = db.Column(db.Text, nullable=True, server_default="gpt-5")
     modified_by_id = db.Column(db.Integer, 
                              db.ForeignKey("User.id", name="fk_plan_cadre_modified_by"),
                              nullable=True)
@@ -901,7 +1058,7 @@ class ChatHistory(db.Model):
     # *** NOUVEAU CHAMP: Arguments (JSON) demandés par role='assistant' ***
     function_call_args = db.Column(db.Text, nullable=True)
 
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, server_default=db.func.current_timestamp()) # Amélioré
+    timestamp = db.Column(db.DateTime, default=now_utc, server_default=db.func.current_timestamp()) # Amélioré
 
     # Assurez-vous que le nom de la classe User est correct ('User')
     user = db.relationship('User',
@@ -1062,14 +1219,15 @@ class Programme(db.Model):
         'Cours',
         secondary=cours_programme,
         back_populates='programmes',
-        lazy='dynamic'
+        lazy='dynamic',
+        overlaps="programme,cours,programme_assocs"
     )
     @property
     def cours(self):
         return list(self.cours_associes)
     
     # Association object pour Cours-Programme, incluant la session par programme
-    cours_assocs = db.relationship('CoursProgramme', back_populates='programme', cascade='all, delete-orphan')
+    cours_assocs = db.relationship('CoursProgramme', back_populates='programme', cascade='all, delete-orphan', overlaps="cours_associes")
 
     def __repr__(self):
         return f"<Programme {self.nom}>"
@@ -1103,14 +1261,16 @@ class Cours(db.Model):
     programme_assocs = db.relationship(
         'CoursProgramme',
         back_populates='cours',
-        cascade='all, delete-orphan'
+        cascade='all, delete-orphan',
+        overlaps="cours_associes"
     )
     # Relation many-to-many vers Programme (facilitant les jointures)
     programmes = db.relationship(
         'Programme',
         secondary=cours_programme,
         back_populates='cours_associes',
-        lazy='dynamic'
+        lazy='dynamic',
+        overlaps="cours,programme_assocs,programme,cours_assocs"
     )
 
     plan_cadre = db.relationship("PlanCadre", back_populates="cours", uselist=False)

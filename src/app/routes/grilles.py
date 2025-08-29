@@ -1,11 +1,11 @@
 import os
 import uuid
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, Response, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, jsonify, abort
 from flask_login import login_required, current_user
 from ..forms import FileUploadForm
 from ..tasks.import_grille import extract_grille_from_pdf_task
 import logging
-from celery.result import AsyncResult   
+from celery.result import AsyncResult
 from ...celery_app import celery
 from ..forms import (
     ConfirmationGrilleForm
@@ -58,96 +58,48 @@ def import_grille():
         task = extract_grille_from_pdf_task.delay(pdf_path=filepath, openai_key=openai_key)
         
         flash("Le fichier a été importé et la tâche a été lancée. Veuillez patienter...", "info")
-        # Rediriger vers la page de suivi avec le task.id
-        return redirect(url_for('grille_bp.grille_task_status_page', task_id=task.id))
+        # Rediriger vers la page de suivi unifiée
+        return redirect(url_for('tasks.track_task', task_id=task.id))
     return render_template('import_grille.html', form=form)
 
 
-@grille_bp.route('/grille_task_status/<task_id>')
+@grille_bp.route('/grille/import', methods=['POST'])
 @login_required
-def grille_task_status_page(task_id):
-    """
-    Affiche la page HTML de suivi du statut et du résultat de la tâche Celery pour la grille.
-    """
-    logger.info(f"Vérification du backend Celery dans la route: Broker='{celery.conf.broker_url}', Backend='{celery.conf.result_backend}'")
+def import_grille_start():
+    """Unified start endpoint for grille import (PDF -> Celery task).
 
-    try:
-        # Récupérer le résultat de la tâche avec l'instance celery explicite
-        task_result = AsyncResult(task_id, app=celery)
-
-        current_state = task_result.state
-        current_result = task_result.result
-        logger.info(f"Rendering HTML page for task {task_id}. Initial state: {current_state}, Result: {current_result}")
-
-        return render_template('task_status.html',
-                               task_id=task_id,
-                               state=current_state,
-                               result=current_result)
-
-    except AttributeError as e:
-        if "'DisabledBackend' object has no attribute" in str(e):
-            logger.error(f"Celery utilise TOUJOURS un 'DisabledBackend' pour la tâche {task_id}. Vérifiez la configuration ET la connexion Redis.", exc_info=True)
-            return Response(f"Erreur: Backend Celery désactivé malgré la configuration explicite. Vérifiez la connexion Redis. Backend configuré: {celery.conf.result_backend}", status=500)
-        else:
-            logger.error(f"Erreur AttributeError inattendue dans grille_task_status_page pour {task_id}: {e}", exc_info=True)
-            return Response("Erreur interne du serveur (AttributeError)", status=500)
-    except Exception as e:
-        # Attraper d'autres erreurs potentielles (ex: connexion Redis refusée)
-        logger.error(f"Exception générale dans grille_task_status_page pour {task_id}: {e}", exc_info=True)
-        return Response(f"Erreur interne du serveur: {e}", status=500)
-
-@grille_bp.route('/api/task_status/<task_id>')
-@login_required
-def get_task_status(task_id):
-    """
-    Endpoint API qui renvoie le statut et le résultat actuels d'une tâche Celery au format JSON.
+    Accepts multipart FormData with key 'file'. Returns { task_id } and 202.
     """
     try:
-        # Récupérer le résultat de la tâche
-        task_result = AsyncResult(task_id, app=celery)
-        state = task_result.state
-        result = task_result.result
+        if 'file' not in request.files:
+            return jsonify({'error': 'Aucun fichier fourni.'}), 400
+        file = request.files['file']
+        if not file or not file.filename:
+            return jsonify({'error': 'Fichier invalide.'}), 400
+        # Build upload path
+        upload_dir = os.path.join(current_app.config.get("UPLOAD_FOLDER", "uploads"))
+        os.makedirs(upload_dir, exist_ok=True)
+        filename = f"{uuid.uuid4().hex}_{file.filename}"
+        filepath = os.path.join(upload_dir, filename)
+        file.save(filepath)
 
-        # Construire la réponse
-        response_data = {
-            "task_id": task_id,
-            "state": state,
-        }
+        # Optional programme context
+        prog_id = None
+        try:
+            prog_val = request.form.get('programme_id') or request.values.get('programme_id')
+            if prog_val:
+                prog_id = int(prog_val)
+        except Exception:
+            prog_id = None
 
-        # Ajouter des détails du résultat en fonction de l'état
-        if state == 'SUCCESS':
-            if isinstance(result, dict) and 'status' in result:
-                response_data["status"] = result['status']
-                if result['status'] == 'success':
-                    response_data["result"] = result['result']
-                    # Ajouter les statistiques d'utilisation si disponibles
-                    if 'usage' in result:
-                        response_data["usage"] = result['usage']
-                else:
-                    # Cas d'erreur retournée par la tâche elle-même
-                    response_data["message"] = result.get('message', 'Erreur inconnue')
-            else:
-                # Pour les tâches qui ne suivent pas la structure standard
-                response_data["status"] = "success"
-                response_data["result"] = result
-        elif state == 'FAILURE':
-            # En cas d'échec de la tâche
-            response_data["status"] = "error"
-            if isinstance(result, Exception):
-                response_data["message"] = str(result)
-            else:
-                response_data["message"] = "Échec de la tâche pour une raison inconnue"
-        
-        return jsonify(response_data)
-    
+        # Enqueue Celery task
+        openai_key = current_user.openai_key
+        task = extract_grille_from_pdf_task.delay(pdf_path=filepath, openai_key=openai_key, programme_id=prog_id)
+        return jsonify({'task_id': task.id}), 202
     except Exception as e:
-        logger.error(f"Erreur lors de la récupération du statut de la tâche {task_id}: {e}", exc_info=True)
-        return jsonify({
-            "task_id": task_id,
-            "state": "ERROR",
-            "status": "error", 
-            "message": f"Erreur serveur: {str(e)}"
-        }), 500
+        logger.exception('Erreur lors du démarrage de l\'import de grille')
+        return jsonify({'error': str(e)}), 500
+
 
 @grille_bp.route('/liste_grilles')
 @login_required
@@ -199,20 +151,41 @@ def liste_grilles():
 def confirm_grille_import(task_id):
     """
     Affiche un formulaire permettant de confirmer l'importation d'une grille de cours extraite.
-    L'utilisateur peut choisir le programme auquel associer la grille.
     """
     # Récupérer le résultat de la tâche
     task_result = AsyncResult(task_id, app=celery)
     
     if task_result.state != 'SUCCESS' or not task_result.result or task_result.result.get('status') != 'success':
         flash("L'extraction n'est pas encore terminée ou a échoué.", "warning")
-        return redirect(url_for('grille_bp.grille_task_status_page', task_id=task_id))
+        return redirect(url_for('tasks.track_task', task_id=task_id))
     
     # Récupérer le JSON de la grille
     try:
         grille_json = task_result.result['result']
-        grille_data = json.loads(grille_json)
-        
+        # Accepter dict/list directement, ou parser texte avec reformatage tolérant
+        if isinstance(grille_json, (dict, list)):
+            grille_data = grille_json
+        else:
+            def _parse_or_coerce(s):
+                s = (s or '').strip()
+                # Retirer éventuelles fences Markdown
+                for fence in ("```json", "```JSON", "```"):
+                    if s.startswith(fence):
+                        s = s[len(fence):].strip()
+                if s.endswith("```"):
+                    s = s[:-3].strip()
+                try:
+                    return json.loads(s)
+                except Exception:
+                    pass
+                start = s.find('{')
+                end = s.rfind('}')
+                if start != -1 and end != -1 and end > start:
+                    candidate = s[start:end+1]
+                    return json.loads(candidate)
+                return json.loads(s)  # Laisse lever
+            grille_data = _parse_or_coerce(grille_json)
+
         # Obtenir le nom du programme depuis le JSON
         nom_programme = grille_data.get('programme', 'Programme inconnu')
     except Exception as e:
@@ -222,16 +195,14 @@ def confirm_grille_import(task_id):
     
     # Créer le formulaire
     form = ConfirmationGrilleForm()
-    
-    # Remplir la liste déroulante des programmes disponibles
-    programmes = Programme.query.join(Department).filter(
-        Department.id == current_user.department_id
-    ).all() if current_user.department_id else Programme.query.all()
-    
-    form.programme_id.choices = [(p.id, f"{p.nom}") for p in programmes]
-    
-    # Pré-remplir avec le nom du programme détecté
-    form.nom_programme.data = nom_programme
+
+    # Récupérer le programme depuis les paramètres de requête
+    programme_id = request.args.get('programme_id', type=int)
+    if not programme_id:
+        flash("Programme non spécifié.", "warning")
+        return redirect(url_for('tasks.track_task', task_id=task_id))
+
+    programme = db.session.get(Programme, programme_id) or abort(404)
     
     # Stocker l'ID de la tâche et le JSON pour soumission
     form.task_id.data = task_id
@@ -244,16 +215,13 @@ def confirm_grille_import(task_id):
         
         if form.confirmer.data:
             try:
-                # Récupérer les données du formulaire
-                programme_id = form.programme_id.data
-                programme = Programme.query.get_or_404(programme_id)
-                
                 # Sauvegarder en base de données
                 success = save_grille_to_database(
                     grille_data=grille_data,
                     programme_id=programme_id,
                     programme_nom=programme.nom,
-                    user_id=current_user.id
+                    user_id=current_user.id,
+                    import_mode=(form.import_mode.data or 'append')
                 )
                 
                 if success:
@@ -283,5 +251,6 @@ def confirm_grille_import(task_id):
         form=form,
         apercu_sessions=apercu_sessions,
         nom_programme=nom_programme,
-        task_id=task_id
+        task_id=task_id,
+        programme=programme
     )

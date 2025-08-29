@@ -20,14 +20,8 @@ class CalendarResponse(BaseModel):
 
 
 DEFAULT_CALENDAR_TEMPLATE = (
-    "Tu es un assistant pédagogique. Génère un calendrier hebdomadaire "
-    "des activités pour la session {session}.\n"
-    "Base-toi sur les informations du plan-cadre ci-dessous pour proposer "
-    "un déroulement cohérent du cours.\n"
-    "Plan-cadre:\n{sections}\n\n"
-    "Le résultat doit être un JSON avec une liste 'calendriers'. Chaque "
-    "élément comporte les champs: semaine (int), sujet, activites, "
-    "travaux_hors_classe et evaluations."
+    "Session: {session}\n"
+    "Plan-cadre:\n{sections}\n"
 )
 
 

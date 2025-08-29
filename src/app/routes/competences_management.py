@@ -20,10 +20,13 @@ def add_competence():
     else:
         programmes = []
 
-    form.programme.choices = [(p.id, p.nom) for p in programmes]
+    # Utilise le champ multi-sélection "programmes" pour rester cohérent
+    form.programmes.choices = [(p.id, p.nom) for p in programmes]
 
     if form.validate_on_submit():
-        programme_id = form.programme.data
+        programme_ids = form.programmes.data or []
+        # Sélectionne le premier programme comme programme principal (colonne programme_id)
+        programme_id = programme_ids[0] if programme_ids else None
         code = form.code.data
         nom = form.nom.data
         criteria_de_performance = form.criteria_de_performance.data or ""
@@ -44,6 +47,10 @@ def add_competence():
         )
         try:
             db.session.add(new_comp)
+            db.session.flush()
+            # Associe la compétence aux programmes sélectionnés (relation many-to-many)
+            if programme_ids:
+                new_comp.programmes = Programme.query.filter(Programme.id.in_(programme_ids)).all()
             db.session.commit()
             flash('Compétence ajoutée avec succès!', 'success')
             return redirect(url_for('programme.view_programme', programme_id=programme_id))
@@ -97,7 +104,7 @@ def add_element_competence():
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_element_competence(element_id):
-    element = ElementCompetence.query.get(element_id)
+    element = db.session.get(ElementCompetence, element_id)
     if not element:
         flash('Élément de compétence non trouvé.', 'danger')
         return redirect(url_for('main.index'))

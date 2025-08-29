@@ -1,8 +1,41 @@
 import logging
-from typing import Optional
+import json
+from typing import Optional, Mapping, Dict, Any
 
 _LOGGING_CONFIGURED = False
 LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
+
+
+_DEFAULT_RECORD_KEYS = set(logging.makeLogRecord({}).__dict__.keys())
+
+
+class ContextFormatter(logging.Formatter):
+    """Formatter that appends any custom LogRecord attributes as JSON context.
+
+    This ensures that fields passed via ``extra={...}`` appear in logs even if
+    the base format string doesn't include them explicitly.
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        base = super().format(record)
+        # Collect non-standard attributes from the record
+        context: Dict[str, Any] = {}
+        for k, v in record.__dict__.items():
+            if k in _DEFAULT_RECORD_KEYS:
+                continue
+            if k.startswith("_"):
+                continue
+            if k in {"exc_text", "stack_info"}:
+                continue
+            context[k] = v
+        if context:
+            try:
+                ctx = json.dumps(context, ensure_ascii=False, default=str)
+                return f"{base} | {ctx}"
+            except Exception:
+                # Fallback: show a best-effort repr
+                return f"{base} | context={context}"
+        return base
 
 def setup_logging(level: int = logging.INFO) -> None:
     """Configure root logger with a standard format once."""
@@ -10,7 +43,7 @@ def setup_logging(level: int = logging.INFO) -> None:
     if _LOGGING_CONFIGURED:
         return
     handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    handler.setFormatter(ContextFormatter(LOG_FORMAT))
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
     root_logger.handlers.clear()
@@ -22,3 +55,51 @@ def get_logger(name: Optional[str] = None) -> logging.Logger:
     if not _LOGGING_CONFIGURED:
         setup_logging()
     return logging.getLogger(name)
+
+
+# ---- Debug helpers (safe logging) ----
+SENSITIVE_HEADERS = {"authorization", "cookie", "set-cookie", "x-api-key"}
+
+
+def redact_headers(headers: Mapping[str, str]) -> Dict[str, str]:
+    """Return a copy of headers with sensitive values redacted.
+
+    Only used for temporary debugging; avoid long-term logging of full headers.
+    """
+    out: Dict[str, str] = {}
+    for k, v in headers.items():
+        lk = k.lower()
+        if lk in SENSITIVE_HEADERS:
+            if not v:
+                out[k] = "<empty>"
+            elif lk == "authorization":
+                # Keep scheme and last 6 chars for correlation
+                parts = v.split(" ", 1)
+                if len(parts) == 2:
+                    scheme, token = parts
+                    out[k] = f"{scheme} ****{token[-6:]}"
+                else:
+                    out[k] = "****"
+            else:
+                out[k] = "<redacted>"
+        else:
+            out[k] = v
+    return out
+
+
+def dump_request_meta(environ: Mapping[str, Any]) -> Dict[str, Any]:
+    """Extract forwarding-related request metadata from the WSGI environ."""
+    keys = [
+        "REQUEST_METHOD",
+        "PATH_INFO",
+        "QUERY_STRING",
+        "HTTP_HOST",
+        "REMOTE_ADDR",
+        "HTTP_X_FORWARDED_PROTO",
+        "HTTP_X_FORWARDED_HOST",
+        "HTTP_X_FORWARDED_PORT",
+        "HTTP_X_FORWARDED_PREFIX",
+        "SCRIPT_NAME",
+        "wsgi.url_scheme",
+    ]
+    return {k: environ.get(k) for k in keys}

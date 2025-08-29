@@ -1,0 +1,75 @@
+from src.app.tasks.import_plan_de_cours import import_plan_de_cours_task
+from src.app.models import Programme, Department, Cours, PlanCadre, PlanDeCours, User, SectionAISettings
+from src.extensions import db
+
+
+class FakeFiles:
+    def __init__(self, recorder):
+        self.recorder = recorder
+    def create(self, file=None, purpose=None):  # noqa: ARG002
+        return type('Up', (), {'id': 'file-id'})()
+
+
+class FakeResponses:
+    class _Stream:
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc, tb):  # noqa: ARG002
+            return False
+        def __iter__(self):
+            return iter(())
+        def get_final_response(self):
+            # Simulate API returning only output_text as JSON string
+            usage = type('U', (), {'input_tokens': 3, 'output_tokens': 5})()
+            payload = {
+                'presentation_du_cours': 'P',
+                'objectif_terminal_du_cours': 'O',
+                'organisation_et_methodes': 'M',
+                'accomodement': 'A',
+                'evaluation_formative_apprentissages': 'E1',
+                'evaluation_expression_francais': 'E2',
+                'materiel': 'Mat',
+                'calendriers': [],
+                'disponibilites': [],
+                'mediagraphies': [],
+                'evaluations': [],
+            }
+            return type('Resp', (), {
+                'usage': usage,
+                'output_text': __import__('json').dumps(payload)
+            })()
+
+    def __init__(self, recorder):
+        self.recorder = recorder
+    def stream(self, **kwargs):  # noqa: ARG002
+        return FakeResponses._Stream()
+
+
+class FakeOpenAI:
+    def __init__(self, api_key=None):  # noqa: ARG002
+        self.calls = {}
+        self.files = FakeFiles(self.calls)
+        self.responses = FakeResponses(self.calls)
+
+
+def test_import_plan_de_cours_task_parses_output_text_json(app):
+    with app.app_context():
+        dept = Department(nom='D'); db.session.add(dept); db.session.flush()
+        prog = Programme(nom='P', department_id=dept.id); db.session.add(prog); db.session.flush()
+        cours = Cours(code='C', nom='Cours', heures_theorie=0, heures_laboratoire=0, heures_travail_maison=0)
+        db.session.add(cours); db.session.flush(); cours.programmes.append(prog); db.session.flush()
+        pc = PlanCadre(cours_id=cours.id); db.session.add(pc); db.session.flush()
+        plan = PlanDeCours(cours_id=cours.id, session='A25'); db.session.add(plan); db.session.flush()
+        user = User(username='u', password='x', email='u@example.com', openai_key='sk', credits=10.0)
+        db.session.add(user); db.session.add(SectionAISettings(section='plan_de_cours_import', system_prompt=''))
+        db.session.commit()
+
+        class DummySelf:
+            request = type('R', (), {'id': 'tid'})()
+            def update_state(self, state=None, meta=None):  # noqa: ANN001,ARG002
+                return None
+
+        orig = import_plan_de_cours_task.__wrapped__.__func__
+        result = orig(DummySelf(), plan.id, 'text', 'gpt-5', user.id, None, FakeOpenAI)
+        assert result.get('status') == 'success'
+        assert result['fields']['presentation_du_cours'] == 'P'

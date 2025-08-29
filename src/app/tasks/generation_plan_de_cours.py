@@ -4,11 +4,13 @@ from typing import List, Optional
 from celery import shared_task
 from openai import OpenAI
 from pydantic import BaseModel, Field
+import json
 
 from src.extensions import db
 from src.utils.openai_pricing import calculate_call_cost
 from src.app.models import (
-    PlanDeCours, PlanDeCoursCalendrier, User
+    PlanDeCours, PlanDeCoursCalendrier, User, Cours, PlanCadre,
+    PlanDeCoursEvaluations, PlanDeCoursEvaluationsCapacites, PlanCadreCapacites, SectionAISettings
 )
 
 logger = logging.getLogger(__name__)
@@ -29,8 +31,22 @@ class BulkPlanDeCoursResponse(BaseModel):
     accomodement: Optional[str] = None
     evaluation_formative_apprentissages: Optional[str] = None
     evaluation_expression_francais: Optional[str] = None
+    seuil_reussite: Optional[str] = None
     materiel: Optional[str] = None
     calendriers: List[CalendarEntry] = Field(default_factory=list)
+    # Inclure aussi les évaluations pour créer la grille d'évaluation
+    class _EvalCap(BaseModel):
+        capacite: Optional[str] = None
+        ponderation: Optional[str] = None
+    class _EvalItem(BaseModel):
+        titre_evaluation: Optional[str] = None
+        description: Optional[str] = None
+        semaine: Optional[int] = None
+        capacites: List['_EvalCap'] = Field(default_factory=list)
+    evaluations: List['_EvalItem'] = Field(default_factory=list)
+
+# Résoudre les références avant utilisation (Pydantic v2)
+BulkPlanDeCoursResponse.model_rebuild()
 
 
 def _extract_first_parsed(response):
@@ -63,11 +79,61 @@ def _extract_first_parsed(response):
     return None
 
 
+def _collect_summary(items):
+    """Concatène les textes de résumé fournis par l'API Responses."""
+    text = ""
+    if not items:
+        return text
+    if not isinstance(items, (list, tuple)):
+        items = [items]
+    for item in items:
+        if getattr(item, "type", "") == "summary_text":
+            text += getattr(item, "text", "")
+    return text
+
+
+def _extract_reasoning_summary_from_response(response):
+    """Extrait le résumé de raisonnement de la réponse finale."""
+    summary = ""
+    if hasattr(response, "reasoning") and response.reasoning:
+        for r in response.reasoning:
+            summary += _collect_summary(getattr(r, "summary", None))
+    if not summary and hasattr(response, "output"):
+        for item in getattr(response, "output", []):
+            if getattr(item, "type", "") == "reasoning":
+                summary += _collect_summary(getattr(item, "summary", None))
+    return summary.strip()
+
+
+def _serialize_evaluations(plan: PlanDeCours) -> List[dict]:
+    """Sérialise les évaluations du plan de cours."""
+    evaluations = []
+    for e in getattr(plan, "evaluations", []) or []:
+        evaluations.append({
+            "id": e.id,
+            "titre": e.titre_evaluation,
+            "description": e.description,
+            "semaine": e.semaine,
+            "capacites": [
+                {
+                    "capacite_id": c.capacite_id,
+                    "capacite": (
+                        db.session.get(PlanCadreCapacites, c.capacite_id).capacite
+                        if c.capacite_id else None
+                    ),
+                    "ponderation": c.ponderation,
+                }
+                for c in getattr(e, "capacites", [])
+            ],
+        })
+    return evaluations
+
+
 @shared_task(bind=True, name='src.app.tasks.generation_plan_de_cours.generate_plan_de_cours_all_task')
-def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai_model: str, user_id: int):
+def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai_model: str, user_id: int, improve_only: bool = False):
     """Celery task qui génère toutes les sections du plan de cours et met à jour la BD."""
     try:
-        plan = PlanDeCours.query.get(plan_de_cours_id)
+        plan = db.session.get(PlanDeCours, plan_de_cours_id)
         if not plan:
             return {"status": "error", "message": "Plan de cours non trouvé."}
 
@@ -85,15 +151,152 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
         self.update_state(state='PROGRESS', meta={'message': 'Appel au modèle IA en cours...'})
 
         client = OpenAI(api_key=user.openai_key)
-        response = client.responses.parse(
-            model=ai_model,
-            input=prompt,
-            text_format=BulkPlanDeCoursResponse,
-        )
+        # Section-level IA settings (génération ou amélioration)
+        sa = SectionAISettings.get_for('plan_de_cours_improve' if improve_only else 'plan_de_cours')
+        final_model = (ai_model or '').strip() or (sa.ai_model or 'gpt-5')
+        reasoning_params = {"summary": "auto"}
+        if getattr(sa, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
+            reasoning_params["effort"] = sa.reasoning_effort
+
+        # Construire le prompt utilisateur
+        cours: Cours = plan.cours
+        plan_cadre: PlanCadre = cours.plan_cadre if cours else None
+        try:
+            # Extraire 'Informations complémentaires' depuis le prompt fourni (quand appelé via les routes)
+            addl = None
+            try:
+                marker = "Informations complémentaires:"
+                if isinstance(prompt, str) and marker in prompt:
+                    addl = prompt.split(marker, 1)[1].strip()
+            except Exception:
+                addl = None
+
+            if improve_only:
+                # Construire un snapshot du plan de cours courant pour amélioration
+                current_payload = {
+                    'session': plan.session,
+                    'cours': {'code': getattr(cours, 'code', None), 'nom': getattr(cours, 'nom', None)},
+                    'fields': {
+                        'presentation_du_cours': plan.presentation_du_cours,
+                        'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+                        'organisation_et_methodes': plan.organisation_et_methodes,
+                        'accomodement': plan.accomodement,
+                        'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+                        'evaluation_expression_francais': plan.evaluation_expression_francais,
+                        'seuil_reussite': plan.seuil_reussite,
+                        'materiel': plan.materiel,
+                    },
+                    'calendriers': [
+                        {
+                            'semaine': c.semaine,
+                            'sujet': c.sujet,
+                            'activites': c.activites,
+                            'travaux_hors_classe': c.travaux_hors_classe,
+                            'evaluations': c.evaluations,
+                        } for c in plan.calendriers
+                    ],
+                    'evaluations': [
+                        {
+                            'titre_evaluation': e.titre_evaluation,
+                            'description': e.description,
+                            'semaine': e.semaine,
+                            'capacites': [
+                                {
+                                    'capacite': (db.session.get(PlanCadreCapacites, ce.capacite_id).capacite if ce.capacite_id else None),
+                                    'ponderation': ce.ponderation,
+                                } for ce in e.capacites
+                            ],
+                        } for e in plan.evaluations
+                    ],
+                }
+                if addl:
+                    current_payload['informations_complementaires'] = addl
+                import json as _json
+                user_prompt = _json.dumps(current_payload, ensure_ascii=False)
+            else:
+                from src.app.routes.plan_de_cours import build_all_prompt
+                prompt_template = None
+                user_prompt = build_all_prompt(plan_cadre, cours, plan.session, prompt_template, additional_info=addl)
+        except Exception:
+            # Fallback strict: ne pas utiliser le paramètre 'prompt' reçu, mais un contexte minimal
+            # basé uniquement sur le plan-cadre
+            sections = []
+            if plan_cadre:
+                sections.append(f"Objectif terminal: {getattr(plan_cadre, 'objectif_terminal', '') or ''}")
+            user_prompt = "\n".join(sections)
+
+        # Build input with optional system prompt (from settings only)
+        sys_prompt = (sa.system_prompt or '').strip()
+        input_data = ([
+            {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
+            {"role": "user", "content": [{"type": "input_text", "text": user_prompt}]}
+        ])
+        streamed_text = ""
+        reasoning_summary_text = ""
+        try:
+            with client.responses.stream(
+                model=final_model,
+                input=input_data,
+                text_format=BulkPlanDeCoursResponse,
+                reasoning=reasoning_params,
+            ) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or getattr(event, 'event', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Génération en cours...',
+                                'stream_chunk': delta,
+                                'stream_buffer': streamed_text,
+                            })
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(event, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary_text += rs_delta
+                            reasoning_summary_text = reasoning_summary_text.strip()
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif etype.endswith('reasoning.summary.delta') or etype == 'reasoning.summary.delta':
+                        reasoning_summary_text += _collect_summary(getattr(event, 'delta', None))
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif getattr(event, 'summary', None):
+                        reasoning_summary_text += _collect_summary(event.summary)
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif etype.endswith('response.completed') or etype == 'response.completed':
+                        break
+                response = stream.get_final_response()
+        except Exception as se:
+            logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
+            streamed_text = None
+            response = client.responses.parse(
+                model=final_model,
+                input=input_data,
+                text_format=BulkPlanDeCoursResponse,
+            )
+            reasoning_summary_text = _extract_reasoning_summary_from_response(response)
+            if reasoning_summary_text:
+                self.update_state(state='PROGRESS', meta={
+                    'message': 'Résumé du raisonnement',
+                    'reasoning_summary': reasoning_summary_text,
+                })
 
         usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
         usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
-        cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
+        cost = calculate_call_cost(usage_prompt, usage_completion, final_model)
 
         if user.credits < cost:
             return {"status": "error", "message": "Crédits insuffisants pour cette opération."}
@@ -104,6 +307,30 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
         if parsed is None:
             return {"status": "error", "message": "Aucune donnée renvoyée par le modèle."}
 
+        # Snapshot avant modification pour comparaison
+        old_fields = {
+            'presentation_du_cours': plan.presentation_du_cours,
+            'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+            'organisation_et_methodes': plan.organisation_et_methodes,
+            'accomodement': plan.accomodement,
+            'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+            'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'seuil_reussite': plan.seuil_reussite,
+            'materiel': plan.materiel,
+        }
+        old_calendriers = [
+            {
+                'semaine': c.semaine,
+                'sujet': c.sujet,
+                'activites': c.activites,
+                'travaux_hors_classe': c.travaux_hors_classe,
+                'evaluations': c.evaluations,
+            } for c in plan.calendriers
+        ]
+        # Inclure l'instantané des évaluations avant modification pour permettre le revert
+        old_evaluations = _serialize_evaluations(plan)
+        old_evaluations = _serialize_evaluations(plan)
+
         # Mettre à jour les champs
         plan.presentation_du_cours = parsed.presentation_du_cours or plan.presentation_du_cours
         plan.objectif_terminal_du_cours = parsed.objectif_terminal_du_cours or plan.objectif_terminal_du_cours
@@ -111,6 +338,7 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
         plan.accomodement = parsed.accomodement or plan.accomodement
         plan.evaluation_formative_apprentissages = parsed.evaluation_formative_apprentissages or plan.evaluation_formative_apprentissages
         plan.evaluation_expression_francais = parsed.evaluation_expression_francais or plan.evaluation_expression_francais
+        plan.seuil_reussite = parsed.seuil_reussite or plan.seuil_reussite
         plan.materiel = parsed.materiel or plan.materiel
 
         # Calendrier
@@ -129,6 +357,53 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
 
         db.session.commit()
 
+        # Traitement des évaluations provenant de la première réponse (pas de second appel)
+        try:
+            cours: Cours = plan.cours
+            plan_cadre: PlanCadre = cours.plan_cadre if cours else None
+            evals = (getattr(parsed, 'evaluations', None) or [])
+            if evals is not None and (cours and plan_cadre):
+                # Remplacer la liste d'évaluations existantes
+                for e in plan.evaluations:
+                    db.session.delete(e)
+
+                # Map libellé capacité -> id
+                cap_by_name = {}
+                try:
+                    for c in getattr(plan_cadre, 'capacites', []) or []:
+                        if c.capacite:
+                            cap_by_name[c.capacite.strip()] = c.id
+                except Exception:
+                    pass
+
+                for ev in evals or []:
+                    row = PlanDeCoursEvaluations(
+                        plan_de_cours_id=plan.id,
+                        titre_evaluation=getattr(ev, 'titre_evaluation', None) or getattr(ev, 'titre', None),
+                        description=getattr(ev, 'description', None),
+                        semaine=getattr(ev, 'semaine', None),
+                    )
+                    db.session.add(row)
+                    db.session.flush()
+                    for ce in (getattr(ev, 'capacites', None) or []):
+                        cap_id = None
+                        try:
+                            name = getattr(ce, 'capacite', None)
+                            if name:
+                                cap_id = cap_by_name.get(name.strip())
+                        except Exception:
+                            cap_id = None
+                        db.session.add(PlanDeCoursEvaluationsCapacites(
+                            evaluation_id=row.id,
+                            capacite_id=cap_id,
+                            ponderation=getattr(ce, 'ponderation', None),
+                        ))
+                db.session.commit()
+        except Exception:
+            logger.exception("Erreur lors du traitement des évaluations (réponse unique)")
+
+        generated_evals = _serialize_evaluations(plan)
+
         return {
             "status": "success",
             "fields": {
@@ -138,6 +413,7 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
                 'accomodement': plan.accomodement,
                 'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
                 'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'seuil_reussite': plan.seuil_reussite,
                 'materiel': plan.materiel,
             },
             "calendriers": [
@@ -148,10 +424,758 @@ def generate_plan_de_cours_all_task(self, plan_de_cours_id: int, prompt: str, ai
                     'travaux_hors_classe': c.travaux_hors_classe,
                     'evaluations': c.evaluations,
                 } for c in plan.calendriers
-            ]
+            ],
+            "evaluations": generated_evals,
+            "old_fields": old_fields,
+            "old_calendriers": old_calendriers,
+            "old_evaluations": old_evaluations,
+            "cours_id": plan.cours_id,
+            "plan_id": plan.id,
+            "session": plan.session,
+            "validation_url": f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
+            "reasoning_summary": reasoning_summary_text
         }
 
     except Exception as e:
         logger.exception("Erreur dans la tâche generate_plan_de_cours_all_task")
         return {"status": "error", "message": str(e)}
 
+
+class SingleFieldResponse(BaseModel):
+    champ_description: Optional[str] = None
+
+
+@shared_task(bind=True, name='src.app.tasks.generation_plan_de_cours.generate_plan_de_cours_field_task')
+def generate_plan_de_cours_field_task(self, plan_de_cours_id: int, field_name: str, additional_info: Optional[str], user_id: int):
+    """Génère (ou améliore) un champ individuel du plan de cours via Celery.
+
+    Utilise les PlanDeCoursPromptSettings pour construire le prompt.
+    Met à jour la base et retourne un payload compact pour l'UI unifiée.
+    """
+    try:
+        plan = db.session.get(PlanDeCours, plan_de_cours_id)
+        if not plan:
+            return {"status": "error", "message": "Plan de cours non trouvé."}
+
+        # Validation champ supporté
+        allowed_fields = {
+            'presentation_du_cours',
+            'objectif_terminal_du_cours',
+            'organisation_et_methodes',
+            'accomodement',
+            'evaluation_formative_apprentissages',
+            'evaluation_expression_francais',
+            'seuil_reussite',
+            'materiel',
+        }
+        if field_name not in allowed_fields:
+            return {"status": "error", "message": f"Champ non supporté: {field_name}"}
+
+        user = db.session.query(User).with_for_update().get(user_id)
+        if not user:
+            return {"status": "error", "message": "Utilisateur introuvable."}
+        if not user.openai_key:
+            return {"status": "error", "message": "Clé OpenAI non configurée."}
+        if user.credits is None:
+            user.credits = 0.0
+            db.session.commit()
+        if user.credits <= 0:
+            return {"status": "error", "message": "Crédits insuffisants."}
+
+        # Prompt système: même que l'amélioration globale
+        sa_impv = SectionAISettings.get_for('plan_de_cours_improve')
+        sa = sa_impv if (sa_impv and (sa_impv.system_prompt or sa_impv.ai_model or sa_impv.reasoning_effort or sa_impv.verbosity)) else SectionAISettings.get_for('plan_de_cours')
+        # IMPORTANT: ignorer l'override éventuel au niveau du champ pour éviter des modèles obsolètes (ex: gpt-4o)
+        ai_model = (sa.ai_model or 'gpt-5')
+
+        # Construire le prompt user avec l'intégralité du plan actuel, + info complémentaire, + cible du champ
+        cours: Cours = plan.cours
+        if not cours:
+            return {"status": "error", "message": "Contexte cours indisponible."}
+        payload = {
+            'mode': 'improve_field',
+            'target_field': field_name,
+            'session': plan.session,
+            'cours': {'code': getattr(cours, 'code', None), 'nom': getattr(cours, 'nom', None)},
+            'fields': {
+                'presentation_du_cours': plan.presentation_du_cours,
+                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+                'organisation_et_methodes': plan.organisation_et_methodes,
+                'accomodement': plan.accomodement,
+                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'seuil_reussite': plan.seuil_reussite,
+                'materiel': plan.materiel,
+            },
+            'calendriers': [
+                {
+                    'semaine': c.semaine,
+                    'sujet': c.sujet,
+                    'activites': c.activites,
+                    'travaux_hors_classe': c.travaux_hors_classe,
+                    'evaluations': c.evaluations,
+                } for c in plan.calendriers
+            ],
+            'evaluations': [
+                {
+                    'titre_evaluation': e.titre_evaluation,
+                    'description': e.description,
+                    'semaine': e.semaine,
+                    'capacites': [
+                        {
+                            'capacite': (db.session.get(PlanCadreCapacites, ce.capacite_id).capacite if ce.capacite_id else None),
+                            'ponderation': ce.ponderation,
+                        } for ce in e.capacites
+                    ],
+                } for e in plan.evaluations
+            ],
+        }
+        if additional_info:
+            payload['informations_complementaires'] = additional_info
+        import json as _json
+        prompt = _json.dumps(payload, ensure_ascii=False)
+
+        self.update_state(state='PROGRESS', meta={'message': f"Génération de '{field_name}' en cours..."})
+
+        client = OpenAI(api_key=user.openai_key)
+        streamed_text = ""
+        reasoning_summary_text = ""
+        # Reasoning effort from section settings
+        reasoning_params = {"summary": "auto"}
+        if getattr(sa, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
+            reasoning_params["effort"] = sa.reasoning_effort
+        # System prompt: improve settings (same as globale amélioration)
+        sys_prompt = (getattr(sa, 'system_prompt', None) or '').strip()
+        input_data = ([
+            {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
+            {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
+        ])
+        try:
+            with client.responses.stream(
+                model=ai_model,
+                input=input_data,
+                text_format=SingleFieldResponse,
+                reasoning=reasoning_params,
+            ) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or getattr(event, 'event', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            self.update_state(state='PROGRESS', meta={
+                                'message': f"Génération de '{field_name}' en cours...",
+                                'stream_chunk': delta,
+                                'stream_buffer': streamed_text,
+                            })
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(event, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary_text += rs_delta
+                            reasoning_summary_text = reasoning_summary_text.strip()
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif etype.endswith('reasoning.summary.delta') or etype == 'reasoning.summary.delta':
+                        reasoning_summary_text += _collect_summary(getattr(event, 'delta', None))
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif getattr(event, 'summary', None):
+                        reasoning_summary_text += _collect_summary(event.summary)
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif etype.endswith('response.completed') or etype == 'response.completed':
+                        break
+                response = stream.get_final_response()
+        except Exception as se:
+            logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
+            streamed_text = None
+            response = client.responses.parse(
+                model=ai_model,
+                input=input_data,
+                text_format=SingleFieldResponse,
+            )
+            reasoning_summary_text = _extract_reasoning_summary_from_response(response)
+            if reasoning_summary_text:
+                self.update_state(state='PROGRESS', meta={
+                    'message': 'Résumé du raisonnement',
+                    'reasoning_summary': reasoning_summary_text,
+                })
+
+        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
+        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
+        cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
+        if user.credits < cost:
+            return {"status": "error", "message": "Crédits insuffisants pour cette opération."}
+        user.credits -= cost
+
+        # Récupération du champ généré
+        parsed = _extract_first_parsed(response)
+        value = None
+        try:
+            value = parsed and getattr(parsed, 'champ_description', None)
+        except Exception:
+            value = None
+        if not value:
+            return {"status": "error", "message": "Aucune description générée."}
+
+        # Snapshot avant modification pour comparaison (tous les champs + calendrier)
+        old_fields = {
+            'presentation_du_cours': plan.presentation_du_cours,
+            'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+            'organisation_et_methodes': plan.organisation_et_methodes,
+            'accomodement': plan.accomodement,
+            'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+            'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'seuil_reussite': plan.seuil_reussite,
+            'materiel': plan.materiel,
+        }
+        old_calendriers = [
+            {
+                'semaine': c.semaine,
+                'sujet': c.sujet,
+                'activites': c.activites,
+                'travaux_hors_classe': c.travaux_hors_classe,
+                'evaluations': c.evaluations,
+            } for c in plan.calendriers
+        ]
+        # Snapshot des évaluations avant modification (pour la page de review/revert)
+        old_evaluations = _serialize_evaluations(plan)
+
+        # Mise à jour du plan
+        setattr(plan, field_name, value)
+        db.session.commit()
+
+        evaluations = _serialize_evaluations(plan)
+
+        return {
+            'status': 'success',
+            'field_name': field_name,
+            'value': value,
+            'plan_id': plan.id,
+            'cours_id': plan.cours_id,
+            'session': plan.session,
+            'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
+            # Ajouts pour la page de validation unifiée Plan de cours
+            'old_fields': old_fields,
+            'old_calendriers': old_calendriers,
+            'old_evaluations': old_evaluations,
+            'evaluations': evaluations,
+            'validation_url': f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
+            'reasoning_summary': reasoning_summary_text,
+        }
+
+    except Exception as e:
+        logger.exception("Erreur dans la tâche generate_plan_de_cours_field_task")
+        return {"status": "error", "message": str(e)}
+
+
+class CalendarOnlyResponse(BaseModel):
+    calendriers: List[CalendarEntry] = Field(default_factory=list)
+
+
+@shared_task(bind=True, name='src.app.tasks.generation_plan_de_cours.generate_plan_de_cours_calendar_task')
+def generate_plan_de_cours_calendar_task(
+    self,
+    plan_de_cours_id: int,
+    additional_info: Optional[str],
+    user_id: int,
+    current_calendrier: Optional[List[dict]] = None,
+):
+    """Génère uniquement le calendrier des activités du plan de cours."""
+    try:
+        plan = db.session.get(PlanDeCours, plan_de_cours_id)
+        if not plan:
+            return {"status": "error", "message": "Plan de cours non trouvé."}
+
+        user = db.session.query(User).with_for_update().get(user_id)
+        if not user:
+            return {"status": "error", "message": "Utilisateur introuvable."}
+        if not user.openai_key:
+            return {"status": "error", "message": "Clé OpenAI non configurée."}
+        if user.credits is None:
+            user.credits = 0.0
+            db.session.commit()
+        if user.credits <= 0:
+            return {"status": "error", "message": "Crédits insuffisants."}
+
+        # Contexte / prompt: amélioration de section -> prompt user = plan actuel (+ infos), système = improve
+        cours: Cours = plan.cours
+        if not cours:
+            return {"status": "error", "message": "Contexte cours indisponible."}
+        payload = {
+            'mode': 'improve_calendar',
+            'session': plan.session,
+            'cours': {'code': getattr(cours, 'code', None), 'nom': getattr(cours, 'nom', None)},
+            'expected_output': {
+                'only': 'calendriers',
+                'strict': True,
+                'exclude_sections': ['mediagraphies', 'disponibilites']
+            },
+            'fields': {
+                'presentation_du_cours': plan.presentation_du_cours,
+                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+                'organisation_et_methodes': plan.organisation_et_methodes,
+                'accomodement': plan.accomodement,
+                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'seuil_reussite': plan.seuil_reussite,
+                'materiel': plan.materiel,
+            },
+            'calendriers': [
+                {
+                    'semaine': c.semaine,
+                    'sujet': c.sujet,
+                    'activites': c.activites,
+                    'travaux_hors_classe': c.travaux_hors_classe,
+                    'evaluations': c.evaluations,
+                } for c in plan.calendriers
+            ],
+            'evaluations': _serialize_evaluations(plan),
+        }
+        if additional_info:
+            payload['informations_complementaires'] = additional_info
+        prompt = json.dumps(payload, ensure_ascii=False)
+
+        # Choix du modèle + section settings (improve)
+        sa = SectionAISettings.get_for('plan_de_cours_improve')
+        ai_model = (sa.ai_model or 'gpt-5')
+
+        self.update_state(state='PROGRESS', meta={'message': 'Génération du calendrier…'})
+
+        client = OpenAI(api_key=user.openai_key)
+        streamed_text = ""
+        reasoning_summary_text = ""
+        reasoning_params = {"summary": "auto"}
+        if getattr(sa, 'reasoning_effort', None) in {"minimal", "low", "medium", "high"}:
+            reasoning_params["effort"] = sa.reasoning_effort
+        sys_prompt = (sa.system_prompt or '').strip()
+        input_data = ([
+            {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
+            {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
+        ])
+        try:
+            with client.responses.stream(
+                model=ai_model,
+                input=input_data,
+                text_format=CalendarOnlyResponse,
+                reasoning=reasoning_params,
+            ) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Génération du calendrier…',
+                                'stream_chunk': delta,
+                                'stream_buffer': streamed_text,
+                            })
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(event, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary_text += rs_delta
+                            reasoning_summary_text = reasoning_summary_text.strip()
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif etype.endswith('reasoning.summary.delta') or etype == 'reasoning.summary.delta':
+                        reasoning_summary_text += _collect_summary(getattr(event, 'delta', None))
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif getattr(event, 'summary', None):
+                        reasoning_summary_text += _collect_summary(event.summary)
+                        reasoning_summary_text = reasoning_summary_text.strip()
+                        if reasoning_summary_text:
+                            self.update_state(state='PROGRESS', meta={
+                                'message': 'Résumé du raisonnement',
+                                'reasoning_summary': reasoning_summary_text,
+                            })
+                    elif etype.endswith('response.completed') or etype == 'response.completed':
+                        break
+                response = stream.get_final_response()
+        except Exception as se:
+            logging.warning(f"Streaming non disponible, bascule vers mode non-stream: {se}")
+            streamed_text = None
+            response = client.responses.parse(
+                model=ai_model,
+                input=input_data,
+                text_format=CalendarOnlyResponse,
+            )
+            reasoning_summary_text = _extract_reasoning_summary_from_response(response)
+            if reasoning_summary_text:
+                self.update_state(state='PROGRESS', meta={
+                    'message': 'Résumé du raisonnement',
+                    'reasoning_summary': reasoning_summary_text,
+                })
+
+        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
+        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
+        cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
+        if user.credits < cost:
+            return {"status": "error", "message": "Crédits insuffisants pour cette opération."}
+        user.credits -= cost
+
+        parsed = _extract_first_parsed(response)
+        entries: List[CalendarEntry] = (parsed.calendriers if parsed else []) or []
+        if not entries:
+            return {"status": "error", "message": "Aucune entrée générée pour le calendrier."}
+
+        # Snapshot calendrier avant remplacement
+        old_calendriers = [
+            {
+                'semaine': c.semaine,
+                'sujet': c.sujet,
+                'activites': c.activites,
+                'travaux_hors_classe': c.travaux_hors_classe,
+                'evaluations': c.evaluations,
+            } for c in plan.calendriers
+        ]
+        old_evaluations = _serialize_evaluations(plan)
+
+        # Mise à jour DB (remplace le calendrier courant)
+        for cal in plan.calendriers:
+            db.session.delete(cal)
+        for entry in entries:
+            db.session.add(PlanDeCoursCalendrier(
+                plan_de_cours_id=plan.id,
+                semaine=entry.semaine,
+                sujet=entry.sujet,
+                activites=entry.activites,
+                travaux_hors_classe=entry.travaux_hors_classe,
+                evaluations=entry.evaluations,
+            ))
+        db.session.commit()
+
+        evaluations = _serialize_evaluations(plan)
+
+        return {
+            'status': 'success',
+            'plan_id': plan.id,
+            'cours_id': plan.cours_id,
+            'session': plan.session,
+            'calendriers': [
+                {
+                    'semaine': c.semaine,
+                    'sujet': c.sujet,
+                    'activites': c.activites,
+                    'travaux_hors_classe': c.travaux_hors_classe,
+                    'evaluations': c.evaluations,
+                } for c in plan.calendriers
+            ],
+            'evaluations': evaluations,
+            'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
+            # Ajouts pour permettre la restauration via la page de review
+            'old_fields': {
+                'presentation_du_cours': plan.presentation_du_cours,
+                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+                'organisation_et_methodes': plan.organisation_et_methodes,
+                'accomodement': plan.accomodement,
+                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'materiel': plan.materiel,
+            },
+            'old_calendriers': old_calendriers,
+            'old_evaluations': old_evaluations,
+            'validation_url': f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
+            'reasoning_summary': reasoning_summary_text,
+        }
+    except Exception as e:
+        logger.exception("Erreur dans la tâche generate_plan_de_cours_calendar_task")
+        return {"status": "error", "message": str(e)}
+
+
+class EvaluationCapaciteEntry(BaseModel):
+    capacite: Optional[str] = None
+    ponderation: Optional[str] = None
+
+
+class EvaluationEntry(BaseModel):
+    titre: Optional[str] = None
+    description: Optional[str] = None
+    semaine: Optional[int] = None
+    capacites: List[EvaluationCapaciteEntry] = Field(default_factory=list)
+
+
+class EvaluationsResponse(BaseModel):
+    evaluations: List[EvaluationEntry] = Field(default_factory=list)
+
+
+@shared_task(bind=True, name='src.app.tasks.generation_plan_de_cours.generate_plan_de_cours_evaluations_task')
+def generate_plan_de_cours_evaluations_task(
+    self,
+    plan_de_cours_id: int,
+    additional_info: Optional[str],
+    user_id: int,
+    current_evaluations: Optional[List[dict]] = None,
+):
+    """Génère la liste d'évaluations (titre, semaine, description, capacités + pondérations).
+
+    Implémente le streaming SSE (stream_chunk/stream_buffer) et publie
+    également un résumé de raisonnement (reasoning_summary) pendant l'exécution,
+    en alignement avec les autres tâches fonctionnelles du référentiel.
+    """
+    try:
+        plan = db.session.get(PlanDeCours, plan_de_cours_id)
+        if not plan:
+            return {"status": "error", "message": "Plan de cours non trouvé."}
+
+        user = db.session.query(User).with_for_update().get(user_id)
+        if not user:
+            return {"status": "error", "message": "Utilisateur introuvable."}
+        if not user.openai_key:
+            return {"status": "error", "message": "Clé OpenAI non configurée."}
+        if user.credits is None:
+            user.credits = 0.0
+            db.session.commit()
+        if user.credits <= 0:
+            return {"status": "error", "message": "Crédits insuffisants."}
+
+        # Contexte: amélioration de section -> user prompt = plan actuel (+ infos), système = improve
+        cours: Cours = plan.cours
+        if not cours:
+            return {"status": "error", "message": "Contexte cours indisponible."}
+        payload = {
+            'mode': 'improve_evaluations',
+            'session': plan.session,
+            'cours': {'code': getattr(cours, 'code', None), 'nom': getattr(cours, 'nom', None)},
+            'expected_output': {
+                'only': 'evaluations',
+                'strict': True,
+                'exclude_sections': ['mediagraphies', 'disponibilites']
+            },
+            'fields': {
+                'presentation_du_cours': plan.presentation_du_cours,
+                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+                'organisation_et_methodes': plan.organisation_et_methodes,
+                'accomodement': plan.accomodement,
+                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'seuil_reussite': plan.seuil_reussite,
+                'materiel': plan.materiel,
+            },
+            'calendriers': [
+                {
+                    'semaine': c.semaine,
+                    'sujet': c.sujet,
+                    'activites': c.activites,
+                    'travaux_hors_classe': c.travaux_hors_classe,
+                    'evaluations': c.evaluations,
+                } for c in plan.calendriers
+            ],
+            'evaluations': _serialize_evaluations(plan),
+        }
+        if additional_info:
+            payload['informations_complementaires'] = additional_info
+        prompt = json.dumps(payload, ensure_ascii=False)
+
+        sa = SectionAISettings.get_for('plan_de_cours_improve')
+        ai_model = (sa.ai_model or 'gpt-5')
+
+        self.update_state(state='PROGRESS', meta={'message': 'Génération des évaluations…'})
+        client = OpenAI(api_key=user.openai_key)
+        sys_prompt = (sa.system_prompt or '').strip()
+        eval_input = ([
+            {"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]},
+            {"role": "user", "content": [{"type": "input_text", "text": prompt}]}
+        ])
+
+        streamed_text = ""
+        reasoning_summary_text = ""
+        usage_prompt = 0
+        usage_completion = 0
+        try:
+            # Streaming compatible avec SSE du frontend
+            with client.responses.stream(
+                model=ai_model,
+                input=eval_input,
+                text_format=EvaluationsResponse,
+                reasoning={"summary": "auto"},
+            ) as stream:
+                for event in stream:
+                    etype = getattr(event, 'type', '') or ''
+                    if etype.endswith('response.output_text.delta') or etype == 'response.output_text.delta':
+                        delta = getattr(event, 'delta', '') or getattr(event, 'text', '') or ''
+                        if delta:
+                            streamed_text += delta
+                            try:
+                                self.update_state(state='PROGRESS', meta={
+                                    'message': 'Génération en cours…',
+                                    'stream_chunk': delta,
+                                    'stream_buffer': streamed_text,
+                                })
+                            except Exception:
+                                pass
+                    elif etype.endswith('response.reasoning_summary_text.delta') or etype == 'response.reasoning_summary_text.delta':
+                        rs_delta = getattr(event, 'delta', '') or ''
+                        if rs_delta:
+                            reasoning_summary_text += rs_delta
+                            reasoning_summary_text = reasoning_summary_text.strip()
+                            try:
+                                self.update_state(state='PROGRESS', meta={
+                                    'message': 'Résumé du raisonnement',
+                                    'reasoning_summary': reasoning_summary_text,
+                                })
+                            except Exception:
+                                pass
+                    elif etype.endswith('reasoning.summary.delta') or etype == 'reasoning.summary.delta':
+                        # Compat pour certains modèles qui envoient des blocs reasoning séparés
+                        try:
+                            reasoning_summary_text += _collect_summary(getattr(event, 'delta', None))
+                            reasoning_summary_text = reasoning_summary_text.strip()
+                            if reasoning_summary_text:
+                                self.update_state(state='PROGRESS', meta={
+                                    'message': 'Résumé du raisonnement',
+                                    'reasoning_summary': reasoning_summary_text,
+                                })
+                        except Exception:
+                            pass
+                    elif getattr(event, 'summary', None):
+                        try:
+                            reasoning_summary_text += _collect_summary(event.summary)
+                            reasoning_summary_text = reasoning_summary_text.strip()
+                            if reasoning_summary_text:
+                                self.update_state(state='PROGRESS', meta={
+                                    'message': 'Résumé du raisonnement',
+                                    'reasoning_summary': reasoning_summary_text,
+                                })
+                        except Exception:
+                            pass
+                response = stream.get_final_response()
+        except Exception:
+            # Fallback non-streaming
+            response = client.responses.parse(
+                model=ai_model,
+                input=eval_input,
+                text_format=EvaluationsResponse,
+            )
+            try:
+                reasoning_summary_text = _extract_reasoning_summary_from_response(response)
+                if reasoning_summary_text:
+                    self.update_state(state='PROGRESS', meta={
+                        'message': 'Résumé du raisonnement',
+                        'reasoning_summary': reasoning_summary_text,
+                    })
+            except Exception:
+                pass
+
+        usage_prompt = response.usage.input_tokens if hasattr(response, 'usage') else 0
+        usage_completion = response.usage.output_tokens if hasattr(response, 'usage') else 0
+        cost = calculate_call_cost(usage_prompt, usage_completion, ai_model)
+        if user.credits < cost:
+            return {"status": "error", "message": "Crédits insuffisants pour cette opération."}
+        user.credits -= cost
+
+        parsed = _extract_first_parsed(response)
+        evals: List[EvaluationEntry] = (parsed.evaluations if parsed else []) or []
+        if not evals:
+            return {"status": "error", "message": "Aucune évaluation générée."}
+
+        # Snapshot avant remplacement pour revert
+        old_fields = {
+            'presentation_du_cours': plan.presentation_du_cours,
+            'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+            'organisation_et_methodes': plan.organisation_et_methodes,
+            'accomodement': plan.accomodement,
+            'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+            'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'seuil_reussite': plan.seuil_reussite,
+            'materiel': plan.materiel,
+        }
+        old_calendriers = [
+            {
+                'semaine': c.semaine,
+                'sujet': c.sujet,
+                'activites': c.activites,
+                'travaux_hors_classe': c.travaux_hors_classe,
+                'evaluations': c.evaluations,
+            } for c in plan.calendriers
+        ]
+        old_evaluations = _serialize_evaluations(plan)
+
+        # Remplacer la liste d'évaluations existantes
+        for e in plan.evaluations:
+            db.session.delete(e)
+
+        # Map libellé capacité -> id
+        cap_by_name = {}
+        try:
+            for c in getattr(plan_cadre, 'capacites', []) or []:
+                if c.capacite:
+                    cap_by_name[c.capacite.strip()] = c.id
+        except Exception:
+            pass
+
+        for ev in evals:
+            row = PlanDeCoursEvaluations(
+                plan_de_cours_id=plan.id,
+                titre_evaluation=ev.titre,
+                description=ev.description,
+                semaine=ev.semaine,
+            )
+            db.session.add(row)
+            db.session.flush()
+            for ce in (ev.capacites or []):
+                cap_id = None
+                if ce.capacite:
+                    cap_id = cap_by_name.get(ce.capacite.strip())
+                db.session.add(PlanDeCoursEvaluationsCapacites(
+                    evaluation_id=row.id,
+                    capacite_id=cap_id,
+                    ponderation=ce.ponderation,
+                ))
+
+        db.session.commit()
+
+        evaluations = _serialize_evaluations(plan)
+
+        return {
+            'status': 'success',
+            'plan_id': plan.id,
+            'cours_id': plan.cours_id,
+            'session': plan.session,
+            'fields': {
+                'presentation_du_cours': plan.presentation_du_cours,
+                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+                'organisation_et_methodes': plan.organisation_et_methodes,
+                'accomodement': plan.accomodement,
+                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': plan.evaluation_expression_francais,
+                'seuil_reussite': plan.seuil_reussite,
+                'materiel': plan.materiel,
+            },
+            'calendriers': [
+                {
+                    'semaine': c.semaine,
+                    'sujet': c.sujet,
+                    'activites': c.activites,
+                    'travaux_hors_classe': c.travaux_hors_classe,
+                    'evaluations': c.evaluations,
+                } for c in plan.calendriers
+            ],
+            'evaluations': evaluations,
+            'old_fields': old_fields,
+            'old_calendriers': old_calendriers,
+            'old_evaluations': old_evaluations,
+            'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
+            'validation_url': f"/plan_de_cours/review/{plan.id}?task_id={self.request.id}",
+            'reasoning_summary': reasoning_summary_text,
+        }
+    except Exception as e:
+        logger.exception("Erreur dans la tâche generate_plan_de_cours_evaluations_task")
+        return {"status": "error", "message": str(e)}

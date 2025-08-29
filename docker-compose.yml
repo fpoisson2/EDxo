@@ -1,21 +1,58 @@
-version: '3.8'
 services:
   edxo:
     build: .
+    # IMPORTANT: Use a single ASGI worker for SSE/MCP.
+    # FastMCP's SSE transport keeps session state in-process; with multiple workers,
+    # subsequent requests may hit a different worker and fail with
+    # "Could not find session for ID" → 424 (Failed Dependency).
+    # If you need more capacity, scale replicas at the reverse-proxy level and use
+    # sticky routing for the /sse/ path instead of increasing Gunicorn workers.
+    command: gunicorn -k uvicorn.workers.UvicornWorker -w 1 -b 0.0.0.0:8000 -c src/config/gunicorn.conf.py --preload --timeout 500 --keep-alive 75 src.asgi:app
     ports:
-      - "5000:5000"
+      - "8000:8000"
     env_file:
       - .env
+    environment:
+      # Assure que Flask/Celery parlent au conteneur Redis
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - txt_outputs:/app/src/txt_outputs
+      - pdfs:/app/src/pdfs_downloaded
+      # Bind-mount uploads to a host folder so PDFs are visible on the host
+      - ./uploads:/app/src/uploads
+      # Bind-mount the SQLite DB directory from host for dev/debug
+      # Use env var to avoid surprises if running compose from another CWD
+      - ${EDXO_DB_HOST_DIR:-./src/database}:/app/src/database
     depends_on:
       - redis
+    restart: unless-stopped
   redis:
     image: redis:alpine
-    ports:
-      - "6340:6340"
+    # Disable persistence to avoid restoring old Celery tasks on restart
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    # Keep Redis data purely in-memory for dev; ensures clean state on container restart
+    tmpfs:
+      - /data
+    # No host port mapping needed; used only on internal network
   celery:
     build: .
-    command: celery -A celery_app.celery worker --loglevel=info --hostname=worker2@%h
+    command: celery -A src.celery_app:celery worker --loglevel=info --autoscale=8,2 -Ofair --prefetch-multiplier=1 --hostname=worker2@%h
     env_file:
       - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_WORKER=1
+    volumes:
+      - txt_outputs:/app/src/txt_outputs
+      - pdfs:/app/src/pdfs_downloaded
+      - ./uploads:/app/src/uploads
+      - ${EDXO_DB_HOST_DIR:-./src/database}:/app/src/database
     depends_on:
       - redis
+    restart: unless-stopped
+
+volumes:
+  txt_outputs: {}
+  pdfs: {}

@@ -27,7 +27,7 @@ from wtforms.validators import DataRequired, InputRequired, NumberRange, Optiona
 from wtforms.widgets import ListWidget, CheckboxInput
 
 from .models import User
-from ..utils.openai_pricing import get_all_models
+from ..utils.openai_pricing import get_all_models, DEFAULT_PRICING
 
 # Liste des régions disponibles
 REGIONS = [
@@ -54,22 +54,17 @@ REGIONS = [
 
 class ConfirmationGrilleForm(FlaskForm):
     """Formulaire pour confirmer l'importation d'une grille de cours."""
-    programme_id = SelectField(
-        'Programme', 
-        validators=[DataRequired()], 
-        coerce=int,
+    import_mode = SelectField(
+        'Mode d\'import',
+        choices=[('append', 'Ajouter aux cours existants'), ('overwrite', 'Écraser les cours existants du programme')],
+        default='append',
+        validators=[DataRequired()],
         render_kw={"class": "form-select"}
     )
-    
-    nom_programme = StringField(
-        'Nom du programme (tel que détecté dans le PDF)', 
-        validators=[DataRequired(), Length(max=255)],
-        render_kw={"class": "form-control", "readonly": True}
-    )
-    
+
     task_id = HiddenField('ID de la tâche')
     grille_json = HiddenField('JSON de la grille')
-    
+
     confirmer = SubmitField('Confirmer importation', render_kw={"class": "btn btn-success"})
     annuler = SubmitField('Annuler', render_kw={"class": "btn btn-secondary"})
 
@@ -133,7 +128,8 @@ class OpenAIModelForm(FlaskForm):
 
 class ChatSettingsForm(FlaskForm):
     chat_model = SelectField('Modèle pour le chat', validators=[DataRequired()])
-    tool_model = SelectField("Modèle pour l'appel d'outils", validators=[DataRequired()])
+    # Couplé automatiquement à chat_model; non requis dans le formulaire
+    tool_model = SelectField("Modèle pour l'appel d'outils", validators=[Optional()])
     reasoning_effort = SelectField(
         "Effort de raisonnement",
         choices=[
@@ -158,8 +154,51 @@ class ChatSettingsForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         models = get_all_models()
-        self.chat_model.choices = [(model.name, model.name) for model in models]
-        self.tool_model.choices = [(model.name, model.name) for model in models]
+        if models:
+            choices = [(model.name, model.name) for model in models]
+        else:
+            # Fallback to known defaults so the page remains usable without DB seeding
+            choices = [(name, name) for name in DEFAULT_PRICING.keys()]
+        self.chat_model.choices = choices
+        self.tool_model.choices = choices
+
+
+class SectionAISettingsForm(FlaskForm):
+    system_prompt = TextAreaField(
+        'Prompt système',
+        validators=[Optional()],
+        render_kw={"rows": 16, "class": "form-control font-monospace"}
+    )
+    ai_model = SelectField('Modèle', validators=[Optional()])
+    reasoning_effort = SelectField(
+        'Niveau de raisonnement',
+        choices=[
+            ('', '— par défaut —'),
+            ('minimal', 'Minimal'),
+            ('low', 'Faible'),
+            ('medium', 'Moyen'),
+            ('high', 'Élevé')
+        ]
+    )
+    verbosity = SelectField(
+        'Verbosité',
+        choices=[
+            ('', '— par défaut —'),
+            ('low', 'Faible'),
+            ('medium', 'Moyenne'),
+            ('high', 'Élevée')
+        ]
+    )
+    submit = SubmitField('Enregistrer')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        models = get_all_models()
+        if models:
+            model_choices = [(m.name, m.name) for m in models]
+        else:
+            model_choices = [(name, name) for name in DEFAULT_PRICING.keys()]
+        self.ai_model.choices = [('', '— par défaut —')] + model_choices
 
 class MultiCheckboxField(SelectMultipleField):
     widget = widgets.ListWidget(prefix_label=False)
@@ -366,7 +405,7 @@ class AnalysePromptForm(FlaskForm):
     ai_model = SelectField(
         'Modèle d\'IA',
         validators=[DataRequired()],
-        default='gpt-4o',
+        default='gpt-5',
         render_kw={"class": "form-control"}
     )
     submit = SubmitField('Sauvegarder', render_kw={"class": "btn btn-primary"})
@@ -389,7 +428,7 @@ class PlanDeCoursPromptSettingsForm(FlaskForm):
     ai_model = SelectField(
         'Modèle d\'IA',
         validators=[DataRequired()],
-        default='gpt-4o',
+        default='gpt-5',
         render_kw={"class": "form-control"}
     )
     submit = SubmitField('Sauvegarder', render_kw={"class": "btn btn-primary"})
@@ -400,12 +439,43 @@ class PlanDeCoursPromptSettingsForm(FlaskForm):
         self.ai_model.choices = [(model.name, model.name) for model in models]
 
 
+class OcrPromptSettingsForm(FlaskForm):
+    extraction_prompt = TextAreaField(
+        'Prompt système unique – Extraction des compétences (JSON)',
+        validators=[Optional()],
+        render_kw={"rows": 18, "class": "form-control font-monospace"}
+    )
+    model_extraction = SelectField('Modèle – Extraction', validators=[Optional()])
+    submit = SubmitField('Sauvegarder', render_kw={"class": "btn btn-primary"})
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        models = get_all_models()
+        choices = [(m.name, m.name) for m in models]
+        self.model_extraction.choices = [('', '— par défaut —')] + choices
+
+
+class PlanCadreImportPromptSettingsForm(FlaskForm):
+    prompt_template = TextAreaField(
+        'Template du prompt (inclure {doc_text})',
+        validators=[DataRequired()],
+        render_kw={"rows": 18, "class": "form-control font-monospace"}
+    )
+    ai_model = SelectField('Modèle IA', validators=[DataRequired()], default='gpt-5')
+    submit = SubmitField('Sauvegarder', render_kw={"class": "btn btn-primary"})
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        models = get_all_models()
+        self.ai_model.choices = [(m.name, m.name) for m in models]
+
+
 class GenerateContentForm(FlaskForm):
     additional_info = TextAreaField('Informations complémentaires', validators=[DataRequired()])
     ai_model = SelectField(
         'Modèle d\'IA',
         validators=[DataRequired()],
-        default='gpt-4o'
+        default='gpt-5'
     )
     reasoning_effort = SelectField(
         "Effort de raisonnement",
@@ -592,13 +662,6 @@ class MoyenEvaluationFieldForm(Form):
 #class GenerateContentForm(FlaskForm):
 #    submit = SubmitField('Générer le Contenu')
 
-class GenerationSettingForm(FlaskForm):
-    use_ai = BooleanField('Utiliser l\'IA')
-    text_content = TextAreaField('Texte / Prompt', validators=[Optional()])
-
-    class Meta:
-        csrf = False  # Assurez-vous que le CSRF est activé
-
 class ChangePasswordForm(FlaskForm):
     current_password = PasswordField('Mot de passe actuel', validators=[DataRequired()])
     new_password = PasswordField('Nouveau mot de passe', validators=[
@@ -633,11 +696,6 @@ class WelcomeChangePasswordForm(FlaskForm):
 
 class CombinedWelcomeForm(ProfileEditForm, WelcomeChangePasswordForm):
     pass
-
-class GlobalGenerationSettingsForm(FlaskForm):
-    sections = FieldList(FormField(GenerationSettingForm), min_entries=21, max_entries=21)
-    openai_key = StringField('Clé OpenAI', validators=[Optional()])
-    submit = SubmitField('Enregistrer les Paramètres')
 
 class CapaciteItemForm(Form):
     class Meta:
@@ -745,6 +803,10 @@ class DepartmentPIEAForm(FlaskForm):
 class DeleteForm(FlaskForm):
     """Simple form for CSRF protection on delete operations"""
     pass
+
+class APITokenForm(FlaskForm):
+    ttl = IntegerField('Durée de vie (jours)', validators=[Optional()])
+    submit = SubmitField('Générer un jeton')
 
 class OcrTriggerForm(FlaskForm):
     pdf_url = URLField('URL du PDF', validators=[DataRequired(), URL()])

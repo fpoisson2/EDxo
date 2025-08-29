@@ -1,22 +1,107 @@
 {% extends 'base.html' %}
 
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/view_plan_cadre.css') }}">
+    <script>
+      window.addEventListener('DOMContentLoaded', function() {
+        if (window.marked && window.marked.setOptions) {
+          window.marked.setOptions({ breaks: true, gfm: true });
+        }
+      });
+    </script>
+    <script>
+      // a11y: aria-labels for textareas and icon-only buttons
+      document.addEventListener('DOMContentLoaded', function(){
+        try {
+          document.querySelectorAll('textarea').forEach(el => {
+            if (!el.getAttribute('aria-label')) {
+              let p = el.parentElement, labelText = '';
+              while (p && p !== document.body) { const lab = p.querySelector('label'); if (lab && lab.textContent.trim()) { labelText = lab.textContent.trim(); break; } p = p.parentElement; }
+              if (labelText) el.setAttribute('aria-label', labelText);
+            }
+          });
+          document.querySelectorAll('button, a').forEach(el => { const hasText = (el.textContent||'').trim().length>0; if (!hasText) { const t = el.getAttribute('title'); if (t && !el.getAttribute('aria-label')) el.setAttribute('aria-label', t); } });
+        } catch(_){}
+      });
+    </script>
+    <style>
+      html { scroll-behavior: smooth; }
+      /* Assure un bon décalage pour les ancres avec la nav collante */
+      #accordionPlanCours .accordion-item { scroll-margin-top: 140px; }
+      @media (max-width: 768px) { #accordionPlanCours .accordion-item { scroll-margin-top: 80px; } }
+    </style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5">
-    <h1>Plan de cours</h1>
-    <hr>
+    <button class="btn btn-outline-primary d-md-none mb-3" type="button"
+            data-bs-toggle="offcanvas" data-bs-target="#sectionsOffcanvas" aria-controls="sectionsOffcanvas">
+        Sections
+    </button>
+    <!-- Navigation de sections (desktop) -->
+    <nav id="sectionsNav" class="nav nav-pills d-none d-md-flex flex-wrap gap-2 sticky-top bg-white py-2 px-2 border rounded mb-3 shadow-sm" style="top: 70px; z-index: 1020; overflow-x: auto;">
+        <a class="nav-link" href="#section-infos">Informations générales</a>
+        <a class="nav-link" href="#section-capacites">Capacités du cours</a>
+        <a class="nav-link" href="#section-regles-dept">Règles départementales</a>
+        <a class="nav-link" href="#section-piea">Règles de PIEA</a>
+        <a class="nav-link" href="#section-contenu">Contenu du cours</a>
+    </nav>
+    <!-- Navigation mobile (offcanvas) -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sectionsOffcanvas" aria-labelledby="sectionsOffcanvasLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sectionsOffcanvasLabel">Sections</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
+        </div>
+        <div class="offcanvas-body">
+            <nav class="nav flex-column">
+                <a class="nav-link" href="#section-infos" data-bs-dismiss="offcanvas">Informations générales</a>
+                <a class="nav-link" href="#section-capacites" data-bs-dismiss="offcanvas">Capacités du cours</a>
+                <a class="nav-link" href="#section-regles-dept" data-bs-dismiss="offcanvas">Règles départementales</a>
+                <a class="nav-link" href="#section-piea" data-bs-dismiss="offcanvas">Règles de PIEA</a>
+                <a class="nav-link" href="#section-contenu" data-bs-dismiss="offcanvas">Contenu du cours</a>
+            </nav>
+        </div>
+    </div>
 
-    <!-- Export Button - Aligned Right -->
-    <div class="d-flex justify-content-start mb-4">
+    <!-- Titre -->
+    <div class="mb-3 text-center">
+        <h1>Plan de cours pour le cours : {{ cours.code }} - {{ cours.nom }}</h1>
+    </div>
+
+    <!-- Actions (alignées au style plan-cadre) -->
+    <div class="d-flex flex-column flex-sm-row gap-3 mb-5 align-items-center pdc-actions">
+        {% if current_user.role in ['admin', 'coordo'] %}
+        <button type="button" id="openImportPlanCoursTask" class="btn btn-outline-primary d-flex align-items-center">
+            <i class="bi bi-file-earmark-arrow-up me-2"></i>
+            <span>Importer</span>
+        </button>
+        <button type="button" id="openGeneratePdcBtn" class="btn btn-success d-flex align-items-center">
+            <i class="bi bi-box-arrow-up-right me-2"></i>
+            <span>Générer</span>
+        </button>
+        <button type="button" id="openImprovePdcBtn" class="btn btn-outline-success d-flex align-items-center">
+            <i class="bi bi-magic me-2"></i>
+            <span>Améliorer</span>
+        </button>
+        <form method="POST" action="{{ url_for('plan_de_cours.delete_plan_de_cours', plan_id=plan_de_cours.id) }}" class="d-inline" onsubmit="return confirm('Supprimer ce plan de cours ({{ cours.code }} - {{ plan_de_cours.session }}) ?');">
+            {{ delete_plan_form.hidden_tag() }}
+            <button type="submit" class="btn btn-outline-danger d-flex align-items-center">
+                <i class="bi bi-trash me-2"></i>
+                <span>Supprimer</span>
+            </button>
+        </form>
+        {% endif %}
         <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" 
-           class="btn btn-success d-flex align-items-center">
+           class="btn btn-primary d-flex align-items-center">
             <i class="bi bi-file-earmark-word me-2"></i>
-            <span>Exporter en .docx</span>
+            <span>Exporter</span>
         </a>
     </div>
 
     <div class="accordion" id="accordionPlanCours">
         <!-- Accordéon : Informations Générales sur le Cours -->
-        <div class="accordion-item">
+        <div class="accordion-item" id="section-infos">
             <h2 class="accordion-header" id="headingInfoGen">
                 <button class="accordion-button collapsed bg-primary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInfoGen" aria-expanded="false" aria-controls="collapseInfoGen">
                     Informations générales sur le cours
@@ -48,8 +133,8 @@
             </div>
         </div>
 
-        <!-- Accordéon : Informations PlanCadre -->
-        <div class="accordion-item">
+        <!-- Accordéon : Capacités du cours (PlanCadre) -->
+        <div class="accordion-item" id="section-capacites">
             <h2 class="accordion-header" id="headingPlanCadre">
                 <button class="accordion-button collapsed bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePlanCadre" aria-expanded="false" aria-controls="collapsePlanCadre">
                     Capacités du cours
@@ -140,7 +225,7 @@
         </div>
 
         <!-- Accordéon : Règles Départementales -->
-        <div class="accordion-item">
+        <div class="accordion-item" id="section-regles-dept">
             <h2 class="accordion-header" id="headingReglesDept">
                 <button class="accordion-button collapsed bg-danger text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReglesDept" aria-expanded="false" aria-controls="collapseReglesDept">
                     Règles départementales
@@ -165,7 +250,7 @@
         </div>
 
         <!-- Accordéon : Règles de PIEA -->
-        <div class="accordion-item">
+        <div class="accordion-item" id="section-piea">
             <h2 class="accordion-header" id="headingReglesPIEA">
                 <button class="accordion-button collapsed bg-warning text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReglesPIEA" aria-expanded="false" aria-controls="collapseReglesPIEA">
                     Règles de PIEA
@@ -189,20 +274,16 @@
             </div>
         </div>
 
-        <!-- Accordéon : Édition du PlanDeCours -->
-        <div class="accordion-item">
+        <!-- Accordéon : Contenu du cours (édition) -->
+        <div class="accordion-item" id="section-contenu">
             <h2 class="accordion-header" id="headingEdition">
-                <button class="accordion-button collapsed bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEdition" aria-expanded="false" aria-controls="collapseEdition">
+                <button class="accordion-button bg-info text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEdition" aria-expanded="true" aria-controls="collapseEdition">
                     Contenu du cours
                 </button>
             </h2>
-            <div id="collapseEdition" class="accordion-collapse collapse" aria-labelledby="headingEdition">
+            <div id="collapseEdition" class="accordion-collapse collapse show" aria-labelledby="headingEdition">
                 <div class="accordion-body">
-                    <div class="d-flex justify-content-end mb-3">
-                        <button type="button" class="btn btn-primary btn-sm" id="open-generate-plan-cours" title="Générer toutes les sections" data-bs-toggle="modal" data-bs-target="#generatePlanCoursModal">
-                            <i class="bi bi-magic me-2"></i>Tout générer
-                        </button>
-                    </div>
+                    
                     <form method="POST" action="{{ url_for('plan_de_cours.view_plan_de_cours', cours_id=cours.id) }}" id="planDeCoursForm">
                         {{ form.hidden_tag() }}
                         <!-- Informations Principales -->
@@ -223,9 +304,11 @@
                         <div class="mb-3 position-relative">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="presentation_du_cours" class="form-label fw-bold">Présentation du cours</label>
-                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="presentation_du_cours" title="Générer automatiquement">
-                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="presentation_du_cours" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
                                 </button>
+                                {% endif %}
                             </div>
                             {{ form.presentation_du_cours(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="presentation_du_cours") }}
                         </div>
@@ -233,9 +316,11 @@
                         <div class="mb-3 position-relative">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="objectif_terminal_du_cours" class="form-label fw-bold">{{ form.objectif_terminal_du_cours.label.text }}</label>
-                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="objectif_terminal_du_cours" title="Générer automatiquement">
-                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objectif_terminal_du_cours" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
                                 </button>
+                                {% endif %}
                             </div>
                             {{ form.objectif_terminal_du_cours(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="objectif_terminal_du_cours") }}
                         </div>
@@ -243,9 +328,11 @@
                         <div class="mb-3 position-relative">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="organisation_et_methodes" class="form-label fw-bold">{{ form.organisation_et_methodes.label.text }}</label>
-                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="organisation_et_methodes" title="Générer automatiquement">
-                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="organisation_et_methodes" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
                                 </button>
+                                {% endif %}
                             </div>
                             {{ form.organisation_et_methodes(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="organisation_et_methodes") }}
                         </div>
@@ -253,9 +340,11 @@
                         <div class="mb-3 position-relative">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="accomodement" class="form-label fw-bold">{{ form.accomodement.label.text }}</label>
-                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="accomodement" title="Générer automatiquement">
-                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="accomodement" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
                                 </button>
+                                {% endif %}
                             </div>
                             {{ form.accomodement(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="accomodement") }}
                         </div>
@@ -263,9 +352,11 @@
                         <div class="mb-3 position-relative">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="evaluation_formative_apprentissages" class="form-label fw-bold">{{ form.evaluation_formative_apprentissages.label.text }}</label>
-                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="evaluation_formative_apprentissages" title="Générer automatiquement">
-                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="evaluation_formative_apprentissages" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
                                 </button>
+                                {% endif %}
                             </div>
                             {{ form.evaluation_formative_apprentissages(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="evaluation_formative_apprentissages") }}
                         </div>
@@ -273,11 +364,30 @@
                         <div class="mb-3 position-relative">
                             <div class="d-flex align-items-center justify-content-between">
                                 <label for="evaluation_expression_francais" class="form-label fw-bold">{{ form.evaluation_expression_francais.label.text }}</label>
-                                <button type="button" class="btn btn-secondary btn-sm generate-button" data-field="evaluation_expression_francais" title="Générer automatiquement">
-                                    <i class="bi bi-magic"></i>Générer automatiquement
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="evaluation_expression_francais" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
                                 </button>
+                                {% endif %}
                             </div>
                             {{ form.evaluation_expression_francais(class="form-control auto-resize border-0", oninput="autoResize(this)", style="overflow:hidden; resize:none;", id="evaluation_expression_francais") }}
+                        </div>
+
+                        <div class="mb-3 position-relative">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label for="seuil_reussite" class="form-label fw-bold">{{ form.seuil_reussite.label.text }}</label>
+                                {% if current_user.role in ['admin','coordo'] %}
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="seuil_reussite" title="Améliorer uniquement cette section">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                            {{ form.seuil_reussite(
+                                class="form-control auto-resize border-0",
+                                oninput="autoResize(this)",
+                                style="overflow:hidden; resize:none;",
+                                id="seuil_reussite"
+                            ) }}
                         </div>
 
                         <div class="mb-3">
@@ -285,7 +395,9 @@
                             {{ form.materiel(
                                 class="form-control auto-resize border-0",
                                 oninput="autoResize(this)",
-                                style="overflow:hidden; resize:none;") }}
+                                style="overflow:hidden; resize:none;",
+                                id="materiel"
+                            ) }}
                         </div>
 
                         <hr>
@@ -317,8 +429,8 @@
                         <div class="mb-3">
                             <div class="d-flex align-items-center justify-content-between">
                                 <h4 class="mb-0">Calendrier des activités</h4>
-                                <button type="button" class="btn btn-secondary btn-sm generate-calendar" id="generate-calendar" title="Générer le calendrier">
-                                    <i class="bi bi-magic"></i>Générer le calendrier
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="improve-calendar" title="Améliorer le calendrier">
+                                    <i class="bi bi-magic"></i>
                                 </button>
                             </div>
                             <div id="calendrier-container" class="mb-3" {% if not form.calendriers %}style="display: none;"{% endif %}>
@@ -431,7 +543,12 @@
 
                         <!-- Évaluations -->
                         <div class="mb-3">
-                            <h4>Évaluations</h4>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h4 class="mb-0">Évaluations</h4>
+                                <button type="button" id="improve-evaluations" class="btn btn-outline-primary btn-sm" title="Améliorer les évaluations">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                            </div>
                             <div id="evaluations-container" class="mb-3" {% if not form.evaluations %}style="display: none;"{% endif %}>
                                 {% for evaluation_subform in form.evaluations %}
                                     <div class="card mb-3 evaluation-item {% if loop.index0 is even %}bg-light{% else %}bg-secondary text-white{% endif %}" data-eval-index="{{ loop.index0 }}">
@@ -458,7 +575,7 @@
                                                 {{ evaluation_subform.texte_description(class="form-control") }}
                                             </div>
                                             <div class="capacites-section">
-                                                <h5>Capacités évaluées</h5>
+                                                <h5 class="mb-0">Capacités évaluées</h5>
                                                 <div class="capacites-container">
                                                     {% for cap_subform in evaluation_subform.capacites %}
                                                         <div class="capacite-item card bg-light mb-2 p-2">
@@ -498,18 +615,17 @@
                             </div>
                         </div>
 
+                        
+
                         <button type="submit" id="floatingSaveBtn" class="btn d-none">
                             <i class="bi bi-check-lg"></i>
                         </button>
                         <button type="button" id="floatingCancelBtn" class="btn d-none">
                             <i class="bi bi-x-lg"></i>
                         </button>
-                        <div class="mt-4">
-                            <a href="{{ url_for('plan_de_cours.export_docx', cours_id=cours.id, session=plan_de_cours.session) }}" class="btn btn-success" role="button">
-                                Exporter le Plan de Cours en .docx
-                            </a>
-                        </div>
                     </form>
+
+                    <!-- Modal Import DOCX moved below to avoid collapse visibility issues -->
 
                     <!-- Modèles cachés pour clonage -->
 <div id="calendrier-template" class="calendar-item border p-2 mb-2" draggable="true" style="display: none;">
@@ -648,14 +764,14 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Toast UI Editor CSS -->
-<link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.css" />
-
-<!-- Toast UI Editor Scripts with defer -->
-<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
-<script src="https://uicdn.toast.com/editor-plugin-autoheight/latest/toastui-editor-plugin-autoheight.js"></script>
+{% include '_easymde_assets.html' %}
 
 <style>
+.pdc-actions { flex-wrap: wrap; }
+.pdc-actions .btn { white-space: nowrap; }
+@media (max-width: 576px) {
+    .pdc-actions .btn { flex: 1 1 100%; justify-content: center; }
+}
 .calendar-item {
     cursor: move;
     transition: all 0.3s ease;
@@ -782,8 +898,8 @@ textarea.toast-ui-target:not(.toast-initialized) {
     position: relative;
 }
 
-.generate-button.loading,
-.generate-calendar.loading {
+
+.generate-button.loading {
     pointer-events: none;
     opacity: 0.7;
 }
@@ -846,113 +962,91 @@ textarea.toast-ui-target:not(.toast-initialized) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Soumission du modal de génération globale du plan de cours
-    const genForm = document.getElementById('generatePlanCoursForm');
-    if (genForm) {
-        genForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const submitBtn = document.getElementById('confirmGeneratePlanCoursBtn');
-            submitBtn?.classList.add('loading');
-            submitBtn?.setAttribute('disabled', 'disabled');
-
-            const csrfToken = "{{ csrf_token() }}";
-            const formData = new FormData(genForm);
-            // Démarrer la tâche asynchrone puis poller jusqu'à complétion
-            const payload = new URLSearchParams();
-            payload.append('cours_id', String({{ cours.id }}));
-            payload.append('session', "{{ plan_de_cours.session }}");
-            const addInfo = formData.get('additional_info');
-            if (addInfo) payload.append('additional_info', addInfo);
-            const aiModel = formData.get('ai_model');
-            if (aiModel) payload.append('ai_model', aiModel);
-
-            const statusText = document.createElement('div');
-            statusText.className = 'small text-muted mb-2';
-            statusText.id = 'generatePlanCoursStatus';
-            statusText.textContent = 'Préparation de la génération...';
-            genForm.querySelector('.modal-body')?.appendChild(statusText);
-
-            try {
-                const startResp = await fetch("{{ url_for('plan_de_cours.generate_all_start') }}", {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
-                    body: payload.toString(),
-                    credentials: 'same-origin'
-                });
-                const startData = await startResp.json();
-                if (!startResp.ok || !startData.success) throw new Error(startData.message || 'Démarrage échoué');
-
-                statusText.textContent = 'Génération en cours...';
-                const taskId = startData.task_id;
-                let done = false;
-                while (!done) {
-                    await new Promise(r => setTimeout(r, 1500));
-                    const st = await fetch(`{{ url_for('plan_de_cours.generate_all_status') }}?task_id=${encodeURIComponent(taskId)}`, { method: 'GET', credentials: 'same-origin' });
-                    const stData = await st.json();
-                    if (!st.ok || stData.success === false) throw new Error(stData.message || 'Erreur de tâche');
-                    if (stData.state === 'PROGRESS' && stData.meta?.message) {
-                        statusText.textContent = stData.meta.message;
-                    }
-                    if (stData.state === 'SUCCESS') {
-                        const data = stData.result || {};
-                        // Mettre à jour les champs texte
-                        if (data.fields) {
-                            for (const [key, val] of Object.entries(data.fields)) {
-                                const el = document.getElementById(key);
-                                if (!el) continue;
-                                el.value = val ?? '';
-                                if (el.toastEditor) {
-                                    el.toastEditor.setMarkdown(val ?? '');
-                                }
-                            }
-                        }
-                        // Mettre à jour le calendrier
-                        const container = document.getElementById('calendrier-container');
-                        if (container) {
-                            container.innerHTML = '';
-                            const entries = data.calendriers || [];
-                            if (entries.length > 0) {
-                                container.style.display = 'block';
-                                entries.forEach((entry, index) => {
-                                    const newItem = document.createElement('div');
-                                    newItem.className = `calendar-item border p-2 mb-2 ${index % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
-                                    newItem.innerHTML = document.getElementById('calendrier-template').innerHTML.replace(/__index__/g, index);
-                                    newItem.querySelector(`[name="calendriers-${index}-semaine"]`).value = entry.semaine ?? '';
-                                    newItem.querySelector(`[name="calendriers-${index}-sujet"]`).value = entry.sujet ?? '';
-                                    newItem.querySelector(`[name="calendriers-${index}-activites"]`).value = entry.activites ?? '';
-                                    newItem.querySelector(`[name="calendriers-${index}-travaux_hors_classe"]`).value = entry.travaux_hors_classe ?? '';
-                                    newItem.querySelector(`[name="calendriers-${index}-evaluations"]`).value = entry.evaluations ?? '';
-                                    container.appendChild(newItem);
-                                });
-                                calendrierIndex = entries.length;
-                                initDragAndDrop();
-                                if (window.showFloatingButtons) window.showFloatingButtons();
-                            } else {
-                                container.style.display = 'none';
-                            }
-                        }
-                        done = true;
-                    }
-                }
-
-                // Fermer le modal
-                const modalEl = document.getElementById('generatePlanCoursModal');
-                const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                modal.hide();
-                statusText.remove();
-
-                const toast = document.getElementById('generateSuccessToast');
-                if (toast) new bootstrap.Toast(toast).show();
-            } catch (e) {
-                console.error('Erreur génération complète du plan de cours', e);
-                const toast = document.getElementById('generateErrorToast');
-                if (toast) new bootstrap.Toast(toast).show();
-            } finally {
-                submitBtn?.classList.remove('loading');
-                submitBtn?.removeAttribute('disabled');
-            }
+    // Importer le plan de cours via le modal fichier simplifié
+    try {
+      const btnImp = document.getElementById('openImportPlanCoursTask');
+      if (btnImp && window.EDxoTasks && window.EDxoTasks.openFileTask) {
+        btnImp.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.EDxoTasks.openFileTask({
+            url: "{{ url_for('plan_de_cours.import_docx_start') }}",
+            title: 'Importer Plan de cours — {{ cours.code }} (.docx)',
+            startMessage: 'Import en cours…',
+            extraFormData: { cours_id: "{{ cours.id }}", session: "{{ plan_de_cours.session }}" }
+          });
         });
-    }
+      }
+    } catch(_) {}
+
+    // Bouton principal Générer: ouvrir le Quick Modal (JSON)
+    try {
+      const btnGen = document.getElementById('openGeneratePdcBtn');
+      if (btnGen && window.EDxoTasks && window.EDxoTasks.openQuickTask) {
+        btnGen.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.EDxoTasks.openQuickTask({
+            url: "/api/plan_de_cours/{{ plan_de_cours.id }}/generate",
+            title: 'Générer le plan de cours — {{ cours.code }}',
+            startMessage: 'Génération en cours…',
+            fieldLabels: { additional_info: 'Informations complémentaires' },
+            fixedPayload: { stream: true }
+          });
+        });
+      }
+    } catch(_) {}
+
+    // Bouton Améliorer: ouvrir le Quick Modal pour saisir l'info complémentaire
+    try {
+      const btnImprove = document.getElementById('openImprovePdcBtn');
+      if (btnImprove && window.EDxoTasks && window.EDxoTasks.openQuickTask) {
+        btnImprove.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.EDxoTasks.openQuickTask({
+            url: "{{ url_for('plan_de_cours.generate_all_start') }}",
+            title: 'Améliorer le plan de cours — {{ cours.code }}',
+            startMessage: 'Amélioration en cours…',
+            basePayload: { additional_info: '' },
+            fixedPayload: {
+              cours_id: {{ cours.id }},
+              session: "{{ plan_de_cours.session }}",
+              improve_only: true,
+              stream: true
+            }
+          });
+        });
+      }
+    } catch(_) {}
+
+    // Amélioration ciblée: utiliser le Quick Modal unifié pour lancer une tâche Celery par champ
+    try {
+      const magicBtns = document.querySelectorAll('.magic-generate[data-target-column]');
+      magicBtns.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const field = btn.getAttribute('data-target-column');
+          if (!field) return;
+          const url = `/api/plan_de_cours/{{ plan_de_cours.id }}/improve/${encodeURIComponent(field)}`;
+          const baseTitle = btn.getAttribute('title') || `Améliorer: ${field}`;
+          const title = `${baseTitle} — {{ cours.code }}`;
+          if (window.EDxoTasks && typeof window.EDxoTasks.openQuickTask === 'function') {
+            window.EDxoTasks.openQuickTask({
+              url,
+              title,
+              startMessage: 'Amélioration en cours…',
+              fixedPayload: { stream: true }
+            });
+          } else {
+            // Fallback minimal si orchestrateur indisponible
+            const headers = { 'Content-Type': 'application/json' };
+            try { const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content'); if (csrf) headers['X-CSRFToken'] = csrf; } catch{}
+            fetch(url, { method: 'POST', headers, credentials: 'same-origin', body: JSON.stringify({ stream: true }) })
+              .then(r => r.json())
+              .then(d => { if (d && d.task_id) window.location.href = `/tasks/track/${d.task_id}`; })
+              .catch(() => {});
+          }
+        });
+      });
+    } catch(_) {}
     // Fonction pour afficher les toasts
     function showToast(toastId) {
         const toastElement = document.getElementById(toastId);
@@ -1007,85 +1101,43 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.head.appendChild(style);
 
-    // Gestion des clics sur les boutons de génération
-    document.querySelectorAll('.generate-button').forEach(button => {
-        button.addEventListener('click', async function() {
-            const fieldName = this.getAttribute('data-field');
-            const fieldElement = document.getElementById(fieldName);
-            if (!fieldElement) {
-                console.error(`Champ ${fieldName} non trouvé.`);
-                showToast('generateErrorToast');
-                return;
-            }
-
-            // Créer et ajouter l'overlay de chargement
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.className = 'loading-overlay';
-            loadingOverlay.innerHTML = `
-                <div class="loading-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <div class="loading-text">Génération en cours...</div>
-                </div>
-            `;
-            
-            // Ajouter l'overlay et configurer le conteneur parent
-            fieldElement.parentElement.style.position = 'relative';
-            fieldElement.parentElement.appendChild(loadingOverlay);
-            
-            // Désactiver le bouton pendant la génération
-            this.classList.add('loading');
-            this.disabled = true;
-
-            try {
-                const payload = {
-                    field_name: fieldName,
-                    current_value: fieldElement.value || '',
-                    cours_id: {{ cours.id }},
-                    session: "{{ plan_de_cours.session }}"
+    // Navigation des sections: ouvrir l'accordéon ciblé et défiler en douceur
+    try {
+        const sectionsNav = document.getElementById('sectionsNav');
+        let scrollSpyInstance;
+        if (sectionsNav) {
+            scrollSpyInstance = new bootstrap.ScrollSpy(document.body, { target: '#sectionsNav', offset: 100 });
+        }
+        document.querySelectorAll('#sectionsNav .nav-link, #sectionsOffcanvas .nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetSelector = link.getAttribute('href');
+                if (!targetSelector || !targetSelector.startsWith('#')) return;
+                const item = document.querySelector(targetSelector);
+                if (!item) return;
+                const collapseEl = item.querySelector('.accordion-collapse');
+                if (collapseEl) {
+                    const collapseInstance = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+                    collapseInstance.show();
+                }
+                const scrollToTarget = () => {
+                    item.scrollIntoView({ behavior: 'smooth' });
+                    if (scrollSpyInstance) scrollSpyInstance.refresh();
                 };
-
-                const response = await fetch("{{ url_for('plan_de_cours.generate_content') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': "{{ csrf_token() }}"
-                    },
-                    body: JSON.stringify(payload),
-                    credentials: 'same-origin'
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Erreur inconnue lors de la génération.');
-                }
-
-                const data = await response.json();
-
-                if (data.champ_description) {
-                    fieldElement.value = data.champ_description;
-                    if (fieldElement.toastEditor) {
-                        fieldElement.toastEditor.setMarkdown(data.champ_description);
-                    }
-                    showToast('generateSuccessToast');
+                const offcanvasEl = document.getElementById('sectionsOffcanvas');
+                const offcanvas = offcanvasEl ? bootstrap.Offcanvas.getInstance(offcanvasEl) : null;
+                if (offcanvas) {
+                    const handler = () => { offcanvasEl.removeEventListener('hidden.bs.offcanvas', handler); scrollToTarget(); };
+                    offcanvasEl.addEventListener('hidden.bs.offcanvas', handler);
+                    offcanvas.hide();
                 } else {
-                    throw new Error('Contenu généré non reçu.');
+                    scrollToTarget();
                 }
-            } catch (error) {
-                console.error('Erreur lors de la génération automatique:', error);
-                showToast('generateErrorToast');
-            } finally {
-                // Nettoyer : supprimer l'overlay et réactiver le bouton
-                const overlay = fieldElement.parentElement.querySelector('.loading-overlay');
-                if (overlay) {
-                    overlay.remove();
-                }
-                this.classList.remove('loading');
-                this.disabled = false;
-            }
+            });
         });
-    });
+    } catch(_) {}
+
+    // Ancien flux de génération par champ supprimé au profit du modal unifié
 });
 document.addEventListener('DOMContentLoaded', function() {
     const toastFields = [
@@ -1099,117 +1151,96 @@ document.addEventListener('DOMContentLoaded', function() {
         'materiel'
     ];
 
+    // Stocker les éditeurs EasyMDE pour rafraîchir lors de l'ouverture d'un accordion
+    window.__pdcEditors = window.__pdcEditors || {};
+
     toastFields.forEach(fieldId => {
         const textarea = document.getElementById(fieldId);
+        if (!textarea) {
+            console.warn(`Le champ ${fieldId} n'existe pas !`);
+            return;
+        }
 
-        if (textarea) {
-            const container = document.createElement('div');
-            textarea.parentNode.insertBefore(container, textarea);
-            textarea.style.display = 'none';
-
-            const editor = new toastui.Editor({
-                el: container,
-                initialEditType: 'wysiwyg',
-                initialValue: textarea.value || '',
-                toolbarItems: [
-                    ['bold', 'italic'],
-                    ['ul', 'indent', 'outdent']
-                ],
-                usageStatistics: false,
-                hideModeSwitch: true,
+        try {
+            const mde = new EasyMDE({
+                element: textarea,
+                autoDownloadFontAwesome: false,
+                spellChecker: false,
                 autofocus: false,
-                height: 'auto',
-                minHeight: '100px',
-                toolbarVisibleWithoutEditor: false,
-                customKeyMap: {
-                    Tab: (editor, ev) => {
-                        ev.preventDefault();
-                        editor.exec('indent');
-                    },
-                    'Shift-Tab': (editor, ev) => {
-                        ev.preventDefault();
-                        editor.exec('outdent');
-                    }
-                }
+                minHeight: '120px',
+                status: false,
+                forceSync: true,
+                toolbar: ['bold','italic','|','unordered-list','ordered-list','|','guide'],
             });
 
+            // Marquer comme initialisé et wrapper compatible
             textarea.classList.add('toast-initialized');
-            textarea.toastEditor = editor;
+            textarea.toastEditor = { setMarkdown: (val) => mde.value(val) };
 
-            editor.on('change', () => {
-                textarea.value = editor.getMarkdown();
+            // Conserver une référence globale pour rafraîchir au besoin
+            window.__pdcEditors[fieldId] = mde;
+
+            mde.codemirror.on('change', () => {
+                textarea.value = mde.value();
                 if (typeof window.showFloatingButtons === 'function') {
                     window.showFloatingButtons();
                 }
             });
-        } else {
-            console.warn(`Le champ ${fieldId} n'existe pas !`);
+
+            // A11y: associer un libellé au textarea interne CodeMirror
+            try {
+                const cmInput = mde.codemirror.getInputField && mde.codemirror.getInputField();
+                if (cmInput) {
+                    // Associer un nom accessible explicite selon le champ
+                    const labels = {
+                        'presentation_du_cours': 'Présentation du cours',
+                        'objectif_terminal_du_cours': 'Objectif terminal du cours',
+                        'organisation_et_methodes': 'Organisation et méthodes',
+                        'accomodement': 'Accommodement',
+                        'evaluation_formative_apprentissages': 'Évaluation formative des apprentissages',
+                        'evaluation_expression_francais': 'Évaluation de l\'expression du français',
+                        'seuil_reussite': 'Seuil de réussite',
+                        'materiel': 'Matériel'
+                    };
+                    const labelText = labels[fieldId] || textarea.getAttribute('placeholder') || 'Zone de texte';
+                    cmInput.setAttribute('aria-label', labelText);
+                }
+            } catch {}
+
+            // Toolbar: cachée tant que pas de focus
+            const container = textarea.nextElementSibling && textarea.nextElementSibling.classList.contains('EasyMDEContainer')
+                ? textarea.nextElementSibling : document.querySelector(`#${textarea.id} + .EasyMDEContainer`);
+            const toolbar = container ? container.querySelector('.editor-toolbar') : null;
+            if (toolbar) toolbar.style.display = 'none';
+            if (container) {
+                container.addEventListener('focusin', () => { if (toolbar) toolbar.style.display = 'block'; });
+                container.addEventListener('focusout', (e) => {
+                    if (!container.contains(e.relatedTarget) && toolbar) {
+                        const selection = window.getSelection();
+                        if (!selection.toString()) toolbar.style.display = 'none';
+                    }
+                });
+            }
+
+            // Si l'éditeur a été initialisé dans un panneau masqué, le rafraîchir légèrement après rendu
+            setTimeout(() => { try { mde.codemirror.refresh(); } catch(_) {} }, 0);
+
+        } catch (error) {
+            console.error(`Erreur lors de l'initialisation de l'éditeur pour ${fieldId}:`, error);
         }
     });
 
-    function waitForToastUI() {
-        return new Promise((resolve) => {
-            function checkToastUI() {
-                if (window.toastui && window.toastui.Editor && toastui.Editor.plugin) {
-                    resolve();
-                } else {
-                    setTimeout(checkToastUI, 100);
-                }
-            }
-            checkToastUI();
+    // Quand un accordion s'ouvre, rafraîchir les CodeMirror visibles pour afficher le contenu sans clic
+    try {
+        document.querySelectorAll('.accordion-collapse').forEach(col => {
+            col.addEventListener('shown.bs.collapse', () => {
+                if (!window.__pdcEditors) return;
+                Object.values(window.__pdcEditors).forEach(ed => {
+                    try { ed.codemirror.refresh(); } catch(_) {}
+                });
+            });
         });
-    }
-
-
-    // Initialiser les éditeurs Toast UI
-    async function initToastEditors() {
-        await waitForToastUI();
-
-        toastFields.forEach(fieldId => {
-            const textarea = document.getElementById(fieldId);
-            if (textarea) {
-                try {
-                    const container = document.createElement('div');
-                    textarea.parentNode.insertBefore(container, textarea);
-                    textarea.style.display = 'none';
-
-                    const editor = new toastui.Editor({
-                        el: container,
-                        initialEditType: 'wysiwyg',
-                        initialValue: textarea.value || '',
-                        height: 'auto',
-                        minHeight: '200px',
-                        toolbarItems: [
-                            ['heading', 'bold', 'italic', 'strike'],
-                            ['ul', 'ol', 'indent', 'outdent'],
-                            ['table', 'link']
-                        ],
-                        plugins: [toastui.Editor.plugin.autoHeight],
-                        usageStatistics: false,
-                        hideModeSwitch: true
-                    });
-
-                    // Gestionnaire de changement
-                    editor.on('change', () => {
-                        textarea.value = editor.getMarkdown();
-                        if (typeof window.showFloatingButtons === 'function') {
-                            window.showFloatingButtons();
-                        }
-                    });
-
-                    // Marquer comme initialisé
-                    textarea.classList.add('toast-initialized');
-                    textarea.toastEditor = editor;
-
-                } catch (error) {
-                    console.error(`Erreur lors de l'initialisation de l'éditeur pour ${fieldId}:`, error);
-                }
-            }
-        });
-    }
-
-    // Lancer l'initialisation
-    initToastEditors();
+    } catch(_) {}
 });
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1351,85 +1382,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialiser le drag & drop au chargement
     initDragAndDrop();
 
-    // Génération automatique du calendrier via l'IA
-    document.getElementById('generate-calendar')?.addEventListener('click', async function() {
-        const button = this;
+    // Helper DOM: remplir calendrier depuis payload (calendriers)
+    function populateCalendarFromPayload(payload) {
         const container = document.getElementById('calendrier-container');
+        const items = (payload && (payload.calendriers || payload.entries)) || [];
+        container.innerHTML = '';
+        if (!items.length) { container.style.display = 'none'; return; }
         container.style.display = 'block';
-
-        // Ajouter overlay de chargement
-        const loadingOverlay = document.createElement('div');
-        loadingOverlay.className = 'loading-overlay';
-        loadingOverlay.innerHTML = `
-            <div class="loading-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-                <div class="loading-text">Génération en cours...</div>
-            </div>
-        `;
-        container.style.position = 'relative';
-        container.appendChild(loadingOverlay);
-        button.classList.add('loading');
-        button.disabled = true;
-        try {
-            const payload = {
-                cours_id: {{ cours.id }},
-                session: "{{ plan_de_cours.session }}"
-            };
-            const response = await fetch("{{ url_for('plan_de_cours.generate_calendar') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': "{{ csrf_token() }}"
-                },
-                body: JSON.stringify(payload),
-                credentials: 'same-origin'
-            });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error || 'Erreur inconnue');
-            }
-
-            const data = await response.json();
-            const overlay = container.querySelector('.loading-overlay');
-            if (overlay) {
-                overlay.remove();
-            }
-            container.innerHTML = '';
-            if (data.entries && data.entries.length > 0) {
-                container.style.display = 'block';
-                data.entries.forEach((entry, index) => {
-                    const newItem = document.createElement('div');
-                    newItem.className = `calendar-item border p-2 mb-2 ${index % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
-                    newItem.innerHTML = document.getElementById('calendrier-template').innerHTML.replace(/__index__/g, index);
-                    newItem.querySelector(`[name="calendriers-${index}-semaine"]`).value = entry.semaine ?? '';
-                    newItem.querySelector(`[name="calendriers-${index}-sujet"]`).value = entry.sujet ?? '';
-                    newItem.querySelector(`[name="calendriers-${index}-activites"]`).value = entry.activites ?? '';
-                    newItem.querySelector(`[name="calendriers-${index}-travaux_hors_classe"]`).value = entry.travaux_hors_classe ?? '';
-                    newItem.querySelector(`[name="calendriers-${index}-evaluations"]`).value = entry.evaluations ?? '';
-                    container.appendChild(newItem);
-                });
-                calendrierIndex = data.entries.length;
-                initDragAndDrop();
-                window.showFloatingButtons();
-                showToast('generateSuccessToast');
-            } else {
-                showToast('generateErrorToast');
-            }
-        } catch (error) {
-            console.error('Erreur lors de la génération du calendrier:', error);
-            showToast('generateErrorToast');
-        } finally {
-            const overlay = container.querySelector('.loading-overlay');
-            if (overlay) {
-                overlay.remove();
-            }
-            button.classList.remove('loading');
-            button.disabled = false;
-        }
-    });
+        items.forEach((entry, index) => {
+            const newItem = document.createElement('div');
+            newItem.className = `calendar-item border p-2 mb-2 ${index % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
+            newItem.innerHTML = document.getElementById('calendrier-template').innerHTML.replace(/__index__/g, index);
+            newItem.querySelector(`[name="calendriers-${index}-semaine"]`).value = entry.semaine ?? '';
+            newItem.querySelector(`[name="calendriers-${index}-sujet"]`).value = entry.sujet ?? '';
+            newItem.querySelector(`[name="calendriers-${index}-activites"]`).value = entry.activites ?? '';
+            newItem.querySelector(`[name="calendriers-${index}-travaux_hors_classe"]`).value = entry.travaux_hors_classe ?? '';
+            newItem.querySelector(`[name="calendriers-${index}-evaluations"]`).value = entry.evaluations ?? '';
+            container.appendChild(newItem);
+        });
+        calendrierIndex = items.length;
+        initDragAndDrop();
+        if (window.showFloatingButtons) window.showFloatingButtons();
+    }
 
     // Gestion du bouton d'ajout de calendrier
     document.getElementById('add-calendrier')?.addEventListener('click', function() {
@@ -1467,6 +1441,117 @@ document.addEventListener('DOMContentLoaded', function() {
         container.appendChild(newItem);
         window.showFloatingButtons();
     });
+
+    // Helper: remplir évaluations depuis payload (evaluations)
+    function populateEvaluationsFromPayload(payload) {
+        const container = document.getElementById('evaluations-container');
+        const list = (payload && payload.evaluations) || [];
+        container.innerHTML = '';
+        if (!list.length) { container.style.display = 'none'; return; }
+        container.style.display = 'block';
+        const capHidden = document.getElementById('capacites-hidden');
+        const nameToId = {};
+        if (capHidden) {
+            Array.from(capHidden.options).forEach(opt => { if (opt.text) nameToId[opt.text.trim()] = opt.value; });
+        }
+        list.forEach((ev, idx) => {
+            const tpl = document.getElementById('evaluation-template');
+            const wrap = document.createElement('div');
+            wrap.className = `evaluation-item border p-2 mb-2 ${idx % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
+            wrap.setAttribute('data-eval-index', String(idx));
+            wrap.innerHTML = tpl.innerHTML.replace(/__index__/g, String(idx));
+            wrap.querySelector(`[name="evaluations-${idx}-titre_evaluation"]`).value = ev.titre || '';
+            wrap.querySelector(`[name="evaluations-${idx}-semaine"]`).value = ev.semaine ?? '';
+            wrap.querySelector(`[name="evaluations-${idx}-texte_description"]`).value = ev.description || '';
+            // Capacités
+            const capCont = wrap.querySelector('.capacites-container');
+            (ev.capacites || []).forEach((ce, cIdx) => {
+                const capTpl = document.getElementById('evaluation-capacite-template');
+                const capEl = document.createElement('div');
+                capEl.className = 'capacite-item mb-2 border p-2';
+                capEl.innerHTML = capTpl.innerHTML
+                    .replace(/__eval_index__/g, String(idx))
+                    .replace(/__cap_index__/g, String(cIdx));
+                // Fill select options from hidden
+                const sel = capEl.querySelector(`#evaluations-${idx}-capacites-${cIdx}-capacite_id`);
+                if (sel && capHidden) sel.innerHTML = capHidden.innerHTML;
+                const capId = ce.capacite_id || (ce.capacite && nameToId[ce.capacite.trim()]) || '';
+                if (sel) sel.value = String(capId || '');
+                const pond = capEl.querySelector(`#evaluations-${idx}-capacites-${cIdx}-ponderation`);
+                if (pond) pond.value = ce.ponderation || '';
+                capCont.appendChild(capEl);
+            });
+            container.appendChild(wrap);
+        });
+        if (typeof reindexEvaluations === 'function') reindexEvaluations();
+        if (window.showFloatingButtons) window.showFloatingButtons();
+    }
+
+    // Récupère le calendrier actuel depuis le DOM
+    function collectCalendarData() {
+        const items = [];
+        document.querySelectorAll('#calendrier-container .calendar-item').forEach((item) => {
+            items.push({
+                semaine: item.querySelector('[name$="-semaine"]')?.value || '',
+                sujet: item.querySelector('[name$="-sujet"]')?.value || '',
+                activites: item.querySelector('[name$="-activites"]')?.value || '',
+                travaux_hors_classe: item.querySelector('[name$="-travaux_hors_classe"]')?.value || '',
+                evaluations: item.querySelector('[name$="-evaluations"]')?.value || '',
+            });
+        });
+        return items;
+    }
+
+    // Récupère les évaluations actuelles depuis le DOM
+    function collectEvaluationsData() {
+        const list = [];
+        document.querySelectorAll('#evaluations-container .evaluation-item').forEach((item) => {
+            const ev = {
+                titre: item.querySelector('[name$="-titre_evaluation"]')?.value || '',
+                semaine: item.querySelector('[name$="-semaine"]')?.value || '',
+                description: item.querySelector('[name$="-texte_description"]')?.value || '',
+                capacites: []
+            };
+            item.querySelectorAll('.capacite-item').forEach(cap => {
+                ev.capacites.push({
+                    capacite_id: cap.querySelector('[name$="-capacite_id"]')?.value || '',
+                    ponderation: cap.querySelector('[name$="-ponderation"]')?.value || ''
+                });
+            });
+            list.push(ev);
+        });
+        return list;
+    }
+
+    // Amélioration du calendrier
+    document.getElementById('improve-calendar')?.addEventListener('click', function() {
+        const existing = collectCalendarData();
+        if (window.EDxoTasks && window.EDxoTasks.openQuickTask) {
+            window.EDxoTasks.openQuickTask({
+                url: "/api/plan_de_cours/{{ plan_de_cours.id }}/generate_calendar",
+                title: 'Améliorer le calendrier',
+                startMessage: 'Amélioration en cours…',
+                fixedPayload: { stream: true, existing_calendriers: existing },
+                onDone: (data) => { try { populateCalendarFromPayload(data); showToast('generateSuccessToast'); } catch(_) {} }
+            });
+        }
+    });
+
+    // Amélioration des évaluations
+    document.getElementById('improve-evaluations')?.addEventListener('click', function() {
+        const existing = collectEvaluationsData();
+        if (window.EDxoTasks && window.EDxoTasks.openQuickTask) {
+            window.EDxoTasks.openQuickTask({
+                url: "/api/plan_de_cours/{{ plan_de_cours.id }}/generate_evaluations",
+                title: 'Améliorer les évaluations',
+                startMessage: 'Amélioration en cours…',
+                fixedPayload: { stream: true, existing_evaluations: existing },
+                onDone: (data) => { try { populateEvaluationsFromPayload(data); showToast('generateSuccessToast'); } catch(_) {} }
+            });
+        }
+    });
+
+    // Un seul bouton (titre section) gère l'amélioration des évaluations
 
 // Modification de la fonction d'ajout d'évaluation
     document.getElementById('add-evaluation')?.addEventListener('click', function() {
@@ -1550,6 +1635,127 @@ document.addEventListener('click', function(e) {
         window.showFloatingButtons();
     }
 });
+
+    // Import DOCX handling (Celery-based)
+    function applyImportPayloadToUI(data) {
+        if (data?.fields) {
+            for (const [key, val] of Object.entries(data.fields)) {
+                const el = document.getElementById(key);
+                if (!el) continue;
+                el.value = val ?? '';
+                if (el.toastEditor) el.toastEditor.setMarkdown(val ?? '');
+            }
+        }
+        // Calendrier
+        const calCont = document.getElementById('calendrier-container');
+        if (calCont) {
+            calCont.innerHTML = '';
+            const entries = data?.calendriers || [];
+            if (entries.length > 0) {
+                calCont.style.display = 'block';
+                entries.forEach((entry, index) => {
+                    const newItem = document.createElement('div');
+                    newItem.className = `calendar-item border p-2 mb-2 ${index % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
+                    newItem.innerHTML = document.getElementById('calendrier-template').innerHTML.replace(/__index__/g, index);
+                    newItem.querySelector(`[name="calendriers-${index}-semaine"]`).value = entry.semaine ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-sujet"]`).value = entry.sujet ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-activites"]`).value = entry.activites ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-travaux_hors_classe"]`).value = entry.travaux_hors_classe ?? '';
+                    newItem.querySelector(`[name="calendriers-${index}-evaluations"]`).value = entry.evaluations ?? '';
+                    calCont.appendChild(newItem);
+                });
+                calendrierIndex = entries.length;
+                if (typeof initDragAndDrop === 'function') initDragAndDrop();
+            } else {
+                calCont.style.display = 'none';
+            }
+        }
+        // Médiagraphies
+        const medCont = document.getElementById('mediagraphie-container');
+        if (medCont) {
+            medCont.innerHTML = '';
+            const list = data?.mediagraphies || [];
+            if (list.length > 0) {
+                medCont.style.display = 'block';
+                list.forEach((m, index) => {
+                    const newItem = document.createElement('div');
+                    newItem.className = 'mediagraphie-item mb-2';
+                    newItem.innerHTML = document.getElementById('mediagraphie-template').innerHTML.replace(/__index__/g, index);
+                    newItem.querySelector(`[name="mediagraphies-${index}-reference_bibliographique"]`).value = m.reference_bibliographique ?? '';
+                    medCont.appendChild(newItem);
+                });
+                mediagraphieIndex = list.length;
+            } else {
+                medCont.style.display = 'none';
+            }
+        }
+        // Disponibilités
+        const dispCont = document.getElementById('disponibilites-container');
+        if (dispCont) {
+            dispCont.innerHTML = '';
+            const list = data?.disponibilites || [];
+            if (list.length > 0) {
+                dispCont.style.display = 'block';
+                list.forEach((d, index) => {
+                    const newItem = document.createElement('div');
+                    newItem.className = 'disponibilite-item mb-2';
+                    newItem.innerHTML = document.getElementById('disponibilite-template').innerHTML.replace(/__index__/g, index);
+                    newItem.querySelector(`[name="disponibilites-${index}-jour_semaine"]`).value = d.jour_semaine ?? '';
+                    newItem.querySelector(`[name="disponibilites-${index}-plage_horaire"]`).value = d.plage_horaire ?? '';
+                    newItem.querySelector(`[name="disponibilites-${index}-lieu"]`).value = d.lieu ?? '';
+                    dispCont.appendChild(newItem);
+                });
+                disponibiliteIndex = list.length;
+            } else {
+                dispCont.style.display = 'none';
+            }
+        }
+        // Évaluations
+        const evalCont = document.getElementById('evaluations-container');
+        const hiddenCaps = document.getElementById('capacites-hidden');
+        if (evalCont) {
+            evalCont.innerHTML = '';
+            const list = data?.evaluations || [];
+            if (list.length > 0) {
+                evalCont.style.display = 'block';
+                list.forEach((ev, evalIndex) => {
+                    const newItem = document.createElement('div');
+                    newItem.className = `card mb-3 evaluation-item ${evalIndex % 2 === 0 ? 'bg-light' : 'bg-secondary text-white'}`;
+                    newItem.setAttribute('data-eval-index', String(evalIndex));
+                    newItem.innerHTML = document.getElementById('evaluation-template').innerHTML.replace(/__index__/g, evalIndex);
+                    newItem.querySelector(`[name="evaluations-${evalIndex}-titre_evaluation"]`).value = ev.titre_evaluation ?? '';
+                    newItem.querySelector(`[name="evaluations-${evalIndex}-semaine"]`).value = ev.semaine ?? '';
+                    newItem.querySelector(`[name="evaluations-${evalIndex}-texte_description"]`).value = ev.description ?? '';
+                    const capsContainer = newItem.querySelector('.capacites-container');
+                    capsContainer.innerHTML = '';
+                    (ev.capacites || []).forEach((cap, capIndex) => {
+                        const capItem = document.createElement('div');
+                        capItem.className = 'capacite-item mb-2 border p-2';
+                        capItem.innerHTML = document.getElementById('evaluation-capacite-template').innerHTML
+                            .replace(/__eval_index__/g, evalIndex)
+                            .replace(/__cap_index__/g, capIndex);
+                        const select = capItem.querySelector('select');
+                        if (hiddenCaps) select.innerHTML = hiddenCaps.innerHTML;
+                        if (cap.capacite_id) {
+                            select.value = String(cap.capacite_id);
+                        } else if (cap.capacite_nom) {
+                            const opt = Array.from(select.options).find(o => o.text === cap.capacite_nom);
+                            if (opt) select.value = opt.value;
+                        }
+                        capItem.querySelector(`[name="evaluations-${evalIndex}-capacites-${capIndex}-ponderation"]`).value = cap.ponderation ?? '';
+                        capsContainer.appendChild(capItem);
+                    });
+                    evalCont.appendChild(newItem);
+                });
+                evaluationIndex = list.length;
+            } else {
+                evalCont.style.display = 'none';
+            }
+        }
+        if (window.showFloatingButtons) window.showFloatingButtons();
+    }
+
+    // Import DOCX via Start Modal unifié — plus de gestion locale ici
 
     // Gestion de la sauvegarde
     if (floatingSaveBtn && planDeCoursForm) {
@@ -1758,48 +1964,10 @@ document.addEventListener('click', function(e) {
 });
 </script>
 
-<!-- Modal Génération du Plan de Cours (similaire au plan-cadre) -->
-<div class="modal fade" id="generatePlanCoursModal" tabindex="-1" aria-labelledby="generatePlanCoursLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
-    <div class="modal-content">
-      <form id="generatePlanCoursForm">
-        {{ generate_form.hidden_tag() }}
-        <div class="modal-header">
-          <h5 class="modal-title" id="generatePlanCoursLabel">Générer le plan de cours</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            {{ generate_form.additional_info.label(class="form-label") }}
-            {{ generate_form.additional_info(class="form-control border-0", rows="3", placeholder="Ajoutez des précisions utiles (public cible, modalités, logiciels, etc.)") }}
-          </div>
-          <div class="mb-3">
-            {{ generate_form.ai_model.label(class="form-label") }}
-            {{ generate_form.ai_model(class="form-select border-0") }}
-          </div>
-          <div class="mb-3">
-            {{ generate_form.reasoning_effort.label(class="form-label") }}
-            {{ generate_form.reasoning_effort(class="form-select border-0") }}
-          </div>
-          <div class="mb-3">
-            {{ generate_form.verbosity.label(class="form-label") }}
-            {{ generate_form.verbosity(class="form-select border-0") }}
-          </div>
-          <div class="form-text">La génération remplira toutes les sections disponibles et le calendrier.</div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-          <button type="submit" class="btn btn-primary" id="confirmGeneratePlanCoursBtn">
-            <span class="btn-text">Générer</span>
-            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="modalLoadingSpinnerPlanCours">
-              <span class="visually-hidden">Chargement...</span>
-            </span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-  </div>
+<!-- Modal Import DOCX (moved outside accordion to avoid collapse visibility issues) -->
+<!-- Import DOCX modal supprimé — utilisation du Start Modal unifié -->
+
+<!-- Modal génération Plan de Cours supprimé: l'orchestrateur unifié est utilisé -->
 
 <div class="toast-container position-fixed bottom-0 end-0 p-3">
     <div id="saveSuccessToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">

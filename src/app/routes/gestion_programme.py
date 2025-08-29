@@ -6,14 +6,15 @@ from typing import Optional
 from flask import Blueprint, jsonify, render_template
 from flask_login import login_required, current_user
 from openai import OpenAI
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, ConfigDict
 
 # Import SQLAlchemy DB and models
 from ..models import (
     db,
     PlanDeCours,
     Cours,
-    AnalysePlanCoursPrompt
+    AnalysePlanCoursPrompt,
+    SectionAISettings
 )
 from ...utils.decorator import ensure_profile_completed
 from ...utils.logging_config import get_logger
@@ -23,7 +24,37 @@ logger = get_logger(__name__)
 # ---------------------------------------------------------------------------
 # Modèle Pydantic pour la réponse de PlanDeCours
 # ---------------------------------------------------------------------------
+def _postprocess_openai_schema(schema: dict) -> None:
+    schema.pop('default', None)
+    if '$ref' in schema:
+        return
+    if schema.get('type') == 'object' or 'properties' in schema:
+        schema['additionalProperties'] = False
+    props = schema.get('properties')
+    if props:
+        # OpenAI Responses JSON schema requires a 'required' array listing
+        # every key present in 'properties', even if values may be null.
+        # Align with the pattern used elsewhere in the project.
+        schema['required'] = list(props.keys())
+        for prop_schema in props.values():
+            _postprocess_openai_schema(prop_schema)
+    if 'items' in schema:
+        items = schema['items']
+        if isinstance(items, dict):
+            _postprocess_openai_schema(items)
+        elif isinstance(items, list):
+            for item in items:
+                _postprocess_openai_schema(item)
+    if '$defs' in schema:
+        for def_schema in schema['$defs'].values():
+            _postprocess_openai_schema(def_schema)
+
+
 class PlanDeCoursAIResponse(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+        json_schema_extra=lambda schema, _: _postprocess_openai_schema(schema)
+    )
     """
     Représente la structure retournée par l'IA pour la vérification
     d'un plan de cours (compatibility_percentage, recommendations, etc.).
@@ -58,7 +89,7 @@ def gestion_programme():
 @login_required
 @ensure_profile_completed
 def get_verifier_plan_cours(plan_id):
-    plan = PlanDeCours.query.get_or_404(plan_id)
+    plan = db.session.get(PlanDeCours, plan_id) or abort(404)
 
     # Vérifier les permissions de l'utilisateur
     if current_user.role not in ['admin', 'coordo']:
@@ -79,161 +110,32 @@ def get_verifier_plan_cours(plan_id):
 @login_required
 @ensure_profile_completed
 def update_verifier_plan_cours(plan_id):
-    """
-    Route qui illustre l'approche en deux appels :
-      - Premier appel (o1-preview ou tout autre modèle O1)
-      - Deuxième appel (gpt-4o)
-    en suivant exactement la structure de plan-cadre.
-    """
-    plan = PlanDeCours.query.get_or_404(plan_id)
+    """[Déprécié] Utiliser l'endpoint asynchrone /gestion_programme/analyse_plan_de_cours/<id>/start.
 
-    # Vérifier les permissions
+    Cette route est conservée temporairement pour compatibilité et renvoie 410.
+    """
+    return jsonify({
+        'error': "Endpoint déprécié. Utiliser /gestion_programme/analyse_plan_de_cours/<id>/start",
+        'replacement': f"/gestion_programme/analyse_plan_de_cours/{plan_id}/start"
+    }), 410
+
+
+# ---------------------------------------------------------------------------
+# Démarrage asynchrone (pattern unifié /tasks) pour l'analyse Plan de cours
+# ---------------------------------------------------------------------------
+from ..tasks.analyse_plan_de_cours import analyse_plan_de_cours_task
+
+
+@gestion_programme_bp.route('/analyse_plan_de_cours/<int:plan_id>/start', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def start_analyse_plan_de_cours(plan_id):
+    """Déclenche l'analyse du plan de cours en tâche Celery et retourne { task_id } (202)."""
+    # Permissions identiques à la vérification synchronisée
     if current_user.role not in ['admin', 'coordo']:
         return jsonify({'error': "Vous n'avez pas les droits nécessaires pour vérifier ce plan de cours."}), 403
-
-    # Récupérer l'openai_key et les crédits de l'utilisateur
-    openai_key = current_user.openai_key
-    user_credits = current_user.credits
-
-    if not openai_key:
-        return jsonify({'error': "Aucune clé OpenAI dans votre profil."}), 400
-
-    # Données à envoyer dans le prompt
-    schema_json = json.dumps(PlanDeCoursAIResponse.schema(), indent=4, ensure_ascii=False)
-
-    plan_de_cours = PlanDeCours.query.get_or_404(plan_id)
-    plan_cadre = plan_de_cours.cours.plan_cadre
-
-    # Récupérer le template de prompt en BD
-    prompt_template = AnalysePlanCoursPrompt.query.first()
-    if not prompt_template:
-        return jsonify({'error': "Le template de prompt n'est pas configuré."}), 500
-
-    # Formater le prompt avec les variables
-    instruction = prompt_template.prompt_template.format(
-        plan_cours_id=plan_de_cours.id,
-        plan_cours_json=json.dumps(plan_de_cours.to_dict(), indent=4, ensure_ascii=False),
-        plan_cadre_id=plan_cadre.id,
-        plan_cadre_json=json.dumps(plan_cadre.to_dict(), indent=4, ensure_ascii=False),
-        schema_json=schema_json
-    )
-
-    structured_request = {
-        "instruction": instruction
-    }
-
-    # Construction du client identique au plan-cadre
-    client = OpenAI(api_key=openai_key)
-
-    total_prompt_tokens = 0
-    total_completion_tokens = 0
-
-    # ----------------------------------------------------------
-    # 1) Premier appel : model = "o3-mini" (ou autre modèle O1)
-    # ----------------------------------------------------------
-    ai_model = "o3-mini"  # Correction : chaîne de caractères
-
-    try:
-        o1_response = client.beta.chat.completions.parse(
-            model=ai_model,
-            messages=[{"role": "user", "content": json.dumps(structured_request)}]
-        )
-    except Exception as e:
-        logger.error(f"OpenAI error (premier appel): {e}")
-        return jsonify({'error': f"Erreur API OpenAI premier appel: {str(e)}"}), 500
-
-    # Récupérer les tokens du premier appel
-    if hasattr(o1_response, 'usage'):
-        total_prompt_tokens += o1_response.usage.prompt_tokens
-        total_completion_tokens += o1_response.usage.completion_tokens
-
-    o1_response_content = (
-        o1_response.choices[0].message.content if o1_response.choices else ""
-    )
-
-    print(o1_response_content)
-    # ----------------------------------------------------------
-    # 2) Deuxième appel : model = "gpt-4o"
-    # ----------------------------------------------------------
-    try:
-        completion = client.beta.chat.completions.parse(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "user",
-                    "content": (
-                        f"Formatte selon PlanDeCoursAIResponse ce qui suit: {o1_response_content}"
-                    )
-                }
-            ],
-            response_format=PlanDeCoursAIResponse,
-        )
-    except Exception as e:
-        logger.error(f"OpenAI error (second appel): {e}")
-        return jsonify({'error': f"Erreur API OpenAI second appel: {str(e)}"}), 500
-
-    # Récupérer les tokens du deuxième appel
-    if hasattr(completion, 'usage'):
-        total_prompt_tokens += completion.usage.prompt_tokens
-        total_completion_tokens += completion.usage.completion_tokens
-
-    # ----------------------------------------------------------
-    # Calculer le coût total
-    # ----------------------------------------------------------
-    usage_1_prompt = o1_response.usage.prompt_tokens if hasattr(o1_response, 'usage') else 0
-    usage_1_completion = o1_response.usage.completion_tokens if hasattr(o1_response, 'usage') else 0
-    cost_first_call = calculate_call_cost(usage_1_prompt, usage_1_completion, ai_model)
-
-    usage_2_prompt = completion.usage.prompt_tokens if hasattr(completion, 'usage') else 0
-    usage_2_completion = completion.usage.completion_tokens if hasattr(completion, 'usage') else 0
-    cost_second_call = calculate_call_cost(usage_2_prompt, usage_2_completion, "gpt-4o")
-
-    total_cost = cost_first_call + cost_second_call
-
-    print(f"Premier appel ({ai_model}): {cost_first_call:.6f}$ "
-          f"({usage_1_prompt} prompt, {usage_1_completion} completion)")
-    print(f"Second appel (gpt-4o): {cost_second_call:.6f}$ "
-          f"({usage_2_prompt} prompt, {usage_2_completion} completion)")
-    print(f"Coût total: {total_cost:.6f}$")
-
-    # Vérifier si l'utilisateur a suffisamment de crédits
-    new_credits = user_credits - total_cost
-    if new_credits < 0:
-        return jsonify({"error": "Crédits insuffisants pour cet appel."}), 400
-
-    # Mettre à jour les crédits
-    current_user.credits = new_credits
-    db.session.commit()
-
-    # ----------------------------------------------------------
-    # 3) Parser et mettre à jour le plan de cours avec la réponse finale
-    # ----------------------------------------------------------
-    second_response_content = completion.choices[0].message.content if completion.choices else ""
-    print(second_response_content)
-
-    if hasattr(completion.choices[0].message, 'parsed'):
-        ai_response = completion.choices[0].message.parsed
-    else:
-        try:
-            ai_response = PlanDeCoursAIResponse.parse_raw(second_response_content)
-        except ValidationError as e:
-            logger.error(f"Validation Pydantic error: {e}")
-            return jsonify({'error': "Erreur de structuration des données par l'IA."}), 500
-
-    # Mise à jour du plan avec les données de l'IA
-    plan.compatibility_percentage = ai_response.compatibility_percentage
-    plan.recommendation_ameliore = ai_response.recommendation_ameliore
-    plan.recommendation_plan_cadre = ai_response.recommendation_plan_cadre
-
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Erreur lors de la mise à jour du plan après IA: {e}")
-        return jsonify({'error': "Erreur lors de la mise à jour du plan après IA."}), 500
-
-    return jsonify({
-        'compatibility_percentage': plan.compatibility_percentage,
-        'recommendation_ameliore': plan.recommendation_ameliore,
-        'recommendation_plan_cadre': plan.recommendation_plan_cadre
-    })
+    # Existence minimale
+    plan = db.session.get(PlanDeCours, plan_id) or abort(404)
+    # Lancer la tâche en passant l'id utilisateur pour l'accès à la clé et crédits
+    task = analyse_plan_de_cours_task.delay(plan.id, current_user.id)
+    return jsonify({'task_id': task.id}), 202

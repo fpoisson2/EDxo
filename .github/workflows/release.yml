@@ -1,0 +1,140 @@
+name: Release
+
+on:
+  push:
+    branches: [main, dev]
+    paths-ignore:
+      - "src/config/version.py"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Fetch all tags
+        run: |
+          git fetch --tags --force --prune
+
+      - name: "Calculate versions (CALVER: YYYY.M.PATCH / betas as bN)"
+        id: calver
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          YEAR=$(date +%Y)
+          # Month without leading zero (portable)
+          if MONTH=$(date +%-m 2>/dev/null); then
+            :
+          else
+            MONTH=$(date +%m | sed 's/^0*//')
+          fi
+          BASE_NOPAD="$YEAR.$MONTH"
+          MONTH_PAD=$(printf "%02d" "$MONTH")
+          BASE_PAD="$YEAR.$MONTH_PAD"
+
+          # Collect tags possibly created with padded or non-padded months
+          TAGS=$( { git tag --list "${BASE_NOPAD}.*" || true; git tag --list "${BASE_PAD}.*" || true; } | sort -u)
+
+          # Latest *stable* patch this month (exclude betas)
+          STABLE_PATCHES=$(echo "$TAGS" | grep -E "^((${BASE_NOPAD})|(${BASE_PAD}))\.[0-9]+$" || true | sed -E "s/^(${BASE_NOPAD}|${BASE_PAD})\.([0-9]+)$/\2/" | sort -n)
+          if [ -z "${STABLE_PATCHES}" ]; then
+            STABLE_LAST=-1
+          else
+            STABLE_LAST=$(echo "$STABLE_PATCHES" | tail -n1)
+          fi
+
+          # Target patch for new work = next after latest *stable*
+          TARGET_PATCH=$((STABLE_LAST + 1))
+
+          # Next beta number for that target patch
+          BETA_TAGS=$(echo "$TAGS" | grep -E "^(${BASE_NOPAD}|${BASE_PAD})\.${TARGET_PATCH}b[0-9]+$" || true)
+          if [ -z "${BETA_TAGS}" ]; then
+            NEXT_BETA=1
+          else
+            LAST_BETA=$(echo "$BETA_TAGS" | sed -E "s/^(${BASE_NOPAD}|${BASE_PAD})\.${TARGET_PATCH}b([0-9]+)$/\2/" | sort -n | tail -n1)
+            NEXT_BETA=$((LAST_BETA + 1))
+          fi
+
+          RELEASE_VERSION="${BASE_NOPAD}.${TARGET_PATCH}"
+          PRERELEASE_VERSION="${BASE_NOPAD}.${TARGET_PATCH}b${NEXT_BETA}"
+
+          {
+            echo "release=$RELEASE_VERSION"
+            echo "prerelease=$PRERELEASE_VERSION"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: "Select version for current branch"
+        id: select
+        shell: bash
+        run: |
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            echo "VERSION=${{ steps.calver.outputs.release }}" >> "$GITHUB_ENV"
+            echo "KIND=release" >> "$GITHUB_ENV"
+          else
+            echo "VERSION=${{ steps.calver.outputs.prerelease }}" >> "$GITHUB_ENV"
+            echo "KIND=prerelease" >> "$GITHUB_ENV"
+          fi
+          echo "Using version: ${VERSION} (${KIND})"
+
+      - name: Update src/config/version.py
+        shell: bash
+        run: |
+          mkdir -p src/config
+          cat > src/config/version.py <<EOF
+          # version.py
+          """Application version information.
+
+          This file is automatically updated by the release workflow.
+          """
+          __version__ = "${VERSION}"
+          EOF
+
+      - name: Commit version file (no-op safe)
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
+        run: |
+          git add src/config/version.py
+          git commit -m "chore: bump version to ${VERSION}" || echo "No changes to commit"
+          git push || echo "Nothing to push"
+
+      - name: Create tag
+        shell: bash
+        run: |
+          if git rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null; then
+            echo "Tag ${VERSION} already exists, skipping tag creation."
+          else
+            git tag "${VERSION}"
+            git push origin "${VERSION}"
+          fi
+
+      - name: Create GitHub Release (main)
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Pre-release (dev)
+        if: github.ref == 'refs/heads/dev'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

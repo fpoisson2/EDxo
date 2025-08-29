@@ -14,7 +14,7 @@
   {% if changes|length == 0 %}
     <div class="alert alert-info">Aucun changement proposé par rapport au contenu actuel.</div>
   {% else %}
-    <form method="POST" action="{{ url_for('plan_cadre.apply_improvement', plan_id=plan_id) }}" id="reviewForm">
+    <form method="POST" action="{{ apply_url or url_for('plan_cadre.apply_improvement', plan_id=plan_id) }}" id="reviewForm">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="task_id" value="{{ task_id }}">
 
@@ -33,13 +33,15 @@
 
             {% if change.before is string %}
               <div class="row">
+                {# Transmettre les textes via JSON pour préserver les retours de ligne #}
+                <script type="application/json" class="diff-data">{{ {'before': change.before, 'after': change.after} | tojson }}</script>
                 <div class="col-md-6">
                   <label class="fw-bold">Actuel</label>
-                  <div class="border rounded p-1 diff-before" data-before="{{ change.before|e }}" data-after="{{ change.after|e }}" style="white-space: pre-wrap;"></div>
+                  <div class="border rounded p-1 diff-before" style="white-space: pre-wrap;"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="fw-bold">Proposition</label>
-                  <div class="border rounded p-1 bg-light diff-after" data-before="{{ change.before|e }}" data-after="{{ change.after|e }}" style="white-space: pre-wrap;"></div>
+                  <div class="border rounded p-1 bg-light diff-after" style="white-space: pre-wrap;"></div>
                 </div>
               </div>
             {% else %}
@@ -177,8 +179,10 @@
                                         <input class="form-check-input merge-item-{{ section }}" type="checkbox" name="accept_items[capacites][{{ cap_index }}][savoirs_faire]" value="{{ loop.index0 }}" disabled>
                                         <label class="form-check-label">
                                           <strong>{{ sf.texte }}</strong>
-                                          {% if sf.cible %}<div class="small">Cible: {{ sf.cible }}</div>{% endif %}
-                                          {% if sf.seuil_reussite %}<div class="small">Seuil: {{ sf.seuil_reussite }}</div>{% endif %}
+                                          {% set _cible = sf.cible or sf.seuil_performance %}
+                                          {% set _seuil = sf.seuil_reussite or sf.critere_reussite %}
+                                          {% if _cible %}<div class="small">Cible: {{ _cible }}</div>{% endif %}
+                                          {% if _seuil %}<div class="small">Seuil: {{ _seuil }}</div>{% endif %}
                                         </label>
                                       </div>
                                     </li>
@@ -223,8 +227,22 @@
         {% endfor %}
       </div>
 
-      <button type="submit" class="btn btn-success">Appliquer les modifications</button>
-      <a class="btn btn-secondary" href="{{ url_for('cours.view_plan_cadre', cours_id=cours.id, plan_id=plan_id) }}">Annuler</a>
+      {% if simple_confirm %}
+        <div class="d-flex gap-2">
+          {% if plan and plan.cours_id %}
+            <a class="btn btn-outline-secondary" href="/cours/{{ plan.cours_id }}/plan_de_cours/{{ plan.session }}/">Retour au plan</a>
+          {% else %}
+            <a class="btn btn-outline-secondary" href="{{ url_for('main.index') }}">Retour</a>
+          {% endif %}
+          <button type="button" id="pdcConfirmBtn" class="btn btn-success">Confirmer</button>
+          {% if task_id %}
+            <button type="button" id="pdcRevertBtn" class="btn btn-warning">Restaurer l'ancienne version</button>
+          {% endif %}
+        </div>
+      {% else %}
+        <button type="submit" class="btn btn-success">Appliquer les modifications</button>
+        <a class="btn btn-secondary" href="{{ url_for('cours.view_plan_cadre', cours_id=cours.id, plan_id=plan_id) }}">Annuler</a>
+      {% endif %}
     </form>
   {% endif %}
 {% endblock %}
@@ -301,25 +319,45 @@ function diffWords(a, b) {
   return res.reverse();
 }
 
+function getDiffPayload(el) {
+  const row = el.closest('.row');
+  const script = row ? row.querySelector('.diff-data') : null;
+  if (script) {
+    try {
+      const obj = JSON.parse(script.textContent || '{}');
+      // Normalize escaped sequences from upstream (e.g., literal "\n" in strings)
+      const normalize = (v) => {
+        if (v == null) return '';
+        if (typeof v !== 'string') return v;
+        // Convert two-character sequences to actual control chars
+        return v
+          .replace(/\\r\\n/g, '\n')
+          .replace(/\\n/g, '\n')
+          .replace(/\\t/g, '\t');
+      };
+      return { before: normalize(obj.before), after: normalize(obj.after) };
+    } catch (_) {}
+  }
+  return { before: el.getAttribute('data-before') || '', after: el.getAttribute('data-after') || '' };
+}
+
 function renderDiffBefore(el) {
-  const before = el.getAttribute('data-before') || '';
-  const after = el.getAttribute('data-after') || '';
+  const { before = '', after = '' } = getDiffPayload(el);
   const parts = diffWords(before, after);
   el.innerHTML = parts.map(p => {
     if (p.type === 'del') return '<span class="diff-del">' + escapeHtml(p.text) + '</span>';
     if (p.type === 'same') return '<span class="diff-same">' + escapeHtml(p.text) + '</span>';
-    return ''; // don't show additions on before side
+    return '';
   }).join('');
 }
 
 function renderDiffAfter(el) {
-  const before = el.getAttribute('data-before') || '';
-  const after = el.getAttribute('data-after') || '';
+  const { before = '', after = '' } = getDiffPayload(el);
   const parts = diffWords(before, after);
   el.innerHTML = parts.map(p => {
     if (p.type === 'add') return '<span class="diff-add">' + escapeHtml(p.text) + '</span>';
     if (p.type === 'same') return '<span class="diff-same">' + escapeHtml(p.text) + '</span>';
-    return ''; // don't show deletions on after side
+    return '';
   }).join('');
 }
 
@@ -366,6 +404,41 @@ document.addEventListener('DOMContentLoaded', function() {
     if (merge) merge.addEventListener('change', update);
     update();
   });
+
+  // Mode Plan de cours: boutons confirmer/restaurer (API JSON)
+  try {
+    const SIMPLE = {{ (simple_confirm or False)|tojson }};
+    if (SIMPLE) {
+      const applyUrl = {{ (apply_url or '')|tojson }};
+      const planId = {{ (plan_id or 0)|int }};
+      const taskId = {{ (task_id or '')|tojson }};
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+      async function callApply(action) {
+        if (!applyUrl) return;
+        const headers = { 'Content-Type': 'application/json' };
+        if (csrf) { headers['X-CSRFToken'] = csrf; headers['X-CSRF-Token'] = csrf; }
+        const res = await fetch(applyUrl + (taskId ? ('?task_id=' + encodeURIComponent(taskId)) : ''), {
+          method: 'POST',
+          headers,
+          credentials: 'same-origin',
+          body: JSON.stringify({ action, task_id: taskId })
+        });
+        const data = await res.json().catch(()=>({}));
+        if (!res.ok || !data.success) {
+          alert(data.message || 'Action échouée.');
+          return;
+        }
+        try { addNotification('Modifications enregistrées.', 'success', data.redirect_url || null, taskId); } catch(_) {}
+        if (data.redirect_url) window.location.href = data.redirect_url;
+      }
+
+      const confirmBtn = document.getElementById('pdcConfirmBtn');
+      if (confirmBtn) confirmBtn.addEventListener('click', () => callApply('confirm'));
+      const revertBtn = document.getElementById('pdcRevertBtn');
+      if (revertBtn) revertBtn.addEventListener('click', () => { if (confirm("Restaurer l'ancienne version ?")) callApply('revert'); });
+    }
+  } catch(_) {}
 });
 </script>
 {% endblock %}

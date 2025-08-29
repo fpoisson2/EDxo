@@ -3,13 +3,15 @@ import logging
 from collections import defaultdict
 
 import bleach
-from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, jsonify, abort
 
 import os
 
 import html
 
 import json
+import re
+import time
 from flask_login import login_required, current_user
 
 from ..forms import (
@@ -23,6 +25,8 @@ from ..models import (
     User,
     Programme,
     Competence,
+    ElementCompetence,
+    competence_programme,
     FilConducteur,
     Cours,
     CoursPrealable,
@@ -32,13 +36,413 @@ from ..models import (
     ElementCompetenceParCours,
     PlanDeCours
 )
+from flask import send_file
+import io
+from ...utils import generate_programme_grille_pdf
+
+try:
+    import openpyxl
+    from openpyxl.styles import Alignment
+except Exception:
+    openpyxl = None
 from ...utils.decorator import role_required, ensure_profile_completed, roles_required
+from openai import OpenAI
 
 # Utilities
 # Example of another blueprint import (unused here, just as in your snippet)
 logger = logging.getLogger(__name__)
 
 programme_bp = Blueprint('programme', __name__, url_prefix='/programme')
+
+@programme_bp.route('/<int:programme_id>/competences/logigramme')
+@login_required
+@ensure_profile_completed
+def competence_logigramme(programme_id):
+    """
+    Vue interactive: logigramme des compétences reliées aux cours d'un programme,
+    visualisant la progression par session et les liens développée/atteinte.
+    """
+    logger.debug(f"Accessing competence logigramme for programme ID: {programme_id}")
+    programme = db.session.get(Programme, programme_id) or abort(404)
+
+    # Vérifier l’accès
+    if programme not in current_user.programmes and current_user.role != 'admin':
+        flash("Vous n'avez pas accès à ce programme.", 'danger')
+        return redirect(url_for('main.index'))
+
+    # Collecte des cours + sessions via l'objet d'association CoursProgramme
+    course_items = []
+    course_ids = []
+    for assoc in programme.cours_assocs:
+        c = assoc.cours
+        if not c:
+            continue
+        course_ids.append(c.id)
+        course_items.append({
+            'id': c.id,
+            'code': c.code,
+            'nom': c.nom,
+            'session': assoc.session or 0,
+            'fil_color': (c.fil_conducteur.couleur if getattr(c, 'fil_conducteur', None) and c.fil_conducteur.couleur else None),
+            'fil_id': (c.fil_conducteur.id if getattr(c, 'fil_conducteur', None) else None),
+            'fil_desc': (c.fil_conducteur.description if getattr(c, 'fil_conducteur', None) else None),
+        })
+
+    # Compétences associées au programme
+    competences = (
+        programme
+        .competences
+        .order_by(Competence.code)
+        .all()
+    )
+    comp_items = [{'id': comp.id, 'code': comp.code, 'nom': comp.nom} for comp in competences]
+    comp_ids = {c['id'] for c in comp_items}
+
+    # Liens Compétence ↔ Cours
+    # 1) Basé sur les éléments de compétence par cours et leur statut
+    #    Statuts possibles: "Réinvesti", "Atteint", "Développé significativement"
+    #    On agrège par (cours_id, competence_id) et on retient le statut dominant
+    #    selon la priorité: Développé significativement > Atteint > Réinvesti.
+    links = []
+    if course_ids:
+        from ..models import CompetenceParCours, ElementCompetenceParCours, ElementCompetence  # import local pour éviter cycles
+
+        # Agrégation par (cours_id, competence_id)
+        agg = {}
+        q = (
+            db.session.query(ElementCompetenceParCours.cours_id,
+                             ElementCompetence.competence_id,
+                             ElementCompetenceParCours.status)
+            .join(ElementCompetence, ElementCompetenceParCours.element_competence_id == ElementCompetence.id)
+            .filter(ElementCompetenceParCours.cours_id.in_(course_ids))
+        )
+        for cours_id, competence_id, status in q.all():
+            if competence_id not in comp_ids:
+                continue
+            key = (cours_id, competence_id)
+            d = agg.setdefault(key, {"reinvesti": 0, "atteint": 0, "developpe": 0, "total": 0})
+            s = (status or '').strip().lower()
+            if 'significativement' in s or 'développ' in s or 'developpe' in s:
+                d['developpe'] += 1
+            elif 'atteint' in s:
+                d['atteint'] += 1
+            elif 'réinvesti' in s or 'reinvesti' in s:
+                d['reinvesti'] += 1
+            d['total'] += 1
+
+        # Construire les liens à partir de l'agrégation
+        for (cours_id, competence_id), counts in agg.items():
+            if counts['developpe'] > 0:
+                ltype = 'developpe'
+            elif counts['atteint'] > 0:
+                ltype = 'atteint'
+            elif counts['reinvesti'] > 0:
+                ltype = 'reinvesti'
+            else:
+                continue
+            links.append({
+                'competence_id': competence_id,
+                'cours_id': cours_id,
+                'type': ltype,
+                'weight': counts['total'],
+                'counts': counts,
+            })
+
+        # 2) Compléter avec CompetenceParCours si aucun élément détaillé (fallback)
+        rows = CompetenceParCours.query.filter(CompetenceParCours.cours_id.in_(course_ids)).all()
+        seen = {(l['cours_id'], l['competence_id']) for l in links}
+        for r in rows:
+            if r.competence_developpee_id and r.competence_developpee_id in comp_ids:
+                key = (r.cours_id, r.competence_developpee_id)
+                if key not in seen:
+                    links.append({
+                        'competence_id': r.competence_developpee_id,
+                        'cours_id': r.cours_id,
+                        'type': 'developpe',
+                        'weight': 1,
+                        'counts': {'developpe': 1, 'atteint': 0, 'reinvesti': 0, 'total': 1}
+                    })
+            if r.competence_atteinte_id and r.competence_atteinte_id in comp_ids:
+                key = (r.cours_id, r.competence_atteinte_id)
+                if key not in seen:
+                    links.append({
+                        'competence_id': r.competence_atteinte_id,
+                        'cours_id': r.cours_id,
+                        'type': 'atteint',
+                        'weight': 1,
+                        'counts': {'developpe': 0, 'atteint': 1, 'reinvesti': 0, 'total': 1}
+                    })
+
+    # Sessions présentes (pour colonnes)
+    sessions = sorted({int(c['session']) for c in course_items if c['session'] is not None})
+    if not sessions:
+        sessions = [0]
+
+    # Dictionnaire des fils conducteurs présents
+    fils = {}
+    for c in course_items:
+        if c.get('fil_id'):
+            fid = c['fil_id']
+            if fid not in fils:
+                fils[fid] = {'id': fid, 'description': c.get('fil_desc'), 'couleur': c.get('fil_color')}
+
+    data = {
+        'programme': {'id': programme.id, 'nom': programme.nom},
+        'competences': comp_items,
+        'cours': course_items,
+        'links': links,
+        'sessions': sessions,
+        'fils': list(fils.values())
+    }
+
+    # Génération IA: formulaire des modèles dispo
+    try:
+        from ..forms import GenerateContentForm
+        generate_form = GenerateContentForm()
+    except Exception:
+        generate_form = None
+
+    return render_template('programme/competence_logigramme.html', programme=programme, data=data, generate_form=generate_form)
+
+
+@programme_bp.route('/<int:programme_id>/competences/logigramme/export.xlsx')
+@login_required
+@ensure_profile_completed
+def export_competence_logigramme_xlsx(programme_id):
+    """Export cours×compétences (statut) en XLSX.
+    Lignes: cours (triés par session puis code). Colonnes: compétences (par code).
+    Cellules: symbole selon statut agrégé pour (cours, compétence).
+    """
+    if openpyxl is None:
+        return jsonify({'error': "Dépendance 'openpyxl' manquante côté serveur."}), 500
+    programme = db.session.get(Programme, programme_id) or abort(404)
+    if programme not in current_user.programmes and current_user.role != 'admin':
+        flash("Vous n'avez pas accès à ce programme.", 'danger')
+        return redirect(url_for('main.index'))
+
+    # Collect cours (with session ordering)
+    cours_list = []
+    for assoc in programme.cours_assocs:
+        if assoc.cours:
+            cours_list.append((int(assoc.session or 0), assoc.cours.code or '', assoc.cours))
+    cours_list.sort(key=lambda t: (t[0], t[1]))
+
+    # Competences
+    competences = programme.competences.order_by(Competence.code).all()
+    comp_ids = {c.id for c in competences}
+
+    # Aggregate statuses for each (cours, competence)
+    from ..models import CompetenceParCours, ElementCompetenceParCours, ElementCompetence
+    course_ids = [c.id for _,__, c in cours_list]
+    agg = {}
+    if course_ids:
+        q = (
+            db.session.query(ElementCompetenceParCours.cours_id,
+                             ElementCompetence.competence_id,
+                             ElementCompetenceParCours.status)
+            .join(ElementCompetence, ElementCompetenceParCours.element_competence_id == ElementCompetence.id)
+            .filter(ElementCompetenceParCours.cours_id.in_(course_ids))
+        )
+        for cours_id, competence_id, status in q.all():
+            if competence_id not in comp_ids:
+                continue
+            key = (cours_id, competence_id)
+            d = agg.setdefault(key, {"reinvesti": 0, "atteint": 0, "developpe": 0, "total": 0})
+            s = (status or '').strip().lower()
+            if 'significativement' in s or 'développ' in s or 'developpe' in s:
+                d['developpe'] += 1
+            elif 'atteint' in s:
+                d['atteint'] += 1
+            elif 'réinvesti' in s or 'reinvesti' in s:
+                d['reinvesti'] += 1
+            d['total'] += 1
+        # Fallback CompetenceParCours
+        rows = CompetenceParCours.query.filter(CompetenceParCours.cours_id.in_(course_ids)).all()
+        seen = set(agg.keys())
+        for r in rows:
+            if r.competence_developpee_id and r.competence_developpee_id in comp_ids and (r.cours_id, r.competence_developpee_id) not in seen:
+                agg[(r.cours_id, r.competence_developpee_id)] = {"developpe": 1, "atteint": 0, "reinvesti": 0, "total": 1}
+            if r.competence_atteinte_id and r.competence_atteinte_id in comp_ids and (r.cours_id, r.competence_atteinte_id) not in seen:
+                agg[(r.cours_id, r.competence_atteinte_id)] = {"developpe": 0, "atteint": 1, "reinvesti": 0, "total": 1}
+
+    # Build workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Logigramme'
+    # Header row
+    ws.cell(row=1, column=1, value='Cours\\Compétences')
+    for j, comp in enumerate(competences, start=2):
+        ws.cell(row=1, column=j, value=comp.code)
+    # Symbols map
+    sym_map = { 'developpe': '•', 'atteint': '✓', 'reinvesti': '↺' }
+    # Fill rows
+    for i, (_, __, cours) in enumerate(cours_list, start=2):
+        ws.cell(row=i, column=1, value=cours.code)
+        for j, comp in enumerate(competences, start=2):
+            d = agg.get((cours.id, comp.id))
+            if not d:
+                continue
+            if d['developpe'] > 0:
+                t = 'developpe'
+            elif d['atteint'] > 0:
+                t = 'atteint'
+            else:
+                t = 'reinvesti'
+            ws.cell(row=i, column=j, value=sym_map.get(t, ''))
+    # Align center
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+        for cell in row:
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+    # Autosize columns (rough)
+    for col in ws.columns:
+        maxlen = 10
+        for cell in col:
+            try:
+                v = str(cell.value) if cell.value is not None else ''
+                if len(v) > maxlen:
+                    maxlen = len(v)
+            except Exception:
+                pass
+        ws.column_dimensions[col[0].column_letter].width = maxlen + 2
+
+    bio = io.BytesIO()
+    wb.save(bio)
+    bio.seek(0)
+    filename = f"logigramme_{programme_id}.xlsx"
+    return send_file(bio, as_attachment=True, download_name=filename, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+@programme_bp.route('/<int:programme_id>/links', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def save_programme_links(programme_id):
+    """Persist edited links into ElementCompetenceParCours rows.
+    For each provided link {cours_id, competence_id, type, weight}, we set the
+    status of ElementCompetenceParCours rows for that (cours, competence)'s elements
+    to the selected type. If no rows exist, we create rows for the competence's
+    elements for this course. Weight is not strictly enforced at DB level because
+    the number of elements is authoritative; all rows are set to the given type.
+    """
+    from flask import jsonify
+    programme = db.session.get(Programme, programme_id) or abort(404)
+    # Restrict to admin/coordo only
+    if current_user.role not in ('admin', 'coordo'):
+        return jsonify({'error': "Accès restreint (admin/coordo)"}), 403
+    # If not admin, ensure membership to programme
+    if current_user.role != 'admin' and programme not in current_user.programmes:
+        return jsonify({'error': "Accès refusé"}), 403
+
+    try:
+        payload = (request.get_json(silent=True) or [])
+        assert isinstance(payload, list)
+    except Exception:
+        return jsonify({'error': 'Format JSON invalide'}), 400
+
+    # Build quick lookups for validation
+    course_ids = {assoc.cours_id for assoc in programme.cours_assocs}
+    comp_ids = {c.id for c in programme.competences}
+    allowed_types = {'developpe': 'Développé significativement', 'atteint': 'Atteint', 'reinvesti': 'Réinvesti'}
+
+    # Build competence elements index for this programme
+    comp_ids = {c.id for c in programme.competences}
+    # Map competence_id -> [element ids]
+    comp_to_elem_ids = {}
+    all_elem_ids = []
+    for cid in comp_ids:
+      ids = [e.id for e in ElementCompetence.query.filter_by(competence_id=cid).all()]
+      comp_to_elem_ids[cid] = ids
+      all_elem_ids.extend(ids)
+
+    # Build payload pairs set
+    payload_pairs = set()
+    updated = 0
+    for item in payload:
+        try:
+            cours_id = int(item.get('cours_id'))
+            competence_id = int(item.get('competence_id'))
+            ltype = str(item.get('type'))
+        except Exception:
+            continue
+        if cours_id not in course_ids or competence_id not in comp_ids:
+            continue
+        if ltype not in allowed_types:
+            continue
+        payload_pairs.add((cours_id, competence_id))
+        status_value = allowed_types[ltype]
+
+        # Fetch elements for this competence
+        elements = ElementCompetence.query.filter_by(competence_id=competence_id).order_by(ElementCompetence.id).all()
+        if not elements:
+            # No elements defined; skip silently
+            continue
+
+        # Ensure one EPC row per element for this course
+        existing = { (epc.element_competence_id): epc for epc in ElementCompetenceParCours.query
+                     .filter_by(cours_id=cours_id)
+                     .filter(ElementCompetenceParCours.element_competence_id.in_([e.id for e in elements]))
+                     .all() }
+        for e in elements:
+            epc = existing.get(e.id)
+            if not epc:
+                epc = ElementCompetenceParCours(cours_id=cours_id, element_competence_id=e.id, status=status_value)
+                db.session.add(epc)
+            else:
+                epc.status = status_value
+        updated += 1
+
+    # Handle deletions: remove EPC rows for pairs not present in payload
+    if all_elem_ids:
+        # Fetch all EPC rows for programme courses and competence elements
+        rows = (ElementCompetenceParCours.query
+                .filter(ElementCompetenceParCours.cours_id.in_(course_ids))
+                .filter(ElementCompetenceParCours.element_competence_id.in_(all_elem_ids))
+                .all())
+        # Build element->competence map
+        elem_to_comp = {}
+        for cid, eids in comp_to_elem_ids.items():
+            for eid in eids:
+                elem_to_comp[eid] = cid
+        for r in rows:
+            comp_id = elem_to_comp.get(r.element_competence_id)
+            if comp_id is None:
+                continue
+            if (r.cours_id, comp_id) not in payload_pairs:
+                db.session.delete(r)
+
+    try:
+        db.session.commit()
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.exception("Error saving links")
+        return jsonify({'error': "Erreur lors de l'enregistrement"}), 500
+
+    return jsonify({'ok': True, 'updated': updated, 'message': f'{updated} liens appliqués'}), 200
+
+
+@programme_bp.route('/<int:programme_id>/logigramme/generate', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def generate_competence_logigramme(programme_id):
+    """Start Celery task to generate suggested links; returns task_id for polling."""
+    programme = db.session.get(Programme, programme_id) or abort(404)
+    if current_user.role not in ('admin', 'coordo'):
+        return jsonify({'error': 'Accès restreint (admin/coordo)'}), 403
+    if current_user.role != 'admin' and programme not in current_user.programmes:
+        return jsonify({'error': 'Accès refusé'}), 403
+    user = current_user
+    if not user.openai_key:
+        return jsonify({'error': 'Aucune clé OpenAI configurée dans votre profil.'}), 400
+    if not user.credits or user.credits <= 0:
+        return jsonify({'error': "Crédits insuffisants pour effectuer l'appel."}), 400
+    form = request.get_json(silent=True) or {}
+
+    # Enqueue task
+    from ..tasks.generation_logigramme import generate_programme_logigramme_task
+    task = generate_programme_logigramme_task.delay(programme_id, user.id, form)
+    return jsonify({'task_id': task.id}), 202
+
+
+    
+
 
 @programme_bp.route('/<int:programme_id>/competences')
 @login_required
@@ -48,7 +452,7 @@ def view_competences_programme(programme_id):
     Affiche la liste de toutes les compétences associées à un programme spécifique.
     """
     logger.debug(f"Accessing competencies list for programme ID: {programme_id}")
-    programme = Programme.query.get_or_404(programme_id)
+    programme = db.session.get(Programme, programme_id) or abort(404)
 
     # Vérifier l’accès
     if programme not in current_user.programmes and current_user.role != 'admin':
@@ -110,7 +514,7 @@ def review_competencies_import():
     except Exception as e:
         logger.error(f"Erreur lors de la lecture OCR {ocr_file_path}: {e}", exc_info=True)
     
-    # Lecture du fichier JSON de compétences
+    # Lecture du fichier JSON de compétences (avec stratégie de repli si le fichier exact n'existe pas)
     competencies_data = None
     has_competencies_file = False
     try:
@@ -120,8 +524,44 @@ def review_competencies_import():
             raise ValueError("Structure JSON invalide: clé 'competences' manquante.")
         has_competencies_file = True
     except Exception as e:
-        logger.error(f"Erreur lors du parsing JSON {competencies_file_path}: {e}", exc_info=True)
-        flash(f"Erreur lors de la lecture ou du parsing du fichier JSON des compétences: {e}", "warning")
+        logger.warning(f"Lecture initiale échouée pour {competencies_file_path}: {e}")
+        # Tentative de repli: rechercher un fichier _competences.json correspondant dans le dossier
+        try:
+            candidates = []
+            if os.path.isdir(txt_output_dir):
+                base_lower = base_filename.lower()
+                for fname in os.listdir(txt_output_dir):
+                    if not fname.endswith('_competences.json'):
+                        continue
+                    f_lower = fname.lower()
+                    # Correspondances permissives: préfixe identique ou inclusion du code de programme
+                    if f_lower.startswith(base_lower) or base_lower.startswith(f_lower.replace('_competences.json','')):
+                        candidates.append(os.path.join(txt_output_dir, fname))
+                # Si aucune correspondance stricte, tenter une correspondance contenant le code (avant le premier '_')
+                if not candidates and '_' in base_lower:
+                    code_prefix = base_lower.split('_', 1)[0]
+                    for fname in os.listdir(txt_output_dir):
+                        if fname.lower().endswith('_competences.json') and fname.lower().startswith(code_prefix):
+                            candidates.append(os.path.join(txt_output_dir, fname))
+            if len(candidates) == 1:
+                fallback_path = candidates[0]
+                logger.info(f"Utilisation du JSON de repli détecté: {fallback_path}")
+                competencies_file_path = fallback_path
+                with open(competencies_file_path, 'r', encoding='utf-8') as f:
+                    competencies_data = json.load(f)
+                if not isinstance(competencies_data, dict) or 'competences' not in competencies_data:
+                    raise ValueError("Structure JSON invalide dans le fichier de repli: clé 'competences' manquante.")
+                has_competencies_file = True
+                flash("Fichier des compétences introuvable sous le nom attendu; utilisation d'une correspondance trouvée.", "info")
+            elif len(candidates) > 1:
+                logger.warning(f"Plusieurs fichiers candidats trouvés pour base '{base_filename}': {candidates}")
+                flash("Plusieurs fichiers de compétences possibles trouvés. Merci de relancer en sélectionnant le bon devis.", "warning")
+            else:
+                logger.error(f"Aucun fichier JSON correspondant trouvé dans {txt_output_dir} pour base '{base_filename}'.")
+                flash(f"Erreur lors de la lecture ou du parsing du fichier JSON des compétences: {e}", "warning")
+        except Exception as e2:
+            logger.error(f"Erreur lors de la recherche/sélection d'un fichier JSON de repli: {e2}", exc_info=True)
+            flash(f"Erreur lors de la lecture ou du parsing du fichier JSON des compétences: {e}", "warning")
     
     # Construction du comparatif pour chaque compétence
     comparisons = []
@@ -413,6 +853,25 @@ def confirm_competencies_import():
                     competences_added_count += 1
                     logger.info(f"Création de la compétence {code}.")
 
+                # Associer la compétence au programme dans la table d'association (utilisée par le logigramme)
+                try:
+                    link_exists = db.session.execute(
+                        db.text(
+                            "SELECT 1 FROM Competence_Programme WHERE competence_id = :cid AND programme_id = :pid"
+                        ),
+                        {"cid": comp_to_process.id, "pid": programme.id}
+                    ).first()
+                    if not link_exists:
+                        db.session.execute(
+                            db.text(
+                                "INSERT INTO Competence_Programme (competence_id, programme_id) VALUES (:cid, :pid)"
+                            ),
+                            {"cid": comp_to_process.id, "pid": programme.id}
+                        )
+                        logger.debug(f"Association Competence[{comp_to_process.id}] -> Programme[{programme.id}] créée.")
+                except Exception as link_err:
+                    logger.warning(f"Impossible de créer l'association Competence_Programme pour {code}: {link_err}")
+
                 # Traitement complet des éléments de compétence :
                 # Récupération de la liste d'éléments depuis le JSON
                 elements_list = comp_data.get('elements') or comp_data.get('Éléments') or []
@@ -525,7 +984,7 @@ def view_programme(programme_id):
     logger.debug(f"User programmes: {[p.id for p in current_user.programmes]}")
     
     # Récupérer le programme
-    programme = Programme.query.get(programme_id)
+    programme = db.session.get(Programme, programme_id)
     if not programme:
         flash('Programme non trouvé.', 'danger')
         return redirect(url_for('main.index'))
@@ -567,7 +1026,7 @@ def view_programme(programme_id):
             # Récupérer le username de l'utilisateur si modified_by_id existe
             modified_username = None
             if dernier_plan.modified_by_id:
-                user = User.query.get(dernier_plan.modified_by_id)
+                user = db.session.get(User, dernier_plan.modified_by_id)
                 modified_username = user.username if user else None
 
             cours.dernier_plan = {
@@ -623,6 +1082,7 @@ def view_programme(programme_id):
     # Créer des dictionnaires de formulaires de suppression
     delete_forms_competences = {comp.id: DeleteForm(prefix=f"competence-{comp.id}") for comp in competences}
     delete_forms_cours = {c.id: DeleteForm(prefix=f"cours-{c.id}") for c in cours_liste}
+    delete_forms_fils = {f.id: DeleteForm(prefix=f"fil-{f.id}") for f in fil_conducteurs}
 
     # Récupérer tous les programmes (pour le sélecteur éventuel)
     programmes = current_user.programmes
@@ -632,6 +1092,13 @@ def view_programme(programme_id):
         plans = PlanDeCours.query.filter_by(cours_id=cours.id).all()
         cours_plans_mapping[cours.id] = [p.to_dict() for p in plans]
 
+    # Génération IA: liste de modèles (pour le modal)
+    try:
+        from ..forms import GenerateContentForm
+        generate_form = GenerateContentForm()
+    except Exception:
+        generate_form = None
+
     return render_template('view_programme.html',
                            programme=programme,
                            programmes=programmes,
@@ -640,6 +1107,7 @@ def view_programme(programme_id):
                            cours_par_session=cours_par_session,
                            delete_forms_competences=delete_forms_competences,
                            delete_forms_cours=delete_forms_cours,
+                           delete_forms_fils=delete_forms_fils,
                            prerequisites=prerequisites,
                            corequisites=corequisites,
                            competencies_codes=competencies_codes,
@@ -647,14 +1115,418 @@ def view_programme(programme_id):
                            total_heures_laboratoire=total_heures_laboratoire,
                            total_heures_travail_maison=total_heures_travail_maison,
                            total_unites=total_unites,
-                           cours_plans_mapping=cours_plans_mapping
+                           cours_plans_mapping=cours_plans_mapping,
+                           generate_form=generate_form
                            )
+
+@programme_bp.route('/<int:programme_id>/grille/generate', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def generate_programme_grille(programme_id):
+    programme = db.session.get(Programme, programme_id) or abort(404)
+    if current_user.role not in ('admin', 'coordo'):
+        return jsonify({'error': 'Accès restreint (admin/coordo)'}), 403
+    if current_user.role != 'admin' and programme not in current_user.programmes:
+        return jsonify({'error': 'Accès refusé'}), 403
+    user = current_user
+    if not user.openai_key:
+        return jsonify({'error': 'Aucune clé OpenAI configurée dans votre profil.'}), 400
+    if not user.credits or user.credits <= 0:
+        return jsonify({'error': "Crédits insuffisants pour effectuer l\'appel."}), 400
+
+    form = request.get_json(silent=True) or {}
+    from ..tasks.generation_grille import generate_programme_grille_task
+    task = generate_programme_grille_task.delay(programme_id, user.id, form)
+    return jsonify({'task_id': task.id}), 202
+
+@programme_bp.route('/<int:programme_id>/competences/import_pdf/start', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def import_competences_pdf_start(programme_id):
+    """Démarre l'import simplifié de compétences depuis un PDF pour un programme.
+
+    Reçoit un formulaire multipart avec 'file' et retourne {task_id}.
+    """
+    from ..tasks.ocr import simple_import_competences_pdf
+    programme = db.session.get(Programme, programme_id) or abort(404)
+    if current_user.role not in ('admin', 'coordo') and programme not in current_user.programmes:
+        return jsonify({'error': 'Accès refusé'}), 403
+    if 'file' not in request.files:
+        return jsonify({'error': 'Aucun fichier fourni.'}), 400
+    f = request.files['file']
+    if not f or not f.filename.lower().endswith('.pdf'):
+        return jsonify({'error': 'Veuillez fournir un fichier PDF.'}), 400
+    upload_dir = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'uploads'))
+    os.makedirs(upload_dir, exist_ok=True)
+    safe_name = re.sub(r'[^A-Za-z0-9_.-]+', '_', f.filename)
+    filename = f"prog{programme_id}_{int(time.time())}_{safe_name}"
+    pdf_path = os.path.join(upload_dir, filename)
+    f.save(pdf_path)
+    task = simple_import_competences_pdf.delay(programme_id, pdf_path, current_user.id)
+    return jsonify({'task_id': task.id}), 202
+
+@programme_bp.route('/<int:programme_id>/competences/import/review')
+@login_required
+@ensure_profile_completed
+def review_competences_import_task(programme_id):
+    """Affiche la page de comparaison à partir du résultat de tâche (task_id)."""
+    from ...celery_app import celery
+    from celery.result import AsyncResult
+    programme = db.session.get(Programme, programme_id) or abort(404)
+    task_id = request.args.get('task_id')
+    if not task_id:
+        flash('Identifiant de tâche manquant.', 'danger')
+        return redirect(url_for('programme.view_competences_programme', programme_id=programme.id))
+    res = AsyncResult(task_id, app=celery)
+    data = res.result or {}
+    base_filename = (data.get('result') or {}).get('base_filename') or ''
+
+    comparisons = []
+    try:
+        txt_output_dir = current_app.config.get('TXT_OUTPUT_DIR', 'txt_outputs')
+        source_list = (data.get('result') or {}).get('competences') or []
+        if base_filename:
+            json_path = os.path.join(txt_output_dir, f"{base_filename}_competences.json")
+            if os.path.exists(json_path):
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    j = json.load(f)
+                    source_list = j.get('competences') or source_list
+        for comp in source_list:
+            code = comp.get('Code') or comp.get('code')
+            if not code:
+                continue
+            db_comp = Competence.query.filter_by(code=code, programme_id=programme.id).first()
+            db_version = None
+            if db_comp:
+                db_elements = []
+                for elem in db_comp.elements:
+                    criteria_list = [c.criteria for c in elem.criteria] if elem.criteria else []
+                    db_elements.append({'nom': elem.nom, 'criteres': criteria_list})
+                db_version = {
+                    'code': db_comp.code,
+                    'nom': db_comp.nom,
+                    'contexte': db_comp.contexte_de_realisation,
+                    'criteres': db_comp.criteria_de_performance,
+                    'elements': db_elements,
+                }
+            json_elements = []
+            elems = comp.get('Éléments') or comp.get('elements') or []
+            for elem in elems:
+                if isinstance(elem, str):
+                    json_elements.append({'nom': elem, 'criteres': None})
+                elif isinstance(elem, dict):
+                    json_elements.append({'nom': elem.get('element') or elem.get('nom'), 'criteres': elem.get('criteres')})
+            json_version = {
+                'code': comp.get('Code') or comp.get('code'),
+                'nom': comp.get('Nom de la compétence') or comp.get('nom'),
+                'contexte': comp.get('Contexte de réalisation') or comp.get('Contexte') or comp.get('contexte_de_realisation'),
+                'criteres': comp.get("Critères de performance pour l’ensemble de la compétence") or comp.get('criteria_de_performance'),
+                'elements': json_elements,
+            }
+            comparisons.append({'code': code, 'db': db_version, 'json': json_version})
+    except Exception:
+        current_app.logger.exception('Erreur construction comparatif import (task)')
+        comparisons = []
+
+    form = ReviewImportConfirmForm()
+    form.programme_id.data = programme_id
+    form.base_filename.data = base_filename
+    form.import_structured.data = 'true'
+    return render_template('programme/review_import.html', programme=programme, comparisons=comparisons, base_filename=base_filename, form=form)
+
+@programme_bp.route('/<int:programme_id>/grille/apply', methods=['POST'])
+@login_required
+@ensure_profile_completed
+def apply_programme_grille(programme_id):
+    programme = db.session.get(Programme, programme_id) or abort(404)
+    if current_user.role not in ('admin', 'coordo'):
+        return jsonify({'error': 'Accès restreint (admin/coordo)'}), 403
+    if current_user.role != 'admin' and programme not in current_user.programmes:
+        return jsonify({'error': 'Accès refusé'}), 403
+
+    payload = request.get_json(silent=True) or {}
+    mode = (payload.get('mode') or 'append').lower()
+    grid = payload.get('grid') or {}
+    sessions = grid.get('sessions') or []
+    fils = grid.get('fils_conducteurs') or []
+
+    # Option overwrite: supprimer les associations Cours↔Programme (pas les cours)
+    if mode == 'overwrite':
+        try:
+            # Détacher tous les cours de ce programme
+            for assoc in list(programme.cours_assocs):
+                db.session.delete(assoc)
+            db.session.flush()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': f"Erreur lors de l\'effacement de la grille: {e}"}), 500
+
+    import random, string, re
+    from ..models import Cours, CoursProgramme as CP, CoursPrealable, CoursCorequis
+
+    def gen_unique_code():
+        """Génère un code de cours unique préfixé par le code du programme.
+
+        Si le programme possède un code ministériel (ex: 243.A0), on extrait le
+        préfixe numérique (ex: 243) et on produit des codes du type '243-ABC'.
+        À défaut, on utilise l'identifiant du programme comme préfixe.
+        """
+        # Déterminer le préfixe de programme
+        prefix = None
+        try:
+            lp = getattr(programme, 'liste_programme_ministeriel', None)
+            if lp and getattr(lp, 'code', None):
+                m = re.match(r"^(\d{2,4})", lp.code.strip())
+                if m:
+                    prefix = m.group(1)
+            if not prefix:
+                prefix = str(programme.id)
+        except Exception:
+            prefix = str(programme.id)
+
+        # Génère un code court aléatoire et vérifie l'unicité
+        for _ in range(12):
+            code = f"{prefix}-{''.join(random.choices(string.ascii_uppercase, k=3))}"
+            if not Cours.query.filter_by(code=code).first():
+                return code
+        # Fallback numériques
+        for _ in range(12):
+            code = f"{prefix}-{random.randint(100,999)}"
+            if not Cours.query.filter_by(code=code).first():
+                return code
+        # Dernier recours
+        return f"{prefix}-{random.randint(1000,9999)}"
+
+    created = []
+    # Mapping temporaire: nom du cours -> (id, session)
+    name_to_course = {}
+    try:
+        for sess_obj in sessions:
+            sess_num = int(sess_obj.get('session') or 0)
+            for course in (sess_obj.get('courses') or []):
+                nom = (course.get('nom') or 'Cours généré').strip()
+                ht = int(course.get('heures_theorie') or 0)
+                hl = int(course.get('heures_laboratoire') or 0)
+                hm = int(course.get('heures_travail_maison') or 0)
+                unites = float(course.get('nombre_unites') or 0.0)
+                if unites == 0.0:
+                    try:
+                        unites = round((ht + hl + hm), 2)
+                    except Exception:
+                        unites = float(ht + hl + hm) if all(isinstance(x, int) for x in (ht, hl, hm)) else 1.0
+
+                c = Cours(code=gen_unique_code(), nom=nom,
+                          nombre_unites=unites,
+                          heures_theorie=ht,
+                          heures_laboratoire=hl,
+                          heures_travail_maison=hm)
+                db.session.add(c)
+                db.session.flush()
+                # Associer au programme avec session
+                assoc = CP()
+                assoc.cours_id = c.id
+                assoc.programme_id = programme.id
+                assoc.session = sess_num
+                db.session.add(assoc)
+                created.append({'id': c.id, 'code': c.code, 'nom': c.nom, 'session': sess_num})
+                # Conserver le mapping sur le nom pour les liens (préalables/corequis)
+                # Si doublon de nom, on garde le premier rencontré pour la session correspondante
+                name_key = c.nom.strip()
+                name_to_course.setdefault(name_key, (c.id, sess_num))
+
+        # Deuxième passe: appliquer préalables et co‑requis
+        # Éviter doublons exacts en mémoire avant commit
+        prealables_to_add = []  # tuples (cours_id, prealable_id)
+        corequis_to_add = []    # tuples (cours_id, corequis_id)
+
+        for sess_obj in sessions:
+            sess_num = int(sess_obj.get('session') or 0)
+            for course in (sess_obj.get('courses') or []):
+                nom = (course.get('nom') or '').strip()
+                if not nom or nom not in name_to_course:
+                    continue
+                cours_id, cours_session = name_to_course[nom]
+                # Sanity: on attend que cours_session == sess_num
+                # Gérer préalables (max 2, sessions antérieures seulement)
+                raw_p = course.get('prealables') or course.get('prerequis') or []
+                if isinstance(raw_p, str):
+                    raw_p = [raw_p]
+                added = 0
+                seen = set()
+                for p in raw_p:
+                    pname = str(p).strip()
+                    if not pname or pname.lower() in seen:
+                        continue
+                    seen.add(pname.lower())
+                    ref = name_to_course.get(pname)
+                    if not ref:
+                        continue
+                    ref_id, ref_session = ref
+                    if ref_id == cours_id:
+                        continue  # pas d'auto-référence
+                    if ref_session >= cours_session:
+                        continue  # préalables doivent être dans une session antérieure
+                    prealables_to_add.append((cours_id, ref_id))
+                    added += 1
+                    if added >= 2:
+                        break  # ne jamais dépasser 2 préalables
+
+                # Gérer co‑requis (même session uniquement)
+                raw_c = course.get('corequis') or []
+                if isinstance(raw_c, str):
+                    raw_c = [raw_c]
+                seen_c = set()
+                for co in raw_c:
+                    cname = str(co).strip()
+                    if not cname or cname.lower() in seen_c:
+                        continue
+                    seen_c.add(cname.lower())
+                    ref = name_to_course.get(cname)
+                    if not ref:
+                        continue
+                    ref_id, ref_session = ref
+                    if ref_id == cours_id:
+                        continue  # pas d'auto-référence
+                    if ref_session != cours_session:
+                        continue  # co‑requis dans la même session uniquement
+                    corequis_to_add.append((cours_id, ref_id))
+
+        # Insérer en base (en filtrant doublons)
+        seen_pairs_p = set()
+        for (cid, pid) in prealables_to_add:
+            key = (cid, pid)
+            if key in seen_pairs_p:
+                continue
+            seen_pairs_p.add(key)
+            db.session.add(CoursPrealable(cours_id=cid, cours_prealable_id=pid, note_necessaire=None))
+
+        seen_pairs_c = set()
+        for (cid, coid) in corequis_to_add:
+            key = (cid, coid)
+            if key in seen_pairs_c:
+                continue
+            seen_pairs_c.add(key)
+            db.session.add(CoursCorequis(cours_id=cid, cours_corequis_id=coid))
+
+        # Appliquer les fils conducteurs (facultatif)
+        try:
+            from ..models import FilConducteur
+            # Index existants par (description lower) pour éviter doublons
+            existing_fils = { (f.description or '').strip().lower(): f for f in FilConducteur.query.filter_by(programme_id=programme.id).all() }
+            for f in (fils if isinstance(fils, list) else []):
+                try:
+                    desc = str(f.get('description') or '').strip()
+                    if not desc:
+                        continue
+                    color = str(f.get('couleur') or '').strip() or None
+                    course_names = f.get('cours') or []
+                    if isinstance(course_names, str):
+                        course_names = [course_names]
+                    # Trouver ou créer le fil
+                    key = desc.lower()
+                    fil = existing_fils.get(key)
+                    if not fil:
+                        fil = FilConducteur(programme_id=programme.id, description=desc, couleur=color)
+                        db.session.add(fil)
+                        db.session.flush()
+                        existing_fils[key] = fil
+                    elif color and (fil.couleur or '').strip() != color:
+                        fil.couleur = color
+                    # Associer les cours par nom
+                    for cname in course_names:
+                        try:
+                            n = str(cname).strip()
+                        except Exception:
+                            continue
+                        ref = name_to_course.get(n)
+                        if not ref:
+                            continue
+                        cid, _ = ref
+                        cobj = db.session.get(Cours, cid)
+                        if cobj:
+                            cobj.fil_conducteur_id = fil.id
+                except Exception:
+                    continue
+        except Exception as e:
+            # On n'interrompt pas l'application de la grille si la section fils échoue
+            current_app.logger.warning(f"Application partielle: erreur sur fils conducteurs: {e}")
+
+        db.session.commit()
+        return jsonify({'ok': True, 'created': created}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f"Erreur lors de l\'application de la grille: {e}"}), 500
+
+
+@programme_bp.route('/<int:programme_id>/grille/review/<task_id>')
+@login_required
+@ensure_profile_completed
+def review_programme_grille(programme_id, task_id):
+    """Page de validation/aperçu d'une grille générée (via task_id)."""
+    programme = Programme.query.get_or_404(programme_id)
+    if current_user.role not in ('admin', 'coordo'):
+        flash('Accès restreint (admin/coordo).', 'danger')
+        return redirect(url_for('main.index'))
+    if current_user.role != 'admin' and programme not in current_user.programmes:
+        flash('Accès refusé.', 'danger')
+        return redirect(url_for('main.index'))
+
+    # Préparer la grille ACTUELLE (en base) pour comparaison
+    # sessions -> liste de cours (code, nom, heures)
+    from ..models import CoursProgramme as CP, Cours
+    try:
+        # Récupérer toutes les associations pour ce programme
+        assocs = (CP.query
+                  .filter(CP.programme_id == programme.id)
+                  .join(Cours, CP.cours_id == Cours.id)
+                  .add_entity(Cours)
+                  .all())
+        sessions_map = {}
+        for assoc, cours in assocs:
+            s = int(getattr(assoc, 'session', 0) or 0)
+            sessions_map.setdefault(s, []).append({
+                'id': cours.id,
+                'code': cours.code,
+                'nom': cours.nom,
+                'heures_theorie': cours.heures_theorie or 0,
+                'heures_laboratoire': cours.heures_laboratoire or 0,
+                'heures_travail_maison': cours.heures_travail_maison or 0,
+                'nombre_unites': cours.nombre_unites or 0.0,
+            })
+        existing_sessions = [
+            {'session': s, 'courses': sorted(lst, key=lambda x: x['nom'].lower())}
+            for s, lst in sessions_map.items()
+        ]
+        existing_sessions.sort(key=lambda x: x['session'])
+    except Exception:
+        existing_sessions = []
+
+    # La page charge les détails via /tasks/status/<task_id> côté client et affiche un aperçu + bouton d'application
+    return render_template('programme/review_grille_generation.html', programme=programme, task_id=task_id, existing_sessions=existing_sessions)
+
+@programme_bp.route('/<int:programme_id>/grille/pdf')
+@login_required
+def export_programme_grille_pdf(programme_id):
+    """Exporte la grille de cours du programme en PDF."""
+    programme = Programme.query.get_or_404(programme_id)
+    if programme not in current_user.programmes and current_user.role != 'admin':
+        flash("Vous n'avez pas accès à ce programme.", 'danger')
+        return redirect(url_for('main.index'))
+
+    pdf_bytes = generate_programme_grille_pdf(programme)
+    filename = f"grille_{programme.nom}.pdf"
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=filename
+    )
 
 @programme_bp.route('/competence/<int:competence_id>/edit', methods=['GET', 'POST'])
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
 def edit_competence(competence_id):
-    competence = Competence.query.get_or_404(competence_id)
+    competence = db.session.get(Competence, competence_id) or abort(404)
     programmes = Programme.query.all()
     form = CompetenceForm()
     form.programmes.choices = [(p.id, p.nom) for p in programmes]
@@ -705,7 +1577,7 @@ def delete_competence(competence_id):
     delete_form = DeleteForm(prefix=f"competence-{competence_id}")
 
     if delete_form.validate_on_submit():
-        competence = Competence.query.get(competence_id)
+        competence = db.session.get(Competence, competence_id)
         if not competence:
             flash('Compétence non trouvée.', 'danger')
             return redirect(url_for('main.index'))
@@ -744,7 +1616,7 @@ def view_competence_by_code(competence_code):
 @ensure_profile_completed
 def view_competence(competence_id):
     # Récupération de la compétence + programme lié
-    competence = Competence.query.get(competence_id)
+    competence = db.session.get(Competence, competence_id)
     if not competence:
         flash('Compétence non trouvée.', 'danger')
         return redirect(url_for('main.index'))

@@ -12,35 +12,38 @@
   --vp-unites: #6f42c1;    /* purple */
 }
 
-.vp-header {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--vp-gap);
-}
+.vp-header { display: flex; flex-direction: column; gap: var(--vp-gap); border-bottom: 1px solid var(--vp-border); padding-bottom: 0.5rem; }
 
-.vp-title {
-  display: flex;
+.vp-title { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--vp-gap); }
+.vp-title h2 { margin: 0; }
+
+/* Normalize header action buttons (height/alignment/icon size) */
+.vp-title .btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--vp-gap);
+  gap: 0.35rem;
+  white-space: nowrap;
+  justify-content: center;
+  width: auto; /* no forced width to avoid huge buttons */
+  padding: 0.25rem 0.5rem; /* compact header buttons */
+  font-size: 0.9rem;
+}
+.vp-title .btn i {
+  line-height: 1;
+  font-size: 1rem;
 }
 
-.vp-stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--vp-gap);
+@media (max-width: 480px) {
+  .vp-title .btn { width: 100%; }
 }
 
-.vp-stat {
-  border: 1px solid var(--vp-border);
-  border-radius: var(--vp-card-radius);
-  background: white;
-  padding: 0.75rem;
-}
+.vp-stats { display: flex; flex-wrap: wrap; gap: var(--vp-gap); align-items: stretch; }
 
-.vp-stat .label { color: var(--vp-muted); font-size: 0.8rem; }
-.vp-stat .value { font-weight: 800; font-size: 1.25rem; }
+.vp-stat { border: 1px solid var(--vp-border); border-radius: var(--vp-card-radius); background: #fcfdff; padding: 0.45rem 0.6rem; min-width: 8.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+
+.vp-stat .label { color: var(--vp-muted); font-size: 0.75rem; }
+.vp-stat .value { font-weight: 800; font-size: 1.1rem; }
+.vp-stat .label .bi { margin-right: 0.25rem; font-size: 0.9em; vertical-align: -1px; }
 
 /* Category color emphasis */
 .vp-stat { position: relative; }
@@ -59,10 +62,7 @@
 .vp-stat-maison .value { color: var(--vp-maison); }
 .vp-stat-unites .value { color: var(--vp-unites); }
 
-@media (min-width: 768px) {
-  .vp-header { grid-template-columns: 2fr 3fr; }
-  .vp-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
+@media (min-width: 768px) { .vp-stats { flex-wrap: nowrap; } }
 
 .vp-toolbar {
   display: flex;
@@ -144,6 +144,13 @@
 .vp-chip { background: var(--vp-soft); border: 1px solid var(--vp-border); border-radius: 999px; padding: 0.15rem 0.5rem; font-size: 0.75rem; }
 
 .vp-course-actions { margin-top: auto; padding: 0.5rem; background: #fafafa; border-top: 1px solid var(--vp-border); }
+.vp-course-actions .btn { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+
+/* Actions row under the title */
+.vp-actions .btn { padding: 0.25rem 0.5rem; font-size: 0.9rem; }
+
+/* Extra small button utility for inline minor actions */
+.btn-xs { padding: 0.1rem 0.35rem; font-size: 0.75rem; line-height: 1.1; }
 
 .vp-badges a.badge { text-decoration: none; }
 
@@ -171,6 +178,7 @@
   border-radius: 8px;
   padding: 0.2rem 0.5rem;
   color: var(--fil, inherit);
+  text-align: center; /* avoid visual right-cling */
 }
 
 /* High-contrast highlight for search */

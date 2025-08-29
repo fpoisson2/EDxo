@@ -4,12 +4,27 @@
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/view_plan_cadre.css') }}">
     <script src="{{ url_for('static', filename='js/view_plan_cadre.js') }}" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
       window.addEventListener('DOMContentLoaded', function() {
         if (window.marked && window.marked.setOptions) {
           window.marked.setOptions({ breaks: true, gfm: true });
         }
+      });
+    </script>
+
+    <script>
+      // a11y: attach aria-labels to textareas from nearest label/heading; and icon-only buttons
+      document.addEventListener('DOMContentLoaded', function(){
+        try {
+          document.querySelectorAll('textarea').forEach(el => {
+            if (!el.getAttribute('aria-label')) {
+              let p = el.parentElement, labelText = '';
+              while (p && p !== document.body) { const lab = p.querySelector('label'); if (lab && lab.textContent.trim()) { labelText = lab.textContent.trim(); break; } p = p.parentElement; }
+              if (labelText) el.setAttribute('aria-label', labelText);
+            }
+          });
+          document.querySelectorAll('button, a').forEach(el => { const hasText = (el.textContent||'').trim().length>0; if (!hasText) { const t = el.getAttribute('title'); if (t && !el.getAttribute('aria-label')) el.setAttribute('aria-label', t); } });
+        } catch(_){}
       });
     </script>
     <style>
@@ -56,23 +71,31 @@
     <!-- Boutons d'Action Supplémentaires -->
     <div class="d-flex flex-column flex-sm-row gap-3 mb-5 align-items-center">
         {% if current_user.role in ['admin', 'coordo'] %}
-        <button type="button" id="openGenerateBtn" class="btn btn-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
+        <!-- Import .docx (unifié: ouvre le Start Modal en mode fichier) -->
+        <button type="button" id="openImportPlanCadreTask" class="btn btn-outline-primary d-flex align-items-center">
+            <i class="bi bi-file-earmark-arrow-up me-2"></i>
+            <span>Importer</span>
+        </button>
+
+        <button type="button" id="openGenerateBtn" class="btn btn-success d-flex align-items-center" data-quick-mode="generate">
             <i class="bi bi-box-arrow-up-right me-2"></i>
-            <span class="btn-text">Générer le plan-cadre</span>
+            <span class="btn-text">Générer</span>
             <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="loadingSpinner">
                 <span class="visually-hidden">Chargement...</span>
             </span>
         </button>
 
-        <button type="button" id="openImproveBtn" class="btn btn-outline-success d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#generateModal">
+        <button type="button" id="openImproveBtn" class="btn btn-outline-success d-flex align-items-center" data-quick-mode="improve">
             <i class="bi bi-magic me-2"></i>
-            <span>Améliorer le plan-cadre</span>
+            <span>Améliorer</span>
         </button>
+
+        <!-- Dropdown unifié retiré -->
         {% endif %}
 
         <a href="{{ url_for('plan_cadre.export_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary d-flex align-items-center">
             <i class="bi bi-file-earmark-word me-2"></i>
-            <span>Exporter en DOCX</span>
+            <span>Exporter</span>
         </a>
     </div>
 
@@ -160,10 +183,10 @@
                     <div class="accordion-body">
                         <!-- Place et rôle du cours dans le programme (avec Toast UI Editor) -->
                         <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2">
+                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.place_intro.id }}">
                                 <strong>Place et rôle du cours dans le programme</strong>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="place_intro" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="place_intro" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -178,7 +201,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold d-flex align-items-center gap-2">Compétences développées
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="competences_developpees" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="competences_developpees" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -222,7 +245,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold d-flex align-items-center gap-2">Objets cibles
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objets_cibles" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objets_cibles" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -266,7 +289,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold d-flex align-items-center gap-2">Compétences certifiées
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="competences_certifiees" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="competences_certifiees" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -310,7 +333,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold d-flex align-items-center gap-2">Cours corequis
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_corequis" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_corequis" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -354,7 +377,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold d-flex align-items-center gap-2">Cours préalables
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_prealables" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_prealables" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -398,7 +421,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <h6 class="fw-bold d-flex align-items-center gap-2">Cours reliés
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_relies" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="cours_relies" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -458,10 +481,10 @@
                     <div class="accordion-body">
                         <!-- Objectif Terminal (sans Toast UI Editor) -->
                         <div class="mb-3">
-                            <label class="fw-bold d-flex align-items-center gap-2">
+                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.objectif_terminal.id }}">
                                 <span>Objectif terminal</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objectif_terminal" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objectif_terminal" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -476,7 +499,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h6 class="fw-bold d-flex align-items-center gap-2">Capacités
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="capacites" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="capacites" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -509,7 +532,7 @@
                                                     <div class="accordion-body">
                                                         <!-- Énoncé de la capacité -->
                                                         <div class="mb-3">
-                                                            <label class="fw-bold">Énoncé de la capacité</label>
+                                                            <label class="fw-bold" for="{{ capacite.capacite.id }}">Énoncé de la capacité</label>
                                                             {{ capacite.capacite(class="form-control fw-bold auto-resize border-0",
                                                                                oninput="autoResize(this)",
                                                                                style="overflow:hidden; resize:none;") }}
@@ -517,7 +540,7 @@
                                                         
                                                         <!-- Description des capacités (avec Toast UI Editor) -->
                                                         <div class="mb-3">
-                                                            <label class="fw-bold">Description</label>
+                                                            <label class="fw-bold" for="{{ capacite.description_capacite.id }}">Description</label>
                                                             {{ capacite.description_capacite(class="form-control auto-resize border-0 use-toast",
                                                                                           oninput="autoResize(this)",
                                                                                           style="overflow:hidden; resize:none;") }}
@@ -659,10 +682,10 @@
                      data-bs-parent="#planCadreAccordion">
                     <div class="accordion-body">
                         <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2">
+                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.structure_intro.id }}">
                                 <span>Structure du cours</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_intro" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_intro" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -672,10 +695,10 @@
                                                          style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2">
+                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.structure_activites_theoriques.id }}">
                                 <span>Activités théoriques</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_theoriques" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_theoriques" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -685,10 +708,10 @@
                                                                        style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2">
+                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.structure_activites_pratiques.id }}">
                                 <span>Activités pratiques</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_pratiques" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_pratiques" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -698,10 +721,10 @@
                                                                       style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2">
+                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.structure_activites_prevues.id }}">
                                 <span>Organisation du cours (activités prévues)</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_prevues" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_prevues" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -730,10 +753,10 @@
                      data-bs-parent="#planCadreAccordion">
                     <div class="accordion-body">
                         <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2">
+                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.eval_evaluation_sommative.id }}">
                                 <span>Évaluation sommative des apprentissages</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_sommative" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_sommative" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -743,10 +766,10 @@
                                                                    style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2">
+                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.eval_nature_evaluations_sommatives.id }}">
                                 <span>Nature des évaluations sommatives</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_nature_evaluations_sommatives" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_nature_evaluations_sommatives" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -756,10 +779,10 @@
                                                                             style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2">
+                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.eval_evaluation_de_la_langue.id }}">
                                 <span>Évaluation de la langue</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_de_la_langue" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_de_la_langue" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -769,10 +792,10 @@
                                                                       style="overflow:hidden; resize:none;") }}
                         </div>
                         <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2">
+                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.eval_evaluation_sommatives_apprentissages.id }}">
                                 <span>Évaluation formative des apprentissages</span>
                                 {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_sommatives_apprentissages" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_sommatives_apprentissages" title="Améliorer uniquement cette section">
                                     <i class="bi bi-magic"></i>
                                 </button>
                                 {% endif %}
@@ -787,7 +810,7 @@
                                 <label class="fw-bold d-flex align-items-center gap-2">
                                     <span>Savoir-être</span>
                                     {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="savoirs_etre" data-bs-toggle="modal" data-bs-target="#generateModal" title="Améliorer uniquement cette section">
+                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="savoirs_etre" title="Améliorer uniquement cette section">
                                         <i class="bi bi-magic"></i>
                                     </button>
                                     {% endif %}
@@ -882,7 +905,16 @@
             <div id="collapseGestionFichiers" class="accordion-collapse collapse show" aria-labelledby="headingGestionFichiers" data-bs-parent="#gestionFichiersAccordion">
                 <div class="accordion-body">
                     <div class="d-flex flex-wrap gap-2 mb-3">
-                        <a href="{{ url_for('plan_cadre.export_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary">Exporter en DOCX</a>
+                        <a href="{{ url_for('plan_cadre.export_plan_cadre', plan_id=plan.id) }}" class="btn btn-primary d-flex align-items-center">
+                            <i class="bi bi-file-earmark-word me-2"></i>
+                            Exporter en DOCX
+                        </a>
+                        {% if current_user.role in ['admin','coordo'] %}
+                        <button type="button" class="btn btn-outline-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#importPlanCadreModal">
+                            <i class="bi bi-file-earmark-arrow-up me-2"></i>
+                            Importer .docx
+                        </button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -916,97 +948,113 @@
         </div>
     </div>
 
-    <!-- Modal Génération du Plan-cadre (Formulaire Séparé) -->
-    <div class="modal fade" id="generateModal" tabindex="-1" aria-labelledby="generateModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <form action="{{ url_for('plan_cadre.generate_plan_cadre_content', plan_id=plan.id) }}" method="post" id="generateContentForm">
-                    {{ generate_form.hidden_tag() }}
-                    <input type="hidden" name="mode" id="genMode" value="generate">
-                    <input type="hidden" name="target_columns" id="genTargetColumns" value="">
-                    <input type="hidden" name="stream" id="genStream" value="0">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="generateModalLabel">Générer le plan-cadre</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="streamContainer" class="d-none mb-3">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <label class="form-label d-flex align-items-center gap-2 mb-0">
-                                    <i class="bi bi-lightbulb"></i>
-                                    <span>Aperçu en direct</span>
-                                </label>
-                                <div id="streamTabs" class="btn-group btn-group-sm" role="group" aria-label="Aperçu tabs">
-                                    <button type="button" class="btn btn-outline-secondary active" data-target="structured">Structuré</button>
-                                    <button type="button" class="btn btn-outline-secondary" data-target="json">JSON</button>
-                                </div>
-                            </div>
-                            <div id="reasoningSummary" class="alert alert-secondary py-2 small mb-2 d-none"></div>
-                            <div class="small text-muted mb-2" id="streamStatus"></div>
-                            <div id="streamPreviewHtml" class="stream-preview d-none"></div>
-                            <pre id="streamOutput" class="form-control stream-output d-none"></pre>
-                        </div>
-                        <!-- Groupe prompt général (génération/amélioration globale) -->
-                        <div class="mb-3" id="generalPromptGroup">
-                            {{ generate_form.additional_info.label(class="form-label") }}
-                            {{ generate_form.additional_info(class="form-control border-0", rows="3", placeholder="Décrivez brièvement le contexte de génération/amélioration globale.") }}
-                            {% for error in generate_form.additional_info.errors %}
-                                <div class="text-danger">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        <!-- Groupe prompt simple (baguette magique) -->
-                        <div class="mb-3 d-none" id="wandPromptGroup">
-                            <label class="form-label">Instruction (baguette magique)</label>
-                            <textarea name="wand_instruction" class="form-control border-0" rows="3" placeholder="Ex.: Rendre ce texte plus clair, simple et concis, sans ajouter d'information."></textarea>
-                            <div class="form-text">Cette instruction courte est utilisée uniquement pour améliorer la section ciblée.</div>
-                        </div>
-                        <div class="mb-3">
-                            {{ generate_form.ai_model.label(class="form-label") }}
-                            {{ generate_form.ai_model(class="form-select border-0") }}
-                            {% for error in generate_form.ai_model.errors %}
-                                <div class="text-danger">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        <div class="mb-3">
-                            {{ generate_form.reasoning_effort.label(class="form-label") }}
-                            {{ generate_form.reasoning_effort(class="form-select border-0") }}
-                            {% for error in generate_form.reasoning_effort.errors %}
-                                <div class="text-danger">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        <div class="mb-3">
-                            {{ generate_form.verbosity.label(class="form-label") }}
-                            {{ generate_form.verbosity(class="form-select border-0") }}
-                            {% for error in generate_form.verbosity.errors %}
-                                <div class="text-danger">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        {# Case à cocher supprimée (mode géré par les boutons) #}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                        <button type="submit" class="btn btn-primary" id="confirmGenerateBtn">
-                            <span class="btn-text">Générer le plan-cadre</span>
-                            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="modalLoadingSpinner">
-                                <span class="visually-hidden">Chargement...</span>
-                            </span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Boutons principaux: ouvrir le Start Modal (JSON)
+        try {
+          const btnGen = document.getElementById('openGenerateBtn');
+          const btnImp = document.getElementById('openImproveBtn');
+          if (btnGen && window.EDxoTasks && window.EDxoTasks.openQuickTask) {
+            btnGen.addEventListener('click', (e) => {
+              e.preventDefault();
+              window.EDxoTasks.openQuickTask({
+                url: "/api/plan_cadre/{{ plan.id }}/generate",
+                title: 'Générer le plan‑cadre — {{ cours.code }}',
+                startMessage: 'Génération en cours…',
+                fixedPayload: { stream: true }
+              });
+            });
+          }
+          if (btnImp && window.EDxoTasks && window.EDxoTasks.openQuickTask) {
+            btnImp.addEventListener('click', (e) => {
+              e.preventDefault();
+              window.EDxoTasks.openQuickTask({
+                url: "/api/plan_cadre/{{ plan.id }}/improve",
+                title: 'Améliorer le plan‑cadre — {{ cours.code }}',
+                startMessage: 'Amélioration en cours…',
+                fixedPayload: { improve_only: true, stream: true }
+              });
+            });
+          }
+        } catch (_) {}
+
+        // Uniformiser l'import: ouvrir le Start Modal (mode fichier)
+        try {
+          const openImp = document.getElementById('openImportPlanCadreTask');
+          if (openImp) {
+            openImp.addEventListener('click', (e) => {
+              e.preventDefault();
+              const endpoint = "{{ url_for('plan_cadre.import_plan_cadre_docx_start', plan_id=plan.id) }}";
+              const start = () => window.EDxoTasks.openFileTask({
+                url: endpoint,
+                title: 'Importer Plan‑cadre — {{ cours.code }} (.docx)',
+                startMessage: 'Import en cours…',
+                // Mute log-like buffer updates; stream only generated content chunks
+                muteLogBuffer: true
+              });
+              const waitForOrchestrator = (retries = 15) => {
+                if (window.EDxoTasks && typeof window.EDxoTasks.openFileTask === 'function') {
+                  start();
+                } else if (retries > 0) {
+                  setTimeout(() => waitForOrchestrator(retries - 1), 100);
+                }
+              };
+              waitForOrchestrator();
+            });
+          }
+        } catch(_) {}
+
+        // Amélioration ciblée d'une section: utiliser le modal simplifié (infos complémentaires)
+        try {
+          const magicBtns = document.querySelectorAll('.magic-generate[data-target-column]');
+          magicBtns.forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const section = btn.getAttribute('data-target-column');
+              if (!section) return;
+              const url = `/api/plan_cadre/{{ plan.id }}/improve/${encodeURIComponent(section)}`;
+              const baseTitle = btn.getAttribute('title') || `Améliorer: ${section}`;
+              const title = `${baseTitle} — {{ cours.code }}`;
+              if (window.EDxoTasks && typeof window.EDxoTasks.openQuickTask === 'function') {
+                window.EDxoTasks.openQuickTask({
+                  url,
+                  title,
+                  startMessage: 'Amélioration en cours…',
+                  fixedPayload: { stream: true }
+                });
+              } else {
+                // Fallback: démarrer directement avec payload minimal
+                const headers = { 'Content-Type': 'application/json' };
+                try { const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content'); if (csrf) headers['X-CSRFToken'] = csrf; } catch{}
+                fetch(url, { method: 'POST', headers, credentials: 'same-origin', body: JSON.stringify({ stream: true }) })
+                  .then(r => r.json())
+                  .then(d => {
+                    const taskId = d && d.task_id;
+                    if (taskId) {
+                      try { sessionStorage.setItem('currentTaskId', taskId); } catch {}
+                      if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
+                        window.EDxoTasks.openTaskModal(taskId, { title });
+                      } else {
+                        window.location.href = `/tasks/track/${taskId}`;
+                      }
+                    }
+                  })
+                  .catch(() => {});
+              }
+            });
+          });
+        } catch(_) {}
+
+        // Fallback local supprimé: l'orchestrateur EDxoTasks est requis
+      });
+    </script>
 
 </div>
 {% endblock %}
 
 
 {% block scripts %}
-<!-- Toast UI Editor CSS -->
-<link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.css" />
-
-<!-- Toast UI Editor Scripts with defer -->
-<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js" defer></script>
-<script src="https://uicdn.toast.com/editor-plugin-autoheight/latest/toastui-editor-plugin-autoheight.js" defer></script>
-
+{% include '_easymde_assets.html' %}
 {% endblock %}

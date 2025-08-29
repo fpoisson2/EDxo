@@ -8,54 +8,71 @@
 {% block programmes_specific %}
 <div class="container mt-4">
   <div class="vp-header mb-3">
-    <div>
-      <div class="vp-title">
-        <h2 class="mb-1">{{ programme.nom }}</h2>
-        <div class="d-flex align-items-center gap-2">
-          <a href="{{ url_for('programme.view_competences_programme', programme_id=programme.id) }}" class="btn btn-sm btn-outline-info">
-            <i class="fas fa-list-ul"></i> Voir les compétences
-          </a>
-          {% if current_user.role in ['admin', 'coordo'] %}
-          <a href="{{ url_for('grille_bp.import_grille') }}" class="btn btn-sm btn-outline-secondary">
-            <i class="fas fa-file-import"></i> Importer une grille
-          </a>
-          {% endif %}
-          <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#vp-fil-bar" aria-expanded="false" aria-controls="vp-fil-bar">
-            <i class="bi bi-tags"></i> Fils
-          </button>
+    <div class="vp-title">
+      <h2 class="mb-1">{{ programme.nom }}</h2>
+      <div class="vp-stats">
+        <div class="vp-stat vp-stat-theorie">
+          <div class="label"><i class="bi bi-journal-text"></i> Théorie</div>
+          <div class="value">{{ total_heures_theorie }} h</div>
         </div>
-      </div>
-
-      <div id="vp-fil-bar" class="collapse mt-2">
-        <div class="vp-fil-list" role="list">
-          {% for fil in fil_conducteurs %}
-            {% set bg = fil.couleur or '#cccccc' %}
-            <span class="vp-fil-dot" title="{{ fil.description }}" style="--dot: {{ bg }}"></span>
-          {% else %}
-            <span class="vp-empty">Aucun fil conducteur</span>
-          {% endfor %}
-          {% if current_user.role in ['admin', 'coordo'] %}
-            <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-xs btn-primary ms-2">Ajouter</a>
-          {% endif %}
+        <div class="vp-stat vp-stat-pratique">
+          <div class="label"><i class="bi bi-tools"></i> Pratique</div>
+          <div class="value">{{ total_heures_laboratoire }} h</div>
+        </div>
+        <div class="vp-stat vp-stat-maison">
+          <div class="label"><i class="bi bi-house-door"></i> Travail maison</div>
+          <div class="value">{{ total_heures_travail_maison }} h</div>
+        </div>
+        <div class="vp-stat vp-stat-unites">
+          <div class="label"><i class="bi bi-123"></i> Unités</div>
+          <div class="value">{{ "%.2f"|format(total_unites) }}</div>
         </div>
       </div>
     </div>
-    <div class="vp-stats">
-      <div class="vp-stat vp-stat-theorie">
-        <div class="label">Théorie</div>
-        <div class="value">{{ total_heures_theorie }} h</div>
-      </div>
-      <div class="vp-stat vp-stat-pratique">
-        <div class="label">Pratique</div>
-        <div class="value">{{ total_heures_laboratoire }} h</div>
-      </div>
-      <div class="vp-stat vp-stat-maison">
-        <div class="label">Travail maison</div>
-        <div class="value">{{ total_heures_travail_maison }} h</div>
-      </div>
-      <div class="vp-stat vp-stat-unites">
-        <div class="label">Unités</div>
-        <div class="value">{{ "%.2f"|format(total_unites) }}</div>
+
+    <div class="vp-actions d-flex align-items-center gap-2 flex-wrap">
+      <a href="{{ url_for('programme.view_competences_programme', programme_id=programme.id) }}" class="btn btn-sm btn-outline-info">
+        <i class="fas fa-list-ul"></i> Voir les compétences
+      </a>
+      <a href="{{ url_for('programme.competence_logigramme', programme_id=programme.id) }}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-graph-up"></i> Logigramme compétences
+      </a>
+      {% if current_user.role in ['admin', 'coordo'] %}
+      <a href="#" id="openImportGrilleBtn" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-file-import"></i> Importer une grille
+      </a>
+      <a href="#" id="openGenerateGrilleBtn" class="btn btn-sm btn-outline-success">
+        <i class="fas fa-wand-magic-sparkles"></i> Générer (IA)
+      </a>
+      {% endif %}
+      <a href="{{ url_for('programme.export_programme_grille_pdf', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
+      </a>
+      <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#vp-fil-bar" aria-expanded="false" aria-controls="vp-fil-bar">
+        <i class="bi bi-tags"></i> Fils
+      </button>
+    </div>
+
+    <div id="vp-fil-bar" class="collapse mt-2">
+      <div class="vp-fil-list d-flex align-items-center flex-wrap gap-2" role="list">
+        {% for fil in fil_conducteurs %}
+          {% set bg = fil.couleur or '#cccccc' %}
+          <div class="d-inline-flex align-items-center gap-1">
+            <span class="vp-fil-dot" title="{{ fil.description }}" style="--dot: {{ bg }}"></span>
+            {% if current_user.role in ['admin', 'coordo'] %}
+              <a href="{{ url_for('main.edit_fil_conducteur', fil_id=fil.id) }}" class="btn btn-xs btn-outline-secondary" title="Éditer"><i class="bi bi-pencil"></i></a>
+              <form method="POST" action="{{ url_for('main.delete_fil_conducteur', fil_id=fil.id) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce fil conducteur ?');">
+                {{ delete_forms_fils[fil.id].hidden_tag() }}
+                <button type="submit" class="btn btn-xs btn-outline-danger" title="Supprimer"><i class="bi bi-trash"></i></button>
+              </form>
+            {% endif %}
+          </div>
+        {% else %}
+          <span class="vp-empty">Aucun fil conducteur</span>
+        {% endfor %}
+        {% if current_user.role in ['admin', 'coordo'] %}
+          <a href="{{ url_for('main.add_fil_conducteur') }}" class="btn btn-xs btn-primary ms-2">Ajouter</a>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -162,6 +179,14 @@
                               type="button">
                         Plan de cours
                       </button>
+                      {% if current_user.role in ['admin', 'coordo'] %}
+                        <form method="POST" action="{{ url_for('cours.delete_cours', cours_id=c.id) }}" class="mt-2" onsubmit="return confirm('Supprimer le cours {{ c.code }} — {{ c.nom }} ?');">
+                          {{ delete_forms_cours[c.id].hidden_tag() }}
+                          <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                            <i class="bi bi-trash"></i> Supprimer le cours
+                          </button>
+                        </form>
+                      {% endif %}
                     </div>
                   </div>
                 </div>
@@ -260,6 +285,100 @@
   .plan-card.selected, .session-card.selected { border: 2px solid #0d6efd; }
 </style>
 
+<script>
+  // Brancher les boutons Importer/Générer sur les modaux simplifiés (comme view_plan_cadre)
+  document.addEventListener('DOMContentLoaded', function() {
+    // Import grille (PDF) → modal fichier unifié
+    try {
+      const impBtn = document.getElementById('openImportGrilleBtn');
+      if (impBtn) {
+        impBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const start = () => window.EDxoTasks.openFileTask({
+            url: '/grille/import',
+            title: 'Importer une grille — {{ programme.nom }} (PDF)',
+            startMessage: 'Import en cours…',
+            extraFormData: { programme_id: '{{ programme.id }}' }
+          });
+          if (window.EDxoTasks && typeof window.EDxoTasks.openFileTask === 'function') {
+            start();
+          } else {
+            // Repli: naviguer vers l'ancienne page d'import
+            window.location.href = '{{ url_for('grille_bp.import_grille') }}';
+          }
+        });
+      }
+    } catch(_) {}
+
+    // Génération de la grille (IA) → modal rapide "Informations complémentaires"
+    try {
+      const genBtn = document.getElementById('openGenerateGrilleBtn');
+      if (genBtn) {
+        genBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const computeDefaults = () => {
+            // Tente d'inférer nb_sessions et total_hours à partir de la page
+            let nbSessions = 0;
+            try { nbSessions = document.querySelectorAll('.accordion-item.vp-session').length || 0; } catch {}
+            let totalHours = 0;
+            try {
+              document.querySelectorAll('.vp-hours-badge').forEach(span => {
+                const m = (span.textContent || '').match(/(\d+)\D+(\d+)\D+\d+/);
+                if (m) {
+                  const ht = parseInt(m[1], 10) || 0;
+                  const hl = parseInt(m[2], 10) || 0;
+                  totalHours += (ht + hl) * 15; // h_cours = (théorie + labo) * 15
+                }
+              });
+            } catch {}
+            // total unités calculé côté serveur si non fourni; on peut passer la somme actuelle en optionnel
+            const totalUnits = parseFloat('{{ "%.2f"|format(total_unites) }}') || 0;
+            return { nbSessions, totalHours, totalUnits };
+          };
+
+          const { nbSessions, totalHours, totalUnits } = computeDefaults();
+          const url = "{{ url_for('programme.generate_programme_grille', programme_id=programme.id) }}";
+
+          if (window.EDxoTasks && typeof window.EDxoTasks.openQuickTask === 'function' && nbSessions > 0 && totalHours > 0) {
+            window.EDxoTasks.openQuickTask({
+              url,
+              title: 'Générer la grille — {{ programme.nom }}',
+              startMessage: 'Génération de la grille en cours…',
+              basePayload: {
+                nb_sessions: nbSessions,
+                total_hours: totalHours,
+                total_units: totalUnits
+              },
+              // Align with other flows to explicitly enable streaming UI
+              fixedPayload: { stream: true }
+            });
+            return;
+          }
+
+          // Repli: ouvrir le Start Modal générique pré-rempli pour compléter manuellement
+          const defaultJson = {
+            total_hours: totalHours || 0,
+            nb_sessions: nbSessions || 0,
+            total_units: totalUnits || 0,
+            additional_info: ''
+          };
+          if (window.EDxoTasks && typeof window.EDxoTasks.openTaskStartModal === 'function') {
+            window.EDxoTasks.openTaskStartModal({
+              url,
+              title: 'Générer la grille — {{ programme.nom }}',
+              method: 'POST',
+              mode: 'json',
+              defaultJson
+            });
+          } else {
+            // Dernier repli: simple redirection
+            window.location.href = url;
+          }
+        });
+      }
+    } catch(_) {}
+  });
+</script>
 <script>
 const allCoursPlans = {{ cours_plans_mapping|tojson }};
 let planCoursModal;
@@ -607,5 +726,6 @@ function handlePlanCoursAction() {
     }
 }
 </script>
+
 
 {% endblock %}

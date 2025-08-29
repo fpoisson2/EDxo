@@ -44,13 +44,39 @@
 {% endblock %}
 {% block content %}
 <div class="container mt-4">
-  <h1>Suivi de la tâche</h1>
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h1 class="mb-0">Suivi de la tâche</h1>
+    <div class="d-flex gap-2">
+      <button id="btn-leave-track" class="btn btn-sm btn-outline-secondary" type="button" title="Revenir à la page précédente">Quitter le suivi</button>
+      <a id="btn-open-modal" class="btn btn-sm btn-outline-primary" href="#" title="Ouvrir en modal non bloquant">Ouvrir en modal</a>
+    </div>
+  </div>
   <p><strong>ID de la tâche :</strong> <span id="task-id">{{ task_id }}</span></p>
   <p>
     <strong>Statut :</strong>
     <span id="task-status" class="status-message status-{{ state|lower }}">{{ state }}</span>
     <span id="loading-indicator" style="display: none;"> ( Rafraîchissement en cours<span class="dots">...</span> )</span>
   </p>
+  <div class="mt-3">
+    <h3>Résumé du raisonnement</h3>
+    <div id="reasoning-wrap" class="position-relative mb-3">
+      <div id="reasoning-overlay" style="position:absolute;inset:0;pointer-events:none;z-index:10;display:flex;align-items:center;justify-content:center;">
+        <div class="spinner-border text-secondary" role="status" aria-label="Chargement"><span class="visually-hidden">Chargement…</span></div>
+      </div>
+      <div id="reasoning" class="small" style="min-height:100px;max-height:25vh;overflow:auto;background:#f8f9fa;padding:8px;border-radius:6px;"></div>
+    </div>
+
+    <h3>Contenu généré (stream)</h3>
+    <div id="stream-wrap" class="position-relative mb-3">
+      <div id="stream-overlay" style="position:absolute;inset:0;pointer-events:none;z-index:10;display:flex;align-items:center;justify-content:center;">
+        <div class="spinner-border text-secondary" role="status" aria-label="Chargement"><span class="visually-hidden">Chargement…</span></div>
+      </div>
+      <div id="stream-text" class="form-control" style="background:#0f172a;color:#e2e8f0;font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Cantarell, Noto Sans, Ubuntu, Helvetica Neue, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';font-size:0.95rem;line-height:1.3;min-height:140px;max-height:280px;overflow:auto;white-space:pre-wrap;position:relative;"></div>
+    </div>
+
+    <h3>Flux en direct</h3>
+    <div id="stream-log" style="background:#0f172a;color:#e2e8f0;border-radius:6px;padding:10px;min-height:120px;max-height:240px;overflow:auto;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;"></div>
+  </div>
 <div id="result-area">
     <h2>Résultat :</h2>
     {% if result and result.status == 'success' %}
@@ -58,7 +84,7 @@
       <div class="alert alert-success mb-3">
         <strong>Extraction réussie !</strong> Vous pouvez maintenant confirmer l'importation de cette grille dans votre programme.
         <div class="mt-2">
-          <a href="{{ url_for('grille_bp.confirm_grille_import', task_id=task_id) }}" class="btn btn-primary">
+          <a href="{{ result.validation_url or url_for('grille_bp.confirm_grille_import', task_id=task_id) }}" class="btn btn-primary">
             <i class="fas fa-check-circle"></i> Confirmer l'importation
           </a>
         </div>
@@ -84,7 +110,9 @@
     </div>
   </div>
 
-  <p class="mt-3"><a href="{{ url_for('grille_bp.import_grille') }}" class="btn btn-secondary">Revenir à l'import</a></p>
+  <p class="mt-3">
+    <a id="return-link" href="#" class="btn btn-secondary">Revenir</a>
+  </p>
 </div>
 {% endblock %}
 
@@ -94,6 +122,61 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js" referrerpolicy="no-referrer"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // Assainir tout backdrop/modal résiduel pouvant bloquer l'UI
+    try {
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+    } catch {}
+    // Boutons utilitaires
+    const leaveBtn = document.getElementById('btn-leave-track');
+    const openModalBtn = document.getElementById('btn-open-modal');
+    const _taskId = {{ task_id|tojson }};
+    // Lien de retour configurable (sessionStorage ou query string)
+    let returnLink = null;
+    try { returnLink = sessionStorage.getItem(`return_link_${_taskId}`) || null; } catch {}
+    try {
+        if (!returnLink) {
+            const params = new URLSearchParams(window.location.search);
+            const r = params.get('return');
+            if (r) returnLink = r;
+        }
+    } catch {}
+    if (leaveBtn) {
+        leaveBtn.addEventListener('click', function() {
+            if (returnLink) {
+                window.location.href = returnLink;
+            } else if (window.history && window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/';
+            }
+        });
+    }
+    const returnAnchor = document.getElementById('return-link');
+    if (returnAnchor) {
+        returnAnchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (returnLink) {
+                window.location.href = returnLink;
+            } else if (document.referrer) {
+                window.location.href = document.referrer;
+            } else {
+                window.history.back();
+            }
+        });
+    }
+    if (openModalBtn) {
+        openModalBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            try { sessionStorage.setItem('currentTaskId', _taskId); } catch {}
+            if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
+                window.EDxoTasks.settings && (window.EDxoTasks.settings.preferPage = false);
+                window.EDxoTasks.openTaskModal(_taskId, { title: 'Suivi de la tâche' });
+            }
+        });
+    }
     // Éléments DOM à manipuler
     const taskIdElement = document.getElementById("task-id");
     const taskStatusElement = document.getElementById("task-status");
@@ -106,9 +189,143 @@ document.addEventListener("DOMContentLoaded", function() {
     const usageStats = document.getElementById("usage-stats");
     const inputTokens = document.getElementById("input-tokens");
     const outputTokens = document.getElementById("output-tokens");
+    const streamLog = document.getElementById("stream-log");
 
     // Obtenir l'ID de la tâche
     const taskId = taskIdElement.textContent.trim();
+
+    // --- SSE Streaming des événements de tâche (si disponible et non désactivé) ---
+    try {
+        const allowSSE = !((window.EDxoTasks && window.EDxoTasks.settings && window.EDxoTasks.settings.disableSSE) === true);
+        const sseUrl = {{ (events_url or ('/tasks/events/' ~ task_id))|tojson }};
+        const es = allowSSE ? new EventSource(sseUrl) : null;
+        const reasoningEl = document.getElementById('reasoning');
+        const reasoningOverlay = document.getElementById('reasoning-overlay');
+        const streamTextEl = document.getElementById('stream-text');
+        const streamOverlay = document.getElementById('stream-overlay');
+        let streamBuf = '';
+        let streamTimer = null;
+        let streamDirty = false;
+        function setStreamText(el, text) { try { if (!el) return; if ('value' in el) el.value = text || ''; else el.textContent = text || ''; } catch {} }
+        function scrollStreamToBottom(el) { try { if (el) el.scrollTop = el.scrollHeight; } catch {} }
+        function scheduleStreamUpdate() {
+            if (!streamDirty) return;
+            if (!streamTimer) {
+                streamTimer = setTimeout(() => {
+                    streamTimer = null;
+                    if (!streamDirty) return;
+                    streamDirty = false;
+                    setStreamText(streamTextEl, streamBuf);
+                    scrollStreamToBottom(streamTextEl);
+                }, 200);
+            }
+        }
+        let lastReasoning = '';
+        let reasoningTimer = null;
+        let reasoningDirty = false;
+        function scheduleReasoningUpdate() {
+            if (!reasoningDirty) return;
+            if (!reasoningTimer) {
+                reasoningTimer = setTimeout(() => {
+                    reasoningTimer = null;
+                    if (!reasoningDirty) return;
+                    reasoningDirty = false;
+                    if (reasoningEl) reasoningEl.textContent = lastReasoning;
+                }, 120);
+            }
+        }
+        function appendLog(line) {
+            if (!line) return;
+            const now = new Date();
+            const ts = now.toLocaleTimeString();
+            const safe = ('' + line).replace(/[\u0000-\u001F\u007F<>]/g, ch => ({'<':'&lt;','>':'&gt;'}[ch]||''));
+            const wasAtBottom = streamLog.scrollTop + streamLog.clientHeight >= streamLog.scrollHeight - 4;
+            streamLog.insertAdjacentHTML('beforeend', `<div>[${ts}] ${safe}</div>`);
+            if (wasAtBottom) streamLog.scrollTop = streamLog.scrollHeight;
+        }
+        if (es) es.addEventListener('open', () => appendLog('Connexion au flux ouverte.'));
+        let lastMsg = null;
+        let lastSeq = -1;
+        let lastReasoning = '';
+        if (es) es.addEventListener('progress', (ev) => {
+            try {
+                const data = JSON.parse(ev.data || '{}');
+                // 1) Afficher message/étape si nouveau
+                if (data.step || data.message) {
+                    const msg = `${data.step ? `Étape: ${data.step} | ` : ''}${data.message || ''}${typeof data.progress === 'number' ? ` | Progression: ${data.progress}%` : ''}`.trim();
+                    if (msg && msg !== lastMsg) {
+                        lastMsg = msg;
+                        appendLog(msg);
+                    }
+                }
+                // 2) Détails: raisonnement + flux de texte
+                const meta = data.meta || {};
+                if (meta) {
+                    const rs = (meta.reasoning_summary || '').trim();
+                    if (rs && rs !== lastReasoning) {
+                        lastReasoning = rs;
+                        reasoningDirty = true;
+                        if (reasoningOverlay && rs) reasoningOverlay.style.display = 'none';
+                        scheduleReasoningUpdate();
+                    }
+                    // Heuristic: suppress log-like buffers/chunks (with step/message/progress)
+                    const hasLogMeta = !!(meta.message || meta.step || typeof meta.progress === 'number');
+                    const isLogLike = (txt) => {
+                        try {
+                            const s = String(txt || '');
+                            return /^(Initialisation de l'import|Préparation du texte|Appel au modèle IA|Fichier prêt:|Conversion DOCX|PDF prêt:|Upload OpenAI réussi|Erreur analyse fichier)/i.test(s.trim());
+                        } catch { return false; }
+                    };
+                    if (meta.stream_chunk) {
+                        if (!hasLogMeta && !isLogLike(meta.stream_chunk)) {
+                            streamBuf += String(meta.stream_chunk);
+                            streamDirty = true;
+                            if (streamOverlay) streamOverlay.style.display = 'none';
+                            scheduleStreamUpdate();
+                        }
+                    } else if (meta.stream_buffer) {
+                        if (!hasLogMeta && !isLogLike(meta.stream_buffer)) {
+                            streamBuf = String(meta.stream_buffer);
+                            streamDirty = true;
+                            if (streamOverlay) streamOverlay.style.display = 'none';
+                            scheduleStreamUpdate();
+                        }
+                    }
+                }
+                if (data.state) {
+                    taskStatusElement.textContent = data.state;
+                    updateStatusClasses(data.state);
+                }
+            } catch {}
+        });
+        if (es) es.addEventListener('done', (ev) => {
+            try {
+                const data = JSON.parse(ev.data || '{}');
+                appendLog(`Terminé avec état ${data.state}.`);
+                // Afficher le bouton de validation si présent
+                try {
+                    const payload = data && data.result ? data.result : (data.meta || {});
+                    const url = payload && (payload.validation_url || payload.reviewUrl || payload.plan_de_cours_url);
+                    if (url) {
+                        const existing = document.getElementById('btn-validate-final');
+                        if (!existing) {
+                            const btn = document.createElement('a');
+                            btn.id = 'btn-validate-final';
+                            btn.className = 'btn btn-primary mt-2';
+                            btn.href = url;
+                            btn.textContent = 'Aller à la validation';
+                            document.querySelector('#result-area')?.insertAdjacentElement('afterbegin', btn);
+                        }
+                    }
+                } catch {}
+            } catch { appendLog('Terminé.'); }
+            if (es) es.close();
+        });
+        if (es) es.addEventListener('error', (ev) => {
+            try { const data = JSON.parse(ev.data || '{}'); appendLog('Erreur flux: ' + (data.error||'inconnue')); } catch { appendLog('Erreur flux.'); }
+        });
+        if (es) es.addEventListener('ping', () => {});
+    } catch (e) { console.warn('SSE indisponible ou désactivée:', e); }
     
     // États pour lesquels on continue de vérifier
     const pendingStates = ["PENDING", "STARTED", "RECEIVED", "PROGRESS", "RETRY"];
@@ -122,6 +339,8 @@ document.addEventListener("DOMContentLoaded", function() {
         if (status === "SUCCESS") {
             taskStatusElement.classList.add("status-success");
         } else if (status === "FAILURE") {
+            taskStatusElement.classList.add("status-error");
+        } else if (status === "REVOKED") {
             taskStatusElement.classList.add("status-error");
         } else if (status === "PROGRESS") {
             taskStatusElement.classList.add("status-progress");
@@ -179,7 +398,8 @@ document.addEventListener("DOMContentLoaded", function() {
         try {
             loadingIndicator.style.display = "inline"; // Afficher l'indicateur de chargement
             
-            const response = await fetch(`/api/task_status/${taskId}`);
+            const statusUrl = {{ (status_api_url or ('/tasks/status/' ~ task_id))|tojson }};
+            const response = await fetch(statusUrl);
             const data = await response.json();
             
             // Mettre à jour l'état de la tâche
@@ -191,6 +411,21 @@ if (data.state === "SUCCESS") {
                 if (data.status === "success") {
                     // Afficher le résultat sous forme de JSON
                     displayJsonResult(data.result);
+                    // Si un lien de validation est fourni, l'afficher en tête
+                    try {
+                        const url = (data.result && (data.result.validation_url || data.result.reviewUrl || data.result.plan_de_cours_url)) || null;
+                        if (url) {
+                            const existing = document.getElementById('btn-validate-final');
+                            if (!existing) {
+                                const btn = document.createElement('a');
+                                btn.id = 'btn-validate-final';
+                                btn.className = 'btn btn-primary mt-2';
+                                btn.href = url;
+                                btn.textContent = 'Aller à la validation';
+                                document.querySelector('#result-area')?.insertAdjacentElement('afterbegin', btn);
+                            }
+                        }
+                    } catch {}
                     
                     // Afficher les statistiques d'utilisation si disponibles
                     if (data.usage) {
@@ -201,10 +436,11 @@ if (data.state === "SUCCESS") {
                     if (!document.querySelector('.confirm-import-btn')) {
                         const alertDiv = document.createElement('div');
                         alertDiv.className = 'alert alert-success mb-3';
+                        const url = (data.result && data.result.validation_url) || `/confirm_grille_import/${taskId}`;
                         alertDiv.innerHTML = `
                             <strong>Extraction réussie !</strong> Vous pouvez maintenant confirmer l'importation de cette grille dans votre programme.
                             <div class="mt-2">
-                                <a href="/confirm_grille_import/${taskId}" class="btn btn-primary confirm-import-btn">
+                                <a href="${url}" class="btn btn-primary confirm-import-btn">
                                     <i class="fas fa-check-circle"></i> Confirmer l'importation
                                 </a>
                             </div>
@@ -223,6 +459,14 @@ if (data.state === "SUCCESS") {
                 // Afficher le message d'erreur en cas d'échec
                 displayError(data.message || "La tâche a échoué sans message d'erreur spécifique");
                 
+                // Arrêter les vérifications
+                return false;
+            } else if (data.state === "REVOKED") {
+                // Tâche annulée/nettoyée: afficher un message clair et arrêter
+                const msg = data.message || (data.meta && data.meta.message) || "Tâche nettoyée après redémarrage.";
+                resultPlaceholder.textContent = msg;
+                resultPre.style.display = "none";
+                errorAlert.style.display = "none";
                 // Arrêter les vérifications
                 return false;
             } else {

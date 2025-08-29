@@ -113,7 +113,7 @@ La définition doit:
                 'context_variables': ['current_value', 'cours_id']
             },
             'calendrier': {
-                'template': """Tu es un assistant pédagogique. Génère un calendrier hebdomadaire des activités pour la session {session} en te basant sur les informations suivantes du plan-cadre:\n{sections}\nLe résultat doit être un JSON avec une liste 'calendriers' contenant pour chaque semaine les champs semaine, sujet, activites, travaux_hors_classe et evaluations.""",
+                'template': """Session: {session}\nPlan-cadre:\n{sections}""",
                 'context_variables': ['session', 'sections']
             }
         }
@@ -127,7 +127,7 @@ La définition doit:
                     field_name=field_name,
                     prompt_template=settings['template'],
                     context_variables=settings['context_variables'],
-                    ai_model='gpt-4o'
+                    ai_model='gpt-5'
                 )
                 db.session.add(prompt)
                 prompts_added += 1

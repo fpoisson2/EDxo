@@ -1,0 +1,178 @@
+{% extends 'index.html' %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/competence_logigramme.css') }}">
+{% endblock %}
+
+{% block programmes_specific %}
+<div class="container-fluid mt-3">
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3 gap-2">
+    <div class="d-flex align-items-center gap-2 mb-2 mb-md-0">
+      <h4 class="mb-0">Logigramme des compétences — {{ programme.nom }}</h4>
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <!-- Mode timeline retiré pour le moment -->
+      <div class="btn-group btn-group-sm" role="group" aria-label="Filtrer les liens">
+        <input type="checkbox" class="btn-check" id="toggleDeveloppee" checked>
+        <label class="btn btn-outline-primary" for="toggleDeveloppee">Développé signif.</label>
+
+        <input type="checkbox" class="btn-check" id="toggleAtteinte" checked>
+        <label class="btn btn-outline-success" for="toggleAtteinte">Atteinte</label>
+
+        <input type="checkbox" class="btn-check" id="toggleReinvesti" checked>
+        <label class="btn btn-outline-secondary" for="toggleReinvesti">Réinvesti</label>
+      </div>
+      <div class="input-group input-group-sm flex-grow-1" style="min-width: 180px; max-width: 280px;">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input id="searchBox" type="search" class="form-control" placeholder="Rechercher compétence ou cours">
+      </div>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Zoom">
+        <button id="zoomInBtn" class="btn btn-outline-secondary" title="Zoom avant"><i class="bi bi-zoom-in"></i></button>
+        <button id="zoomOutBtn" class="btn btn-outline-secondary" title="Zoom arrière"><i class="bi bi-zoom-out"></i></button>
+        <button id="resetViewBtn" class="btn btn-outline-secondary" title="Réinitialiser la vue"><i class="bi bi-aspect-ratio"></i></button>
+      </div>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Export">
+        <button id="exportSvgBtn" class="btn btn-outline-secondary"><i class="bi bi-filetype-svg"></i> SVG</button>
+        <button id="exportPngBtn" class="btn btn-outline-secondary"><i class="bi bi-filetype-png"></i> PNG</button>
+        <a id="exportXlsxBtn" class="btn btn-outline-secondary" href="{{ url_for('programme.export_competence_logigramme_xlsx', programme_id=programme.id) }}">
+          <i class="bi bi-file-earmark-excel"></i> XLSX
+        </a>
+      </div>
+      {% if current_user.role in ['admin','coordo'] %}
+        <div class="vr d-none d-md-block"></div>
+        <a id="openGenerateLogigramBtn" class="btn btn-sm btn-success" href="#"
+           data-url="{{ url_for('programme.generate_competence_logigramme', programme_id=programme.id) }}"
+           data-title="Générer le logigramme de compétences">
+          <i class="bi bi-stars"></i> Générer
+        </a>
+        <button id="editModeToggle" class="btn btn-sm btn-outline-danger" type="button" aria-pressed="false">
+          <i class="bi bi-pencil-square"></i> Mode édition
+        </button>
+        <button id="saveLinksBtn" class="btn btn-sm btn-success d-none" type="button">
+          <i class="bi bi-save2"></i> Enregistrer
+        </button>
+      {% endif %}
+      <a href="{{ url_for('programme.view_programme', programme_id=programme.id) }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Programme
+      </a>
+    </div>
+  </div>
+
+  <div class="legend small mb-2" id="legendBar">
+    <span class="legend-item"><span class="legend-dot legend-comp"></span> Compétence</span>
+    <span class="legend-item"><span class="legend-line legend-dev"></span> Dév. signif.</span>
+    <span class="legend-item"><span class="legend-line legend-att"></span> Atteint</span>
+    <span class="legend-item"><span class="legend-line legend-rei"></span> Réinvesti</span>
+    <span class="legend-item">Fils:</span>
+    <span id="filLegend"></span>
+  </div>
+
+  <div id="graphContainer" class="graph-container">
+    <svg id="competenceGraph" class="graph-svg" preserveAspectRatio="xMinYMin meet"></svg>
+    <div id="editModeBadge" class="edit-mode-badge d-none">Édition</div>
+  </div>
+
+  <div id="infoPanel" class="card shadow-sm p-2" style="display:none; z-index:1200;">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+      <strong id="infoTitle">Détails</strong>
+      <button id="infoClose" class="btn btn-sm btn-outline-secondary">Fermer</button>
+    </div>
+    <div id="infoBody" class="small"></div>
+  </div>
+</div>
+
+<script>
+  window.COMPETENCE_MAP_DATA = {{ data|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/competence_logigramme.js') }}"></script>
+<script src="{{ url_for('static', filename='js/link_editor.js') }}"></script>
+
+{% if current_user.role in ['admin','coordo'] %}
+<!-- Modal Génération Logigramme -->
+<div class="modal fade" id="generateLogigramModal" tabindex="-1" aria-labelledby="generateLogigramLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <form id="generateLogigramForm">
+        {% if generate_form %}{{ generate_form.hidden_tag() }}{% endif %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="generateLogigramLabel">Générer le logigramme de compétences</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label" for="gl-additional">Informations complémentaires (facultatif)</label>
+            {% if generate_form %}
+              {{ generate_form.additional_info(class="form-control border-0", rows="3", placeholder="Contexte, priorités, contraintes…") }}
+            {% else %}
+              <textarea id="gl-additional" class="form-control" rows="3" placeholder="Contexte, priorités, contraintes…" aria-label="Informations complémentaires"></textarea>
+            {% endif %}
+          </div>
+          <div class="row g-3">
+            <div class="col-sm-4">
+              <label class="form-label">Modèle d'IA</label>
+              {% if generate_form %}
+                {{ generate_form.ai_model(class="form-select border-0", id="gl-ai-model") }}
+              {% else %}
+                <select id="gl-ai-model" class="form-select"><option value="gpt-5">gpt-5</option></select>
+              {% endif %}
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label">Effort de raisonnement</label>
+              {% if generate_form %}
+                {{ generate_form.reasoning_effort(class="form-select border-0", id="gl-reasoning") }}
+              {% else %}
+                <select id="gl-reasoning" class="form-select"><option value="medium">Moyen</option></select>
+              {% endif %}
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label">Verbosité</label>
+              {% if generate_form %}
+                {{ generate_form.verbosity(class="form-select border-0", id="gl-verbosity") }}
+              {% else %}
+                <select id="gl-verbosity" class="form-select"><option value="medium">Moyenne</option></select>
+              {% endif %}
+            </div>
+          </div>
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" id="gl-replace">
+            <label class="form-check-label" for="gl-replace">Remplacer les liens existants</label>
+          </div>
+          <div class="form-text mt-2">Les cours, compétences et le nom du programme seront envoyés automatiquement. Aucun plan de cours/plan‑cadre n'est inclus.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary" id="confirmGenerateLogigramBtn">
+            <span class="btn-text">Générer</span>
+            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" id="glSpinner">
+              <span class="visually-hidden">Chargement...</span>
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Script direct (réponse immédiate) supprimé: remplacé par la version avec polling de tâche -->
+{% endif %}
+
+{% if current_user.role in ['admin','coordo'] %}
+<script id="gl-celery-overrides">
+document.addEventListener('DOMContentLoaded', function(){
+  const startBtn = document.getElementById('openGenerateLogigramBtn');
+  if (!startBtn) return;
+  if (!(window.EDxoTasks && typeof window.EDxoTasks.openQuickTask === 'function')) return;
+  startBtn.addEventListener('click', function(e){
+    e.preventDefault();
+    window.EDxoTasks.openQuickTask({
+      url: startBtn.getAttribute('data-url'),
+      title: 'Génération du logigramme — {{ programme.nom }}',
+      startMessage: 'Génération en cours…',
+      basePayload: { additional_info: '' }
+    });
+  });
+});
+</script>
+{% endif %}
+{% endblock %}

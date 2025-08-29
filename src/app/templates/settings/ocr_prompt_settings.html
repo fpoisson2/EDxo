@@ -1,0 +1,41 @@
+{% extends 'parametres.html' %}
+{% block parametres_content %}
+<h1 class="mb-3">Devis ministériels (OCR) – Paramètres IA</h1>
+
+<form method="POST">
+  {{ form.hidden_tag() }}
+
+  <div class="card mb-4">
+    <div class="card-header bg-light"><strong>Prompt système</strong></div>
+    <div class="card-body">
+      <label class="form-label">{{ form.extraction_prompt.label }}</label>
+      {{ form.extraction_prompt(class_='form-control font-monospace', rows=12) }}
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header bg-light"><strong>Paramètres IA</strong></div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">{{ form.model_extraction.label }}</label>
+          {{ form.model_extraction(class_='form-select') }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">{{ ai_form.reasoning_effort.label }}</label>
+          {{ ai_form.reasoning_effort(class_='form-select') }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">{{ ai_form.verbosity.label }}</label>
+          {{ ai_form.verbosity(class_='form-select') }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    {{ form.submit(class_='btn btn-primary') }}
+    <a href="{{ url_for('settings.parametres') }}" class="btn btn-outline-secondary">Retour</a>
+  </div>
+</form>
+{% endblock %}

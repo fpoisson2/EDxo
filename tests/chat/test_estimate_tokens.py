@@ -20,5 +20,5 @@ def test_estimate_tokens_for_text_fallback(monkeypatch):
 
     text = "Un petit test de tokenisation"
     manual_count = len(text.split())
-    estimated = estimate_tokens_for_text(text, model="modele-fictif")
+    estimated = estimate_tokens_for_text(text, model="gpt-5-mini")
     assert estimated == manual_count

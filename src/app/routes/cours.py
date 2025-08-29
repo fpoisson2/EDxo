@@ -19,7 +19,9 @@ from ..forms import (
 from ..models import (
     db,
     Cours,
+    CoursProgramme,
     PlanCadre,
+    PlanDeCours,
     PlanCadreCapacites,
     PlanCadreCapaciteSavoirsNecessaires,
     PlanCadreCapaciteSavoirsFaire,
@@ -476,7 +478,7 @@ def view_plan_cadre(cours_id, plan_id):
                     # On cherche si cap_id dans les existants
                     if cap_id and cap_id.isdigit() and int(cap_id) in existing_cap_ids:
                         # Mettre à jour la cap existante
-                        existing_cap = PlanCadreCapacites.query.get(int(cap_id))
+                        existing_cap = db.session.get(PlanCadreCapacites, int(cap_id))
                         existing_cap.capacite = capacite_value
                         existing_cap.description_capacite = description_value
                         existing_cap.ponderation_min = pmin_int
@@ -591,7 +593,7 @@ def view_plan_cadre(cours_id, plan_id):
                 to_delete_ids = existing_cap_ids - new_cap_ids_handled
                 if to_delete_ids:
                     for cid in to_delete_ids:
-                        cap_to_del = PlanCadreCapacites.query.get(cid)
+                        cap_to_del = db.session.get(PlanCadreCapacites, cid)
                         if cap_to_del:
                             db.session.delete(cap_to_del)
 
@@ -921,20 +923,41 @@ def edit_capacite(cours_id, plan_id, capacite_id):
 def delete_cours(cours_id):
     form = DeleteForm(prefix=f"cours-{cours_id}")
     if form.validate_on_submit():
-        cours = Cours.query.get(cours_id)
+        cours = db.session.get(Cours, cours_id)
         if not cours:
             flash('Cours non trouvé.')
             return redirect(url_for('main.index'))
         programme_id = cours.programme_id
 
         try:
+            # Supprimer explicitement les dépendances pour respecter les contraintes NOT NULL
+            # 1) Plans de cours et leurs enfants (cascade sur enfants déjà défini)
+            for pdc in PlanDeCours.query.filter_by(cours_id=cours.id).all():
+                db.session.delete(pdc)
+
+            # 2) Plan-cadre (cascade sur enfants déjà défini)
+            pc = PlanCadre.query.filter_by(cours_id=cours.id).first()
+            if pc:
+                db.session.delete(pc)
+
+            # 3) Associations diverses basées sur cours_id
+            ElementCompetenceParCours.query.filter_by(cours_id=cours.id).delete()
+            CompetenceParCours.query.filter_by(cours_id=cours.id).delete()
+            CoursPrealable.query.filter_by(cours_id=cours.id).delete()
+            CoursPrealable.query.filter_by(cours_prealable_id=cours.id).delete()
+            CoursCorequis.query.filter_by(cours_id=cours.id).delete()
+            CoursCorequis.query.filter_by(cours_corequis_id=cours.id).delete()
+            # Table d'association cours-programme
+            CoursProgramme.query.filter_by(cours_id=cours.id).delete()
+
+            # 4) Supprimer le cours
             db.session.delete(cours)
             db.session.commit()
             flash('Cours supprimé avec succès!')
         except SQLAlchemyError as e:
             db.session.rollback()
             flash(f'Erreur lors de la suppression du cours : {e}')
-        return redirect(url_for('main.view_programme', programme_id=programme_id))
+        return redirect(url_for('programme.view_programme', programme_id=programme_id))
     else:
         flash('Erreur lors de la soumission du formulaire de suppression.')
         return redirect(url_for('main.index'))

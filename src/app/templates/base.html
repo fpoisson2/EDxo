@@ -37,34 +37,66 @@
 
     <title>EDxo - Gestion pédagogique</title>
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    {% if config['USE_LOCAL_BOOTSTRAP'] %}
+      <link rel="stylesheet" href="{{ asset_url('vendor/bootstrap/bootstrap.min.css') }}" />
+    {% else %}
+      <!-- Bootstrap CSS (preload to reduce render-blocking) -->
+      <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+      <noscript><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" /></noscript>
+    {% endif %}
 
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+    {% if config['USE_LOCAL_ICONS'] %}
+      <link rel="stylesheet" href="{{ asset_url('vendor/bootstrap-icons/font/bootstrap-icons.css') }}" />
+    {% else %}
+      <!-- Bootstrap Icons stylesheet; avoid preloading font to prevent warnings on pages not using icons immediately -->
+      <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+      <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" /></noscript>
+    {% endif %}
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Font Awesome (low priority) -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Preload main FA webfonts to reduce icon CLS -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" /></noscript>
 
     {% block head %}
     <style>
       body {
         font-family: 'Roboto', sans-serif;
       }
+      /* Minimal critical utilities to reduce CLS before Bootstrap loads */
+      .container { max-width: 1140px; margin-left: auto; margin-right: auto; padding-left: 1rem; padding-right: 1rem; }
+      .mt-4 { margin-top: 1.5rem !important; }
+      .mb-3 { margin-bottom: 1rem !important; }
+      .text-center { text-align: center !important; }
       /* Logo */
+      .logo-container { min-height: 44px; display:flex; align-items:center; }
       .logo-container img {
-        max-width: 80px;
-        height: auto;
+        width: 40px; height: 40px;
+        object-fit: contain;
+      }
+      /* Desktop: enlarge logo slightly while keeping header compact */
+      @media (min-width: 992px) {
+        .logo-container { min-height: 56px; }
+        .logo-container img { width: 56px; height: 56px; }
+        .header-container { min-height: auto; padding: 0; }
+        .header-container .navbar { padding-top: 0; padding-bottom: 0; min-height: 56px; align-items: center; }
+        .header-container .navbar-brand { padding-top: 0; padding-bottom: 0; margin: 0; }
+        .header-container .navbar-nav .nav-link { padding-top: 0; padding-bottom: 0; line-height: 1.1; }
+        .header-container .user-info { padding-top: 0; padding-bottom: 0; }
+        .header-container .dropdown-menu { margin-top: 0.25rem; }
       }
       /* Header */
       .header-container {
         background-color: #f0f0f0;
-        padding: 0.5rem 0;
+        padding: 0.25rem 0;
         border-bottom: 1px solid #e0e0e0;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         /* S'assurer que les menus (notifications, user) passent au-dessus des éléments sticky de la page */
         position: relative;
         z-index: 1100;
+        min-height: 48px;
       }
       .navbar-nav .nav-link {
         margin-right: 1rem;
@@ -125,7 +157,7 @@
       }
       /* Menu Notification */
       .notification-toggle {
-        font-size: 1.75rem;
+        font-size: 1.25rem;
         color: #555;
         position: relative;
         text-decoration: none;
@@ -137,14 +169,22 @@
         display: none;
       }
       #notification-badge {
-        font-size: 0.65rem;
-        padding: 2px 5px;
-        border-radius: 50%;
-        background: #dc3545;
-        color: #fff;
         position: absolute;
         top: 0;
         right: 0;
+        transform: translate(35%, -35%);
+        background: #dc3545;
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 14px;
+        min-width: 14px;
+        padding: 0 4px; /* allows 2-digit counts to fit as a pill */
+        border-radius: 999px;
+        border: 2px solid #fff; /* white ring so it doesn’t cover the bell */
+        font-size: 10px;
+        line-height: 1;
       }
       #notification-list li {
         white-space: normal;
@@ -156,6 +196,8 @@
       /* S'assurer que les modaux passent au-dessus du header et des menus */
       .modal-backdrop {
         z-index: 2050;
+        /* Par sécurité: si un backdrop résiduel subsiste, ne pas bloquer les clics */
+        pointer-events: none;
       }
       .modal {
         z-index: 2060;
@@ -176,7 +218,12 @@
         opacity: 0;
         transform: translateY(-100%);
       }
-      /* Adaptations pour petit écran */
+      /* Contrast tweaks */
+      .credit-display { background-color: #e6f4ea; color: #1f5133; }
+      .accordion-button.bg-info.text-white { color: #052c65 !important; background-color: #cfe8ff !important; }
+      .accordion-button.bg-primary.text-white { background-color: #0b5ed7 !important; color: #fff !important; }
+      .btn:focus { outline: 2px solid #0d6efd; outline-offset: 2px; }
+    /* Adaptations pour petit écran */
       @media (max-width: 768px) {
         .navbar-collapse {
           padding: 0;
@@ -242,6 +289,7 @@
         }
       }
     </style>
+    
     {% endblock %}
   </head>
   <body>
@@ -253,7 +301,7 @@
       <div class="container">
         <nav class="navbar navbar-expand-lg navbar-light">
           <a class="navbar-brand logo-container" href="{{ url_for('main.index') }}">
-            <img src="{{ url_for('static', filename='assets/EDxologo.png') }}" alt="EDxo Logo" class="img-fluid" loading="lazy" />
+            <img src="{{ url_for('static', filename='assets/EDxologo.png') }}" alt="EDxo Logo" class="img-fluid" loading="lazy" width="80" height="80" />
           </a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                   aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Basculer la navigation">
@@ -279,16 +327,16 @@
               </li>
             </ul>
             <div class="user-info ms-3 d-flex align-items-center">
-              <!-- Menu Notification -->
+              <!-- Tâches en cours -->
               <div class="dropdown me-3">
-                <a class="notification-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="bi bi-bell"></i>
+                <a class="notification-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Ouvrir les tâches" title="Tâches">
+                  <i class="bi bi-list-task"></i>
                   <span id="notification-badge" style="display:none;"></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="min-width: 300px;">
-                  <li class="dropdown-header">Notifications</li>
+                  <li class="dropdown-header">Tâches</li>
                   <div id="notification-list">
-                    <li class="dropdown-item text-muted small">Aucune notification</li>
+                    <li class="dropdown-item text-muted small">Aucune tâche</li>
                   </div>
                 </ul>
               </div>
@@ -369,9 +417,13 @@
       <p>Version: {{ version }}</p>
     </footer>
 
-    <!-- Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Bootstrap Bundle JS / Marked (defer to avoid blocking) -->
+    {% if config['USE_LOCAL_BOOTSTRAP'] %}
+      <script src="{{ asset_url('vendor/bootstrap/bootstrap.bundle.min.js') }}" defer></script>
+    {% else %}
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    {% endif %}
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
 
     <!-- Gestion du crédit -->
     <script>
@@ -448,15 +500,18 @@
       });
     </script>
 
-    <!-- Gestion du polling pour les tâches -->
+    <!-- Gestion du polling pour les tâches (unifié) -->
     <script>
+      // Prefix-aware base path (supports reverse proxies setting SCRIPT_NAME / X-Forwarded-Prefix)
+      const APP_PREFIX = (function(){ try { return {{ request.script_root|tojson }} || ''; } catch(_) { return ''; } })();
+      try { window.APP_PREFIX = APP_PREFIX; } catch(_) {}
       let currentTaskId = null;
       let isPolling = false;
 
       function checkTaskStatus() {
         if (!currentTaskId) return;
 
-        fetch('/task_status/' + currentTaskId, {
+        fetch(`${APP_PREFIX}/tasks/status/` + currentTaskId, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           credentials: 'same-origin'
@@ -470,24 +525,45 @@
           }
           if (data.state === 'SUCCESS') {
             const payload = data.result || data.meta || {};
+            // Certains workers retournent {status:"error"} tout en ayant l'état SUCCESS côté Celery
+            if (payload && payload.status === 'error') {
+              const t = getTaskTitle(currentTaskId);
+              addNotification(`${t} — échouée — ` + (payload.message || "Une erreur est survenue."), "error", null, currentTaskId);
+              stopPolling();
+              clearTaskId();
+              window.onTaskStreamUpdate = null;
+              return;
+            }
             if (payload.preview) {
               const planId = payload.plan_id;
               const reviewUrl = `/plan_cadre/${planId}/review?task_id=` + currentTaskId;
-              addNotification("Proposition d'amélioration prête. Cliquez pour comparer et appliquer.", "success", reviewUrl);
+              const t = getTaskTitle(currentTaskId);
+              addNotification(`${t} — terminée — Proposition prête. Cliquez pour comparer.`, "success", reviewUrl, currentTaskId);
               if (typeof window.onTaskCompleted === 'function') {
                 try { window.onTaskCompleted({ ...payload, reviewUrl }); } catch (e) { console.warn('onTaskCompleted error', e); }
               }
             } else {
               const coursId = payload.cours_id;
               const planId = payload.plan_id;
-              if (coursId && planId) {
+              // Cas import/génération Plan de Cours: si une URL directe est fournie, l'utiliser
+              if (payload.plan_de_cours_url) {
+                const t = getTaskTitle(currentTaskId);
+                addNotification(`${t} — terminée — Cliquez pour voir le plan de cours.`, "success", payload.plan_de_cours_url, currentTaskId);
+                if (typeof window.onTaskCompleted === 'function') {
+                  try { window.onTaskCompleted({ ...payload, planDeCoursUrl: payload.plan_de_cours_url }); } catch (e) { console.warn('onTaskCompleted error', e); }
+                }
+              }
+              // Cas Plan-Cadre existant (lien plan-cadre)
+              else if (coursId && planId) {
                 const planCadreUrl = `/cours/${coursId}/plan_cadre/${planId}`;
-                addNotification("Génération terminée. Cliquez pour voir le plan-cadre.", "success", planCadreUrl);
+                const t = getTaskTitle(currentTaskId);
+                addNotification(`${t} — terminée — Cliquez pour voir le plan‑cadre.`, "success", planCadreUrl, currentTaskId);
                 if (typeof window.onTaskCompleted === 'function') {
                   try { window.onTaskCompleted({ ...payload, planCadreUrl }); } catch (e) { console.warn('onTaskCompleted error', e); }
                 }
               } else {
-                addNotification("Génération terminée.", "success");
+                const t = getTaskTitle(currentTaskId);
+                addNotification(`${t} — terminée.`, "success", null, currentTaskId);
                 if (typeof window.onTaskCompleted === 'function') {
                   try { window.onTaskCompleted(payload); } catch (e) { console.warn('onTaskCompleted error', e); }
                 }
@@ -497,15 +573,37 @@
             clearTaskId();
             window.onTaskStreamUpdate = null;
           } else if (data.state === 'FAILURE') {
-            addNotification("La génération a échoué : " + (data.result?.message || "Une erreur est survenue."), "error");
+            const t = getTaskTitle(currentTaskId);
+            addNotification(`${t} — échouée — ` + (data.result?.message || "Une erreur est survenue."), "error", null, currentTaskId);
+            stopPolling();
+            clearTaskId();
+            window.onTaskStreamUpdate = null;
+          } else if (data.state === 'REVOKED') {
+            const msg = data.message || (data.meta && data.meta.message) || "Tâche nettoyée après redémarrage.";
+            const t = getTaskTitle(currentTaskId);
+            addNotification(`${t} — arrêtée — ${msg}`, "warning", null, currentTaskId);
             stopPolling();
             clearTaskId();
             window.onTaskStreamUpdate = null;
           } else if (data.state === 'PROGRESS') {
-            addNotification(data.message || "Génération en cours...", "in-progress");
+            const link = `/tasks/track/${currentTaskId}`;
+            const t = getTaskTitle(currentTaskId);
+            const msg = (data.message && data.message.trim()) ? data.message : 'Tâche en cours…';
+            addNotification(`${t} — ${msg}`, "in-progress", link, currentTaskId);
+            setTimeout(checkTaskStatus, 3000);
+          } else if (data.state === 'PENDING') {
+            // PENDING should show spinner like in-progress
+            const link = `/tasks/track/${currentTaskId}`;
+            const t = getTaskTitle(currentTaskId);
+            const msg = (data.message && data.message.trim()) ? data.message : 'Tâche en cours…';
+            addNotification(`${t} — ${msg}`, "in-progress", link, currentTaskId);
             setTimeout(checkTaskStatus, 3000);
           } else {
-            addNotification("Génération en cours...", "in-progress");
+            // For any other non-final states, keep polling with in-progress
+            const link = `/tasks/track/${currentTaskId}`;
+            const t = getTaskTitle(currentTaskId);
+            const msg = (data.message && data.message.trim()) ? data.message : 'Tâche en cours…';
+            addNotification(`${t} — ${msg}`, "in-progress", link, currentTaskId);
             setTimeout(checkTaskStatus, 3000);
           }
         })
@@ -515,11 +613,17 @@
         });
       }
 
+      function getTaskTitle(taskId) {
+        try { return localStorage.getItem(`edxo_task_title_${taskId}`) || 'Tâche'; } catch { return 'Tâche'; }
+      }
+
       function startTaskPolling(taskId) {
         if (isPolling) return;
         currentTaskId = taskId;
         isPolling = true;
-        addNotification("Génération en cours...", "in-progress");
+        const t = getTaskTitle(taskId);
+        // Initial state: treat as in-progress (spinner)
+        addNotification(`${t} — Tâche en cours…`, "in-progress", `/tasks/track/${taskId}`, taskId);
         checkTaskStatus();
       }
 
@@ -530,7 +634,7 @@
 
       function clearTaskId() {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        fetch('/clear_task_id', {
+        fetch(`${APP_PREFIX}/clear_task_id`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -550,14 +654,52 @@
       }
 
       setInterval(function() {
+        // Désactiver le poller hérité si l'orchestrateur unifié est chargé
+        if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') return;
         const storedTaskId = sessionStorage.getItem('currentTaskId');
-        console.log("Looking for task");
         if (storedTaskId && !isPolling) startTaskPolling(storedTaskId);
       }, 3000);
 
       document.addEventListener('DOMContentLoaded', function() {
-        const storedTaskId = sessionStorage.getItem('currentTaskId');
-        if (storedTaskId && !isPolling) startTaskPolling(storedTaskId);
+        // Désactiver le poller hérité si l'orchestrateur unifié est chargé
+        if (!(window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function')) {
+          const storedTaskId = sessionStorage.getItem('currentTaskId');
+          if (storedTaskId && !isPolling) startTaskPolling(storedTaskId);
+        }
+      });
+    </script>
+
+    <!-- Orchestrateur unifié des tâches (SSE + polling) -->
+    <script src="{{ asset_url('js/task_orchestrator.js') }}" defer></script>
+
+    <!-- Ouvrir le suivi tâche en modal quand on clique une notification /tasks/track/<id> -->
+    <script>
+      document.addEventListener('click', function (e) {
+        const anchor = e.target && e.target.closest ? e.target.closest('a') : null;
+        if (!anchor || !anchor.href) return;
+        try {
+          const url = new URL(anchor.getAttribute('href'), window.location.origin);
+          if (url.pathname.startsWith('/tasks/track/')) {
+            const parts = url.pathname.split('/');
+            const taskId = parts[parts.length - 1];
+            if (taskId) {
+              e.preventDefault();
+              try { sessionStorage.setItem('currentTaskId', taskId); } catch {}
+              // Fermer un éventuel dropdown de notifications
+              try {
+                const dd = bootstrap.Dropdown.getInstance(document.getElementById('notificationDropdown'));
+                if (dd) dd.hide();
+              } catch {}
+              // Ouvrir le modal de suivi si dispo; replis vers la navigation sinon
+              if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
+                window.EDxoTasks.openTaskModal(taskId, { title: 'Suivi de la tâche' });
+              } else {
+                // Fallback prefix-aware navigation
+                window.location.href = `${APP_PREFIX}/tasks/track/${taskId}`;
+              }
+            }
+          }
+        } catch {}
       });
     </script>
 
@@ -589,22 +731,49 @@
                 addNotification("Erreur de génération : " + data.message, "error");
               }
             })
-            .catch(error => console.error(error));
+            .catch(error => { console.error(error); try { addNotification('Erreur de génération : ' + (error.message||error), 'error', null, (sessionStorage.getItem('currentTaskId')||null)); } catch(_) {} });
           });
         }
       });
     </script>
 
-    <!-- Système de notifications avec persistance -->
+    <!-- Centre des tâches (persistance locale) -->
     <script>
       let notifications = [];
-      const STORAGE_KEY = "edxo_notifications";
+      const STORAGE_KEY = "edxo_tasks";
+
+      function extractTaskId(link) {
+        if (!link) return null;
+        try { const m = String(link).match(/\/tasks\/track\/([^/]+)/); return m ? m[1] : null; } catch { return null; }
+      }
 
       function loadNotifications() {
         const data = localStorage.getItem(STORAGE_KEY);
         if (data) {
           try {
-            notifications = JSON.parse(data);
+            const parsed = JSON.parse(data) || [];
+            const normed = parsed.map(n => {
+              if (!n) return null;
+              const tid = n.taskId || extractTaskId(n.link);
+              return Object.assign({}, n, tid ? { taskId: tid } : {});
+            }).filter(Boolean);
+            const byId = new Map();
+            const others = new Map();
+            for (const n of normed) {
+              if (n.taskId) {
+                const prev = byId.get(n.taskId);
+                if (!prev || (new Date(n.timestamp || 0) > new Date(prev.timestamp || 0))) {
+                  byId.set(n.taskId, n);
+                }
+              } else {
+                const key = n.link ? `link:${n.link}` : `msg:${n.type}|${n.message}`;
+                const prev = others.get(key);
+                if (!prev || (new Date(n.timestamp || 0) > new Date(prev.timestamp || 0))) {
+                  others.set(key, n);
+                }
+              }
+            }
+            notifications = [...byId.values(), ...others.values()];
           } catch (e) {
             console.error("Erreur lors du chargement des notifications", e);
             notifications = [];
@@ -620,7 +789,7 @@
         const list = document.getElementById("notification-list");
         list.innerHTML = "";
         if (notifications.length === 0) {
-          list.innerHTML = '<li class="dropdown-item text-muted small">Aucune notification</li>';
+          list.innerHTML = '<li class="dropdown-item text-muted small">Aucune tâche</li>';
         } else {
           notifications.forEach(notif => {
             let iconHtml = "";
@@ -630,27 +799,160 @@
               iconHtml = '<i class="bi bi-exclamation-triangle me-2 text-danger"></i>';
             } else if (notif.type === "warning") {
               iconHtml = '<i class="bi bi-exclamation-circle me-2 text-warning"></i>';
+            } else if (notif.type === "queued") {
+              iconHtml = '<i class="bi bi-clock me-2 text-secondary"></i>';
             } else if (notif.type === "in-progress") {
-              iconHtml = '<span class="spinner-border spinner-border-sm me-2 text-warning"></span>';
+              iconHtml = '<span class="spinner-border spinner-border-sm me-2 text-primary"></span>';
             } else {
-              iconHtml = '<i class="bi bi-info-circle me-2 text-info"></i>';
+              // Fallback: when no specific icon, prefer the blue loader next to the task
+              iconHtml = '<span class="spinner-border spinner-border-sm me-2 text-primary"></span>';
             }
             const li = document.createElement("li");
             li.className = "dropdown-item";
-            li.innerHTML = notif.link 
-              ? iconHtml + '<a href="' + notif.link + '">' + notif.message + "</a>"
+            // Sanitize track links: only present clickable links that resolve to a concrete task id
+            let safeLink = notif.link || null;
+            try {
+              const isTrack = typeof safeLink === 'string' && (safeLink.indexOf('/tasks/track/') === 0 || safeLink.indexOf((window.APP_PREFIX||'') + '/tasks/track/') === 0);
+              if (isTrack) {
+                const m = String(safeLink).match(/\/tasks\/track\/([^/]+)/);
+                const tid = (notif.taskId || (m ? m[1] : null) || '').trim();
+                if (tid) {
+                  const prefix = (typeof window !== 'undefined' && window.APP_PREFIX) ? window.APP_PREFIX : '';
+                  safeLink = `${prefix}/tasks/track/${tid}`;
+                } else {
+                  safeLink = null; // do not render empty /tasks/track/
+                }
+              }
+            } catch {}
+            li.innerHTML = safeLink 
+              ? iconHtml + '<a href="' + safeLink + '">' + notif.message + "</a>"
               : iconHtml + notif.message;
+            // Validate existence on click; prune invalid entries
+            try {
+              const a = li.querySelector('a');
+              if (a) {
+                a.addEventListener('click', async (ev) => {
+                  try {
+                    const href = a.getAttribute('href') || '';
+                    const tid = extractTaskId(href);
+                    // Lien de suivi sans ID: supprimer l'entrée orpheline
+                    if (!tid && (href.indexOf('/tasks/track/') === 0 || href.indexOf((window.APP_PREFIX||'') + '/tasks/track/') === 0)) {
+                      ev.preventDefault();
+                      notifications = notifications.filter(n => !(n && n.link === href));
+                      saveNotifications();
+                      updateNotificationUI();
+                      try { window.flashMessageSystem && window.flashMessageSystem.warning('Lien de tâche invalide. Entrée supprimée.', 4000); } catch {}
+                      return;
+                    }
+                    if (!tid) return; // pas de validation pour les autres liens
+                    const ok = await checkTaskExists(tid);
+                    if (!ok) {
+                      ev.preventDefault();
+                      // Remove the stale notification
+                      notifications = notifications.filter(n => !(n && (n.taskId === tid || (n.link && n.link.indexOf(`/tasks/track/${tid}`) !== -1))));
+                      saveNotifications();
+                      updateNotificationUI();
+                      try { window.flashMessageSystem && window.flashMessageSystem.warning('Cette tâche n\'existe plus. Liste nettoyée.', 4000); } catch {}
+                    }
+                  } catch {}
+                });
+              }
+            } catch {}
             list.appendChild(li);
           });
           const clearBtnLi = document.createElement("li");
           clearBtnLi.className = "dropdown-item text-center";
-          clearBtnLi.innerHTML = '<button class="btn btn-sm btn-outline-secondary" id="clear-notifications-btn">Effacer les notifications</button>';
+          clearBtnLi.innerHTML = '<button class="btn btn-sm btn-outline-secondary" id="clear-notifications-btn" title="Conserve les tâches en cours">Effacer la liste</button>';
           list.appendChild(clearBtnLi);
           document.getElementById("clear-notifications-btn").addEventListener("click", () => {
             clearNotifications();
           });
         }
         updateNotificationBadge();
+      }
+
+      // Quick server-side existence check
+      async function checkTaskExists(taskId) {
+        try {
+          const r = await fetch(`${APP_PREFIX}/tasks/status/` + taskId, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+          if (!r.ok) return false;
+          const d = await r.json();
+          return !!(d && d.state);
+        } catch (_) { return false; }
+      }
+
+      // Prune stale/invalid notifications; validate hits limited to avoid burst
+      let pruningInFlight = false;
+      async function pruneNotifications({ maxAgeMs = 1000 * 60 * 60 * 24, validate = false, validateLimit = 6 } = {}) {
+        if (pruningInFlight) return;
+        pruningInFlight = true;
+        try {
+          const now = Date.now();
+          // Nettoyage immédiat: supprimer entrées avec lien /tasks/track/ sans ID
+          notifications = notifications.filter(n => {
+            if (!n || !n.link) return !!n;
+            try {
+              const isTrack = (n.link.indexOf('/tasks/track/') === 0) || (n.link.indexOf((window.APP_PREFIX||'') + '/tasks/track/') === 0);
+              if (isTrack) {
+                const m = String(n.link).match(/\/tasks\/track\/([^/]+)/);
+                if (!m || !m[1]) return false;
+              }
+            } catch {}
+            return true;
+          });
+          // Drop very old non-active items
+          notifications = notifications.filter(n => {
+            if (!n) return false;
+            if (n.type === 'in-progress' || n.type === 'queued') return true;
+            const ts = new Date(n.timestamp || 0).getTime();
+            if (!ts) return true;
+            return (now - ts) <= maxAgeMs;
+          });
+          // Supprimer "in-progress" sans taskId trop anciens (> 30 minutes)
+          notifications = notifications.filter(n => {
+            if (!n) return false;
+            if (!(n.type === 'in-progress' && !n.taskId)) return true;
+            const ts = new Date(n.timestamp || 0).getTime();
+            if (!ts) return false;
+            return (now - ts) <= (1000 * 60 * 30);
+          });
+          if (validate) {
+            let validated = 0;
+            for (const n of [...notifications]) {
+              if (validated >= validateLimit) break;
+              if (!(n && (n.taskId || extractTaskId(n.link)))) continue;
+              const tid = n.taskId || extractTaskId(n.link);
+              if (!tid) continue;
+              validated++;
+              try {
+                const r = await fetch(`${APP_PREFIX}/tasks/status/` + tid, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+                if (!r.ok) {
+                  // Remove stale if endpoint not reachable or task truly missing
+                  notifications = notifications.filter(x => !(x && (x.taskId === tid || (x.link && x.link.indexOf(`/tasks/track/${tid}`) !== -1))));
+                  continue;
+                }
+                const data = await r.json();
+                const state = (data && data.state) || 'PENDING';
+                if (state === 'SUCCESS' || state === 'FAILURE' || state === 'REVOKED') {
+                  const payload = (data.result || data.meta || {});
+                  const title = getTaskTitle(tid);
+                  const base = state === 'SUCCESS' ? 'terminée' : 'arrêtée';
+                  const detail = (data.message || payload.message || '').trim();
+                  const composed = detail ? `${title} — ${base} — ${detail}` : `${title} — ${base}`;
+                  const link = (payload && payload.validation_url) ? payload.validation_url : `/tasks/track/${tid}`;
+                  const type = state === 'SUCCESS' ? 'success' : (state === 'FAILURE' ? 'error' : 'warning');
+                  // Replace existing notification for this task id
+                  notifications = notifications.filter(x => !(x && (x.taskId === tid || (x.link && x.link.indexOf(`/tasks/track/${tid}`) !== -1))));
+                  notifications.push({ id: Date.now(), taskId: tid, message: composed, type, link, timestamp: new Date().toISOString() });
+                  try { if (sessionStorage.getItem('currentTaskId') === tid) sessionStorage.removeItem('currentTaskId'); } catch {}
+                }
+              } catch { /* ignore validation error */ }
+            }
+          }
+          saveNotifications();
+          updateNotificationUI();
+        } catch {}
+        pruningInFlight = false;
       }
 
       function updateNotificationBadge() {
@@ -663,47 +965,145 @@
         }
       }
 
-      function addNotification(message, type = "info", link = null) {
-        if (type === "in-progress") {
-          const existingIndex = notifications.findIndex(notif => notif.type === "in-progress");
-          if (existingIndex !== -1) {
-            if (notifications[existingIndex].message !== message || notifications[existingIndex].link !== link) {
-              notifications[existingIndex].message = message;
-              notifications[existingIndex].link = link;
-              notifications[existingIndex].timestamp = new Date().toISOString();
-              saveNotifications();
-              updateNotificationUI();
+      function addNotification(message, type = "info", link = null, taskId = null) {
+        // Déduplique par taskId ou lien; sinon, atténue les doublons exacts message+type
+        let tid = taskId;
+        try {
+          if (!tid && typeof link === 'string') {
+            const m = link.match(/\/tasks\/track\/([^/]+)/);
+            if (m) tid = m[1];
+          }
+          // Dernier recours: si rien n'est fourni, utiliser la tâche active en session
+          if (!tid && typeof sessionStorage !== 'undefined') {
+            const cur = sessionStorage.getItem('currentTaskId');
+            if (cur) tid = cur;
+          }
+          // Si nous avons un tid mais un lien /tasks/track/ invalide, on le normalise
+          if (tid && typeof link === 'string') {
+            const extracted = (function(){ try { const m = String(link).match(/\/tasks\/track\/([^/]+)/); return m ? m[1] : null; } catch { return null; }})();
+            const isTrack = (link.indexOf('/tasks/track/') === 0) || (link.indexOf((window.APP_PREFIX||'') + '/tasks/track/') === 0);
+            if (isTrack && extracted !== tid) {
+              const prefix = (typeof window !== 'undefined' && window.APP_PREFIX) ? window.APP_PREFIX : '';
+              link = `${prefix}/tasks/track/${tid}`;
             }
-            return;
+          }
+        } catch {}
+        const nowIso = new Date().toISOString();
+        if (tid) {
+          const payload = { id: Date.now(), taskId: tid, message, type, link, timestamp: nowIso };
+          let updated = false;
+          for (let i = 0; i < notifications.length; i++) {
+            const n = notifications[i];
+            if (n && n.taskId === tid) {
+              notifications[i] = Object.assign({}, n, payload);
+              updated = true;
+            }
+          }
+          if (!updated) notifications.push(payload);
+          // Nettoyage: supprimer doublons potentiels sans taskId mais avec même lien de suivi
+          try {
+            const trackLink = `/tasks/track/${tid}`;
+            notifications = notifications.filter((n, idx) => {
+              if (!n) return false;
+              if (n.taskId === tid) return true;
+              if (n.link && typeof n.link === 'string' && n.link.indexOf(trackLink) !== -1) return false;
+              return true;
+            });
+            // Supprimer anciennes entrées "en cours" sans taskId qui doublonnent le même message
+            notifications = notifications.filter(n => !(
+              !n.taskId && n.type === 'in-progress' && typeof n.message === 'string' && typeof message === 'string' && n.message.indexOf('Tâche en cours') !== -1
+            ));
+          } catch {}
+          saveNotifications();
+          updateNotificationUI();
+          return;
+        }
+        if (link) {
+          // Ne jamais stocker un lien /tasks/track/ sans ID; rendre non cliquable
+          try {
+            const isTrack = (typeof link === 'string') && (link.indexOf('/tasks/track/') === 0 || link.indexOf((window.APP_PREFIX||'') + '/tasks/track/') === 0);
+            if (isTrack) {
+              const m = String(link).match(/\/tasks\/track\/([^/]+)/);
+              if (!m || !m[1]) link = null;
+            }
+          } catch {}
+          const i = notifications.findIndex(n => n && n.link === link && !n.taskId);
+          if (i !== -1) {
+            notifications[i].message = message;
+            notifications[i].type = type;
+            notifications[i].timestamp = nowIso;
+          } else {
+            notifications.push({ id: Date.now(), message, type, link, timestamp: nowIso });
           }
         } else {
-          notifications = notifications.filter(n => n.type !== "in-progress");
+          const i = notifications.slice(-10).findIndex(n => n && !n.taskId && n.message === message && n.type === type);
+          if (i !== -1) {
+            const realIdx = notifications.length - 10 + i;
+            notifications[realIdx].timestamp = nowIso;
+          } else {
+            notifications.push({ id: Date.now(), message, type, timestamp: nowIso });
+          }
         }
-        const notif = {
-          id: Date.now(),
-          message: message,
-          type: type,
-          link: link,
-          timestamp: new Date().toISOString()
-        };
-        notifications.push(notif);
         saveNotifications();
         updateNotificationUI();
       }
 
       function clearNotifications() {
-        notifications = [];
+        // Conserver seulement les tâches réellement en cours (avec un taskId ou un lien valide)
+        notifications = notifications.filter(n => {
+          if (!n) return false;
+          if (n.type === 'in-progress' || n.type === 'queued') {
+            try {
+              const tid = n.taskId || extractTaskId(n.link || '');
+              return !!tid; // supprimer les orphelines sans identifiant
+            } catch { return false; }
+          }
+          return false;
+        });
         saveNotifications();
         updateNotificationUI();
       }
 
       document.addEventListener('DOMContentLoaded', () => {
         loadNotifications();
+        // Ne pas supprimer automatiquement les notifications "in-progress"; elles restent épinglées
+        try {
+          const storedTaskId = sessionStorage.getItem('currentTaskId');
+          if (storedTaskId) {
+            // If orchestrator is loaded (legacy poller disabled), perform a one-shot status check
+            if (window.EDxoTasks && typeof window.EDxoTasks.openTaskModal === 'function') {
+              fetch(`${APP_PREFIX}/tasks/status/` + storedTaskId, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(data => {
+                  if (!data || !data.state) return;
+                  if (data.state === 'SUCCESS' || data.state === 'FAILURE' || data.state === 'REVOKED') {
+                    // Replace any in-progress with a final notification and clear session key
+                    const payload = data.result || data.meta || {};
+                    const link = `/tasks/track/${storedTaskId}`;
+                    const title = getTaskTitle(storedTaskId);
+                    const base = data.state === 'SUCCESS' ? 'terminée' : 'arrêtée';
+                    const detail = (data.message || payload.message || '').trim();
+                    const composed = detail ? `${title} — ${base} — ${detail}` : `${title} — ${base}`;
+                    addNotification(composed, data.state === 'SUCCESS' ? 'success' : 'warning', payload.validation_url || link, storedTaskId);
+                    // Clear session-stored task id on final state
+                    try { sessionStorage.removeItem('currentTaskId'); } catch {}
+                  }
+                })
+                .catch(() => {});
+            }
+          }
+        } catch {}
         updateNotificationUI();
         const notificationDropdown = document.getElementById('notificationDropdown');
-        notificationDropdown.addEventListener('click', () => {
+        notificationDropdown.addEventListener('click', async () => {
           document.getElementById("notification-badge").style.display = "none";
+          // On open, validate a handful and prune stale
+          await pruneNotifications({ validate: true, validateLimit: 6, maxAgeMs: 1000 * 60 * 60 * 24 });
         });
+        // Perform an initial quick validation to clear stale in-progress items
+        pruneNotifications({ validate: true, validateLimit: 6 });
+        // Background prune for age only
+        pruneNotifications({ validate: false });
       });
     </script>
 

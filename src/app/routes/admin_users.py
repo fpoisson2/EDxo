@@ -57,7 +57,7 @@ def manage_users():
                     flash('Vous ne pouvez pas supprimer votre propre compte.', 'danger')
                     return redirect(url_for('main.manage_users'))
 
-                user_to_delete = User.query.get(user_id)
+                user_to_delete = db.session.get(User, user_id)
                 if user_to_delete:
                     try:
                         db.session.delete(user_to_delete)
@@ -100,7 +100,7 @@ def manage_users():
 @role_required('admin')
 @ensure_profile_completed
 def edit_user(user_id):
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         flash("Utilisateur non trouvé.", "danger")
         return redirect(url_for('main.manage_users'))
@@ -152,7 +152,7 @@ def edit_user(user_id):
             user.programmes.clear()
             submitted_programmes = request.form.getlist('programmes')
             for prog_id in submitted_programmes:
-                prog_obj = Programme.query.get(int(prog_id))
+                prog_obj = db.session.get(Programme, int(prog_id))
                 if prog_obj:
                     user.programmes.append(prog_obj)
 

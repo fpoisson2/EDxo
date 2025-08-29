@@ -1,0 +1,19 @@
+{% extends "parametres.html" %}
+{% block parametres_content %}
+  <h2>Plan‑cadre — Import DOCX (Prompt système)</h2>
+  <p class="text-muted">Ce template doit contenir le placeholder {doc_text} qui sera remplacé par le texte extrait du DOCX.</p>
+
+  <form method="POST" class="mt-3">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+      <label class="form-label">Modèle IA</label>
+      {{ form.ai_model(class="form-select") }}
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Template du prompt</label>
+      {{ form.prompt_template }}
+    </div>
+    <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+  </form>
+{% endblock %}
+

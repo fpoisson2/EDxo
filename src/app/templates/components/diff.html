@@ -1,0 +1,28 @@
+{% macro render_simple_diff(before, after, title_before='Avant', title_after='Après') %}
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header bg-light">{{ title_before }}</div>
+      <div class="card-body">
+        {% if before is string %}
+          <pre class="mb-0" style="white-space:pre-wrap">{{ before }}</pre>
+        {% else %}
+          <pre class="mb-0" style="white-space:pre-wrap">{{ before | tojson(indent=2) }}</pre>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header bg-light">{{ title_after }}</div>
+      <div class="card-body">
+        {% if after is string %}
+          <pre class="mb-0" style="white-space:pre-wrap">{{ after }}</pre>
+        {% else %}
+          <pre class="mb-0" style="white-space:pre-wrap">{{ after | tojson(indent=2) }}</pre>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endmacro %}
+
