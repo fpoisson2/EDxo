@@ -9,6 +9,7 @@ from starlette.applications import Starlette
 from starlette.routing import Mount, Route
 from starlette.requests import Request
 from starlette.responses import StreamingResponse
+from urllib.parse import parse_qs
 from starlette.middleware.wsgi import WSGIMiddleware
 import asyncio
 import json
@@ -132,6 +133,41 @@ flask_asgi = WSGIMiddleware(flask_app)
 # Obtain the MCP ASGI app (robust to missing integrations)
 mcp_asgi_app = get_mcp_asgi_app()
 
+
+class InjectAuthFromQuery:
+    """ASGI middleware: promote `?access_token=` to Authorization header.
+
+    Some clients (e.g., MCP Inspector or simple SSE consumers) cannot always set
+    custom headers. Per RFC 6750 (section 2.3), allow passing the bearer token
+    via URI query parameter `access_token`. If present and no `Authorization`
+    header is set, inject `Authorization: Bearer <token>` into the request.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        try:
+            if scope.get("type") == "http":
+                headers = list(scope.get("headers") or [])
+                has_auth = any(k.lower() == b"authorization" for k, _ in headers)
+                if not has_auth:
+                    raw_qs = scope.get("query_string") or b""
+                    if raw_qs:
+                        qs = parse_qs(raw_qs.decode("utf-8"), keep_blank_values=True)
+                        token = None
+                        vals = qs.get("access_token")
+                        if isinstance(vals, list) and vals:
+                            token = vals[-1]
+                        if token:
+                            headers.append((b"authorization", f"Bearer {token}".encode("utf-8")))
+                            scope = dict(scope)
+                            scope["headers"] = headers
+        except Exception:
+            # Best-effort: never block the request due to middleware errors
+            pass
+        return await self.app(scope, receive, send)
+
 logger = get_logger(__name__)
 try:
     is_fallback = getattr(mcp_asgi_app, "edxo_mcp_fallback", False)
@@ -150,7 +186,8 @@ lifespan = getattr(mcp_asgi_app, "lifespan", None)
 kwargs = {"routes": [
     # ASGI-native SSE for Celery task events; declared before Flask mount to take precedence
     Route("/tasks/events/{task_id}", endpoint=sse_task_events),
-    Mount("/sse", app=mcp_asgi_app),
+    # Allow passing OAuth tokens via `?access_token=` to the MCP SSE mount
+    Mount("/sse", app=InjectAuthFromQuery(mcp_asgi_app)),
     Mount("/", app=flask_asgi),
 ]}
 if lifespan is not None:
