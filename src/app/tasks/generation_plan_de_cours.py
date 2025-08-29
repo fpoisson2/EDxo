@@ -34,7 +34,23 @@ class BulkPlanDeCoursResponse(BaseModel):
 
 
 def _extract_first_parsed(response):
+    """Retourne le premier objet parsé d'une réponse OpenAI.
+
+    La structure renvoyée par l'API OpenAI a évolué. Certains appels
+    exposent directement une liste ``output_parsed`` tandis que d'autres
+    nécessitent de parcourir ``output -> content -> parsed``. Cette
+    fonction gère les deux cas et renvoie ``None`` si aucune donnée n'est
+    trouvée.
+    """
     try:
+        # Nouveau format : output_parsed disponible directement
+        output_parsed = getattr(response, 'output_parsed', None)
+        if output_parsed:
+            if isinstance(output_parsed, list):
+                return output_parsed[0]
+            return output_parsed
+
+        # Ancien format : parcourir les sorties et contenus
         outputs = getattr(response, 'output', None) or []
         for item in outputs:
             contents = getattr(item, 'content', None) or []
