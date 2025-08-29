@@ -2,6 +2,8 @@
 
 EDxo automatise la création des plans‑cadres, des plans de cours et des grilles d’évaluation grâce à l’IA (OpenAI Responses). L’application web met l’accent sur des workflows guidés, un suivi de tâches unifié (Celery) et une configuration IA par domaine.
 
+- Composants clés: Flask (application), Celery (tâches), Starlette (hub ASGI pour SSE), serveur MCP (Model Context Protocol) et OAuth 2.1.
+
 ## Table des matières
 
 1. Fonctionnalités
@@ -14,7 +16,8 @@ EDxo automatise la création des plans‑cadres, des plans de cours et des grill
 8. Déploiement
 9. Structure du projet
 10. API et OAuth
-11. Licence
+11. MCP
+12. Licence
 
 ## Fonctionnalités
 
@@ -30,7 +33,7 @@ EDxo automatise la création des plans‑cadres, des plans de cours et des grill
 
 - Python 3.12
 - Virtualenv (recommandé)
-- Redis (broker et backend Celery)
+- Redis (broker et backend Celery) en local ou via Docker
 - Optionnel: Docker et Docker Compose
 
 ## Installation
@@ -63,12 +66,17 @@ CELERY_RESULT_BACKEND=redis://127.0.0.1:6379/0
 # Facultatif
 LOG_LEVEL=INFO
 OPENAI_API_KEY=...
+# Optionnel
+RATELIMIT_STORAGE_URI=memory://
+TOASTUI_USE_CDN=1
+EASYMDE_USE_CDN=1
 ```
 
 Notes
 
 - Les clés OpenAI ne doivent jamais être codées en dur; la clé utilisateur peut être fournie côté profil pour débiter ses crédits.
 - Des barèmes par défaut existent pour la tarification (gpt‑5, gpt‑5‑mini, gpt‑5‑nano) et peuvent être configurés dans la table `OpenAIModel`.
+- Les tests n’exigent pas de clé OpenAI ni de Redis; la configuration de test (`TestConfig`) utilise SQLite en mémoire, désactive CSRF et règle le rate‑limit en mémoire.
 
 ## Démarrage
 
@@ -86,11 +94,15 @@ Lancer le worker Celery local
 celery -A src.celery_app:celery worker --loglevel=info
 ```
 
+Astuce: au premier démarrage non‑test, une table SQLite est initialisée et un utilisateur admin est créé si absent (`username: admin`, mot de passe par défaut défini à la création; changez‑le immédiatement dans l’UI).
+
 ### ASGI (recommandé en production)
 
 ```
 gunicorn -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:8000 src.asgi:app
 ```
+
+Remarque: le flux SSE des tâches (`GET /tasks/events/<task_id>`) est servi côté ASGI pour éviter de bloquer des workers WSGI. Désactivez le buffering côté reverse‑proxy pour ce chemin.
 
 ### Docker Compose
 
@@ -98,7 +110,7 @@ gunicorn -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:8000 src.asgi:app
 docker-compose up --build
 ```
 
-Services: app (ASGI), redis, celery. Volumes: DB, uploads, pdfs, txt (persistants).
+Services: `app` (ASGI), `redis`, `celery`. Volumes: DB, uploads, pdfs, txt (persistants).
 
 ## Tests
 
@@ -112,9 +124,9 @@ pytest -q
 
 - Endpoints unifiés
   - Statut JSON: `GET /tasks/status/<task_id>` → `{task_id,state,message,meta,result}`
-  - Streaming SSE: `GET /tasks/events/<task_id>` → événements `open|progress|ping|done` (servi par l’ASGI hub)
+  - Streaming SSE: `GET /tasks/events/<task_id>` → événements `open|progress|ping|done` (servi par le hub ASGI)
   - Page de suivi: `GET /tasks/track/<task_id>` (template générique)
-  - Annulation: `POST /tasks/cancel/<task_id>`
+  - Annulation: `POST /tasks/cancel/<task_id>` (révocation + drapeau Redis coopératif)
 - Orchestrateur Frontend (`static/js/task_orchestrator.js`): `EDxoTasks.startCeleryTask(url, fetchOpts, {title,startMessage,streamEl,summaryEl,onDone})`
 - Les tâches publient `meta.stream_chunk`/`stream_buffer` et `meta.reasoning_summary` pour afficher le flux et le résumé de raisonnement en temps réel.
 
@@ -179,9 +191,10 @@ curl -H "X-API-Token: VOTRE_TOKEN" https://example.com/api/programmes
 
 Métadonnées: `GET /.well-known/oauth-authorization-server`, inscription client: `POST /register`, autorisation: `GET /authorize`, échange: `POST /token`. Présenter `Authorization: Bearer <token>`.
 
-### Serveur MCP
+## MCP
 
-Le serveur FastMCP (`src/mcp_server/server.py`) expose les mêmes données via Model Context Protocol; accepte les jetons personnels ou OAuth.
+- Serveur MCP FastMCP: `src/mcp_server/server.py` expose ressources/outils (recherche et accès aux documents/objets du domaine) et est monté sous `/sse` via l’app ASGI.
+- Authentification: accepte jetons personnels et OAuth; si FastMCP n’est pas disponible, un fallback inerte est chargé (les imports/routages restent valides).
 
 ## Licence
 
