@@ -247,8 +247,7 @@ def run_improve_field(dummy, plan_id, user_id):
 )
 @pytest.mark.parametrize("use_event", [False, True])
 def test_task_status_updates(app, setup_fn, runner, openai_path, final_text, output_delta, use_event):
-    if runner is run_improve_field and use_event:
-        pytest.skip("legacy event naming not supported for field generation")
+    # Removed skip: enforce both legacy and event naming in all cases
     plan_id, user_id = setup_fn(app)
     dummy = DummySelf()
     events = [
@@ -273,4 +272,3 @@ def test_task_status_updates(app, setup_fn, runner, openai_path, final_text, out
         u.get("reasoning_summary") == "raisonnement" and u.get("message") == "Résumé du raisonnement"
         for u in dummy.updates
     )
-

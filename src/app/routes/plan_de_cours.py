@@ -1393,10 +1393,14 @@ def review_plan_de_cours_generation(plan_id):
     old_fields = {}
     old_cal = []
     old_evals = []
+    old_media = []
+    old_dispo = []
     new_fields = {}
     new_cal = []
     new_evals = []
     reasoning_summary = None
+    new_media = []
+    new_dispo_list = []
     try:
         if task_id:
             res = AsyncResult(task_id, app=celery)
@@ -1408,6 +1412,10 @@ def review_plan_de_cours_generation(plan_id):
             new_cal = data.get('calendriers') or []
             new_evals = data.get('evaluations') or []
             reasoning_summary = data.get('reasoning_summary')
+            old_media = data.get('old_mediagraphies') or []
+            old_dispo = data.get('old_disponibilites') or []
+            new_media = data.get('mediagraphies') or []
+            new_dispo_list = data.get('disponibilites') or []
     except Exception:
         current_app.logger.exception('Erreur lecture résultat tâche plan de cours')
 
@@ -1450,6 +1458,17 @@ def review_plan_de_cours_generation(plan_id):
             } for e in plan.evaluations
         ]
 
+    if plan and not new_media:
+        new_media = [
+            {'reference_bibliographique': m.reference_bibliographique} for m in plan.mediagraphies
+        ]
+    if plan and not new_dispo_list:
+        new_dispo_list = [
+            {'jour_semaine': d.jour_semaine, 'plage_horaire': d.plage_horaire, 'lieu': d.lieu} for d in plan.disponibilites
+        ]
+
+    # Helpers to normalize lists for diff presentation
+
     # Construire un dict de "changes" compatible avec le template du plan-cadre
     changes = {}
     labels = {
@@ -1461,6 +1480,10 @@ def review_plan_de_cours_generation(plan_id):
         'evaluation_expression_francais': 'Évaluation expression français',
         'seuil_reussite': 'Seuil de réussite',
         'materiel': 'Matériel',
+        'nom_enseignant': 'Nom enseignant',
+        'telephone_enseignant': 'Téléphone enseignant',
+        'courriel_enseignant': 'Courriel enseignant',
+        'bureau_enseignant': 'Bureau enseignant',
     }
     def _norm(v):
         return (v or '').strip() if isinstance(v, str) else v
@@ -1498,6 +1521,18 @@ def review_plan_de_cours_generation(plan_id):
             out.append({'texte': titre, 'description': "\n".join(desc_parts) if desc_parts else ''})
         return out
 
+    def _media_to_list(items):
+        return [{'texte': (m.get('reference_bibliographique') or ''), 'description': ''} for m in (items or [])]
+
+    def _dispo_to_list(items):
+        out = []
+        for d in items or []:
+            t = " - ".join(filter(None, [d.get('jour_semaine') or '', d.get('plage_horaire') or '']))
+            if d.get('lieu'):
+                t = f"{t} @ {d.get('lieu')}" if t else d.get('lieu')
+            out.append({'texte': t, 'description': ''})
+        return out
+
     if (old_cal or new_cal) and (_cal_to_list(old_cal) != _cal_to_list(new_cal)):
         changes['calendrier'] = {
             'before': _cal_to_list(old_cal),
@@ -1510,6 +1545,19 @@ def review_plan_de_cours_generation(plan_id):
             'before': _eval_to_list(old_evals),
             'after': _eval_to_list(new_evals),
             'label': 'Évaluations'
+        }
+
+    if (old_media or new_media) and (_media_to_list(old_media) != _media_to_list(new_media)):
+        changes['mediagraphies'] = {
+            'before': _media_to_list(old_media),
+            'after': _media_to_list(new_media),
+            'label': 'Médiagraphie'
+        }
+    if (old_dispo or new_dispo_list) and (_dispo_to_list(old_dispo) != _dispo_to_list(new_dispo_list)):
+        changes['disponibilites'] = {
+            'before': _dispo_to_list(old_dispo),
+            'after': _dispo_to_list(new_dispo_list),
+            'label': 'Disponibilités'
         }
 
     # Utiliser le template de revue plan-cadre, en mode confirmation simple (confirm/revert)
@@ -1604,7 +1652,103 @@ def apply_review_plan_de_cours(plan_id):
 
         db.session.commit()
 
-    # En cas de confirmation: rien à faire car la génération a déjà écrit en BD
+    if action == 'confirm':
+        if not task_id:
+            return jsonify({'success': False, 'message': 'task_id requis pour confirmer.'}), 400
+        try:
+            res = AsyncResult(task_id, app=celery)
+            payload = res.result or {}
+        except Exception:
+            current_app.logger.exception('Erreur lecture résultat tâche pour confirm plan de cours')
+            return jsonify({'success': False, 'message': "Impossible de lire le résultat de la tâche."}), 500
+
+        # Appliquer les nouveaux champs à partir du payload
+        new_fields = (payload.get('fields') or {})
+        field_names = [
+            'presentation_du_cours',
+            'objectif_terminal_du_cours',
+            'organisation_et_methodes',
+            'accomodement',
+            'evaluation_formative_apprentissages',
+            'evaluation_expression_francais',
+            'seuil_reussite',
+            'materiel',
+            'nom_enseignant',
+            'telephone_enseignant',
+            'courriel_enseignant',
+            'bureau_enseignant',
+        ]
+        for fn in field_names:
+            if fn in new_fields:
+                setattr(plan, fn, new_fields.get(fn))
+
+        # Remplacer calendrier/médiagraphie/disponibilités/évaluations depuis payload
+        # Calendrier
+        for c in plan.calendriers:
+            db.session.delete(c)
+        for entry in (payload.get('calendriers') or []):
+            db.session.add(PlanDeCoursCalendrier(
+                plan_de_cours_id=plan.id,
+                semaine=entry.get('semaine'),
+                sujet=entry.get('sujet'),
+                activites=entry.get('activites'),
+                travaux_hors_classe=entry.get('travaux_hors_classe'),
+                evaluations=entry.get('evaluations'),
+            ))
+
+        # Médiagraphies
+        for m in plan.mediagraphies:
+            db.session.delete(m)
+        for itm in (payload.get('mediagraphies') or []):
+            ref = (itm.get('reference_bibliographique') if isinstance(itm, dict) else None)
+            if ref:
+                db.session.add(PlanDeCoursMediagraphie(
+                    plan_de_cours_id=plan.id,
+                    reference_bibliographique=ref,
+                ))
+
+        # Disponibilités
+        for d in plan.disponibilites:
+            db.session.delete(d)
+        for disp in (payload.get('disponibilites') or []):
+            if any(disp.get(k) for k in ('jour_semaine', 'plage_horaire', 'lieu')):
+                db.session.add(PlanDeCoursDisponibiliteEnseignant(
+                    plan_de_cours_id=plan.id,
+                    jour_semaine=disp.get('jour_semaine'),
+                    plage_horaire=disp.get('plage_horaire'),
+                    lieu=disp.get('lieu'),
+                ))
+
+        # Évaluations
+        for e in plan.evaluations:
+            db.session.delete(e)
+        plan_cadre = plan.cours.plan_cadre if plan and plan.cours else None
+        try:
+            from src.app.tasks.import_plan_de_cours import _resolve_capacity_id  # reuse resolver
+        except Exception:
+            _resolve_capacity_id = None
+        for ev in (payload.get('evaluations') or []):
+            if not any(ev.get(k) for k in ('titre', 'description', 'semaine', 'capacites')):
+                continue
+            row = PlanDeCoursEvaluations(
+                plan_de_cours_id=plan.id,
+                titre_evaluation=ev.get('titre'),
+                description=ev.get('description'),
+                semaine=ev.get('semaine'),
+            )
+            db.session.add(row)
+            db.session.flush()
+            for cap in (ev.get('capacites') or []):
+                cap_id = None
+                if _resolve_capacity_id is not None:
+                    cap_id = _resolve_capacity_id(cap.get('capacite'), plan_cadre)
+                db.session.add(PlanDeCoursEvaluationsCapacites(
+                    evaluation_id=row.id,
+                    capacite_id=cap_id,
+                    ponderation=cap.get('ponderation'),
+                ))
+        db.session.commit()
+
     redirect_url = f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/"
     return jsonify({'success': True, 'redirect_url': redirect_url})
 

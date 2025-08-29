@@ -1,4 +1,5 @@
 import logging
+import json
 import re
 import unicodedata
 from typing import Dict, Optional
@@ -306,6 +307,52 @@ def _extract_first_parsed(response):
     return None
 
 
+def _extract_json_like_text(response) -> Optional[dict]:
+    """Conservative fallback: try to parse JSON from text fields.
+
+    Handles shapes like:
+    - response.output_text (string JSON)
+    - response.text (string JSON)
+    - response.output[*].content[*].text (string JSON)
+    Returns a dict if JSON-decoding succeeds, else None.
+    """
+    # 1) Direct fields commonly present in SDKs
+    for attr in ("output_text", "text"):
+        try:
+            txt = getattr(response, attr, None)
+            if isinstance(txt, str) and txt.strip():
+                return json.loads(txt)
+        except Exception:
+            pass
+
+    # 2) Scan output -> content -> text
+    try:
+        outputs = getattr(response, 'output', None) or []
+        if isinstance(outputs, dict):
+            outputs = [outputs]
+        for item in outputs:
+            contents = []
+            if isinstance(item, dict):
+                contents = item.get('content') or []
+            else:
+                contents = getattr(item, 'content', None) or []
+            if isinstance(contents, dict):
+                contents = [contents]
+            for c in contents:
+                try:
+                    if isinstance(c, dict):
+                        txt = c.get('text')
+                    else:
+                        txt = getattr(c, 'text', None)
+                    if isinstance(txt, str) and txt.strip():
+                        return json.loads(txt)
+                except Exception:
+                    continue
+    except Exception:
+        pass
+    return None
+
+
 @shared_task(bind=True, name='src.app.tasks.import_plan_de_cours.import_plan_de_cours_task')
 def import_plan_de_cours_task(
     self,
@@ -429,33 +476,12 @@ def import_plan_de_cours_task(
 
         # Construire l'input pour Responses API
         if file_id:
-            compact_instruction = (
-                f"Contexte: cours {getattr(cours, 'code', '') or ''} - {getattr(cours, 'nom', '') or ''}, session {plan.session}.\n"
-                "Le plan de cours est joint en PDF.\n"
-                "Extrait les informations et renvoie un objet strictement conforme au schéma suivant (tous les champs sont facultatifs, mais remplis si l'information est présente):\n"
-                "- presentation_du_cours (string)\n"
-                "- objectif_terminal_du_cours (string)\n"
-                "- organisation_et_methodes (string)\n"
-                "- accomodement (string)\n"
-                "- evaluation_formative_apprentissages (string)\n"
-                "- evaluation_expression_francais (string)\n"
-                "- materiel (string)\n"
-                "- seuil_reussite (string)\n"
-                "- calendriers (array d'objets: semaine:int, sujet:string, activites:string, travaux_hors_classe:string, evaluations:string)\n"
-                "- nom_enseignant, telephone_enseignant, courriel_enseignant, bureau_enseignant (strings)\n"
-                "- disponibilites (array d'objets: jour_semaine, plage_horaire, lieu)\n"
-                "- mediagraphies (array d'objets: reference_bibliographique)\n"
-                "- evaluations (array d'objets: titre_evaluation, description, semaine:int, capacites: array d'objets {capacite:string, ponderation:string})\n"
-                "Repère les semaines et évaluations dans le document (mots-clés: 'Semaine', 'Évaluation', 'pondération', 'travaux', 'projet', etc.).\n"
-                "Si une donnée n'est pas trouvée, omets-la ou rends-la vide (listes vides)."
-            )
             input_blocks = []
             if sys_prompt:
                 input_blocks.append({"role": "system", "content": [{"type": "input_text", "text": sys_prompt}]})
             input_blocks.append({
                 "role": "user",
                 "content": [
-                    {"type": "input_text", "text": compact_instruction},
                     {"type": "input_file", "file_id": file_id},
                 ]
             })
@@ -582,6 +608,8 @@ def import_plan_de_cours_task(
             parsed = None
         if parsed is None:
             parsed = _extract_first_parsed(response)
+        if parsed is None:
+            parsed = _extract_json_like_text(response)
         # Si dict -> valider via Pydantic pour logique en aval
         try:
             if isinstance(parsed, dict):
@@ -591,93 +619,77 @@ def import_plan_de_cours_task(
         if parsed is None:
             return {"status": "error", "message": "Aucune donnée renvoyée par le modèle."}
 
-        # Update fields
-        plan.presentation_du_cours = parsed.presentation_du_cours or plan.presentation_du_cours
-        plan.objectif_terminal_du_cours = parsed.objectif_terminal_du_cours or plan.objectif_terminal_du_cours
-        plan.organisation_et_methodes = parsed.organisation_et_methodes or plan.organisation_et_methodes
-        plan.accomodement = parsed.accomodement or plan.accomodement
-        plan.evaluation_formative_apprentissages = parsed.evaluation_formative_apprentissages or plan.evaluation_formative_apprentissages
-        plan.evaluation_expression_francais = parsed.evaluation_expression_francais or plan.evaluation_expression_francais
-        plan.materiel = parsed.materiel or plan.materiel
+        # Snapshot des anciennes données pour l'écran de validation
+        old_fields = {
+            'presentation_du_cours': plan.presentation_du_cours,
+            'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
+            'organisation_et_methodes': plan.organisation_et_methodes,
+            'accomodement': plan.accomodement,
+            'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
+            'evaluation_expression_francais': plan.evaluation_expression_francais,
+            'seuil_reussite': getattr(plan, 'seuil_reussite', None),
+            'materiel': plan.materiel,
+            'nom_enseignant': plan.nom_enseignant,
+            'telephone_enseignant': plan.telephone_enseignant,
+            'courriel_enseignant': plan.courriel_enseignant,
+            'bureau_enseignant': plan.bureau_enseignant,
+        }
+        old_calendriers = [
+            {
+                'semaine': c.semaine,
+                'sujet': c.sujet,
+                'activites': c.activites,
+                'travaux_hors_classe': c.travaux_hors_classe,
+                'evaluations': c.evaluations,
+            } for c in plan.calendriers
+        ]
+        old_mediagraphies = [
+            {
+                'reference_bibliographique': m.reference_bibliographique,
+            } for m in plan.mediagraphies
+        ]
+        old_disponibilites = [
+            {
+                'jour_semaine': d.jour_semaine,
+                'plage_horaire': d.plage_horaire,
+                'lieu': d.lieu,
+            } for d in plan.disponibilites
+        ]
+        old_evaluations = [
+            {
+                'id': e.id,
+                'titre': e.titre_evaluation,
+                'description': e.description,
+                'semaine': e.semaine,
+                'capacites': [
+                    {
+                        'capacite_id': c.capacite_id,
+                        'capacite': (c.capacite.capacite if c.capacite else None),
+                        'ponderation': c.ponderation,
+                    } for c in e.capacites
+                ]
+            } for e in plan.evaluations
+        ]
 
-        plan.nom_enseignant = parsed.nom_enseignant or plan.nom_enseignant
-        plan.telephone_enseignant = parsed.telephone_enseignant or plan.telephone_enseignant
-        plan.courriel_enseignant = parsed.courriel_enseignant or plan.courriel_enseignant
-        plan.bureau_enseignant = parsed.bureau_enseignant or plan.bureau_enseignant
-
-        # Calendriers (replace)
-        for cal in plan.calendriers:
-            db.session.delete(cal)
-        for entry in parsed.calendriers or []:
-            db.session.add(PlanDeCoursCalendrier(
-                plan_de_cours_id=plan.id,
-                semaine=entry.semaine,
-                sujet=entry.sujet,
-                activites=entry.activites,
-                travaux_hors_classe=entry.travaux_hors_classe,
-                evaluations=entry.evaluations,
-            ))
-
-        # Médiagraphies (replace)
-        for m in plan.mediagraphies:
-            db.session.delete(m)
-        for itm in parsed.mediagraphies or []:
-            if itm.reference_bibliographique:
-                db.session.add(PlanDeCoursMediagraphie(
-                    plan_de_cours_id=plan.id,
-                    reference_bibliographique=itm.reference_bibliographique,
-                ))
-
-        # Disponibilités (replace)
-        for d in plan.disponibilites:
-            db.session.delete(d)
-        for disp in parsed.disponibilites or []:
-            if disp.jour_semaine or disp.plage_horaire or disp.lieu:
-                db.session.add(PlanDeCoursDisponibiliteEnseignant(
-                    plan_de_cours_id=plan.id,
-                    jour_semaine=disp.jour_semaine,
-                    plage_horaire=disp.plage_horaire,
-                    lieu=disp.lieu,
-                ))
-
-        # Évaluations (replace)
-        for ev in plan.evaluations:
-            db.session.delete(ev)
-        for ev in parsed.evaluations or []:
-            if not (ev.titre_evaluation or ev.description or ev.semaine or ev.capacites):
-                continue
-            new_ev = PlanDeCoursEvaluations(
-                plan_de_cours_id=plan.id,
-                titre_evaluation=ev.titre_evaluation,
-                description=ev.description,
-                semaine=ev.semaine,
-            )
-            for cap_in in ev.capacites or []:
-                cap_id = _resolve_capacity_id(cap_in.capacite, plan_cadre)
-                # N'ajoute le lien que si on a une résolution valide
-                if cap_id is not None:
-                    new_ev.capacites.append(PlanDeCoursEvaluationsCapacites(
-                        capacite_id=cap_id,
-                        ponderation=cap_in.ponderation,
-                    ))
-            db.session.add(new_ev)
-
-        db.session.commit()
+        # Ne pas écraser la BD ici: on prépare seulement un aperçu (preview).
+        # Les écritures ne seront appliquées que lors de la confirmation côté UI.
+        db.session.commit()  # conserver uniquement la décrémentation des crédits utilisateur
 
         # Build payload for UI
         payload = {
             'fields': {
-                'presentation_du_cours': plan.presentation_du_cours,
-                'objectif_terminal_du_cours': plan.objectif_terminal_du_cours,
-                'organisation_et_methodes': plan.organisation_et_methodes,
-                'accomodement': plan.accomodement,
-                'evaluation_formative_apprentissages': plan.evaluation_formative_apprentissages,
-                'evaluation_expression_francais': plan.evaluation_expression_francais,
-                'materiel': plan.materiel,
-                'nom_enseignant': plan.nom_enseignant,
-                'telephone_enseignant': plan.telephone_enseignant,
-                'courriel_enseignant': plan.courriel_enseignant,
-                'bureau_enseignant': plan.bureau_enseignant,
+                'presentation_du_cours': parsed.presentation_du_cours,
+                'objectif_terminal_du_cours': parsed.objectif_terminal_du_cours,
+                'organisation_et_methodes': parsed.organisation_et_methodes,
+                'accomodement': parsed.accomodement,
+                'evaluation_formative_apprentissages': parsed.evaluation_formative_apprentissages,
+                'evaluation_expression_francais': parsed.evaluation_expression_francais,
+                'seuil_reussite': getattr(plan, 'seuil_reussite', None),
+                'materiel': parsed.materiel,
+                'nom_enseignant': parsed.nom_enseignant,
+                'telephone_enseignant': parsed.telephone_enseignant,
+                'courriel_enseignant': parsed.courriel_enseignant,
+                'bureau_enseignant': parsed.bureau_enseignant,
             },
             'calendriers': [
                 {
@@ -686,31 +698,30 @@ def import_plan_de_cours_task(
                     'activites': c.activites,
                     'travaux_hors_classe': c.travaux_hors_classe,
                     'evaluations': c.evaluations,
-                } for c in plan.calendriers
+                } for c in (parsed.calendriers or [])
             ],
             'mediagraphies': [
-                {'reference_bibliographique': m.reference_bibliographique} for m in plan.mediagraphies
+                {'reference_bibliographique': m.reference_bibliographique} for m in (parsed.mediagraphies or [])
             ],
             'disponibilites': [
                 {
                     'jour_semaine': d.jour_semaine,
                     'plage_horaire': d.plage_horaire,
                     'lieu': d.lieu,
-                } for d in plan.disponibilites
+                } for d in (parsed.disponibilites or [])
             ],
             'evaluations': [
                 {
-                    'titre_evaluation': e.titre_evaluation,
+                    'titre': e.titre_evaluation,
                     'description': e.description,
                     'semaine': e.semaine,
                     'capacites': [
                         {
-                            'capacite_id': c.capacite_id,
-                            'capacite_nom': (c.capacite.capacite if c.capacite else None),
-                            'ponderation': c.ponderation,
-                        } for c in e.capacites
+                            'capacite': cap.capacite,
+                            'ponderation': cap.ponderation,
+                        } for cap in (e.capacites or [])
                     ]
-                } for e in plan.evaluations
+                } for e in (parsed.evaluations or [])
             ],
             # Identifiants utiles pour la notification + lien direct
             'cours_id': plan.cours_id,
@@ -721,6 +732,13 @@ def import_plan_de_cours_task(
             # Lien direct possible vers l'affichage du plan de cours (fallback)
             'plan_de_cours_url': f"/cours/{plan.cours_id}/plan_de_cours/{plan.session}/",
         }
+
+        # Injecter les anciennes données pour l'écran de validation/annulation
+        payload['old_fields'] = old_fields
+        payload['old_calendriers'] = old_calendriers
+        payload['old_evaluations'] = old_evaluations
+        payload['old_mediagraphies'] = old_mediagraphies
+        payload['old_disponibilites'] = old_disponibilites
 
         # Include local PDF path for diagnostics if available
         if pdf_local_path:

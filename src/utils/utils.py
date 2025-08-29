@@ -833,7 +833,7 @@ def get_plan_cadre_data(cours_id, db_path='programme.db'):
         subquery = db.session.query(ElementCompetenceParCours.element_competence_id).filter_by(cours_id=cours_id).subquery()
         # 9. Cours développant une même compétence avant, pendant et après
         # Suppression de l'ancien champ session, on renvoie None
-        from sqlalchemy import literal
+        from sqlalchemy import literal, select
         cours_developpant = db.session.query(
             Cours.id.label('cours_id'),
             Cours.nom.label('cours_nom'),
@@ -841,7 +841,11 @@ def get_plan_cadre_data(cours_id, db_path='programme.db'):
             literal(None).label('session')
         ) \
         .join(ElementCompetenceParCours, Cours.id == ElementCompetenceParCours.cours_id) \
-        .filter(ElementCompetenceParCours.element_competence_id.in_(subquery)) \
+        .filter(
+            ElementCompetenceParCours.element_competence_id.in_(
+                select(subquery.c.element_competence_id)
+            )
+        ) \
         .filter(Cours.id != cours_id) \
         .distinct().all()
 
