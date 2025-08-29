@@ -1,2 +1,6 @@
 # version.py
-__version__ = "2025.04.01"
+"""Application version information.
+
+This file is automatically updated by the release workflow.
+"""
+__version__ = "2025.08.0"
