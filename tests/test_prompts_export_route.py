@@ -33,7 +33,9 @@ def test_export_prompts_includes_section_and_ocr(app, client):
         ocr.extraction_prompt = "OCR Prompt"
         db.session.commit()
 
-    resp = client.get("/settings/prompts/export")
+    # GET should be disallowed
+    assert client.get("/settings/prompts/export").status_code == 405
+    resp = client.post("/settings/prompts/export")
     assert resp.status_code == 200
     assert "attachment; filename=prompts.md" in resp.headers.get("Content-Disposition", "")
     content = resp.data.decode()
@@ -49,3 +51,12 @@ def test_settings_sidebar_has_export_link(app, client):
     resp = client.get("/settings/parametres")
     assert resp.status_code == 200
     assert export_url.encode() in resp.data
+
+
+def test_export_prompts_requires_csrf(app, client):
+    app.config["WTF_CSRF_ENABLED"] = True
+    admin_id = create_admin(app)
+    login(client, admin_id)
+    # Missing token should trigger CSRF failure
+    resp = client.post("/settings/prompts/export")
+    assert resp.status_code == 400

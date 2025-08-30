@@ -5,8 +5,6 @@ import io
 from flask import Blueprint, request, render_template, flash, redirect, url_for, jsonify
 from flask import send_from_directory, current_app, send_file
 from flask_login import login_required, current_user
-from flask_wtf.csrf import CSRFProtect
-
 from ..forms import (
     DeletePlanForm,
     UploadForm,
@@ -22,8 +20,6 @@ from ..forms import (
 )
 from .evaluation import AISixLevelGridResponse
 from ...utils.decorator import role_required, roles_required, ensure_profile_completed
-
-csrf = CSRFProtect()
 
 
 # Importez bien sûr db et User depuis vos modèles
@@ -702,7 +698,7 @@ def download_canevas(filename):
     return send_from_directory(upload_folder, filename, as_attachment=True)
 
 
-@settings_bp.route('/prompts/export', methods=['GET'])
+@settings_bp.route('/prompts/export', methods=['POST'])
 @roles_required('admin')
 @login_required
 @ensure_profile_completed
