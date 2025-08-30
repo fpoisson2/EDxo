@@ -23,9 +23,10 @@ def docx_to_schema_page():
 @ensure_profile_completed
 def docx_to_schema_start():
     form = DocxToSchemaForm()
-    if 'file' not in request.files:
-        return jsonify({'error': 'Aucun fichier fourni.'}), 400
-    file = request.files['file']
+    if not form.validate_on_submit():
+        return jsonify({'error': 'Invalid submission.', 'details': form.errors}), 400
+
+    file = form.file.data
     if not file or not file.filename.lower().endswith('.docx'):
         return jsonify({'error': 'Veuillez fournir un fichier .docx.'}), 400
 
@@ -36,9 +37,9 @@ def docx_to_schema_start():
     stored_path = os.path.join(upload_dir, stored_name)
     file.save(stored_path)
 
-    model = request.form.get('model', 'gpt-4o-mini')
-    reasoning = request.form.get('reasoning_level', 'medium')
-    verbosity = request.form.get('verbosity', 'medium')
+    model = form.model.data or 'gpt-4o-mini'
+    reasoning = form.reasoning_level.data or 'medium'
+    verbosity = form.verbosity.data or 'medium'
 
     task = docx_to_json_schema_task.delay(stored_path, model, reasoning, verbosity, current_user.id)
     return jsonify({'task_id': task.id}), 202
