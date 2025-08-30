@@ -7,3 +7,4 @@ from .import_plan_de_cours import import_plan_de_cours_task
 from .import_plan_cadre import import_plan_cadre_preview_task
 from .generation_logigramme import generate_programme_logigramme_task
 from .generation_grille import generate_programme_grille_task
+from .docx_to_schema import docx_to_json_schema_task
