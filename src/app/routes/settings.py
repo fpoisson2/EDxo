@@ -1,8 +1,9 @@
 import json
 import os
+import io
 
 from flask import Blueprint, request, render_template, flash, redirect, url_for, jsonify
-from flask import send_from_directory, current_app
+from flask import send_from_directory, current_app, send_file
 from flask_login import login_required, current_user
 from flask_wtf.csrf import CSRFProtect
 
@@ -701,9 +702,63 @@ def download_canevas(filename):
     return send_from_directory(upload_folder, filename, as_attachment=True)
 
 
+@settings_bp.route('/prompts/export', methods=['GET'])
+@roles_required('admin')
+@login_required
+@ensure_profile_completed
+def export_prompts():
+    """Export all configured prompts into a single markdown file."""
+    sections = SectionAISettings.query.all()
+    ocr = OcrPromptSettings.get_current()
+    plan_cadre_import = PlanCadreImportPromptSettings.get_current()
+    grille = GrillePromptSettings.get_current()
+    analyse = AnalysePlanCoursPrompt.query.first()
+    plan_de_cours_prompts = PlanDeCoursPromptSettings.query.all()
+
+    lines = ["# Export des prompts\n"]
+
+    if sections:
+        lines.append("## Sections IA\n")
+        for sa in sections:
+            lines.append(f"### {sa.section}\n\n```")
+            lines.append((sa.system_prompt or "") + "\n")
+            lines.append("```\n")
+
+    if ocr and (ocr.extraction_prompt or '').strip():
+        lines.append("## OCR Extraction\n\n```")
+        lines.append(ocr.extraction_prompt + "\n")
+        lines.append("```\n")
+
+    if plan_cadre_import and (plan_cadre_import.prompt_template or '').strip():
+        lines.append("## Import Plan-cadre\n\n```")
+        lines.append(plan_cadre_import.prompt_template + "\n")
+        lines.append("```\n")
+
+    if grille and (grille.prompt_template or '').strip():
+        lines.append("## Grille d'évaluation\n\n```")
+        lines.append(grille.prompt_template + "\n")
+        lines.append("```\n")
+
+    if analyse and (analyse.prompt_template or '').strip():
+        lines.append("## Analyse Plan de cours\n\n```")
+        lines.append(analyse.prompt_template + "\n")
+        lines.append("```\n")
+
+    if plan_de_cours_prompts:
+        lines.append("## Plan de cours\n")
+        for p in plan_de_cours_prompts:
+            lines.append(f"### {p.field_name}\n\n```")
+            lines.append((p.prompt_template or "") + "\n")
+            lines.append("```\n")
+
+    content = "".join(lines)
+    buffer = io.BytesIO(content.encode('utf-8'))
+    return send_file(buffer, as_attachment=True, download_name='prompts.md', mimetype='text/markdown')
+
+
 @settings_bp.route('/plan-de-cours/prompts', methods=['GET'])
 @roles_required('admin')
-@login_required 
+@login_required
 @ensure_profile_completed
 def plan_de_cours_prompt_settings():
     """Page de gestion des prompts Plan de cours.
