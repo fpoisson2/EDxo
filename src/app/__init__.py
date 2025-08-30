@@ -43,6 +43,7 @@ from .routes import courses_management  # noqa: F401
 from .routes import competences_management  # noqa: F401
 from .routes import fil_conducteur_routes  # noqa: F401
 from .routes import settings_departements  # noqa: F401
+from .routes import admin_docx_schema  # noqa: F401
 from .routes.chat import chat
 # Import blueprints
 from .routes.cours import cours_bp
@@ -58,7 +59,6 @@ from .routes.grilles import grille_bp
 from .routes.api import api_bp
 from .routes.oauth import oauth_bp
 from .routes.tasks import tasks_bp
-from ..mcp_server.server import init_app as init_mcp_server
 
 # Import version
 from ..config.version import __version__
@@ -246,6 +246,7 @@ def create_app(testing=False):
     init_change_tracking(db)
 
     # Bind Flask app to MCP server for OAuth verification
+    from ..mcp_server.server import init_app as init_mcp_server
     init_mcp_server(app)
 
     if not testing:
