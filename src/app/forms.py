@@ -73,6 +73,22 @@ class FileUploadForm(FlaskForm):
     file = FileField("Importez un fichier PDF", validators=[DataRequired()])
     submit = SubmitField("Envoyer")
 
+
+class DocxToSchemaForm(FlaskForm):
+    file = FileField("Fichier DOCX", validators=[DataRequired()])
+    model = StringField("Modèle", default="gpt-4o-mini", validators=[DataRequired()])
+    reasoning_level = SelectField(
+        "Niveau de raisonnement",
+        choices=[('low', 'Faible'), ('medium', 'Moyen'), ('high', 'Élevé')],
+        default='medium'
+    )
+    verbosity = SelectField(
+        "Verbosité",
+        choices=[('low', 'Faible'), ('medium', 'Moyenne'), ('high', 'Élevée')],
+        default='medium'
+    )
+    submit = SubmitField("Convertir")
+
 class AssociateDevisForm(FlaskForm):
     base_filename = HiddenField(validators=[DataRequired()])
     programme_id = SelectField("Choisir le Programme Cible :", coerce=int, validators=[DataRequired()])
