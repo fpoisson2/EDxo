@@ -36,6 +36,7 @@ def test_docx_to_schema_page_contains_start_endpoint(app, client):
     assert b'normalizePlanSchema' in data
     assert b'n.parts' in data
     assert b'n.fields' in data
+    assert b"n.type === 'object' && n.properties" in data
     assert b'd3.zoom' in data
     assert b'd3.tree' in data
     assert b'onDone' in data
@@ -88,6 +89,7 @@ def test_docx_to_schema_validate_endpoint(app, client):
     # Preview page uses accordion structure and tree graph
     assert b'id="schemaAccordion"' in resp.data
     assert b'd3.tree' in resp.data
+    assert b"n.type === 'object' && n.properties" in resp.data
 
 
 def test_navbar_has_docx_schema_link(app, client):

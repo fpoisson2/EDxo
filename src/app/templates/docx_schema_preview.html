@@ -96,6 +96,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return out;
       }
 
+      if (n.type === 'object' && n.properties) {
+        const props = {};
+        for (const [k, v] of Object.entries(n.properties)) {
+          props[k] = walk(v);
+        }
+        const out = { type: 'object', properties: props };
+        if (n.title) out.title = n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+
       if (n.type === 'array') {
         let items = n.items;
         if (Array.isArray(items)) {
