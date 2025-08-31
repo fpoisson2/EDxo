@@ -301,67 +301,42 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function renderSchemaGraph(schema) {
     if (!schemaGraphEl) return;
-    const {nodes, links} = buildGraph(schema);
+    const treeData = buildTree(schema);
     const width = schemaGraphEl.clientWidth || 600;
     const height = 400;
+    const root = d3.hierarchy(treeData);
+    const treeLayout = d3.tree().size([height, width - 160]);
+    const rootNodes = treeLayout(root);
     const svg = d3.select(schemaGraphEl).html('').append('svg')
       .attr('viewBox', `0 0 ${width} ${height}`);
-    const g = svg.append('g');
+    const g = svg.append('g').attr('transform', 'translate(80,0)');
     const zoom = d3.zoom().scaleExtent([0.5,5]).on('zoom', (event) => g.attr('transform', event.transform));
     svg.call(zoom);
-    const simulation = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(links).id(d => d.id).distance(50))
-      .force('charge', d3.forceManyBody().strength(-200))
-      .force('center', d3.forceCenter(width / 2, height / 2));
-
-    const link = g.append('g').selectAll('line')
-      .data(links).enter().append('line').attr('stroke', '#999');
-
-    const node = g.append('g').selectAll('g')
-      .data(nodes).enter().append('g').call(d3.drag()
-        .on('start', dragstarted)
-        .on('drag', dragged)
-        .on('end', dragended));
-    node.append('circle').attr('r', 20).attr('fill', '#69b3a2');
-    node.append('text').text(d => d.name).attr('text-anchor', 'middle').attr('dy', 4);
-
-    simulation.on('tick', () => {
-      link
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
-      node.attr('transform', d => `translate(${d.x},${d.y})`);
-    });
-
-    function dragstarted(event, d) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      d.fx = d.x; d.fy = d.y;
-    }
-    function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
-    function dragended(event, d) {
-      if (!event.active) simulation.alphaTarget(0);
-      d.fx = null; d.fy = null;
-    }
+    g.selectAll('path')
+      .data(rootNodes.links())
+      .enter().append('path')
+      .attr('fill', 'none')
+      .attr('stroke', '#999')
+      .attr('d', d3.linkHorizontal().x(d => d.y).y(d => d.x));
+    const node = g.selectAll('g')
+      .data(rootNodes.descendants())
+      .enter().append('g')
+      .attr('transform', d => `translate(${d.y},${d.x})`);
+    node.append('circle').attr('r', 4).attr('fill', '#69b3a2');
+    node.append('text').text(d => d.data.name).attr('x', 8).attr('dy', 3);
   }
 
-  function buildGraph(schema) {
-    const nodes = []; const links = [];
-    let id = 0;
-    function walk(node, name, parentId=null) {
-      const currentId = id++;
-      nodes.push({id: currentId, name});
-      if (parentId !== null) links.push({source: parentId, target: currentId});
+  function buildTree(schema) {
+    function walk(node, name) {
+      const out = { name };
       if (node.type === 'object' && node.properties) {
-        for (const [k, v] of Object.entries(node.properties)) {
-          walk(v, k, currentId);
-        }
+        out.children = Object.entries(node.properties).map(([k,v]) => walk(v, k));
       } else if (node.type === 'array' && node.items) {
-        walk(node.items, name + '[]', currentId);
+        out.children = [walk(node.items, name + '[]')];
       }
+      return out;
     }
-    walk(schema, schema.title || 'root');
-    return {nodes, links};
+    return walk(schema, schema.title || 'root');
   }
 
 });

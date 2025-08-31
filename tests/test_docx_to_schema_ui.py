@@ -37,6 +37,7 @@ def test_docx_to_schema_page_contains_start_endpoint(app, client):
     assert b'n.parts' in data
     assert b'n.fields' in data
     assert b'd3.zoom' in data
+    assert b'd3.tree' in data
     assert b'onDone' in data
 
 
@@ -84,8 +85,9 @@ def test_docx_to_schema_validate_endpoint(app, client):
     resp = client.get(f'/docx_schema/{page_id}')
     assert resp.status_code == 200
     assert b'Sample' in resp.data
-    # Preview page uses accordion structure
+    # Preview page uses accordion structure and tree graph
     assert b'id="schemaAccordion"' in resp.data
+    assert b'd3.tree' in resp.data
 
 
 def test_navbar_has_docx_schema_link(app, client):
