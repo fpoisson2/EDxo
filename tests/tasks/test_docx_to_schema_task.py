@@ -103,3 +103,7 @@ def test_schema_of_schema_allows_nested_objects():
     props = SCHEMA_OF_SCHEMA["schema"]["properties"]
     assert props["json_schema"]["additionalProperties"] is True
     assert props["example"]["additionalProperties"] is True
+
+
+def test_schema_of_schema_not_strict():
+    assert SCHEMA_OF_SCHEMA["strict"] is False

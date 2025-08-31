@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # Schema describing the expected structure of the model's output
 SCHEMA_OF_SCHEMA = {
     "name": "SchemaProposal",
-    "strict": True,
+    "strict": False,
     "schema": {
         "type": "object",
         "required": ["title", "description", "json_schema", "example"],
