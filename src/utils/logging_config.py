@@ -37,12 +37,33 @@ class ContextFormatter(logging.Formatter):
                 return f"{base} | context={context}"
         return base
 
+
+class SafeStreamHandler(logging.StreamHandler):
+    """StreamHandler that ignores writes after the stream is closed.
+
+    During test teardown the standard streams may be closed before
+    application atexit handlers run.  Emitting log records in that
+    scenario normally raises ``ValueError: I/O operation on closed file``.
+    This handler quietly drops such records so that logging during
+    shutdown does not generate noisy tracebacks.
+    """
+
+    def emit(self, record: logging.LogRecord) -> None:  # pragma: no cover - tiny wrapper
+        stream = getattr(self, "stream", None)
+        if not stream or getattr(stream, "closed", False):
+            return
+        try:
+            super().emit(record)
+        except Exception:
+            # Ignore logging errors at interpreter shutdown
+            pass
+
 def setup_logging(level: int = logging.INFO) -> None:
     """Configure root logger with a standard format once."""
     global _LOGGING_CONFIGURED
     if _LOGGING_CONFIGURED:
         return
-    handler = logging.StreamHandler()
+    handler = SafeStreamHandler()
     handler.setFormatter(ContextFormatter(LOG_FORMAT))
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
