@@ -1,5 +1,5 @@
 from werkzeug.security import generate_password_hash
-from src.app.models import User, db
+from src.app.models import User, db, OpenAIModel
 
 
 def _login(client, user_id):
@@ -18,6 +18,7 @@ def test_docx_to_schema_page_contains_start_endpoint(app, client):
             openai_key='sk'
         )
         db.session.add(admin)
+        db.session.add(OpenAIModel(name='gpt-4o-mini', input_price=0.0, output_price=0.0))
         db.session.commit()
         admin_id = admin.id
     _login(client, admin_id)
@@ -42,6 +43,7 @@ def test_parametres_page_has_docx_to_schema_link(app, client):
             openai_key='sk'
         )
         db.session.add(admin)
+        db.session.add(OpenAIModel(name='gpt-4o-mini', input_price=0.0, output_price=0.0))
         db.session.commit()
         admin_id = admin.id
     _login(client, admin_id)

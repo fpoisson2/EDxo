@@ -78,7 +78,7 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
     pdf_path = _docx_to_pdf(docx_path)
     client = openai_cls(api_key=user.openai_key)
     with open(pdf_path, "rb") as fh:
-        uploaded = client.files.create(file=fh, purpose="responses")
+        uploaded = client.files.create(file=fh, purpose="user_data")
 
     def push(meta):
         try:
@@ -86,29 +86,35 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         except Exception:
             logger.exception("Failed to update task state")
 
+    input_blocks = [
+        {
+            "role": "system",
+            "content": [{"type": "input_text", "text": "Propose un JSON Schema minimal, cohérent et normalisé pour représenter ce document."}],
+        },
+        {
+            "role": "user",
+            "content": [{"type": "input_file", "file_id": uploaded.id}],
+        },
+    ]
+    text_params = {
+        "format": {"type": "json_schema", **SCHEMA_OF_SCHEMA},
+        "verbosity": verbosity,
+    }
+    reasoning_params = {"effort": reasoning}
+
     with client.responses.stream(
         model=model,
-        reasoning={"effort": reasoning},
-        verbosity=verbosity,
-        input=[
-            {
-                "role": "system",
-                "content": "Propose un JSON Schema minimal, cohérent et normalisé pour représenter ce document."
-            },
-            {
-                "role": "user",
-                "content": [
-                    {"type": "input_file", "file_id": uploaded.id}
-                ]
-            }
-        ],
-        response_format={"type": "json_schema", "json_schema": SCHEMA_OF_SCHEMA}
+        input=input_blocks,
+        text=text_params,
+        reasoning=reasoning_params,
+        tools=[],
+        store=False,
     ) as stream:
         for event in stream:
             etype = getattr(event, "type", "")
             if etype == "response.output_text.delta":
                 push({"stream_chunk": event.delta})
-            elif etype == "response.reasoning_summary.delta":
+            elif etype in {"response.reasoning_summary.delta", "response.reasoning_summary_text.delta"}:
                 push({"reasoning_summary": event.delta})
         final = stream.get_final_response()
 
@@ -118,9 +124,11 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         "completion_tokens": getattr(usage, "output_tokens", 0),
         "model": model,
     }
-    result_text = getattr(final, "output_text", "")
-    try:
-        parsed = json.loads(result_text)
-    except Exception:
-        parsed = result_text
+    parsed = getattr(final, "output_parsed", None)
+    if parsed is None:
+        result_text = getattr(final, "output_text", "")
+        try:
+            parsed = json.loads(result_text)
+        except Exception:
+            parsed = result_text
     return {"status": "success", "result": parsed, "api_usage": api_usage}

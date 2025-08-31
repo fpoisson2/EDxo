@@ -3,7 +3,7 @@ from types import SimpleNamespace
 
 from docx import Document
 
-from src.app.models import User, db
+from src.app.models import User, db, OpenAIModel
 
 
 class DummySelf:
@@ -48,7 +48,7 @@ class FakeResponses:
     def stream(self, **kwargs):
         events = [
             DummyEvent('response.output_text.delta', 'hello'),
-            DummyEvent('response.reasoning_summary.delta', 'because')
+            DummyEvent('response.reasoning_summary_text.delta', 'because')
         ]
         return FakeStream(events)
 
@@ -82,6 +82,7 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch):
     with app.app_context():
         user = User(username='u', password='pw', role='user', openai_key='sk', credits=1.0, is_first_connexion=False)
         db.session.add(user)
+        db.session.add(OpenAIModel(name='gpt-4o-mini', input_price=0.0, output_price=0.0))
         db.session.commit()
         uid = user.id
 

@@ -2,7 +2,7 @@ from io import BytesIO
 from bs4 import BeautifulSoup
 from werkzeug.security import generate_password_hash
 
-from src.app.models import User, db
+from src.app.models import User, db, OpenAIModel
 import src.app.tasks.docx_to_schema as docx_tasks
 
 
@@ -22,6 +22,7 @@ def test_docx_to_schema_requires_csrf(app, client, monkeypatch):
             openai_key='sk'
         )
         db.session.add(admin)
+        db.session.add(OpenAIModel(name='gpt-4o-mini', input_price=0.0, output_price=0.0))
         db.session.commit()
         admin_id = admin.id
 
