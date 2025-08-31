@@ -74,8 +74,7 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         {
             "role": "system",
             "content": [{"type": "input_text", "text": (
-                "Propose un JSON Schema minimal, cohérent et normalisé pour représenter ce document. "
-                "Retourne uniquement un objet JSON avec les champs title, description, json_schema et example."
+                "Propose un JSON Schema complet, cohérent et normalisé pour représenter ce document. "
             )}],
         },
         {
