@@ -73,6 +73,31 @@ class FileUploadForm(FlaskForm):
     file = FileField("Importez un fichier PDF", validators=[DataRequired()])
     submit = SubmitField("Envoyer")
 
+
+class DocxToSchemaForm(FlaskForm):
+    file = FileField("Fichier DOCX", validators=[DataRequired()])
+    model = SelectField("Modèle", choices=[], validators=[DataRequired()])
+    reasoning_level = SelectField(
+        "Niveau de raisonnement",
+        choices=[('low', 'Faible'), ('medium', 'Moyen'), ('high', 'Élevé')],
+        default='medium'
+    )
+    verbosity = SelectField(
+        "Verbosité",
+        choices=[('low', 'Faible'), ('medium', 'Moyenne'), ('high', 'Élevée')],
+        default='medium'
+    )
+    submit = SubmitField("Convertir")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        models = get_all_models()
+        if models:
+            choices = [(m.name, m.name) for m in models]
+        else:
+            choices = [(name, name) for name in DEFAULT_PRICING.keys()]
+        self.model.choices = choices
+
 class AssociateDevisForm(FlaskForm):
     base_filename = HiddenField(validators=[DataRequired()])
     programme_id = SelectField("Choisir le Programme Cible :", coerce=int, validators=[DataRequired()])

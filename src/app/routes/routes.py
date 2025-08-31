@@ -80,6 +80,13 @@ def version():
     from ...config.version import __version__
     return jsonify({'version': __version__})
 
+
+@main.route('/parametres')
+@login_required
+@ensure_profile_completed
+def parametres_alias():
+    return render_template('parametres.html')
+
 # Public: Health endpoint
 @main.route('/health')
 @public_route

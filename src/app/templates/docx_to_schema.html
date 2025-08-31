@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Conversion DOCX en JSON Schema{% endblock %}
+
+{% block content %}
+<h1>Conversion DOCX en JSON Schema</h1>
+<form id="docxSchemaForm" method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+        {{ form.file.label(class_='form-label') }}
+        {{ form.file(class_='form-control') }}
+    </div>
+    <div class="mb-3">
+        {{ form.model.label(class_='form-label') }}
+        {{ form.model(class_='form-select') }}
+    </div>
+    <div class="mb-3">
+        {{ form.reasoning_level.label(class_='form-label') }}
+        {{ form.reasoning_level(class_='form-select') }}
+    </div>
+    <div class="mb-3">
+        {{ form.verbosity.label(class_='form-label') }}
+        {{ form.verbosity(class_='form-select') }}
+    </div>
+    <div>{{ form.submit(class_='btn btn-primary') }}</div>
+</form>
+
+<div id="schemaResultContainer" class="mt-4 d-none">
+    <h2>Schéma généré</h2>
+    <div class="accordion" id="schemaAccordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="schemaHeadingTitle">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#schemaCollapseTitle" aria-expanded="true" aria-controls="schemaCollapseTitle">
+                    Titre
+                </button>
+            </h2>
+            <div id="schemaCollapseTitle" class="accordion-collapse collapse show" aria-labelledby="schemaHeadingTitle" data-bs-parent="#schemaAccordion">
+                <div class="accordion-body" id="schemaResultTitle"></div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="schemaHeadingDesc">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schemaCollapseDesc" aria-expanded="false" aria-controls="schemaCollapseDesc">
+                    Description
+                </button>
+            </h2>
+            <div id="schemaCollapseDesc" class="accordion-collapse collapse" aria-labelledby="schemaHeadingDesc" data-bs-parent="#schemaAccordion">
+                <div class="accordion-body" id="schemaResultDescription"></div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="schemaHeadingSchema">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schemaCollapseSchema" aria-expanded="false" aria-controls="schemaCollapseSchema">
+                    JSON Schema
+                </button>
+            </h2>
+            <div id="schemaCollapseSchema" class="accordion-collapse collapse" aria-labelledby="schemaHeadingSchema" data-bs-parent="#schemaAccordion">
+                <div class="accordion-body">
+                    <div id="schemaResultTree" class="mb-2"></div>
+                    <pre class="mb-0" id="schemaResultJson"></pre>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="schemaHeadingExample">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schemaCollapseExample" aria-expanded="false" aria-controls="schemaCollapseExample">
+                    Exemple
+                </button>
+            </h2>
+            <div id="schemaCollapseExample" class="accordion-collapse collapse" aria-labelledby="schemaHeadingExample" data-bs-parent="#schemaAccordion">
+                <div class="accordion-body"><pre class="mb-0" id="schemaResultExample"></pre></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('docxSchemaForm');
+  const container = document.getElementById('schemaResultContainer');
+  const titleEl = document.getElementById('schemaResultTitle');
+  const descEl = document.getElementById('schemaResultDescription');
+  const schemaEl = document.getElementById('schemaResultJson');
+  const schemaTreeEl = document.getElementById('schemaResultTree');
+  const exampleEl = document.getElementById('schemaResultExample');
+
+  function renderJsonTree(schema, parent, name='root') {
+    if (!schema || !parent) return;
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    const type = schema.type || 'any';
+    summary.textContent = `${name} (${type})`;
+    details.appendChild(summary);
+    if (schema.type === 'object' && schema.properties) {
+      for (const [key, val] of Object.entries(schema.properties)) {
+        renderJsonTree(val, details, key);
+      }
+    } else if (schema.type === 'array' && schema.items) {
+      renderJsonTree(schema.items, details, 'items');
+    }
+    parent.appendChild(details);
+  }
+
+  function renderResult(res) {
+    if (!res) return;
+    try { titleEl.textContent = res.title || ''; } catch {}
+    try { descEl.textContent = res.description || ''; } catch {}
+    try {
+      schemaEl.textContent = JSON.stringify(res.json_schema, null, 2);
+      schemaTreeEl.innerHTML = '';
+      renderJsonTree(res.json_schema, schemaTreeEl, 'root');
+    } catch {}
+    try { exampleEl.textContent = JSON.stringify(res.example, null, 2); } catch {}
+    try { container.classList.remove('d-none'); } catch {}
+  }
+  if (!form) return;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    try {
+      const startUrl = '/docx_to_schema/start';
+      await window.EDxoTasks.startCeleryTask(startUrl, {
+        method: 'POST',
+        body: fd,
+        headers: { 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf },
+        credentials: 'same-origin'
+      }, {
+        title: 'Conversion DOCX',
+        startMessage: 'Conversion en cours…',
+        openModal: true,
+        onDone: (payload, state) => {
+          try {
+            if (state === 'SUCCESS' && payload && payload.result) {
+              renderResult(payload.result);
+            }
+          } catch (err) {
+            console.error('Erreur rendu schéma', err);
+          }
+        }
+      });
+    } catch (err) {
+      console.error('Erreur conversion DOCX', err);
+      try { addNotification('Erreur conversion', 'error'); } catch (_) {}
+    }
+  });
+});
+</script>
+{% endblock %}
