@@ -13,23 +13,6 @@ from .import_plan_cadre import _create_pdf_from_text
 
 logger = logging.getLogger(__name__)
 
-# Schema describing the expected structure of the model's output
-SCHEMA_OF_SCHEMA = {
-    "name": "SchemaProposal",
-    "strict": False,
-    "schema": {
-        "type": "object",
-        "required": ["title", "description", "json_schema", "example"],
-        "properties": {
-            "title": {"type": "string"},
-            "description": {"type": "string"},
-            "json_schema": {"type": "object", "additionalProperties": True},
-            "example": {"type": "object", "additionalProperties": True}
-        },
-        "additionalProperties": False
-    }
-}
-
 def _docx_to_pdf(docx_path: str) -> str:
     """Convert a DOCX file to PDF using LibreOffice.
 
@@ -90,17 +73,17 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
     input_blocks = [
         {
             "role": "system",
-            "content": [{"type": "input_text", "text": "Propose un JSON Schema minimal, cohérent et normalisé pour représenter ce document."}],
+            "content": [{"type": "input_text", "text": (
+                "Propose un JSON Schema minimal, cohérent et normalisé pour représenter ce document. "
+                "Retourne uniquement un objet JSON avec les champs title, description, json_schema et example."
+            )}],
         },
         {
             "role": "user",
             "content": [{"type": "input_file", "file_id": uploaded.id}],
         },
     ]
-    text_params = {
-        "format": {"type": "json_schema", **SCHEMA_OF_SCHEMA},
-        "verbosity": verbosity,
-    }
+    text_params = {"verbosity": verbosity}
     reasoning_params = {"effort": reasoning}
 
     with client.responses.stream(
@@ -125,11 +108,9 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         "completion_tokens": getattr(usage, "output_tokens", 0),
         "model": model,
     }
-    parsed = getattr(final, "output_parsed", None)
-    if parsed is None:
-        result_text = getattr(final, "output_text", "")
-        try:
-            parsed = json.loads(result_text)
-        except Exception:
-            parsed = result_text
+    result_text = getattr(final, "output_text", "")
+    try:
+        parsed = json.loads(result_text)
+    except Exception:
+        parsed = result_text
     return {"status": "success", "result": parsed, "api_usage": api_usage}
