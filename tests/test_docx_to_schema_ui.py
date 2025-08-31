@@ -32,6 +32,7 @@ def test_docx_to_schema_page_contains_start_endpoint(app, client):
     assert b'id="schemaResultGraph"' in data
     assert b'renderSchemaAccordion' in data
     assert b'renderSchemaGraph' in data
+    assert b'normalizePlanSchema' in data
     assert b'd3.zoom' in data
     assert b'onDone' in data
 

@@ -80,6 +80,39 @@ document.addEventListener('DOMContentLoaded', () => {
   const schemaTreeEl = document.getElementById('schemaResultTree');
   const schemaGraphEl = document.getElementById('schemaResultGraph');
 
+  function normalizePlanSchema(node) {
+    if (!node || typeof node !== 'object') return node;
+    if (node.type || node.properties || node.items) return node;
+    function walk(n) {
+      if (!n || typeof n !== 'object') return {};
+      if (n.element) {
+        const items = walk(n.element);
+        const out = { type: 'array', items };
+        if (n.titre || n.title) out.title = n.titre || n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+      if (n.champs) {
+        const props = {};
+        for (const champ of n.champs) {
+          const key = champ.titre || champ.title || 'champ';
+          props[key] = walk(champ);
+          if (champ.description) props[key].description = champ.description;
+        }
+        const out = { type: 'object', properties: props };
+        if (n.titre || n.title) out.title = n.titre || n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+      const out = {};
+      if (n.titre || n.title) out.title = n.titre || n.title;
+      if (n.description) out.description = n.description;
+      if (n.type) out.type = n.type;
+      return out;
+    }
+    return walk(node);
+  }
+
   function renderSchemaAccordion(schema, parent, name='root', path='root', required=[]) {
     if (!schema || !parent) return;
     const type = schema.type || (schema.$ref ? schema.$ref : 'any');
@@ -115,6 +148,12 @@ document.addEventListener('DOMContentLoaded', () => {
     item.appendChild(collapse);
     parent.appendChild(item);
 
+    if (schema.description) {
+      const desc = document.createElement('div');
+      desc.textContent = schema.description;
+      body.appendChild(desc);
+    }
+
     if (schema.type === 'object' && schema.properties) {
       const inner = document.createElement('div');
       inner.className = 'accordion';
@@ -139,13 +178,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderResult(res) {
     if (!res) return;
-    try { titleEl.textContent = res.title || ''; } catch {}
-    try { descEl.textContent = res.description || ''; } catch {}
+    const schemaObj = normalizePlanSchema(res.json_schema || res);
+    try { titleEl.textContent = res.title || res.titre || schemaObj.title || ''; } catch {}
+    try { descEl.textContent = res.description || schemaObj.description || ''; } catch {}
     try {
       schemaEl.textContent = JSON.stringify(res, null, 2);
       schemaTreeEl.innerHTML = '';
-      renderSchemaAccordion(res, schemaTreeEl, 'root', 'root');
-      renderSchemaGraph(res);
+      renderSchemaAccordion(schemaObj, schemaTreeEl, 'root', 'root');
+      renderSchemaGraph(schemaObj);
     } catch {}
     try { container.classList.remove('d-none'); } catch {}
   }
