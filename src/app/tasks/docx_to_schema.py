@@ -118,6 +118,7 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
 
     streamed_text = ""
     reasoning_summary_text = ""
+    seq = 0
     try:
         with client.responses.stream(**request_kwargs) as stream:
             for event in stream:
@@ -126,7 +127,13 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
                     delta = getattr(event, "delta", "") or getattr(event, "text", "") or ""
                     if delta:
                         streamed_text += delta
-                        push({"stream_chunk": delta, "stream_buffer": streamed_text})
+                        seq += 1
+                        push({
+                            "message": "Analyse en cours...",
+                            "stream_chunk": delta,
+                            "stream_buffer": streamed_text,
+                            "seq": seq,
+                        })
                 elif etype.endswith("response.reasoning_summary_text.delta") or etype == "response.reasoning_summary_text.delta":
                     rs_delta = getattr(event, "delta", "") or ""
                     if rs_delta:
@@ -142,6 +149,12 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         reasoning_summary_text = _extract_reasoning_summary_from_response(final)
         if reasoning_summary_text:
             push({"message": "Résumé du raisonnement", "reasoning_summary": reasoning_summary_text})
+        try:
+            text = getattr(final, "output_text", "") or ""
+            if text:
+                push({"message": "Analyse terminée", "stream_buffer": text})
+        except Exception:
+            pass
 
     usage = getattr(final, "usage", None)
     api_usage = {

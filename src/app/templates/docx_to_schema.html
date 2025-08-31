@@ -57,13 +57,18 @@
                 <div class="accordion-body">
                     <div id="schemaResultTree" class="mb-2 accordion"></div>
                     <div id="schemaResultGraph" class="mb-2"></div>
-                    <pre class="mb-0" id="schemaResultJson"></pre>
+                    <pre class="mb-0 small" id="schemaResultJson"></pre>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<style>
+  #schemaResultJson, #schemaResultTree { overflow-x:auto; }
+  #schemaResultGraph svg { width:100%; height:400px; }
+  @media (max-width:576px){ #schemaResultGraph svg { height:300px; } }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -178,17 +183,22 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderSchemaGraph(schema) {
     if (!schemaGraphEl) return;
     const {nodes, links} = buildGraph(schema);
-    const width = 600, height = 400;
-    const svg = d3.select(schemaGraphEl).html('').append('svg').attr('width', width).attr('height', height);
+    const width = schemaGraphEl.clientWidth || 600;
+    const height = 400;
+    const svg = d3.select(schemaGraphEl).html('').append('svg')
+      .attr('viewBox', `0 0 ${width} ${height}`);
+    const g = svg.append('g');
+    const zoom = d3.zoom().scaleExtent([0.5,5]).on('zoom', (event) => g.attr('transform', event.transform));
+    svg.call(zoom);
     const simulation = d3.forceSimulation(nodes)
       .force('link', d3.forceLink(links).id(d => d.id).distance(50))
       .force('charge', d3.forceManyBody().strength(-200))
       .force('center', d3.forceCenter(width / 2, height / 2));
 
-    const link = svg.append('g').selectAll('line')
+    const link = g.append('g').selectAll('line')
       .data(links).enter().append('line').attr('stroke', '#999');
 
-    const node = svg.append('g').selectAll('g')
+    const node = g.append('g').selectAll('g')
       .data(nodes).enter().append('g').call(d3.drag()
         .on('start', dragstarted)
         .on('drag', dragged)

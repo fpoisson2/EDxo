@@ -103,6 +103,7 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch, caplog):
     result = orig(dummy, str(docx_path), 'gpt-4o-mini', 'medium', 'medium', uid, FakeOpenAI)
     assert result['status'] == 'success'
     assert any('stream_chunk' in u for u in dummy.updates)
+    assert any(u.get('stream_chunk') and u.get('message') == 'Analyse en cours...' for u in dummy.updates)
     assert any(u.get('message') == 'Résumé du raisonnement' for u in dummy.updates)
     assert result['result']['title'] == 'T'
     called_kwargs = FakeOpenAI.last_instance.responses.kwargs
