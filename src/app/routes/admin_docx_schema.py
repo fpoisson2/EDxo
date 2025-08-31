@@ -43,3 +43,21 @@ def docx_to_schema_start():
 
     task = docx_to_json_schema_task.delay(stored_path, model, reasoning, verbosity, current_user.id)
     return jsonify({'task_id': task.id}), 202
+
+
+@main.route('/docx_to_schema/validate', methods=['POST'])
+@role_required('admin')
+@ensure_profile_completed
+def docx_to_schema_validate():
+    """Endpoint appelé lorsque l'utilisateur valide le schéma généré."""
+    # Pour l'instant on accepte simplement la requête et répondons avec un succès.
+    # L'intégration future pourra créer les objets nécessaires à partir du schéma.
+    return jsonify({'success': True})
+
+
+@main.route('/docx_schema_preview', methods=['GET'])
+@role_required('admin')
+@ensure_profile_completed
+def docx_schema_preview():
+    """Page d'aperçu du schéma validé, accessible via le menu principal."""
+    return render_template('docx_schema_preview.html')

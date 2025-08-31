@@ -921,3 +921,12 @@ def prompt_settings():
             flash(f'Erreur lors de la mise à jour : {str(e)}', 'error')
 
     return render_template('settings/prompt_settings.html', settings=settings, ai_form=ai_form)
+
+
+@settings_bp.route('/docx_to_schema_prompts', methods=['GET'])
+@login_required
+@role_required('admin')
+@ensure_profile_completed
+def docx_to_schema_prompt_settings():
+    """Page de configuration des prompts système pour la conversion DOCX→JSON."""
+    return render_template('settings/docx_to_schema_prompts.html')

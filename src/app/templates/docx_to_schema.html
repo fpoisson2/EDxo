@@ -58,9 +58,12 @@
                     <div id="schemaResultTree" class="mb-2 accordion"></div>
                     <div id="schemaResultGraph" class="mb-2"></div>
                     <pre class="mb-0 small" id="schemaResultJson"></pre>
-                </div>
-            </div>
-        </div>
+    </div>
+  </div>
+  <div class="mt-3 text-end">
+    <button id="schemaValidateBtn" class="btn btn-success" type="button">Valider</button>
+  </div>
+</div>
     </div>
 </div>
 
@@ -270,6 +273,27 @@ document.addEventListener('DOMContentLoaded', () => {
       try { addNotification('Erreur conversion', 'error'); } catch (_) {}
     }
   });
+
+  const validateBtn = document.getElementById('schemaValidateBtn');
+  if (validateBtn) {
+    validateBtn.addEventListener('click', async () => {
+      try {
+        const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        await fetch('/docx_to_schema/validate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrf,
+            'X-CSRF-Token': csrf,
+          },
+          body: JSON.stringify({}),
+        });
+        window.location.href = '/docx_schema_preview';
+      } catch (err) {
+        console.error('Erreur validation schéma', err);
+      }
+    });
+  }
   function renderSchemaGraph(schema) {
     if (!schemaGraphEl) return;
     const {nodes, links} = buildGraph(schema);

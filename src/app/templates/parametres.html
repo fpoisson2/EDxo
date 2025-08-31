@@ -71,6 +71,9 @@
                       <a href="{{ url_for('settings.plan_de_cours_prompt_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.plan_de_cours_prompt_settings' %}active{% endif %}">
                         <i class="bi bi-file-earmark-text me-2"></i>Plans de cours
                       </a>
+                      <a href="{{ url_for('settings.docx_to_schema_prompt_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.docx_to_schema_prompt_settings' %}active{% endif %}">
+                        <i class="bi bi-filetype-doc me-2"></i>DOCX → JSON
+                      </a>
                       <a href="{{ url_for('settings.configure_analyse_prompt') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.configure_analyse_prompt' %}active{% endif %}">
                         <i class="bi bi-chat-text me-2"></i>Analyse des plans de cours
                       </a>
