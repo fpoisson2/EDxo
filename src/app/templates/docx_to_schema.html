@@ -56,23 +56,15 @@
             <div id="schemaCollapseSchema" class="accordion-collapse collapse" aria-labelledby="schemaHeadingSchema" data-bs-parent="#schemaAccordion">
                 <div class="accordion-body">
                     <div id="schemaResultTree" class="mb-2 accordion"></div>
+                    <div id="schemaResultGraph" class="mb-2"></div>
                     <pre class="mb-0" id="schemaResultJson"></pre>
                 </div>
-            </div>
-        </div>
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="schemaHeadingExample">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schemaCollapseExample" aria-expanded="false" aria-controls="schemaCollapseExample">
-                    Exemple
-                </button>
-            </h2>
-            <div id="schemaCollapseExample" class="accordion-collapse collapse" aria-labelledby="schemaHeadingExample" data-bs-parent="#schemaAccordion">
-                <div class="accordion-body"><pre class="mb-0" id="schemaResultExample"></pre></div>
             </div>
         </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('docxSchemaForm');
@@ -81,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const descEl = document.getElementById('schemaResultDescription');
   const schemaEl = document.getElementById('schemaResultJson');
   const schemaTreeEl = document.getElementById('schemaResultTree');
-  const exampleEl = document.getElementById('schemaResultExample');
+  const schemaGraphEl = document.getElementById('schemaResultGraph');
 
   function renderSchemaAccordion(schema, parent, name='root', path='root', required=[]) {
     if (!schema || !parent) return;
@@ -145,11 +137,11 @@ document.addEventListener('DOMContentLoaded', () => {
     try { titleEl.textContent = res.title || ''; } catch {}
     try { descEl.textContent = res.description || ''; } catch {}
     try {
-      schemaEl.textContent = JSON.stringify(res.json_schema, null, 2);
+      schemaEl.textContent = JSON.stringify(res, null, 2);
       schemaTreeEl.innerHTML = '';
-      renderSchemaAccordion(res.json_schema, schemaTreeEl, 'root', 'root');
+      renderSchemaAccordion(res, schemaTreeEl, 'root', 'root');
+      renderSchemaGraph(res);
     } catch {}
-    try { exampleEl.textContent = JSON.stringify(res.example, null, 2); } catch {}
     try { container.classList.remove('d-none'); } catch {}
   }
   if (!form) return;
@@ -183,6 +175,66 @@ document.addEventListener('DOMContentLoaded', () => {
       try { addNotification('Erreur conversion', 'error'); } catch (_) {}
     }
   });
+  function renderSchemaGraph(schema) {
+    if (!schemaGraphEl) return;
+    const {nodes, links} = buildGraph(schema);
+    const width = 600, height = 400;
+    const svg = d3.select(schemaGraphEl).html('').append('svg').attr('width', width).attr('height', height);
+    const simulation = d3.forceSimulation(nodes)
+      .force('link', d3.forceLink(links).id(d => d.id).distance(50))
+      .force('charge', d3.forceManyBody().strength(-200))
+      .force('center', d3.forceCenter(width / 2, height / 2));
+
+    const link = svg.append('g').selectAll('line')
+      .data(links).enter().append('line').attr('stroke', '#999');
+
+    const node = svg.append('g').selectAll('g')
+      .data(nodes).enter().append('g').call(d3.drag()
+        .on('start', dragstarted)
+        .on('drag', dragged)
+        .on('end', dragended));
+    node.append('circle').attr('r', 20).attr('fill', '#69b3a2');
+    node.append('text').text(d => d.name).attr('text-anchor', 'middle').attr('dy', 4);
+
+    simulation.on('tick', () => {
+      link
+        .attr('x1', d => d.source.x)
+        .attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x)
+        .attr('y2', d => d.target.y);
+      node.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+
+    function dragstarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x; d.fy = d.y;
+    }
+    function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+    function dragended(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null; d.fy = null;
+    }
+  }
+
+  function buildGraph(schema) {
+    const nodes = []; const links = [];
+    let id = 0;
+    function walk(node, name, parentId=null) {
+      const currentId = id++;
+      nodes.push({id: currentId, name});
+      if (parentId !== null) links.push({source: parentId, target: currentId});
+      if (node.type === 'object' && node.properties) {
+        for (const [k, v] of Object.entries(node.properties)) {
+          walk(v, k, currentId);
+        }
+      } else if (node.type === 'array' && node.items) {
+        walk(node.items, name + '[]', currentId);
+      }
+    }
+    walk(schema, schema.title || 'root');
+    return {nodes, links};
+  }
+
 });
 </script>
 {% endblock %}

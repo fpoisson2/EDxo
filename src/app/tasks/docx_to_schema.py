@@ -14,19 +14,6 @@ from .import_plan_cadre import _create_pdf_from_text
 logger = logging.getLogger(__name__)
 
 
-SCHEMA_PROPOSAL_DESCRIPTOR = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": ["title", "description", "json_schema", "example"],
-    "properties": {
-        "title": {"type": "string"},
-        "description": {"type": "string"},
-        "json_schema": {"type": "object"},
-        "example": {"type": "object"},
-    },
-}
-
-
 def _extract_reasoning_summary_from_response(response):
     """Extract reasoning summary text from a Responses API result."""
     summary = ""
@@ -110,8 +97,9 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         {
             "role": "system",
             "content": [{"type": "input_text", "text": (
-                "Propose un JSON Schema minimal, cohérent et normalisé pour représenter ce document. "
-                "Retourne uniquement un objet JSON avec les champs title, description, json_schema et example."
+                "Propose un schéma JSON simple, cohérent et normalisé pour représenter parfaitement ce document. "
+                "Retourne un schéma avec les champs titre du champ et description du champ. "
+                "Le schéma devrait parfaitement représenter la séquence et la hiérarchie des sections. Ne retourne que le schéma."
             )}],
         },
         {
@@ -122,15 +110,7 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
     request_kwargs = dict(
         model=model,
         input=input_blocks,
-        text={
-            "format": {
-                "type": "json_schema",
-                "name": "SchemaProposal",
-                "strict": False,
-                "schema": SCHEMA_PROPOSAL_DESCRIPTOR,
-            },
-            "verbosity": verbosity,
-        },
+        text={"verbosity": verbosity},
         reasoning={"effort": reasoning, "summary": "auto"},
         tools=[],
         store=True,

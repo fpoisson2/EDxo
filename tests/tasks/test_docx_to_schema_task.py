@@ -55,8 +55,8 @@ class FakeResponses:
             output_parsed = {
                 'title': 'T',
                 'description': 'D',
-                'json_schema': {'type': 'object'},
-                'example': {}
+                'type': 'object',
+                'properties': {}
             }
             usage = Usage()
         return FakeStream(events, Resp())
@@ -107,5 +107,6 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch, caplog):
     assert result['result']['title'] == 'T'
     called_kwargs = FakeOpenAI.last_instance.responses.kwargs
     assert called_kwargs['store'] is True
-    assert called_kwargs['text']['format']['type'] == 'json_schema'
+    assert 'format' not in called_kwargs.get('text', {})
+    assert 'Propose un schéma JSON simple' in called_kwargs['input'][0]['content'][0]['text']
     assert 'OpenAI usage' in caplog.text

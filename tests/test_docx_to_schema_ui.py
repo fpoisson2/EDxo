@@ -29,7 +29,9 @@ def test_docx_to_schema_page_contains_start_endpoint(app, client):
     assert b'id="schemaResultContainer"' in data
     assert b'id="schemaAccordion"' in data
     assert b'id="schemaResultTree"' in data
+    assert b'id="schemaResultGraph"' in data
     assert b'renderSchemaAccordion' in data
+    assert b'renderSchemaGraph' in data
     assert b'onDone' in data
 
 
