@@ -55,7 +55,7 @@
             </h2>
             <div id="schemaCollapseSchema" class="accordion-collapse collapse" aria-labelledby="schemaHeadingSchema" data-bs-parent="#schemaAccordion">
                 <div class="accordion-body">
-                    <div id="schemaResultTree" class="mb-2"></div>
+                    <div id="schemaResultTree" class="mb-2 accordion"></div>
                     <pre class="mb-0" id="schemaResultJson"></pre>
                 </div>
             </div>
@@ -83,21 +83,61 @@ document.addEventListener('DOMContentLoaded', () => {
   const schemaTreeEl = document.getElementById('schemaResultTree');
   const exampleEl = document.getElementById('schemaResultExample');
 
-  function renderJsonTree(schema, parent, name='root') {
+  function renderSchemaAccordion(schema, parent, name='root', path='root', required=[]) {
     if (!schema || !parent) return;
-    const details = document.createElement('details');
-    const summary = document.createElement('summary');
-    const type = schema.type || 'any';
-    summary.textContent = `${name} (${type})`;
-    details.appendChild(summary);
+    const type = schema.type || (schema.$ref ? schema.$ref : 'any');
+    const isRequired = required.includes(name);
+    const itemId = `acc-${path.replace(/[^a-z0-9]/gi, '-')}`;
+
+    const item = document.createElement('div');
+    item.className = 'accordion-item';
+
+    const header = document.createElement('h2');
+    header.className = 'accordion-header';
+    header.id = `${itemId}-head`;
+
+    const button = document.createElement('button');
+    button.className = 'accordion-button collapsed';
+    button.type = 'button';
+    button.setAttribute('data-bs-toggle', 'collapse');
+    button.setAttribute('data-bs-target', `#${itemId}-body`);
+    button.setAttribute('aria-expanded', 'false');
+    button.setAttribute('aria-controls', `${itemId}-body`);
+    button.textContent = `${name}${isRequired ? '*' : ''} (${type})`;
+    header.appendChild(button);
+    item.appendChild(header);
+
+    const collapse = document.createElement('div');
+    collapse.id = `${itemId}-body`;
+    collapse.className = 'accordion-collapse collapse';
+    collapse.setAttribute('aria-labelledby', `${itemId}-head`);
+
+    const body = document.createElement('div');
+    body.className = 'accordion-body';
+    collapse.appendChild(body);
+    item.appendChild(collapse);
+    parent.appendChild(item);
+
     if (schema.type === 'object' && schema.properties) {
+      const inner = document.createElement('div');
+      inner.className = 'accordion';
+      inner.id = `${itemId}-inner`;
+      body.appendChild(inner);
+      const childRequired = schema.required || [];
       for (const [key, val] of Object.entries(schema.properties)) {
-        renderJsonTree(val, details, key);
+        renderSchemaAccordion(val, inner, key, `${path}.${key}`, childRequired);
       }
     } else if (schema.type === 'array' && schema.items) {
-      renderJsonTree(schema.items, details, 'items');
+      renderSchemaAccordion(schema.items, body, 'items', `${path}[]`);
+    } else if (schema.$ref) {
+      const p = document.createElement('div');
+      p.textContent = schema.$ref;
+      body.appendChild(p);
+    } else {
+      const p = document.createElement('div');
+      p.textContent = `Type: ${type}`;
+      body.appendChild(p);
     }
-    parent.appendChild(details);
   }
 
   function renderResult(res) {
@@ -107,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       schemaEl.textContent = JSON.stringify(res.json_schema, null, 2);
       schemaTreeEl.innerHTML = '';
-      renderJsonTree(res.json_schema, schemaTreeEl, 'root');
+      renderSchemaAccordion(res.json_schema, schemaTreeEl, 'root', 'root');
     } catch {}
     try { exampleEl.textContent = JSON.stringify(res.example, null, 2); } catch {}
     try { container.classList.remove('d-none'); } catch {}
