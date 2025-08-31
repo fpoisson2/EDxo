@@ -97,3 +97,9 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch):
 
 def test_schema_of_schema_has_no_additional_props():
     assert SCHEMA_OF_SCHEMA["schema"]["additionalProperties"] is False
+
+
+def test_schema_of_schema_allows_nested_objects():
+    props = SCHEMA_OF_SCHEMA["schema"]["properties"]
+    assert props["json_schema"]["additionalProperties"] is True
+    assert props["example"]["additionalProperties"] is True

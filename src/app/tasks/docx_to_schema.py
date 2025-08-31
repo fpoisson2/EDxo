@@ -23,8 +23,8 @@ SCHEMA_OF_SCHEMA = {
         "properties": {
             "title": {"type": "string"},
             "description": {"type": "string"},
-            "json_schema": {"type": "object"},
-            "example": {"type": "object"}
+            "json_schema": {"type": "object", "additionalProperties": True},
+            "example": {"type": "object", "additionalProperties": True}
         },
         "additionalProperties": False
     }
