@@ -1,5 +1,6 @@
 from pathlib import Path
 from types import SimpleNamespace
+import logging
 
 from docx import Document
 
@@ -62,7 +63,8 @@ class FakeOpenAI:
         self.responses = FakeResponses()
 
 
-def test_docx_to_schema_streaming(app, tmp_path, monkeypatch):
+def test_docx_to_schema_streaming(app, tmp_path, monkeypatch, caplog):
+    caplog.set_level(logging.INFO)
     docx_path = tmp_path / 'test.docx'
     doc = Document()
     doc.add_paragraph('Hello world')
@@ -91,3 +93,4 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch):
     assert any('stream_chunk' in u for u in dummy.updates)
     assert any('reasoning_summary' in u for u in dummy.updates)
     assert result['result']['title'] == 'T'
+    assert 'OpenAI usage' in caplog.text

@@ -113,4 +113,5 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         parsed = json.loads(result_text)
     except Exception:
         parsed = result_text
+    logger.info("[%s] OpenAI usage: %s", task_id, api_usage)
     return {"status": "success", "result": parsed, "api_usage": api_usage}
