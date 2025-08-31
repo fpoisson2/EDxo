@@ -91,7 +91,7 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         text=text_params,
         reasoning=reasoning_params,
         tools=[],
-        store=False,
+        store=True,
     ) as stream:
         for event in stream:
             etype = getattr(event, "type", "")
