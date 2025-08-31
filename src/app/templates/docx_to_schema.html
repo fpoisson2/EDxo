@@ -82,9 +82,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function normalizePlanSchema(node) {
     if (!node || typeof node !== 'object') return node;
-    if (node.type || node.properties || node.items) return node;
+
     function walk(n) {
       if (!n || typeof n !== 'object') return {};
+
+      // unwrap single-key root objects
+      const keys = Object.keys(n);
+      if (!n.type && !n.properties && !n.items && !n.champs && !n.parts && keys.length === 1 && !['title','description'].includes(keys[0])) {
+        const key = keys[0];
+        const inner = walk(n[key]);
+        if (inner && typeof inner === 'object' && !inner.title) inner.title = key;
+        return inner;
+      }
+
+      if (n.parts) {
+        const props = {};
+        for (const [k, v] of Object.entries(n.parts)) {
+          props[k] = walk(v);
+        }
+        const out = { type: 'object', properties: props };
+        if (n.title) out.title = n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+
+      if (n.fields) {
+        const props = {};
+        for (const [k, v] of Object.entries(n.fields)) {
+          props[k] = walk(v);
+        }
+        const out = { type: 'object', properties: props };
+        if (n.title) out.title = n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+
       if (n.element) {
         const items = walk(n.element);
         const out = { type: 'array', items };
@@ -92,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (n.description) out.description = n.description;
         return out;
       }
+
       if (n.champs) {
         const props = {};
         for (const champ of n.champs) {
@@ -104,10 +137,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (n.description) out.description = n.description;
         return out;
       }
-      const out = {};
+
+      if (n.type === 'array') {
+        let items = n.items;
+        if (items && typeof items === 'object' && !items.type && !items.properties && !items.items) {
+          const itemProps = {};
+          for (const [ik, iv] of Object.entries(items)) {
+            itemProps[ik] = typeof iv === 'string' ? { type: iv } : walk(iv);
+          }
+          items = { type: 'object', properties: itemProps };
+        } else if (items) {
+          items = walk(items);
+        }
+        const out = { type: 'array', items };
+        if (n.title) out.title = n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+
+      const out = { type: n.type || 'string' };
       if (n.titre || n.title) out.title = n.titre || n.title;
       if (n.description) out.description = n.description;
-      if (n.type) out.type = n.type;
       return out;
     }
     return walk(node);
