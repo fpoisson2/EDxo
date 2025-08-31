@@ -205,23 +205,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const g = svg.append('g').attr('transform', 'translate(80,0)');
     const zoom = d3.zoom().scaleExtent([0.5,5]).on('zoom', (event) => g.attr('transform', event.transform));
     svg.call(zoom);
-    g.selectAll('path')
+    const link = g.selectAll('path')
       .data(rootNodes.links())
       .enter().append('path')
       .attr('fill', 'none')
       .attr('stroke', '#999')
       .attr('d', d3.linkHorizontal().x(d => d.y).y(d => d.x));
-    const node = g.selectAll('g')
+    const types = Array.from(new Set(rootNodes.descendants().map(d => d.data.type))).sort();
+    const color = d3.scaleOrdinal().domain(types).range(d3.schemeCategory10);
+    const node = g.selectAll('g.node')
       .data(rootNodes.descendants())
       .enter().append('g')
-      .attr('transform', d => `translate(${d.y},${d.x})`);
-    node.append('circle').attr('r', 4).attr('fill', '#69b3a2');
+      .attr('class', 'node')
+      .attr('transform', d => `translate(${d.y},${d.x})`)
+      .call(d3.drag()
+        .on('start', function(event){ event.sourceEvent.stopPropagation(); })
+        .on('drag', function(event, d){
+          d.y = event.x;
+          d.x = event.y;
+          d3.select(this).attr('transform', `translate(${d.y},${d.x})`);
+          link.attr('d', d3.linkHorizontal().x(d => d.y).y(d => d.x));
+        }));
+    node.append('circle').attr('r', 4).attr('fill', d => color(d.data.type));
     node.append('text').text(d => d.data.name).attr('x', 8).attr('dy', 3);
+    const legend = svg.append('g').attr('class','legend').attr('transform','translate(10,10)');
+    types.forEach((t,i) => {
+      const lg = legend.append('g').attr('transform', `translate(0,${i*20})`);
+      lg.append('rect').attr('width',12).attr('height',12).attr('fill', color(t));
+      lg.append('text').attr('x',18).attr('y',10).text(t);
+    });
   }
 
   function buildTree(schema) {
     function walk(node, name) {
-      const out = { name };
+      const out = { name, type: node.type || 'any' };
       if (node.type === 'object' && node.properties) {
         out.children = Object.entries(node.properties).map(([k,v]) => walk(v, k));
       } else if (node.type === 'array' && node.items) {
