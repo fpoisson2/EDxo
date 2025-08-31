@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from docx import Document
 
 from src.app.models import User, db, OpenAIModel
+from src.app.tasks.docx_to_schema import SCHEMA_OF_SCHEMA
 
 
 class DummySelf:
@@ -92,3 +93,7 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch):
     assert result['status'] == 'success'
     assert any('stream_chunk' in u for u in dummy.updates)
     assert any('reasoning_summary' in u for u in dummy.updates)
+
+
+def test_schema_of_schema_has_no_additional_props():
+    assert SCHEMA_OF_SCHEMA["schema"]["additionalProperties"] is False

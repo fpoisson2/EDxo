@@ -25,7 +25,8 @@ SCHEMA_OF_SCHEMA = {
             "description": {"type": "string"},
             "json_schema": {"type": "object"},
             "example": {"type": "object"}
-        }
+        },
+        "additionalProperties": False
     }
 }
 
