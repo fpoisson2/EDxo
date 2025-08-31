@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const schemaEl = document.getElementById('schemaResultJson');
   const schemaTreeEl = document.getElementById('schemaResultTree');
   const schemaGraphEl = document.getElementById('schemaResultGraph');
+  let currentSchema = null;
 
   function normalizePlanSchema(node) {
     if (!node || typeof node !== 'object') return node;
@@ -231,6 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderResult(res) {
     if (!res) return;
+    currentSchema = res;
     const schemaObj = normalizePlanSchema(res.json_schema || res);
     try { titleEl.textContent = res.title || res.titre || schemaObj.title || ''; } catch {}
     try { descEl.textContent = res.description || schemaObj.description || ''; } catch {}
@@ -279,16 +281,19 @@ document.addEventListener('DOMContentLoaded', () => {
     validateBtn.addEventListener('click', async () => {
       try {
         const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        await fetch('/docx_to_schema/validate', {
+        const resp = await fetch('/docx_to_schema/validate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrf,
             'X-CSRF-Token': csrf,
           },
-          body: JSON.stringify({}),
+          body: JSON.stringify({ schema: currentSchema }),
         });
-        window.location.href = '/docx_schema_preview';
+        const data = await resp.json();
+        if (data.page_id) {
+          window.location.href = `/docx_schema/${data.page_id}`;
+        }
       } catch (err) {
         console.error('Erreur validation schéma', err);
       }

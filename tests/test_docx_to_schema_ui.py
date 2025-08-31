@@ -74,9 +74,16 @@ def test_docx_to_schema_validate_endpoint(app, client):
         db.session.commit()
         admin_id = admin.id
     _login(client, admin_id)
-    resp = client.post('/docx_to_schema/validate', json={})
+    payload = {'schema': {'title': 'Sample', 'type': 'object'}}
+    resp = client.post('/docx_to_schema/validate', json=payload)
+    assert resp.status_code == 201
+    data = resp.get_json()
+    assert data['success'] is True
+    page_id = data['page_id']
+    # Page accessible
+    resp = client.get(f'/docx_schema/{page_id}')
     assert resp.status_code == 200
-    assert resp.get_json()['success'] is True
+    assert b'Sample' in resp.data
 
 
 def test_navbar_has_docx_schema_link(app, client):
@@ -95,7 +102,37 @@ def test_navbar_has_docx_schema_link(app, client):
     _login(client, admin_id)
     resp = client.get('/', follow_redirects=True)
     assert resp.status_code == 200
-    assert b'/docx_schema_preview' in resp.data
+    assert b'/docx_schema' in resp.data
+
+
+def test_docx_schema_management(app, client):
+    with app.app_context():
+        admin = User(
+            username='admin6',
+            password=generate_password_hash('pw'),
+            role='admin',
+            is_first_connexion=False,
+            openai_key='sk'
+        )
+        db.session.add(admin)
+        db.session.add(OpenAIModel(name='gpt-4o-mini', input_price=0.0, output_price=0.0))
+        db.session.commit()
+        admin_id = admin.id
+    _login(client, admin_id)
+    # Create schema page
+    resp = client.post('/docx_to_schema/validate', json={'schema': {'title': 'Manage', 'type': 'object'}})
+    page_id = resp.get_json()['page_id']
+    # List page includes it
+    resp = client.get('/docx_schema')
+    assert b'>Manage<' in resp.data
+    # View JSON
+    resp = client.get(f'/docx_schema/{page_id}/json')
+    assert b'Manage' in resp.data
+    # Delete
+    resp = client.post(f'/docx_schema/{page_id}/delete')
+    assert resp.status_code == 302
+    resp = client.get('/docx_schema')
+    assert b'>Manage<' not in resp.data
 
 
 def test_docx_to_schema_prompts_page(app, client):

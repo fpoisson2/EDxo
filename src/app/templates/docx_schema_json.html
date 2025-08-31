@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}{{ page.title }}{% endblock %}
+{% block title %}JSON {{ page.title }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-  <h1>{{ page.title }}</h1>
+  <h1>Schéma JSON - {{ page.title }}</h1>
   <pre class="small">{{ page.json_schema | tojson(indent=2) }}</pre>
   <a href="{{ url_for('main.docx_schema_pages') }}" class="btn btn-secondary mt-3">Retour</a>
 </div>

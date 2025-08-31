@@ -1,11 +1,12 @@
 import os
 import re
 import time
-from flask import render_template, request, jsonify, current_app
+from flask import render_template, request, jsonify, current_app, redirect, url_for
 from flask_login import login_required, current_user
 
 from ..forms import DocxToSchemaForm
 from ..tasks.docx_to_schema import docx_to_json_schema_task
+from ..models import db, DocxSchemaPage
 from .routes import main
 from ...utils.decorator import role_required, ensure_profile_completed
 
@@ -49,15 +50,47 @@ def docx_to_schema_start():
 @role_required('admin')
 @ensure_profile_completed
 def docx_to_schema_validate():
-    """Endpoint appelé lorsque l'utilisateur valide le schéma généré."""
-    # Pour l'instant on accepte simplement la requête et répondons avec un succès.
-    # L'intégration future pourra créer les objets nécessaires à partir du schéma.
-    return jsonify({'success': True})
+    """Persiste le schéma validé et retourne l'identifiant de la nouvelle page."""
+    data = request.get_json() or {}
+    schema = data.get('schema')
+    if not schema:
+        return jsonify({'error': 'Schéma manquant.'}), 400
 
+    title = schema.get('title') or schema.get('titre') or f"Schéma {int(time.time())}"
+    page = DocxSchemaPage(title=title, json_schema=schema)
+    db.session.add(page)
+    db.session.commit()
+    return jsonify({'success': True, 'page_id': page.id}), 201
 
-@main.route('/docx_schema_preview', methods=['GET'])
+@main.route('/docx_schema', methods=['GET'])
 @role_required('admin')
 @ensure_profile_completed
-def docx_schema_preview():
-    """Page d'aperçu du schéma validé, accessible via le menu principal."""
-    return render_template('docx_schema_preview.html')
+def docx_schema_pages():
+    pages = DocxSchemaPage.query.order_by(DocxSchemaPage.created_at.desc()).all()
+    return render_template('docx_schema_list.html', pages=pages)
+
+
+@main.route('/docx_schema/<int:page_id>', methods=['GET'])
+@role_required('admin')
+@ensure_profile_completed
+def docx_schema_page_view(page_id):
+    page = DocxSchemaPage.query.get_or_404(page_id)
+    return render_template('docx_schema_preview.html', page=page)
+
+
+@main.route('/docx_schema/<int:page_id>/json', methods=['GET'])
+@role_required('admin')
+@ensure_profile_completed
+def docx_schema_page_json(page_id):
+    page = DocxSchemaPage.query.get_or_404(page_id)
+    return render_template('docx_schema_json.html', page=page)
+
+
+@main.route('/docx_schema/<int:page_id>/delete', methods=['POST'])
+@role_required('admin')
+@ensure_profile_completed
+def docx_schema_page_delete(page_id):
+    page = DocxSchemaPage.query.get_or_404(page_id)
+    db.session.delete(page)
+    db.session.commit()
+    return redirect(url_for('main.docx_schema_pages'))
