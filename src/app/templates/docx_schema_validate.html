@@ -46,7 +46,7 @@
 </div>
 
 <style>
-  #schemaResultJson, #schemaResultTree { overflow-x: auto; }
+  #schemaResultJson, #schemaResultTree, #schemaResultGraph { overflow-x: auto; }
   #schemaResultGraph svg { width: 100%; height: 400px; }
   @media (max-width: 576px) { #schemaResultGraph svg { height: 300px; } }
 </style>
@@ -203,15 +203,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderSchemaGraph(schema) {
     if (!schemaGraphEl) return;
     const treeData = buildTree(schema);
-    const width = schemaGraphEl.clientWidth || 600;
+    let width = schemaGraphEl.clientWidth || schemaGraphEl.parentElement?.clientWidth || window.innerWidth - 40;
+    width = Math.min(width, window.innerWidth - 40);
     const height = 400;
+    const marginLeft = 40;
     const root = d3.hierarchy(treeData);
-    const treeLayout = d3.tree().size([height, width - 160]);
+    const treeLayout = d3.tree().size([height, width - marginLeft - 20]);
     const rootNodes = treeLayout(root);
-    const svg = d3.select(schemaGraphEl).append('svg');
+    const svg = d3.select(schemaGraphEl).html('').append('svg');
     svg.attr('viewBox', [0, 0, width, height]);
-    const g = svg.append('g').attr('transform', 'translate(40,0)');
-    svg.call(d3.zoom().on('zoom', (event) => g.attr('transform', event.transform)));
+    const g = svg.append('g').attr('transform', `translate(${marginLeft},0)`);
+    svg.call(d3.zoom().scaleExtent([0.5,5]).on('zoom', (event) => g.attr('transform', event.transform)));
     const link = g.selectAll('.link').data(rootNodes.links()).enter().append('path').attr('class', 'link').attr('fill', 'none').attr('stroke', '#555').attr('stroke-width', 1.5).attr('d', d3.linkHorizontal().x(d => d.y).y(d => d.x));
     const node = g.selectAll('.node').data(rootNodes.descendants()).enter().append('g').attr('class', 'node').attr('transform', d => `translate(${d.y},${d.x})`).call(d3.drag().on('start', () => { }).on('drag', (event, d) => { d.x = event.y; d.y = event.x; d3.select(event.sourceEvent.target.parentNode).attr('transform', `translate(${d.y},${d.x})`); link.attr('d', d3.linkHorizontal().x(d => d.y).y(d => d.x)); }));
     node.append('circle').attr('r', 4).attr('fill', d => ({object:'#6c757d',array:'#0d6efd',string:'#198754',number:'#fd7e14',boolean:'#dc3545'}[d.data.type] || '#6c757d'));

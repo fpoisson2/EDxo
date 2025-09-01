@@ -104,6 +104,11 @@
                         <a href="{{ url_for('settings.docx_to_schema_prompt_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.docx_to_schema_prompt_settings' %}active{% endif %}">
                           <i class="bi bi-filetype-doc me-2"></i>Prompts DOCX → JSON
                         </a>
+                        {% for p in docx_schema_pages %}
+                        <a href="{{ url_for('main.docx_schema_page_view', page_id=p.id) }}" class="list-group-item list-group-item-action">
+                          <i class="bi bi-diagram-3 me-2"></i>{{ p.title }}
+                        </a>
+                        {% endfor %}
                     </div>
                   </div>
                 </div>

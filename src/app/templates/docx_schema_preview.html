@@ -46,7 +46,7 @@
 </div>
 
 <style>
-  #schemaResultJson, #schemaResultTree { overflow-x: auto; }
+  #schemaResultJson, #schemaResultTree, #schemaResultGraph { overflow-x: auto; }
   #schemaResultGraph svg { width: 100%; height: 400px; }
   @media (max-width: 576px) { #schemaResultGraph svg { height: 300px; } }
 </style>
@@ -195,14 +195,16 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderSchemaGraph(schema) {
     if (!schemaGraphEl) return;
     const treeData = buildTree(schema);
-    const width = schemaGraphEl.clientWidth || 600;
+    let width = schemaGraphEl.clientWidth || schemaGraphEl.parentElement?.clientWidth || window.innerWidth - 40;
+    width = Math.min(width, window.innerWidth - 40);
     const height = 400;
+    const marginLeft = 40;
     const root = d3.hierarchy(treeData);
-    const treeLayout = d3.tree().size([height, width - 160]);
+    const treeLayout = d3.tree().size([height, width - marginLeft - 20]);
     const rootNodes = treeLayout(root);
     const svg = d3.select(schemaGraphEl).html('').append('svg')
       .attr('viewBox', `0 0 ${width} ${height}`);
-    const g = svg.append('g').attr('transform', 'translate(80,0)');
+    const g = svg.append('g').attr('transform', `translate(${marginLeft},0)`);
     const zoom = d3.zoom().scaleExtent([0.5,5]).on('zoom', (event) => g.attr('transform', event.transform));
     svg.call(zoom);
     const link = g.selectAll('path')

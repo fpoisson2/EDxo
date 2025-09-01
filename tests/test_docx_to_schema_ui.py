@@ -107,7 +107,7 @@ def test_docx_to_schema_validate_endpoint(app, client):
     assert b"n.type === 'object' && n.properties" in resp.data
 
 
-def test_navbar_updates_with_schema_links(app, client):
+def test_parametres_updates_with_schema_links(app, client):
     with app.app_context():
         admin = User(
             username='admin4',
@@ -121,12 +121,12 @@ def test_navbar_updates_with_schema_links(app, client):
         db.session.commit()
         admin_id = admin.id
     _login(client, admin_id)
-    resp = client.get('/', follow_redirects=True)
+    resp = client.get('/parametres')
     assert b'/docx_schema' not in resp.data
     # add a schema page
     resp = client.post('/docx_to_schema/validate', json={'schema': {'title': 'Link', 'type': 'object'}})
     page_id = resp.get_json()['page_id']
-    resp = client.get('/', follow_redirects=True)
+    resp = client.get('/parametres')
     assert f'/docx_schema/{page_id}'.encode() in resp.data
 
 
