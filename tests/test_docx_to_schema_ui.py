@@ -307,5 +307,40 @@ def test_docx_schema_preview_plan_form_order_and_nested(app, client):
     assert 'markdownOrderMap = buildMarkdownOrderMap(markdownData);' in data
     assert 'path.replace(/\\[[0-9]+\\]/g, \'\')' in data
     assert data.count('getMdOrder(') >= 3
+    assert 'getMarkdownIndex' in data
+    assert 'normalizedMarkdown' in data
     assert 'position-absolute top-0 end-0 remove-form-array-item' in data
     assert 'normalizeName(' in data
+
+
+def test_markdown_plain_text_ordering():
+    import unicodedata, re
+
+    def normalize_name(s):
+        s = unicodedata.normalize('NFD', s or '')
+        s = ''.join(c for c in s if unicodedata.category(c) != 'Mn')
+        s = re.sub(r'[^a-zA-Z0-9]+', ' ', s)
+        return s.strip().lower()
+
+    def sort_by_markdown(schema, markdown):
+        norm_md = normalize_name(markdown)
+        entries = list(schema['properties'].items())
+        def position(item):
+            key, val = item
+            name = normalize_name(val.get('title') or key)
+            idx = norm_md.find(name)
+            return idx if idx != -1 else float('inf')
+        entries.sort(key=position)
+        return [k for k, _ in entries]
+
+    schema = {
+        'title': 'Plain',
+        'type': 'object',
+        'properties': {
+            'first': {'type': 'string', 'title': 'Premier'},
+            'second': {'type': 'string', 'title': 'Deuxième'},
+        }
+    }
+    markdown = 'Deuxième\nPremier'
+    ordered = sort_by_markdown(schema, markdown)
+    assert ordered == ['second', 'first']
