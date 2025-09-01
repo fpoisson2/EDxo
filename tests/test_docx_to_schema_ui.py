@@ -192,3 +192,72 @@ def test_docx_to_schema_prompts_page(app, client):
     assert b'Niveau de raisonnement' in resp.data
     assert b'Verbosit' in resp.data
     assert 'Propose un schéma JSON simple'.encode('utf-8') in resp.data
+
+
+def test_docx_schema_preview_buttons_and_lists(app, client):
+    with app.app_context():
+        admin = User(
+            username='array_admin',
+            password=generate_password_hash('pw'),
+            role='admin',
+            is_first_connexion=False,
+            openai_key='sk'
+        )
+        db.session.add(admin)
+        db.session.add(OpenAIModel(name='gpt-4o-mini', input_price=0.0, output_price=0.0))
+        db.session.commit()
+        admin_id = admin.id
+    _login(client, admin_id)
+    schema = {
+        'title': 'ArraySample',
+        'type': 'object',
+        'properties': {
+            'items': {
+                'type': 'array',
+                'items': {'type': 'string', 'title': 'It'}
+            }
+        }
+    }
+    resp = client.post('/docx_to_schema/validate', json={'schema': schema, 'markdown': '# md\n- a'})
+    assert resp.status_code == 201
+    page_id = resp.get_json()['page_id']
+    resp = client.get(f'/docx_schema/{page_id}')
+    data = resp.data
+    assert b'id="schemaImportBtn"' in data
+    assert b'id="schemaImproveBtn"' in data
+    assert b'id="schemaGenerateBtn"' in data
+    assert b'id="schemaExportBtn"' in data
+    assert b'add-array-item' in data
+    assert b'add-list-item' in data
+
+
+def test_docx_schema_preview_plan_form(app, client):
+    with app.app_context():
+        admin = User(
+            username='plan_admin',
+            password=generate_password_hash('pw'),
+            role='admin',
+            is_first_connexion=False,
+            openai_key='sk'
+        )
+        db.session.add(admin)
+        db.session.add(OpenAIModel(name='gpt-4o-mini', input_price=0.0, output_price=0.0))
+        db.session.commit()
+        admin_id = admin.id
+    _login(client, admin_id)
+    schema = {
+        'title': 'Form',
+        'type': 'object',
+        'properties': {
+            'name': {'type': 'string', 'title': 'Nom'},
+            'tags': {'type': 'array', 'items': {'type': 'string'}}
+        }
+    }
+    resp = client.post('/docx_to_schema/validate', json={'schema': schema, 'markdown': '# md'})
+    assert resp.status_code == 201
+    page_id = resp.get_json()['page_id']
+    resp = client.get(f'/docx_schema/{page_id}')
+    data = resp.data
+    assert b'id="planCadreForm"' in data
+    assert b'id="planCadreSaveBtn"' in data
+    assert b'add-form-array-item' in data
