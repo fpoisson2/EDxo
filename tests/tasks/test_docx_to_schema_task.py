@@ -121,7 +121,6 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch, caplog):
     assert result['result']['markdown'] == '# md'
     called_kwargs = FakeOpenAI.last_instance.responses.kwargs
     assert called_kwargs['store'] is True
-    assert called_kwargs['response_format']['type'] == 'json_schema'
-    assert 'DocxSchemaResponse' in called_kwargs['response_format']['json_schema']['name']
+    assert called_kwargs['text_format'].__name__ == 'DocxSchemaResponse'
     assert 'Propose un schéma JSON simple' in called_kwargs['input'][0]['content'][0]['text']
     assert 'OpenAI usage' in caplog.text

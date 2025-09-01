@@ -19,7 +19,7 @@ class DocxSchemaResponse(BaseModel):
     """Structure attendue de la sortie OpenAI pour un schéma DOCX."""
     title: str
     description: str
-    schema: dict
+    schema: str
     markdown: str
 
 
@@ -115,18 +115,6 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
             "content": [{"type": "input_file", "file_id": uploaded.id}],
         },
     ]
-    response_schema = {
-        "type": "object",
-        "additionalProperties": False,
-        "properties": {
-            "title": {"type": "string"},
-            "description": {"type": "string"},
-            "schema": {"type": "string"},
-            "markdown": {"type": "string"},
-        },
-        "required": ["title", "description", "schema", "markdown"],
-    }
-
     request_kwargs = dict(
         model=model,
         input=input_blocks,
@@ -134,10 +122,7 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         reasoning={"effort": reasoning, "summary": "auto"},
         tools=[],
         store=True,
-        response_format={
-            "type": "json_schema",
-            "json_schema": {"name": "DocxSchemaResponse", "schema": response_schema},
-        },
+        text_format=DocxSchemaResponse,
     )
 
     streamed_text = ""
