@@ -35,9 +35,10 @@ async function renameSchema(id) {
   const currentTitle = titleCell.textContent.trim();
   const newTitle = prompt('Nouveau titre:', currentTitle);
   if (!newTitle || newTitle === currentTitle) return;
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
   const resp = await fetch(`/docx_schema/${id}/rename`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken, 'X-CSRF-Token': csrfToken },
     body: JSON.stringify({ title: newTitle })
   });
   if (resp.ok) {
