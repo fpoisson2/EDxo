@@ -293,12 +293,14 @@ document.addEventListener('DOMContentLoaded', () => {
       list.className = 'd-flex flex-column gap-2';
       container.appendChild(list);
 
+      const itemName = normalizeName(schema.items.title || schema.title || path);
+      const itemPath = path === 'root' ? itemName : `${path}.${itemName}`;
+
       function addItem() {
-        const idx = list.children.length;
         if (schema.items.type === 'object') {
           const wrapper = document.createElement('div');
           wrapper.className = 'border rounded p-2 position-relative';
-          renderPlanCadreForm(schema.items, wrapper, path);
+          renderPlanCadreForm(schema.items, wrapper, itemPath);
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'btn btn-outline-danger btn-sm position-absolute top-0 end-0 remove-form-array-item';
@@ -424,11 +426,13 @@ document.addEventListener('DOMContentLoaded', () => {
       addBtn.className = 'btn btn-sm btn-outline-primary add-array-item mb-2';
       addBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Ajouter';
       body.insertBefore(addBtn, list);
+      const itemName = normalizeName(schema.items.title || name);
+      const itemPath = path === 'root' ? itemName : `${path}.${itemName}`;
       const addItem = () => {
         const idx = list.children.length;
         const wrapper = document.createElement('div');
         wrapper.className = 'mb-2';
-          renderSchemaAccordion(schema.items, wrapper, `${name}[${idx}]`, path, schema.items.required || []);
+        renderSchemaAccordion(schema.items, wrapper, `${name}[${idx}]`, itemPath, schema.items.required || []);
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
         removeBtn.className = 'btn btn-sm btn-outline-danger remove-array-item ms-2';
@@ -526,7 +530,8 @@ document.addEventListener('DOMContentLoaded', () => {
           return walk(v, k, childPath);
         });
       } else if (node.type === 'array' && node.items) {
-        const childPath = path;
+        const itemName = normalizeName(node.items.title || name);
+        const childPath = path === 'root' ? itemName : `${path}.${itemName}`;
         out.children = [walk(node.items, name + '[]', childPath)];
       }
       return out;

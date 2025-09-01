@@ -344,3 +344,82 @@ def test_markdown_plain_text_ordering():
     markdown = 'Deuxième\nPremier'
     ordered = sort_by_markdown(schema, markdown)
     assert ordered == ['second', 'first']
+
+
+def test_markdown_nested_array_ordering():
+    import unicodedata, re
+
+    def normalize_name(s):
+        s = unicodedata.normalize('NFD', s or '')
+        s = ''.join(c for c in s if unicodedata.category(c) != 'Mn')
+        s = re.sub(r'[^a-zA-Z0-9]+', ' ', s)
+        return s.strip().lower()
+
+    def build_markdown_order_map(markdown):
+        lines = markdown.splitlines()
+        order = {'root': []}
+        headings = []
+        list_stack = []
+        for line in lines:
+            m = re.match(r'^(#+)\s+(.*)', line)
+            if m:
+                depth = len(m.group(1))
+                text = normalize_name(m.group(2))
+                if len(headings) < depth - 1:
+                    headings.extend([None] * (depth - 1 - len(headings)))
+                headings = headings[:depth - 1]
+                headings.append(text)
+                list_stack = []
+                parent = '.'.join(h for h in headings[:-1] if h) or 'root'
+                order.setdefault(parent, []).append(text)
+                continue
+            m = re.match(r'^(\s*)[-*+]\s+(.*)', line)
+            if m:
+                indent = len(m.group(1)) // 2
+                text = normalize_name(m.group(2))
+                list_stack = list_stack[:indent]
+                parent = '.'.join(h for h in headings + list_stack if h) or 'root'
+                order.setdefault(parent, []).append(text)
+                list_stack.append(text)
+        return order
+
+    def sort_props(props, md_map, path):
+        entries = list(props.items())
+        md_order = md_map.get(path, [])
+        def pos(item):
+            key, val = item
+            name = normalize_name(val.get('title') or key)
+            try:
+                return md_order.index(name)
+            except ValueError:
+                return float('inf')
+        entries.sort(key=pos)
+        return [k for k, _ in entries]
+
+    schema = {
+        'title': 'Root',
+        'type': 'object',
+        'properties': {
+            'section': {
+                'title': 'Section',
+                'type': 'array',
+                'items': {
+                    'title': 'Element',
+                    'type': 'object',
+                    'properties': {
+                        'title': {'type': 'string', 'title': 'Titre'},
+                        'note': {'type': 'string', 'title': 'Note'},
+                    }
+                }
+            },
+            'summary': {'type': 'string', 'title': 'Résumé'}
+        }
+    }
+
+    markdown = '## Section\n- Element\n  - Titre\n  - Note\n## Résumé'
+    md_map = build_markdown_order_map(markdown)
+    root_order = sort_props(schema['properties'], md_map, 'root')
+    assert root_order == ['section', 'summary']
+    item_props = schema['properties']['section']['items']['properties']
+    nested_order = sort_props(item_props, md_map, 'section.element')
+    assert nested_order == ['title', 'note']
