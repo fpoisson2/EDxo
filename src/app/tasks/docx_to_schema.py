@@ -7,11 +7,23 @@ from typing import Optional
 from celery import shared_task
 from docx import Document
 from openai import OpenAI
+from pydantic import BaseModel
 
 from ..models import User, db
 from .import_plan_cadre import _create_pdf_from_text
 
 logger = logging.getLogger(__name__)
+
+
+class DocxSchemaResponse(BaseModel):
+    """Structure attendue de la sortie OpenAI pour un schéma DOCX."""
+    title: str
+    description: str
+    schema: dict
+    markdown: str
+
+
+DocxSchemaResponse.model_rebuild()
 
 
 def _extract_reasoning_summary_from_response(response):
@@ -103,23 +115,6 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
             "content": [{"type": "input_file", "file_id": uploaded.id}],
         },
     ]
-    response_format = {
-        "type": "json_schema",
-        "json_schema": {
-            "name": "docx_schema_result",
-            "schema": {
-                "type": "object",
-                "additionalProperties": False,
-                "required": ["title", "description", "schema", "markdown"],
-                "properties": {
-                    "title": {"type": "string"},
-                    "description": {"type": "string"},
-                    "schema": {"type": "object"},
-                    "markdown": {"type": "string"},
-                },
-            },
-        },
-    }
     request_kwargs = dict(
         model=model,
         input=input_blocks,
@@ -127,7 +122,7 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         reasoning={"effort": reasoning, "summary": "auto"},
         tools=[],
         store=True,
-        response_format=response_format,
+        text_format=DocxSchemaResponse,
     )
 
     streamed_text = ""
@@ -177,12 +172,17 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         "model": model,
     }
 
-    parsed = None
+    parsed_obj = None
     try:
-        parsed = getattr(final, "output_parsed", None)
+        op = getattr(final, "output_parsed", None)
     except Exception:
-        parsed = None
-    if parsed is None:
+        op = None
+    if op is not None:
+        if hasattr(op, "model_dump"):
+            parsed_obj = op.model_dump()
+        elif isinstance(op, dict):
+            parsed_obj = op
+    if parsed_obj is None:
         json_text = None
         try:
             json_text = getattr(final, "output_text", None)
@@ -192,15 +192,15 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
             json_text = streamed_text
         if json_text:
             try:
-                parsed = json.loads(json_text)
+                parsed_obj = json.loads(json_text)
             except Exception:
-                parsed = json_text
+                parsed_obj = json_text
 
-    if isinstance(parsed, dict):
-        title = parsed.get('title')
-        description = parsed.get('description')
-        schema_obj = parsed.get('schema')
-        markdown = parsed.get('markdown', '')
+    if isinstance(parsed_obj, dict):
+        title = parsed_obj.get('title')
+        description = parsed_obj.get('description')
+        schema_obj = parsed_obj.get('schema')
+        markdown = parsed_obj.get('markdown', '')
         if isinstance(schema_obj, dict):
             if title and 'title' not in schema_obj:
                 schema_obj['title'] = title
@@ -213,7 +213,7 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
             'markdown': markdown,
         }
     else:
-        result_payload = {'title': None, 'description': None, 'schema': parsed, 'markdown': ''}
+        result_payload = {'title': None, 'description': None, 'schema': parsed_obj, 'markdown': ''}
 
     logger.info("[%s] OpenAI usage: %s", task_id, api_usage)
     return {"status": "success", "result": result_payload, "api_usage": api_usage}

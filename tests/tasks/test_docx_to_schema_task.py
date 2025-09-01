@@ -5,6 +5,8 @@ import logging
 from docx import Document
 
 from src.app.models import User, db, OpenAIModel
+
+
 class DummySelf:
     def __init__(self):
         self.request = type('R', (), {'id': 'tid'})()
@@ -39,31 +41,23 @@ class FakeStream:
 
 
 class FakeResponses:
-    def __init__(self):
+    def __init__(self, parsed):
         self.kwargs = None
+        self.parsed = parsed
 
     def stream(self, **kwargs):
         self.kwargs = kwargs
         events = [
             DummyEvent('response.output_text.delta', 'hello'),
-            DummyEvent('response.reasoning_summary_text.delta', 'because')
+            DummyEvent('response.reasoning_summary_text.delta', 'because'),
         ]
         class Usage:
             input_tokens = 1
             output_tokens = 2
         class Resp:
-            output_parsed = {
-                'title': 'T',
-                'description': 'D',
-                'schema': {
-                    'title': 'T',
-                    'description': 'D',
-                    'type': 'object',
-                    'properties': {}
-                },
-                'markdown': '# md'
-            }
             usage = Usage()
+            output_parsed = None
+        Resp.output_parsed = self.parsed
         return FakeStream(events, Resp())
 
 
@@ -73,10 +67,12 @@ class FakeFiles:
 
 
 class FakeOpenAI:
+    expected_parsed = None
     last_instance = None
+
     def __init__(self, api_key=None):  # noqa: ARG002
         self.files = FakeFiles()
-        self.responses = FakeResponses()
+        self.responses = FakeResponses(FakeOpenAI.expected_parsed)
         FakeOpenAI.last_instance = self
 
 
@@ -95,6 +91,13 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch, caplog):
 
     import src.app.tasks.docx_to_schema as module
     monkeypatch.setattr(module, 'subprocess', SimpleNamespace(run=fake_run))
+
+    FakeOpenAI.expected_parsed = module.DocxSchemaResponse(
+        title='T',
+        description='D',
+        schema={'title': 'T', 'description': 'D', 'type': 'object', 'properties': {}},
+        markdown='# md',
+    )
 
     with app.app_context():
         user = User(username='u', password='pw', role='user', openai_key='sk', credits=1.0, is_first_connexion=False)
@@ -117,8 +120,6 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch, caplog):
     assert result['result']['markdown'] == '# md'
     called_kwargs = FakeOpenAI.last_instance.responses.kwargs
     assert called_kwargs['store'] is True
-    assert 'response_format' in called_kwargs
-    props = called_kwargs['response_format']['json_schema']['schema']['properties']
-    assert set(props.keys()) == {'title', 'description', 'schema', 'markdown'}
+    assert called_kwargs['text_format'].__name__ == 'DocxSchemaResponse'
     assert 'Propose un schéma JSON simple' in called_kwargs['input'][0]['content'][0]['text']
     assert 'OpenAI usage' in caplog.text
