@@ -99,6 +99,7 @@ def test_docx_to_schema_validate_endpoint(app, client):
     resp = client.get(f'/docx_schema/{page_id}')
     assert resp.status_code == 200
     assert b'Sample' in resp.data
+    assert b'id="schemaEditBtn"' in resp.data
     # Preview page uses accordion structure and tree graph
     assert b'id="schemaAccordion"' in resp.data
     assert b'd3.tree' in resp.data
@@ -149,9 +150,14 @@ def test_docx_schema_management(app, client):
     # List page includes it
     resp = client.get('/docx_schema')
     assert b'>Manage<' in resp.data
+    # Edit schema
+    resp = client.post(f'/docx_schema/{page_id}/edit', json={'schema': {'title': 'Updated', 'type': 'object'}})
+    assert resp.status_code == 200
+    resp = client.get(f'/docx_schema/{page_id}')
+    assert b'Updated' in resp.data
     # View JSON
     resp = client.get(f'/docx_schema/{page_id}/json')
-    assert b'Manage' in resp.data
+    assert b'Updated' in resp.data
     # Delete
     resp = client.post(f'/docx_schema/{page_id}/delete')
     assert resp.status_code == 302

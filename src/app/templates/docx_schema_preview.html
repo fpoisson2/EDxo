@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="container mt-4">
-  <h1>{{ page.title }}</h1>
+  <h1 id="schemaPageTitle">{{ page.title }}</h1>
 
   <div class="accordion" id="schemaAccordion">
     <div class="accordion-item">
@@ -42,23 +42,50 @@
     </div>
   </div>
 
-  <a href="{{ url_for('main.docx_schema_pages') }}" class="btn btn-secondary mt-3">Retour</a>
+  <div class="mt-3 d-flex gap-2">
+    <button id="schemaEditBtn" class="btn btn-primary" type="button">Éditer</button>
+    <a href="{{ url_for('main.docx_schema_pages') }}" class="btn btn-secondary">Retour</a>
+  </div>
+
+  <div class="modal fade" id="schemaEditModal" tabindex="-1" aria-labelledby="schemaEditLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="schemaEditLabel">Éditer le schéma</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <textarea id="schemaEditTextarea" class="form-control" rows="12"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="button" id="schemaEditSaveBtn" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
   #schemaResultJson, #schemaResultTree, #schemaResultGraph { overflow-x: auto; }
-  #schemaResultGraph svg { width: 100%; height: 400px; }
+  #schemaResultGraph svg { height: 400px; }
   @media (max-width: 576px) { #schemaResultGraph svg { height: 300px; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const schemaData = {{ page.json_schema | tojson }};
+  let schemaData = {{ page.json_schema | tojson }};
+  const pageId = {{ page.id }};
   const titleEl = document.getElementById('schemaResultTitle');
   const descEl = document.getElementById('schemaResultDescription');
   const schemaEl = document.getElementById('schemaResultJson');
   const schemaTreeEl = document.getElementById('schemaResultTree');
   const schemaGraphEl = document.getElementById('schemaResultGraph');
+  const pageTitleEl = document.getElementById('schemaPageTitle');
+  const editBtn = document.getElementById('schemaEditBtn');
+  const editModalEl = document.getElementById('schemaEditModal');
+  const editTextarea = document.getElementById('schemaEditTextarea');
+  const editSaveBtn = document.getElementById('schemaEditSaveBtn');
 
   function normalizePlanSchema(node) {
     if (!node || typeof node !== 'object') return node;
@@ -195,14 +222,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderSchemaGraph(schema) {
     if (!schemaGraphEl) return;
     const treeData = buildTree(schema);
+    const root = d3.hierarchy(treeData);
+    const depth = root.height + 1;
     let width = schemaGraphEl.clientWidth || schemaGraphEl.parentElement?.clientWidth || window.innerWidth - 40;
-    width = Math.min(width, window.innerWidth - 40);
+    width = Math.max(width, depth * 180);
     const height = 400;
     const marginLeft = 40;
-    const root = d3.hierarchy(treeData);
     const treeLayout = d3.tree().size([height, width - marginLeft - 20]);
     const rootNodes = treeLayout(root);
     const svg = d3.select(schemaGraphEl).html('').append('svg')
+      .attr('width', width)
+      .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`);
     const g = svg.append('g').attr('transform', `translate(${marginLeft},0)`);
     const zoom = d3.zoom().scaleExtent([0.5,5]).on('zoom', (event) => g.attr('transform', event.transform));
@@ -251,12 +281,45 @@ document.addEventListener('DOMContentLoaded', () => {
     return walk(schema, schema.title || 'root');
   }
 
-  const normalized = normalizePlanSchema(schemaData);
-  titleEl.textContent = normalized.title || '';
-  descEl.textContent = normalized.description || '';
-  schemaEl.textContent = JSON.stringify(normalized, null, 2);
-  renderSchemaAccordion(normalized, schemaTreeEl, 'root', 'root');
-  renderSchemaGraph(normalized);
+  let currentSchema = normalizePlanSchema(schemaData);
+  function renderAll() {
+    pageTitleEl.textContent = currentSchema.title || '';
+    document.title = currentSchema.title || document.title;
+    titleEl.textContent = currentSchema.title || '';
+    descEl.textContent = currentSchema.description || '';
+    schemaEl.textContent = JSON.stringify(schemaData, null, 2);
+    renderSchemaAccordion(currentSchema, schemaTreeEl, 'root', 'root');
+    renderSchemaGraph(currentSchema);
+  }
+  renderAll();
+
+  if (editBtn) {
+    const modal = new bootstrap.Modal(editModalEl);
+    editBtn.addEventListener('click', () => {
+      editTextarea.value = JSON.stringify(schemaData, null, 2);
+      modal.show();
+    });
+    editSaveBtn.addEventListener('click', async () => {
+      try {
+        const updated = JSON.parse(editTextarea.value);
+        const resp = await fetch(`/docx_schema/${pageId}/edit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ schema: updated })
+        });
+        if (resp.ok) {
+          schemaData = updated;
+          currentSchema = normalizePlanSchema(schemaData);
+          renderAll();
+          modal.hide();
+        } else {
+          alert('Erreur lors de la sauvegarde');
+        }
+      } catch (e) {
+        alert('JSON invalide');
+      }
+    });
+  }
 });
 </script>
 {% endblock %}

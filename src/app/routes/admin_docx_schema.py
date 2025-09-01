@@ -109,6 +109,22 @@ def docx_schema_page_json(page_id):
     return render_template('docx_schema_json.html', page=page)
 
 
+@main.route('/docx_schema/<int:page_id>/edit', methods=['POST'])
+@role_required('admin')
+@ensure_profile_completed
+def docx_schema_page_edit(page_id):
+    """Met à jour le schéma JSON d'une page existante."""
+    page = DocxSchemaPage.query.get_or_404(page_id)
+    data = request.get_json() or {}
+    schema = data.get('schema')
+    if not schema:
+        return jsonify({'error': 'Schéma manquant.'}), 400
+    page.json_schema = schema
+    page.title = schema.get('title') or schema.get('titre') or page.title
+    db.session.commit()
+    return jsonify({'success': True})
+
+
 @main.route('/docx_schema/<int:page_id>/delete', methods=['POST'])
 @role_required('admin')
 @ensure_profile_completed
