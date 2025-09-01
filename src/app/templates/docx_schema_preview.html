@@ -356,7 +356,18 @@ document.addEventListener('DOMContentLoaded', () => {
       inner.id = `${itemId}-inner`;
       body.appendChild(inner);
       const childRequired = schema.required || [];
-      for (const [key, val] of Object.entries(schema.properties)) {
+      const entries = Object.entries(schema.properties);
+      entries.sort(([ak, av], [bk, bv]) => {
+        const nameA = (av.title || ak).toLowerCase();
+        const nameB = (bv.title || bk).toLowerCase();
+        const ia = markdownOrder.indexOf(nameA);
+        const ib = markdownOrder.indexOf(nameB);
+        if (ia === -1 && ib === -1) return 0;
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      });
+      for (const [key, val] of entries) {
         renderSchemaAccordion(val, inner, key, `${path}.${key}`, childRequired);
       }
     } else if (schema.type === 'array' && schema.items) {
@@ -453,7 +464,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function walk(node, name) {
       const out = { name, type: node.type || 'any' };
       if (node.type === 'object' && node.properties) {
-        out.children = Object.entries(node.properties).map(([k,v]) => walk(v, k));
+        const entries = Object.entries(node.properties);
+        entries.sort(([ak, av], [bk, bv]) => {
+          const nameA = (av.title || ak).toLowerCase();
+          const nameB = (bv.title || bk).toLowerCase();
+          const ia = markdownOrder.indexOf(nameA);
+          const ib = markdownOrder.indexOf(nameB);
+          if (ia === -1 && ib === -1) return 0;
+          if (ia === -1) return 1;
+          if (ib === -1) return -1;
+          return ia - ib;
+        });
+        out.children = entries.map(([k,v]) => walk(v, k));
       } else if (node.type === 'array' && node.items) {
         out.children = [walk(node.items, name + '[]')];
       }

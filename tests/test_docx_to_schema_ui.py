@@ -281,6 +281,7 @@ def test_docx_schema_preview_plan_form_order_and_nested(app, client):
         'title': 'Form',
         'type': 'object',
         'properties': {
+            'summary': {'type': 'string', 'title': 'Résumé'},
             'section': {
                 'title': 'Section',
                 'type': 'array',
@@ -291,8 +292,7 @@ def test_docx_schema_preview_plan_form_order_and_nested(app, client):
                         'notes': {'type': 'array', 'items': {'type': 'string', 'title': 'Note'}}
                     }
                 }
-            },
-            'summary': {'type': 'string', 'title': 'Résumé'}
+            }
         }
     }
     markdown = '## Section\n## Résumé'
@@ -303,4 +303,5 @@ def test_docx_schema_preview_plan_form_order_and_nested(app, client):
     data = resp.data.decode('utf-8')
     assert 'markdownOrder' in data
     assert 'position-absolute top-0 end-0 remove-form-array-item' in data
+    assert data.count('markdownOrder.indexOf') >= 3
     assert 'Section' in data
