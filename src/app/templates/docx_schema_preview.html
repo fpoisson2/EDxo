@@ -224,17 +224,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const treeData = buildTree(schema);
     const root = d3.hierarchy(treeData);
     const depth = root.height + 1;
-    let width = schemaGraphEl.clientWidth || schemaGraphEl.parentElement?.clientWidth || window.innerWidth - 40;
-    width = Math.max(width, depth * 180);
+    const svgWidth = schemaGraphEl.clientWidth || schemaGraphEl.parentElement?.clientWidth || window.innerWidth - 40;
+    let width = Math.max(svgWidth, depth * 180);
     const height = 400;
     const marginLeft = 40;
     const treeLayout = d3.tree().size([height, width - marginLeft - 20]);
     const rootNodes = treeLayout(root);
     const svg = d3.select(schemaGraphEl).html('').append('svg')
-      .attr('width', width)
+      .attr('width', svgWidth)
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`);
-    const g = svg.append('g').attr('transform', `translate(${marginLeft},0)`);
+    const g = svg.append('g');
     const zoom = d3.zoom().scaleExtent([0.5,5]).on('zoom', (event) => g.attr('transform', event.transform));
     svg.call(zoom);
     const link = g.selectAll('path')
@@ -266,6 +266,12 @@ document.addEventListener('DOMContentLoaded', () => {
       lg.append('rect').attr('width',12).attr('height',12).attr('fill', color(t));
       lg.append('text').attr('x',18).attr('y',10).text(t);
     });
+
+    const box = g.node().getBBox();
+    const scale = Math.min(svgWidth / (box.width + marginLeft), height / (box.height + 20));
+    const x = (width - box.width * scale) / 2 - box.x * scale + marginLeft;
+    const y = (height - box.height * scale) / 2 - box.y * scale;
+    svg.call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
   }
 
   function buildTree(schema) {

@@ -52,6 +52,7 @@ def test_docx_to_schema_preview_page(app, client):
     assert resp.status_code == 200
     assert b'id="schemaAccordion"' in resp.data
     assert b'id="schemaValidateBtn"' in resp.data
+    assert b'zoom.transform' in resp.data
 
 
 def test_parametres_page_has_docx_conversion_links(app, client):
@@ -106,6 +107,7 @@ def test_docx_to_schema_validate_endpoint(app, client):
     assert b'd3.drag' in resp.data
     assert b'legend' in resp.data
     assert b"n.type === 'object' && n.properties" in resp.data
+    assert b'zoom.transform' in resp.data
 
 
 def test_navbar_updates_with_schema_links(app, client):

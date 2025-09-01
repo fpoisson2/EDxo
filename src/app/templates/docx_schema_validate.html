@@ -205,18 +205,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const treeData = buildTree(schema);
     const root = d3.hierarchy(treeData);
     const depth = root.height + 1;
-    let width = schemaGraphEl.clientWidth || schemaGraphEl.parentElement?.clientWidth || window.innerWidth - 40;
-    width = Math.max(width, depth * 180);
+    const svgWidth = schemaGraphEl.clientWidth || schemaGraphEl.parentElement?.clientWidth || window.innerWidth - 40;
+    let width = Math.max(svgWidth, depth * 180);
     const height = 400;
     const marginLeft = 40;
     const treeLayout = d3.tree().size([height, width - marginLeft - 20]);
     const rootNodes = treeLayout(root);
     const svg = d3.select(schemaGraphEl).html('').append('svg')
-      .attr('width', width)
+      .attr('width', svgWidth)
       .attr('height', height)
       .attr('viewBox', [0, 0, width, height]);
-    const g = svg.append('g').attr('transform', `translate(${marginLeft},0)`);
-    svg.call(d3.zoom().scaleExtent([0.5,5]).on('zoom', (event) => g.attr('transform', event.transform)));
+    const g = svg.append('g');
+    const zoom = d3.zoom().scaleExtent([0.5,5]).on('zoom', (event) => g.attr('transform', event.transform));
+    svg.call(zoom);
     const link = g.selectAll('.link').data(rootNodes.links()).enter().append('path').attr('class', 'link').attr('fill', 'none').attr('stroke', '#555').attr('stroke-width', 1.5).attr('d', d3.linkHorizontal().x(d => d.y).y(d => d.x));
     const node = g.selectAll('.node').data(rootNodes.descendants()).enter().append('g').attr('class', 'node').attr('transform', d => `translate(${d.y},${d.x})`).call(d3.drag().on('start', () => { }).on('drag', (event, d) => { d.x = event.y; d.y = event.x; d3.select(event.sourceEvent.target.parentNode).attr('transform', `translate(${d.y},${d.x})`); link.attr('d', d3.linkHorizontal().x(d => d.y).y(d => d.x)); }));
     node.append('circle').attr('r', 4).attr('fill', d => ({object:'#6c757d',array:'#0d6efd',string:'#198754',number:'#fd7e14',boolean:'#dc3545'}[d.data.type] || '#6c757d'));
@@ -225,6 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const legend = svg.append('g').attr('transform', `translate(${width-100},20)`);
     legend.selectAll('rect').data(legendData).enter().append('rect').attr('x',0).attr('y',(d,i)=>i*20).attr('width',12).attr('height',12).attr('fill',d=>d[1]);
     legend.selectAll('text').data(legendData).enter().append('text').attr('x',18).attr('y',(d,i)=>i*20+10).text(d=>d[0]);
+    const box = g.node().getBBox();
+    const scale = Math.min(svgWidth / (box.width + marginLeft), height / (box.height + 20));
+    const x = (width - box.width * scale) / 2 - box.x * scale + marginLeft;
+    const y = (height - box.height * scale) / 2 - box.y * scale;
+    svg.call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
   }
 
   function buildTree(schema, name='root') {
