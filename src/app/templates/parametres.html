@@ -98,15 +98,12 @@
                 <div id="dataSchemaSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
                   <div class="accordion-body p-0">
                     <div class="list-group list-group-flush">
-                      <a href="{{ url_for('main.docx_schema_pages') }}" class="list-group-item list-group-item-action {% if request.endpoint in ('main.docx_schema_pages', 'main.docx_schema_page_view', 'main.docx_schema_page_json') %}active{% endif %}">
-                        <i class="bi bi-file-earmark-code me-2"></i>Schémas DOCX
-                      </a>
-                      <a href="{{ url_for('main.docx_to_schema_page') }}" class="list-group-item list-group-item-action {% if request.endpoint.startswith('main.docx_to_schema') %}active{% endif %}">
-                        <i class="bi bi-file-earmark-word me-2"></i>DOCX → JSON Schema
-                      </a>
-                      <a href="{{ url_for('settings.docx_to_schema_prompt_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.docx_to_schema_prompt_settings' %}active{% endif %}">
-                        <i class="bi bi-filetype-doc me-2"></i>Prompts DOCX → JSON
-                      </a>
+                        <a href="{{ url_for('main.docx_to_schema_page') }}" class="list-group-item list-group-item-action {% if request.endpoint.startswith('main.docx_to_schema') %}active{% endif %}">
+                          <i class="bi bi-file-earmark-word me-2"></i>DOCX → JSON Schema
+                        </a>
+                        <a href="{{ url_for('settings.docx_to_schema_prompt_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.docx_to_schema_prompt_settings' %}active{% endif %}">
+                          <i class="bi bi-filetype-doc me-2"></i>Prompts DOCX → JSON
+                        </a>
                     </div>
                   </div>
                 </div>

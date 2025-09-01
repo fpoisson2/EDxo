@@ -54,7 +54,7 @@ def test_docx_to_schema_preview_page(app, client):
     assert b'id="schemaValidateBtn"' in resp.data
 
 
-def test_parametres_page_has_docx_schema_links(app, client):
+def test_parametres_page_has_docx_conversion_links(app, client):
     with app.app_context():
         admin = User(
             username='admin2',
@@ -72,7 +72,7 @@ def test_parametres_page_has_docx_schema_links(app, client):
     assert resp.status_code == 200
     assert b'/docx_to_schema' in resp.data
     assert b'/settings/docx_to_schema_prompts' in resp.data
-    assert b'/docx_schema' in resp.data
+    assert b'/docx_schema' not in resp.data
 
 
 def test_docx_to_schema_validate_endpoint(app, client):
@@ -181,3 +181,4 @@ def test_docx_to_schema_prompts_page(app, client):
     assert b'Mod' in resp.data
     assert b'Niveau de raisonnement' in resp.data
     assert b'Verbosit' in resp.data
+    assert 'Propose un schéma JSON simple'.encode('utf-8') in resp.data

@@ -10,6 +10,12 @@ from ..models import db, DocxSchemaPage, SectionAISettings
 from .routes import main
 from ...utils.decorator import role_required, ensure_profile_completed
 
+DEFAULT_DOCX_TO_SCHEMA_PROMPT = (
+    "Propose un schéma JSON simple, cohérent et normalisé pour représenter parfaitement ce document. "
+    "Retourne un schéma avec les champs titre du champ et description du champ. "
+    "Le schéma devrait parfaitement représenter la séquence et la hiérarchie des sections. Ne retourne que le schéma."
+)
+
 
 @main.route('/docx_to_schema', methods=['GET'])
 @role_required('admin')
@@ -42,11 +48,7 @@ def docx_to_schema_start():
     model = sa.ai_model or 'gpt-4o-mini'
     reasoning = sa.reasoning_effort or 'medium'
     verbosity = sa.verbosity or 'medium'
-    system_prompt = sa.system_prompt or (
-        "Propose un schéma JSON simple, cohérent et normalisé pour représenter parfaitement ce document. "
-        "Retourne un schéma avec les champs titre du champ et description du champ. "
-        "Le schéma devrait parfaitement représenter la séquence et la hiérarchie des sections. Ne retourne que le schéma."
-    )
+    system_prompt = sa.system_prompt or DEFAULT_DOCX_TO_SCHEMA_PROMPT
 
     task = docx_to_json_schema_task.delay(stored_path, model, reasoning, verbosity, system_prompt, current_user.id)
     return jsonify({'task_id': task.id}), 202
