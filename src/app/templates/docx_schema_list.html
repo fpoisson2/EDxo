@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Schémas DOCX{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h1>Schémas DOCX validés</h1>
+  {% if pages %}
+  <table class="table">
+    <thead><tr><th>ID</th><th>Titre</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for p in pages %}
+      <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.title }}</td>
+        <td>
+          <a class="btn btn-sm btn-primary" href="{{ url_for('main.docx_schema_page_view', page_id=p.id) }}">Voir</a>
+          <a class="btn btn-sm btn-secondary" href="{{ url_for('main.docx_schema_page_json', page_id=p.id) }}">JSON</a>
+          <form method="POST" action="{{ url_for('main.docx_schema_page_delete', page_id=p.id) }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-danger" onclick="return confirm('Supprimer ce schéma?')">Supprimer</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Aucun schéma validé.</p>
+  {% endif %}
+</div>
+{% endblock %}

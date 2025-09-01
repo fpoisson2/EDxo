@@ -39,9 +39,6 @@ def test_docx_to_schema_requires_csrf(app, client, monkeypatch):
     )
 
     data = {
-        'model': 'gpt-4o-mini',
-        'reasoning_level': 'medium',
-        'verbosity': 'medium',
         'file': (BytesIO(b'hi'), 'test.docx'),
     }
     # Missing CSRF token
@@ -58,9 +55,6 @@ def test_docx_to_schema_requires_csrf(app, client, monkeypatch):
     token = soup.find('input', {'name': 'csrf_token'})['value']
 
     data = {
-        'model': 'gpt-4o-mini',
-        'reasoning_level': 'medium',
-        'verbosity': 'medium',
         'csrf_token': token,
         'file': (BytesIO(b'hi'), 'test.docx'),
     }

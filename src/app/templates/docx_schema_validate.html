@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% block title %}Validation du schéma{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h1>{{ title or schema.title or 'Schéma' }}</h1>
+  <div class="accordion" id="schemaAccordion">
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="schemaHeadingTitle">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#schemaCollapseTitle" aria-expanded="true" aria-controls="schemaCollapseTitle">
+          Titre
+        </button>
+      </h2>
+      <div id="schemaCollapseTitle" class="accordion-collapse collapse show" aria-labelledby="schemaHeadingTitle" data-bs-parent="#schemaAccordion">
+        <div class="accordion-body" id="schemaResultTitle"></div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="schemaHeadingDesc">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schemaCollapseDesc" aria-expanded="false" aria-controls="schemaCollapseDesc">
+          Description
+        </button>
+      </h2>
+      <div id="schemaCollapseDesc" class="accordion-collapse collapse" aria-labelledby="schemaHeadingDesc" data-bs-parent="#schemaAccordion">
+        <div class="accordion-body" id="schemaResultDescription"></div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="schemaHeadingMarkdown">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schemaCollapseMarkdown" aria-expanded="false" aria-controls="schemaCollapseMarkdown">
+          Markdown
+        </button>
+      </h2>
+      <div id="schemaCollapseMarkdown" class="accordion-collapse collapse" aria-labelledby="schemaHeadingMarkdown" data-bs-parent="#schemaAccordion">
+        <div class="accordion-body" id="schemaResultMarkdown"></div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="schemaHeadingSchema">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schemaCollapseSchema" aria-expanded="false" aria-controls="schemaCollapseSchema">
+          JSON Schema
+        </button>
+      </h2>
+      <div id="schemaCollapseSchema" class="accordion-collapse collapse" aria-labelledby="schemaHeadingSchema" data-bs-parent="#schemaAccordion">
+        <div class="accordion-body">
+          <div id="schemaResultTree" class="mb-2 accordion"></div>
+          <div id="schemaResultGraph" class="mb-2"></div>
+          <pre class="mb-0 small" id="schemaResultJson"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mt-3 text-end">
+    <button id="schemaValidateBtn" class="btn btn-success" type="button">Valider</button>
+  </div>
+</div>
+
+<style>
+  #schemaResultJson, #schemaResultTree, #schemaResultGraph { overflow-x: auto; }
+  #schemaResultGraph svg { height: 400px; }
+  @media (max-width: 576px) { #schemaResultGraph svg { height: 300px; } }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const schemaData = {{ schema | tojson }};
+  const markdownData = {{ markdown | tojson }};
+  const titleData = {{ title | tojson }};
+  const descData = {{ description | tojson }};
+  const titleEl = document.getElementById('schemaResultTitle');
+  const descEl = document.getElementById('schemaResultDescription');
+  const schemaEl = document.getElementById('schemaResultJson');
+  const schemaTreeEl = document.getElementById('schemaResultTree');
+  const schemaGraphEl = document.getElementById('schemaResultGraph');
+  const markdownEl = document.getElementById('schemaResultMarkdown');
+
+  function normalizePlanSchema(node) {
+    if (!node || typeof node !== 'object') return node;
+    function walk(n) {
+      if (!n || typeof n !== 'object') return {};
+      const keys = Object.keys(n);
+      if (!n.type && !n.properties && !n.items && !n.champs && !n.parts && keys.length === 1 && !['title','description'].includes(keys[0])) {
+        const key = keys[0];
+        const inner = walk(n[key]);
+        if (inner && typeof inner === 'object' && !inner.title) inner.title = key;
+        return inner;
+      }
+      if (n.parts) {
+        const props = {};
+        for (const [k, v] of Object.entries(n.parts)) {
+          props[k] = walk(v);
+        }
+        const out = { type: 'object', properties: props };
+        if (n.title) out.title = n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+      if (n.fields) {
+        const props = {};
+        for (const [k, v] of Object.entries(n.fields)) {
+          props[k] = walk(v);
+        }
+        const out = { type: 'object', properties: props };
+        if (n.title) out.title = n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+      if (n.element) {
+        const items = walk(n.element);
+        const out = { type: 'array', items };
+        if (n.titre || n.title) out.title = n.titre || n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+      if (n.champs) {
+        const props = {};
+        for (const champ of n.champs) {
+          const key = champ.titre || champ.title || 'champ';
+          props[key] = walk(champ);
+          if (champ.description) props[key].description = champ.description;
+        }
+        const out = { type: 'object', properties: props };
+        if (n.titre || n.title) out.title = n.titre || n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+      if (n.type === 'object' && n.properties) {
+        const props = {};
+        for (const [k, v] of Object.entries(n.properties)) {
+          props[k] = walk(v);
+        }
+        const out = { type: 'object', properties: props };
+        if (n.title) out.title = n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+      if (n.type === 'array') {
+        let items = n.items;
+        if (items && typeof items === 'object' && !items.type && !items.properties && !items.items) {
+          const itemProps = {};
+          for (const [ik, iv] of Object.entries(items)) {
+            itemProps[ik] = typeof iv === 'string' ? { type: iv } : walk(iv);
+          }
+          items = { type: 'object', properties: itemProps };
+        } else if (items) {
+          items = walk(items);
+        }
+        const out = { type: 'array', items };
+        if (n.title) out.title = n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+      const out = { type: n.type || 'string' };
+      if (n.titre || n.title) out.title = n.titre || n.title;
+      if (n.description) out.description = n.description;
+      return out;
+    }
+    return walk(node);
+  }
+
+  function renderSchemaAccordion(schema, parent, name='root', path='root', required=[]) {
+    if (!schema || !parent) return;
+    const type = schema.type || (schema.$ref ? schema.$ref : 'any');
+    const isRequired = required.includes(name);
+    const itemId = `acc-${path.replace(/[^a-z0-9]/gi, '-')}`;
+    const item = document.createElement('div');
+    item.className = 'accordion-item';
+    const header = document.createElement('h2');
+    header.className = 'accordion-header';
+    header.id = `${itemId}-head`;
+    const button = document.createElement('button');
+    button.className = 'accordion-button collapsed';
+    button.type = 'button';
+    button.setAttribute('data-bs-toggle', 'collapse');
+    button.setAttribute('data-bs-target', `#${itemId}-body`);
+    button.setAttribute('aria-expanded', 'false');
+    button.setAttribute('aria-controls', `${itemId}-body`);
+    button.textContent = `${name}${isRequired ? '*' : ''} (${type})`;
+    header.appendChild(button);
+    item.appendChild(header);
+    const collapse = document.createElement('div');
+    collapse.id = `${itemId}-body`;
+    collapse.className = 'accordion-collapse collapse';
+    collapse.setAttribute('aria-labelledby', `${itemId}-head`);
+    const body = document.createElement('div');
+    body.className = 'accordion-body';
+    collapse.appendChild(body);
+    item.appendChild(collapse);
+    parent.appendChild(item);
+    if (schema.description) {
+      const desc = document.createElement('div');
+      desc.textContent = schema.description;
+      body.appendChild(desc);
+    }
+    if (schema.type === 'object' && schema.properties) {
+      const inner = document.createElement('div');
+      inner.className = 'accordion';
+      inner.id = `${itemId}-inner`;
+      body.appendChild(inner);
+      const childRequired = schema.required || [];
+      for (const [key, val] of Object.entries(schema.properties)) {
+        renderSchemaAccordion(val, inner, key, `${path}.${key}`, childRequired);
+      }
+    } else if (schema.type === 'array' && schema.items) {
+      renderSchemaAccordion(schema.items, body, 'items', `${path}[]`);
+    } else if (schema.$ref) {
+      const p = document.createElement('div');
+      p.textContent = schema.$ref;
+      body.appendChild(p);
+    } else {
+      const p = document.createElement('div');
+      p.textContent = `Type: ${type}`;
+      body.appendChild(p);
+    }
+  }
+
+  function renderSchemaGraph(schema) {
+    if (!schemaGraphEl) return;
+    const treeData = buildTree(schema);
+    const root = d3.hierarchy(treeData);
+    const depth = root.height + 1;
+    const svgWidth = schemaGraphEl.clientWidth || schemaGraphEl.parentElement?.clientWidth || window.innerWidth - 40;
+    let width = Math.max(svgWidth, depth * 180);
+    const height = 400;
+    const marginLeft = 40;
+    const treeLayout = d3.tree().size([height, width - marginLeft - 20]);
+    const rootNodes = treeLayout(root);
+    const svg = d3.select(schemaGraphEl).html('').append('svg')
+      .attr('width', svgWidth)
+      .attr('height', height)
+      .attr('viewBox', [0, 0, width, height]);
+    const g = svg.append('g');
+    const zoom = d3.zoom().scaleExtent([0.5,5]).on('zoom', (event) => g.attr('transform', event.transform));
+    svg.call(zoom);
+    const link = g.selectAll('.link').data(rootNodes.links()).enter().append('path').attr('class', 'link').attr('fill', 'none').attr('stroke', '#555').attr('stroke-width', 1.5).attr('d', d3.linkHorizontal().x(d => d.y).y(d => d.x));
+    const node = g.selectAll('.node').data(rootNodes.descendants()).enter().append('g').attr('class', 'node').attr('transform', d => `translate(${d.y},${d.x})`).call(d3.drag().on('start', () => { }).on('drag', (event, d) => { d.x = event.y; d.y = event.x; d3.select(event.sourceEvent.target.parentNode).attr('transform', `translate(${d.y},${d.x})`); link.attr('d', d3.linkHorizontal().x(d => d.y).y(d => d.x)); }));
+    node.append('circle').attr('r', 4).attr('fill', d => ({object:'#6c757d',array:'#0d6efd',string:'#198754',number:'#fd7e14',boolean:'#dc3545'}[d.data.type] || '#6c757d'));
+    node.append('text').attr('dy', '.31em').attr('x', d => d.children ? -6 : 6).style('text-anchor', d => d.children ? 'end' : 'start').text(d => d.data.name);
+    const legendData = [ ['object','#6c757d'], ['array','#0d6efd'], ['string','#198754'], ['number','#fd7e14'], ['boolean','#dc3545'] ];
+    const legend = svg.append('g').attr('transform', `translate(${width-100},20)`);
+    legend.selectAll('rect').data(legendData).enter().append('rect').attr('x',0).attr('y',(d,i)=>i*20).attr('width',12).attr('height',12).attr('fill',d=>d[1]);
+    legend.selectAll('text').data(legendData).enter().append('text').attr('x',18).attr('y',(d,i)=>i*20+10).text(d=>d[0]);
+    const box = g.node().getBBox();
+    const scale = Math.min(svgWidth / (box.width + marginLeft), height / (box.height + 20));
+    const x = (width - box.width * scale) / 2 - box.x * scale + marginLeft;
+    const y = (height - box.height * scale) / 2 - box.y * scale;
+    svg.call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
+  }
+
+  function buildTree(schema, name='root') {
+    const node = { name, type: schema.type };
+    if (schema.properties) {
+      node.children = Object.entries(schema.properties).map(([k,v]) => buildTree(v,k));
+    } else if (schema.items) {
+      node.children = [buildTree(schema.items,'items')];
+    }
+    return node;
+  }
+
+  if (titleData && !schemaData.title) schemaData.title = titleData;
+  if (descData && !schemaData.description) schemaData.description = descData;
+  function renderAll() {
+    const schemaObj = normalizePlanSchema(schemaData.json_schema || schemaData);
+    titleEl.textContent = schemaData.title || schemaData.titre || schemaObj.title || '';
+    descEl.textContent = schemaData.description || schemaObj.description || '';
+    schemaEl.textContent = JSON.stringify(schemaData, null, 2);
+    if (markdownEl && markdownData) {
+      markdownEl.innerHTML = window.marked.parse(markdownData);
+    }
+    renderSchemaAccordion(schemaObj, schemaTreeEl, 'root', 'root');
+    renderSchemaGraph(schemaObj);
+  }
+  renderAll();
+  const validateBtn = document.getElementById('schemaValidateBtn');
+  if (validateBtn) {
+    validateBtn.addEventListener('click', async () => {
+      const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+      const resp = await fetch('/docx_to_schema/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrf,
+          'X-CSRF-Token': csrf,
+        },
+        body: JSON.stringify({ schema: schemaData, markdown: markdownData, title: titleData, description: descData }),
+      });
+      const data = await resp.json();
+      if (data.page_id) {
+        window.location.href = `/docx_schema/${data.page_id}`;
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

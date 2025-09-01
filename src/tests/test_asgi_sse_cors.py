@@ -6,11 +6,11 @@ from starlette.testclient import TestClient
 import pytest
 
 
-@pytest.mark.asyncio
-async def test_tasks_events_sse_includes_cors_header_direct():
-    # Call the SSE handler directly to validate response headers
+def test_tasks_events_sse_includes_cors_header_direct():
+    # Call the SSE handler directly to validate response headers without requiring asyncio plugin
     from src.asgi import sse_task_events
     from starlette.requests import Request
+    import asyncio
 
     scope = {
         "type": "http",
@@ -18,7 +18,7 @@ async def test_tasks_events_sse_includes_cors_header_direct():
         "headers": [],
     }
     req = Request(scope)
-    resp = await sse_task_events(req)
+    resp = asyncio.run(sse_task_events(req))
     assert resp.headers.get("Access-Control-Allow-Origin") == "*"
 
 

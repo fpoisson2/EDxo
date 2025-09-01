@@ -4,7 +4,7 @@ Ce référentiel utilise des agents/outils pour automatiser des modifications de
 
 ## Règle essentielle
 - Toujours écrire des tests pertinents (pytest) pour couvrir le correctif ou la fonctionnalité ajoutée.
-- Toujours exécuter la suite de tests localement avec `pytest -q` et s'assurer qu'elle passe avant de conclure la tâche.
+- Toujours exécuter la suite de tests localement avec `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q` pour accélérer l'exécution et s'assurer qu'elle passe avant de conclure la tâche.
 
 ## Détails pratiques
 - Emplacement des tests: placez-les sous `tests/` avec le préfixe `test_*.py`.
@@ -15,7 +15,8 @@ Ce référentiel utilise des agents/outils pour automatiser des modifications de
 - Si des avertissements perturbent la lisibilité, nettoyez-les ou filtrez-les de manière ciblée, sans masquer des problèmes réels.
 
 ## Commandes utiles
-- Lancer toute la suite: `pytest -q`
+- Lancer toute la suite (résumé concis): `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q`
+- Interrompre au premier échec pour un diagnostic rapide: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q --maxfail=1`
 - Exécuter un seul fichier: `pytest -q tests/test_mon_module.py`
 - Exécuter un seul test: `pytest -q tests/test_mon_module.py::test_cas_specifique`
 - Compter les tests rapidement (collect only): `pytest -q --collect-only | awk -F': ' '{s+=$2} END{print s}'`

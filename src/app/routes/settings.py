@@ -21,6 +21,7 @@ from ..forms import (
 )
 from .evaluation import AISixLevelGridResponse
 from ...utils.decorator import role_required, roles_required, ensure_profile_completed
+from .admin_docx_schema import DEFAULT_DOCX_TO_SCHEMA_PROMPT
 
 csrf = CSRFProtect()
 
@@ -921,3 +922,24 @@ def prompt_settings():
             flash(f'Erreur lors de la mise à jour : {str(e)}', 'error')
 
     return render_template('settings/prompt_settings.html', settings=settings, ai_form=ai_form)
+
+
+@settings_bp.route('/docx_to_schema_prompts', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+@ensure_profile_completed
+def docx_to_schema_prompt_settings():
+    """Configurer le prompt système et les paramètres IA pour DOCX→JSON."""
+    sa = SectionAISettings.get_for('docx_to_schema')
+    ai_form = SectionAISettingsForm(obj=sa)
+    if request.method == 'GET' and not (sa.system_prompt and sa.system_prompt.strip()):
+        ai_form.system_prompt.data = DEFAULT_DOCX_TO_SCHEMA_PROMPT
+    if request.method == 'POST' and ai_form.validate_on_submit():
+        sa.system_prompt = ai_form.system_prompt.data or None
+        sa.ai_model = ai_form.ai_model.data or None
+        sa.reasoning_effort = ai_form.reasoning_effort.data or None
+        sa.verbosity = ai_form.verbosity.data or None
+        db.session.commit()
+        flash('Paramètres enregistrés', 'success')
+        return redirect(url_for('settings.docx_to_schema_prompt_settings'))
+    return render_template('settings/docx_to_schema_prompts.html', ai_form=ai_form)

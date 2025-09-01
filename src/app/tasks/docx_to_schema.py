@@ -7,11 +7,23 @@ from typing import Optional
 from celery import shared_task
 from docx import Document
 from openai import OpenAI
+from pydantic import BaseModel
 
 from ..models import User, db
 from .import_plan_cadre import _create_pdf_from_text
 
 logger = logging.getLogger(__name__)
+
+
+class DocxSchemaResponse(BaseModel):
+    """Structure attendue de la sortie OpenAI pour un schéma DOCX."""
+    title: str
+    description: str
+    schema: str
+    markdown: str
+
+
+DocxSchemaResponse.model_rebuild()
 
 
 def _extract_reasoning_summary_from_response(response):
@@ -71,7 +83,7 @@ def _docx_to_pdf(docx_path: str) -> str:
     return pdf_path
 
 @shared_task(bind=True, name="app.tasks.docx_to_schema.convert")
-def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, verbosity: str, user_id: int, openai_cls=OpenAI):
+def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, verbosity: str, system_prompt: str, user_id: int, openai_cls=OpenAI):
     """Convert a DOCX file to a JSON Schema using OpenAI's file API with streaming."""
     task_id = self.request.id
     logger.info("[%s] Starting DOCX→Schema for %s", task_id, docx_path)
@@ -96,11 +108,7 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
     input_blocks = [
         {
             "role": "system",
-            "content": [{"type": "input_text", "text": (
-                "Propose un schéma JSON simple, cohérent et normalisé pour représenter parfaitement ce document. "
-                "Retourne un schéma avec les champs titre du champ et description du champ. "
-                "Le schéma devrait parfaitement représenter la séquence et la hiérarchie des sections. Ne retourne que le schéma."
-            )}],
+            "content": [{"type": "input_text", "text": system_prompt}],
         },
         {
             "role": "user",
@@ -114,6 +122,7 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         reasoning={"effort": reasoning, "summary": "auto"},
         tools=[],
         store=True,
+        text_format=DocxSchemaResponse,
     )
 
     streamed_text = ""
@@ -163,12 +172,17 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         "model": model,
     }
 
-    parsed = None
+    parsed_obj = None
     try:
-        parsed = getattr(final, "output_parsed", None)
+        op = getattr(final, "output_parsed", None)
     except Exception:
-        parsed = None
-    if parsed is None:
+        op = None
+    if op is not None:
+        if hasattr(op, "model_dump"):
+            parsed_obj = op.model_dump()
+        elif isinstance(op, dict):
+            parsed_obj = op
+    if parsed_obj is None:
         json_text = None
         try:
             json_text = getattr(final, "output_text", None)
@@ -178,9 +192,33 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
             json_text = streamed_text
         if json_text:
             try:
-                parsed = json.loads(json_text)
+                parsed_obj = json.loads(json_text)
             except Exception:
-                parsed = json_text
+                parsed_obj = json_text
+
+    if isinstance(parsed_obj, dict):
+        title = parsed_obj.get('title')
+        description = parsed_obj.get('description')
+        schema_obj = parsed_obj.get('schema')
+        if isinstance(schema_obj, str):
+            try:
+                schema_obj = json.loads(schema_obj)
+            except Exception:
+                pass
+        markdown = parsed_obj.get('markdown', '')
+        if isinstance(schema_obj, dict):
+            if title and 'title' not in schema_obj:
+                schema_obj['title'] = title
+            if description and 'description' not in schema_obj:
+                schema_obj['description'] = description
+        result_payload = {
+            'title': title,
+            'description': description,
+            'schema': schema_obj,
+            'markdown': markdown,
+        }
+    else:
+        result_payload = {'title': None, 'description': None, 'schema': parsed_obj, 'markdown': ''}
 
     logger.info("[%s] OpenAI usage: %s", task_id, api_usage)
-    return {"status": "success", "result": parsed, "api_usage": api_usage}
+    return {"status": "success", "result": result_payload, "api_usage": api_usage}
