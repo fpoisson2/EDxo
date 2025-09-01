@@ -6,6 +6,8 @@ import sys
 os.environ.setdefault('SECRET_KEY', 'test')
 os.environ.setdefault('RECAPTCHA_PUBLIC_KEY', 'test')
 os.environ.setdefault('RECAPTCHA_PRIVATE_KEY', 'test')
+os.environ.setdefault('CELERY_BROKER_URL', 'memory://')
+os.environ.setdefault('CELERY_RESULT_BACKEND', 'cache+memory://')
 
 # Ensure that the application's source code is importable.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))

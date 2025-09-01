@@ -44,7 +44,7 @@ def test_docx_to_schema_page_contains_start_endpoint(app, client):
     assert b'onDone' in data
 
 
-def test_parametres_page_has_docx_to_schema_link(app, client):
+def test_parametres_page_has_docx_schema_links(app, client):
     with app.app_context():
         admin = User(
             username='admin2',
@@ -62,6 +62,7 @@ def test_parametres_page_has_docx_to_schema_link(app, client):
     assert resp.status_code == 200
     assert b'/docx_to_schema' in resp.data
     assert b'/settings/docx_to_schema_prompts' in resp.data
+    assert b'/docx_schema' in resp.data
 
 
 def test_docx_to_schema_validate_endpoint(app, client):
@@ -96,7 +97,7 @@ def test_docx_to_schema_validate_endpoint(app, client):
     assert b"n.type === 'object' && n.properties" in resp.data
 
 
-def test_navbar_has_docx_schema_link(app, client):
+def test_navbar_has_no_docx_schema_link(app, client):
     with app.app_context():
         admin = User(
             username='admin4',
@@ -112,7 +113,7 @@ def test_navbar_has_docx_schema_link(app, client):
     _login(client, admin_id)
     resp = client.get('/', follow_redirects=True)
     assert resp.status_code == 200
-    assert b'/docx_schema' in resp.data
+    assert b'/docx_schema' not in resp.data
 
 
 def test_docx_schema_management(app, client):

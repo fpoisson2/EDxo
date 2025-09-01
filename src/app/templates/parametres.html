@@ -71,9 +71,6 @@
                       <a href="{{ url_for('settings.plan_de_cours_prompt_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.plan_de_cours_prompt_settings' %}active{% endif %}">
                         <i class="bi bi-file-earmark-text me-2"></i>Plans de cours
                       </a>
-                      <a href="{{ url_for('settings.docx_to_schema_prompt_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.docx_to_schema_prompt_settings' %}active{% endif %}">
-                        <i class="bi bi-filetype-doc me-2"></i>DOCX → JSON
-                      </a>
                       <a href="{{ url_for('settings.configure_analyse_prompt') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.configure_analyse_prompt' %}active{% endif %}">
                         <i class="bi bi-chat-text me-2"></i>Analyse des plans de cours
                       </a>
@@ -85,6 +82,30 @@
                       </a>
                       <a href="{{ url_for('settings.manage_openai_models') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.manage_openai_models' %}active{% endif %}">
                         <i class="bi bi-cpu me-2"></i>Modèles OpenAI
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section Schéma de données -->
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#dataSchemaSettings">
+                    <i class="bi bi-diagram-3 me-2"></i>Schéma de données
+                  </button>
+                </h2>
+                <div id="dataSchemaSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
+                  <div class="accordion-body p-0">
+                    <div class="list-group list-group-flush">
+                      <a href="{{ url_for('main.docx_schema_pages') }}" class="list-group-item list-group-item-action {% if request.endpoint in ('main.docx_schema_pages', 'main.docx_schema_page_view', 'main.docx_schema_page_json') %}active{% endif %}">
+                        <i class="bi bi-file-earmark-code me-2"></i>Schémas DOCX
+                      </a>
+                      <a href="{{ url_for('main.docx_to_schema_page') }}" class="list-group-item list-group-item-action {% if request.endpoint.startswith('main.docx_to_schema') %}active{% endif %}">
+                        <i class="bi bi-file-earmark-word me-2"></i>DOCX → JSON Schema
+                      </a>
+                      <a href="{{ url_for('settings.docx_to_schema_prompt_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.docx_to_schema_prompt_settings' %}active{% endif %}">
+                        <i class="bi bi-filetype-doc me-2"></i>Prompts DOCX → JSON
                       </a>
                     </div>
                   </div>
@@ -166,9 +187,6 @@
                       <span class="d-none">Espace développeur</span>
                       <a href="{{ url_for('settings.developer') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-code-slash me-2"></i>Espace développeur
-                      </a>
-                      <a href="{{ url_for('main.docx_to_schema_page') }}" class="list-group-item list-group-item-action">
-                        <i class="bi bi-file-earmark-word me-2"></i>DOCX → JSON Schema
                       </a>
                       <a href="{{ url_for('main.manage_users') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-people me-2"></i>Gestion utilisateurs
