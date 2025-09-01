@@ -5,6 +5,7 @@ Ce référentiel utilise des agents/outils pour automatiser des modifications de
 ## Règle essentielle
 - Toujours écrire des tests pertinents (pytest) pour couvrir le correctif ou la fonctionnalité ajoutée.
 - Toujours exécuter la suite de tests localement avec `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q` pour accélérer l'exécution et s'assurer qu'elle passe avant de conclure la tâche.
+- Inclure et valider un jeton CSRF pour toute requête POST/PUT/DELETE modifiant l'état (champ `csrf_token` ou en-tête `X-CSRFToken`).
 
 ## Détails pratiques
 - Emplacement des tests: placez-les sous `tests/` avec le préfixe `test_*.py`.

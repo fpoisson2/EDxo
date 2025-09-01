@@ -11,10 +11,11 @@
       {% for p in pages %}
       <tr>
         <td>{{ p.id }}</td>
-        <td>{{ p.title }}</td>
+        <td id="title-{{ p.id }}">{{ p.title }}</td>
         <td>
           <a class="btn btn-sm btn-primary" href="{{ url_for('main.docx_schema_page_view', page_id=p.id) }}">Voir</a>
           <a class="btn btn-sm btn-secondary" href="{{ url_for('main.docx_schema_page_json', page_id=p.id) }}">JSON</a>
+          <button type="button" class="btn btn-sm btn-warning" onclick="renameSchema({{ p.id }})">Renommer</button>
           <form method="POST" action="{{ url_for('main.docx_schema_page_delete', page_id=p.id) }}" class="d-inline">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-sm btn-danger" onclick="return confirm('Supprimer ce schéma?')">Supprimer</button>
@@ -28,4 +29,23 @@
   <p>Aucun schéma validé.</p>
   {% endif %}
 </div>
+<script>
+async function renameSchema(id) {
+  const titleCell = document.getElementById(`title-${id}`);
+  const currentTitle = titleCell.textContent.trim();
+  const newTitle = prompt('Nouveau titre:', currentTitle);
+  if (!newTitle || newTitle === currentTitle) return;
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+  const resp = await fetch(`/docx_schema/${id}/rename`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken, 'X-CSRF-Token': csrfToken },
+    body: JSON.stringify({ title: newTitle })
+  });
+  if (resp.ok) {
+    titleCell.textContent = newTitle;
+  } else {
+    alert('Erreur lors de la mise à jour du titre');
+  }
+}
+</script>
 {% endblock %}
