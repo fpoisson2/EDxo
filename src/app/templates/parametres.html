@@ -107,6 +107,11 @@
                         <a href="{{ url_for('main.docx_schema_pages') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'main.docx_schema_pages' %}active{% endif %}">
                           <i class="bi bi-collection me-2"></i>Liste des schémas de données
                         </a>
+                        {% for s in docx_schemas %}
+                        <a href="{{ url_for('settings.docx_schema_prompt_settings', page_id=s.id) }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.docx_schema_prompt_settings' and request.view_args.get('page_id') == s.id %}active{% endif %}">
+                          <i class="bi bi-filetype-json me-2"></i>Prompts – {{ s.title }}
+                        </a>
+                        {% endfor %}
                     </div>
                   </div>
                 </div>

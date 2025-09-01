@@ -43,6 +43,7 @@ from ..models import (
     SectionAISettings,
     OcrPromptSettings,
     PlanCadreImportPromptSettings,
+    DocxSchemaPage,
 )
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
@@ -829,7 +830,8 @@ def edit_plan_de_cours_prompt(prompt_id):
 @login_required  # Cette route nécessite que l'utilisateur soit connecté
 @ensure_profile_completed
 def parametres():
-    return render_template('parametres.html')
+    docx_schemas = DocxSchemaPage.query.order_by(DocxSchemaPage.created_at.desc()).all()
+    return render_template('parametres.html', docx_schemas=docx_schemas)
 
 @settings_bp.route("/gestion-plans-cours", methods=["GET"])
 @roles_required('admin', 'coordo')
@@ -943,3 +945,28 @@ def docx_to_schema_prompt_settings():
         flash('Paramètres enregistrés', 'success')
         return redirect(url_for('settings.docx_to_schema_prompt_settings'))
     return render_template('settings/docx_to_schema_prompts.html', ai_form=ai_form)
+
+
+@settings_bp.route('/docx_schema/<int:page_id>/prompts', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+@ensure_profile_completed
+def docx_schema_prompt_settings(page_id):
+    """Configurer le prompt système et les paramètres IA pour un schéma de données spécifique."""
+    page = DocxSchemaPage.query.get_or_404(page_id)
+    section_key = f'docx_schema_{page_id}'
+    sa = SectionAISettings.get_for(section_key)
+    ai_form = SectionAISettingsForm(obj=sa)
+    if request.method == 'GET' and not (sa.system_prompt and sa.system_prompt.strip()):
+        ai_form.system_prompt.data = (
+            "Tu es un assistant qui retourne une sortie strictement conforme au schéma JSON fourni."
+        )
+    if request.method == 'POST' and ai_form.validate_on_submit():
+        sa.system_prompt = ai_form.system_prompt.data or None
+        sa.ai_model = ai_form.ai_model.data or None
+        sa.reasoning_effort = ai_form.reasoning_effort.data or None
+        sa.verbosity = ai_form.verbosity.data or None
+        db.session.commit()
+        flash('Paramètres enregistrés', 'success')
+        return redirect(url_for('settings.docx_schema_prompt_settings', page_id=page_id))
+    return render_template('settings/docx_schema_prompts.html', ai_form=ai_form, page=page)

@@ -57,7 +57,8 @@ from ..models import (
     ElementCompetenceParCours,
     Cours,
     CoursProgramme,
-    ListeCegep
+    ListeCegep,
+    DocxSchemaPage
 )
 from ...extensions import limiter
 from ...utils.decorator import role_required, roles_required, ensure_profile_completed
@@ -85,7 +86,8 @@ def version():
 @login_required
 @ensure_profile_completed
 def parametres_alias():
-    return render_template('parametres.html')
+    docx_schemas = DocxSchemaPage.query.order_by(DocxSchemaPage.created_at.desc()).all()
+    return render_template('parametres.html', docx_schemas=docx_schemas)
 
 # Public: Health endpoint
 @main.route('/health')
