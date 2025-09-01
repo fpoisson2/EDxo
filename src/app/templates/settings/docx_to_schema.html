@@ -1,0 +1,54 @@
+{% extends "parametres.html" %}
+{% block parametres_content %}
+<h1>Conversion DOCX en JSON Schema</h1>
+<form id="docxSchemaForm" method="POST" enctype="multipart/form-data">
+  {{ form.hidden_tag() }}
+  <div class="mb-3">
+    {{ form.file.label(class_='form-label') }}
+    {{ form.file(class_='form-control') }}
+  </div>
+  <div>{{ form.submit(class_='btn btn-primary') }}</div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('docxSchemaForm');
+  if (!form) return;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    try {
+      await window.EDxoTasks.startCeleryTask('/docx_to_schema/start', {
+        method: 'POST',
+        body: fd,
+        headers: { 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf },
+        credentials: 'same-origin'
+      }, {
+        title: 'Conversion DOCX',
+        startMessage: 'Conversion en cours…',
+        openModal: true,
+        onDone: async (payload, state) => {
+          if (state === 'SUCCESS' && payload && payload.result) {
+            await fetch('/docx_to_schema/preview', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrf,
+                'X-CSRF-Token': csrf
+              },
+              body: JSON.stringify({ schema: payload.result })
+            });
+            window.location.href = '/docx_to_schema/preview';
+          }
+        }
+      });
+    } catch (err) {
+      console.error('Erreur conversion DOCX', err);
+      try { addNotification('Erreur conversion', 'error'); } catch (_) {}
+    }
+  });
+});
+</script>
+{% endblock %}

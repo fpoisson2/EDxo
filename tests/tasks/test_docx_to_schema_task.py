@@ -100,7 +100,8 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch, caplog):
 
     dummy = DummySelf()
     orig = module.docx_to_json_schema_task.__wrapped__.__func__
-    result = orig(dummy, str(docx_path), 'gpt-4o-mini', 'medium', 'medium', uid, FakeOpenAI)
+    prompt = "Propose un schéma JSON simple"
+    result = orig(dummy, str(docx_path), 'gpt-4o-mini', 'medium', 'medium', prompt, uid, FakeOpenAI)
     assert result['status'] == 'success'
     assert any('stream_chunk' in u for u in dummy.updates)
     assert any(u.get('stream_chunk') and u.get('message') == 'Analyse en cours...' for u in dummy.updates)

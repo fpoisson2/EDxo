@@ -26,22 +26,32 @@ def test_docx_to_schema_page_contains_start_endpoint(app, client):
     assert resp.status_code == 200
     data = resp.data
     assert b'/docx_to_schema/start' in data
-    assert b'id="schemaResultContainer"' in data
-    assert b'id="schemaAccordion"' in data
-    assert b'id="schemaResultTree"' in data
-    assert b'id="schemaResultGraph"' in data
-    assert b'id="schemaValidateBtn"' in data
-    assert b'renderSchemaAccordion' in data
-    assert b'renderSchemaGraph' in data
-    assert b'normalizePlanSchema' in data
-    assert b'n.parts' in data
-    assert b'n.fields' in data
-    assert b"n.type === 'object' && n.properties" in data
-    assert b'd3.zoom' in data
-    assert b'd3.tree' in data
-    assert b'd3.drag' in data
-    assert b'legend' in data
+    assert b'name="model"' not in data
+    assert b'name="reasoning_level"' not in data
+    assert b'name="verbosity"' not in data
     assert b'onDone' in data
+
+
+def test_docx_to_schema_preview_page(app, client):
+    with app.app_context():
+        admin = User(
+            username='adminp',
+            password=generate_password_hash('pw'),
+            role='admin',
+            is_first_connexion=False,
+            openai_key='sk'
+        )
+        db.session.add(admin)
+        db.session.add(OpenAIModel(name='gpt-4o-mini', input_price=0.0, output_price=0.0))
+        db.session.commit()
+        admin_id = admin.id
+    _login(client, admin_id)
+    schema = {'title': 'Preview', 'type': 'object'}
+    client.post('/docx_to_schema/preview', json={'schema': schema})
+    resp = client.get('/docx_to_schema/preview')
+    assert resp.status_code == 200
+    assert b'id="schemaAccordion"' in resp.data
+    assert b'id="schemaValidateBtn"' in resp.data
 
 
 def test_parametres_page_has_docx_schema_links(app, client):
@@ -97,7 +107,7 @@ def test_docx_to_schema_validate_endpoint(app, client):
     assert b"n.type === 'object' && n.properties" in resp.data
 
 
-def test_navbar_has_no_docx_schema_link(app, client):
+def test_navbar_updates_with_schema_links(app, client):
     with app.app_context():
         admin = User(
             username='admin4',
@@ -112,8 +122,12 @@ def test_navbar_has_no_docx_schema_link(app, client):
         admin_id = admin.id
     _login(client, admin_id)
     resp = client.get('/', follow_redirects=True)
-    assert resp.status_code == 200
     assert b'/docx_schema' not in resp.data
+    # add a schema page
+    resp = client.post('/docx_to_schema/validate', json={'schema': {'title': 'Link', 'type': 'object'}})
+    page_id = resp.get_json()['page_id']
+    resp = client.get('/', follow_redirects=True)
+    assert f'/docx_schema/{page_id}'.encode() in resp.data
 
 
 def test_docx_schema_management(app, client):
@@ -162,4 +176,8 @@ def test_docx_to_schema_prompts_page(app, client):
     _login(client, admin_id)
     resp = client.get('/settings/docx_to_schema_prompts')
     assert resp.status_code == 200
-    assert b'Prompts DOCX' in resp.data
+    assert b'DOCX \xe2\x86\x92 JSON' in resp.data
+    assert b'Prompt syst' in resp.data
+    assert b'Mod' in resp.data
+    assert b'Niveau de raisonnement' in resp.data
+    assert b'Verbosit' in resp.data

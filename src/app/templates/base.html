@@ -325,6 +325,13 @@
                   <i class="bi bi-gear me-2"></i> Gestion de programme
                 </a>
               </li>
+              {% for p in docx_schema_pages %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('main.docx_schema_page_view', page_id=p.id) }}">
+                  <i class="bi bi-diagram-3 me-2"></i>{{ p.title }}
+                </a>
+              </li>
+              {% endfor %}
             </ul>
             <div class="user-info ms-3 d-flex align-items-center">
               <!-- Tâches en cours -->

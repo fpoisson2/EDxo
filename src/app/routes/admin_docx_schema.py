@@ -1,12 +1,12 @@
 import os
 import re
 import time
-from flask import render_template, request, jsonify, current_app, redirect, url_for
+from flask import render_template, request, jsonify, current_app, redirect, url_for, session
 from flask_login import login_required, current_user
 
 from ..forms import DocxToSchemaForm
 from ..tasks.docx_to_schema import docx_to_json_schema_task
-from ..models import db, DocxSchemaPage
+from ..models import db, DocxSchemaPage, SectionAISettings
 from .routes import main
 from ...utils.decorator import role_required, ensure_profile_completed
 
@@ -16,7 +16,7 @@ from ...utils.decorator import role_required, ensure_profile_completed
 @ensure_profile_completed
 def docx_to_schema_page():
     form = DocxToSchemaForm()
-    return render_template('docx_to_schema.html', form=form)
+    return render_template('settings/docx_to_schema.html', form=form)
 
 
 @main.route('/docx_to_schema/start', methods=['POST'])
@@ -38,12 +38,32 @@ def docx_to_schema_start():
     stored_path = os.path.join(upload_dir, stored_name)
     file.save(stored_path)
 
-    model = form.model.data or 'gpt-4o-mini'
-    reasoning = form.reasoning_level.data or 'medium'
-    verbosity = form.verbosity.data or 'medium'
+    sa = SectionAISettings.get_for('docx_to_schema')
+    model = sa.ai_model or 'gpt-4o-mini'
+    reasoning = sa.reasoning_effort or 'medium'
+    verbosity = sa.verbosity or 'medium'
+    system_prompt = sa.system_prompt or (
+        "Propose un schéma JSON simple, cohérent et normalisé pour représenter parfaitement ce document. "
+        "Retourne un schéma avec les champs titre du champ et description du champ. "
+        "Le schéma devrait parfaitement représenter la séquence et la hiérarchie des sections. Ne retourne que le schéma."
+    )
 
-    task = docx_to_json_schema_task.delay(stored_path, model, reasoning, verbosity, current_user.id)
+    task = docx_to_json_schema_task.delay(stored_path, model, reasoning, verbosity, system_prompt, current_user.id)
     return jsonify({'task_id': task.id}), 202
+
+
+@main.route('/docx_to_schema/preview', methods=['GET', 'POST'])
+@role_required('admin')
+@ensure_profile_completed
+def docx_to_schema_preview_temp():
+    if request.method == 'POST':
+        data = request.get_json() or {}
+        session['pending_docx_schema'] = data.get('schema')
+        return jsonify({'ok': True})
+    schema = session.get('pending_docx_schema')
+    if not schema:
+        return redirect(url_for('main.docx_to_schema_page'))
+    return render_template('docx_schema_validate.html', schema=schema)
 
 
 @main.route('/docx_to_schema/validate', methods=['POST'])
@@ -60,6 +80,7 @@ def docx_to_schema_validate():
     page = DocxSchemaPage(title=title, json_schema=schema)
     db.session.add(page)
     db.session.commit()
+    session.pop('pending_docx_schema', None)
     return jsonify({'success': True, 'page_id': page.id}), 201
 
 @main.route('/docx_schema', methods=['GET'])

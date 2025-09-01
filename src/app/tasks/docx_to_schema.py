@@ -71,7 +71,7 @@ def _docx_to_pdf(docx_path: str) -> str:
     return pdf_path
 
 @shared_task(bind=True, name="app.tasks.docx_to_schema.convert")
-def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, verbosity: str, user_id: int, openai_cls=OpenAI):
+def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, verbosity: str, system_prompt: str, user_id: int, openai_cls=OpenAI):
     """Convert a DOCX file to a JSON Schema using OpenAI's file API with streaming."""
     task_id = self.request.id
     logger.info("[%s] Starting DOCX→Schema for %s", task_id, docx_path)
@@ -96,11 +96,7 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
     input_blocks = [
         {
             "role": "system",
-            "content": [{"type": "input_text", "text": (
-                "Propose un schéma JSON simple, cohérent et normalisé pour représenter parfaitement ce document. "
-                "Retourne un schéma avec les champs titre du champ et description du champ. "
-                "Le schéma devrait parfaitement représenter la séquence et la hiérarchie des sections. Ne retourne que le schéma."
-            )}],
+            "content": [{"type": "input_text", "text": system_prompt}],
         },
         {
             "role": "user",

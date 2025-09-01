@@ -298,6 +298,15 @@ def create_app(testing=False):
         # Expose csrf_token() helper globally for templates
         return dict(has_endpoint=has_endpoint, asset_url=asset_url, csrf_token=generate_csrf)
 
+    @app.context_processor
+    def inject_docx_schema_pages():
+        try:
+            from .models import DocxSchemaPage
+            pages = DocxSchemaPage.query.order_by(DocxSchemaPage.created_at.asc()).all()
+        except Exception:
+            pages = []
+        return dict(docx_schema_pages=pages)
+
     @app.before_request
     def before_request():
         # Allow static files and explicitly public routes to bypass auth redirect
