@@ -154,6 +154,12 @@ def test_docx_schema_management(app, client):
     # List page includes it
     resp = client.get('/docx_schema')
     assert b'>Manage<' in resp.data
+    # Rename schema
+    resp = client.post(f'/docx_schema/{page_id}/rename', json={'title': 'Renamed'})
+    assert resp.status_code == 200
+    resp = client.get('/docx_schema')
+    assert b'>Renamed<' in resp.data
+    assert b'>Manage<' not in resp.data
     # Edit schema
     resp = client.post(f'/docx_schema/{page_id}/edit', json={'schema': {'title': 'Updated', 'type': 'object'}})
     assert resp.status_code == 200
@@ -167,7 +173,7 @@ def test_docx_schema_management(app, client):
     resp = client.post(f'/docx_schema/{page_id}/delete')
     assert resp.status_code == 302
     resp = client.get('/docx_schema')
-    assert b'>Manage<' not in resp.data
+    assert b'>Updated<' not in resp.data
 
 
 def test_docx_to_schema_prompts_page(app, client):

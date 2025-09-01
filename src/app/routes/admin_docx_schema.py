@@ -151,6 +151,23 @@ def docx_schema_page_edit(page_id):
     return jsonify({'success': True})
 
 
+@main.route('/docx_schema/<int:page_id>/rename', methods=['POST'])
+@role_required('admin')
+@ensure_profile_completed
+def docx_schema_page_rename(page_id):
+    """Met à jour uniquement le titre d'un schéma existant."""
+    page = DocxSchemaPage.query.get_or_404(page_id)
+    data = request.get_json() or {}
+    title = data.get('title')
+    if not title:
+        return jsonify({'error': 'Titre manquant.'}), 400
+    page.title = title
+    if isinstance(page.json_schema, dict):
+        page.json_schema['title'] = title
+    db.session.commit()
+    return jsonify({'success': True})
+
+
 @main.route('/docx_schema/<int:page_id>/delete', methods=['POST'])
 @role_required('admin')
 @ensure_profile_completed
