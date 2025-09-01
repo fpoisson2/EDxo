@@ -47,7 +47,7 @@ def test_docx_to_schema_preview_page(app, client):
         admin_id = admin.id
     _login(client, admin_id)
     schema = {'title': 'Preview', 'type': 'object'}
-    client.post('/docx_to_schema/preview', json={'schema': schema, 'markdown': '# Titre\nContenu'})
+    client.post('/docx_to_schema/preview', json={'schema': schema, 'markdown': '# Titre\nContenu', 'title': 'Preview', 'description': 'Desc'})
     resp = client.get('/docx_to_schema/preview')
     assert resp.status_code == 200
     assert b'id="schemaAccordion"' in resp.data
@@ -91,7 +91,7 @@ def test_docx_to_schema_validate_endpoint(app, client):
         db.session.commit()
         admin_id = admin.id
     _login(client, admin_id)
-    payload = {'schema': {'title': 'Sample', 'type': 'object'}, 'markdown': '# md'}
+    payload = {'schema': {'type': 'object'}, 'markdown': '# md', 'title': 'Sample', 'description': 'Desc'}
     resp = client.post('/docx_to_schema/validate', json=payload)
     assert resp.status_code == 201
     data = resp.get_json()

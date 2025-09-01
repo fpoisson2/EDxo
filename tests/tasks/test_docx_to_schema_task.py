@@ -53,6 +53,8 @@ class FakeResponses:
             output_tokens = 2
         class Resp:
             output_parsed = {
+                'title': 'T',
+                'description': 'D',
                 'schema': {
                     'title': 'T',
                     'description': 'D',
@@ -109,10 +111,14 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch, caplog):
     assert any('stream_chunk' in u for u in dummy.updates)
     assert any(u.get('stream_chunk') and u.get('message') == 'Analyse en cours...' for u in dummy.updates)
     assert any(u.get('message') == 'Résumé du raisonnement' for u in dummy.updates)
+    assert result['result']['title'] == 'T'
+    assert result['result']['description'] == 'D'
     assert result['result']['schema']['title'] == 'T'
     assert result['result']['markdown'] == '# md'
     called_kwargs = FakeOpenAI.last_instance.responses.kwargs
     assert called_kwargs['store'] is True
-    assert 'format' not in called_kwargs.get('text', {})
+    assert 'response_format' in called_kwargs
+    props = called_kwargs['response_format']['json_schema']['schema']['properties']
+    assert set(props.keys()) == {'title', 'description', 'schema', 'markdown'}
     assert 'Propose un schéma JSON simple' in called_kwargs['input'][0]['content'][0]['text']
     assert 'OpenAI usage' in caplog.text

@@ -103,6 +103,23 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
             "content": [{"type": "input_file", "file_id": uploaded.id}],
         },
     ]
+    response_format = {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "docx_schema_result",
+            "schema": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["title", "description", "schema", "markdown"],
+                "properties": {
+                    "title": {"type": "string"},
+                    "description": {"type": "string"},
+                    "schema": {"type": "object"},
+                    "markdown": {"type": "string"},
+                },
+            },
+        },
+    }
     request_kwargs = dict(
         model=model,
         input=input_blocks,
@@ -110,6 +127,7 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         reasoning={"effort": reasoning, "summary": "auto"},
         tools=[],
         store=True,
+        response_format=response_format,
     )
 
     streamed_text = ""
@@ -178,10 +196,24 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
             except Exception:
                 parsed = json_text
 
-    if isinstance(parsed, dict) and 'schema' in parsed and 'markdown' in parsed:
-        result_payload = parsed
+    if isinstance(parsed, dict):
+        title = parsed.get('title')
+        description = parsed.get('description')
+        schema_obj = parsed.get('schema')
+        markdown = parsed.get('markdown', '')
+        if isinstance(schema_obj, dict):
+            if title and 'title' not in schema_obj:
+                schema_obj['title'] = title
+            if description and 'description' not in schema_obj:
+                schema_obj['description'] = description
+        result_payload = {
+            'title': title,
+            'description': description,
+            'schema': schema_obj,
+            'markdown': markdown,
+        }
     else:
-        result_payload = {'schema': parsed, 'markdown': ''}
+        result_payload = {'title': None, 'description': None, 'schema': parsed, 'markdown': ''}
 
     logger.info("[%s] OpenAI usage: %s", task_id, api_usage)
     return {"status": "success", "result": result_payload, "api_usage": api_usage}

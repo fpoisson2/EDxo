@@ -12,9 +12,10 @@ from ...utils.decorator import role_required, ensure_profile_completed
 
 DEFAULT_DOCX_TO_SCHEMA_PROMPT = (
     "Propose un schéma JSON simple, cohérent et normalisé pour représenter parfaitement ce document. "
-    "Retourne un objet JSON avec deux clés : `schema` contenant le schéma et `markdown` contenant une version Markdown fidèle au document. "
-    "Chaque champ du schéma doit inclure un titre et une description. "
-    "Le schéma doit représenter parfaitement la séquence et la hiérarchie des sections. Ne retourne que cet objet JSON."
+    "Retourne un objet structuré avec quatre clés : `title`, `description`, `schema` et `markdown`. "
+    "`schema` contient le schéma JSON complet, `markdown` une version Markdown fidèle au document. "
+    "Chaque champ du schéma doit inclure un titre et une description et la hiérarchie doit être respectée. "
+    "Ne retourne que cet objet JSON."
 )
 
 
@@ -61,14 +62,26 @@ def docx_to_schema_start():
 def docx_to_schema_preview_temp():
     if request.method == 'POST':
         data = request.get_json() or {}
-        session['pending_docx_schema'] = data.get('schema')
+        schema = data.get('schema')
+        title = data.get('title')
+        description = data.get('description')
+        if isinstance(schema, dict):
+            if title and 'title' not in schema:
+                schema['title'] = title
+            if description and 'description' not in schema:
+                schema['description'] = description
+        session['pending_docx_schema'] = schema
         session['pending_docx_markdown'] = data.get('markdown')
+        session['pending_docx_title'] = title
+        session['pending_docx_description'] = description
         return jsonify({'ok': True})
     schema = session.get('pending_docx_schema')
     markdown = session.get('pending_docx_markdown')
+    title = session.get('pending_docx_title')
+    description = session.get('pending_docx_description')
     if not schema:
         return redirect(url_for('main.docx_to_schema_page'))
-    return render_template('docx_schema_validate.html', schema=schema, markdown=markdown)
+    return render_template('docx_schema_validate.html', schema=schema, markdown=markdown, title=title, description=description)
 
 
 @main.route('/docx_to_schema/validate', methods=['POST'])
@@ -82,12 +95,20 @@ def docx_to_schema_validate():
     if not schema:
         return jsonify({'error': 'Schéma manquant.'}), 400
 
-    title = schema.get('title') or schema.get('titre') or f"Schéma {int(time.time())}"
+    title = data.get('title') or schema.get('title') or schema.get('titre') or f"Schéma {int(time.time())}"
+    description = data.get('description') or schema.get('description')
+    if isinstance(schema, dict):
+        if title and 'title' not in schema:
+            schema['title'] = title
+        if description and 'description' not in schema:
+            schema['description'] = description
     page = DocxSchemaPage(title=title, json_schema=schema, markdown_content=markdown)
     db.session.add(page)
     db.session.commit()
     session.pop('pending_docx_schema', None)
     session.pop('pending_docx_markdown', None)
+    session.pop('pending_docx_title', None)
+    session.pop('pending_docx_description', None)
     return jsonify({'success': True, 'page_id': page.id}), 201
 
 @main.route('/docx_schema', methods=['GET'])

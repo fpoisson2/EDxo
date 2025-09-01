@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="container mt-4">
-  <h1>{{ schema.title or 'Schéma' }}</h1>
+  <h1>{{ title or schema.title or 'Schéma' }}</h1>
   <div class="accordion" id="schemaAccordion">
     <div class="accordion-item">
       <h2 class="accordion-header" id="schemaHeadingTitle">
@@ -66,6 +66,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const schemaData = {{ schema | tojson }};
   const markdownData = {{ markdown | tojson }};
+  const titleData = {{ title | tojson }};
+  const descData = {{ description | tojson }};
   const titleEl = document.getElementById('schemaResultTitle');
   const descEl = document.getElementById('schemaResultDescription');
   const schemaEl = document.getElementById('schemaResultJson');
@@ -256,6 +258,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return node;
   }
 
+  if (titleData && !schemaData.title) schemaData.title = titleData;
+  if (descData && !schemaData.description) schemaData.description = descData;
   function renderAll() {
     const schemaObj = normalizePlanSchema(schemaData.json_schema || schemaData);
     titleEl.textContent = schemaData.title || schemaData.titre || schemaObj.title || '';
@@ -268,7 +272,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderSchemaGraph(schemaObj);
   }
   renderAll();
-
   const validateBtn = document.getElementById('schemaValidateBtn');
   if (validateBtn) {
     validateBtn.addEventListener('click', async () => {
@@ -280,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
           'X-CSRFToken': csrf,
           'X-CSRF-Token': csrf,
         },
-        body: JSON.stringify({ schema: schemaData, markdown: markdownData }),
+        body: JSON.stringify({ schema: schemaData, markdown: markdownData, title: titleData, description: descData }),
       });
       const data = await resp.json();
       if (data.page_id) {
