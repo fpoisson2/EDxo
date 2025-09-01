@@ -1,5 +1,6 @@
 from werkzeug.security import generate_password_hash
 from src.app.models import User, db, OpenAIModel
+from html import unescape
 
 
 def _login(client, user_id):
@@ -300,11 +301,11 @@ def test_docx_schema_preview_plan_form_order_and_nested(app, client):
     assert resp.status_code == 201
     page_id = resp.get_json()['page_id']
     resp = client.get(f'/docx_schema/{page_id}')
-    data = resp.data.decode('utf-8')
+    data = unescape(resp.data.decode('utf-8'))
     assert 'markdownOrderMap' in data
     assert 'buildMarkdownOrderMap' in data
     assert 'markdownOrderMap = buildMarkdownOrderMap(markdownData);' in data
     assert 'path.replace(/\\[[0-9]+\\]/g, \'\')' in data
     assert data.count('getMdOrder(') >= 3
     assert 'position-absolute top-0 end-0 remove-form-array-item' in data
-    assert 'Section' in data
+    assert 'normalizeName(' in data
