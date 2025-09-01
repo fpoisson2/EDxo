@@ -302,7 +302,8 @@ def test_docx_schema_preview_plan_form_order_and_nested(app, client):
     resp = client.get(f'/docx_schema/{page_id}')
     data = resp.data.decode('utf-8')
     assert 'markdownOrderMap' in data
-    assert 'getMdOrder(path)' in data
+    assert 'buildMarkdownOrderMap' in data
+    assert 'markdownOrderMap = buildMarkdownOrderMap(markdownData);' in data
     assert 'path.replace(/\\[[0-9]+\\]/g, \'\')' in data
     assert data.count('getMdOrder(') >= 3
     assert 'position-absolute top-0 end-0 remove-form-array-item' in data

@@ -125,9 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const editTextarea = document.getElementById('schemaEditTextarea');
   const editSaveBtn = document.getElementById('schemaEditSaveBtn');
   const planFormEl = document.getElementById('planCadreForm');
-  const markdownOrderMap = (() => {
+  let markdownOrderMap = {};
+  function buildMarkdownOrderMap(markdown) {
     try {
-      const tokens = marked.lexer(markdownData || '');
+      const tokens = marked.lexer(markdown || '');
       const map = { root: [] };
       const stack = [];
       function addOrder(path, name) {
@@ -159,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
       process(tokens);
       return map;
     } catch (e) { return { root: [] }; }
-  })();
+  }
   function getMdOrder(path) {
     const key = path.replace(/\[[0-9]+\]/g, '') || 'root';
     return markdownOrderMap[key] || [];
@@ -258,7 +259,9 @@ document.addEventListener('DOMContentLoaded', () => {
         container.appendChild(legend);
       }
       for (const [key, prop] of entries) {
-        renderPlanCadreForm(prop, container, path === 'root' ? key : `${path}.${key}`);
+        const childName = (prop.title || key).toLowerCase();
+        const childPath = path === 'root' ? childName : `${path}.${childName}`;
+        renderPlanCadreForm(prop, container, childPath);
       }
       if (path !== 'root') parent.appendChild(container);
       return;
@@ -281,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (schema.items.type === 'object') {
           const wrapper = document.createElement('div');
           wrapper.className = 'border rounded p-2 position-relative';
-          renderPlanCadreForm(schema.items, wrapper, `${path}[${idx}]`);
+          renderPlanCadreForm(schema.items, wrapper, path);
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'btn btn-outline-danger btn-sm position-absolute top-0 end-0 remove-form-array-item';
@@ -395,7 +398,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return ia - ib;
       });
       for (const [key, val] of entries) {
-        renderSchemaAccordion(val, inner, key, `${path}.${key}`, childRequired);
+        const childName = (val.title || key).toLowerCase();
+        const childPath = path === 'root' ? childName : `${path}.${childName}`;
+        renderSchemaAccordion(val, inner, key, childPath, childRequired);
       }
     } else if (schema.type === 'array' && schema.items) {
       const list = document.createElement('div');
@@ -410,7 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const idx = list.children.length;
         const wrapper = document.createElement('div');
         wrapper.className = 'mb-2';
-        renderSchemaAccordion(schema.items, wrapper, `${name}[${idx}]`, `${path}[${idx}]`);
+          renderSchemaAccordion(schema.items, wrapper, `${name}[${idx}]`, path, schema.items.required || []);
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
         removeBtn.className = 'btn btn-sm btn-outline-danger remove-array-item ms-2';
@@ -504,11 +509,12 @@ document.addEventListener('DOMContentLoaded', () => {
           return ia - ib;
         });
         out.children = entries.map(([k,v]) => {
-          const childPath = path === 'root' ? k : `${path}.${k}`;
+          const childName = (v.title || k).toLowerCase();
+          const childPath = path === 'root' ? childName : `${path}.${childName}`;
           return walk(v, k, childPath);
         });
       } else if (node.type === 'array' && node.items) {
-        const childPath = path === 'root' ? name : `${path}.${name}`;
+        const childPath = path;
         out.children = [walk(node.items, name + '[]', childPath)];
       }
       return out;
@@ -548,6 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentSchema = normalizePlanSchema(schemaData);
   function renderAll() {
+    markdownOrderMap = buildMarkdownOrderMap(markdownData);
     pageTitleEl.textContent = currentSchema.title || '';
     document.title = currentSchema.title || document.title;
     titleEl.textContent = currentSchema.title || '';
