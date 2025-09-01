@@ -26,6 +26,16 @@
       </div>
     </div>
     <div class="accordion-item">
+      <h2 class="accordion-header" id="schemaHeadingMarkdown">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schemaCollapseMarkdown" aria-expanded="false" aria-controls="schemaCollapseMarkdown">
+          Markdown
+        </button>
+      </h2>
+      <div id="schemaCollapseMarkdown" class="accordion-collapse collapse" aria-labelledby="schemaHeadingMarkdown" data-bs-parent="#schemaAccordion">
+        <div class="accordion-body" id="schemaResultMarkdown"></div>
+      </div>
+    </div>
+    <div class="accordion-item">
       <h2 class="accordion-header" id="schemaHeadingSchema">
         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schemaCollapseSchema" aria-expanded="false" aria-controls="schemaCollapseSchema">
           JSON Schema
@@ -51,14 +61,17 @@
   @media (max-width: 576px) { #schemaResultGraph svg { height: 300px; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const schemaData = {{ schema | tojson }};
+  const markdownData = {{ markdown | tojson }};
   const titleEl = document.getElementById('schemaResultTitle');
   const descEl = document.getElementById('schemaResultDescription');
   const schemaEl = document.getElementById('schemaResultJson');
   const schemaTreeEl = document.getElementById('schemaResultTree');
   const schemaGraphEl = document.getElementById('schemaResultGraph');
+  const markdownEl = document.getElementById('schemaResultMarkdown');
 
   function normalizePlanSchema(node) {
     if (!node || typeof node !== 'object') return node;
@@ -248,6 +261,9 @@ document.addEventListener('DOMContentLoaded', () => {
     titleEl.textContent = schemaData.title || schemaData.titre || schemaObj.title || '';
     descEl.textContent = schemaData.description || schemaObj.description || '';
     schemaEl.textContent = JSON.stringify(schemaData, null, 2);
+    if (markdownEl && markdownData) {
+      markdownEl.innerHTML = window.marked.parse(markdownData);
+    }
     renderSchemaAccordion(schemaObj, schemaTreeEl, 'root', 'root');
     renderSchemaGraph(schemaObj);
   }
@@ -264,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
           'X-CSRFToken': csrf,
           'X-CSRF-Token': csrf,
         },
-        body: JSON.stringify({ schema: schemaData }),
+        body: JSON.stringify({ schema: schemaData, markdown: markdownData }),
       });
       const data = await resp.json();
       if (data.page_id) {

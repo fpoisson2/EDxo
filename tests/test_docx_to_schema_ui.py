@@ -47,11 +47,12 @@ def test_docx_to_schema_preview_page(app, client):
         admin_id = admin.id
     _login(client, admin_id)
     schema = {'title': 'Preview', 'type': 'object'}
-    client.post('/docx_to_schema/preview', json={'schema': schema})
+    client.post('/docx_to_schema/preview', json={'schema': schema, 'markdown': '# Titre\nContenu'})
     resp = client.get('/docx_to_schema/preview')
     assert resp.status_code == 200
     assert b'id="schemaAccordion"' in resp.data
     assert b'id="schemaValidateBtn"' in resp.data
+    assert b'id="schemaResultMarkdown"' in resp.data
     assert b'zoom.transform' in resp.data
 
 
@@ -90,7 +91,7 @@ def test_docx_to_schema_validate_endpoint(app, client):
         db.session.commit()
         admin_id = admin.id
     _login(client, admin_id)
-    payload = {'schema': {'title': 'Sample', 'type': 'object'}}
+    payload = {'schema': {'title': 'Sample', 'type': 'object'}, 'markdown': '# md'}
     resp = client.post('/docx_to_schema/validate', json=payload)
     assert resp.status_code == 201
     data = resp.get_json()
@@ -101,6 +102,7 @@ def test_docx_to_schema_validate_endpoint(app, client):
     assert resp.status_code == 200
     assert b'Sample' in resp.data
     assert b'id="schemaEditBtn"' in resp.data
+    assert b'id="schemaResultMarkdown"' in resp.data
     # Preview page uses accordion structure and tree graph
     assert b'id="schemaAccordion"' in resp.data
     assert b'd3.tree' in resp.data
@@ -126,7 +128,7 @@ def test_navbar_updates_with_schema_links(app, client):
     _login(client, admin_id)
     resp = client.get('/parametres')
     assert b'/docx_schema/' not in resp.data
-    resp = client.post('/docx_to_schema/validate', json={'schema': {'title': 'Link', 'type': 'object'}})
+    resp = client.post('/docx_to_schema/validate', json={'schema': {'title': 'Link', 'type': 'object'}, 'markdown': '# md'})
     page_id = resp.get_json()['page_id']
     resp = client.get('/parametres')
     assert f'/docx_schema/{page_id}'.encode() in resp.data
@@ -147,7 +149,7 @@ def test_docx_schema_management(app, client):
         admin_id = admin.id
     _login(client, admin_id)
     # Create schema page
-    resp = client.post('/docx_to_schema/validate', json={'schema': {'title': 'Manage', 'type': 'object'}})
+    resp = client.post('/docx_to_schema/validate', json={'schema': {'title': 'Manage', 'type': 'object'}, 'markdown': '# md'})
     page_id = resp.get_json()['page_id']
     # List page includes it
     resp = client.get('/docx_schema')
@@ -157,6 +159,7 @@ def test_docx_schema_management(app, client):
     assert resp.status_code == 200
     resp = client.get(f'/docx_schema/{page_id}')
     assert b'Updated' in resp.data
+    assert b'id="schemaResultMarkdown"' in resp.data
     # View JSON
     resp = client.get(f'/docx_schema/{page_id}/json')
     assert b'Updated' in resp.data

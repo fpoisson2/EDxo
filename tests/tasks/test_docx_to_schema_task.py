@@ -53,10 +53,13 @@ class FakeResponses:
             output_tokens = 2
         class Resp:
             output_parsed = {
-                'title': 'T',
-                'description': 'D',
-                'type': 'object',
-                'properties': {}
+                'schema': {
+                    'title': 'T',
+                    'description': 'D',
+                    'type': 'object',
+                    'properties': {}
+                },
+                'markdown': '# md'
             }
             usage = Usage()
         return FakeStream(events, Resp())
@@ -106,7 +109,8 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch, caplog):
     assert any('stream_chunk' in u for u in dummy.updates)
     assert any(u.get('stream_chunk') and u.get('message') == 'Analyse en cours...' for u in dummy.updates)
     assert any(u.get('message') == 'Résumé du raisonnement' for u in dummy.updates)
-    assert result['result']['title'] == 'T'
+    assert result['result']['schema']['title'] == 'T'
+    assert result['result']['markdown'] == '# md'
     called_kwargs = FakeOpenAI.last_instance.responses.kwargs
     assert called_kwargs['store'] is True
     assert 'format' not in called_kwargs.get('text', {})

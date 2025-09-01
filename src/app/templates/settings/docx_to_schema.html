@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'X-CSRFToken': csrf,
                 'X-CSRF-Token': csrf
               },
-              body: JSON.stringify({ schema: payload.result })
+              body: JSON.stringify({ schema: payload.result.schema, markdown: payload.result.markdown })
             });
             window.location.href = '/docx_to_schema/preview';
           }

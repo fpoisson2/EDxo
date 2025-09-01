@@ -27,6 +27,16 @@
       </div>
     </div>
     <div class="accordion-item">
+      <h2 class="accordion-header" id="schemaHeadingMarkdown">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schemaCollapseMarkdown" aria-expanded="false" aria-controls="schemaCollapseMarkdown">
+          Markdown
+        </button>
+      </h2>
+      <div id="schemaCollapseMarkdown" class="accordion-collapse collapse" aria-labelledby="schemaHeadingMarkdown" data-bs-parent="#schemaAccordion">
+        <div class="accordion-body" id="schemaResultMarkdown"></div>
+      </div>
+    </div>
+    <div class="accordion-item">
       <h2 class="accordion-header" id="schemaHeadingSchema">
         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#schemaCollapseSchema" aria-expanded="false" aria-controls="schemaCollapseSchema">
           JSON Schema
@@ -72,15 +82,18 @@
   @media (max-width: 576px) { #schemaResultGraph svg { height: 300px; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   let schemaData = {{ page.json_schema | tojson }};
+  const markdownData = {{ page.markdown_content | tojson }};
   const pageId = {{ page.id }};
   const titleEl = document.getElementById('schemaResultTitle');
   const descEl = document.getElementById('schemaResultDescription');
   const schemaEl = document.getElementById('schemaResultJson');
   const schemaTreeEl = document.getElementById('schemaResultTree');
   const schemaGraphEl = document.getElementById('schemaResultGraph');
+  const markdownEl = document.getElementById('schemaResultMarkdown');
   const pageTitleEl = document.getElementById('schemaPageTitle');
   const editBtn = document.getElementById('schemaEditBtn');
   const editModalEl = document.getElementById('schemaEditModal');
@@ -294,6 +307,9 @@ document.addEventListener('DOMContentLoaded', () => {
     titleEl.textContent = currentSchema.title || '';
     descEl.textContent = currentSchema.description || '';
     schemaEl.textContent = JSON.stringify(schemaData, null, 2);
+    if (markdownEl && markdownData) {
+      markdownEl.innerHTML = window.marked.parse(markdownData);
+    }
     renderSchemaAccordion(currentSchema, schemaTreeEl, 'root', 'root');
     renderSchemaGraph(currentSchema);
   }

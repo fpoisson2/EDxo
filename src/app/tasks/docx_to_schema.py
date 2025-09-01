@@ -178,5 +178,10 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
             except Exception:
                 parsed = json_text
 
+    if isinstance(parsed, dict) and 'schema' in parsed and 'markdown' in parsed:
+        result_payload = parsed
+    else:
+        result_payload = {'schema': parsed, 'markdown': ''}
+
     logger.info("[%s] OpenAI usage: %s", task_id, api_usage)
-    return {"status": "success", "result": parsed, "api_usage": api_usage}
+    return {"status": "success", "result": result_payload, "api_usage": api_usage}

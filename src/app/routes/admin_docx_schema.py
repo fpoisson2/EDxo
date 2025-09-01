@@ -12,8 +12,9 @@ from ...utils.decorator import role_required, ensure_profile_completed
 
 DEFAULT_DOCX_TO_SCHEMA_PROMPT = (
     "Propose un schéma JSON simple, cohérent et normalisé pour représenter parfaitement ce document. "
-    "Retourne un schéma avec les champs titre du champ et description du champ. "
-    "Le schéma devrait parfaitement représenter la séquence et la hiérarchie des sections. Ne retourne que le schéma."
+    "Retourne un objet JSON avec deux clés : `schema` contenant le schéma et `markdown` contenant une version Markdown fidèle au document. "
+    "Chaque champ du schéma doit inclure un titre et une description. "
+    "Le schéma doit représenter parfaitement la séquence et la hiérarchie des sections. Ne retourne que cet objet JSON."
 )
 
 
@@ -61,11 +62,13 @@ def docx_to_schema_preview_temp():
     if request.method == 'POST':
         data = request.get_json() or {}
         session['pending_docx_schema'] = data.get('schema')
+        session['pending_docx_markdown'] = data.get('markdown')
         return jsonify({'ok': True})
     schema = session.get('pending_docx_schema')
+    markdown = session.get('pending_docx_markdown')
     if not schema:
         return redirect(url_for('main.docx_to_schema_page'))
-    return render_template('docx_schema_validate.html', schema=schema)
+    return render_template('docx_schema_validate.html', schema=schema, markdown=markdown)
 
 
 @main.route('/docx_to_schema/validate', methods=['POST'])
@@ -75,14 +78,16 @@ def docx_to_schema_validate():
     """Persiste le schéma validé et retourne l'identifiant de la nouvelle page."""
     data = request.get_json() or {}
     schema = data.get('schema')
+    markdown = data.get('markdown')
     if not schema:
         return jsonify({'error': 'Schéma manquant.'}), 400
 
     title = schema.get('title') or schema.get('titre') or f"Schéma {int(time.time())}"
-    page = DocxSchemaPage(title=title, json_schema=schema)
+    page = DocxSchemaPage(title=title, json_schema=schema, markdown_content=markdown)
     db.session.add(page)
     db.session.commit()
     session.pop('pending_docx_schema', None)
+    session.pop('pending_docx_markdown', None)
     return jsonify({'success': True, 'page_id': page.id}), 201
 
 @main.route('/docx_schema', methods=['GET'])

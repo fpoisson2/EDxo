@@ -263,6 +263,7 @@ class DocxSchemaPage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=True)
     json_schema = db.Column(db.JSON, nullable=False)
+    markdown_content = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=now_utc)
 
 
