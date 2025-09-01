@@ -1,6 +1,7 @@
 from pathlib import Path
 from types import SimpleNamespace
 import logging
+import json
 
 from docx import Document
 
@@ -41,9 +42,9 @@ class FakeStream:
 
 
 class FakeResponses:
-    def __init__(self, parsed):
+    def __init__(self, output_text):
         self.kwargs = None
-        self.parsed = parsed
+        self.output_text = output_text
 
     def stream(self, **kwargs):
         self.kwargs = kwargs
@@ -57,7 +58,7 @@ class FakeResponses:
         class Resp:
             usage = Usage()
             output_parsed = None
-        Resp.output_parsed = self.parsed
+            output_text = self.output_text
         return FakeStream(events, Resp())
 
 
@@ -67,12 +68,12 @@ class FakeFiles:
 
 
 class FakeOpenAI:
-    expected_parsed = None
+    expected_json = None
     last_instance = None
 
     def __init__(self, api_key=None):  # noqa: ARG002
         self.files = FakeFiles()
-        self.responses = FakeResponses(FakeOpenAI.expected_parsed)
+        self.responses = FakeResponses(json.dumps(FakeOpenAI.expected_json))
         FakeOpenAI.last_instance = self
 
 
@@ -92,12 +93,12 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch, caplog):
     import src.app.tasks.docx_to_schema as module
     monkeypatch.setattr(module, 'subprocess', SimpleNamespace(run=fake_run))
 
-    FakeOpenAI.expected_parsed = module.DocxSchemaResponse(
-        title='T',
-        description='D',
-        schema={'title': 'T', 'description': 'D', 'type': 'object', 'properties': {}},
-        markdown='# md',
-    )
+    FakeOpenAI.expected_json = {
+        'title': 'T',
+        'description': 'D',
+        'schema': json.dumps({'title': 'T', 'description': 'D', 'type': 'object', 'properties': {}}),
+        'markdown': '# md',
+    }
 
     with app.app_context():
         user = User(username='u', password='pw', role='user', openai_key='sk', credits=1.0, is_first_connexion=False)
@@ -120,6 +121,7 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch, caplog):
     assert result['result']['markdown'] == '# md'
     called_kwargs = FakeOpenAI.last_instance.responses.kwargs
     assert called_kwargs['store'] is True
-    assert called_kwargs['text_format'].__name__ == 'DocxSchemaResponse'
+    assert called_kwargs['response_format']['type'] == 'json_schema'
+    assert 'DocxSchemaResponse' in called_kwargs['response_format']['json_schema']['name']
     assert 'Propose un schéma JSON simple' in called_kwargs['input'][0]['content'][0]['text']
     assert 'OpenAI usage' in caplog.text

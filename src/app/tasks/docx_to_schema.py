@@ -115,6 +115,18 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
             "content": [{"type": "input_file", "file_id": uploaded.id}],
         },
     ]
+    response_schema = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "title": {"type": "string"},
+            "description": {"type": "string"},
+            "schema": {"type": "string"},
+            "markdown": {"type": "string"},
+        },
+        "required": ["title", "description", "schema", "markdown"],
+    }
+
     request_kwargs = dict(
         model=model,
         input=input_blocks,
@@ -122,7 +134,10 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         reasoning={"effort": reasoning, "summary": "auto"},
         tools=[],
         store=True,
-        text_format=DocxSchemaResponse,
+        response_format={
+            "type": "json_schema",
+            "json_schema": {"name": "DocxSchemaResponse", "schema": response_schema},
+        },
     )
 
     streamed_text = ""
@@ -200,6 +215,11 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
         title = parsed_obj.get('title')
         description = parsed_obj.get('description')
         schema_obj = parsed_obj.get('schema')
+        if isinstance(schema_obj, str):
+            try:
+                schema_obj = json.loads(schema_obj)
+            except Exception:
+                pass
         markdown = parsed_obj.get('markdown', '')
         if isinstance(schema_obj, dict):
             if title and 'title' not in schema_obj:
