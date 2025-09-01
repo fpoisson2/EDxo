@@ -295,13 +295,15 @@ def test_docx_schema_preview_plan_form_order_and_nested(app, client):
             }
         }
     }
-    markdown = '## Section\n## Résumé'
+    markdown = '## Section\n- Titre\n- Note\n## Résumé'
     resp = client.post('/docx_to_schema/validate', json={'schema': schema, 'markdown': markdown})
     assert resp.status_code == 201
     page_id = resp.get_json()['page_id']
     resp = client.get(f'/docx_schema/{page_id}')
     data = resp.data.decode('utf-8')
-    assert 'markdownOrder' in data
+    assert 'markdownOrderMap' in data
+    assert 'getMdOrder(path)' in data
+    assert 'path.replace(/\\[[0-9]+\\]/g, \'\')' in data
+    assert data.count('getMdOrder(') >= 3
     assert 'position-absolute top-0 end-0 remove-form-array-item' in data
-    assert data.count('markdownOrder.indexOf') >= 3
     assert 'Section' in data
