@@ -5,6 +5,31 @@
 <div class="container mt-4">
   <h1 id="schemaPageTitle">{{ page.title }}</h1>
 
+  <div class="d-flex flex-column flex-sm-row gap-3 mb-4 align-items-center">
+    <button type="button" id="schemaImportBtn" class="btn btn-outline-primary d-flex align-items-center">
+      <i class="bi bi-file-earmark-arrow-up me-2"></i>
+      <span>Importer</span>
+    </button>
+    <button type="button" id="schemaGenerateBtn" class="btn btn-success d-flex align-items-center">
+      <i class="bi bi-box-arrow-up-right me-2"></i>
+      <span>Générer</span>
+    </button>
+    <button type="button" id="schemaImproveBtn" class="btn btn-outline-success d-flex align-items-center">
+      <i class="bi bi-magic me-2"></i>
+      <span>Améliorer</span>
+    </button>
+    <button type="button" id="schemaExportBtn" class="btn btn-primary d-flex align-items-center">
+      <i class="bi bi-file-earmark-word me-2"></i>
+      <span>Exporter</span>
+    </button>
+  </div>
+
+  <section class="mb-4">
+    <h2 class="h4 mb-3">Plan cadre</h2>
+    <form id="planCadreForm" class="d-flex flex-column gap-3"></form>
+    <button type="button" id="planCadreSaveBtn" class="btn btn-primary mt-2">Enregistrer</button>
+  </section>
+
   <div class="accordion" id="schemaAccordion">
     <div class="accordion-item">
       <h2 class="accordion-header" id="schemaHeadingTitle">
@@ -53,8 +78,8 @@
   </div>
 
   <div class="mt-3 d-flex gap-2">
-    <button id="schemaEditBtn" class="btn btn-primary" type="button">Éditer</button>
-    <a href="{{ url_for('main.docx_schema_pages') }}" class="btn btn-secondary">Retour</a>
+    <button id="schemaEditBtn" class="btn btn-secondary" type="button">Éditer</button>
+    <a href="{{ url_for('main.docx_schema_pages') }}" class="btn btn-outline-secondary">Retour</a>
   </div>
 
   <div class="modal fade" id="schemaEditModal" tabindex="-1" aria-labelledby="schemaEditLabel" aria-hidden="true">
@@ -99,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const editModalEl = document.getElementById('schemaEditModal');
   const editTextarea = document.getElementById('schemaEditTextarea');
   const editSaveBtn = document.getElementById('schemaEditSaveBtn');
+  const planFormEl = document.getElementById('planCadreForm');
 
   function normalizePlanSchema(node) {
     if (!node || typeof node !== 'object') return node;
@@ -169,6 +195,72 @@ document.addEventListener('DOMContentLoaded', () => {
     return walk(node);
   }
 
+  function renderPlanCadreForm(schema, parent, path='root') {
+    if (!schema || !parent) return;
+    if (schema.type === 'object' && schema.properties) {
+      for (const [key, prop] of Object.entries(schema.properties)) {
+        renderPlanCadreForm(prop, parent, path === 'root' ? key : `${path}.${key}`);
+      }
+      return;
+    }
+    if (schema.type === 'array' && schema.items) {
+      const container = document.createElement('div');
+      container.className = 'mb-3';
+
+      const label = document.createElement('label');
+      label.className = 'form-label';
+      label.textContent = schema.title || path;
+      container.appendChild(label);
+
+      const list = document.createElement('div');
+      list.className = 'd-flex flex-column gap-2';
+      container.appendChild(list);
+
+      function addItem() {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'input-group';
+        const input = document.createElement('input');
+        input.className = 'form-control';
+        input.name = path + '[]';
+        wrapper.appendChild(input);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-outline-danger remove-form-array-item';
+        btn.innerHTML = '<i class="bi bi-x"></i>';
+        btn.addEventListener('click', () => wrapper.remove());
+        wrapper.appendChild(btn);
+        list.appendChild(wrapper);
+      }
+
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'btn btn-outline-primary btn-sm add-form-array-item';
+      addBtn.textContent = 'Ajouter';
+      addBtn.addEventListener('click', addItem);
+      container.appendChild(addBtn);
+
+      parent.appendChild(container);
+      addItem();
+      return;
+    }
+
+    const field = document.createElement('div');
+    field.className = 'mb-3';
+    const label = document.createElement('label');
+    label.className = 'form-label';
+    label.setAttribute('for', path);
+    label.textContent = schema.title || path;
+    const input = document.createElement('input');
+    input.className = 'form-control';
+    input.id = path;
+    input.name = path;
+    if (schema.type === 'number' || schema.type === 'integer') input.type = 'number';
+    else input.type = 'text';
+    field.appendChild(label);
+    field.appendChild(input);
+    parent.appendChild(field);
+  }
+
   function renderSchemaAccordion(schema, parent, name='root', path='root', required=[]) {
     if (!schema || !parent) return;
     const type = schema.type || (schema.$ref ? schema.$ref : 'any');
@@ -220,7 +312,29 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSchemaAccordion(val, inner, key, `${path}.${key}`, childRequired);
       }
     } else if (schema.type === 'array' && schema.items) {
-      renderSchemaAccordion(schema.items, body, 'items', `${path}[]`);
+      const list = document.createElement('div');
+      list.className = 'array-container';
+      body.appendChild(list);
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'btn btn-sm btn-outline-primary add-array-item mb-2';
+      addBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Ajouter';
+      body.insertBefore(addBtn, list);
+      const addItem = () => {
+        const idx = list.children.length;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'mb-2';
+        renderSchemaAccordion(schema.items, wrapper, `${name}[${idx}]`, `${path}[${idx}]`);
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn btn-sm btn-outline-danger remove-array-item ms-2';
+        removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+        removeBtn.addEventListener('click', () => wrapper.remove());
+        wrapper.appendChild(removeBtn);
+        list.appendChild(wrapper);
+      };
+      addBtn.addEventListener('click', addItem);
+      addItem();
     } else if (schema.$ref) {
       const p = document.createElement('div');
       p.textContent = schema.$ref;
@@ -300,6 +414,36 @@ document.addEventListener('DOMContentLoaded', () => {
     return walk(schema, schema.title || 'root');
   }
 
+  function enhanceMarkdownLists(root) {
+    if (!root) return;
+    root.querySelectorAll('ul').forEach((ul) => {
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'btn btn-sm btn-outline-primary add-list-item mb-2';
+      addBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Ajouter';
+      ul.parentNode.insertBefore(addBtn, ul);
+      addBtn.addEventListener('click', () => {
+        const li = document.createElement('li');
+        li.contentEditable = 'true';
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn btn-sm btn-outline-danger ms-2 remove-list-item';
+        removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+        removeBtn.addEventListener('click', () => li.remove());
+        li.appendChild(removeBtn);
+        ul.appendChild(li);
+      });
+      ul.querySelectorAll('li').forEach((li) => {
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn btn-sm btn-outline-danger ms-2 remove-list-item';
+        removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+        removeBtn.addEventListener('click', () => li.remove());
+        li.appendChild(removeBtn);
+      });
+    });
+  }
+
   let currentSchema = normalizePlanSchema(schemaData);
   function renderAll() {
     pageTitleEl.textContent = currentSchema.title || '';
@@ -309,9 +453,14 @@ document.addEventListener('DOMContentLoaded', () => {
     schemaEl.textContent = JSON.stringify(schemaData, null, 2);
     if (markdownEl && markdownData) {
       markdownEl.innerHTML = window.marked.parse(markdownData);
+      enhanceMarkdownLists(markdownEl);
     }
     renderSchemaAccordion(currentSchema, schemaTreeEl, 'root', 'root');
     renderSchemaGraph(currentSchema);
+    if (planFormEl) {
+      planFormEl.innerHTML = '';
+      renderPlanCadreForm(currentSchema, planFormEl);
+    }
   }
   renderAll();
 
