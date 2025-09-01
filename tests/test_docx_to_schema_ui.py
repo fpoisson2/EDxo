@@ -1,5 +1,6 @@
 from werkzeug.security import generate_password_hash
 from src.app.models import User, db, OpenAIModel
+from html import unescape
 
 
 def _login(client, user_id):
@@ -198,3 +199,233 @@ def test_docx_to_schema_prompts_page(app, client):
     assert b'Niveau de raisonnement' in resp.data
     assert b'Verbosit' in resp.data
     assert 'Propose un schéma JSON simple'.encode('utf-8') in resp.data
+
+
+def test_docx_schema_preview_buttons_and_lists(app, client):
+    with app.app_context():
+        admin = User(
+            username='array_admin',
+            password=generate_password_hash('pw'),
+            role='admin',
+            is_first_connexion=False,
+            openai_key='sk'
+        )
+        db.session.add(admin)
+        db.session.add(OpenAIModel(name='gpt-4o-mini', input_price=0.0, output_price=0.0))
+        db.session.commit()
+        admin_id = admin.id
+    _login(client, admin_id)
+    schema = {
+        'title': 'ArraySample',
+        'type': 'object',
+        'properties': {
+            'items': {
+                'type': 'array',
+                'items': {'type': 'string', 'title': 'It'}
+            }
+        }
+    }
+    resp = client.post('/docx_to_schema/validate', json={'schema': schema, 'markdown': '# md\n- a'})
+    assert resp.status_code == 201
+    page_id = resp.get_json()['page_id']
+    resp = client.get(f'/docx_schema/{page_id}')
+    data = resp.data
+    assert b'id="schemaImportBtn"' in data
+    assert b'id="schemaImproveBtn"' in data
+    assert b'id="schemaGenerateBtn"' in data
+    assert b'id="schemaExportBtn"' in data
+    assert b'add-array-item' in data
+    assert b'add-list-item' in data
+
+
+def test_docx_schema_preview_plan_form(app, client):
+    with app.app_context():
+        admin = User(
+            username='plan_admin',
+            password=generate_password_hash('pw'),
+            role='admin',
+            is_first_connexion=False,
+            openai_key='sk'
+        )
+        db.session.add(admin)
+        db.session.add(OpenAIModel(name='gpt-4o-mini', input_price=0.0, output_price=0.0))
+        db.session.commit()
+        admin_id = admin.id
+    _login(client, admin_id)
+    schema = {
+        'title': 'Form',
+        'type': 'object',
+        'properties': {
+            'name': {'type': 'string', 'title': 'Nom'},
+            'tags': {'type': 'array', 'items': {'type': 'string'}}
+        }
+    }
+    resp = client.post('/docx_to_schema/validate', json={'schema': schema, 'markdown': '# md'})
+    assert resp.status_code == 201
+    page_id = resp.get_json()['page_id']
+    resp = client.get(f'/docx_schema/{page_id}')
+    data = resp.data
+    assert b'id="planCadreForm"' in data
+    assert b'id="planCadreSaveBtn"' in data
+    assert b'add-form-array-item' in data
+
+
+def test_docx_schema_preview_plan_form_order_and_nested(app, client):
+    with app.app_context():
+        admin = User(
+            username='plan_order_admin',
+            password=generate_password_hash('pw'),
+            role='admin',
+            is_first_connexion=False,
+            openai_key='sk'
+        )
+        db.session.add(admin)
+        db.session.add(OpenAIModel(name='gpt-4o-mini', input_price=0.0, output_price=0.0))
+        db.session.commit()
+        admin_id = admin.id
+    _login(client, admin_id)
+    schema = {
+        'title': 'Form',
+        'type': 'object',
+        'properties': {
+            'summary': {'type': 'string', 'title': 'Résumé'},
+            'section': {
+                'title': 'Section',
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'title': {'type': 'string', 'title': 'Titre'},
+                        'notes': {'type': 'array', 'items': {'type': 'string', 'title': 'Note'}}
+                    }
+                }
+            }
+        }
+    }
+    markdown = '## Section\n- Titre\n- Note\n## Résumé'
+    resp = client.post('/docx_to_schema/validate', json={'schema': schema, 'markdown': markdown})
+    assert resp.status_code == 201
+    page_id = resp.get_json()['page_id']
+    resp = client.get(f'/docx_schema/{page_id}')
+    data = unescape(resp.data.decode('utf-8'))
+    assert 'markdownOrderMap' in data
+    assert 'buildMarkdownOrderMap' in data
+    assert 'markdownOrderMap = buildMarkdownOrderMap(markdownData);' in data
+    assert 'path.replace(/\\[[0-9]+\\]/g, \'\')' in data
+    assert data.count('getMdOrder(') >= 3
+    assert 'getMarkdownIndex' in data
+    assert 'normalizedMarkdown' in data
+    assert 'position-absolute top-0 end-0 remove-form-array-item' in data
+    assert 'normalizeName(' in data
+
+
+def test_markdown_plain_text_ordering():
+    import unicodedata, re
+
+    def normalize_name(s):
+        s = unicodedata.normalize('NFD', s or '')
+        s = ''.join(c for c in s if unicodedata.category(c) != 'Mn')
+        s = re.sub(r'[^a-zA-Z0-9]+', ' ', s)
+        return s.strip().lower()
+
+    def sort_by_markdown(schema, markdown):
+        norm_md = normalize_name(markdown)
+        entries = list(schema['properties'].items())
+        def position(item):
+            key, val = item
+            name = normalize_name(val.get('title') or key)
+            idx = norm_md.find(name)
+            return idx if idx != -1 else float('inf')
+        entries.sort(key=position)
+        return [k for k, _ in entries]
+
+    schema = {
+        'title': 'Plain',
+        'type': 'object',
+        'properties': {
+            'first': {'type': 'string', 'title': 'Premier'},
+            'second': {'type': 'string', 'title': 'Deuxième'},
+        }
+    }
+    markdown = 'Deuxième\nPremier'
+    ordered = sort_by_markdown(schema, markdown)
+    assert ordered == ['second', 'first']
+
+
+def test_markdown_nested_array_ordering():
+    import unicodedata, re
+
+    def normalize_name(s):
+        s = unicodedata.normalize('NFD', s or '')
+        s = ''.join(c for c in s if unicodedata.category(c) != 'Mn')
+        s = re.sub(r'[^a-zA-Z0-9]+', ' ', s)
+        return s.strip().lower()
+
+    def build_markdown_order_map(markdown):
+        lines = markdown.splitlines()
+        order = {'root': []}
+        headings = []
+        list_stack = []
+        for line in lines:
+            m = re.match(r'^(#+)\s+(.*)', line)
+            if m:
+                depth = len(m.group(1))
+                text = normalize_name(m.group(2))
+                if len(headings) < depth - 1:
+                    headings.extend([None] * (depth - 1 - len(headings)))
+                headings = headings[:depth - 1]
+                headings.append(text)
+                list_stack = []
+                parent = '.'.join(h for h in headings[:-1] if h) or 'root'
+                order.setdefault(parent, []).append(text)
+                continue
+            m = re.match(r'^(\s*)[-*+]\s+(.*)', line)
+            if m:
+                indent = len(m.group(1)) // 2
+                text = normalize_name(m.group(2))
+                list_stack = list_stack[:indent]
+                parent = '.'.join(h for h in headings + list_stack if h) or 'root'
+                order.setdefault(parent, []).append(text)
+                list_stack.append(text)
+        return order
+
+    def sort_props(props, md_map, path):
+        entries = list(props.items())
+        md_order = md_map.get(path, [])
+        def pos(item):
+            key, val = item
+            name = normalize_name(val.get('title') or key)
+            try:
+                return md_order.index(name)
+            except ValueError:
+                return float('inf')
+        entries.sort(key=pos)
+        return [k for k, _ in entries]
+
+    schema = {
+        'title': 'Root',
+        'type': 'object',
+        'properties': {
+            'section': {
+                'title': 'Section',
+                'type': 'array',
+                'items': {
+                    'title': 'Element',
+                    'type': 'object',
+                    'properties': {
+                        'title': {'type': 'string', 'title': 'Titre'},
+                        'note': {'type': 'string', 'title': 'Note'},
+                    }
+                }
+            },
+            'summary': {'type': 'string', 'title': 'Résumé'}
+        }
+    }
+
+    markdown = '## Section\n- Element\n  - Titre\n  - Note\n## Résumé'
+    md_map = build_markdown_order_map(markdown)
+    root_order = sort_props(schema['properties'], md_map, 'root')
+    assert root_order == ['section', 'summary']
+    item_props = schema['properties']['section']['items']['properties']
+    nested_order = sort_props(item_props, md_map, 'section.element')
+    assert nested_order == ['title', 'note']
