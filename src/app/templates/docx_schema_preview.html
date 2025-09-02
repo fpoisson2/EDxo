@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/view_plan_cadre.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h1 id="schemaPageTitle">{{ page.title }}</h1>
+
+  <div class="d-flex flex-column flex-sm-row gap-3 mb-4 align-items-center">
+    <button type="button" id="schemaImportBtn" class="btn btn-outline-primary d-flex align-items-center">
+      <i class="bi bi-file-earmark-arrow-up me-2"></i>
+      <span>Importer</span>
+    </button>
+    <button type="button" id="schemaGenerateBtn" class="btn btn-success d-flex align-items-center">
+      <i class="bi bi-box-arrow-up-right me-2"></i>
+      <span>Générer</span>
+    </button>
+    <button type="button" id="schemaImproveBtn" class="btn btn-outline-success d-flex align-items-center">
+      <i class="bi bi-magic me-2"></i>
+      <span>Améliorer</span>
+    </button>
+    <button type="button" id="schemaExportBtn" class="btn btn-primary d-flex align-items-center">
+      <i class="bi bi-file-earmark-word me-2"></i>
+      <span>Exporter</span>
+    </button>
+  </div>
+
+  <section class="mb-4">
+    <h2 class="h4 mb-3">Plan cadre</h2>
+    <form id="planCadreForm">
+      <div class="accordion" id="planCadreAccordion"></div>
+    </form>
+  </section>
+</div>
+
+<div id="actionBar" class="fixed-bottom bg-white border-top d-none shadow">
+  <div class="container py-2">
+    <div class="row g-2">
+      <div class="col">
+        <button type="button" id="floatingSaveBtn" class="btn btn-primary w-100">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  let schemaData = {{ page.json_schema | tojson }};
+  const markdownData = {{ page.markdown_content | tojson }};
+  const planFormEl = document.getElementById('planCadreForm');
+  const accordionRoot = document.getElementById('planCadreAccordion');
+  const actionBar = document.getElementById('actionBar');
+  const floatingSaveBtn = document.getElementById('floatingSaveBtn');
+  let markdownOrderMap = {};
+  const normalizedMarkdown = normalizeName(markdownData || '');
+  function normalizeName(str) {
+    return (str || '')
+      .toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+  function buildMarkdownOrderMap(markdown) {
+    try {
+      const tokens = marked.lexer(markdown || '');
+      const map = { root: [] };
+      const stack = [];
+      function addOrder(path, name) {
+        const key = path || 'root';
+        if (!map[key]) map[key] = [];
+        map[key].push(name);
+      }
+      function process(tok) {
+        for (const t of tok) {
+          if (t.type === 'heading') {
+            stack.length = t.depth - 1;
+            stack[t.depth - 1] = normalizeName(t.text);
+            const parent = stack.slice(0, -1).join('.') || 'root';
+            addOrder(parent, stack[t.depth - 1]);
+          } else if (t.type === 'list') {
+            if (stack.length === 0) continue;
+            const parent = stack.join('.') || 'root';
+            t.items.forEach(item => {
+              const name = normalizeName(item.text);
+              addOrder(parent, name);
+              if (item.tokens) {
+                stack.push(name);
+                process(item.tokens);
+                stack.pop();
+              }
+            });
+          }
+        }
+      }
+      process(tokens);
+      return map;
+    } catch (e) { return { root: [] }; }
+  }
+  function getMdOrder(path) {
+    const key = normalizeName(path.replace(/\[[0-9]+\]/g, '')) || 'root';
+    return markdownOrderMap[key] || [];
+  }
+  function getMarkdownIndex(name) {
+    const idx = normalizedMarkdown.indexOf(name);
+    return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+  }
+  function normalizePlanSchema(node) {
+    if (!node || typeof node !== 'object') return node;
+
+    function walk(n) {
+      if (!n || typeof n !== 'object') return {};
+
+      const keys = Object.keys(n);
+      if (!n.type && !n.properties && !n.items && !n.champs && !n.parts && keys.length === 1 && !['title','description'].includes(keys[0])) {
+        const key = keys[0];
+        const inner = walk(n[key]);
+        if (inner && typeof inner === 'object' && !inner.title) inner.title = key;
+        return inner;
+      }
+
+      if (n.parts) {
+        const props = {};
+        for (const [k, v] of Object.entries(n.parts)) {
+          props[k] = walk(v);
+        }
+        const out = { type: 'object', properties: props };
+        if (n.title) out.title = n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+
+      if (n.fields) {
+        const props = {};
+        for (const [k, v] of Object.entries(n.fields)) {
+          props[k] = walk(v);
+        }
+        const out = { type: 'object', properties: props };
+        if (n.title) out.title = n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+
+      if (n.type === 'object' && n.properties) {
+        const props = {};
+        for (const [k, v] of Object.entries(n.properties)) {
+          props[k] = walk(v);
+        }
+        const out = { type: 'object', properties: props };
+        if (n.title) out.title = n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+
+      if (n.type === 'array') {
+        let items = n.items;
+        if (Array.isArray(items)) {
+          items = items[0];
+        }
+        if (items) {
+          items = walk(items);
+        }
+        const out = { type: 'array', items };
+        if (n.title) out.title = n.title;
+        if (n.description) out.description = n.description;
+        return out;
+      }
+
+      const out = { type: n.type || 'string' };
+      if (n.titre || n.title) out.title = n.titre || n.title;
+      if (n.description) out.description = n.description;
+      return out;
+    }
+    return walk(node);
+  }
+  function showActionBar() {
+    if (actionBar && actionBar.classList.contains('d-none')) {
+      actionBar.classList.remove('d-none');
+      document.body.classList.add('with-action-bar');
+    }
+  }
+  if (floatingSaveBtn) {
+    floatingSaveBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      actionBar.classList.add('d-none');
+      document.body.classList.remove('with-action-bar');
+    });
+  }
+  function renderPlanCadreForm(schema, parent, path='root', depth=0) {
+    if (!schema || !parent) return;
+    if (schema.type === 'object' && schema.properties) {
+      const entries = Object.entries(schema.properties);
+      const mdOrder = getMdOrder(path);
+      entries.sort(([ak, av], [bk, bv]) => {
+        const nameA = normalizeName(av.title || ak);
+        const nameB = normalizeName(bv.title || bk);
+        const ia = mdOrder.indexOf(nameA);
+        const ib = mdOrder.indexOf(nameB);
+        const posA = ia !== -1 ? ia : getMarkdownIndex(nameA);
+        const posB = ib !== -1 ? ib : getMarkdownIndex(nameB);
+        return posA - posB;
+      });
+      entries.forEach(([key, prop], idx) => {
+        const sectionId = `${path.replace(/\./g, '-')}-${idx}`;
+        const item = document.createElement('div');
+        item.className = 'accordion-item';
+        const header = document.createElement('h2');
+        header.className = 'accordion-header d-flex';
+        const btn = document.createElement('button');
+        btn.className = `accordion-button ${depth > 0 ? 'collapsed' : ''} ${depth === 0 ? 'bg-light' : ''} flex-grow-1`;
+        btn.type = 'button';
+        btn.setAttribute('data-bs-toggle', 'collapse');
+        btn.setAttribute('data-bs-target', `#collapse-${sectionId}`);
+        btn.setAttribute('aria-expanded', depth > 0 ? 'false' : 'true');
+        btn.textContent = prop.title || key;
+        header.appendChild(btn);
+        const magicBtn = document.createElement('button');
+        magicBtn.type = 'button';
+        magicBtn.className = 'btn btn-sm btn-outline-primary ms-2 magic-generate';
+        magicBtn.setAttribute('data-target-column', path === 'root' ? key : `${path}.${key}`);
+        magicBtn.title = 'Améliorer uniquement cette section';
+        magicBtn.innerHTML = '<i class="bi bi-magic"></i>';
+        header.appendChild(magicBtn);
+        item.appendChild(header);
+        const collapse = document.createElement('div');
+        collapse.id = `collapse-${sectionId}`;
+        collapse.className = `accordion-collapse collapse ${depth === 0 ? 'show' : ''}`;
+        if (depth === 0) collapse.setAttribute('data-bs-parent', '#planCadreAccordion');
+        const body = document.createElement('div');
+        body.className = 'accordion-body';
+        collapse.appendChild(body);
+        item.appendChild(collapse);
+        parent.appendChild(item);
+        renderPlanCadreForm(prop, body, path === 'root' ? key : `${path}.${key}`, depth + 1);
+      });
+      return;
+    }
+    if (schema.type === 'array' && schema.items) {
+      const container = document.createElement('div');
+      container.className = 'mb-3';
+      const label = document.createElement('label');
+      label.className = 'form-label fw-bold';
+      label.textContent = schema.title || path;
+      container.appendChild(label);
+      const list = document.createElement('div');
+      list.className = 'd-flex flex-column gap-2';
+      container.appendChild(list);
+      function addItem() {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'border rounded p-2 position-relative';
+        if (schema.items.type === 'object' && schema.items.properties && schema.items.properties.title && schema.items.properties.description) {
+          const titleInput = document.createElement('input');
+          titleInput.className = 'form-control fw-bold mb-1';
+          titleInput.placeholder = 'Titre';
+          wrapper.appendChild(titleInput);
+          const descTextarea = document.createElement('textarea');
+          descTextarea.className = 'form-control';
+          descTextarea.placeholder = 'Description';
+          wrapper.appendChild(descTextarea);
+        } else if (schema.items.type === 'object') {
+          renderPlanCadreForm(schema.items, wrapper, path + '[]', depth + 1);
+        } else {
+          const input = document.createElement('input');
+          input.className = 'form-control';
+          input.name = `${path}[]`;
+          wrapper.appendChild(input);
+        }
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-outline-danger btn-sm position-absolute top-0 end-0 remove-form-array-item';
+        btn.innerHTML = '<i class="bi bi-x"></i>';
+        btn.addEventListener('click', () => { wrapper.remove(); showActionBar(); });
+        wrapper.appendChild(btn);
+        list.appendChild(wrapper);
+        showActionBar();
+      }
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'btn btn-outline-primary btn-sm add-form-array-item';
+      addBtn.textContent = 'Ajouter';
+      addBtn.addEventListener('click', addItem);
+      container.appendChild(addBtn);
+      parent.appendChild(container);
+      addItem();
+      return;
+    }
+    const field = document.createElement('div');
+    field.className = 'mb-3';
+    const label = document.createElement('label');
+    label.className = 'form-label fw-bold';
+    label.textContent = schema.title || path;
+    field.appendChild(label);
+    if (schema.type === 'string' && (path.toLowerCase().includes('description'))) {
+      const textarea = document.createElement('textarea');
+      textarea.className = 'form-control';
+      textarea.name = path;
+      field.appendChild(textarea);
+    } else {
+      const input = document.createElement('input');
+      input.className = 'form-control';
+      input.name = path;
+      if (schema.type === 'number' || schema.type === 'integer') input.type = 'number';
+      else input.type = 'text';
+      field.appendChild(input);
+    }
+    parent.appendChild(field);
+  }
+  let currentSchema = normalizePlanSchema(schemaData);
+  markdownOrderMap = buildMarkdownOrderMap(markdownData);
+  if (accordionRoot) {
+    accordionRoot.innerHTML = '';
+    renderPlanCadreForm(currentSchema, accordionRoot);
+  }
+  if (planFormEl) {
+    planFormEl.addEventListener('input', showActionBar);
+  }
+});
+</script>
+{% endblock %}

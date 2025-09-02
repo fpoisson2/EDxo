@@ -21,6 +21,7 @@ from ..forms import (
 )
 from .evaluation import AISixLevelGridResponse
 from ...utils.decorator import role_required, roles_required, ensure_profile_completed
+from .admin_docx_schema import DEFAULT_DOCX_TO_SCHEMA_PROMPT
 
 csrf = CSRFProtect()
 
@@ -42,6 +43,7 @@ from ..models import (
     SectionAISettings,
     OcrPromptSettings,
     PlanCadreImportPromptSettings,
+    DocxSchemaPage,
 )
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
@@ -828,7 +830,8 @@ def edit_plan_de_cours_prompt(prompt_id):
 @login_required  # Cette route nécessite que l'utilisateur soit connecté
 @ensure_profile_completed
 def parametres():
-    return render_template('parametres.html')
+    docx_schemas = DocxSchemaPage.query.order_by(DocxSchemaPage.created_at.desc()).all()
+    return render_template('parametres.html', docx_schemas=docx_schemas)
 
 @settings_bp.route("/gestion-plans-cours", methods=["GET"])
 @roles_required('admin', 'coordo')
@@ -921,3 +924,85 @@ def prompt_settings():
             flash(f'Erreur lors de la mise à jour : {str(e)}', 'error')
 
     return render_template('settings/prompt_settings.html', settings=settings, ai_form=ai_form)
+
+
+@settings_bp.route('/docx_to_schema_prompts', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+@ensure_profile_completed
+def docx_to_schema_prompt_settings():
+    """Configurer le prompt système et les paramètres IA pour DOCX→JSON."""
+    sa = SectionAISettings.get_for('docx_to_schema')
+    ai_form = SectionAISettingsForm(obj=sa)
+    if request.method == 'GET' and not (sa.system_prompt and sa.system_prompt.strip()):
+        ai_form.system_prompt.data = DEFAULT_DOCX_TO_SCHEMA_PROMPT
+    if request.method == 'POST' and ai_form.validate_on_submit():
+        sa.system_prompt = ai_form.system_prompt.data or None
+        sa.ai_model = ai_form.ai_model.data or None
+        sa.reasoning_effort = ai_form.reasoning_effort.data or None
+        sa.verbosity = ai_form.verbosity.data or None
+        db.session.commit()
+        flash('Paramètres enregistrés', 'success')
+        return redirect(url_for('settings.docx_to_schema_prompt_settings'))
+    return render_template('settings/docx_to_schema_prompts.html', ai_form=ai_form)
+
+
+@settings_bp.route('/docx_schema/<int:page_id>/prompts', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+@ensure_profile_completed
+def docx_schema_prompt_settings(page_id):
+    """Configurer le prompt système et les paramètres IA pour un schéma de données spécifique."""
+    page = DocxSchemaPage.query.get_or_404(page_id)
+
+    sa_gen = SectionAISettings.get_for(f'docx_schema_{page_id}')
+    sa_impv = SectionAISettings.get_for(f'docx_schema_{page_id}_improve')
+    sa_impt = SectionAISettings.get_for(f'docx_schema_{page_id}_import')
+
+    if request.method == 'POST':
+        form_name = request.form.get('form_name')
+        target_map = {
+            'gen': sa_gen,
+            'impv': sa_impv,
+            'impt': sa_impt,
+        }
+        target_sa = target_map.get(form_name)
+        form = SectionAISettingsForm(request.form, obj=target_sa) if target_sa else None
+        if target_sa and form and form.validate():
+            target_sa.system_prompt = form.system_prompt.data or None
+            target_sa.ai_model = form.ai_model.data or None
+            target_sa.reasoning_effort = form.reasoning_effort.data or None
+            target_sa.verbosity = form.verbosity.data or None
+            db.session.commit()
+            flash('Paramètres enregistrés', 'success')
+            return redirect(url_for('settings.docx_schema_prompt_settings', page_id=page_id))
+
+    default_gen = (
+        "Tu es un assistant qui retourne une sortie strictement conforme au schéma JSON fourni."
+    )
+    default_impv = (
+        "Tu es un assistant qui améliore une sortie existante tout en respectant le schéma JSON fourni."
+    )
+    default_impt = (
+        "Tu es un assistant qui extrait des données d'un document et renvoie une sortie strictement conforme au schéma JSON fourni."
+    )
+
+    ai_form_gen = SectionAISettingsForm(obj=sa_gen)
+    ai_form_impv = SectionAISettingsForm(obj=sa_impv)
+    ai_form_impt = SectionAISettingsForm(obj=sa_impt)
+
+    if request.method == 'GET':
+        if not (sa_gen.system_prompt or '').strip():
+            ai_form_gen.system_prompt.data = default_gen
+        if not (sa_impv.system_prompt or '').strip():
+            ai_form_impv.system_prompt.data = default_impv
+        if not (sa_impt.system_prompt or '').strip():
+            ai_form_impt.system_prompt.data = default_impt
+
+    return render_template(
+        'settings/docx_schema_prompts.html',
+        ai_form_gen=ai_form_gen,
+        ai_form_impv=ai_form_impv,
+        ai_form_impt=ai_form_impt,
+        page=page,
+    )

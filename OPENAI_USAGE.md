@@ -26,6 +26,7 @@ Note: L’ancien endpoint synchrone `POST /gestion_programme/update_verifier_pla
 - Grille d’évaluation: `src/app/tasks/generation_grille.py`
 - Logigramme de compétences: `src/app/tasks/generation_logigramme.py`
 - OCR/Imports: `src/app/tasks/ocr.py`, `src/app/tasks/import_plan_de_cours.py`, `src/app/tasks/import_grille.py`, `src/app/tasks/import_plan_cadre.py`
+- Conversion DOCX→Schéma JSON: `src/app/tasks/docx_to_schema.py` (start `POST /docx_to_schema/start`)
 
 Tous suivent le pattern:
 

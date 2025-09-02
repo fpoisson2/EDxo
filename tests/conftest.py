@@ -2,6 +2,13 @@ import os
 import pytest
 import sys
 
+# Ensure required env vars for app initialization in tests
+os.environ.setdefault('SECRET_KEY', 'test')
+os.environ.setdefault('RECAPTCHA_PUBLIC_KEY', 'test')
+os.environ.setdefault('RECAPTCHA_PRIVATE_KEY', 'test')
+os.environ.setdefault('CELERY_BROKER_URL', 'memory://')
+os.environ.setdefault('CELERY_RESULT_BACKEND', 'cache+memory://')
+
 # Ensure that the application's source code is importable.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from src.app import create_app, db

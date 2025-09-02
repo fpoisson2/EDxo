@@ -43,6 +43,7 @@ from .routes import courses_management  # noqa: F401
 from .routes import competences_management  # noqa: F401
 from .routes import fil_conducteur_routes  # noqa: F401
 from .routes import settings_departements  # noqa: F401
+from .routes import admin_docx_schema  # noqa: F401
 from .routes.chat import chat
 # Import blueprints
 from .routes.cours import cours_bp
@@ -58,7 +59,6 @@ from .routes.grilles import grille_bp
 from .routes.api import api_bp
 from .routes.oauth import oauth_bp
 from .routes.tasks import tasks_bp
-from ..mcp_server.server import init_app as init_mcp_server
 
 # Import version
 from ..config.version import __version__
@@ -246,6 +246,7 @@ def create_app(testing=False):
     init_change_tracking(db)
 
     # Bind Flask app to MCP server for OAuth verification
+    from ..mcp_server.server import init_app as init_mcp_server
     init_mcp_server(app)
 
     if not testing:
@@ -296,6 +297,15 @@ def create_app(testing=False):
             return url_for('static', filename=path, v=ver)
         # Expose csrf_token() helper globally for templates
         return dict(has_endpoint=has_endpoint, asset_url=asset_url, csrf_token=generate_csrf)
+
+    @app.context_processor
+    def inject_docx_schema_pages():
+        try:
+            from .models import DocxSchemaPage
+            pages = DocxSchemaPage.query.order_by(DocxSchemaPage.created_at.asc()).all()
+        except Exception:
+            pages = []
+        return dict(docx_schema_pages=pages)
 
     @app.before_request
     def before_request():

@@ -73,6 +73,11 @@ class FileUploadForm(FlaskForm):
     file = FileField("Importez un fichier PDF", validators=[DataRequired()])
     submit = SubmitField("Envoyer")
 
+
+class DocxToSchemaForm(FlaskForm):
+    file = FileField("Fichier DOCX ou PDF", validators=[DataRequired()])
+    submit = SubmitField("Convertir")
+
 class AssociateDevisForm(FlaskForm):
     base_filename = HiddenField(validators=[DataRequired()])
     programme_id = SelectField("Choisir le Programme Cible :", coerce=int, validators=[DataRequired()])

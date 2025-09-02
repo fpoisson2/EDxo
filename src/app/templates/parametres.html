@@ -88,6 +88,35 @@
                 </div>
               </div>
 
+              <!-- Section Schéma de données -->
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#dataSchemaSettings">
+                    <i class="bi bi-diagram-3 me-2"></i>Schéma de données
+                  </button>
+                </h2>
+                <div id="dataSchemaSettings" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
+                  <div class="accordion-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('main.docx_to_schema_page') }}" class="list-group-item list-group-item-action {% if request.endpoint.startswith('main.docx_to_schema') %}active{% endif %}">
+                          <i class="bi bi-file-earmark-word me-2"></i>DOCX → JSON Schema
+                        </a>
+                        <a href="{{ url_for('settings.docx_to_schema_prompt_settings') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.docx_to_schema_prompt_settings' %}active{% endif %}">
+                          <i class="bi bi-filetype-doc me-2"></i>Prompts DOCX → JSON
+                        </a>
+                        <a href="{{ url_for('main.docx_schema_pages') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'main.docx_schema_pages' %}active{% endif %}">
+                          <i class="bi bi-collection me-2"></i>Liste des schémas de données
+                        </a>
+                        {% for s in docx_schemas %}
+                        <a href="{{ url_for('settings.docx_schema_prompt_settings', page_id=s.id) }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.docx_schema_prompt_settings' and request.view_args.get('page_id') == s.id %}active{% endif %}">
+                          <i class="bi bi-filetype-json me-2"></i>Prompts – {{ s.title }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Section Gestion Académique -->
               <div class="accordion-item">
                 <h2 class="accordion-header">

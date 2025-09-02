@@ -57,7 +57,8 @@ from ..models import (
     ElementCompetenceParCours,
     Cours,
     CoursProgramme,
-    ListeCegep
+    ListeCegep,
+    DocxSchemaPage
 )
 from ...extensions import limiter
 from ...utils.decorator import role_required, roles_required, ensure_profile_completed
@@ -79,6 +80,14 @@ main = Blueprint('main', __name__)
 def version():
     from ...config.version import __version__
     return jsonify({'version': __version__})
+
+
+@main.route('/parametres')
+@login_required
+@ensure_profile_completed
+def parametres_alias():
+    docx_schemas = DocxSchemaPage.query.order_by(DocxSchemaPage.created_at.desc()).all()
+    return render_template('parametres.html', docx_schemas=docx_schemas)
 
 # Public: Health endpoint
 @main.route('/health')
