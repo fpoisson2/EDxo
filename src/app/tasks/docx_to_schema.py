@@ -48,14 +48,19 @@ def _extract_reasoning_summary_from_response(response):
             pass
     return summary.strip()
 
-def _docx_to_pdf(docx_path: str) -> str:
-    """Convert a DOCX file to PDF using LibreOffice.
+def _docx_to_pdf(file_path: str) -> str:
+    """Ensure a PDF exists for the given file.
 
-    Falls back to a simple text-based PDF if the conversion fails.
-    Returns the path to the generated PDF.
+    If ``file_path`` already points to a PDF, it is returned as-is. Otherwise,
+    the function attempts to convert the DOCX file to PDF using LibreOffice and
+    falls back to a simple text-based PDF if the conversion fails.
+    Returns the path to the resulting PDF.
     """
-    pdf_path = os.path.splitext(docx_path)[0] + ".pdf"
-    outdir = os.path.dirname(docx_path) or "."
+    if file_path.lower().endswith(".pdf"):
+        return file_path
+
+    pdf_path = os.path.splitext(file_path)[0] + ".pdf"
+    outdir = os.path.dirname(file_path) or "."
     try:
         subprocess.run(
             [
@@ -65,7 +70,7 @@ def _docx_to_pdf(docx_path: str) -> str:
                 "pdf",
                 "--outdir",
                 outdir,
-                docx_path,
+                file_path,
             ],
             check=True,
             stdout=subprocess.PIPE,
@@ -75,7 +80,7 @@ def _docx_to_pdf(docx_path: str) -> str:
             raise FileNotFoundError("PDF conversion failed")
     except Exception:
         try:
-            doc = Document(docx_path)
+            doc = Document(file_path)
             text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
         except Exception:
             text = ""
@@ -83,10 +88,10 @@ def _docx_to_pdf(docx_path: str) -> str:
     return pdf_path
 
 @shared_task(bind=True, name="app.tasks.docx_to_schema.convert")
-def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, verbosity: str, system_prompt: str, user_id: int, openai_cls=OpenAI):
-    """Convert a DOCX file to a JSON Schema using OpenAI's file API with streaming."""
+def docx_to_json_schema_task(self, file_path: str, model: str, reasoning: str, verbosity: str, system_prompt: str, user_id: int, openai_cls=OpenAI):
+    """Convert an uploaded document (DOCX or PDF) to a JSON Schema using OpenAI's file API with streaming."""
     task_id = self.request.id
-    logger.info("[%s] Starting DOCX→Schema for %s", task_id, docx_path)
+    logger.info("[%s] Starting DOCX→Schema for %s", task_id, file_path)
 
     user: Optional[User]
     with db.session.no_autoflush:
@@ -94,7 +99,7 @@ def docx_to_json_schema_task(self, docx_path: str, model: str, reasoning: str, v
     if not user or not user.openai_key:
         return {"status": "error", "message": "Clé OpenAI manquante."}
 
-    pdf_path = _docx_to_pdf(docx_path)
+    pdf_path = _docx_to_pdf(file_path)
     client = openai_cls(api_key=user.openai_key)
     with open(pdf_path, "rb") as fh:
         uploaded = client.files.create(file=fh, purpose="user_data")

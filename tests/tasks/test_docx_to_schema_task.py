@@ -124,3 +124,34 @@ def test_docx_to_schema_streaming(app, tmp_path, monkeypatch, caplog):
     assert called_kwargs['text_format'].__name__ == 'DocxSchemaResponse'
     assert 'Propose un schéma JSON simple' in called_kwargs['input'][0]['content'][0]['text']
     assert 'OpenAI usage' in caplog.text
+
+
+def test_docx_to_schema_with_pdf_input(app, tmp_path, monkeypatch):
+    pdf_path = tmp_path / 'test.pdf'
+    pdf_path.write_bytes(b'%PDF-1.4')
+
+    def fake_run(cmd, **kwargs):  # noqa: ARG001
+        raise AssertionError('libreoffice should not run for PDF input')
+
+    import src.app.tasks.docx_to_schema as module
+    monkeypatch.setattr(module, 'subprocess', SimpleNamespace(run=fake_run))
+
+    FakeOpenAI.expected_json = {
+        'title': 'T',
+        'description': 'D',
+        'schema': json.dumps({'title': 'T', 'description': 'D', 'type': 'object', 'properties': {}}),
+        'markdown': '# md',
+    }
+
+    with app.app_context():
+        user = User(username='u2', password='pw', role='user', openai_key='sk', credits=1.0, is_first_connexion=False)
+        db.session.add(user)
+        db.session.add(OpenAIModel(name='gpt-4o-mini', input_price=0.0, output_price=0.0))
+        db.session.commit()
+        uid = user.id
+
+    dummy = DummySelf()
+    orig = module.docx_to_json_schema_task.__wrapped__.__func__
+    prompt = "Propose un schéma JSON simple"
+    result = orig(dummy, str(pdf_path), 'gpt-4o-mini', 'medium', 'medium', prompt, uid, FakeOpenAI)
+    assert result['status'] == 'success'

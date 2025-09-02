@@ -75,7 +75,7 @@ class FileUploadForm(FlaskForm):
 
 
 class DocxToSchemaForm(FlaskForm):
-    file = FileField("Fichier DOCX", validators=[DataRequired()])
+    file = FileField("Fichier DOCX ou PDF", validators=[DataRequired()])
     submit = SubmitField("Convertir")
 
 class AssociateDevisForm(FlaskForm):
