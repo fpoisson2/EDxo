@@ -102,3 +102,40 @@ def test_docx_schema_rename_requires_csrf(app, client):
     assert resp_ok.get_json()['success'] is True
     with app.app_context():
         assert db.session.get(DocxSchemaPage, page_id).title == 'Renamed'
+
+
+def test_docx_to_schema_accepts_pdf(app, client, monkeypatch):
+    with app.app_context():
+        admin = User(
+            username='admin_pdf',
+            password=generate_password_hash('pw'),
+            role='admin',
+            is_first_connexion=False,
+            openai_key='sk'
+        )
+        db.session.add(admin)
+        db.session.add(OpenAIModel(name='gpt-4o-mini', input_price=0.0, output_price=0.0))
+        db.session.commit()
+        admin_id = admin.id
+
+    _login(client, admin_id)
+
+    class Dummy:
+        id = 'tid'
+
+    monkeypatch.setattr(
+        docx_tasks.docx_to_json_schema_task,
+        'delay',
+        lambda *a, **k: Dummy(),
+    )
+
+    data = {
+        'file': (BytesIO(b'%PDF-1.4', ), 'test.pdf'),
+    }
+    resp = client.post(
+        '/docx_to_schema/start',
+        data=data,
+        content_type='multipart/form-data',
+    )
+    assert resp.status_code == 202
+    assert resp.get_json()['task_id'] == 'tid'

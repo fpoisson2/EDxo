@@ -36,8 +36,8 @@ def docx_to_schema_start():
         return jsonify({'error': 'Invalid submission.', 'details': form.errors}), 400
 
     file = form.file.data
-    if not file or not file.filename.lower().endswith('.docx'):
-        return jsonify({'error': 'Veuillez fournir un fichier .docx.'}), 400
+    if not file or not file.filename.lower().endswith(('.docx', '.pdf')):
+        return jsonify({'error': 'Veuillez fournir un fichier .docx ou .pdf.'}), 400
 
     upload_dir = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'uploads'))
     os.makedirs(upload_dir, exist_ok=True)
