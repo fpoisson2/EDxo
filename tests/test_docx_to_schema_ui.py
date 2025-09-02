@@ -103,6 +103,8 @@ def test_docx_to_schema_validate_endpoint(app, client):
     assert resp.status_code == 200
     assert b'Sample' in resp.data
     assert b'id="planCadreForm"' in resp.data
+    assert b'id="actionBar"' in resp.data
+    assert b'id="planCadreAccordion"' in resp.data
     assert b'id="schemaEditBtn"' not in resp.data
     assert b'id="schemaResultMarkdown"' not in resp.data
     assert b'id="schemaAccordion"' not in resp.data
@@ -275,7 +277,8 @@ def test_docx_schema_preview_plan_form(app, client):
     resp = client.get(f'/docx_schema/{page_id}')
     data = resp.data
     assert b'id="planCadreForm"' in data
-    assert b'id="planCadreSaveBtn"' in data
+    assert b'id="actionBar"' in data
+    assert b'id="floatingSaveBtn"' in data
     assert b'add-form-array-item' in data
 
 
