@@ -105,38 +105,15 @@ def edit_user(user_id):
         flash("Utilisateur non trouvé.", "danger")
         return redirect(url_for('main.manage_users'))
 
-    user_programmes = [prog.id for prog in user.programmes]
+    # Form sans champs académiques (cégep/département/programmes)
     form = EditUserForm()
-    cegeps = get_all_cegeps()
-    form.cegep_id.choices = [(0, 'Aucun')] + [(c['id'], c['nom']) for c in cegeps]
 
     if request.method == 'GET':
         form.user_id.data = user.id
         form.username.data = user.username
         form.email.data = user.email
         form.role.data = user.role
-        form.cegep_id.data = user.cegep_id if user.cegep_id else 0
-        form.department_id.data = user.department_id if user.department_id else 0
         form.openai_key.data = user.openai_key
-
-        if user.cegep_id:
-            details = get_cegep_details_data(user.cegep_id)
-            form.department_id.choices = [(0, 'Aucun')] + [(d['id'], d['nom']) for d in details['departments']]
-            form.programmes.choices = [(p['id'], p['nom']) for p in details['programmes']]
-        else:
-            form.department_id.choices = [(0, 'Aucun')]
-            form.programmes.choices = []
-
-        form.programmes.data = user_programmes
-    else:
-        submitted_cegep_id = request.form.get('cegep_id', type=int)
-        if submitted_cegep_id and submitted_cegep_id != 0:
-            details = get_cegep_details_data(submitted_cegep_id)
-            form.department_id.choices = [(0, 'Aucun')] + [(d['id'], d['nom']) for d in details['departments']]
-            form.programmes.choices = [(p['id'], p['nom']) for p in details['programmes']]
-        else:
-            form.department_id.choices = [(0, 'Aucun')]
-            form.programmes.choices = []
 
     if form.validate_on_submit():
         try:
@@ -145,16 +122,8 @@ def edit_user(user_id):
             if form.password.data:
                 user.password = generate_password_hash(form.password.data, method='scrypt')
             user.role = form.role.data
-            user.cegep_id = form.cegep_id.data if form.cegep_id.data != 0 else None
-            user.department_id = form.department_id.data if form.department_id.data != 0 else None
             user.openai_key = form.openai_key.data
-
-            user.programmes.clear()
-            submitted_programmes = request.form.getlist('programmes')
-            for prog_id in submitted_programmes:
-                prog_obj = db.session.get(Programme, int(prog_id))
-                if prog_obj:
-                    user.programmes.append(prog_obj)
+            # Ne pas modifier les liens académiques (cégep/département/programmes)
 
             db.session.commit()
             flash('Utilisateur mis à jour avec succès.', 'success')

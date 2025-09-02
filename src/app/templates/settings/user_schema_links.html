@@ -1,0 +1,78 @@
+{% extends "parametres.html" %}
+
+{% block parametres_content %}
+<div class="container">
+  <h1 class="mb-4">Lier des points JSON aux utilisateurs</h1>
+
+  <div class="mb-3">
+    <input type="text" id="pointerSearch" class="form-control" placeholder="Rechercher un pointeur (ex: #/properties/code)" />
+  </div>
+
+  <form method="POST">
+    {{ form.hidden_tag() }}
+
+    <div class="accordion" id="userSchemaAccordion">
+      {% for group in page_groups %}
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading_{{ group.id }}">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_{{ group.id }}" aria-expanded="false" aria-controls="collapse_{{ group.id }}">
+            {{ group.title }}
+          </button>
+        </h2>
+        <div id="collapse_{{ group.id }}" class="accordion-collapse collapse" aria-labelledby="heading_{{ group.id }}" data-bs-parent="#userSchemaAccordion">
+          <div class="accordion-body">
+            <div class="list-group">
+              {% for value, label in group.entries %}
+                <label class="list-group-item d-flex align-items-center gap-2 schema-pointer-item" data-pointer-label="{{ label }}" data-group-id="{{ group.id }}">
+                  <input class="form-check-input me-1" type="checkbox" name="entries" id="entry_{{ value|replace('#','_')|replace('/','_') }}" value="{{ value }}" {% if form.entries.data and value in form.entries.data %}checked{% endif %}>
+                  <code class="small">{{ label }}</code>
+                </label>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% for error in form.entries.errors %}
+      <div class="text-danger">{{ error }}</div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+    <a href="{{ url_for('settings.parametres') }}" class="btn btn-secondary">Retour</a>
+  </form>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const input = document.getElementById('pointerSearch');
+  const items = Array.from(document.querySelectorAll('.schema-pointer-item'));
+  const collapses = new Map();
+  document.querySelectorAll('.accordion-collapse').forEach(el => {
+    collapses.set(el.id.replace('collapse_', ''), el);
+  });
+  function applyFilter() {
+    const q = (input.value || '').toLowerCase();
+    const groupsWithVisible = new Set();
+    items.forEach(el => {
+      const label = (el.getAttribute('data-pointer-label') || '').toLowerCase();
+      const match = !q || label.includes(q);
+      el.style.display = match ? '' : 'none';
+      if (match) {
+        groupsWithVisible.add(el.getAttribute('data-group-id'));
+      }
+    });
+    // Auto-open groups with matches when searching
+    document.querySelectorAll('.accordion-collapse').forEach(el => {
+      const gid = el.id.replace('collapse_', '');
+      if (q && groupsWithVisible.has(gid)) {
+        el.classList.add('show');
+      } else if (!q) {
+        el.classList.remove('show');
+      }
+    });
+  }
+  input.addEventListener('input', applyFilter);
+});
+</script>
+{% endblock %}

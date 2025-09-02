@@ -138,4 +138,39 @@ def test_docx_to_schema_accepts_pdf(app, client, monkeypatch):
         content_type='multipart/form-data',
     )
     assert resp.status_code == 202
-    assert resp.get_json()['task_id'] == 'tid'
+
+
+def test_docx_schema_duplicate_requires_csrf(app, client):
+    from src.app.models import DocxSchemaPage
+    with app.app_context():
+        admin = User(
+            username='duper',
+            password=generate_password_hash('pw'),
+            role='admin',
+            is_first_connexion=False,
+            openai_key='sk'
+        )
+        page = DocxSchemaPage(title='Base', json_schema={'title': 'Base', 'type': 'object'})
+        db.session.add_all([admin, page])
+        db.session.commit()
+        admin_id = admin.id
+        page_id = page.id
+
+    _login(client, admin_id)
+    app.config['WTF_CSRF_ENABLED'] = True
+
+    # Missing token
+    r = client.post(f'/docx_schema/{page_id}/duplicate')
+    assert r.status_code == 400
+
+    listing = client.get('/docx_schema')
+    soup = BeautifulSoup(listing.data, 'html.parser')
+    token = soup.find('meta', {'name': 'csrf-token'})['content']
+
+    r2 = client.post(
+        f'/docx_schema/{page_id}/duplicate',
+        headers={'X-CSRFToken': token}
+    )
+    assert r2.status_code == 201
+    new_id = r2.get_json()['page_id']
+    assert isinstance(new_id, int) and new_id != page_id

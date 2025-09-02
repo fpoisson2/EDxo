@@ -22,6 +22,29 @@ user_programme = db.Table(
     extend_existing=True,
 )
 
+# Association table for linking users to DocxSchemaEntry elements
+user_docx_schema_entry = db.Table(
+    'User_DocxSchemaEntry',
+    db.Column('user_id', db.Integer, db.ForeignKey('User.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('entry_id', db.Integer, db.ForeignKey('docx_schema_entries.id', ondelete='CASCADE'), primary_key=True),
+    extend_existing=True,
+)
+
+class UserSchemaPointer(db.Model):
+    """Lien d'un utilisateur vers un pointeur JSON d'un schéma (DocxSchemaPage)."""
+    __tablename__ = 'User_SchemaPointer'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('User.id', ondelete='CASCADE'), nullable=False)
+    page_id = db.Column(db.Integer, db.ForeignKey('docx_schema_pages.id', ondelete='CASCADE'), nullable=False)
+    pointer = db.Column(db.Text, nullable=False)
+
+    page = db.relationship('DocxSchemaPage')
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'page_id', 'pointer', name='uq_user_pointer'),
+    )
+
 # Association table for Cours-Programme with per-programme session
 cours_programme = db.Table(
     'Cours_Programme',
@@ -266,6 +289,92 @@ class DocxSchemaPage(db.Model):
     markdown_content = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=now_utc)
 
+class DocxSchemaEntry(db.Model):
+    """Entrée de données conforme à un DocxSchemaPage."""
+    __tablename__ = 'docx_schema_entries'
+
+    id = db.Column(db.Integer, primary_key=True)
+    page_id = db.Column(db.Integer, db.ForeignKey('docx_schema_pages.id', ondelete='CASCADE'), nullable=False)
+    data = db.Column(db.JSON, nullable=False)
+    title = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=now_utc)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=True)
+
+    page = db.relationship('DocxSchemaPage', backref=db.backref('entries', cascade='all, delete-orphan'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'page_id': self.page_id,
+            'title': self.title,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'data': self.data,
+        }
+
+class DocxSchemaSectionMap(db.Model):
+    """Associe des sections de l'UI d'une page (programme_view) à des pointeurs du schéma JSON.
+
+    Exemple de section_key: 'session.numero', 'cours.code', 'cours.nom', etc.
+    Unicité par (page_id, section_key).
+    """
+    __tablename__ = 'docx_schema_section_map'
+
+    id = db.Column(db.Integer, primary_key=True)
+    page_id = db.Column(db.Integer, db.ForeignKey('docx_schema_pages.id', ondelete='CASCADE'), nullable=False)
+    section_key = db.Column(db.String(64), nullable=False)
+    pointer = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=now_utc)
+
+    page = db.relationship('DocxSchemaPage', backref=db.backref('section_mappings', cascade='all, delete-orphan'))
+
+    __table_args__ = (
+        UniqueConstraint('page_id', 'section_key', name='uq_section_map_page_section'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'page_id': self.page_id,
+            'section_key': self.section_key,
+            'pointer': self.pointer,
+        }
+
+
+class DataSchemaLink(db.Model):
+    """Lien entre deux éléments de schémas (JSON Pointer entre pages de schémas).
+
+    Permet d'exprimer des relations de type: 'derive_de', 'herite_de', 'equivalent_a', 'utilise'.
+    Les pointeurs sont exprimés en JSON Pointer (p.ex. '#/properties/chapitres/items').
+    """
+    __tablename__ = 'data_schema_links'
+
+    id = db.Column(db.Integer, primary_key=True)
+    relation_type = db.Column(db.String(32), nullable=False, default='derive_de')
+    comment = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=now_utc)
+
+    source_page_id = db.Column(db.Integer, db.ForeignKey('docx_schema_pages.id', ondelete='CASCADE'), nullable=False)
+    source_pointer = db.Column(db.Text, nullable=False)
+
+    target_page_id = db.Column(db.Integer, db.ForeignKey('docx_schema_pages.id', ondelete='CASCADE'), nullable=False)
+    target_pointer = db.Column(db.Text, nullable=False)
+
+    source_page = db.relationship('DocxSchemaPage', foreign_keys=[source_page_id])
+    target_page = db.relationship('DocxSchemaPage', foreign_keys=[target_page_id])
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'relation_type': self.relation_type,
+            'comment': self.comment,
+            'source_page_id': self.source_page_id,
+            'source_pointer': self.source_pointer,
+            'target_page_id': self.target_page_id,
+            'target_pointer': self.target_pointer,
+            'source_title': (self.source_page.title if self.source_page else None),
+            'target_title': (self.target_page.title if self.target_page else None),
+        }
+
 
 class EvaluationSavoirFaire(db.Model):
     __tablename__ = 'evaluation_savoirfaire'
@@ -391,6 +500,19 @@ class User(UserMixin, db.Model):
     programmes = db.relationship('Programme',
                                secondary=user_programme,
                                backref=db.backref('users', lazy='dynamic'))
+
+    # Links to DocxSchemaEntry elements chosen by the user
+    docx_schema_entries = db.relationship(
+        'DocxSchemaEntry',
+        secondary=user_docx_schema_entry,
+        backref=db.backref('linked_users', lazy='dynamic')
+    )
+
+    schema_pointers = db.relationship(
+        'UserSchemaPointer',
+        cascade='all, delete-orphan',
+        backref='user'
+    )
 
 
 class OAuthClient(db.Model):

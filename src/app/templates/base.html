@@ -310,21 +310,6 @@
           <div class="collapse navbar-collapse" id="navbarSupportedContent">
             {% if current_user.is_authenticated %}
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-              <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('evaluation.evaluation_wizard') }}">
-                  <i class="bi bi-pencil-square me-2"></i> Créateur de grille d'évaluation
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('chat.index') }}">
-                  <i class="bi bi-chat-dots me-2"></i> Chat
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('gestion_programme.gestion_programme') }}">
-                  <i class="bi bi-gear me-2"></i> Gestion de programme
-                </a>
-              </li>
               {% if current_user.is_authenticated and current_user.role == 'admin' %}
               {% for p in docx_schema_pages %}
               <li class="nav-item">

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Entrées – {{ page.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3">Entrées – {{ page.title }}</h1>
+    <div class="btn-group">
+      <a class="btn btn-outline-secondary" href="{{ url_for('main.docx_schema_mapping_page', page_id=page.id) }}">
+        <i class="bi bi-link-45deg"></i> Associer sections
+      </a>
+      <a class="btn btn-outline-secondary" href="{{ url_for('main.docx_schema_page_view', page_id=page.id) }}">
+        <i class="bi bi-arrow-left"></i> Schéma
+      </a>
+      <a class="btn btn-primary" href="{{ url_for('main.docx_schema_pages') }}">Tous les schémas</a>
+    </div>
+  </div>
+
+  {% if entries %}
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th style="width: 140px;">Créée le</th>
+          <th>Titre</th>
+          <th>Résumé</th>
+          <th style="width: 120px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in entries %}
+        <tr>
+          <td><small>{{ e.created_at.strftime('%Y-%m-%d %H:%M') if e.created_at else '' }}</small></td>
+          <td>{{ e.title or '(sans titre)' }}</td>
+          <td>
+            <code class="small text-break">{{ (e.data | tojson)[:120] ~ ('…' if (e.data | tojson)|length > 120) }}</code>
+          </td>
+          <td>
+            <a class="btn btn-sm btn-outline-secondary me-1" href="{{ url_for('main.docx_schema_programme_view', page_id=page.id, entry_id=e.id) }}" title="Visionner">
+              <i class="bi bi-grid-3x3-gap"></i>
+            </a>
+            <a class="btn btn-sm btn-outline-primary me-1" href="{{ url_for('main.docx_schema_entry_edit_page', page_id=page.id, entry_id=e.id) }}" title="Éditer">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <form method="post" action="{{ url_for('main.docx_schema_entry_delete', page_id=page.id, entry_id=e.id) }}" onsubmit="return confirm('Supprimer cette entrée ?');" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm btn-danger">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="alert alert-info">Aucune entrée pour ce schéma pour l’instant.</div>
+  {% endif %}
+</div>
+{% endblock %}

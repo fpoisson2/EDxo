@@ -27,14 +27,48 @@
       <i class="bi bi-file-earmark-word me-2"></i>
       <span>Exporter</span>
     </button>
+    <a href="{{ url_for('main.docx_schema_programme_view', page_id=page.id) }}" id="schemaProgrammeViewBtn" class="btn btn-outline-secondary d-flex align-items-center">
+      <i class="bi bi-grid-3x3-gap me-2"></i>
+      <span>Visionnement</span>
+    </a>
+    <button type="button" id="schemaBrowseBtn" class="btn btn-outline-secondary d-flex align-items-center">
+      <i class="bi bi-diagram-3 me-2"></i>
+      <span>Parcourir le schéma</span>
+    </button>
+    <button type="button" id="schemaDuplicateBtn" class="btn btn-outline-secondary d-flex align-items-center">
+      <i class="bi bi-files me-2"></i>
+      <span>Dupliquer</span>
+    </button>
+    <a href="{{ url_for('main.docx_schema_entries_list_page', page_id=page.id) }}" class="btn btn-outline-dark d-flex align-items-center">
+      <i class="bi bi-list-ul me-2"></i>
+      <span>Entrées</span>
+    </a>
   </div>
 
   <section class="mb-4">
-    <h2 class="h4 mb-3">Plan cadre</h2>
     <form id="planCadreForm">
       <div class="accordion" id="planCadreAccordion"></div>
     </form>
   </section>
+</div>
+
+<!-- Modal de parcours de schéma -->
+<div class="modal fade" id="schemaPointerBrowseModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Parcourir le schéma</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2"><input id="schemaPointerSearch" class="form-control form-control-sm" placeholder="Rechercher un champ ou chemin..."></div>
+        <div id="schemaPointerTree" class="small"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="actionBar" class="fixed-bottom bg-white border-top d-none shadow">
@@ -46,15 +80,41 @@
     </div>
   </div>
 </div>
+<style>
+  .schema-highlight { outline: 2px solid var(--bs-primary); box-shadow: 0 0 0.5rem rgba(13,110,253,.5); }
+  .copy-btn { border: none; background: transparent; color: var(--bs-secondary); }
+  .copy-btn:hover { color: var(--bs-primary); }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   let schemaData = {{ page.json_schema | tojson }};
+  let initialEntryData = {{ (entry.data | tojson) if (entry is defined and entry) else 'null' }};
+  let editingEntryId = {{ (entry.id) if (entry is defined and entry) else 'null' }};
+  const pageId = {{ page.id }};
+  try {
+    // Coerce stringified schemas into objects; also support wrapper {schema: "..."}
+    if (typeof schemaData === 'string') {
+      const t = schemaData.trim();
+      if ((t.startsWith('{') && t.endsWith('}')) || (t.startsWith('[') && t.endsWith(']'))) {
+        schemaData = JSON.parse(t);
+      }
+    }
+    if (schemaData && typeof schemaData === 'object' && typeof schemaData.schema === 'string') {
+      const t = schemaData.schema.trim();
+      if ((t.startsWith('{') && t.endsWith('}')) || (t.startsWith('[') && t.endsWith(']'))) {
+        schemaData = JSON.parse(t);
+      }
+    }
+  } catch {}
   const markdownData = {{ page.markdown_content | tojson }};
+  const pageTitle = (schemaData && (schemaData.title || schemaData.titre)) || '';
   const planFormEl = document.getElementById('planCadreForm');
   const accordionRoot = document.getElementById('planCadreAccordion');
   const actionBar = document.getElementById('actionBar');
   const floatingSaveBtn = document.getElementById('floatingSaveBtn');
+  // Links map: source_pointer -> link
+  let schemaLinksByPointer = {};
   let markdownOrderMap = {};
   const normalizedMarkdown = normalizeName(markdownData || '');
   function normalizeName(str) {
@@ -102,19 +162,118 @@ document.addEventListener('DOMContentLoaded', () => {
       return map;
     } catch (e) { return { root: [] }; }
   }
+  // Build heading ranges to scope ordering within sections
+  function buildHeadingRanges(markdown) {
+    try {
+      const lines = (markdown || '').split(/\r?\n/);
+      let offset = 0;
+      const heads = [];
+      const re = /^(#+)\s+(.*)$/;
+      for (const line of lines) {
+        const m = line.match(re);
+        if (m) {
+          const depth = m[1].length;
+          const text = m[2] || '';
+          heads.push({ depth, norm: normalizeName(text), start: offset });
+        }
+        offset += line.length + 1; // +1 for \n
+      }
+      // compute end as next heading with depth <= current.depth
+      const total = (markdown || '').length;
+      for (let i = 0; i < heads.length; i++) {
+        let end = total;
+        for (let j = i + 1; j < heads.length; j++) {
+          if (heads[j].depth <= heads[i].depth) { end = heads[j].start; break; }
+        }
+        heads[i].end = end;
+      }
+      return heads;
+    } catch { return []; }
+  }
+  let headingRanges = buildHeadingRanges(markdownData || '');
+
   function getMdOrder(path) {
     const key = normalizeName(path.replace(/\[[0-9]+\]/g, '')) || 'root';
     return markdownOrderMap[key] || [];
   }
-  function getMarkdownIndex(name) {
+  function getMarkdownIndex(name, range) {
+    if (range && Array.isArray(range) && range.length === 2) {
+      try {
+        const slice = (markdownData || '').substring(range[0], range[1]);
+        const norm = normalizeName(slice);
+        const si = norm.indexOf(name);
+        if (si !== -1) return si;
+      } catch {}
+    }
     const idx = normalizedMarkdown.indexOf(name);
     return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+  }
+  function findSectionRangeByTitle(title) {
+    const norm = normalizeName(title || '');
+    const h = headingRanges.find(h => h && h.norm === norm);
+    return h ? [h.start, h.end] : null;
+  }
+  function computeMdPos(key, title, secRange) {
+    try {
+      const md = markdownData || '';
+      if (secRange && Array.isArray(secRange)) {
+        const slice = md.substring(secRange[0], secRange[1]);
+        const idxKey = slice.indexOf(key);
+        if (idxKey !== -1) return idxKey;
+        const normSlice = normalizeName(slice);
+        const idxTitle = normSlice.indexOf(normalizeName(title || key));
+        if (idxTitle !== -1) return 100000 + idxTitle; // prefer key match over title
+      }
+      const idxKeyGlobal = md.indexOf(key);
+      if (idxKeyGlobal !== -1) return 200000 + idxKeyGlobal;
+      const idxNormGlobal = normalizedMarkdown.indexOf(normalizeName(title || key));
+      return idxNormGlobal === -1 ? Number.MAX_SAFE_INTEGER : 300000 + idxNormGlobal;
+    } catch { return Number.MAX_SAFE_INTEGER; }
   }
   function normalizePlanSchema(node) {
     if (!node || typeof node !== 'object') return node;
 
+    const defs = node.$defs || {};
+
+    function getFromPointer(ptr) {
+      // Supports pointers like '#/$defs/name/subpath'
+      if (!ptr || typeof ptr !== 'string' || !ptr.startsWith('#/')) return null;
+      const parts = ptr.slice(2).split('/');
+      let cur = node;
+      for (const p of parts) {
+        const key = p.replace(/~1/g, '/').replace(/~0/g, '~');
+        if (cur && typeof cur === 'object' && key in cur) cur = cur[key];
+        else return null;
+      }
+      return cur || null;
+    }
+
+    function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+    function resolveRef(n) {
+      if (!n || typeof n !== 'object') return n;
+      if (n.$ref) {
+        const target = getFromPointer(n.$ref) || null;
+        if (target) {
+          // Merge resolved target with local overrides (if any)
+          const merged = Object.assign({}, clone(target));
+          for (const [k, v] of Object.entries(n)) {
+            if (k === '$ref') continue;
+            merged[k] = v;
+          }
+          return merged;
+        }
+      }
+      return n;
+    }
+
     function walk(n) {
       if (!n || typeof n !== 'object') return {};
+
+      // Apply $ref resolution first
+      if (n.$ref) {
+        return walk(resolveRef(n));
+      }
 
       const keys = Object.keys(n);
       if (!n.type && !n.properties && !n.items && !n.champs && !n.parts && keys.length === 1 && !['title','description'].includes(keys[0])) {
@@ -149,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (n.type === 'object' && n.properties) {
         const props = {};
         for (const [k, v] of Object.entries(n.properties)) {
-          props[k] = walk(v);
+          props[k] = walk(resolveRef(v));
         }
         const out = { type: 'object', properties: props };
         if (n.title) out.title = n.title;
@@ -163,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
           items = items[0];
         }
         if (items) {
-          items = walk(items);
+          items = walk(resolveRef(items));
         }
         const out = { type: 'array', items };
         if (n.title) out.title = n.title;
@@ -185,13 +344,401 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   if (floatingSaveBtn) {
-    floatingSaveBtn.addEventListener('click', (e) => {
+    floatingSaveBtn.addEventListener('click', async (e) => {
       e.preventDefault();
-      actionBar.classList.add('d-none');
-      document.body.classList.remove('with-action-bar');
+      try {
+        const data = collectFormData();
+        const csrf = (document.querySelector('meta[name="csrf-token"]')||{}).getAttribute?.('content');
+        const targetUrl = (editingEntryId !== null && editingEntryId !== undefined)
+          ? `/docx_schema/{{ page.id }}/entries/${editingEntryId}/update`
+          : (window.location.pathname + '/entries');
+        const resp = await fetch(targetUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(csrf ? { 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf } : {}),
+          },
+          body: JSON.stringify({ data }),
+        });
+        if (!resp.ok) {
+          const err = await safeJson(resp);
+          alert('Erreur lors de la sauvegarde: ' + (err && (err.error || resp.statusText)));
+          return;
+        }
+        // Succès
+        actionBar.classList.add('d-none');
+        document.body.classList.remove('with-action-bar');
+      } catch (e) {
+        console.error(e);
+        alert('Erreur inattendue lors de la sauvegarde.');
+      }
     });
   }
-  function renderPlanCadreForm(schema, parent, path='root', depth=0) {
+  function safeJson(r){ return r.json().catch(()=>null); }
+  function setDeep(target, path, value) {
+    const parts = path.split('.').filter(Boolean);
+    let cur = target;
+    for (let i = 0; i < parts.length; i++) {
+      const key = parts[i];
+      const isLast = i === parts.length - 1;
+      if (isLast) {
+        if (key.endsWith('[]')) {
+          const k = key.slice(0, -2);
+          if (!Array.isArray(cur[k])) cur[k] = [];
+          cur[k].push(value);
+        } else if (cur[key] === undefined) {
+          cur[key] = value;
+        } else if (Array.isArray(cur[key])) {
+          cur[key].push(value);
+        } else {
+          // Dupliquer la clé => convertir en tableau
+          cur[key] = [cur[key], value];
+        }
+      } else {
+        const k = key.replace(/\[\]$/, '');
+        if (cur[k] === undefined || typeof cur[k] !== 'object') cur[k] = {};
+        cur = cur[k];
+      }
+    }
+  }
+  function unescapeJsonPointerToken(t){ return (t||'').replace(/~1/g, '/').replace(/~0/g, '~'); }
+  function pointerToPath(ptr){
+    try {
+      if (!ptr || typeof ptr !== 'string' || !ptr.startsWith('#/')) return [];
+      const toks = ptr.slice(2).split('/');
+      const out = [];
+      for (let i=0;i<toks.length;i++){
+        const t = toks[i];
+        if (t === 'properties' && (i+1) < toks.length) {
+          out.push(unescapeJsonPointerToken(toks[i+1]));
+          i += 1;
+        } else if (t === 'items') {
+          // Optional numeric index follows
+          const nxt = toks[i+1];
+          if (nxt && /^\d+$/.test(nxt)) { out.push(Number(nxt)); i += 1; }
+          // else just means items without index — ignore here
+        } else if (t === '$defs' || t === 'definitions') {
+          // Skip schema-specific sections
+          i += 0; // no-op, but keep tokenization consistent
+        }
+      }
+      return out;
+    } catch { return []; }
+  }
+  function setDeepAtPath(obj, pathArr, value){
+    let cur = obj;
+    for (let i=0;i<pathArr.length;i++){
+      const key = pathArr[i];
+      const last = i === pathArr.length - 1;
+      if (typeof key === 'number') {
+        if (!Array.isArray(cur)) {
+          // Convertir la branche en tableau si nécessaire
+          // Trouver la clé précédente pour y attacher un tableau
+          return; // Protection: chemins invalides si structure inattendue
+        }
+        if (!cur[key]) cur[key] = {};
+        if (last) {
+          // Si on finit sur un index, on suppose que la valeur entière est l'élément
+          cur[key] = value;
+        } else {
+          cur = cur[key];
+        }
+      } else {
+        if (last) {
+          if (cur[key] === undefined) cur[key] = value;
+          else if (Array.isArray(cur[key])) cur[key].push(value);
+          else cur[key] = value; // override scalar
+        } else {
+          const next = pathArr[i+1];
+          // Préparer le bon conteneur (objet ou tableau) selon le prochain token
+          if (typeof next === 'number') {
+            if (!Array.isArray(cur[key])) cur[key] = [];
+          } else {
+            if (!cur[key] || typeof cur[key] !== 'object' || Array.isArray(cur[key])) cur[key] = {};
+          }
+          cur = cur[key];
+        }
+      }
+    }
+  }
+  function collectFormData() {
+    const out = {};
+    if (!planFormEl) return out;
+    const fields = planFormEl.querySelectorAll('input[name], textarea[name], select[name]');
+    fields.forEach(el => {
+      const name = (el.name || '').trim();
+      let val = (el.value || '').trim();
+      if (!name || val === '') return;
+      if (el.type === 'number') {
+        const n = Number(val);
+        if (!Number.isNaN(n)) val = n;
+      }
+      // Priorité: sérialisation via JSON Pointer
+      const holder = el.closest('[data-pointer]');
+      const ptr = holder ? holder.getAttribute('data-pointer') : null;
+      if (ptr) {
+        const p = pointerToPath(ptr);
+        if (p.length > 0) {
+          // Cas particulier: tableau de scalaires (input name se termine par [] et ptr pointe sur la clé du tableau)
+          if (name.endsWith('[]') && (p.length === 1 || (typeof p[p.length-1] === 'string' && !Number.isInteger(p[p.length-1])))) {
+            const key = p[p.length-1];
+            if (!Array.isArray(out[key])) out[key] = [];
+            out[key].push(val);
+            return;
+          }
+          setDeepAtPath(out, p, val);
+          return;
+        }
+      }
+      // Fallback: ancienne méthode basée sur le nom du champ
+      const path = name.startsWith('root.') ? name.slice('root.'.length) : name;
+      setDeep(out, path, val);
+    });
+    return out;
+  }
+  // ---------------------------
+  // Pré-remplissage du formulaire
+  // ---------------------------
+  function prepopulateFromData(schema, data, ptr) {
+    if (!schema || data === undefined || data === null) return;
+    const t = schema.type;
+    if (t === 'object' && schema.properties && typeof data === 'object' && !Array.isArray(data)) {
+      for (const [k, v] of Object.entries(schema.properties)) {
+        if (data[k] !== undefined) {
+          prepopulateFromData(v, data[k], `${ptr}/properties/${k}`);
+        }
+      }
+      return;
+    }
+    if (t === 'array' && schema.items && Array.isArray(data)) {
+      const arrPtr = ptr;
+      const addBtn = document.querySelector(`[data-array-pointer="${CSS.escape(arrPtr)}"]`) ||
+                     (document.querySelector(`[data-pointer="${CSS.escape(arrPtr)}"] .add-item-btn`));
+      if (addBtn) {
+        for (let i = 0; i < data.length; i++) addBtn.click();
+      }
+      if (schema.items && schema.items.type === 'object') {
+        for (let i = 0; i < data.length; i++) {
+          prepopulateFromData(schema.items, data[i], `${ptr}/items/${i}`);
+        }
+      } else {
+        const container = document.querySelector(`[data-pointer="${CSS.escape(arrPtr)}"]`);
+        if (container) {
+          const inputs = container.querySelectorAll('input, textarea, select');
+          for (let i = 0; i < Math.min(inputs.length, data.length); i++) {
+            inputs[i].value = (data[i] != null) ? String(data[i]) : '';
+          }
+        }
+      }
+      return;
+    }
+    const field = document.querySelector(`[data-pointer="${CSS.escape(ptr)}"]`);
+    if (!field) return;
+    const input = field.querySelector('input, textarea, select');
+    if (!input) return;
+    if (typeof data === 'number') input.value = String(data);
+    else if (typeof data === 'string') input.value = data;
+    else input.value = JSON.stringify(data);
+  }
+  function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+  let lastHighlighted = null;
+  function highlightAndScroll(ptr) {
+    try {
+      const target = document.querySelector(`[data-pointer="${CSS.escape(ptr)}"]`);
+      if (!target) return false;
+      if (lastHighlighted && lastHighlighted !== target) {
+        lastHighlighted.classList.remove('schema-highlight');
+      }
+      target.classList.add('schema-highlight');
+      lastHighlighted = target;
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return true;
+    } catch { return false; }
+  }
+  function buildPointerTree(schema, basePtr='#') {
+    const root = document.createElement('div');
+    root.className = 'list-group';
+    function nodeRow(label, ptr) {
+      const a = document.createElement('a');
+      a.href = '#';
+      a.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+      a.innerHTML = `<span>${escapeHtml(label)}</span><code class="ms-2">${escapeHtml(ptr)}</code>`;
+      a.addEventListener('click', (e) => { e.preventDefault(); highlightAndScroll(ptr); browseModal.show ? browseModal.hide() : null; });
+      return a;
+    }
+    function walk(n, path, container) {
+      if (!n || typeof n !== 'object') return;
+      const t = n.type;
+      if (t === 'object' && n.properties) {
+        Object.entries(n.properties).forEach(([k, v]) => {
+          const ptr = `${path}/properties/${k}`;
+          const row = nodeRow(`${v.title || k} (objet)`, ptr);
+          container.appendChild(row);
+          const child = document.createElement('div');
+          child.className = 'ms-3 border-start ps-2';
+          container.appendChild(child);
+          walk(v, ptr, child);
+        });
+      } else if (t === 'array' && n.items) {
+        const ptr = `${path}/items`;
+        const row = nodeRow(`${n.title || 'Éléments'} [liste]`, ptr);
+        container.appendChild(row);
+        const child = document.createElement('div');
+        child.className = 'ms-3 border-start ps-2';
+        container.appendChild(child);
+        walk(n.items, ptr, child);
+      } else {
+        const row = nodeRow(`${n.title || (t || 'valeur')}`, path);
+        container.appendChild(row);
+      }
+    }
+    walk(schema, basePtr, root);
+    return root;
+  }
+
+  // -------- Links + Choices helpers --------
+  function getLinkForPointer(ptr) {
+    // Try exact
+    if (schemaLinksByPointer[ptr]) return schemaLinksByPointer[ptr];
+    // Variants: collapse any numeric index after /items to generic /items
+    try {
+      const collapseIndex = (s) => s.replace(/\/items\/(\d+)/g, '/items');
+      const collapsed = collapseIndex(ptr);
+      if (schemaLinksByPointer[collapsed]) return schemaLinksByPointer[collapsed];
+      if (schemaLinksByPointer[`${collapsed}/items`]) return schemaLinksByPointer[`${collapsed}/items`];
+      // Walk up ancestors: strip trailing /properties/<k> or last segment, check along the way
+      const candidates = new Set();
+      let cur = collapsed;
+      for (let i = 0; i < 6; i++) {
+        if (schemaLinksByPointer[cur]) return schemaLinksByPointer[cur];
+        if (schemaLinksByPointer[`${cur}/items`]) return schemaLinksByPointer[`${cur}/items`];
+        // Remove trailing /properties/<k>
+        if (/\/properties\/[^/]+$/.test(cur)) {
+          cur = cur.replace(/\/properties\/[^/]+$/, '');
+          continue;
+        }
+        // Remove trailing /items
+        if (/\/items$/.test(cur)) {
+          cur = cur.replace(/\/items$/, '');
+          continue;
+        }
+        // Remove trailing numeric index after items if any (already collapsed once)
+        const prev = cur.replace(/\/items\/(\d+)(?=($|\/))/, '/items');
+        if (prev !== cur) { cur = prev; continue; }
+        break;
+      }
+    } catch {}
+    return null;
+  }
+  async function loadSchemaLinks() {
+    try {
+      const r = await fetch(`/docx_schema/${pageId}/links`);
+      if (!r.ok) return;
+      const d = await r.json();
+      const arr = d.links || [];
+      schemaLinksByPointer = {};
+      for (const l of arr) {
+        if (l && l.source_pointer) schemaLinksByPointer[l.source_pointer] = l;
+      }
+    } catch {}
+  }
+  async function fetchChoices(link, targetEntryId) {
+    try {
+      const params = new URLSearchParams({ pointer: link.target_pointer });
+      if (targetEntryId) params.set('target_entry_id', String(targetEntryId));
+      const r = await fetch(`/docx_schema/${link.target_page_id}/choices?` + params.toString());
+      if (!r.ok) return [];
+      const d = await r.json();
+      return d.choices || [];
+    } catch { return []; }
+  }
+  async function ensureEntryPicker(parentEl, link, onChange) {
+    try {
+      const wrap = document.createElement('div');
+      wrap.className = 'd-flex align-items-center gap-2 mb-1';
+      const lbl = document.createElement('span');
+      lbl.className = 'small text-muted';
+      lbl.textContent = 'Source';
+      const sel = document.createElement('select');
+      sel.className = 'form-select form-select-sm';
+      const allOpt = document.createElement('option');
+      allOpt.value = '';
+      allOpt.textContent = 'Toutes les entrées';
+      sel.appendChild(allOpt);
+      // Persist selection using hidden input under data.__links__
+      const hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.name = `root.__links__._b64_${btoa(link.source_pointer)}`;
+      parentEl.appendChild(hidden);
+      const r = await fetch(`/docx_schema/${link.target_page_id}/entries`);
+      if (r.ok) {
+        const j = await r.json();
+        const entries = j.entries || [];
+        for (const e of entries) {
+          const o = document.createElement('option');
+          o.value = String(e.id);
+          o.textContent = e.title || `Entrée #${e.id}`;
+          sel.appendChild(o);
+        }
+      }
+      sel.addEventListener('change', () => { const v = sel.value ? Number(sel.value) : null; hidden.value = v ? String(v) : ''; onChange(v); });
+      wrap.appendChild(lbl); wrap.appendChild(sel);
+      parentEl.appendChild(wrap);
+      // Preselect from initial entry meta if available
+      try {
+        const key = `_b64_${btoa(link.source_pointer)}`;
+        const meta = (initialEntryData && typeof initialEntryData === 'object') ? (initialEntryData.__links__ || null) : null;
+        const saved = meta ? meta[key] : null;
+        if (saved != null) {
+          sel.value = String(saved);
+          hidden.value = String(saved);
+          onChange(Number(saved));
+        }
+      } catch {}
+      return sel;
+    } catch { return null; }
+  }
+  async function turnInputIntoSelect(containerEl, inputEl, ptr, schema) {
+    const link = getLinkForPointer(ptr);
+    if (!link || !['utilise','herite_de'].includes(link.relation_type)) return;
+    // Create select
+    const sel = document.createElement('select');
+    sel.className = 'form-select';
+    sel.name = inputEl.name;
+    const initialValue = (inputEl.value || '').trim();
+    // Insert before replacing input
+    inputEl.replaceWith(sel);
+    let currentTargetEntryId = null;
+    const refresh = async () => {
+      const choices = await fetchChoices(link, currentTargetEntryId);
+      const current = sel.value || initialValue;
+      sel.innerHTML = '';
+      const empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = '—';
+      sel.appendChild(empty);
+      for (const c of choices) {
+        const o = document.createElement('option');
+        o.value = (c.value != null) ? String(c.value) : '';
+        o.textContent = (c.label != null) ? String(c.label) : o.value;
+        sel.appendChild(o);
+      }
+      if (current) sel.value = current;
+    };
+    // Entry picker (optional)
+    await ensureEntryPicker(containerEl, link, (v) => { currentTargetEntryId = v; refresh(); });
+    await refresh();
+  }
+  function filterPointerTree(root, q) {
+    const query = (q||'').trim().toLowerCase();
+    const rows = root.querySelectorAll('a.list-group-item');
+    rows.forEach(a => {
+      const t = (a.innerText || a.textContent || '').toLowerCase();
+      a.style.display = (!query || t.includes(query)) ? '' : 'none';
+    });
+  }
+  function renderPlanCadreForm(schema, parent, path='root', depth=0, opts={}, ptr='#') {
+    const options = Object.assign({ suppressLabel: false, suppressLegend: false, parentTitle: null }, opts || {});
     if (!schema || !parent) return;
     if (schema.type === 'object' && schema.properties) {
       const entries = Object.entries(schema.properties);
@@ -205,96 +752,367 @@ document.addEventListener('DOMContentLoaded', () => {
         const posB = ib !== -1 ? ib : getMarkdownIndex(nameB);
         return posA - posB;
       });
-      entries.forEach(([key, prop], idx) => {
-        const sectionId = `${path.replace(/\./g, '-')}-${idx}`;
+
+      // Accordéons seulement au niveau racine; en profondeur, regrouper simplement
+      if (depth === 0) {
+        const secRange = findSectionRangeByTitle(schema.title || path);
+        const palette = [
+          'bg-primary text-white',
+          'bg-info text-white',
+          'bg-success text-white',
+          'bg-warning text-dark',
+          'bg-danger text-white',
+          'bg-secondary text-white'
+        ];
+        // Order strictly by appearance in the section: prefer raw key, then title
+        entries.sort(([ak, av], [bk, bv]) => {
+          const posA = computeMdPos(ak, av.title, secRange);
+          const posB = computeMdPos(bk, bv.title, secRange);
+          return posA - posB;
+        });
+        entries.forEach(([key, prop], idx) => {
+          const sectionId = `${path.replace(/\./g, '-')}-${idx}`;
+          const item = document.createElement('div');
+          item.className = 'accordion-item';
+          const header = document.createElement('h2');
+          header.className = 'accordion-header d-flex';
+          const btn = document.createElement('button');
+          const colorClass = palette[idx % palette.length];
+          btn.className = `accordion-button flex-grow-1 ${colorClass}`;
+          btn.type = 'button';
+          btn.setAttribute('data-bs-toggle', 'collapse');
+          btn.setAttribute('data-bs-target', `#collapse-${sectionId}`);
+          btn.setAttribute('aria-expanded', 'true');
+          btn.textContent = prop.title || key;
+          header.appendChild(btn);
+          const magicBtn = document.createElement('button');
+          magicBtn.type = 'button';
+          magicBtn.className = 'btn btn-sm btn-outline-primary ms-2 magic-generate';
+          magicBtn.setAttribute('data-target-column', path === 'root' ? key : `${path}.${key}`);
+          magicBtn.title = 'Améliorer uniquement cette section';
+          magicBtn.innerHTML = '<i class="bi bi-magic"></i>';
+          header.appendChild(magicBtn);
+          item.appendChild(header);
+          const collapse = document.createElement('div');
+          collapse.id = `collapse-${sectionId}`;
+          collapse.className = 'accordion-collapse collapse show';
+          collapse.setAttribute('data-bs-parent', '#planCadreAccordion');
+        const body = document.createElement('div');
+        body.className = 'accordion-body';
+        const childPtr = `${ptr}/properties/${key}`;
+        // Copy pointer button for section
+        const copyTop = document.createElement('button');
+        copyTop.type = 'button';
+        copyTop.className = 'copy-btn float-end ms-2';
+        copyTop.setAttribute('data-copy-pointer', childPtr);
+        copyTop.innerHTML = '<i class="bi bi-clipboard"></i>';
+        copyTop.title = 'Copier le chemin';
+        copyTop.addEventListener('click', (e) => { e.stopPropagation(); copyPointer(childPtr); });
+        body.appendChild(copyTop);
+        collapse.appendChild(body);
+        item.appendChild(collapse);
+        parent.appendChild(item);
+        renderPlanCadreForm(
+          prop,
+          body,
+          path === 'root' ? key : `${path}.${key}`,
+          depth + 1,
+          { suppressLegend: true, parentTitle: (prop.title || key) },
+          childPtr
+        );
+        });
+        return;
+      }
+
+      // depth > 0: section simple
+      const container = document.createElement('div');
+      // If rendering inside an accordion section or legend is suppressed, avoid extra boxed look
+      container.className = (options.suppressLegend || options.parentTitle) ? 'mb-3' : 'border rounded p-2 mb-3';
+      container.setAttribute('data-pointer', ptr);
+      const legendText = schema.title || path;
+      if (!options.suppressLegend && legendText && legendText !== pageTitle && legendText !== options.parentTitle) {
+        const legend = document.createElement('h6');
+        legend.textContent = legendText;
+        legend.className = 'fw-bold';
+        container.appendChild(legend);
+      }
+      const secRangeInner = findSectionRangeByTitle(options.parentTitle || schema.title || path);
+      // Ensure inner properties respect section order as well
+      entries.sort(([ak, av], [bk, bv]) => {
+        const posA = computeMdPos(ak, av.title, secRangeInner);
+        const posB = computeMdPos(bk, bv.title, secRangeInner);
+        return posA - posB;
+      });
+      for (const [key, prop] of entries) {
+        const childPtr = `${ptr}/properties/${key}`;
+        renderPlanCadreForm(prop, container, path === 'root' ? key : `${path}.${key}`, depth + 1, {}, childPtr);
+      }
+      parent.appendChild(container);
+      return;
+    }
+    if (schema.type === 'array' && schema.items) {
+      // Detect a nested list inside a list: if items is object and any child is an array
+      let hasNestedList = false;
+      if (schema.items && schema.items.type === 'object' && schema.items.properties) {
+        for (const v of Object.values(schema.items.properties)) {
+          if (v && v.type === 'array') { hasNestedList = true; break; }
+        }
+      }
+
+      function shouldAccordionPerItem(path, schema) {
+        // Generic rule: arrays of objects render as per-item accordions
+        try { return !!(schema && schema.items && schema.items.type === 'object'); } catch { return false; }
+      }
+
+      function buildArrayUI(targetParent, showLabel) {
+        const container = document.createElement('div');
+        container.className = 'mb-3';
+        container.setAttribute('data-pointer', ptr);
+        // Copy pointer button
+        const copyArr = document.createElement('button');
+        copyArr.type = 'button';
+        copyArr.className = 'copy-btn float-end ms-2';
+        copyArr.setAttribute('data-copy-pointer', ptr);
+        copyArr.innerHTML = '<i class="bi bi-clipboard"></i>';
+        copyArr.title = 'Copier le chemin';
+        copyArr.addEventListener('click', (e) => { e.stopPropagation(); copyPointer(ptr); });
+        container.appendChild(copyArr);
+        if (showLabel && !options.suppressLabel) {
+          const labelText = schema.title || path;
+          if (labelText && labelText !== pageTitle) {
+            const label = document.createElement('label');
+            label.className = 'form-label fw-bold';
+            label.textContent = labelText;
+            container.appendChild(label);
+          }
+        }
+        const list = document.createElement('div');
+        list.className = 'd-flex flex-column gap-2';
+        container.appendChild(list);
+        function addItem() {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'border rounded p-2';
+          const row = document.createElement('div');
+          row.className = 'd-flex align-items-start';
+          wrapper.appendChild(row);
+          const fill = document.createElement('div');
+          fill.className = 'flex-fill me-2';
+          row.appendChild(fill);
+          if (schema.items.type === 'object' && schema.items.properties && schema.items.properties.title && schema.items.properties.description) {
+            const titleInput = document.createElement('input');
+            titleInput.className = 'form-control fw-bold mb-1 auto-resize border-0';
+            titleInput.placeholder = 'Titre';
+            fill.appendChild(titleInput);
+            const descTextarea = document.createElement('textarea');
+            descTextarea.className = 'form-control auto-resize border-0';
+            descTextarea.placeholder = 'Description';
+            fill.appendChild(descTextarea);
+          } else if (schema.items.type === 'object') {
+            const itemName = normalizeName(schema.items.title || schema.title || path);
+            const itemPath = path === 'root' ? itemName : `${path}.${itemName}`;
+            renderPlanCadreForm(
+              schema.items,
+              fill,
+              itemPath,
+              depth + 1,
+              // Avoid repeating the accordion header title inside
+              { suppressLegend: true, parentTitle: (schema.title || path) },
+              `${ptr}/items`
+            );
+          } else {
+            // Scalar items: input or select if a link exists on the array pointer
+            const link = getLinkForPointer(ptr);
+            if (link && ['utilise','herite_de'].includes(link.relation_type)) {
+              const sel = document.createElement('select');
+              sel.className = 'form-select';
+              sel.name = `${path}[]`;
+              fill.appendChild(sel);
+              // Optional entry picker per array container (single shared above list)
+              let picker = container.querySelector('[data-entry-picker]');
+              let currentTargetEntryId = null;
+              const refresh = async () => {
+                const choices = await fetchChoices(link, currentTargetEntryId);
+                const current = sel.value;
+                sel.innerHTML = '';
+                const empty = document.createElement('option');
+                empty.value = '';
+                empty.textContent = '—';
+                sel.appendChild(empty);
+                for (const c of choices) {
+                  const o = document.createElement('option');
+                  o.value = (c.value != null) ? String(c.value) : '';
+                  o.textContent = (c.label != null) ? String(c.label) : o.value;
+                  sel.appendChild(o);
+                }
+                if (current) sel.value = current;
+              };
+              if (!picker) {
+                picker = document.createElement('div');
+                picker.setAttribute('data-entry-picker', '');
+                container.insertBefore(picker, container.firstChild);
+                ensureEntryPicker(picker, link, (v) => { currentTargetEntryId = v; refresh(); });
+              }
+              refresh();
+            } else {
+              const input = document.createElement('input');
+              input.className = 'form-control';
+              input.name = `${path}[]`;
+              fill.appendChild(input);
+            }
+          }
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn btn-danger btn-sm remove-item-btn ms-auto';
+          btn.style.border = 'none';
+          btn.title = 'Supprimer';
+          btn.innerHTML = '<i class="bi bi-dash-circle"></i>';
+          btn.addEventListener('click', () => { wrapper.remove(); showActionBar(); });
+          row.appendChild(btn);
+          list.appendChild(wrapper);
+          showActionBar();
+        }
+        const addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'btn btn-success btn-sm add-item-btn';
+        addBtn.title = 'Ajouter';
+        addBtn.innerHTML = '<i class="bi bi-plus-circle"></i>';
+        addBtn.addEventListener('click', addItem);
+        container.appendChild(addBtn);
+        targetParent.appendChild(container);
+        }
+
+      if (shouldAccordionPerItem(path, schema)) {
+        // Build an accordion where each item is its own collapsible section
+        const accId = `${path.replace(/\./g,'-')}-items-acc`;
+        const acc = document.createElement('div');
+        acc.className = 'accordion mb-2';
+        acc.id = accId;
+        acc.setAttribute('data-array-pointer', ptr);
+
+        // Heading (title) for the array of objects
+        if (!options.suppressLabel) {
+          const labelText = schema.title || path;
+          if (labelText && labelText !== pageTitle) {
+            const label = document.createElement('label');
+            label.className = 'form-label fw-bold';
+            label.textContent = labelText;
+            parent.appendChild(label);
+          }
+        }
+
+        const addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'btn btn-success btn-sm add-item-btn mb-2';
+        addBtn.title = 'Ajouter';
+        addBtn.innerHTML = '<i class="bi bi-plus-circle"></i>';
+        // Marquer ce bouton avec le pointeur de l'array pour le pré-remplissage
+        addBtn.setAttribute('data-array-pointer', ptr);
+
+        let itemCount = 0;
+        function addAccItem() {
+          const idx = ++itemCount;
+          const sectId = `${accId}-i${idx}`;
+          const item = document.createElement('div');
+          item.className = 'accordion-item';
+          const header = document.createElement('h2');
+          header.className = 'accordion-header d-flex';
+          const btn = document.createElement('button');
+          btn.className = 'accordion-button flex-grow-1 bg-info text-white';
+          btn.type = 'button';
+          btn.setAttribute('data-bs-toggle', 'collapse');
+          btn.setAttribute('data-bs-target', `#${sectId}`);
+          btn.setAttribute('aria-expanded', 'true');
+          btn.textContent = `${schema.items.title || schema.title || 'Entrée'} #${idx}`;
+          header.appendChild(btn);
+          // Remove button for this accordion item
+          const rem = document.createElement('button');
+          rem.type = 'button';
+          rem.className = 'btn btn-danger btn-sm remove-item-btn ms-2';
+          rem.style.border = 'none';
+          rem.title = 'Supprimer';
+          rem.innerHTML = '<i class="bi bi-dash-circle"></i>';
+          rem.addEventListener('click', () => { item.remove(); showActionBar(); });
+          header.appendChild(rem);
+          item.appendChild(header);
+          const collapse = document.createElement('div');
+          collapse.id = sectId;
+          collapse.className = 'accordion-collapse collapse show';
+          const body = document.createElement('div');
+          body.className = 'accordion-body';
+          collapse.appendChild(body);
+          item.appendChild(collapse);
+          acc.appendChild(item);
+          const itemName = normalizeName(schema.items.title || schema.title || path);
+          const itemPath = path === 'root' ? itemName : `${path}.${itemName}`;
+          // Inclure l'index de l'élément dans le JSON Pointer pour sérialiser correctement les tableaux d'objets
+          const itemPtr = `${ptr}/items/${idx-1}`;
+          renderPlanCadreForm(
+            schema.items,
+            body,
+            itemPath,
+            depth + 1,
+            { suppressLegend: true, parentTitle: (schema.items.title || schema.title || path) },
+            itemPtr
+          );
+          showActionBar();
+        }
+
+        addBtn.addEventListener('click', addAccItem);
+        parent.appendChild(addBtn);
+        parent.appendChild(acc);
+        return;
+      } else if (hasNestedList) {
+        // Render this array as an accordion to better manage nested lists
+        const sectionId = `${path.replace(/\./g, '-')}-arr`; // stable id for this path
         const item = document.createElement('div');
         item.className = 'accordion-item';
         const header = document.createElement('h2');
         header.className = 'accordion-header d-flex';
         const btn = document.createElement('button');
-        btn.className = `accordion-button ${depth > 0 ? 'collapsed' : ''} ${depth === 0 ? 'bg-light' : ''} flex-grow-1`;
+        btn.className = 'accordion-button flex-grow-1 bg-info text-white';
         btn.type = 'button';
         btn.setAttribute('data-bs-toggle', 'collapse');
         btn.setAttribute('data-bs-target', `#collapse-${sectionId}`);
-        btn.setAttribute('aria-expanded', depth > 0 ? 'false' : 'true');
-        btn.textContent = prop.title || key;
+        btn.setAttribute('aria-expanded', 'true');
+        btn.textContent = schema.title || path; // Title only in header
         header.appendChild(btn);
-        const magicBtn = document.createElement('button');
-        magicBtn.type = 'button';
-        magicBtn.className = 'btn btn-sm btn-outline-primary ms-2 magic-generate';
-        magicBtn.setAttribute('data-target-column', path === 'root' ? key : `${path}.${key}`);
-        magicBtn.title = 'Améliorer uniquement cette section';
-        magicBtn.innerHTML = '<i class="bi bi-magic"></i>';
-        header.appendChild(magicBtn);
         item.appendChild(header);
         const collapse = document.createElement('div');
         collapse.id = `collapse-${sectionId}`;
-        collapse.className = `accordion-collapse collapse ${depth === 0 ? 'show' : ''}`;
-        if (depth === 0) collapse.setAttribute('data-bs-parent', '#planCadreAccordion');
+        collapse.className = 'accordion-collapse collapse show';
         const body = document.createElement('div');
         body.className = 'accordion-body';
         collapse.appendChild(body);
         item.appendChild(collapse);
         parent.appendChild(item);
-        renderPlanCadreForm(prop, body, path === 'root' ? key : `${path}.${key}`, depth + 1);
-      });
-      return;
-    }
-    if (schema.type === 'array' && schema.items) {
-      const container = document.createElement('div');
-      container.className = 'mb-3';
-      const label = document.createElement('label');
-      label.className = 'form-label fw-bold';
-      label.textContent = schema.title || path;
-      container.appendChild(label);
-      const list = document.createElement('div');
-      list.className = 'd-flex flex-column gap-2';
-      container.appendChild(list);
-      function addItem() {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'border rounded p-2 position-relative';
-        if (schema.items.type === 'object' && schema.items.properties && schema.items.properties.title && schema.items.properties.description) {
-          const titleInput = document.createElement('input');
-          titleInput.className = 'form-control fw-bold mb-1';
-          titleInput.placeholder = 'Titre';
-          wrapper.appendChild(titleInput);
-          const descTextarea = document.createElement('textarea');
-          descTextarea.className = 'form-control';
-          descTextarea.placeholder = 'Description';
-          wrapper.appendChild(descTextarea);
-        } else if (schema.items.type === 'object') {
-          renderPlanCadreForm(schema.items, wrapper, path + '[]', depth + 1);
-        } else {
-          const input = document.createElement('input');
-          input.className = 'form-control';
-          input.name = `${path}[]`;
-          wrapper.appendChild(input);
-        }
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'btn btn-outline-danger btn-sm position-absolute top-0 end-0 remove-form-array-item';
-        btn.innerHTML = '<i class="bi bi-x"></i>';
-        btn.addEventListener('click', () => { wrapper.remove(); showActionBar(); });
-        wrapper.appendChild(btn);
-        list.appendChild(wrapper);
-        showActionBar();
+        // Important: do NOT repeat the title inside the body
+        buildArrayUI(body, /*showLabel*/ false);
+      } else {
+        // Simple list rendering without extra accordion
+        buildArrayUI(parent, /*showLabel*/ !options.suppressLabel);
       }
-      const addBtn = document.createElement('button');
-      addBtn.type = 'button';
-      addBtn.className = 'btn btn-outline-primary btn-sm add-form-array-item';
-      addBtn.textContent = 'Ajouter';
-      addBtn.addEventListener('click', addItem);
-      container.appendChild(addBtn);
-      parent.appendChild(container);
-      addItem();
       return;
     }
     const field = document.createElement('div');
     field.className = 'mb-3';
-    const label = document.createElement('label');
-    label.className = 'form-label fw-bold';
-    label.textContent = schema.title || path;
-    field.appendChild(label);
+    field.setAttribute('data-pointer', ptr);
+    const copyField = document.createElement('button');
+    copyField.type = 'button';
+    copyField.className = 'copy-btn float-end ms-2';
+    copyField.setAttribute('data-copy-pointer', ptr);
+    copyField.innerHTML = '<i class="bi bi-clipboard"></i>';
+    copyField.title = 'Copier le chemin';
+    copyField.addEventListener('click', (e) => { e.stopPropagation(); copyPointer(ptr); });
+    field.appendChild(copyField);
+    if (!options.suppressLabel) {
+      const labelText = schema.title || path;
+      if (labelText && labelText !== pageTitle) {
+        const label = document.createElement('label');
+        label.className = 'form-label fw-bold';
+        label.textContent = labelText;
+        field.appendChild(label);
+      }
+    }
     if (schema.type === 'string' && (path.toLowerCase().includes('description'))) {
       const textarea = document.createElement('textarea');
       textarea.className = 'form-control';
@@ -307,6 +1125,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (schema.type === 'number' || schema.type === 'integer') input.type = 'number';
       else input.type = 'text';
       field.appendChild(input);
+      // Enhance to select if a link exists on this pointer
+      turnInputIntoSelect(field, input, ptr, schema);
     }
     parent.appendChild(field);
   }
@@ -314,10 +1134,129 @@ document.addEventListener('DOMContentLoaded', () => {
   markdownOrderMap = buildMarkdownOrderMap(markdownData);
   if (accordionRoot) {
     accordionRoot.innerHTML = '';
-    renderPlanCadreForm(currentSchema, accordionRoot);
+    renderPlanCadreForm(currentSchema, accordionRoot, 'root', 0, {}, '#');
   }
+  // Pré-remplir si une entrée est fournie
+  if (initialEntryData) {
+    try { prepopulateFromData(currentSchema, initialEntryData, '#'); } catch (e) { console.warn('Pré-remplissage échoué', e); }
+  }
+  // Load links after render and enhance fields accordingly
+  loadSchemaLinks().then(() => {
+    // Post-process: find fields that have links and turn them into selects
+    const fields = document.querySelectorAll('[data-pointer]');
+    fields.forEach((holder) => {
+      const ptr = holder.getAttribute('data-pointer');
+      const link = getLinkForPointer(ptr);
+      if (!link || !['utilise','herite_de'].includes(link.relation_type)) return;
+      // Find a direct input/textarea child to replace
+      const el = holder.querySelector('input.form-control');
+      if (el && (el.type === 'text' || el.type === 'number')) {
+        turnInputIntoSelect(holder, el, ptr, {});
+      }
+    });
+  });
   if (planFormEl) {
     planFormEl.addEventListener('input', showActionBar);
+  }
+  // Parcours du schéma
+  const browseBtn = document.getElementById('schemaBrowseBtn');
+  const browseModalEl = document.getElementById('schemaPointerBrowseModal');
+  const browseTree = document.getElementById('schemaPointerTree');
+  const browseSearch = document.getElementById('schemaPointerSearch');
+  const browseModal = (typeof bootstrap !== 'undefined') ? new bootstrap.Modal(browseModalEl) : null;
+  const duplicateBtn = document.getElementById('schemaDuplicateBtn');
+  function openBrowse() {
+    if (!browseModal) return;
+    browseTree.innerHTML = '';
+    const tree = buildPointerTree(currentSchema, '#');
+    browseTree.appendChild(tree);
+    if (browseSearch) {
+      browseSearch.value = '';
+      browseSearch.oninput = () => filterPointerTree(browseTree, browseSearch.value);
+    }
+    browseModal.show();
+  }
+  if (browseBtn && browseModal) browseBtn.addEventListener('click', openBrowse);
+  if (duplicateBtn) {
+    duplicateBtn.addEventListener('click', async () => {
+      try {
+        const csrf = (document.querySelector('meta[name="csrf-token"]')||{}).getAttribute?.('content');
+        const resp = await fetch(window.location.pathname + '/duplicate', {
+          method: 'POST',
+          headers: { ...(csrf ? { 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf } : {}) },
+        });
+        const data = await safeJson(resp) || {};
+        if (!resp.ok) { alert('Duplication échouée'); return; }
+        if (data.page_id) {
+          window.location.href = `/docx_schema/${data.page_id}`;
+        }
+      } catch (e) { console.error(e); alert('Erreur lors de la duplication'); }
+    });
+  }
+  // Import/Generate/Improve via task orchestrator
+  const TaskUI = (window.EDxoTasks || window.TaskOrchestrator || {});
+  try {
+    const importBtn = document.getElementById('schemaImportBtn');
+    if (importBtn && typeof TaskUI.openFileTask === 'function') {
+      importBtn.addEventListener('click', () => {
+        TaskUI.openFileTask({
+          title: 'Importer des données (schéma)',
+          url: `/docx_schema/${pageId}/import/start`,
+          startMessage: 'Import en cours…',
+          noSuccessHighlight: true,
+          displayPreviewAsJson: true,
+        });
+      });
+    }
+  } catch {}
+  try {
+    const genBtn = document.getElementById('schemaGenerateBtn');
+    if (genBtn && typeof TaskUI.openQuickTask === 'function') {
+      genBtn.addEventListener('click', () => {
+        TaskUI.openQuickTask({
+          title: 'Générer des données (schéma)',
+          url: `/docx_schema/${pageId}/generate/start`,
+          startMessage: 'Génération en cours…',
+          basePayload: { additional_info: '' },
+          fieldLabels: { additional_info: 'Contexte / consignes (optionnel)' },
+        });
+      });
+    }
+  } catch {}
+  try {
+    const improveBtn = document.getElementById('schemaImproveBtn');
+    if (improveBtn && typeof TaskUI.openQuickTask === 'function') {
+      improveBtn.addEventListener('click', () => {
+        if (!editingEntryId) { alert('Ouvrez d’abord une entrée existante pour l’améliorer.'); return; }
+        TaskUI.openQuickTask({
+          title: 'Améliorer l’entrée (schéma)',
+          url: `/docx_schema/${pageId}/improve/start`,
+          startMessage: 'Amélioration en cours…',
+          basePayload: { additional_info: '' },
+          fixedPayload: { entry_id: editingEntryId },
+          fieldLabels: { additional_info: 'Consignes d’amélioration (optionnel)' },
+        });
+      });
+    }
+  } catch {}
+  // Hash deep-linking: #ptr=JSON_POINTER
+  try {
+    const m = /#ptr=(.*)$/.exec(window.location.hash || '');
+    if (m && m[1]) {
+      const ptr = decodeURIComponent(m[1]);
+      highlightAndScroll(ptr);
+    }
+  } catch {}
+
+  async function copyPointer(ptr) {
+    try {
+      await navigator.clipboard.writeText(ptr);
+      const btn = document.querySelector(`[data-copy-pointer="${CSS.escape(ptr)}"]`);
+      if (btn) { btn.classList.add('text-success'); setTimeout(()=>btn.classList.remove('text-success'), 700); }
+    } catch (e) {
+      console.error('Clipboard error', e);
+      alert('Impossible de copier');
+    }
   }
 });
 </script>

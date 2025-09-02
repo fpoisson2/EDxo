@@ -18,10 +18,12 @@ from ..forms import (
     APITokenForm,
     OcrPromptSettingsForm,
     PlanCadreImportPromptSettingsForm,
+    UserSchemaLinksForm,
 )
 from .evaluation import AISixLevelGridResponse
 from ...utils.decorator import role_required, roles_required, ensure_profile_completed
 from .admin_docx_schema import DEFAULT_DOCX_TO_SCHEMA_PROMPT
+from .admin_docx_schema import _normalize_schema_payload
 
 csrf = CSRFProtect()
 
@@ -44,6 +46,7 @@ from ..models import (
     OcrPromptSettings,
     PlanCadreImportPromptSettings,
     DocxSchemaPage,
+    DataSchemaLink,
 )
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
@@ -161,6 +164,144 @@ def delete_openai_model(model_id):
     else:
         flash("Modèle introuvable.", "danger")
     return redirect(url_for('settings.manage_openai_models'))
+
+
+# ---------------------------- Schémas de données ----------------------------
+@settings_bp.route('/schemas', methods=['GET'])
+@login_required
+@role_required('admin')
+def data_schemas_page():
+    pages = DocxSchemaPage.query.order_by(DocxSchemaPage.created_at.desc()).all()
+    return render_template('settings/data_schemas.html', pages=pages)
+
+
+@settings_bp.route('/schemas/list', methods=['GET'])
+@login_required
+@role_required('admin')
+def docx_schema_list():
+    """Liste des schémas DOCX, intégrée dans la page Paramètres (panneau de droite)."""
+    pages = DocxSchemaPage.query.order_by(DocxSchemaPage.created_at.desc()).all()
+    return render_template('settings/docx_schema_list.html', pages=pages)
+
+
+@settings_bp.route('/schemas/add', methods=['POST'])
+@login_required
+@role_required('admin')
+def add_docx_schema_manual():
+    """Ajoute manuellement un schéma (via JSON ou formulaire).
+
+    Accepte un payload JSON: {"title": str, "schema": object|string}
+    ou un formulaire avec champs "title" et "schema" (texte JSON).
+    Retourne {page_id} avec 201 en cas de succès.
+    """
+    payload = request.get_json(silent=True)
+    title = None
+    schema_raw = None
+    if payload:
+        title = (payload.get('title') or '').strip()
+        schema_raw = payload.get('schema')
+    else:
+        title = (request.form.get('title') or '').strip()
+        schema_raw = request.form.get('schema')
+
+    schema = _normalize_schema_payload(schema_raw)
+    if not isinstance(schema, (dict, list)):
+        return jsonify({'error': 'Schéma invalide ou manquant.'}), 400
+    # Si c'est un objet, on peut propager le titre
+    if isinstance(schema, dict):
+        if title and 'title' not in schema:
+            schema['title'] = title
+        if not title:
+            title = schema.get('title') or schema.get('titre')
+    if not title:
+        title = 'Schéma'
+
+    page = DocxSchemaPage(title=title, json_schema=schema)
+    db.session.add(page)
+    db.session.commit()
+    # Répondre JSON par défaut; si soumission formulaire, rediriger vers la liste
+    if request.is_json:
+        return jsonify({'page_id': page.id, 'title': page.title}), 201
+    return redirect(url_for('settings.docx_schema_list'))
+
+
+@settings_bp.route('/schemas/links', methods=['GET'])
+@login_required
+@role_required('admin')
+def list_schema_links():
+    links = DataSchemaLink.query.order_by(DataSchemaLink.id.asc()).all()
+    return jsonify({'links': [l.to_dict() for l in links]})
+
+
+@settings_bp.route('/schemas/links', methods=['POST'])
+@login_required
+@role_required('admin')
+def create_schema_link():
+    payload = request.get_json(silent=True) or {}
+    src_page = int(payload.get('source_page_id') or 0)
+    tgt_page = int(payload.get('target_page_id') or 0)
+    src_ptr = (payload.get('source_pointer') or '').strip()
+    tgt_ptr = (payload.get('target_pointer') or '').strip()
+    rel = (payload.get('relation_type') or 'derive_de').strip()
+    comment = (payload.get('comment') or None)
+
+    if not (src_page and tgt_page and src_ptr and tgt_ptr):
+        return jsonify({'error': 'Champs requis manquants.'}), 400
+    # Validation simple des pointeurs: autoriser '#/' ou '/'
+    if not (src_ptr.startswith('#/') or src_ptr.startswith('/')):
+        return jsonify({'error': 'source_pointer doit être un JSON Pointer (#/...)'}), 400
+    if not (tgt_ptr.startswith('#/') or tgt_ptr.startswith('/')):
+        return jsonify({'error': 'target_pointer doit être un JSON Pointer (#/...)'}), 400
+    # Normaliser sur format '#/'
+    if src_ptr.startswith('/'):
+        src_ptr = '#' + src_ptr
+    if tgt_ptr.startswith('/'):
+        tgt_ptr = '#' + tgt_ptr
+
+    # Vérifier que les pages existent
+    sp = db.session.get(DocxSchemaPage, src_page)
+    tp = db.session.get(DocxSchemaPage, tgt_page)
+    if not sp or not tp:
+        return jsonify({'error': 'Page source ou cible introuvable.'}), 404
+
+    link = DataSchemaLink(
+        relation_type=rel or 'derive_de',
+        comment=comment,
+        source_page_id=src_page,
+        source_pointer=src_ptr,
+        target_page_id=tgt_page,
+        target_pointer=tgt_ptr,
+    )
+    db.session.add(link)
+    db.session.commit()
+    return jsonify({'link': link.to_dict()}), 201
+
+
+@settings_bp.route('/schemas/links/<int:link_id>/delete', methods=['POST'])
+@login_required
+@role_required('admin')
+def delete_schema_link(link_id):
+    link = db.session.get(DataSchemaLink, link_id)
+    if not link:
+        return jsonify({'error': 'Lien introuvable.'}), 404
+    db.session.delete(link)
+    db.session.commit()
+    return jsonify({'deleted': True})
+
+
+@settings_bp.route('/schemas/page/<int:page_id>/schema', methods=['GET'])
+@login_required
+@role_required('admin')
+def get_schema_for_page(page_id: int):
+    page = db.session.get(DocxSchemaPage, page_id)
+    if not page:
+        return jsonify({'error': 'Page introuvable.'}), 404
+    # Ensure json_schema is an object
+    try:
+        schema = page.json_schema
+    except Exception:
+        schema = None
+    return jsonify({'id': page.id, 'title': page.title, 'schema': schema})
 
 
 @settings_bp.route('/chat_models', methods=['GET', 'POST'])
@@ -833,6 +974,89 @@ def parametres():
     docx_schemas = DocxSchemaPage.query.order_by(DocxSchemaPage.created_at.desc()).all()
     return render_template('parametres.html', docx_schemas=docx_schemas)
 
+@settings_bp.route('/data-schema/user-links', methods=['GET', 'POST'])
+@login_required
+@ensure_profile_completed
+def user_schema_links():
+    """Page pour lier des pointeurs JSON de schémas (DocxSchemaPage.json_schema) à l'utilisateur courant."""
+    from ..models import DocxSchemaPage, UserSchemaPointer
+
+    def enumerate_pointers(schema, base_ptr='#'):
+        """Retourne une liste de pointeurs JSON valides dans le schéma (profondeur propriétés/items)."""
+        out = []
+        if not isinstance(schema, dict):
+            return out
+        schema_type = schema.get('type')
+        # Inclure ce noeud si typé (éviter d'ajouter la racine si non typée)
+        if schema_type:
+            out.append(base_ptr)
+        # Propriétés d'objet
+        props = schema.get('properties') or {}
+        for name, sub in props.items():
+            sub_ptr = ('#/properties/' + name) if base_ptr == '#' else (base_ptr + '/properties/' + name)
+            out.extend(enumerate_pointers(sub, sub_ptr))
+        # Items de tableau
+        if 'items' in schema:
+            items = schema['items']
+            sub_ptr = '#/items' if base_ptr == '#' else (base_ptr + '/items')
+            out.extend(enumerate_pointers(items, sub_ptr))
+        # $defs (optionnel)
+        defs = schema.get('$defs') or {}
+        for name, sub in defs.items():
+            sub_ptr = '#/$defs/' + name if base_ptr == '#' else (base_ptr + '/$defs/' + name)
+            out.extend(enumerate_pointers(sub, sub_ptr))
+        return out
+
+    form = UserSchemaLinksForm()
+
+    pages = DocxSchemaPage.query.order_by(DocxSchemaPage.created_at.asc()).all()
+    choices = []
+    page_groups = []
+    for p in pages:
+        try:
+            ptrs = enumerate_pointers(p.json_schema or {}, '#')
+        except Exception:
+            ptrs = []
+        ptrs = [ptr for ptr in ptrs if ptr and ptr.startswith('#/')]
+        label_prefix = p.title or f'Page #{p.id}'
+        entries = []
+        for ptr in ptrs:
+            key = f"{p.id}::{ptr}"
+            label = f"{ptr}"
+            pair = (key, f"{label_prefix} — {label}")
+            choices.append(pair)
+            entries.append((key, label))
+        page_groups.append({
+            'id': p.id,
+            'title': label_prefix,
+            'entries': entries,
+        })
+    form.entries.choices = choices
+
+    if request.method == 'GET':
+        selected = [f"{sp.page_id}::{sp.pointer}" for sp in current_user.schema_pointers]
+        form.entries.data = selected
+    elif form.validate_on_submit():
+        selected_keys = request.form.getlist('entries')
+        # Remplacer associations: supprimer existantes, recréer à partir de sélection
+        current_user.schema_pointers.clear()
+        for key in selected_keys:
+            try:
+                page_id_str, pointer = key.split('::', 1)
+                page_id = int(page_id_str)
+            except Exception:
+                continue
+            current_user.schema_pointers.append(UserSchemaPointer(page_id=page_id, pointer=pointer))
+        try:
+            db.session.commit()
+            flash('Liens utilisateur mis à jour.', 'success')
+            return redirect(url_for('settings.user_schema_links'))
+        except Exception as e:  # pylint: disable=broad-except
+            db.session.rollback()
+            flash(f'Erreur lors de la mise à jour: {e}', 'danger')
+
+    return render_template('settings/user_schema_links.html', form=form, page_groups=page_groups)
+
 @settings_bp.route("/gestion-plans-cours", methods=["GET"])
 @roles_required('admin', 'coordo')
 @ensure_profile_completed
@@ -952,21 +1176,76 @@ def docx_to_schema_prompt_settings():
 @role_required('admin')
 @ensure_profile_completed
 def docx_schema_prompt_settings(page_id):
-    """Configurer le prompt système et les paramètres IA pour un schéma de données spécifique."""
+    """Configurer les prompts IA (Génération/Amélioration/Importation) pour un schéma de données spécifique."""
     page = DocxSchemaPage.query.get_or_404(page_id)
-    section_key = f'docx_schema_{page_id}'
-    sa = SectionAISettings.get_for(section_key)
-    ai_form = SectionAISettingsForm(obj=sa)
-    if request.method == 'GET' and not (sa.system_prompt and sa.system_prompt.strip()):
-        ai_form.system_prompt.data = (
-            "Tu es un assistant qui retourne une sortie strictement conforme au schéma JSON fourni."
-        )
-    if request.method == 'POST' and ai_form.validate_on_submit():
-        sa.system_prompt = ai_form.system_prompt.data or None
-        sa.ai_model = ai_form.ai_model.data or None
-        sa.reasoning_effort = ai_form.reasoning_effort.data or None
-        sa.verbosity = ai_form.verbosity.data or None
-        db.session.commit()
-        flash('Paramètres enregistrés', 'success')
-        return redirect(url_for('settings.docx_schema_prompt_settings', page_id=page_id))
-    return render_template('settings/docx_schema_prompts.html', ai_form=ai_form, page=page)
+
+    # Trois configurations distinctes
+    sa_gen = SectionAISettings.get_for(f'docx_schema_{page_id}')
+    sa_impv = SectionAISettings.get_for(f'docx_schema_{page_id}_improve')
+    sa_impt = SectionAISettings.get_for(f'docx_schema_{page_id}_import')
+
+    # Valeurs par défaut affichées si vides (non persistées tant qu'on n'enregistre pas)
+    if request.method == 'GET':
+        if not (sa_gen.system_prompt or '').strip():
+            sa_gen.system_prompt = (
+                "Assistant de génération: produis des exemples et sorties STRICTEMENT conformes au schéma JSON fourni (titres, descriptions, types)."
+            )
+        if not (sa_impv.system_prompt or '').strip():
+            sa_impv.system_prompt = (
+                "Assistant d'amélioration: réécris/améliore une donnée existante pour respecter le schéma (structure inchangée, pas d'invention)."
+            )
+        if not (sa_impt.system_prompt or '').strip():
+            sa_impt.system_prompt = (
+                "Assistant d'importation: à partir d'une source (ex: DOCX/PDF/texte), extrais une sortie STRICTEMENT conforme au schéma."
+            )
+
+    # Construire des formulaires liés à chaque config
+    ai_form_gen = SectionAISettingsForm(obj=sa_gen, prefix='gen')
+    ai_form_impv = SectionAISettingsForm(obj=sa_impv, prefix='impv')
+    ai_form_impt = SectionAISettingsForm(obj=sa_impt, prefix='impt')
+
+    if request.method == 'POST':
+        scope = (request.form.get('scope') or 'gen').strip()
+        if scope == 'impv':
+            ai_form_impv = SectionAISettingsForm(formdata=request.form, obj=sa_impv, prefix='impv')
+            if ai_form_impv.validate():
+                sa_impv.system_prompt = ai_form_impv.system_prompt.data or None
+                sa_impv.ai_model = ai_form_impv.ai_model.data or None
+                sa_impv.reasoning_effort = ai_form_impv.reasoning_effort.data or None
+                sa_impv.verbosity = ai_form_impv.verbosity.data or None
+                db.session.commit()
+                flash('Paramètres enregistrés (Amélioration)', 'success')
+                return redirect(url_for('settings.docx_schema_prompt_settings', page_id=page_id))
+        elif scope == 'impt':
+            ai_form_impt = SectionAISettingsForm(formdata=request.form, obj=sa_impt, prefix='impt')
+            if ai_form_impt.validate():
+                sa_impt.system_prompt = ai_form_impt.system_prompt.data or None
+                sa_impt.ai_model = ai_form_impt.ai_model.data or None
+                sa_impt.reasoning_effort = ai_form_impt.reasoning_effort.data or None
+                sa_impt.verbosity = ai_form_impt.verbosity.data or None
+                db.session.commit()
+                flash('Paramètres enregistrés (Importation)', 'success')
+                return redirect(url_for('settings.docx_schema_prompt_settings', page_id=page_id))
+        else:
+            # Compatibilité: si aucune portée fournie, on traite comme "génération".
+            # Supporte à la fois les champs préfixés (gen-*) et non préfixés (anciens tests/clients).
+            if any(k.startswith('gen-') for k in request.form.keys()):
+                ai_form_gen = SectionAISettingsForm(formdata=request.form, obj=sa_gen, prefix='gen')
+            else:
+                ai_form_gen = SectionAISettingsForm(formdata=request.form, obj=sa_gen)
+            if ai_form_gen.validate():
+                sa_gen.system_prompt = ai_form_gen.system_prompt.data or None
+                sa_gen.ai_model = ai_form_gen.ai_model.data or None
+                sa_gen.reasoning_effort = ai_form_gen.reasoning_effort.data or None
+                sa_gen.verbosity = ai_form_gen.verbosity.data or None
+                db.session.commit()
+                flash('Paramètres enregistrés (Génération)', 'success')
+                return redirect(url_for('settings.docx_schema_prompt_settings', page_id=page_id))
+
+    return render_template(
+        'settings/docx_schema_prompts.html',
+        page=page,
+        ai_form_gen=ai_form_gen,
+        ai_form_impv=ai_form_impv,
+        ai_form_impt=ai_form_impt,
+    )

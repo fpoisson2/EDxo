@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/view_programme.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="vp-header mb-3">
+    <div class="vp-title">
+      <h2 class="mb-1">{{ view_title or page.title or 'Schéma' }}</h2>
+    </div>
+    <div class="vp-actions d-flex align-items-center gap-2 flex-wrap">
+      <a href="{{ url_for('main.docx_schema_page_json', page_id=page.id) }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-braces"></i> JSON
+      </a>
+    </div>
+  </div>
+
+  <div class="accordion" id="sessionsAccordion">
+    {% for session, cours_list in cours_par_session.items() %}
+      <div class="accordion-item vp-session" id="session-{{ session }}">
+        <h2 class="accordion-header" id="heading-{{ session }}">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ session }}" aria-expanded="false" aria-controls="collapse-{{ session }}">
+            Session {{ session }}
+          </button>
+        </h2>
+        <div id="collapse-{{ session }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ session }}" data-bs-parent="#sessionsAccordion">
+          <div class="accordion-body">
+            <div class="row g-3">
+              {% for c in cours_list %}
+                <div class="col-12 col-md-6 col-lg-4">
+                  <div class="vp-course-card h-100">
+                    <div class="vp-course-header">
+                      <h6 class="mb-1">
+                        <span class="text-muted">{{ c.code }}</span> — {{ c.nom }}
+                      </h6>
+                    </div>
+                    <div class="vp-course-body">
+                      <div class="vp-hours mb-2" title="Théorie‑Pratique‑Maison">
+                        <span class="vp-hours-badge">{{ c.heures_theorie }}‑{{ c.heures_laboratoire }}‑{{ c.heures_travail_maison }} h</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="alert alert-secondary">Aucune session détectée dans ce schéma.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

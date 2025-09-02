@@ -324,22 +324,21 @@ class EditUserForm(FlaskForm):
     email = StringField("Courriel", validators=[DataRequired(), Email()])
     password = PasswordField("Nouveau mot de passe", validators=[Optional()])
     role = SelectField("Rôle", choices=[('admin', 'Admin'), ('professeur', 'Professeur'), ('cp', 'CP'), ('coordo', 'Coordo'), ('invite', 'Invite')], validators=[DataRequired()])
-    cegep_id = SelectField("Cégep", coerce=int, validators=[Optional()])
-    department_id = SelectField("Département", coerce=int, validators=[Optional()])
-    programmes = MultiCheckboxField("Programmes", coerce=int, default=[])
     openai_key = StringField('Clé API OpenAI')
     submit = SubmitField("Enregistrer les modifications")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.programmes.data is None:
-            self.programmes.data = []
+        # Aucun champ académique ici; rien à initialiser
 
-    def validate_department_id(self, field):
-        if field.data != 0 and self.cegep_id.data == 0:
-            raise ValidationError("Vous devez d'abord sélectionner un cégep.")
-        if field.data != 0 and field.data not in [c[0] for c in field.choices]:
-            field.data = 0  # Reset to "Aucun" if invalid
+
+class UserSchemaLinksForm(FlaskForm):
+    """Permet de lier des pointeurs JSON de schémas à l'utilisateur.
+
+    Les valeurs sont des clés encodant page_id et pointer, p.ex. "<page_id>::#/properties/x".
+    """
+    entries = MultiCheckboxField('Éléments', coerce=str, default=[])
+    submit = SubmitField('Enregistrer')
 
 class CalendrierForm(FlaskForm):
     semaine = IntegerField("Semaine", validators=[Optional()])

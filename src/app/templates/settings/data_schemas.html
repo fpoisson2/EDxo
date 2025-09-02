@@ -1,0 +1,271 @@
+{% extends "parametres.html" %}
+
+{% block title %}Schémas de données{% endblock %}
+
+{% block parametres_content %}
+<h2 class="mb-3">Schémas de données – Lier des éléments</h2>
+<p class="text-muted">Créez des liens entre éléments de schémas (hérite de, dérive de, équivalent à, utilise). Les pointeurs utilisent le format JSON Pointer (ex.: <code>#/properties/chapitres/items</code>).</p>
+
+<div class="card mb-3">
+  <div class="card-header">
+    Comprendre les types de relations
+  </div>
+  <div class="card-body">
+    <ul class="mb-2">
+      <li><strong>Hérite de</strong>: l’élément source étend ou spécialise la structure/règles de l’élément cible. Exemple : un objet « évaluation » peut hériter d’un objet « activité » en ajoutant des champs.</li>
+      <li><strong>Dérive de</strong>: l’élément source est une variante transformée du cible (agrégation, projection). Exemple : un « calendrier synthèse » dérive d’un « calendrier détaillé ».</li>
+      <li><strong>Équivalent à</strong>: l’élément source est sémantiquement égal au cible (même sens) — utile pour l’alignement entre schémas. Exemple : « élève.nom » ≡ « étudiant.nom ».</li>
+      <li><strong>Utilise</strong>: l’élément source dépend/embarque l’élément cible (référence, inclusion, composition). Exemple : « cours.competences » utilise « competence.items ».</li>
+    </ul>
+    <small class="text-muted">La relation est orientée <em>source → cible</em> (pensez « hérite/dérive/utilise de »). Les liens documentent et facilitent la navigation et de futures automatisations, sans imposer de validation croisée automatique pour l’instant.</small>
+  </div>
+  </div>
+
+<div class="row g-3 align-items-end mb-4">
+  <div class="col-12 col-lg-3">
+    <label class="form-label">Schéma source</label>
+    <select id="srcPage" class="form-select">
+      <option value="">— choisir —</option>
+      {% for p in pages %}
+      <option value="{{ p.id }}">#{{ p.id }} — {{ p.title }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-12 col-lg-3">
+    <label class="form-label">Chemin (JSON Pointer)</label>
+    <div class="input-group">
+      <input id="srcPtr" class="form-control" placeholder="#/properties/...">
+      <button class="btn btn-outline-secondary" type="button" id="pickSrc">Choisir</button>
+    </div>
+  </div>
+  <div class="col-12 col-lg-2">
+    <label class="form-label">Relation</label>
+    <select id="relType" class="form-select">
+      <option value="derive_de">Dérive de</option>
+      <option value="herite_de">Hérite de</option>
+      <option value="equivalent_a">Équivalent à</option>
+      <option value="utilise">Utilise</option>
+    </select>
+  </div>
+  <div class="col-12 col-lg-3">
+    <label class="form-label">Schéma cible</label>
+    <select id="tgtPage" class="form-select">
+      <option value="">— choisir —</option>
+      {% for p in pages %}
+      <option value="{{ p.id }}">#{{ p.id }} — {{ p.title }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-12 col-lg-3">
+    <label class="form-label">Chemin cible</label>
+    <div class="input-group">
+      <input id="tgtPtr" class="form-control" placeholder="#/properties/...">
+      <button class="btn btn-outline-secondary" type="button" id="pickTgt">Choisir</button>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <label class="form-label">Commentaire</label>
+    <input id="comment" class="form-control" placeholder="Optionnel">
+  </div>
+  <div class="col-12 col-lg-3">
+    <button id="createBtn" class="btn btn-primary w-100">Créer le lien</button>
+  </div>
+</div>
+
+<h5 class="mt-4">Liens existants</h5>
+<div class="table-responsive">
+  <table class="table table-sm" id="linksTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Source</th>
+        <th>Relation</th>
+        <th>Cible</th>
+        <th>Commentaire</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <div id="emptyState" class="text-muted">Aucun lien pour le moment.</div>
+  <div id="errorBox" class="text-danger small"></div>
+  <div id="okBox" class="text-success small"></div>
+</div>
+
+<script>
+  // --- Modal de sélection de pointeurs ---
+  const picker = {
+    which: null, // 'src' | 'tgt'
+    modal: null,
+    tree: null,
+    currentPageId: null,
+  };
+  function ensurePickerModal() {
+    if (picker.modal) return picker.modal;
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'schemaPointerPickerModal';
+    modal.tabIndex = -1;
+    modal.innerHTML = `
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Sélectionner un élément du schéma</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-2"><input id="schemaSearch" class="form-control form-control-sm" placeholder="Rechercher un champ ou chemin..."></div>
+            <div id="schemaTree" class="small"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    picker.modal = new bootstrap.Modal(modal);
+    picker.tree = modal.querySelector('#schemaTree');
+    return picker.modal;
+  }
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+  function buildTree(schema, basePtr='#') {
+    const root = document.createElement('div');
+    root.className = 'list-group';
+    function nodeRow(label, ptr, isLeaf) {
+      const a = document.createElement('a');
+      a.href = '#';
+      a.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+      a.innerHTML = `<span>${escapeHtml(label)}</span><code class="ms-2">${escapeHtml(ptr)}</code>`;
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetInput = document.getElementById(picker.which === 'src' ? 'srcPtr' : 'tgtPtr');
+        targetInput.value = ptr;
+        picker.modal.hide();
+      });
+      return a;
+    }
+    function walk(n, path, container) {
+      if (!n || typeof n !== 'object') return;
+      const t = n.type;
+      if (t === 'object' && n.properties) {
+        Object.entries(n.properties).forEach(([k, v]) => {
+          const ptr = `${path}/properties/${k}`;
+          const row = nodeRow(`${v.title || k} (objet)`, ptr);
+          container.appendChild(row);
+          // enfants
+          const child = document.createElement('div');
+          child.className = 'ms-3 border-start ps-2';
+          container.appendChild(child);
+          walk(v, ptr, child);
+        });
+      } else if (t === 'array' && n.items) {
+        const ptr = `${path}/items`;
+        const row = nodeRow(`${n.title || 'Éléments'} [liste]`, ptr);
+        container.appendChild(row);
+        const child = document.createElement('div');
+        child.className = 'ms-3 border-start ps-2';
+        container.appendChild(child);
+        walk(n.items, ptr, child);
+      } else {
+        const row = nodeRow(`${n.title || (t || 'valeur')}`, path, true);
+        container.appendChild(row);
+      }
+    }
+    walk(schema, basePtr, root);
+    return root;
+  }
+  function filterTree(root, q) {
+    const query = (q||'').trim().toLowerCase();
+    const rows = root.querySelectorAll('a.list-group-item');
+    rows.forEach(a => {
+      const t = (a.innerText || a.textContent || '').toLowerCase();
+      a.style.display = (!query || t.includes(query)) ? '' : 'none';
+    });
+  }
+  async function openPicker(which) {
+    picker.which = which;
+    const pageId = (which === 'src' ? document.getElementById('srcPage').value : document.getElementById('tgtPage').value);
+    if (!pageId) { alert('Choisissez d\'abord un schéma.'); return; }
+    ensurePickerModal();
+    picker.tree.innerHTML = '<div class="text-muted">Chargement…</div>';
+    const resp = await fetch(`{{ url_for('settings.get_schema_for_page', page_id=0) }}`.replace('/0/', `/${pageId}/`));
+    if (!resp.ok) { picker.tree.innerHTML = '<div class="text-danger">Erreur de chargement du schéma.</div>'; picker.modal.show(); return; }
+    const data = await resp.json();
+    // Normaliser un peu: assurer {type, properties/items}
+    let s = data.schema || {};
+    if (s && typeof s === 'object' && s.schema && typeof s.schema === 'object') { s = s.schema; }
+    picker.tree.innerHTML = '';
+    const tree = buildTree(s, '#');
+    picker.tree.appendChild(tree);
+    const search = document.getElementById('schemaSearch');
+    if (search) {
+      search.value = '';
+      search.oninput = () => filterTree(picker.tree, search.value);
+    }
+    picker.modal.show();
+  }
+  document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'pickSrc') openPicker('src');
+    if (e.target && e.target.id === 'pickTgt') openPicker('tgt');
+  });
+
+  async function loadLinks() {
+    const tbody = document.querySelector('#linksTable tbody');
+    const empty = document.getElementById('emptyState');
+    tbody.innerHTML = '';
+    empty.style.display = 'none';
+    const resp = await fetch('{{ url_for('settings.list_schema_links') }}');
+    if (!resp.ok) { empty.textContent = 'Erreur de chargement.'; empty.style.display = ''; return; }
+    const data = await resp.json();
+    const links = data.links || [];
+    if (!links.length) { empty.style.display = ''; return; }
+    for (const l of links) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${l.id}</td>
+        <td><div class="small">#${l.source_page_id} – ${l.source_title || ''}</div><code>${l.source_pointer}</code></td>
+        <td>${l.relation_type}</td>
+        <td><div class="small">#${l.target_page_id} – ${l.target_title || ''}</div><code>${l.target_pointer}</code></td>
+        <td>${l.comment || ''}</td>
+        <td class="text-end"><button class="btn btn-sm btn-outline-danger" data-del="${l.id}">Supprimer</button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+  async function createLink() {
+    const srcPage = document.getElementById('srcPage').value;
+    const srcPtr = document.getElementById('srcPtr').value.trim();
+    const rel = document.getElementById('relType').value;
+    const tgtPage = document.getElementById('tgtPage').value;
+    const tgtPtr = document.getElementById('tgtPtr').value.trim();
+    const comment = document.getElementById('comment').value.trim();
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const resp = await fetch('{{ url_for('settings.create_schema_link') }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf },
+      body: JSON.stringify({ source_page_id: srcPage, source_pointer: srcPtr, relation_type: rel, target_page_id: tgtPage, target_pointer: tgtPtr, comment })
+    });
+    const err = document.getElementById('errorBox');
+    const ok = document.getElementById('okBox');
+    err.textContent = ''; ok.textContent = '';
+    if (!resp.ok) { const d = await resp.json().catch(()=>({})); err.textContent = d.error || 'Erreur.'; return; }
+    ok.textContent = 'Lien créé.';
+    document.getElementById('srcPtr').value='';
+    document.getElementById('tgtPtr').value='';
+    document.getElementById('comment').value='';
+    await loadLinks();
+  }
+  async function onDelete(id) {
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const url = '{{ url_for('settings.delete_schema_link', link_id=0) }}'.replace('/0/', `/${id}/`);
+    const r = await fetch(url, { method: 'POST', headers: { 'X-CSRFToken': csrf, 'X-CSRF-Token': csrf } });
+    if (r.ok) loadLinks();
+  }
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-del]');
+    if (btn) { onDelete(btn.getAttribute('data-del')); }
+  });
+  document.getElementById('createBtn').addEventListener('click', createLink);
+  loadLinks();
+</script>
+{% endblock %}
