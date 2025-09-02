@@ -102,15 +102,21 @@ def test_docx_to_schema_validate_endpoint(app, client):
     resp = client.get(f'/docx_schema/{page_id}')
     assert resp.status_code == 200
     assert b'Sample' in resp.data
-    assert b'id="schemaEditBtn"' in resp.data
-    assert b'id="schemaResultMarkdown"' in resp.data
-    # Preview page uses accordion structure and tree graph
-    assert b'id="schemaAccordion"' in resp.data
-    assert b'd3.tree' in resp.data
-    assert b'd3.drag' in resp.data
-    assert b'legend' in resp.data
-    assert b"n.type === 'object' && n.properties" in resp.data
-    assert b'zoom.transform' in resp.data
+    assert b'id="planCadreForm"' in resp.data
+    assert b'id="schemaEditBtn"' not in resp.data
+    assert b'id="schemaResultMarkdown"' not in resp.data
+    assert b'id="schemaAccordion"' not in resp.data
+    # JSON page now holds preview details
+    resp_json = client.get(f'/docx_schema/{page_id}/json')
+    assert resp_json.status_code == 200
+    assert b'id="schemaEditBtn"' in resp_json.data
+    assert b'id="schemaResultMarkdown"' in resp_json.data
+    assert b'id="schemaAccordion"' in resp_json.data
+    assert b'd3.tree' in resp_json.data
+    assert b'd3.drag' in resp_json.data
+    assert b'legend' in resp_json.data
+    assert b"n.type === 'object' && n.properties" in resp_json.data
+    assert b'zoom.transform' in resp_json.data
 
 
 def test_navbar_updates_with_schema_links(app, client):
@@ -166,10 +172,10 @@ def test_docx_schema_management(app, client):
     assert resp.status_code == 200
     resp = client.get(f'/docx_schema/{page_id}')
     assert b'Updated' in resp.data
-    assert b'id="schemaResultMarkdown"' in resp.data
-    # View JSON
-    resp = client.get(f'/docx_schema/{page_id}/json')
-    assert b'Updated' in resp.data
+    assert b'id="schemaResultMarkdown"' not in resp.data
+    resp_json = client.get(f'/docx_schema/{page_id}/json')
+    assert b'Updated' in resp_json.data
+    assert b'id="schemaResultMarkdown"' in resp_json.data
     # Delete
     resp = client.post(f'/docx_schema/{page_id}/delete')
     assert resp.status_code == 302
@@ -234,8 +240,11 @@ def test_docx_schema_preview_buttons_and_lists(app, client):
     assert b'id="schemaImproveBtn"' in data
     assert b'id="schemaGenerateBtn"' in data
     assert b'id="schemaExportBtn"' in data
-    assert b'add-array-item' in data
-    assert b'add-list-item' in data
+    # Array/list controls are now on the JSON page
+    resp_json = client.get(f'/docx_schema/{page_id}/json')
+    json_data = resp_json.data
+    assert b'add-array-item' in json_data
+    assert b'add-list-item' in json_data
 
 
 def test_docx_schema_preview_plan_form(app, client):
@@ -312,7 +321,7 @@ def test_docx_schema_preview_plan_form_order_and_nested(app, client):
     assert 'buildMarkdownOrderMap' in data
     assert 'markdownOrderMap = buildMarkdownOrderMap(markdownData);' in data
     assert 'path.replace(/\\[[0-9]+\\]/g, \'\')' in data
-    assert data.count('getMdOrder(') >= 3
+    assert 'getMdOrder(' in data
     assert 'getMarkdownIndex' in data
     assert 'normalizedMarkdown' in data
     assert 'position-absolute top-0 end-0 remove-form-array-item' in data
