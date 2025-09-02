@@ -26,20 +26,36 @@ def test_docx_schema_prompts_page(app, client):
     page_id = resp.get_json()['page_id']
     resp = client.get('/parametres')
     assert f'/settings/docx_schema/{page_id}/prompts'.encode() in resp.data
+
+    # La page de paramètres doit afficher les trois onglets
     resp = client.get(f'/settings/docx_schema/{page_id}/prompts')
     assert resp.status_code == 200
-    assert b'Prompt syst' in resp.data
-    resp = client.post(
-        f'/settings/docx_schema/{page_id}/prompts',
-        data={
-            'system_prompt': 'Custom',
-            'ai_model': '',
-            'reasoning_effort': '',
-            'verbosity': ''
-        },
-        follow_redirects=True
-    )
-    assert resp.status_code == 200
+    for label in (b'G\xc3\xa9n\xc3\xa9ration', b'Am\xc3\xa9lioration', b'Importation'):
+        assert label in resp.data
+
+    # Soumettre chaque formulaire et vérifier l'enregistrement
+    for form_name, prompt_text in (
+        ('gen', 'Gen'),
+        ('impv', 'Impv'),
+        ('impt', 'Impt'),
+    ):
+        resp = client.post(
+            f'/settings/docx_schema/{page_id}/prompts',
+            data={
+                'form_name': form_name,
+                'system_prompt': prompt_text,
+                'ai_model': '',
+                'reasoning_effort': '',
+                'verbosity': ''
+            },
+            follow_redirects=True
+        )
+        assert resp.status_code == 200
+
     with app.app_context():
-        sa = SectionAISettings.query.filter_by(section=f'docx_schema_{page_id}').first()
-        assert sa and sa.system_prompt == 'Custom'
+        sa_gen = SectionAISettings.query.filter_by(section=f'docx_schema_{page_id}').first()
+        sa_impv = SectionAISettings.query.filter_by(section=f'docx_schema_{page_id}_improve').first()
+        sa_impt = SectionAISettings.query.filter_by(section=f'docx_schema_{page_id}_import').first()
+        assert sa_gen and sa_gen.system_prompt == 'Gen'
+        assert sa_impv and sa_impv.system_prompt == 'Impv'
+        assert sa_impt and sa_impt.system_prompt == 'Impt'
