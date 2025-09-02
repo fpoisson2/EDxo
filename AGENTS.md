@@ -17,6 +17,7 @@ Ce référentiel utilise des agents/outils pour automatiser des modifications de
 
 ## Commandes utiles
 - Lancer toute la suite (résumé concis): `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q`
+- Pour obtenir explicitement le résumé final (nombre de tests et durée), exécutez `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest` sans `-q` supplémentaire (le fichier `pytest.ini` l'inclut déjà) et relevez la dernière ligne de sortie.
 - Interrompre au premier échec pour un diagnostic rapide: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 pytest -q --maxfail=1`
 - Exécuter un seul fichier: `pytest -q tests/test_mon_module.py`
 - Exécuter un seul test: `pytest -q tests/test_mon_module.py::test_cas_specifique`
