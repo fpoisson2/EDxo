@@ -236,6 +236,10 @@ def test_docx_schema_preview_buttons_and_lists(app, client):
     assert b'id="schemaExportBtn"' in data
     assert b'add-array-item' in data
     assert b'add-list-item' in data
+    assert b'view_plan_cadre.css' in data
+    assert b'floatingSchemaSaveBtn' in data
+    assert b'magic-generate' in data
+    assert b'bg-primary' in data
 
 
 def test_docx_schema_preview_plan_form(app, client):

@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% block title %}{{ page.title }}{% endblock %}
 
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/view_plan_cadre.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
   <h1 id="schemaPageTitle">{{ page.title }}</h1>
@@ -29,6 +34,8 @@
     <form id="planCadreForm" class="d-flex flex-column gap-3"></form>
     <button type="button" id="planCadreSaveBtn" class="btn btn-primary mt-2">Enregistrer</button>
   </section>
+
+  <button type="button" id="floatingSchemaSaveBtn" class="btn btn-primary position-fixed bottom-0 end-0 m-3 d-none">Enregistrer</button>
 
   <div class="accordion" id="schemaAccordion">
     <div class="accordion-item">
@@ -297,17 +304,60 @@ document.addEventListener('DOMContentLoaded', () => {
       const itemPath = path === 'root' ? itemName : `${path}.${itemName}`;
 
       function addItem() {
+        const idx = list.children.length;
         if (schema.items.type === 'object') {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'border rounded p-2 position-relative';
-          renderPlanCadreForm(schema.items, wrapper, itemPath);
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'btn btn-outline-danger btn-sm position-absolute top-0 end-0 remove-form-array-item';
-          btn.innerHTML = '<i class="bi bi-x"></i>';
-          btn.addEventListener('click', () => wrapper.remove());
-          wrapper.appendChild(btn);
-          list.appendChild(wrapper);
+          if (schema.items.properties && schema.items.properties.title && schema.items.properties.description && Object.keys(schema.items.properties).length === 2) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'border rounded p-2 position-relative';
+            const titleInput = document.createElement('input');
+            titleInput.className = 'form-control fw-bold mb-1';
+            titleInput.name = `${itemPath}[${idx}].title`;
+            titleInput.placeholder = schema.items.properties.title.title || 'Titre';
+            const descInput = document.createElement('input');
+            descInput.className = 'form-control';
+            descInput.name = `${itemPath}[${idx}].description`;
+            descInput.placeholder = schema.items.properties.description.title || 'Description';
+            wrapper.appendChild(titleInput);
+            wrapper.appendChild(descInput);
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-outline-danger btn-sm position-absolute top-0 end-0 remove-form-array-item';
+            btn.innerHTML = '<i class="bi bi-x"></i>';
+            btn.addEventListener('click', () => wrapper.remove());
+            wrapper.appendChild(btn);
+            list.appendChild(wrapper);
+          } else {
+            const acc = document.createElement('div');
+            acc.className = 'accordion-item';
+            const head = document.createElement('h2');
+            head.className = 'accordion-header position-relative';
+            const collapseId = `${itemPath.replace(/[^a-z0-9]/gi,'-')}-${idx}`;
+            const btn = document.createElement('button');
+            btn.className = 'accordion-button collapsed';
+            btn.type = 'button';
+            btn.setAttribute('data-bs-toggle','collapse');
+            btn.setAttribute('data-bs-target',`#${collapseId}`);
+            btn.setAttribute('aria-expanded','false');
+            btn.setAttribute('aria-controls',collapseId);
+            btn.textContent = schema.items.title || `${schema.title || path} ${idx+1}`;
+            head.appendChild(btn);
+            const rm = document.createElement('button');
+            rm.type = 'button';
+            rm.className = 'btn btn-sm btn-outline-danger position-absolute top-0 end-0 remove-form-array-item';
+            rm.innerHTML = '<i class="bi bi-x"></i>';
+            rm.addEventListener('click', () => acc.remove());
+            head.appendChild(rm);
+            acc.appendChild(head);
+            const collapse = document.createElement('div');
+            collapse.id = collapseId;
+            collapse.className = 'accordion-collapse collapse';
+            const body = document.createElement('div');
+            body.className = 'accordion-body';
+            collapse.appendChild(body);
+            acc.appendChild(collapse);
+            list.appendChild(acc);
+            renderPlanCadreForm(schema.items, body, itemPath);
+          }
         } else {
           const wrapper = document.createElement('div');
           wrapper.className = 'input-group';
@@ -375,7 +425,16 @@ document.addEventListener('DOMContentLoaded', () => {
     button.setAttribute('aria-expanded', 'false');
     button.setAttribute('aria-controls', `${itemId}-body`);
     button.textContent = `${name}${isRequired ? '*' : ''} (${type})`;
+    const depth = path.split('.').length - 1;
+    if (depth === 1) button.classList.add('bg-light');
+    if (depth > 1) button.classList.add('bg-primary', 'text-white');
     header.appendChild(button);
+
+    const magicBtn = document.createElement('button');
+    magicBtn.type = 'button';
+    magicBtn.className = 'btn btn-sm btn-outline-primary ms-2 magic-generate';
+    magicBtn.innerHTML = '<i class="bi bi-magic"></i>';
+    header.appendChild(magicBtn);
     item.appendChild(header);
 
     const collapse = document.createElement('div');
@@ -430,16 +489,36 @@ document.addEventListener('DOMContentLoaded', () => {
       const itemPath = path === 'root' ? itemName : `${path}.${itemName}`;
       const addItem = () => {
         const idx = list.children.length;
-        const wrapper = document.createElement('div');
-        wrapper.className = 'mb-2';
-        renderSchemaAccordion(schema.items, wrapper, `${name}[${idx}]`, itemPath, schema.items.required || []);
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'btn btn-sm btn-outline-danger remove-array-item ms-2';
-        removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
-        removeBtn.addEventListener('click', () => wrapper.remove());
-        wrapper.appendChild(removeBtn);
-        list.appendChild(wrapper);
+        if (schema.items.type === 'object' && schema.items.properties && schema.items.properties.title && schema.items.properties.description) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'mb-2';
+          const titleInput = document.createElement('input');
+          titleInput.className = 'form-control fw-bold mb-1';
+          titleInput.placeholder = schema.items.properties.title.title || 'Titre';
+          const descInput = document.createElement('input');
+          descInput.className = 'form-control';
+          descInput.placeholder = schema.items.properties.description.title || 'Description';
+          wrapper.appendChild(titleInput);
+          wrapper.appendChild(descInput);
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'btn btn-sm btn-outline-danger remove-array-item ms-2';
+          removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+          removeBtn.addEventListener('click', () => wrapper.remove());
+          wrapper.appendChild(removeBtn);
+          list.appendChild(wrapper);
+        } else {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'mb-2';
+          renderSchemaAccordion(schema.items, wrapper, `${name}[${idx}]`, itemPath, schema.items.required || []);
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'btn btn-sm btn-outline-danger remove-array-item ms-2';
+          removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+          removeBtn.addEventListener('click', () => wrapper.remove());
+          wrapper.appendChild(removeBtn);
+          list.appendChild(wrapper);
+        }
       };
       addBtn.addEventListener('click', addItem);
       addItem();
@@ -549,7 +628,14 @@ document.addEventListener('DOMContentLoaded', () => {
       ul.parentNode.insertBefore(addBtn, ul);
       addBtn.addEventListener('click', () => {
         const li = document.createElement('li');
-        li.contentEditable = 'true';
+        const titleInput = document.createElement('input');
+        titleInput.className = 'form-control fw-bold mb-1';
+        titleInput.placeholder = 'Titre';
+        const descInput = document.createElement('input');
+        descInput.className = 'form-control';
+        descInput.placeholder = 'Description';
+        li.appendChild(titleInput);
+        li.appendChild(descInput);
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
         removeBtn.className = 'btn btn-sm btn-outline-danger ms-2 remove-list-item';
@@ -559,6 +645,17 @@ document.addEventListener('DOMContentLoaded', () => {
         ul.appendChild(li);
       });
       ul.querySelectorAll('li').forEach((li) => {
+        if (!li.querySelector('input')) {
+          const text = li.textContent || '';
+          li.textContent = '';
+          const titleInput = document.createElement('input');
+          titleInput.className = 'form-control fw-bold mb-1';
+          titleInput.value = text;
+          const descInput = document.createElement('input');
+          descInput.className = 'form-control';
+          li.appendChild(titleInput);
+          li.appendChild(descInput);
+        }
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
         removeBtn.className = 'btn btn-sm btn-outline-danger ms-2 remove-list-item';
@@ -589,6 +686,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   renderAll();
+
+  const floatingBtn = document.getElementById('floatingSchemaSaveBtn');
+  if (planFormEl && floatingBtn) {
+    const showSave = () => floatingBtn.classList.remove('d-none');
+    planFormEl.addEventListener('input', showSave);
+    planFormEl.addEventListener('change', showSave);
+    floatingBtn.addEventListener('click', () => {
+      planFormEl.requestSubmit();
+      floatingBtn.classList.add('d-none');
+    });
+  }
 
   if (editBtn) {
     const modal = new bootstrap.Modal(editModalEl);
