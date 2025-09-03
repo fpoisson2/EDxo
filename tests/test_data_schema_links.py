@@ -79,3 +79,21 @@ def test_create_and_list_schema_links(app, client):
     ids = [l['id'] for l in r4.get_json()['links']]
     assert lid not in ids
 
+
+def test_create_link_with_root_pointer(app, client):
+    admin_id = create_admin(app)
+    _login(client, admin_id)
+    p1, p2 = create_schema_pages(app)
+    payload = {
+        'source_page_id': p1,
+        'source_pointer': '#',
+        'relation_type': 'herite_de',
+        'target_page_id': p2,
+        'target_pointer': '#'
+    }
+    r = client.post('/settings/schemas/links', json=payload)
+    assert r.status_code == 201
+    link = r.get_json()['link']
+    assert link['source_pointer'] == '#'
+    assert link['target_pointer'] == '#'
+

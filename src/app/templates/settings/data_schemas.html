@@ -4,7 +4,7 @@
 
 {% block parametres_content %}
 <h2 class="mb-3">Schémas de données – Lier des éléments</h2>
-<p class="text-muted">Créez des liens entre éléments de schémas (hérite de, dérive de, équivalent à, utilise). Les pointeurs utilisent le format JSON Pointer (ex.: <code>#/properties/chapitres/items</code>).</p>
+<p class="text-muted">Créez des liens entre éléments de schémas (hérite de, dérive de, équivalent à, utilise). Les pointeurs utilisent le format JSON Pointer (ex.: <code>#/properties/chapitres/items</code> ou <code>#</code> pour la racine).</p>
 
 <div class="card mb-3">
   <div class="card-header">
@@ -34,7 +34,7 @@
   <div class="col-12 col-lg-3">
     <label class="form-label">Chemin (JSON Pointer)</label>
     <div class="input-group">
-      <input id="srcPtr" class="form-control" placeholder="#/properties/...">
+      <input id="srcPtr" class="form-control" placeholder="# ou #/properties/...">
       <button class="btn btn-outline-secondary" type="button" id="pickSrc">Choisir</button>
     </div>
   </div>
@@ -59,7 +59,7 @@
   <div class="col-12 col-lg-3">
     <label class="form-label">Chemin cible</label>
     <div class="input-group">
-      <input id="tgtPtr" class="form-control" placeholder="#/properties/...">
+      <input id="tgtPtr" class="form-control" placeholder="# ou #/properties/...">
       <button class="btn btn-outline-secondary" type="button" id="pickTgt">Choisir</button>
     </div>
   </div>
@@ -171,7 +171,13 @@
         container.appendChild(row);
       }
     }
-    walk(schema, basePtr, root);
+    // racine
+    const rootRow = nodeRow(`${schema.title || 'Racine'} (racine)`, basePtr);
+    root.appendChild(rootRow);
+    const childContainer = document.createElement('div');
+    childContainer.className = 'ms-3 border-start ps-2';
+    root.appendChild(childContainer);
+    walk(schema, basePtr, childContainer);
     return root;
   }
   function filterTree(root, q) {
