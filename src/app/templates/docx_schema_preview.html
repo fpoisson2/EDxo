@@ -46,6 +46,7 @@
   </div>
 
   <section class="mb-4">
+    <div id="parentEntryPicker" class="mb-3"></div>
     <form id="planCadreForm">
       <div class="accordion" id="planCadreAccordion"></div>
     </form>
@@ -425,6 +426,35 @@ document.addEventListener('DOMContentLoaded', () => {
       return out;
     } catch { return []; }
   }
+  function getValueAtPointer(obj, ptr){
+    try {
+      const path = pointerToPath(ptr);
+      let cur = obj;
+      for (const p of path){
+        if (cur == null) return undefined;
+        cur = cur[p];
+      }
+      return cur;
+    } catch { return undefined; }
+  }
+  function setDataAtPointer(root, ptr, value){
+    const path = pointerToPath(ptr);
+    let cur = root;
+    for (let i=0;i<path.length-1;i++){
+      const k = path[i];
+      if (cur[k] === undefined) cur[k] = (typeof path[i+1] === 'number') ? [] : {};
+      cur = cur[k];
+    }
+    if (path.length){
+      cur[path[path.length-1]] = value;
+    }
+  }
+  function disableField(ptr){
+    const field = document.querySelector(`[data-pointer="${CSS.escape(ptr)}"]`);
+    if (!field) return;
+    field.querySelectorAll('input, textarea, select').forEach(el => { el.disabled = true; });
+    field.querySelectorAll('.add-item-btn, .remove-item-btn').forEach(btn => { btn.disabled = true; btn.style.display = 'none'; });
+  }
   function setDeepAtPath(obj, pathArr, value){
     let cur = obj;
     for (let i=0;i<pathArr.length;i++){
@@ -539,6 +569,47 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof data === 'number') input.value = String(data);
     else if (typeof data === 'string') input.value = data;
     else input.value = JSON.stringify(data);
+  }
+  function enhanceLinkedFields(){
+    const fields = document.querySelectorAll('[data-pointer]');
+    fields.forEach((holder) => {
+      const ptr = holder.getAttribute('data-pointer');
+      const link = getLinkForPointer(ptr);
+      if (!link || link.relation_type !== 'utilise') return;
+      const el = holder.querySelector('input.form-control');
+      if (el && (el.type === 'text' || el.type === 'number')) {
+        turnInputIntoSelect(holder, el, ptr, {});
+      }
+    });
+  }
+  async function applyParent(parentId){
+    accordionRoot.innerHTML = '';
+    renderPlanCadreForm(currentSchema, accordionRoot, 'root', 0, {}, '#');
+    if (initialEntryData) {
+      try { prepopulateFromData(currentSchema, initialEntryData, '#'); } catch {}
+    }
+    enhanceLinkedFields();
+    if (!parentId || !rootLink) return;
+    try {
+      const r = await fetch(`/docx_schema/${rootLink.target_page_id}/entries`);
+      if (!r.ok) return;
+      const j = await r.json();
+      const entry = (j.entries || []).find(e => e.id === parentId);
+      if (!entry) return;
+      const inherited = {};
+      for (const [ptr, link] of Object.entries(schemaLinksByPointer)){
+        if (link.relation_type === 'herite_de' && ptr !== '#'){
+          const v = getValueAtPointer(entry.data, link.target_pointer);
+          if (v !== undefined) setDataAtPointer(inherited, ptr, v);
+        }
+      }
+      prepopulateFromData(currentSchema, inherited, '#');
+      for (const [ptr, link] of Object.entries(schemaLinksByPointer)){
+        if (link.relation_type === 'herite_de' && ptr !== '#'){
+          disableField(ptr);
+        }
+      }
+    } catch {}
   }
   function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
   let lastHighlighted = null;
@@ -1140,20 +1211,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if (initialEntryData) {
     try { prepopulateFromData(currentSchema, initialEntryData, '#'); } catch (e) { console.warn('Pré-remplissage échoué', e); }
   }
-  // Load links after render and enhance fields accordingly
+  // Load links after render, enhance fields and setup root inheritance selector
+  let rootLink = null;
   loadSchemaLinks().then(() => {
-    // Post-process: find fields that have links and turn them into selects
-    const fields = document.querySelectorAll('[data-pointer]');
-    fields.forEach((holder) => {
-      const ptr = holder.getAttribute('data-pointer');
-      const link = getLinkForPointer(ptr);
-      if (!link || !['utilise','herite_de'].includes(link.relation_type)) return;
-      // Find a direct input/textarea child to replace
-      const el = holder.querySelector('input.form-control');
-      if (el && (el.type === 'text' || el.type === 'number')) {
-        turnInputIntoSelect(holder, el, ptr, {});
-      }
-    });
+    rootLink = schemaLinksByPointer['#'] || null;
+    if (rootLink && rootLink.relation_type === 'herite_de') {
+      const picker = document.getElementById('parentEntryPicker');
+      ensureEntryPicker(picker, rootLink, (id) => { applyParent(id); });
+    }
+    enhanceLinkedFields();
   });
   if (planFormEl) {
     planFormEl.addEventListener('input', showActionBar);

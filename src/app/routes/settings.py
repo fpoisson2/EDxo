@@ -248,11 +248,15 @@ def create_schema_link():
     if not (src_page and tgt_page and src_ptr and tgt_ptr):
         return jsonify({'error': 'Champs requis manquants.'}), 400
     # Validation simple des pointeurs: autoriser '#/' ou '/'
-    if not (src_ptr.startswith('#/') or src_ptr.startswith('/')):
-        return jsonify({'error': 'source_pointer doit être un JSON Pointer (#/...)'}), 400
-    if not (tgt_ptr.startswith('#/') or tgt_ptr.startswith('/')):
-        return jsonify({'error': 'target_pointer doit être un JSON Pointer (#/...)'}), 400
-    # Normaliser sur format '#/'
+    def _is_valid_ptr(p: str) -> bool:
+        return p == '#' or p.startswith('#/') or p.startswith('/')
+
+    if not _is_valid_ptr(src_ptr):
+        return jsonify({'error': 'source_pointer doit être un JSON Pointer (#/...) ou #'}), 400
+    if not _is_valid_ptr(tgt_ptr):
+        return jsonify({'error': 'target_pointer doit être un JSON Pointer (#/...) ou #'}), 400
+
+    # Normaliser sur format commençant par '#'
     if src_ptr.startswith('/'):
         src_ptr = '#' + src_ptr
     if tgt_ptr.startswith('/'):
