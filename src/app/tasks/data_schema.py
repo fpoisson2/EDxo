@@ -76,8 +76,51 @@ def _parse_final_json(final, streamed_text: str):
     return parsed
 
 
+def _ensure_strict_schema(node: dict) -> dict:
+    """Return a copy of the JSON Schema where every object node explicitly sets
+    additionalProperties to False (required by OpenAI strict JSON Schema), and
+    recurse into properties/items/$defs/definitions and composition keywords.
+    """
+    if not isinstance(node, dict):
+        return node
+    out = dict(node)
+    t = out.get('type')
+    # If object-like, enforce additionalProperties: false
+    is_object = (t == 'object') or ('properties' in out)
+    if is_object:
+        if 'type' not in out:
+            out['type'] = 'object'
+        if 'additionalProperties' not in out:
+            out['additionalProperties'] = False
+        props = out.get('properties') or {}
+        if isinstance(props, dict):
+            out['properties'] = {k: _ensure_strict_schema(v) for k, v in props.items()}
+            # Strict mode: required must include every key in properties
+            req = out.get('required')
+            prop_keys = list(props.keys())
+            if not isinstance(req, list) or set(req) != set(prop_keys):
+                out['required'] = prop_keys
+    # If array-like, recurse into items
+    if out.get('type') == 'array' or ('items' in out):
+        items = out.get('items')
+        if isinstance(items, dict):
+            out['items'] = _ensure_strict_schema(items)
+        elif isinstance(items, list):
+            out['items'] = [_ensure_strict_schema(x) if isinstance(x, dict) else x for x in items]
+    # Recurse into common composition keywords
+    for key in ('oneOf', 'anyOf', 'allOf'):
+        if isinstance(out.get(key), list):
+            out[key] = [_ensure_strict_schema(x) if isinstance(x, dict) else x for x in out[key]]
+    # Recurse into definitions blocks
+    for key in ('$defs', 'definitions'):
+        if isinstance(out.get(key), dict):
+            out[key] = {k: _ensure_strict_schema(v) if isinstance(v, dict) else v for k, v in out[key].items()}
+    return out
+
+
 def _build_text_format_for_schema(schema: dict) -> dict:
-    return {"format": {"type": "json_schema", "name": "DocxSchemaData", "schema": schema, "strict": True}}
+    strict_schema = _ensure_strict_schema(schema or {})
+    return {"format": {"type": "json_schema", "name": "DocxSchemaData", "schema": strict_schema, "strict": True}}
 
 
 @shared_task(bind=True, name="app.tasks.data_schema.generate_entry")
@@ -194,4 +237,3 @@ def data_schema_import_from_file_task(self, page_id: int, file_path: str, user_i
     result = {"entry_id": entry.id, "data": payload}
     validation_url = f"/docx_schema/{page.id}/entries/{entry.id}/edit"
     return {"status": "success", "result": result, "validation_url": validation_url, "api_usage": _extract_usage(final)}
-

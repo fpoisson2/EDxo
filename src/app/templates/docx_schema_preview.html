@@ -598,10 +598,34 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!entry) return;
       const inherited = {};
       for (const [ptr, link] of Object.entries(schemaLinksByPointer)){
-        if (link.relation_type === 'herite_de' && ptr !== '#'){
-          const v = getValueAtPointer(entry.data, link.target_pointer);
-          if (v !== undefined) setDataAtPointer(inherited, ptr, v);
-        }
+        if (link.relation_type !== 'herite_de' || ptr === '#') continue;
+        let v = getValueAtPointer(entry.data, link.target_pointer);
+        // If a root-level item is selected and this field targets under that items pointer, extract from the selected item
+        try {
+          const rp = rootLink && rootLink.target_pointer || '';
+          if (currentRootItemValue && rp && /\/items$/.test(rp) && link.target_pointer.startsWith(rp)) {
+            const arr = getValueAtPointer(entry.data, rp);
+            if (Array.isArray(arr)) {
+              const match = (o) => {
+                if (!o || typeof o !== 'object') return false;
+                for (const k of ['id','code','slug','value']) if (o[k] != null && String(o[k]) === String(currentRootItemValue)) return true;
+                return false;
+              };
+              const sel = arr.find(match);
+              if (sel && typeof sel === 'object') {
+                const rem = link.target_pointer.slice(rp.length);
+                if (rem) {
+                  const subPtr = '#' + rem.replace(/^\/+/, '');
+                  const subVal = getValueAtPointer({ root: sel }, subPtr.replace(/^#/, '#/root'));
+                  if (subVal !== undefined) v = subVal;
+                } else {
+                  v = sel;
+                }
+              }
+            }
+          }
+        } catch {}
+        if (v !== undefined) setDataAtPointer(inherited, ptr, v);
       }
       prepopulateFromData(currentSchema, inherited, '#');
       for (const [ptr, link] of Object.entries(schemaLinksByPointer)){
@@ -769,9 +793,69 @@ document.addEventListener('DOMContentLoaded', () => {
       return sel;
     } catch { return null; }
   }
+  async function ensureItemsPicker(parentEl, link, getEntryId, onChange) {
+    try {
+      const wrap = document.createElement('div');
+      wrap.className = 'd-flex align-items-center gap-2 mb-1';
+      wrap.setAttribute('data-item-picker', '');
+      const lbl = document.createElement('span');
+      lbl.className = 'small text-muted';
+      lbl.textContent = 'Élément';
+      const sel = document.createElement('select');
+      sel.className = 'form-select form-select-sm';
+      const empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = '—';
+      sel.appendChild(empty);
+      // Persist selection using hidden input under data.__links__
+      const hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.name = `root.__links__._b64_${btoa(link.source_pointer)}__item`;
+      parentEl.appendChild(hidden);
+      async function refresh() {
+        const entryId = typeof getEntryId === 'function' ? getEntryId() : null;
+        sel.innerHTML = '';
+        const emp = document.createElement('option'); emp.value=''; emp.textContent='—'; sel.appendChild(emp);
+        if (!entryId) return;
+        const choices = await fetchChoices(link, entryId);
+        for (const c of choices) {
+          const o = document.createElement('option');
+          o.value = (c.value != null) ? String(c.value) : '';
+          o.textContent = (c.label != null) ? String(c.label) : o.value;
+          sel.appendChild(o);
+        }
+      }
+      sel.addEventListener('change', () => { const v = sel.value || ''; hidden.value = v; if (typeof onChange === 'function') onChange(v || null); });
+      wrap.appendChild(lbl); wrap.appendChild(sel);
+      parentEl.appendChild(wrap);
+      // Preselect from initial entry meta if available
+      try {
+        const key = `_b64_${btoa(link.source_pointer)}__item`;
+        const meta = (initialEntryData && typeof initialEntryData === 'object') ? (initialEntryData.__links__ || null) : null;
+        const saved = meta ? meta[key] : null;
+        await refresh();
+        if (saved != null) {
+          sel.value = String(saved);
+          hidden.value = String(saved);
+          if (typeof onChange === 'function') onChange(String(saved));
+        }
+      } catch { await refresh(); }
+      return sel;
+    } catch { return null; }
+  }
   async function turnInputIntoSelect(containerEl, inputEl, ptr, schema) {
     const link = getLinkForPointer(ptr);
-    if (!link || !['utilise','herite_de'].includes(link.relation_type)) return;
+    if (!link) return;
+    // For 'utilise', allow ancestor links (inherited choices make sense).
+    // For 'herite_de', only apply when the link explicitly targets this pointer
+    // (or its collapsed array form). Do NOT cascade a root-level link ('#')
+    // to all children, which was causing every field to be sourced from parent.
+    const collapsedPtr = ptr.replace(/\/items\/(\d+)/g, '/items');
+    const isExactHerite = (link.relation_type === 'herite_de') &&
+                          (link.source_pointer === collapsedPtr) &&
+                          (link.source_pointer !== '#');
+    const isUtilise = (link.relation_type === 'utilise');
+    if (!(isUtilise || isExactHerite)) return;
     // Create select
     const sel = document.createElement('select');
     sel.className = 'form-select';
@@ -993,7 +1077,12 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             // Scalar items: input or select if a link exists on the array pointer
             const link = getLinkForPointer(ptr);
-            if (link && ['utilise','herite_de'].includes(link.relation_type)) {
+            // Same rule as scalar fields: 'utilise' can come from ancestors,
+            // 'herite_de' only when explicitly defined on this pointer.
+            const collapsedPtr = ptr.replace(/\/items\/(\d+)/g, '/items');
+            const isExactHerite = link && link.relation_type === 'herite_de' && link.source_pointer === collapsedPtr && link.source_pointer !== '#';
+            const isUtilise = link && link.relation_type === 'utilise';
+            if (isUtilise || isExactHerite) {
               const sel = document.createElement('select');
               sel.className = 'form-select';
               sel.name = `${path}[]`;
@@ -1213,11 +1302,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   // Load links after render, enhance fields and setup root inheritance selector
   let rootLink = null;
+  let currentRootEntryId = null;
+  let currentRootItemValue = null;
   loadSchemaLinks().then(() => {
     rootLink = schemaLinksByPointer['#'] || null;
     if (rootLink && rootLink.relation_type === 'herite_de') {
       const picker = document.getElementById('parentEntryPicker');
-      ensureEntryPicker(picker, rootLink, (id) => { applyParent(id); });
+      ensureEntryPicker(picker, rootLink, (id) => { currentRootEntryId = id; applyParent(id); });
+      // If root link targets an array items pointer, also allow choosing the specific item
+      try {
+        const tp = rootLink.target_pointer || '';
+        if (/\/items$/.test(tp)) {
+          ensureItemsPicker(picker, rootLink, () => currentRootEntryId, (val) => { currentRootItemValue = val; applyParent(currentRootEntryId); });
+        }
+      } catch {}
     }
     enhanceLinkedFields();
   });
