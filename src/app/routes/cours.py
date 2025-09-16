@@ -42,6 +42,7 @@ from ..models import (
 )
 from ...utils.decorator import role_required, ensure_profile_completed
 from ...utils import get_programme_id_for_cours, is_coordo_for_programme
+from ...utils.schema_manager import PlanCadreSchemaManager
 
 cours_bp = Blueprint('cours', __name__, url_prefix='/cours')
 
@@ -165,6 +166,8 @@ def add_plan_cadre(cours_id):
             eval_evaluation_sommatives_apprentissages=""
         )
         db.session.add(new_plan)
+        db.session.flush()
+        PlanCadreSchemaManager().record_for_plan(new_plan)
         db.session.commit()
 
         flash('Plan Cadre créé avec succès!', 'success')
@@ -205,6 +208,8 @@ def view_plan_cadre(cours_id, plan_id):
         flash('Plan Cadre ou Cours non trouvé.', 'danger')
         return redirect(url_for('cours.view_cours', cours_id=cours_id))
 
+    schema_manager = PlanCadreSchemaManager()
+
     if request.method == 'GET':
         # Préparer le formulaire principal
         plan_data = {
@@ -220,6 +225,7 @@ def view_plan_cadre(cours_id, plan_id):
             'eval_evaluation_sommatives_apprentissages': plan.eval_evaluation_sommatives_apprentissages or ""
         }
         plan_form = PlanCadreForm(data=plan_data)
+        plan_schema_sections = schema_manager.build_sections(plan, plan_form)
 
         # Peupler les champs répétés (tables reliées)
         # competences_developpees
@@ -317,7 +323,8 @@ def view_plan_cadre(cours_id, plan_id):
             import_form=import_form,
             competences_developpees_from_cours=competences_developpees_from_cours,
             competences_atteintes=competences_atteintes,
-            elements_competence_par_cours=elements_competence_par_cours
+            elements_competence_par_cours=elements_competence_par_cours,
+            plan_schema_sections=plan_schema_sections,
         )
 
     # POST -> Mise à jour du plan-cadre
@@ -340,6 +347,7 @@ def view_plan_cadre(cours_id, plan_id):
             return redirect(url_for('cours.view_plan_cadre', cours_id=cours_id, plan_id=plan_id))
 
         form_submitted = PlanCadreForm(request.form)
+        plan_schema_sections = schema_manager.build_sections(plan, form_submitted)
         if form_submitted.validate_on_submit():
             try:
                 # Mettre à jour le plan-cadre principal
@@ -599,7 +607,7 @@ def view_plan_cadre(cours_id, plan_id):
 
                 plan.modified_at = datetime.now(UTC)
                 plan.modified_by_id = current_user.id
-
+                schema_manager.update_extra_fields(plan, plan_schema_sections, request.form)
                 db.session.commit()
                 success_message = "Plan-cadre et capacités mis à jour avec succès."
 

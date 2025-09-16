@@ -12,6 +12,9 @@ def verify_recaptcha(token: str) -> bool:
         bool: ``True`` if the verification succeeds and the score meets the
         configured threshold, ``False`` otherwise.
     """
+    if current_app.config.get("RECAPTCHA_DISABLED"):
+        return True
+
     if not token:
         return False
 

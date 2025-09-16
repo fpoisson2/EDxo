@@ -1,0 +1,30 @@
+{% if field.storage == 'column' and field.form_field %}
+  <div class="mb-2">
+    <label class="fw-bold d-flex align-items-center gap-2" for="{{ field.html_id }}">
+      <span>{{ field.label }}</span>
+      {% if current_user.role in ['admin','coordo'] %}
+        <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="{{ field.improve_target }}" title="Améliorer uniquement cette section">
+          <i class="bi bi-magic"></i>
+        </button>
+      {% endif %}
+    </label>
+    {{ field.form_field(class="form-control border-0 auto-resize use-toast", oninput="autoResize(this)", style="overflow:hidden; resize:none;") }}
+    {% if field.help_text %}
+      <small class="text-muted">{{ field.help_text }}</small>
+    {% endif %}
+  </div>
+{% else %}
+  <div class="mb-2">
+    <label class="fw-bold d-flex align-items-center gap-2" for="{{ field.html_id }}">
+      <span>{{ field.label }}</span>
+    </label>
+    {% if field.field_type == 'text' %}
+      <input type="text" name="{{ field.html_name }}" id="{{ field.html_id }}" value="{{ field.value or '' }}" class="form-control border-0" placeholder="{{ field.placeholder or '' }}">
+    {% else %}
+      <textarea name="{{ field.html_name }}" id="{{ field.html_id }}" class="form-control border-0 auto-resize use-toast" oninput="autoResize(this)" style="overflow:hidden; resize:none;" placeholder="{{ field.placeholder or '' }}">{{ field.value or '' }}</textarea>
+    {% endif %}
+    {% if field.help_text %}
+      <small class="text-muted">{{ field.help_text }}</small>
+    {% endif %}
+  </div>
+{% endif %}

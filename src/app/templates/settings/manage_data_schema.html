@@ -1,0 +1,230 @@
+{% extends 'parametres.html' %}
+
+{% block parametres_content %}
+<h2 class="mb-3">Gestion du schéma &laquo;&nbsp;{{ schema.name }}&nbsp;&raquo;</h2>
+<p class="text-muted">Personnalisez les sections et champs affichés pour les plans-cadres. Les modifications sont enregistrées immédiatement et s'appliquent à toutes les entrées existantes sans perte de données.</p>
+
+<div class="mb-4">
+  <h3 class="h5">Ajouter une section</h3>
+  <form method="post" class="row g-3">
+    {{ new_section_form.hidden_tag() }}
+    <input type="hidden" name="form_name" value="create_section">
+    <div class="col-md-3">
+      {{ new_section_form.key.label(class="form-label") }}
+      {{ new_section_form.key(class="form-control", placeholder="ex: organisation") }}
+      {% for error in new_section_form.key.errors %}
+        <div class="text-danger small">{{ error }}</div>
+      {% endfor %}
+    </div>
+    <div class="col-md-4">
+      {{ new_section_form.label.label(class="form-label") }}
+      {{ new_section_form.label(class="form-control", placeholder="Titre de section") }}
+      {% for error in new_section_form.label.errors %}
+        <div class="text-danger small">{{ error }}</div>
+      {% endfor %}
+    </div>
+    <div class="col-md-2">
+      {{ new_section_form.position.label(class="form-label") }}
+      {{ new_section_form.position(class="form-control", placeholder="0") }}
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+      <div class="form-check">
+        {{ new_section_form.active(class="form-check-input", id=new_section_form.active.id) }}
+        <label class="form-check-label" for="{{ new_section_form.active.id }}">Active</label>
+      </div>
+    </div>
+    <div class="col-12">
+      {{ new_section_form.description.label(class="form-label") }}
+      {{ new_section_form.description(class="form-control", rows=2, placeholder="Description optionnelle") }}
+    </div>
+    <div class="col-12">
+      {{ new_section_form.submit(class="btn btn-primary") }}
+    </div>
+  </form>
+</div>
+
+{% for section in schema.sections|sort(attribute='position') %}
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light">
+      <div class="d-flex justify-content-between align-items-center">
+        <h3 class="h5 mb-0">Section&nbsp;: {{ section.label }}</h3>
+        <span class="badge bg-secondary">Identifiant&nbsp;: {{ section.key }}</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <form method="post" class="row g-3 mb-4">
+        {{ section_forms[section.id].hidden_tag() }}
+        <input type="hidden" name="form_name" value="update_section">
+        <input type="hidden" name="section_id" value="{{ section.id }}">
+        <div class="col-md-4">
+          {{ section_forms[section.id].label.label(class="form-label") }}
+          {{ section_forms[section.id].label(class="form-control") }}
+        </div>
+        <div class="col-md-2">
+          {{ section_forms[section.id].position.label(class="form-label") }}
+          {{ section_forms[section.id].position(class="form-control") }}
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <div class="form-check">
+            {{ section_forms[section.id].active(class="form-check-input", id=section_forms[section.id].active.id) }}
+            <label class="form-check-label" for="{{ section_forms[section.id].active.id }}">Active</label>
+          </div>
+        </div>
+        <div class="col-12">
+          {{ section_forms[section.id].description.label(class="form-label") }}
+          {{ section_forms[section.id].description(class="form-control", rows=2) }}
+        </div>
+        <div class="col-12">
+          {{ section_forms[section.id].submit(class="btn btn-outline-primary") }}
+        </div>
+      </form>
+
+      <h4 class="h6">Champs</h4>
+      {% if section.fields %}
+        <div class="list-group mb-3">
+          {% for field in section.fields|sort(attribute='position') %}
+            <div class="list-group-item">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <span class="fw-semibold">{{ field.label }}</span>
+                  <small class="text-muted d-block">Identifiant&nbsp;: {{ field.key }} &mdash; Stockage&nbsp;: {{ 'Colonne' if field.storage == 'column' else 'Données additionnelles' }}</small>
+                  {% if field.help_text %}
+                    <div class="text-muted small">{{ field.help_text }}</div>
+                  {% endif %}
+                  {% if not field.is_active %}
+                    <span class="badge bg-warning text-dark">Archivé</span>
+                  {% elif not field.active %}
+                    <span class="badge bg-warning text-dark">Désactivé</span>
+                  {% endif %}
+                </div>
+                <div class="text-end">
+                  <form method="post" class="d-inline">
+                    {{ toggle_forms[field.id].hidden_tag() }}
+                    <input type="hidden" name="form_name" value="{{ 'archive_field' if field.is_active else 'restore_field' }}">
+                    <input type="hidden" name="field_id" value="{{ field.id }}">
+                    {% if field.is_active %}
+                      <button type="submit" class="btn btn-sm btn-outline-secondary">Archiver</button>
+                    {% else %}
+                      <button type="submit" class="btn btn-sm btn-outline-success">Restaurer</button>
+                    {% endif %}
+                  </form>
+                </div>
+              </div>
+              <form method="post" class="row g-3 mt-3">
+                {{ field_forms[field.id].hidden_tag() }}
+                <input type="hidden" name="form_name" value="update_field">
+                <input type="hidden" name="field_id" value="{{ field.id }}">
+                <input type="hidden" name="section_id" value="{{ section.id }}">
+                <div class="col-md-3">
+                  {{ field_forms[field.id].label.label(class="form-label") }}
+                  {{ field_forms[field.id].label(class="form-control") }}
+                </div>
+                <div class="col-md-3">
+                  {{ field_forms[field.id].field_type.label(class="form-label") }}
+                  {{ field_forms[field.id].field_type(class="form-select") }}
+                </div>
+                <div class="col-md-3">
+                  {{ field_forms[field.id].storage.label(class="form-label") }}
+                  {{ field_forms[field.id].storage(class="form-select") }}
+                </div>
+                <div class="col-md-3">
+                  {{ field_forms[field.id].storage_column.label(class="form-label") }}
+                  {{ field_forms[field.id].storage_column(class="form-select") }}
+                  {% for error in field_forms[field.id].storage_column.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                  {% endfor %}
+                </div>
+                <div class="col-md-2">
+                  {{ field_forms[field.id].position.label(class="form-label") }}
+                  {{ field_forms[field.id].position(class="form-control") }}
+                </div>
+                <div class="col-md-3">
+                  {{ field_forms[field.id].placeholder.label(class="form-label") }}
+                  {{ field_forms[field.id].placeholder(class="form-control") }}
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <div class="form-check">
+                    {{ field_forms[field.id].required(class="form-check-input", id=field_forms[field.id].required.id) }}
+                    <label class="form-check-label" for="{{ field_forms[field.id].required.id }}">Requis</label>
+                  </div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <div class="form-check">
+                    {{ field_forms[field.id].active(class="form-check-input", id=field_forms[field.id].active.id) }}
+                    <label class="form-check-label" for="{{ field_forms[field.id].active.id }}">Actif</label>
+                  </div>
+                </div>
+                <div class="col-12">
+                  {{ field_forms[field.id].help_text.label(class="form-label") }}
+                  {{ field_forms[field.id].help_text(class="form-control", rows=2) }}
+                </div>
+                <div class="col-12">
+                  {{ field_forms[field.id].submit(class="btn btn-outline-primary btn-sm") }}
+                </div>
+              </form>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted">Aucun champ configuré pour cette section.</p>
+      {% endif %}
+
+      <h5 class="h6">Ajouter un champ</h5>
+      <form method="post" class="row g-3">
+        {{ new_field_forms[section.id].hidden_tag() }}
+        <input type="hidden" name="form_name" value="create_field">
+        <input type="hidden" name="section_id" value="{{ section.id }}">
+        <div class="col-md-3">
+          {{ new_field_forms[section.id].key.label(class="form-label") }}
+          {{ new_field_forms[section.id].key(class="form-control", placeholder="ex: info_supp") }}
+          {% for error in new_field_forms[section.id].key.errors %}
+            <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+        <div class="col-md-3">
+          {{ new_field_forms[section.id].label.label(class="form-label") }}
+          {{ new_field_forms[section.id].label(class="form-control") }}
+        </div>
+        <div class="col-md-2">
+          {{ new_field_forms[section.id].field_type.label(class="form-label") }}
+          {{ new_field_forms[section.id].field_type(class="form-select") }}
+        </div>
+        <div class="col-md-2">
+          {{ new_field_forms[section.id].storage.label(class="form-label") }}
+          {{ new_field_forms[section.id].storage(class="form-select") }}
+        </div>
+        <div class="col-md-2">
+          {{ new_field_forms[section.id].storage_column.label(class="form-label") }}
+          {{ new_field_forms[section.id].storage_column(class="form-select") }}
+          {% for error in new_field_forms[section.id].storage_column.errors %}
+            <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+        <div class="col-md-2">
+          {{ new_field_forms[section.id].position.label(class="form-label") }}
+          {{ new_field_forms[section.id].position(class="form-control") }}
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <div class="form-check">
+            {{ new_field_forms[section.id].required(class="form-check-input", id=new_field_forms[section.id].required.id) }}
+            <label class="form-check-label" for="{{ new_field_forms[section.id].required.id }}">Requis</label>
+          </div>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <div class="form-check">
+            {{ new_field_forms[section.id].active(class="form-check-input", id=new_field_forms[section.id].active.id) }}
+            <label class="form-check-label" for="{{ new_field_forms[section.id].active.id }}">Actif</label>
+          </div>
+        </div>
+        <div class="col-12">
+          {{ new_field_forms[section.id].help_text.label(class="form-label") }}
+          {{ new_field_forms[section.id].help_text(class="form-control", rows=2) }}
+        </div>
+        <div class="col-12">
+          {{ new_field_forms[section.id].submit(class="btn btn-success") }}
+        </div>
+      </form>
+    </div>
+  </div>
+{% endfor %}
+{% endblock %}

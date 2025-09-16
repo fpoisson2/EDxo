@@ -106,13 +106,15 @@ def forgot_password():
     form = ForgotPasswordForm()
     if form.validate_on_submit():
         # Vérification du token reCAPTCHA v3
+        recaptcha_disabled = current_app.config.get('RECAPTCHA_DISABLED')
         recaptcha_token = form.recaptcha_token.data.strip() if form.recaptcha_token.data else None
-        if not recaptcha_token:
-            flash("Le token reCAPTCHA est manquant. Veuillez réessayer.", "danger")
-            return redirect(url_for('main.forgot_password'))
-        if not verify_recaptcha(recaptcha_token):
-            flash("La vérification reCAPTCHA a échoué. Veuillez réessayer.", "danger")
-            return redirect(url_for('main.forgot_password'))
+        if not recaptcha_disabled:
+            if not recaptcha_token:
+                flash("Le token reCAPTCHA est manquant. Veuillez réessayer.", "danger")
+                return redirect(url_for('main.forgot_password'))
+            if not verify_recaptcha(recaptcha_token):
+                flash("La vérification reCAPTCHA a échoué. Veuillez réessayer.", "danger")
+                return redirect(url_for('main.forgot_password'))
 
         user = User.query.filter_by(email=form.email.data).first()
         if user:
@@ -137,13 +139,15 @@ def reset_password(token):
     form = ResetPasswordForm()
     if form.validate_on_submit():
         # Vérification du token reCAPTCHA v3
+        recaptcha_disabled = current_app.config.get('RECAPTCHA_DISABLED')
         recaptcha_token = form.recaptcha_token.data.strip() if form.recaptcha_token.data else None
-        if not recaptcha_token:
-            flash("Le token reCAPTCHA est manquant. Veuillez réessayer.", "danger")
-            return redirect(url_for('main.reset_password', token=token))
-        if not verify_recaptcha(recaptcha_token):
-            flash("La vérification reCAPTCHA a échoué. Veuillez réessayer.", "danger")
-            return redirect(url_for('main.reset_password', token=token))
+        if not recaptcha_disabled:
+            if not recaptcha_token:
+                flash("Le token reCAPTCHA est manquant. Veuillez réessayer.", "danger")
+                return redirect(url_for('main.reset_password', token=token))
+            if not verify_recaptcha(recaptcha_token):
+                flash("La vérification reCAPTCHA a échoué. Veuillez réessayer.", "danger")
+                return redirect(url_for('main.reset_password', token=token))
 
         user.password = generate_password_hash(form.password.data, method='scrypt')
         # Invalider le token en incrémentant reset_version
@@ -211,14 +215,16 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         # Vérification du token reCAPTCHA v3
+        recaptcha_disabled = current_app.config.get('RECAPTCHA_DISABLED')
         recaptcha_token = form.recaptcha_token.data.strip() if form.recaptcha_token.data else None
-        if not recaptcha_token:
-            flash("Le token reCAPTCHA est manquant. Veuillez réessayer.", "danger")
-            return redirect(url_for('main.login'))
+        if not recaptcha_disabled:
+            if not recaptcha_token:
+                flash("Le token reCAPTCHA est manquant. Veuillez réessayer.", "danger")
+                return redirect(url_for('main.login'))
 
-        if not verify_recaptcha(recaptcha_token):
-            flash("La vérification reCAPTCHA a échoué. Veuillez réessayer.", "danger")
-            return redirect(url_for('main.login'))
+            if not verify_recaptcha(recaptcha_token):
+                flash("La vérification reCAPTCHA a échoué. Veuillez réessayer.", "danger")
+                return redirect(url_for('main.login'))
 
         # Authentification de l'utilisateur
         username = form.username.data.lower()
@@ -456,6 +462,4 @@ def index():
 
 
 ## moved to courses_management.py
-
-
 

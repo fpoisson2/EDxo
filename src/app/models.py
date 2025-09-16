@@ -1345,3 +1345,131 @@ class GlobalGenerationSettings(db.Model):
 
     def __repr__(self):
         return f"<GlobalGenerationSettings {self.section}>"
+
+
+# ------------------------------------------------------------------------------
+# Schémas dynamiques configurables (PlanCadre & autres)
+# ------------------------------------------------------------------------------
+
+
+class DataSchema(db.Model):
+    """Schéma de données configurable (ex.: plan-cadre)."""
+
+    __tablename__ = "data_schemas"
+
+    id = db.Column(db.Integer, primary_key=True)
+    slug = db.Column(db.String(64), nullable=False, unique=True)
+    name = db.Column(db.String(128), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=now_utc)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
+
+    sections = db.relationship(
+        "DataSchemaSection",
+        back_populates="schema",
+        cascade="all, delete-orphan",
+        order_by="DataSchemaSection.position"
+    )
+
+    fields = db.relationship(
+        "DataSchemaField",
+        back_populates="schema",
+        cascade="all, delete-orphan",
+        order_by="DataSchemaField.position"
+    )
+
+    @classmethod
+    def get_by_slug(cls, slug: str):
+        return cls.query.filter_by(slug=slug).first()
+
+
+class DataSchemaSection(db.Model):
+    __tablename__ = "data_schema_sections"
+
+    id = db.Column(db.Integer, primary_key=True)
+    schema_id = db.Column(db.Integer, db.ForeignKey("data_schemas.id", ondelete="CASCADE"), nullable=False)
+    key = db.Column(db.String(64), nullable=False)
+    label = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    position = db.Column(db.Integer, nullable=False, default=0)
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, default=now_utc)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
+
+    schema = db.relationship("DataSchema", back_populates="sections")
+    fields = db.relationship(
+        "DataSchemaField",
+        back_populates="section",
+        cascade="all, delete-orphan",
+        order_by="DataSchemaField.position"
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint('schema_id', 'key', name='uq_schema_section_key'),
+    )
+
+
+class DataSchemaField(db.Model):
+    __tablename__ = "data_schema_fields"
+
+    id = db.Column(db.Integer, primary_key=True)
+    schema_id = db.Column(db.Integer, db.ForeignKey("data_schemas.id", ondelete="CASCADE"), nullable=False)
+    section_id = db.Column(db.Integer, db.ForeignKey("data_schema_sections.id", ondelete="CASCADE"), nullable=False)
+    key = db.Column(db.String(64), nullable=False)
+    label = db.Column(db.String(255), nullable=False)
+    help_text = db.Column(db.Text, nullable=True)
+    field_type = db.Column(db.String(32), nullable=False, default='textarea')
+    storage = db.Column(db.String(16), nullable=False, default='extra')
+    storage_column = db.Column(db.String(64), nullable=True)
+    position = db.Column(db.Integer, nullable=False, default=0)
+    required = db.Column(db.Boolean, nullable=False, default=False)
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    placeholder = db.Column(db.String(255), nullable=True)
+    config = db.Column(db.JSON, nullable=False, default=dict)
+    archived_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=now_utc)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
+
+    schema = db.relationship("DataSchema", back_populates="fields")
+    section = db.relationship("DataSchemaSection", back_populates="fields")
+
+    __table_args__ = (
+        db.UniqueConstraint('schema_id', 'key', name='uq_schema_field_key'),
+    )
+
+    @property
+    def is_active(self) -> bool:
+        return self.active and self.archived_at is None
+
+
+class DataSchemaRecord(db.Model):
+    """Valeurs persistées pour un schéma dynamique."""
+
+    __tablename__ = "data_schema_records"
+
+    id = db.Column(db.Integer, primary_key=True)
+    schema_id = db.Column(db.Integer, db.ForeignKey("data_schemas.id", ondelete="CASCADE"), nullable=False)
+    owner_type = db.Column(db.String(64), nullable=False)
+    owner_id = db.Column(db.Integer, nullable=False)
+    data = db.Column(db.JSON, nullable=False, default=dict)
+    created_at = db.Column(db.DateTime, default=now_utc)
+    updated_at = db.Column(db.DateTime, default=now_utc, onupdate=now_utc)
+
+    schema = db.relationship("DataSchema")
+
+    __table_args__ = (
+        db.UniqueConstraint('schema_id', 'owner_type', 'owner_id', name='uq_schema_record_owner'),
+    )
+
+    @classmethod
+    def get_or_create(cls, schema_id: int, owner_type: str, owner_id: int):
+        record = cls.query.filter_by(
+            schema_id=schema_id,
+            owner_type=owner_type,
+            owner_id=owner_id
+        ).first()
+        if not record:
+            record = cls(schema_id=schema_id, owner_type=owner_type, owner_id=owner_id, data={})
+            db.session.add(record)
+            db.session.flush()
+        return record

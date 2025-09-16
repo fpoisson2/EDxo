@@ -170,6 +170,9 @@
                       <a href="{{ url_for('system.management') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-gear-fill me-2"></i>Gestion Système
                       </a>
+                      <a href="{{ url_for('settings.manage_data_schema', slug='plan_cadre') }}" class="list-group-item list-group-item-action {% if request.endpoint == 'settings.manage_data_schema' %}active{% endif %}">
+                        <i class="bi bi-diagram-2 me-2"></i>Schéma plan-cadre
+                      </a>
                       <a href="{{ url_for('system.email_settings') }}" class="list-group-item list-group-item-action">
                         <i class="bi bi-envelope me-2"></i>Paramètres Courriel
                       </a>

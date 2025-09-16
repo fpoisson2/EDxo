@@ -181,20 +181,11 @@
                      aria-labelledby="headingIntroduction"
                      data-bs-parent="#planCadreAccordion">
                     <div class="accordion-body">
-                        <!-- Place et rôle du cours dans le programme (avec Toast UI Editor) -->
-                        <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.place_intro.id }}">
-                                <strong>Place et rôle du cours dans le programme</strong>
-                                {% if current_user.role in ['admin','coordo'] %}
-                                    <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="place_intro" title="Améliorer uniquement cette section">
-                                    <i class="bi bi-magic"></i>
-                                </button>
-                                {% endif %}
-                            </label>
-                            {{ plan_form.place_intro(class="form-control border-0 auto-resize use-toast",
-                                                     oninput="autoResize(this)",
-                                                     style="overflow:hidden; resize:none;") }}
-                        </div>
+                        {% for section in plan_schema_sections if section.key == 'repere_generaux' %}
+                            {% for field in section.fields %}
+                                {% include 'plan_cadre/_schema_field.html' %}
+                            {% endfor %}
+                        {% endfor %}
 
                         <!-- Compétences développées (listes dynamiques sans Toast UI Editor) -->
                         <div class="mb-2">
@@ -479,20 +470,11 @@
                      aria-labelledby="headingResultatsVises"
                      data-bs-parent="#planCadreAccordion">
                     <div class="accordion-body">
-                        <!-- Objectif Terminal (sans Toast UI Editor) -->
-                        <div class="mb-3">
-                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.objectif_terminal.id }}">
-                                <span>Objectif terminal</span>
-                                {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="objectif_terminal" title="Améliorer uniquement cette section">
-                                    <i class="bi bi-magic"></i>
-                                </button>
-                                {% endif %}
-                            </label>
-                            {{ plan_form.objectif_terminal(class="form-control border-0 auto-resize",
-                                             oninput="autoResize(this)",
-                                             style="overflow:hidden; resize:none;") }}
-                        </div>
+                        {% for section in plan_schema_sections if section.key == 'resultats_vises' %}
+                            {% for field in section.fields %}
+                                {% include 'plan_cadre/_schema_field.html' %}
+                            {% endfor %}
+                        {% endfor %}
 
                         <!-- Capacités -->
                         <div class="mb-3">
@@ -679,60 +661,13 @@
                 </h2>
                 <div id="collapseOrganisation" class="accordion-collapse collapse show"
                      aria-labelledby="headingOrganisation"
-                     data-bs-parent="#planCadreAccordion">
+                    data-bs-parent="#planCadreAccordion">
                     <div class="accordion-body">
-                        <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.structure_intro.id }}">
-                                <span>Structure du cours</span>
-                                {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_intro" title="Améliorer uniquement cette section">
-                                    <i class="bi bi-magic"></i>
-                                </button>
-                                {% endif %}
-                            </label>
-                            {{ plan_form.structure_intro(class="form-control border-0 auto-resize use-toast",
-                                                         oninput="autoResize(this)",
-                                                         style="overflow:hidden; resize:none;") }}
-                        </div>
-                        <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.structure_activites_theoriques.id }}">
-                                <span>Activités théoriques</span>
-                                {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_theoriques" title="Améliorer uniquement cette section">
-                                    <i class="bi bi-magic"></i>
-                                </button>
-                                {% endif %}
-                            </label>
-                            {{ plan_form.structure_activites_theoriques(class="form-control border-0 auto-resize use-toast",
-                                                                       oninput="autoResize(this)",
-                                                                       style="overflow:hidden; resize:none;") }}
-                        </div>
-                        <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.structure_activites_pratiques.id }}">
-                                <span>Activités pratiques</span>
-                                {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_pratiques" title="Améliorer uniquement cette section">
-                                    <i class="bi bi-magic"></i>
-                                </button>
-                                {% endif %}
-                            </label>
-                            {{ plan_form.structure_activites_pratiques(class="form-control border-0 auto-resize use-toast",
-                                                                      oninput="autoResize(this)",
-                                                                      style="overflow:hidden; resize:none;") }}
-                        </div>
-                        <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.structure_activites_prevues.id }}">
-                                <span>Organisation du cours (activités prévues)</span>
-                                {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="structure_activites_prevues" title="Améliorer uniquement cette section">
-                                    <i class="bi bi-magic"></i>
-                                </button>
-                                {% endif %}
-                            </label>
-                            {{ plan_form.structure_activites_prevues(class="form-control border-0 auto-resize use-toast",
-                                                                     oninput="autoResize(this)",
-                                                                     style="overflow:hidden; resize:none;") }}
-                        </div>
+                        {% for section in plan_schema_sections if section.key == 'organisation_apprentissage' %}
+                            {% for field in section.fields %}
+                                {% include 'plan_cadre/_schema_field.html' %}
+                            {% endfor %}
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -750,59 +685,13 @@
                 </h2>
                 <div id="collapseEvaluation" class="accordion-collapse collapse show"
                      aria-labelledby="headingEvaluation"
-                     data-bs-parent="#planCadreAccordion">
+                    data-bs-parent="#planCadreAccordion">
                     <div class="accordion-body">
-                        <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.eval_evaluation_sommative.id }}">
-                                <span>Évaluation sommative des apprentissages</span>
-                                {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_sommative" title="Améliorer uniquement cette section">
-                                    <i class="bi bi-magic"></i>
-                                </button>
-                                {% endif %}
-                            </label>
-                            {{ plan_form.eval_evaluation_sommative(class="form-control border-0 auto-resize use-toast",
-                                                                   oninput="autoResize(this)",
-                                                                   style="overflow:hidden; resize:none;") }}
-                        </div>
-                        <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.eval_nature_evaluations_sommatives.id }}">
-                                <span>Nature des évaluations sommatives</span>
-                                {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_nature_evaluations_sommatives" title="Améliorer uniquement cette section">
-                                    <i class="bi bi-magic"></i>
-                                </button>
-                                {% endif %}
-                            </label>
-                            {{ plan_form.eval_nature_evaluations_sommatives(class="form-control border-0 auto-resize use-toast",
-                                                                            oninput="autoResize(this)",
-                                                                            style="overflow:hidden; resize:none;") }}
-                        </div>
-                        <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.eval_evaluation_de_la_langue.id }}">
-                                <span>Évaluation de la langue</span>
-                                {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_de_la_langue" title="Améliorer uniquement cette section">
-                                    <i class="bi bi-magic"></i>
-                                </button>
-                                {% endif %}
-                            </label>
-                            {{ plan_form.eval_evaluation_de_la_langue(class="form-control border-0 auto-resize use-toast",
-                                                                      oninput="autoResize(this)",
-                                                                      style="overflow:hidden; resize:none;") }}
-                        </div>
-                        <div class="mb-2">
-                            <label class="fw-bold d-flex align-items-center gap-2" for="{{ plan_form.eval_evaluation_sommatives_apprentissages.id }}">
-                                <span>Évaluation formative des apprentissages</span>
-                                {% if current_user.role in ['admin','coordo'] %}
-                                <button type="button" class="btn btn-sm btn-outline-primary magic-generate" data-target-column="eval_evaluation_sommatives_apprentissages" title="Améliorer uniquement cette section">
-                                    <i class="bi bi-magic"></i>
-                                </button>
-                                {% endif %}
-                            </label>
-                            {{ plan_form.eval_evaluation_sommatives_apprentissages(class="form-control border-0 auto-resize use-toast",
-                                                                                   oninput="autoResize(this)",
-                                                                                   style="overflow:hidden; resize:none;") }}
+                        {% for section in plan_schema_sections if section.key == 'evaluation' %}
+                            {% for field in section.fields %}
+                                {% include 'plan_cadre/_schema_field.html' %}
+                            {% endfor %}
+                        {% endfor %}
                         
                         <!-- Savoir-être -->
                         <div class="mb-2">

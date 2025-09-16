@@ -75,6 +75,7 @@ from ..config.env import (
     SECRET_KEY,
     RECAPTCHA_PUBLIC_KEY,
     RECAPTCHA_PRIVATE_KEY,
+    DISABLE_RECAPTCHA,
     OPENAI_API_KEY,
     OPENAI_MODEL_SECTION,
     OPENAI_MODEL_EXTRACTION,
@@ -170,6 +171,7 @@ def create_app(testing=False):
             SECRET_KEY=SECRET_KEY,
             RECAPTCHA_SITE_KEY=RECAPTCHA_PUBLIC_KEY,
             RECAPTCHA_SECRET_KEY=RECAPTCHA_PRIVATE_KEY,
+            RECAPTCHA_DISABLED=DISABLE_RECAPTCHA,
             OPENAI_API_KEY=OPENAI_API_KEY,
             # Forcer l'utilisation de gpt-5 partout, ignorer les variables d'environnement
             OPENAI_MODEL_SECTION='gpt-5',

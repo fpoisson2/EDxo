@@ -18,9 +18,13 @@ from ..forms import (
     APITokenForm,
     OcrPromptSettingsForm,
     PlanCadreImportPromptSettingsForm,
+    SchemaFieldForm,
+    SchemaFieldToggleForm,
+    SchemaSectionForm,
 )
 from .evaluation import AISixLevelGridResponse
 from ...utils.decorator import role_required, roles_required, ensure_profile_completed
+from ...utils.schema_manager import get_schema_manager
 
 csrf = CSRFProtect()
 
@@ -42,6 +46,8 @@ from ..models import (
     SectionAISettings,
     OcrPromptSettings,
     PlanCadreImportPromptSettings,
+    DataSchemaField,
+    DataSchemaSection,
 )
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
@@ -145,6 +151,193 @@ def plan_cadre_import_prompt_settings():
             flash("Erreur lors de l'enregistrement.", 'danger')
 
     return render_template('settings/plan_cadre_import_prompt.html', form=form)
+
+
+@settings_bp.route('/schemas/<slug>', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def manage_data_schema(slug):
+    manager = get_schema_manager(slug)
+    if not manager:
+        flash("Schéma inconnu.", "danger")
+        return redirect(url_for('settings.parametres'))
+
+    schema = manager.ensure_schema()
+    column_choices = [('', '---')] + [(name, label) for name, label in manager.column_choices()]
+
+    new_section_form = SchemaSectionForm(prefix='new_section')
+    new_field_forms = {}
+    section_forms = {}
+    field_forms = {}
+    toggle_forms = {}
+
+    for section in schema.sections:
+        section_form = SchemaSectionForm(
+            prefix=f'section_{section.id}',
+            section_id=str(section.id),
+            key=section.key,
+            label=section.label,
+            description=section.description,
+            position=section.position,
+            active=section.active,
+        )
+        section_forms[section.id] = section_form
+
+        new_field_form = SchemaFieldForm(prefix=f'new_field_{section.id}', section_id=str(section.id))
+        new_field_form.storage_column.choices = column_choices
+        new_field_forms[section.id] = new_field_form
+
+        for field in section.fields:
+            field_form = SchemaFieldForm(
+                prefix=f'field_{field.id}',
+                field_id=str(field.id),
+                section_id=str(section.id),
+                key=field.key,
+                label=field.label,
+                help_text=field.help_text,
+                field_type=field.field_type or 'textarea',
+                storage=field.storage or 'extra',
+                storage_column=field.storage_column or '',
+                position=field.position,
+                placeholder=field.placeholder,
+                required=field.required,
+                active=field.active,
+            )
+            field_form.storage_column.choices = column_choices
+            field_forms[field.id] = field_form
+
+            toggle_form = SchemaFieldToggleForm(prefix=f'toggle_{field.id}', field_id=str(field.id))
+            toggle_forms[field.id] = toggle_form
+
+    if new_section_form.validate_on_submit() and new_section_form.submit.data and request.form.get('form_name') == 'create_section':
+        key = (new_section_form.key.data or '').strip()
+        if ' ' in key:
+            new_section_form.key.errors.append("L'identifiant ne doit pas contenir d'espace.")
+        elif DataSchemaSection.query.filter_by(schema_id=schema.id, key=key).first():
+            new_section_form.key.errors.append("Cet identifiant existe déjà.")
+        else:
+            manager.create_section(schema, {
+                'key': key,
+                'label': (new_section_form.label.data or '').strip(),
+                'description': (new_section_form.description.data or '').strip() or None,
+                'position': new_section_form.position.data,
+                'active': bool(new_section_form.active.data),
+            })
+            db.session.commit()
+            flash('Section ajoutée.', 'success')
+            return redirect(url_for('settings.manage_data_schema', slug=slug))
+
+    elif request.method == 'POST':
+        form_name = request.form.get('form_name')
+
+        if form_name == 'update_section':
+            section_id = int(request.form.get('section_id', 0))
+            section = DataSchemaSection.query.filter_by(id=section_id, schema_id=schema.id).first()
+            form = section_forms.get(section_id)
+            if not section or not form:
+                flash('Section introuvable.', 'danger')
+            elif form.validate_on_submit():
+                key = (form.key.data or '').strip()
+                if key != section.key:
+                    form.key.errors.append("L'identifiant ne peut pas être modifié.")
+                else:
+                    manager.update_section(section, {
+                        'label': (form.label.data or '').strip(),
+                        'description': (form.description.data or '').strip() or None,
+                        'position': form.position.data,
+                        'active': bool(form.active.data),
+                    })
+                    db.session.commit()
+                    flash('Section mise à jour.', 'success')
+                    return redirect(url_for('settings.manage_data_schema', slug=slug))
+
+        elif form_name == 'create_field':
+            section_id = int(request.form.get('section_id', 0))
+            section = DataSchemaSection.query.filter_by(id=section_id, schema_id=schema.id).first()
+            form = new_field_forms.get(section_id)
+            if not section or not form:
+                flash('Section introuvable.', 'danger')
+            elif form.validate_on_submit():
+                key = (form.key.data or '').strip()
+                if ' ' in key:
+                    form.key.errors.append("L'identifiant ne doit pas contenir d'espace.")
+                elif DataSchemaField.query.filter_by(schema_id=schema.id, key=key).first():
+                    form.key.errors.append("Cet identifiant est déjà utilisé.")
+                else:
+                    storage = form.storage.data
+                    column_name = form.storage_column.data or None
+                    if storage == 'column' and not manager.validate_column(column_name or ''):
+                        form.storage_column.errors.append('Colonne invalide pour ce schéma.')
+                    else:
+                        manager.create_field(schema, section, {
+                            'key': key,
+                            'label': (form.label.data or '').strip(),
+                            'help_text': (form.help_text.data or '').strip() or None,
+                            'field_type': form.field_type.data,
+                            'storage': storage,
+                            'storage_column': column_name,
+                            'position': form.position.data,
+                            'placeholder': (form.placeholder.data or '').strip() or None,
+                            'required': bool(form.required.data),
+                            'active': bool(form.active.data),
+                        })
+                        db.session.commit()
+                        flash('Champ ajouté.', 'success')
+                        return redirect(url_for('settings.manage_data_schema', slug=slug))
+
+        elif form_name == 'update_field':
+            field_id = int(request.form.get('field_id', 0))
+            field = DataSchemaField.query.filter_by(id=field_id, schema_id=schema.id).first()
+            form = field_forms.get(field_id)
+            if not field or not form:
+                flash('Champ introuvable.', 'danger')
+            elif form.validate_on_submit():
+                key = (form.key.data or '').strip()
+                if key != field.key:
+                    form.key.errors.append("L'identifiant ne peut pas être modifié.")
+                else:
+                    storage = form.storage.data
+                    column_name = form.storage_column.data or None
+                    if storage == 'column' and not manager.validate_column(column_name or ''):
+                        form.storage_column.errors.append('Colonne invalide pour ce schéma.')
+                    else:
+                        manager.update_field(field, {
+                            'label': (form.label.data or '').strip(),
+                            'help_text': (form.help_text.data or '').strip() or None,
+                            'field_type': form.field_type.data,
+                            'storage': storage,
+                            'storage_column': column_name,
+                            'position': form.position.data,
+                            'placeholder': (form.placeholder.data or '').strip() or None,
+                            'required': bool(form.required.data),
+                            'active': bool(form.active.data),
+                        })
+                        db.session.commit()
+                        flash('Champ mis à jour.', 'success')
+                        return redirect(url_for('settings.manage_data_schema', slug=slug))
+
+        elif form_name in {'archive_field', 'restore_field'}:
+            field_id = int(request.form.get('field_id', 0))
+            field = DataSchemaField.query.filter_by(id=field_id, schema_id=schema.id).first()
+            form = toggle_forms.get(field_id)
+            if not field or not form:
+                flash('Champ introuvable.', 'danger')
+            elif form.validate_on_submit():
+                manager.toggle_field(field, active=(form_name == 'restore_field'))
+                db.session.commit()
+                flash('État du champ mis à jour.', 'success')
+                return redirect(url_for('settings.manage_data_schema', slug=slug))
+
+    return render_template(
+        'settings/manage_data_schema.html',
+        schema=schema,
+        new_section_form=new_section_form,
+        section_forms=section_forms,
+        field_forms=field_forms,
+        new_field_forms=new_field_forms,
+        toggle_forms=toggle_forms,
+        slug=slug,
+    )
 
 @settings_bp.route('/openai_models/delete/<int:model_id>', methods=['POST'])
 @login_required

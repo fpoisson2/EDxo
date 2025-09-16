@@ -770,6 +770,44 @@ class DuplicatePlanCadreForm(FlaskForm):
     new_cours_id = SelectField('Dupliquer vers le Cours', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Dupliquer Plan Cadre')
 
+class SchemaSectionForm(FlaskForm):
+    section_id = HiddenField(validators=[Optional()])
+    key = StringField('Identifiant', validators=[DataRequired(), Length(max=64)])
+    label = StringField('Titre affiché', validators=[DataRequired(), Length(max=255)])
+    description = TextAreaField('Description', validators=[Optional()])
+    position = IntegerField('Position', validators=[Optional()])
+    active = BooleanField('Section active', default=True)
+    submit = SubmitField('Enregistrer la section')
+
+
+class SchemaFieldForm(FlaskForm):
+    field_id = HiddenField(validators=[Optional()])
+    section_id = HiddenField(validators=[DataRequired()])
+    key = StringField('Identifiant interne', validators=[DataRequired(), Length(max=64)])
+    label = StringField('Libellé', validators=[DataRequired(), Length(max=255)])
+    help_text = TextAreaField('Texte d\'aide', validators=[Optional()])
+    field_type = SelectField(
+        'Type de champ',
+        choices=[('textarea', 'Zone de texte'), ('text', 'Texte court')],
+        default='textarea',
+    )
+    storage = SelectField(
+        'Mode de stockage',
+        choices=[('column', 'Colonne existante'), ('extra', 'Champ additionnel')],
+        default='extra',
+    )
+    storage_column = SelectField('Colonne associée', validators=[Optional()], choices=[])
+    position = IntegerField('Position', validators=[Optional()])
+    placeholder = StringField('Texte indicatif', validators=[Optional(), Length(max=255)])
+    required = BooleanField('Champ requis')
+    active = BooleanField('Actif', default=True)
+    submit = SubmitField('Enregistrer le champ')
+
+
+class SchemaFieldToggleForm(FlaskForm):
+    field_id = HiddenField(validators=[DataRequired()])
+    submit = SubmitField('Archiver')
+
 class CreateUserForm(FlaskForm):
     username = StringField('Nom d\'utilisateur', validators=[DataRequired(), Length(min=3, max=25)])
     password = PasswordField('Mot de passe', validators=[DataRequired(), Length(min=6)])

@@ -10,6 +10,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 SECRET_KEY = os.getenv("SECRET_KEY")
 RECAPTCHA_PUBLIC_KEY = os.getenv("RECAPTCHA_PUBLIC_KEY")
 RECAPTCHA_PRIVATE_KEY = os.getenv("RECAPTCHA_PRIVATE_KEY")
+DISABLE_RECAPTCHA = os.getenv("DISABLE_RECAPTCHA", "false").strip().lower() in {"1", "true", "yes"}
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL_SECTION = os.getenv("OPENAI_MODEL_SECTION", "gpt-5")
 OPENAI_MODEL_EXTRACTION = os.getenv("OPENAI_MODEL_EXTRACTION", "gpt-5-mini")
@@ -21,10 +22,11 @@ CELERY_WORKER = os.getenv("CELERY_WORKER")
 
 def validate() -> None:
     """Raise a RuntimeError if required environment variables are missing."""
-    missing = [name for name, value in {
-        'SECRET_KEY': SECRET_KEY,
-        'RECAPTCHA_PUBLIC_KEY': RECAPTCHA_PUBLIC_KEY,
-        'RECAPTCHA_PRIVATE_KEY': RECAPTCHA_PRIVATE_KEY,
-    }.items() if not value]
+    required = {'SECRET_KEY': SECRET_KEY}
+    if not DISABLE_RECAPTCHA:
+        required['RECAPTCHA_PUBLIC_KEY'] = RECAPTCHA_PUBLIC_KEY
+        required['RECAPTCHA_PRIVATE_KEY'] = RECAPTCHA_PRIVATE_KEY
+
+    missing = [name for name, value in required.items() if not value]
     if missing:
         raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
