@@ -801,6 +801,8 @@ class SchemaFieldForm(FlaskForm):
     placeholder = StringField('Texte indicatif', validators=[Optional(), Length(max=255)])
     required = BooleanField('Champ requis')
     active = BooleanField('Actif', default=True)
+    collection_template = SelectField('Gabarit de collection', validators=[Optional()], choices=[])
+    existing_config = HiddenField(validators=[Optional()])
     submit = SubmitField('Enregistrer le champ')
 
 

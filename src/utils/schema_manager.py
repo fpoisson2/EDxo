@@ -1,10 +1,12 @@
 """Gestion centralisée des schémas dynamiques (plan-cadre & extensions)."""
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional
 
 from flask import current_app
+from sqlalchemy.sql.sqltypes import String, Text
 
 from src.app.models import (
     DataSchema,
@@ -185,6 +187,8 @@ class SchemaManager:
         field.required = form_data.get('required', False)
         field.active = form_data.get('active', True)
         field.placeholder = form_data.get('placeholder') or None
+        if 'config' in form_data:
+            field.config = form_data.get('config') or {}
 
     def toggle_field(self, field: DataSchemaField, active: bool) -> None:
         field.active = active
@@ -296,6 +300,66 @@ class PlanCadreSchemaManager(SchemaManager):
     slug = 'plan_cadre'
     owner_type = 'PlanCadre'
 
+    COLLECTION_TEMPLATES: Dict[str, Dict] = {
+        'text_list': {
+            'label': 'Liste de textes',
+            'help_text': 'Chaque ligne représente un élément de liste.',
+            'config': {
+                'type': 'array',
+                'items': {'type': 'string'}
+            }
+        },
+        'text_description_list': {
+            'label': 'Liste texte + description',
+            'help_text': 'Chaque élément contient un texte principal et une description optionnelle.',
+            'config': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'texte': {'type': 'string'},
+                        'description': {'type': 'string'}
+                    }
+                }
+            }
+        },
+        'capacites': {
+            'label': 'Capacités (structure complète)',
+            'help_text': "Liste des capacités et de leurs éléments (savoirs, épreuves, pondérations).",
+            'config': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'capacite': {'type': 'string'},
+                        'description_capacite': {'type': 'string'},
+                        'ponderation_min': {'type': 'integer'},
+                        'ponderation_max': {'type': 'integer'},
+                        'savoirs_necessaires': {
+                            'type': 'array',
+                            'items': {'type': 'string'}
+                        },
+                        'savoirs_faire': {
+                            'type': 'array',
+                            'items': {
+                                'type': 'object',
+                                'properties': {
+                                    'texte': {'type': 'string'},
+                                    'cible': {'type': 'string'},
+                                    'seuil_reussite': {'type': 'string'},
+                                }
+                            }
+                        },
+                        'moyens_evaluation': {
+                            'type': 'array',
+                            'items': {'type': 'string'}
+                        }
+                    }
+                }
+            }
+        },
+    }
+
     @property
     def default_name(self) -> str:
         return "Plan-cadre"
@@ -305,7 +369,67 @@ class PlanCadreSchemaManager(SchemaManager):
         return "Sections textuelles configurables pour les plans-cadres."
 
     def default_sections(self) -> Iterable[Dict]:
-        return [
+        collections_fields = [
+            {
+                'key': 'capacites',
+                'label': self.COLLECTION_TEMPLATES['capacites']['label'],
+                'storage': 'extra',
+                'position': 10,
+                'help_text': self.COLLECTION_TEMPLATES['capacites']['help_text'],
+                'config': deepcopy(self.COLLECTION_TEMPLATES['capacites']['config']),
+            },
+            {
+                'key': 'competences_developpees',
+                'label': 'Compétences développées',
+                'storage': 'extra',
+                'position': 20,
+                'config': deepcopy(self.COLLECTION_TEMPLATES['text_description_list']['config']),
+            },
+            {
+                'key': 'competences_certifiees',
+                'label': 'Compétences certifiées',
+                'storage': 'extra',
+                'position': 30,
+                'config': deepcopy(self.COLLECTION_TEMPLATES['text_description_list']['config']),
+            },
+            {
+                'key': 'objets_cibles',
+                'label': 'Objets cibles',
+                'storage': 'extra',
+                'position': 40,
+                'config': deepcopy(self.COLLECTION_TEMPLATES['text_description_list']['config']),
+            },
+            {
+                'key': 'cours_corequis',
+                'label': 'Cours corequis',
+                'storage': 'extra',
+                'position': 50,
+                'config': deepcopy(self.COLLECTION_TEMPLATES['text_description_list']['config']),
+            },
+            {
+                'key': 'cours_prealables',
+                'label': 'Cours préalables',
+                'storage': 'extra',
+                'position': 60,
+                'config': deepcopy(self.COLLECTION_TEMPLATES['text_description_list']['config']),
+            },
+            {
+                'key': 'cours_relies',
+                'label': 'Cours reliés',
+                'storage': 'extra',
+                'position': 70,
+                'config': deepcopy(self.COLLECTION_TEMPLATES['text_description_list']['config']),
+            },
+            {
+                'key': 'savoirs_etre',
+                'label': 'Savoirs-être',
+                'storage': 'extra',
+                'position': 80,
+                'config': deepcopy(self.COLLECTION_TEMPLATES['text_list']['config']),
+            },
+        ]
+
+        base_sections = [
             {
                 'key': 'repere_generaux',
                 'label': 'Repères généraux',
@@ -405,20 +529,76 @@ class PlanCadreSchemaManager(SchemaManager):
                 ],
             },
         ]
+        base_sections.append(
+            {
+                'key': 'collections_plan_cadre',
+                'label': 'Collections et éléments structurés',
+                'description': "Listes imbriquées telles que compétences, objets, cours liés et capacités.",
+                'position': 40,
+                'fields': collections_fields,
+            }
+        )
+        return base_sections
 
     def column_choices(self) -> List[tuple]:
-        return [
-            ('place_intro', 'Place et rôle du cours'),
-            ('objectif_terminal', 'Objectif terminal'),
-            ('structure_intro', 'Structure du cours'),
-            ('structure_activites_theoriques', 'Activités théoriques'),
-            ('structure_activites_pratiques', 'Activités pratiques'),
-            ('structure_activites_prevues', 'Activités prévues'),
-            ('eval_evaluation_sommative', 'Évaluation sommative'),
-            ('eval_nature_evaluations_sommatives', 'Nature des évaluations sommatives'),
-            ('eval_evaluation_de_la_langue', 'Évaluation de la langue'),
-            ('eval_evaluation_sommatives_apprentissages', 'Évaluation sommative (CKEditor)'),
-        ]
+        label_overrides = {
+            'place_intro': 'Place et rôle du cours',
+            'objectif_terminal': 'Objectif terminal',
+            'structure_intro': 'Structure du cours',
+            'structure_activites_theoriques': 'Activités théoriques',
+            'structure_activites_pratiques': 'Activités pratiques',
+            'structure_activites_prevues': 'Activités prévues',
+            'eval_evaluation_sommative': 'Évaluation sommative',
+            'eval_nature_evaluations_sommatives': 'Nature des évaluations sommatives',
+            'eval_evaluation_de_la_langue': 'Évaluation de la langue',
+            'eval_evaluation_sommatives_apprentissages': 'Évaluation sommative (CKEditor)',
+            'additional_info': 'Informations additionnelles',
+            'ai_model': 'Modèle IA',
+        }
+        excluded = {'id', 'cours_id', 'modified_by_id', 'modified_at'}
+        choices: List[tuple] = []
+        for column in PlanCadre.__table__.columns:
+            if column.name in excluded:
+                continue
+            if not isinstance(column.type, (String, Text)):
+                continue
+            label = label_overrides.get(
+                column.name,
+                column.name.replace('_', ' ').capitalize()
+            )
+            choices.append((column.name, label))
+        return choices
+
+    def collection_template_choices(self) -> List[tuple]:
+        choices: List[tuple] = [('', '---')]
+        choices.extend((key, meta['label']) for key, meta in self.COLLECTION_TEMPLATES.items())
+        choices.append(('custom', 'Conserver la configuration existante'))
+        return choices
+
+    def get_collection_template(self, key: str) -> Dict:
+        if key in self.COLLECTION_TEMPLATES:
+            return deepcopy(self.COLLECTION_TEMPLATES[key]['config'])
+        return {}
+
+    def get_collection_help_text(self, key: str) -> Optional[str]:
+        if key in self.COLLECTION_TEMPLATES:
+            return self.COLLECTION_TEMPLATES[key].get('help_text')
+        return None
+
+    def detect_collection_template(self, config: Optional[Dict]) -> str:
+        if not config:
+            return ''
+        for key, meta in self.COLLECTION_TEMPLATES.items():
+            if meta['config'] == config:
+                return key
+        return 'custom'
+
+    def get_collection_label(self, template_key: str, config: Optional[Dict]) -> str:
+        if template_key in self.COLLECTION_TEMPLATES:
+            return self.COLLECTION_TEMPLATES[template_key]['label']
+        if template_key == 'custom' or (template_key == '' and config):
+            return 'Configuration personnalisée'
+        return 'Aucun gabarit'
 
 
 def get_schema_manager(slug: str) -> Optional[SchemaManager]:

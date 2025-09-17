@@ -170,6 +170,33 @@ def manage_data_schema(slug):
     section_forms = {}
     field_forms = {}
     toggle_forms = {}
+    field_previews = {}
+    field_template_labels = {}
+
+    def _format_config(value):
+        if value in (None, {}, []):
+            return ''
+        try:
+            return json.dumps(value, ensure_ascii=False, indent=2)
+        except (TypeError, ValueError):
+            return json.dumps(value, ensure_ascii=False)
+
+    def _serialize_config(value):
+        if value in (None, {}, []):
+            return ''
+        try:
+            return json.dumps(value, ensure_ascii=False)
+        except (TypeError, ValueError):
+            return ''
+
+    def _load_existing_config(form):
+        raw = (form.existing_config.data or '').strip()
+        if not raw:
+            return {}
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            return {}
 
     for section in schema.sections:
         section_form = SchemaSectionForm(
@@ -185,6 +212,10 @@ def manage_data_schema(slug):
 
         new_field_form = SchemaFieldForm(prefix=f'new_field_{section.id}', section_id=str(section.id))
         new_field_form.storage_column.choices = column_choices
+        new_field_form.collection_template.choices = manager.collection_template_choices()
+        if request.method == 'GET':
+            new_field_form.collection_template.data = ''
+            new_field_form.existing_config.data = ''
         new_field_forms[section.id] = new_field_form
 
         for field in section.fields:
@@ -204,6 +235,16 @@ def manage_data_schema(slug):
                 active=field.active,
             )
             field_form.storage_column.choices = column_choices
+            field_form.collection_template.choices = manager.collection_template_choices()
+            template_key = manager.detect_collection_template(field.config)
+            if request.method == 'GET':
+                field_form.collection_template.data = template_key
+                field_form.existing_config.data = _serialize_config(field.config)
+            elif not field_form.existing_config.data:
+                field_form.existing_config.data = _serialize_config(field.config)
+            effective_template = field_form.collection_template.data or template_key
+            field_previews[field.id] = _format_config(field.config)
+            field_template_labels[field.id] = manager.get_collection_label(effective_template, field.config)
             field_forms[field.id] = field_form
 
             toggle_form = SchemaFieldToggleForm(prefix=f'toggle_{field.id}', field_id=str(field.id))
@@ -266,9 +307,20 @@ def manage_data_schema(slug):
                 else:
                     storage = form.storage.data
                     column_name = form.storage_column.data or None
-                    if storage == 'column' and not manager.validate_column(column_name or ''):
+                    template_key = form.collection_template.data or ''
+                    if template_key and storage != 'extra':
+                        form.collection_template.errors.append('Les collections personnalisées doivent utiliser le stockage "Champ additionnel".')
+                    elif storage == 'column' and not manager.validate_column(column_name or ''):
                         form.storage_column.errors.append('Colonne invalide pour ce schéma.')
                     else:
+                        if template_key == 'custom' or not template_key:
+                            config_data = _load_existing_config(form)
+                        else:
+                            config_data = manager.get_collection_template(template_key)
+                            if not (form.help_text.data or '').strip():
+                                default_help = manager.get_collection_help_text(template_key)
+                                if default_help:
+                                    form.help_text.data = default_help
                         manager.create_field(schema, section, {
                             'key': key,
                             'label': (form.label.data or '').strip(),
@@ -280,6 +332,7 @@ def manage_data_schema(slug):
                             'placeholder': (form.placeholder.data or '').strip() or None,
                             'required': bool(form.required.data),
                             'active': bool(form.active.data),
+                            'config': config_data,
                         })
                         db.session.commit()
                         flash('Champ ajouté.', 'success')
@@ -298,9 +351,20 @@ def manage_data_schema(slug):
                 else:
                     storage = form.storage.data
                     column_name = form.storage_column.data or None
-                    if storage == 'column' and not manager.validate_column(column_name or ''):
+                    template_key = form.collection_template.data or ''
+                    if template_key and storage != 'extra':
+                        form.collection_template.errors.append('Les collections personnalisées doivent utiliser le stockage "Champ additionnel".')
+                    elif storage == 'column' and not manager.validate_column(column_name or ''):
                         form.storage_column.errors.append('Colonne invalide pour ce schéma.')
                     else:
+                        if template_key and template_key != 'custom':
+                            config_data = manager.get_collection_template(template_key)
+                            if not (form.help_text.data or '').strip():
+                                default_help = manager.get_collection_help_text(template_key)
+                                if default_help:
+                                    form.help_text.data = default_help
+                        else:
+                            config_data = _load_existing_config(form)
                         manager.update_field(field, {
                             'label': (form.label.data or '').strip(),
                             'help_text': (form.help_text.data or '').strip() or None,
@@ -311,6 +375,7 @@ def manage_data_schema(slug):
                             'placeholder': (form.placeholder.data or '').strip() or None,
                             'required': bool(form.required.data),
                             'active': bool(form.active.data),
+                            'config': config_data,
                         })
                         db.session.commit()
                         flash('Champ mis à jour.', 'success')
@@ -336,6 +401,8 @@ def manage_data_schema(slug):
         field_forms=field_forms,
         new_field_forms=new_field_forms,
         toggle_forms=toggle_forms,
+        field_previews=field_previews,
+        field_template_labels=field_template_labels,
         slug=slug,
     )
 

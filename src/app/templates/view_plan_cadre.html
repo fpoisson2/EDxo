@@ -33,6 +33,9 @@
 {% endblock %}
 
 {% block content %}
+{% set plan_schema_sections = plan_schema_sections or [] %}
+{% set known_schema_section_keys = ['repere_generaux', 'resultats_vises', 'organisation_apprentissage', 'evaluation'] %}
+{% set custom_schema_sections = plan_schema_sections | rejectattr('key', 'in', known_schema_section_keys) | list %}
 <div class="container mt-5">
     <button class="btn btn-outline-primary d-md-none mb-3" type="button"
             data-bs-toggle="offcanvas" data-bs-target="#sectionsOffcanvas" aria-controls="sectionsOffcanvas">
@@ -46,6 +49,11 @@
         <a class="nav-link" href="#partie-4">Partie 4&nbsp;-&nbsp;Organisation de l'apprentissage</a>
         <a class="nav-link" href="#partie-5">Partie 5&nbsp;-&nbsp;Évaluation des apprentissages</a>
         <a class="nav-link" href="#partie-6">Partie 6&nbsp;-&nbsp;Éléments de compétence</a>
+        {% for section in custom_schema_sections %}
+        {% if section.fields %}
+        <a class="nav-link" href="#schema-section-{{ section.key }}">{{ section.label }}</a>
+        {% endif %}
+        {% endfor %}
     </nav>
     <div class="offcanvas offcanvas-start" tabindex="-1" id="sectionsOffcanvas" aria-labelledby="sectionsOffcanvasLabel">
         <div class="offcanvas-header">
@@ -60,6 +68,11 @@
                 <a class="nav-link" href="#partie-4">Partie 4&nbsp;-&nbsp;Organisation de l'apprentissage</a>
                 <a class="nav-link" href="#partie-5">Partie 5&nbsp;-&nbsp;Évaluation des apprentissages</a>
                 <a class="nav-link" href="#partie-6">Partie 6&nbsp;-&nbsp;Éléments de compétence</a>
+                {% for section in custom_schema_sections %}
+                {% if section.fields %}
+                <a class="nav-link" href="#schema-section-{{ section.key }}">{{ section.label }}</a>
+                {% endif %}
+                {% endfor %}
             </nav>
         </div>
     </div>
@@ -736,6 +749,35 @@
                     </div>
                 </div>
             </div>
+
+
+{% for section in custom_schema_sections %}
+{% if section.fields %}
+            <div class="accordion-item" id="schema-section-{{ section.key }}">
+                <h2 class="accordion-header" id="heading-schema-{{ section.key }}">
+                    <button class="accordion-button bg-info text-dark collapsed" type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#collapse-schema-{{ section.key }}"
+                            aria-expanded="false"
+                            aria-controls="collapse-schema-{{ section.key }}">
+                        {{ section.label }}
+                    </button>
+                </h2>
+                <div id="collapse-schema-{{ section.key }}" class="accordion-collapse collapse"
+                     aria-labelledby="heading-schema-{{ section.key }}"
+                     data-bs-parent="#planCadreAccordion">
+                    <div class="accordion-body">
+                        {% if section.description %}
+                            <p class="text-muted">{{ section.description }}</p>
+                        {% endif %}
+                        {% for field in section.fields %}
+                            {% include 'plan_cadre/_schema_field.html' %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+{% endif %}
+            {% endfor %}
 
 
             <!-- PARTIE 6: Éléments de compétence associés -->
