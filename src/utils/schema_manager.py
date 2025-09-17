@@ -241,11 +241,15 @@ class SchemaManager:
         html_id = field.key
         value = None
         improve_target = None
+        record_data = (record.data or {}) if record else {}
+        record_value = record_data.get(field.key)
         if field.storage == 'column':
             attr_name = storage_column or field.key
             form_field = getattr(form, attr_name, None) if form is not None else None
-            value = getattr(plan, attr_name, None)
+            value = record_value if record_value is not None else getattr(plan, attr_name, None)
             if form_field is not None:
+                if record_value is not None:
+                    form_field.data = record_value
                 html_name = form_field.name
                 html_id = form_field.id
             else:
@@ -253,7 +257,7 @@ class SchemaManager:
                 html_id = attr_name
             improve_target = attr_name
         else:
-            value = (record.data or {}).get(field.key)
+            value = record_value
             html_name = f"extra__{field.key}"
             html_id = html_name
 
@@ -569,6 +573,9 @@ class PlanCadreSchemaManager(SchemaManager):
             choices.append((column.name, label))
         return choices
 
+    def column_keys(self) -> List[str]:
+        return [key for key, _label in self.column_choices()]
+
     def collection_template_choices(self) -> List[tuple]:
         choices: List[tuple] = [('', '---')]
         choices.extend((key, meta['label']) for key, meta in self.COLLECTION_TEMPLATES.items())
@@ -599,6 +606,21 @@ class PlanCadreSchemaManager(SchemaManager):
         if template_key == 'custom' or (template_key == '' and config):
             return 'Configuration personnalisée'
         return 'Aucun gabarit'
+
+    def update_column_data(
+        self,
+        plan: PlanCadre,
+        column_values: Dict[str, str],
+        mirror_plan: bool = True,
+    ) -> None:
+        record = self.record_for_plan(plan)
+        payload = dict(record.data or {})
+        for key, value in column_values.items():
+            payload[key] = value
+            if mirror_plan and hasattr(plan, key):
+                setattr(plan, key, value)
+        record.data = payload
+        db.session.add(record)
 
 
 def get_schema_manager(slug: str) -> Optional[SchemaManager]:

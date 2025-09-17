@@ -209,21 +209,16 @@ def view_plan_cadre(cours_id, plan_id):
         return redirect(url_for('cours.view_cours', cours_id=cours_id))
 
     schema_manager = PlanCadreSchemaManager()
+    column_keys = schema_manager.column_keys()
 
     if request.method == 'GET':
         # Préparer le formulaire principal
-        plan_data = {
-            'place_intro': plan.place_intro or "",
-            'objectif_terminal': plan.objectif_terminal or "",
-            'structure_intro': plan.structure_intro or "",
-            'structure_activites_theoriques': plan.structure_activites_theoriques or "",
-            'structure_activites_pratiques': plan.structure_activites_pratiques or "",
-            'structure_activites_prevues': plan.structure_activites_prevues or "",
-            'eval_evaluation_sommative': plan.eval_evaluation_sommative or "",
-            'eval_nature_evaluations_sommatives': plan.eval_nature_evaluations_sommatives or "",
-            'eval_evaluation_de_la_langue': plan.eval_evaluation_de_la_langue or "",
-            'eval_evaluation_sommatives_apprentissages': plan.eval_evaluation_sommatives_apprentissages or ""
-        }
+        record = schema_manager.record_for_plan(plan)
+        record_data = dict(record.data or {})
+        plan_data = {}
+        for key in column_keys:
+            if hasattr(PlanCadreForm, key):
+                plan_data[key] = record_data.get(key) or getattr(plan, key, "") or ""
         plan_form = PlanCadreForm(data=plan_data)
         plan_schema_sections = schema_manager.build_sections(plan, plan_form)
 
@@ -351,16 +346,12 @@ def view_plan_cadre(cours_id, plan_id):
         if form_submitted.validate_on_submit():
             try:
                 # Mettre à jour le plan-cadre principal
-                plan.place_intro = form_submitted.place_intro.data
-                plan.objectif_terminal = form_submitted.objectif_terminal.data
-                plan.structure_intro = form_submitted.structure_intro.data
-                plan.structure_activites_theoriques = form_submitted.structure_activites_theoriques.data
-                plan.structure_activites_pratiques = form_submitted.structure_activites_pratiques.data
-                plan.structure_activites_prevues = form_submitted.structure_activites_prevues.data
-                plan.eval_evaluation_sommative = form_submitted.eval_evaluation_sommative.data
-                plan.eval_nature_evaluations_sommatives = form_submitted.eval_nature_evaluations_sommatives.data
-                plan.eval_evaluation_de_la_langue = form_submitted.eval_evaluation_de_la_langue.data
-                plan.eval_evaluation_sommatives_apprentissages = form_submitted.eval_evaluation_sommatives_apprentissages.data
+                column_updates: dict[str, str] = {}
+                for key in column_keys:
+                    if hasattr(form_submitted, key):
+                        column_updates[key] = getattr(form_submitted, key).data or ""
+                if column_updates:
+                    schema_manager.update_column_data(plan, column_updates)
 
                 # On supprime toutes les anciennes entrées reliées pour les recréer
                 plan.competences_developpees.clear()
