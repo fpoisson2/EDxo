@@ -283,6 +283,48 @@ def _register_debug_route(app):
 
         _sse_test_fetch.is_public = True  # type: ignore[attr-defined]
         app.add_url_rule("/sse/test_fetch", "sse_test_fetch", _sse_test_fetch, methods=["GET"])  # type: ignore[arg-type]
+
+        # Provide OAuth discovery aliases under /sse for clients that resolve metadata relative to the MCP mount.
+        def _oauth_as_alias():
+            from flask import request, url_for
+            issuer = request.url_root.rstrip('/')
+            payload = {
+                'issuer': issuer,
+                'authorization_endpoint': url_for('oauth.authorize', _external=True),
+                'token_endpoint': url_for('oauth.issue_token', _external=True),
+                'registration_endpoint': url_for('oauth.register_client', _external=True),
+                'response_types_supported': ['code'],
+                'grant_types_supported': ['authorization_code', 'refresh_token'],
+                'code_challenge_methods_supported': ['S256'],
+                'token_endpoint_auth_methods_supported': ['none'],
+            }
+            resp = jsonify(payload)
+            try:
+                resp.headers['Access-Control-Allow-Origin'] = '*'
+            except Exception:
+                pass
+            return resp, 200
+
+        _oauth_as_alias.is_public = True  # type: ignore[attr-defined]
+        app.add_url_rule("/sse/.well-known/oauth-authorization-server", "sse_oauth_as", _oauth_as_alias, methods=["GET"])  # type: ignore[arg-type]
+
+        def _oauth_pr_alias():
+            from flask import request, jsonify
+            resource = request.url_root.rstrip('/') + '/sse'
+            payload = {
+                'resource': resource,
+                'authorization_servers': [resource],
+                'scopes_supported': ['mcp:read', 'mcp:write'],
+            }
+            resp = jsonify(payload)
+            try:
+                resp.headers['Access-Control-Allow-Origin'] = '*'
+            except Exception:
+                pass
+            return resp, 200
+
+        _oauth_pr_alias.is_public = True  # type: ignore[attr-defined]
+        app.add_url_rule("/sse/.well-known/oauth-protected-resource", "sse_oauth_pr", _oauth_pr_alias, methods=["GET"])  # type: ignore[arg-type]
     except Exception:
         pass
 
@@ -299,13 +341,22 @@ def get_mcp_asgi_app() -> Any:
         return _fallback_asgi()
 
     # Prefer FastMCP's first-party ASGI factories when available
+    # Prefer modern Streamable HTTP transport; fall back to SSE if needed
     try:
         if hasattr(mcp, "http_app"):
             try:
-                # Use legacy SSE transport and explicit '/' path; this matched previous working config.
-                return mcp.http_app(transport="sse", path="/")  # type: ignore[attr-defined]
+                return mcp.http_app(transport="streamable-http", path="/")  # type: ignore[attr-defined]
             except TypeError:
                 # Older signatures without keyword args
+                return mcp.http_app("/", None, None, None, "streamable-http")  # type: ignore[misc]
+    except Exception:
+        pass
+
+    try:
+        if hasattr(mcp, "http_app"):
+            try:
+                return mcp.http_app(transport="sse", path="/")  # type: ignore[attr-defined]
+            except TypeError:
                 return mcp.http_app("sse", "/")  # type: ignore[misc]
     except Exception:
         pass
@@ -366,9 +417,46 @@ def _fallback_asgi() -> Any:
                 "asgi_fallback": True,
             })
 
+        async def well_known_as(_request):
+            # Authorization server metadata: point to root OAuth endpoints on the same origin
+            try:
+                url = str(_request.url)
+                # Build issuer base (scheme://host)
+                issuer = f"{_request.url.scheme}://{_request.url.netloc}"
+                payload = {
+                    "issuer": issuer,
+                    "authorization_endpoint": issuer + "/authorize",
+                    "token_endpoint": issuer + "/token",
+                    "registration_endpoint": issuer + "/register",
+                    "response_types_supported": ["code"],
+                    "grant_types_supported": ["authorization_code", "refresh_token"],
+                    "code_challenge_methods_supported": ["S256"],
+                    "token_endpoint_auth_methods_supported": ["none"],
+                }
+                return JSONResponse(payload, headers={"Access-Control-Allow-Origin": "*"})
+            except Exception:
+                return JSONResponse({"error": "metadata_unavailable"}, status_code=500)
+
+        async def well_known_pr(_request):
+            # Protected resource metadata: declare resource and list AS as the resource (compat with tests/clients)
+            try:
+                # Compute canonical resource as <scheme>://<host>/sse (no trailing slash)
+                resource = f"{_request.url.scheme}://{_request.url.netloc}/sse"
+                payload = {
+                    "resource": resource,
+                    "authorization_servers": [resource],
+                    "scopes_supported": ["mcp:read", "mcp:write"],
+                }
+                return JSONResponse(payload, headers={"Access-Control-Allow-Origin": "*"})
+            except Exception:
+                return JSONResponse({"error": "metadata_unavailable"}, status_code=500)
+
         app = Starlette(routes=[
             Route("/", not_enabled),
             Route("/debug", debug),
+            # Provide discovery endpoints under the MCP mount for clients that resolve relative to /sse
+            Route("/.well-known/oauth-authorization-server", well_known_as),
+            Route("/.well-known/oauth-protected-resource", well_known_pr),
         ])
         # Mark this as fallback so the hub can log accordingly
         setattr(app, "edxo_mcp_fallback", True)
@@ -1055,6 +1143,36 @@ if mcp:
                         "tools": TOOL_NAMES,
                         "server": "asgi",
                     })
+
+                # OAuth discovery under the MCP mount to support clients that resolve metadata at /sse/.well-known/*
+                @mcp.custom_route("/.well-known/oauth-authorization-server", methods=["GET"])  # type: ignore[attr-defined]
+                async def _oauth_as(_request):
+                    try:
+                        issuer = f"{_request.url.scheme}://{_request.url.netloc}"
+                        return JSONResponse({
+                            "issuer": issuer,
+                            "authorization_endpoint": issuer + "/authorize",
+                            "token_endpoint": issuer + "/token",
+                            "registration_endpoint": issuer + "/register",
+                            "response_types_supported": ["code"],
+                            "grant_types_supported": ["authorization_code", "refresh_token"],
+                            "code_challenge_methods_supported": ["S256"],
+                            "token_endpoint_auth_methods_supported": ["none"],
+                        }, headers={"Access-Control-Allow-Origin": "*"})
+                    except Exception:
+                        return JSONResponse({"error": "metadata_unavailable"}, status_code=500)
+
+                @mcp.custom_route("/.well-known/oauth-protected-resource", methods=["GET"])  # type: ignore[attr-defined]
+                async def _oauth_pr(_request):
+                    try:
+                        resource = f"{_request.url.scheme}://{_request.url.netloc}/sse"
+                        return JSONResponse({
+                            "resource": resource,
+                            "authorization_servers": [resource],
+                            "scopes_supported": ["mcp:read", "mcp:write"],
+                        }, headers={"Access-Control-Allow-Origin": "*"})
+                    except Exception:
+                        return JSONResponse({"error": "metadata_unavailable"}, status_code=500)
         except Exception:
             pass
     except Exception as _e:  # pragma: no cover - defensive
