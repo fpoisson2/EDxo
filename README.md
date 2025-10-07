@@ -154,6 +154,15 @@ sudo apt update && sudo apt install -y redis-server
 sudo systemctl enable --now redis
 ```
 
+## Frontend React (Vite)
+
+Un client React TypeScript réside dans `frontend/` pour découpler l’interface du backend Flask.
+
+- Installation: `cd frontend && npm install`
+- Configuration: copiez `.env.example` en `.env.development` et ajustez `VITE_API_BASE_URL`
+- Développement: `npm run dev` (proxy `/api`, `/auth`, `/tasks` vers Flask par défaut)
+- Qualité: `npm run lint`; build de production avec `npm run build`
+
 ## Structure du projet
 
 ```
