@@ -32,7 +32,6 @@ def test_oauth_registration_and_access(app, client):
     resp = client.post(
         '/token',
         data={
-            'client_id': client_id,
             'grant_type': 'client_credentials',
             'ttl': 3600,
         },
@@ -102,7 +101,6 @@ def test_authorization_code_flow(app, client):
         '/authorize',
         query_string={
             'response_type': 'code',
-            'client_id': 'cid',
             'redirect_uri': 'https://example.com/cb',
             'code_challenge': code_challenge,
             'state': 'abc',
@@ -114,7 +112,7 @@ def test_authorization_code_flow(app, client):
     token = soup.find('input', {'name': 'csrf_token'})['value']
 
     resp = client.post(
-        '/authorize?client_id=cid&redirect_uri=https://example.com/cb&state=abc',
+        '/authorize?redirect_uri=https://example.com/cb&state=abc',
         data={'confirm': 'yes', 'code_challenge': code_challenge, 'csrf_token': token},
         follow_redirects=False,
     )
@@ -131,7 +129,6 @@ def test_authorization_code_flow(app, client):
             'grant_type': 'authorization_code',
             'code': code,
             'code_verifier': code_verifier,
-            'client_id': 'cid',
             'client_secret': 'secret',
             'redirect_uri': 'https://example.com/cb',
         },
