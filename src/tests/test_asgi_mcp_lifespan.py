@@ -2,6 +2,16 @@ import importlib
 
 
 def test_parent_asgi_app_uses_mcp_lifespan(monkeypatch):
+    monkeypatch.setenv("SECRET_KEY", "testing")
+    monkeypatch.setenv("RECAPTCHA_PUBLIC_KEY", "testing")
+    monkeypatch.setenv("RECAPTCHA_PRIVATE_KEY", "testing")
+    monkeypatch.setenv("CELERY_BROKER_URL", "memory://")
+    monkeypatch.setenv("CELERY_RESULT_BACKEND", "cache+memory://")
+    import src.config.env as env
+    monkeypatch.setattr(env, "SECRET_KEY", "testing", raising=False)
+    monkeypatch.setattr(env, "RECAPTCHA_PUBLIC_KEY", "testing", raising=False)
+    monkeypatch.setattr(env, "RECAPTCHA_PRIVATE_KEY", "testing", raising=False)
+
     # Create a dummy ASGI app with a recognizable lifespan callable
     class DummyASGI:
         async def __call__(self, scope, receive, send):

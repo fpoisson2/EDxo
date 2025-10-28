@@ -9,7 +9,7 @@ from src.utils.datetime_utils import now_utc, ensure_aware_utc
 import secrets
 import hashlib
 import base64
-from typing import Dict
+from typing import Dict, Optional
 import logging
 
 from flask import Blueprint, jsonify, request, url_for, redirect, render_template
@@ -29,6 +29,27 @@ logger = get_logger(__name__)
 
 
 TOKEN_RESOURCES: Dict[str, str] = {}
+
+
+def _resolve_client(client_id: Optional[str]) -> Optional[OAuthClient]:
+    """Resolve an OAuth client by id or fall back to the single registered one."""
+
+    if client_id:
+        return OAuthClient.query.filter_by(client_id=client_id).first()
+
+    # When no client_id is provided, fall back to the sole registered client.
+    clients = OAuthClient.query.limit(2).all()
+    if len(clients) == 1:
+        logger.info(
+            "OAuth: defaulted to sole client", extra={"client_id": clients[0].client_id}
+        )
+        return clients[0]
+
+    logger.info(
+        "OAuth: unable to resolve client without id",
+        extra={"registered_clients": len(clients)},
+    )
+    return None
 
 
 def canonical_mcp_resource() -> str:
@@ -229,16 +250,18 @@ def issue_token():
     if not data:
         data = request.get_json(silent=True) or {}
 
-    client_id = data.get('client_id')
+    client_id_param = data.get('client_id')
     client_secret = data.get('client_secret')
-    client = OAuthClient.query.filter_by(client_id=client_id).first()
+    client = _resolve_client(client_id_param)
     if not client or (client_secret and client.client_secret != client_secret):
         logger.info("OAuth: invalid_client at token endpoint", extra={
-            "client_id": client_id,
+            "client_id": client_id_param,
             "has_secret": bool(client_secret),
             "remote_addr": request.remote_addr,
         })
         return _json_error(401, 'invalid_client', 'Client authentication failed')
+
+    client_id = client.client_id
 
     grant_type = data.get('grant_type', 'client_credentials')
     resource = data.get('resource')
@@ -260,7 +283,7 @@ def issue_token():
     if grant_type == 'authorization_code':
         code = data.get('code')
         code_verifier = data.get('code_verifier')
-        redirect_uri = data.get('redirect_uri')
+        redirect_uri = data.get('redirect_uri') or client.redirect_uri
         if not code or not code_verifier or not redirect_uri:
             logger.info("OAuth: authorization_code missing fields", extra={
                 "client_id": client_id,
@@ -339,19 +362,24 @@ def issue_token():
 @login_required
 def authorize():
     """Display a consent page and issue an authorization code."""
-    client_id = request.args.get('client_id')
+    client_id_param = request.args.get('client_id')
+    client = _resolve_client(client_id_param)
     redirect_uri = request.args.get('redirect_uri')
+    if client and not redirect_uri:
+        redirect_uri = client.redirect_uri
+
+    if not client or (client.redirect_uri and client.redirect_uri != redirect_uri):
+        logger.info("OAuth: authorize invalid_client or redirect mismatch", extra={
+            "client_id": client_id_param,
+            "redirect_uri": redirect_uri,
+        })
+        return jsonify({'error': 'invalid_client'}), 400
+
+    client_id = client.client_id
     code_challenge = request.values.get('code_challenge')
     state = request.values.get('state')
     scope = request.values.get('scope')
     resource = request.values.get('resource')
-    client = OAuthClient.query.filter_by(client_id=client_id).first()
-    if not client or (client.redirect_uri and client.redirect_uri != redirect_uri):
-        logger.info("OAuth: authorize invalid_client or redirect mismatch", extra={
-            "client_id": client_id,
-            "redirect_uri": redirect_uri,
-        })
-        return jsonify({'error': 'invalid_client'}), 400
 
     if request.method == 'POST' and request.form.get('confirm') == 'yes':
         code = issue_auth_code(

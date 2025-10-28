@@ -3,11 +3,19 @@ from starlette.responses import JSONResponse
 from starlette.routing import Route, Mount
 from starlette.middleware.cors import CORSMiddleware
 from starlette.testclient import TestClient
-import pytest
+import asyncio
 
 
-@pytest.mark.asyncio
-async def test_tasks_events_sse_includes_cors_header_direct():
+def test_tasks_events_sse_includes_cors_header_direct(monkeypatch):
+    monkeypatch.setenv("SECRET_KEY", "testing")
+    monkeypatch.setenv("RECAPTCHA_PUBLIC_KEY", "testing")
+    monkeypatch.setenv("RECAPTCHA_PRIVATE_KEY", "testing")
+    monkeypatch.setenv("CELERY_BROKER_URL", "memory://")
+    monkeypatch.setenv("CELERY_RESULT_BACKEND", "cache+memory://")
+    import src.config.env as env
+    monkeypatch.setattr(env, "SECRET_KEY", "testing", raising=False)
+    monkeypatch.setattr(env, "RECAPTCHA_PUBLIC_KEY", "testing", raising=False)
+    monkeypatch.setattr(env, "RECAPTCHA_PRIVATE_KEY", "testing", raising=False)
     # Call the SSE handler directly to validate response headers
     from src.asgi import sse_task_events
     from starlette.requests import Request
@@ -18,7 +26,7 @@ async def test_tasks_events_sse_includes_cors_header_direct():
         "headers": [],
     }
     req = Request(scope)
-    resp = await sse_task_events(req)
+    resp = asyncio.run(sse_task_events(req))
     assert resp.headers.get("Access-Control-Allow-Origin") == "*"
 
 
