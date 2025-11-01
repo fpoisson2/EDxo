@@ -261,7 +261,7 @@ def issue_token():
         code = data.get('code')
         code_verifier = data.get('code_verifier')
         redirect_uri = data.get('redirect_uri')
-        if not code or not code_verifier or not redirect_uri:
+        if not code or not code_verifier:
             logger.info("OAuth: authorization_code missing fields", extra={
                 "client_id": client_id,
                 "has_code": bool(code),
@@ -277,9 +277,14 @@ def issue_token():
                 "redirect_uri": redirect_uri,
             })
             return _json_error(401, 'unauthorized', 'Invalid code')
+        redirect_mismatch = (
+            record.redirect_uri
+            and redirect_uri
+            and record.redirect_uri != redirect_uri
+        )
         if (
             record.client_id != client_id
-            or (record.redirect_uri and record.redirect_uri != redirect_uri)
+            or redirect_mismatch
             or ensure_aware_utc(record.expires_at) <= now_utc()
         ):
             logger.info("OAuth: invalid or expired code", extra={
@@ -287,6 +292,15 @@ def issue_token():
                 "redirect_uri": redirect_uri,
             })
             return _json_error(401, 'unauthorized', 'Invalid code')
+        if record.redirect_uri and not redirect_uri:
+            logger.info(
+                "OAuth: token request missing redirect_uri but code was bound",
+                extra={
+                    "client_id": client_id,
+                    "bound_redirect": record.redirect_uri,
+                },
+            )
+            redirect_uri = record.redirect_uri
         calc_challenge = b64url_no_pad(hashlib.sha256(code_verifier.encode()).digest())
         if calc_challenge != record.code_challenge:
             logger.info("OAuth: PKCE verifier mismatch", extra={
