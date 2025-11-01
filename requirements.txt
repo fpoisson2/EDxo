@@ -28,6 +28,7 @@ openai
 openpyxl
 pypdf2
 pytest
+pytest-asyncio
 pytest-playwright
 playwright
 python-dotenv
