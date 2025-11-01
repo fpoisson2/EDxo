@@ -7,7 +7,9 @@ services:
     # "Could not find session for ID" → 424 (Failed Dependency).
     # If you need more capacity, scale replicas at the reverse-proxy level and use
     # sticky routing for the /sse/ path instead of increasing Gunicorn workers.
-    command: gunicorn -k uvicorn.workers.UvicornWorker -w 1 -b 0.0.0.0:8000 -c src/config/gunicorn.conf.py --preload --timeout 500 --keep-alive 75 src.asgi:app
+    command: >-
+      sh -c "python -m src.utils.wait_for_service redis 6379 --timeout 60 --interval 1 &&
+      gunicorn -k uvicorn.workers.UvicornWorker -w 1 -b 0.0.0.0:8000 -c src/config/gunicorn.conf.py --preload --timeout 500 --keep-alive 75 src.asgi:app"
     ports:
       - "8000:8000"
     env_file:
@@ -37,7 +39,9 @@ services:
     # No host port mapping needed; used only on internal network
   celery:
     build: .
-    command: celery -A src.celery_app:celery worker --loglevel=info --autoscale=8,2 -Ofair --prefetch-multiplier=1 --hostname=worker2@%h
+    command: >-
+      sh -c "python -m src.utils.wait_for_service redis 6379 --timeout 60 --interval 1 &&
+      celery -A src.celery_app:celery worker --loglevel=info --autoscale=8,2 -Ofair --prefetch-multiplier=1 --hostname=worker2@%h"
     env_file:
       - .env
     environment:
