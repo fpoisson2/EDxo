@@ -110,6 +110,8 @@ class TestConfig:
 
 
 def create_app(testing=False):
+    testing = bool(testing or os.getenv("PYTEST_CURRENT_TEST"))
+
     if not testing:
         validate()
         if SECRET_KEY:

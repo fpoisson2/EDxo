@@ -90,10 +90,17 @@ def _json_error(status: int, error: str, description: str):
     return resp
 
 
-@oauth_bp.get('/.well-known/oauth-authorization-server')
+@oauth_bp.route('/.well-known/oauth-authorization-server', methods=['GET', 'OPTIONS'])
 @csrf.exempt
 def oauth_metadata():
     """Expose OAuth server metadata for discovery."""
+    if request.method == 'OPTIONS':
+        from flask import make_response
+        pre = make_response('', 204)
+        pre.headers['Access-Control-Allow-Origin'] = '*'
+        pre.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        pre.headers['Access-Control-Allow-Headers'] = '*'
+        return pre
     payload = {
         'issuer': request.url_root.rstrip('/'),
         'authorization_endpoint': url_for('oauth.authorize', _external=True),
@@ -109,16 +116,22 @@ def oauth_metadata():
         "scheme": request.scheme,
         "headers": redact_headers(request.headers),
     })
-    return (
-        jsonify(payload),
-        200,
-    )
+    resp = jsonify(payload)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return (resp, 200)
 
 
-@oauth_bp.get('/.well-known/oauth-protected-resource')
+@oauth_bp.route('/.well-known/oauth-protected-resource', methods=['GET', 'OPTIONS'])
 @csrf.exempt
 def resource_metadata():
     """Expose metadata for the protected resource."""
+    if request.method == 'OPTIONS':
+        from flask import make_response
+        pre = make_response('', 204)
+        pre.headers['Access-Control-Allow-Origin'] = '*'
+        pre.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        pre.headers['Access-Control-Allow-Headers'] = '*'
+        return pre
     resource = canonical_mcp_resource()
     payload = {
         'resource': resource,
@@ -133,13 +146,22 @@ def resource_metadata():
         "scheme": request.scheme,
         "headers": redact_headers(request.headers),
     })
-    return (jsonify(payload), 200)
+    resp = jsonify(payload)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return (resp, 200)
 
 
-@oauth_bp.post('/register')
+@oauth_bp.route('/register', methods=['POST', 'OPTIONS'])
 @csrf.exempt
 def register_client():
     """Register a public OAuth client using dynamic client registration."""
+    if request.method == 'OPTIONS':
+        from flask import make_response
+        pre = make_response('', 204)
+        pre.headers['Access-Control-Allow-Origin'] = '*'
+        pre.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        pre.headers['Access-Control-Allow-Headers'] = '*'
+        return pre
     data = request.get_json(force=True, silent=True) or {}
     redirect_uris = data.get('redirect_uris') or []
     if not isinstance(redirect_uris, list) or not redirect_uris:
@@ -172,23 +194,22 @@ def register_client():
 
     import time
 
-    return (
-        jsonify(
-            {
-                'client_id': client_id,
-                'client_id_issued_at': int(time.time()),
-                'token_endpoint_auth_method': 'none',
-                'redirect_uris': redirect_uris,
-                'grant_types': ['authorization_code', 'refresh_token'],
-                'response_types': ['code'],
-                'application_type': 'web',
-            }
-        ),
-        201,
+    resp = jsonify(
+        {
+            'client_id': client_id,
+            'client_id_issued_at': int(time.time()),
+            'token_endpoint_auth_method': 'none',
+            'redirect_uris': redirect_uris,
+            'grant_types': ['authorization_code', 'refresh_token'],
+            'response_types': ['code'],
+            'application_type': 'web',
+        }
     )
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return (resp, 201)
 
 
-@oauth_bp.post('/token')
+@oauth_bp.route('/token', methods=['POST', 'OPTIONS'])
 @csrf.exempt
 def issue_token():
     """Issue an access token for a registered client.
@@ -197,6 +218,13 @@ def issue_token():
     compatible with tests and legacy clients we also accept JSON payloads, but
     the form body takes precedence.
     """
+    if request.method == 'OPTIONS':
+        from flask import make_response
+        pre = make_response('', 204)
+        pre.headers['Access-Control-Allow-Origin'] = '*'
+        pre.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        pre.headers['Access-Control-Allow-Headers'] = '*'
+        return pre
     data = request.form.to_dict()
     if not data:
         data = request.get_json(silent=True) or {}
@@ -302,7 +330,9 @@ def issue_token():
         "ttl": ttl,
         "user_bound": bool(user_id),
     })
-    return jsonify({'access_token': token, 'token_type': 'bearer', 'expires_in': ttl}), 200
+    resp = jsonify({'access_token': token, 'token_type': 'bearer', 'expires_in': ttl})
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp, 200
 
 
 @oauth_bp.route('/authorize', methods=['GET', 'POST'])
