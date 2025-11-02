@@ -341,25 +341,23 @@ def get_mcp_asgi_app() -> Any:
         return _fallback_asgi()
 
     # Prefer FastMCP's first-party ASGI factories when available
-    # Prefer modern Streamable HTTP transport; fall back to SSE if needed
-    try:
-        if hasattr(mcp, "http_app"):
+    # Try SSE transport first for compatibility, then fall back to streamable HTTP
+    transports: tuple[tuple[str, dict[str, Any]], ...] = (
+        ("sse", {"transport": "sse", "path": "/"}),
+        ("streamable-http", {"transport": "streamable-http", "path": "/"}),
+    )
+    for label, kwargs in transports:
+        try:
+            if not hasattr(mcp, "http_app"):
+                continue
             try:
-                return mcp.http_app(transport="streamable-http", path="/")  # type: ignore[attr-defined]
+                return mcp.http_app(**kwargs)  # type: ignore[arg-type]
             except TypeError:
-                # Older signatures without keyword args
-                return mcp.http_app("/", None, None, None, "streamable-http")  # type: ignore[misc]
-    except Exception:
-        pass
-
-    try:
-        if hasattr(mcp, "http_app"):
-            try:
-                return mcp.http_app(transport="sse", path="/")  # type: ignore[attr-defined]
-            except TypeError:
-                return mcp.http_app("sse", "/")  # type: ignore[misc]
-    except Exception:
-        pass
+                if label == "sse":
+                    return mcp.http_app("sse", "/")  # type: ignore[misc]
+                return mcp.http_app("/", None, None, None, label)  # type: ignore[misc]
+        except Exception:
+            continue
 
     # Try known integration modules with a create function
     try:
@@ -503,7 +501,14 @@ class DBTokenVerifier(TokenVerifier):
             # Optional audience binding check based on resource parameter
             presented_resource = None
             if has_request_context():
-                base = request.url_root.rstrip('/')
+                base_url = None
+                try:
+                    base_url = getattr(request, "host_url", None)
+                except Exception:
+                    base_url = None
+                if not base_url:
+                    base_url = request.url_root
+                base = (base_url or "").rstrip('/')
                 presented_resource = f"{base}/sse"
                 try:
                     logger.info(
