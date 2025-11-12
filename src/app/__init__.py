@@ -303,13 +303,16 @@ def create_app(testing=False):
     def before_request():
         # Allow static files and explicitly public routes to bypass auth redirect
         view_func = app.view_functions.get(request.endpoint)
+        path = request.path or ''
         if (
             request.endpoint == 'static' or
-            request.path.startswith('/static/') or
-            request.path.startswith('/api/') or
-            request.path.startswith('/sse/') or  # MCP SSE endpoint is public (uses Bearer token)
-            request.path in ('/token', '/register') or
-            request.path.startswith('/.well-known/') or
+            path.startswith('/static/') or
+            path.startswith('/api/') or
+            path in {'/sse', '/mcp'} or
+            path.startswith('/sse/') or  # MCP SSE endpoint is public (uses Bearer token)
+            path.startswith('/mcp/') or  # MCP ASGI adapter mounts under /mcp
+            path in ('/token', '/register') or
+            path.startswith('/.well-known/') or
             (view_func is not None and getattr(view_func, 'is_public', False))
         ):
             return

@@ -241,27 +241,15 @@ def issue_token():
         return _json_error(401, 'invalid_client', 'Client authentication failed')
 
     grant_type = data.get('grant_type', 'client_credentials')
-    resource = data.get('resource')
-    if not resource:
-        # Backward compatibility: default to canonical MCP resource when missing
-        resource = canonical_mcp_resource()
-        logger.info(
-            "OAuth: token request missing resource → defaulted",
-            extra={
-                "client_id": client_id,
-                "grant_type": grant_type,
-                "resource": resource,
-            },
-        )
-    # Normalize resource to avoid trailing-slash mismatches
-    resource = (resource or "").rstrip('/')
+    resource_param = data.get('resource')
+    resource = resource_param.rstrip('/') if resource_param else None
     ttl = int(data.get('ttl', 3600))
 
     if grant_type == 'authorization_code':
         code = data.get('code')
         code_verifier = data.get('code_verifier')
         redirect_uri = data.get('redirect_uri')
-        if not code or not code_verifier or not redirect_uri:
+        if not code or not code_verifier:
             logger.info("OAuth: authorization_code missing fields", extra={
                 "client_id": client_id,
                 "has_code": bool(code),
@@ -277,9 +265,14 @@ def issue_token():
                 "redirect_uri": redirect_uri,
             })
             return _json_error(401, 'unauthorized', 'Invalid code')
+        redirect_mismatch = (
+            record.redirect_uri
+            and redirect_uri
+            and record.redirect_uri != redirect_uri
+        )
         if (
             record.client_id != client_id
-            or (record.redirect_uri and record.redirect_uri != redirect_uri)
+            or redirect_mismatch
             or ensure_aware_utc(record.expires_at) <= now_utc()
         ):
             logger.info("OAuth: invalid or expired code", extra={
@@ -287,6 +280,37 @@ def issue_token():
                 "redirect_uri": redirect_uri,
             })
             return _json_error(401, 'unauthorized', 'Invalid code')
+        if record.redirect_uri and not redirect_uri:
+            logger.info(
+                "OAuth: token request missing redirect_uri but code was bound",
+                extra={
+                    "client_id": client_id,
+                    "bound_redirect": record.redirect_uri,
+                },
+            )
+            redirect_uri = record.redirect_uri
+        if not resource:
+            if getattr(record, 'resource', None):
+                resource = record.resource
+                logger.info(
+                    "OAuth: token request missing resource → reused authorization resource",
+                    extra={
+                        "client_id": client_id,
+                        "grant_type": grant_type,
+                        "resource": resource,
+                        "bound_resource": record.resource,
+                    },
+                )
+            else:
+                resource = canonical_mcp_resource()
+                logger.info(
+                    "OAuth: token request missing resource → defaulted",
+                    extra={
+                        "client_id": client_id,
+                        "grant_type": grant_type,
+                        "resource": resource,
+                    },
+                )
         calc_challenge = b64url_no_pad(hashlib.sha256(code_verifier.encode()).digest())
         if calc_challenge != record.code_challenge:
             logger.info("OAuth: PKCE verifier mismatch", extra={
@@ -310,6 +334,17 @@ def issue_token():
             db.session.rollback()
     else:
         user_id = None
+        if not resource:
+            resource = canonical_mcp_resource()
+            logger.info(
+                "OAuth: token request missing resource → defaulted",
+                extra={
+                    "client_id": client_id,
+                    "grant_type": grant_type,
+                    "resource": resource,
+                },
+            )
+    resource = (resource or "").rstrip('/')
 
     token = secrets.token_hex(16)
     expires_at = now_utc() + timedelta(seconds=ttl)
