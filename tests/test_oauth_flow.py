@@ -143,3 +143,174 @@ def test_authorization_code_flow(app, client):
     resp = client.get('/api/programmes', headers=headers)
     assert resp.status_code == 200
     assert any(p['id'] == prog_id for p in resp.get_json())
+
+
+def test_authorization_code_flow_without_redirect_in_token_request(app, client):
+    prog_id = setup_data(app)
+
+    with app.app_context():
+        client_obj = OAuthClient(
+            client_id='cid2',
+            client_secret='secret',
+            name='test2',
+            redirect_uri='https://example.com/cb',
+        )
+        db.session.add(client_obj)
+        user = User(username='u2', password='p')
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+
+    with client.session_transaction() as sess:
+        sess['_user_id'] = str(user_id)
+        sess['_fresh'] = True
+
+    app.config['WTF_CSRF_ENABLED'] = True
+
+    import hashlib, base64
+
+    code_verifier = 'verifier456'
+    code_challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(code_verifier.encode()).digest()
+    ).rstrip(b'=').decode()
+
+    resp = client.get(
+        '/authorize',
+        query_string={
+            'response_type': 'code',
+            'client_id': 'cid2',
+            'redirect_uri': 'https://example.com/cb',
+            'code_challenge': code_challenge,
+            'state': 'xyz',
+        },
+    )
+    assert resp.status_code == 200
+
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(resp.data, 'html.parser')
+    token = soup.find('input', {'name': 'csrf_token'})['value']
+
+    resp = client.post(
+        '/authorize?client_id=cid2&redirect_uri=https://example.com/cb&state=xyz',
+        data={'confirm': 'yes', 'code_challenge': code_challenge, 'csrf_token': token},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+
+    from urllib.parse import urlparse, parse_qs
+
+    parsed = urlparse(resp.headers['Location'])
+    code = parse_qs(parsed.query)['code'][0]
+
+    token_resp = client.post(
+        '/token',
+        data={
+            'grant_type': 'authorization_code',
+            'code': code,
+            'code_verifier': code_verifier,
+            'client_id': 'cid2',
+            'client_secret': 'secret',
+            # redirect_uri intentionally omitted to mirror MCP behaviour
+        },
+    )
+    assert token_resp.status_code == 200
+    token = token_resp.get_json()['access_token']
+
+    headers = {'Authorization': f'Bearer {token}'}
+    resp = client.get('/api/programmes', headers=headers)
+    assert resp.status_code == 200
+    assert any(p['id'] == prog_id for p in resp.get_json())
+
+
+def test_authorization_code_flow_uses_bound_resource_when_missing_in_token_request(
+    app, client, monkeypatch
+):
+    prog_id = setup_data(app)
+
+    import importlib
+
+    oauth_module = importlib.import_module('src.app.routes.oauth')
+    monkeypatch.setattr(
+        oauth_module,
+        'canonical_mcp_resource',
+        lambda: 'https://canonical.example/sse',
+    )
+
+    with app.app_context():
+        client_obj = OAuthClient(
+            client_id='cid3',
+            client_secret='secret',
+            name='test3',
+            redirect_uri='https://example.com/cb',
+        )
+        db.session.add(client_obj)
+        user = User(username='u3', password='p')
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+
+    with client.session_transaction() as sess:
+        sess['_user_id'] = str(user_id)
+        sess['_fresh'] = True
+
+    app.config['WTF_CSRF_ENABLED'] = True
+
+    import hashlib
+    import base64
+
+    code_verifier = 'verifier789'
+    code_challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(code_verifier.encode()).digest()
+    ).rstrip(b'=').decode()
+
+    bound_resource = 'https://bound.example/sse/'
+
+    resp = client.get(
+        '/authorize',
+        query_string={
+            'response_type': 'code',
+            'client_id': 'cid3',
+            'redirect_uri': 'https://example.com/cb',
+            'code_challenge': code_challenge,
+            'state': 'ijk',
+            'resource': bound_resource,
+        },
+    )
+    assert resp.status_code == 200
+
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(resp.data, 'html.parser')
+    token = soup.find('input', {'name': 'csrf_token'})['value']
+
+    resp = client.post(
+        '/authorize?client_id=cid3&redirect_uri=https://example.com/cb&state=ijk',
+        data={'confirm': 'yes', 'code_challenge': code_challenge, 'csrf_token': token},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+
+    from urllib.parse import urlparse, parse_qs
+
+    parsed = urlparse(resp.headers['Location'])
+    code = parse_qs(parsed.query)['code'][0]
+
+    token_resp = client.post(
+        '/token',
+        data={
+            'grant_type': 'authorization_code',
+            'code': code,
+            'code_verifier': code_verifier,
+            'client_id': 'cid3',
+            'client_secret': 'secret',
+            # resource intentionally omitted to verify fallback to bound value
+        },
+    )
+    assert token_resp.status_code == 200
+    token = token_resp.get_json()['access_token']
+
+    headers = {'Authorization': f'Bearer {token}'}
+    resp = client.get('/api/programmes', headers=headers)
+    assert resp.status_code == 200
+    assert any(p['id'] == prog_id for p in resp.get_json())

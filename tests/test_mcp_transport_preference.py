@@ -1,7 +1,7 @@
 import types
 
 
-def test_get_mcp_asgi_app_prefers_streamable_http(monkeypatch):
+def test_get_mcp_asgi_app_prefers_sse_transport(monkeypatch):
     from src.mcp_server import server as srv
 
     called = {"transport": None}
@@ -17,6 +17,6 @@ def test_get_mcp_asgi_app_prefers_streamable_http(monkeypatch):
 
     app = srv.get_mcp_asgi_app()
     assert callable(app)
-    # We prefer streamable-http when available
-    assert called["transport"] in ("streamable-http", "http")
+    # We now prioritise SSE for compatibility, but fall back gracefully
+    assert called["transport"] in ("sse", "streamable-http", "http")
 

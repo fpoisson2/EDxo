@@ -40,6 +40,25 @@ def test_static_files_access(client):
     response = client.get('/static/nonexistent_file.txt')
     assert response.status_code == 404, "A nonexistent static file should return 404 without redirection."
 
+
+def test_sse_root_is_public(client):
+    """The bare /sse endpoint should bypass the login redirect."""
+
+    response = client.get('/sse', follow_redirects=False)
+    assert response.status_code not in (301, 302, 303, 307, 308)
+    location = response.headers.get('Location')
+    assert not location or 'login' not in location
+
+
+def test_mcp_root_is_public(client):
+    """The /mcp adapter endpoint should not trigger the login redirect loop."""
+
+    response = client.get('/mcp', follow_redirects=False)
+    assert response.status_code not in (301, 302, 303, 307, 308)
+    location = response.headers.get('Location')
+    assert not location or 'login' not in location
+
+
 def test_protected_route_without_authentication(client):
     """
     Checks that a protected route (e.g., '/settings') redirects to the login page

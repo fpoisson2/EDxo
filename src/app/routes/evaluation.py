@@ -777,7 +777,8 @@ def get_grid():
     if not evaluation_id:
         return ""
         
-    evaluation = db.session.get(PlanDeCoursEvaluations, int(evaluation_id)) or abort(404)
+    evaluation_id_int = int(evaluation_id)
+    evaluation = db.session.get(PlanDeCoursEvaluations, evaluation_id_int) or abort(404)
     
     # Récupérer les capacités et savoirs-faire
     eval_capacites = (
@@ -785,6 +786,7 @@ def get_grid():
         .join(PlanCadreCapacites)
         .join(PlanCadre)
         .filter(PlanCadre.cours_id == evaluation.plan_de_cours.cours_id)
+        .filter(PlanDeCoursEvaluationsCapacites.evaluation_id == evaluation_id_int)
         .filter(PlanDeCoursEvaluationsCapacites.capacite_id.isnot(None))
         .options(
             db.joinedload(PlanDeCoursEvaluationsCapacites.capacite)
@@ -795,7 +797,7 @@ def get_grid():
     
     # Récupérer les savoirs-faire déjà sélectionnés
     existing_sf = EvaluationSavoirFaire.query.filter_by(
-        evaluation_id=int(evaluation_id)
+        evaluation_id=evaluation_id_int
     ).all()
     selected_sf_ids = {sf.savoir_faire_id for sf in existing_sf}
     
