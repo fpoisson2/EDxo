@@ -2438,8 +2438,23 @@ def export_docx(cours_id, session):
     # Calculer les totaux
     for ev in plan_de_cours.evaluations:
         for cap_link in ev.capacites:
+            if not cap_link.capacite:
+                current_app.logger.warning(
+                    "Capacité manquante pour l'association d'évaluation %s",
+                    cap_link.id,
+                )
+                continue
+
             cap_name = cap_link.capacite.capacite
             cap_id = cap_link.capacite_id
+
+            if cap_name not in cap_total_map or cap_id not in cap_id_total_map:
+                current_app.logger.warning(
+                    "Capacité '%s' absente du plan cadre pour l'association %s",
+                    cap_name,
+                    cap_link.id,
+                )
+                continue
             
             try:
                 ponderation_str = str(cap_link.ponderation).strip().replace('%', '')
@@ -2463,7 +2478,23 @@ def export_docx(cours_id, session):
     for ev in plan_de_cours.evaluations:
         cap_map = {cap: "" for cap in all_caps}
         for cap_link in ev.capacites:
+            if not cap_link.capacite:
+                current_app.logger.warning(
+                    "Capacité manquante pour l'association d'évaluation %s",
+                    cap_link.id,
+                )
+                continue
+
             cap_name = cap_link.capacite.capacite
+
+            if cap_name not in cap_map:
+                current_app.logger.warning(
+                    "Capacité '%s' absente du plan cadre pour l'association %s",
+                    cap_name,
+                    cap_link.id,
+                )
+                continue
+
             # Strip the % if it exists and ensure it's properly formatted
             ponderation_str = str(cap_link.ponderation).strip().replace('%', '')
             try:
