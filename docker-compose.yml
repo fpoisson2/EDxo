@@ -56,6 +56,15 @@ services:
     depends_on:
       - redis
     restart: unless-stopped
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    # Host network so cloudflared can reach localhost:8000 (edxo exposed port)
+    # without requiring changes to the Cloudflare tunnel ingress config.
+    network_mode: host
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - edxo
+    restart: unless-stopped
 
 volumes:
   txt_outputs: {}
