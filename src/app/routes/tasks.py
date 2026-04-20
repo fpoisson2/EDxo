@@ -225,6 +225,45 @@ def cancel_task(task_id):
         }), 500
 
 
+@tasks_bp.post("/<task_id>/review_response")
+@login_required
+def submit_review_response(task_id):
+    """Forward a user's partial-review feedback to the running agent.
+
+    Body JSON:
+        {"review_id": "...", "feedback": "..."}
+
+    The agent's `request_user_review` tool subscribes to the Redis channel
+    ``edxo:review_response:<task_id>:<review_id>`` and resumes once this
+    endpoint publishes the payload.
+    """
+    try:
+        body = request.get_json(silent=True) or {}
+    except Exception:
+        body = {}
+    review_id = (body.get("review_id") or "").strip()
+    feedback = body.get("feedback")
+    if feedback is None:
+        feedback = ""
+    if not review_id:
+        return jsonify({"ok": False, "error": "review_id manquant"}), 400
+    try:
+        import redis
+
+        r = redis.Redis.from_url(CELERY_BROKER_URL)
+        channel = f"edxo:review_response:{task_id}:{review_id}"
+        payload = json.dumps({"feedback": str(feedback)}, ensure_ascii=False)
+        subscribers = r.publish(channel, payload)
+        current_app.logger.info(
+            "[tasks.review_response] task=%s review=%s subscribers=%s feedback_chars=%d",
+            task_id, review_id, subscribers, len(str(feedback)),
+        )
+        return jsonify({"ok": True, "subscribers": int(subscribers)})
+    except Exception as e:
+        current_app.logger.exception("[tasks.review_response] publish failed: %s", e)
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 @tasks_bp.get("/track/<task_id>")
 @login_required
 def track_task(task_id):

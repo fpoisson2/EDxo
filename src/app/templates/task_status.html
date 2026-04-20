@@ -76,6 +76,34 @@
 
     <h3>Flux en direct</h3>
     <div id="stream-log" style="background:#0f172a;color:#e2e8f0;border-radius:6px;padding:10px;min-height:120px;max-height:240px;overflow:auto;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;"></div>
+
+    <h3>Outils utilisés</h3>
+    <div id="tool-calls-log" class="small" style="background:#f1f5f9;border-radius:6px;padding:10px;min-height:60px;max-height:220px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;"></div>
+  </div>
+
+  <!-- Modal de révision partielle (agent request_user_review) -->
+  <div class="modal fade" id="partial-review-modal" tabindex="-1" aria-labelledby="partial-review-title" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="partial-review-title">Révision partielle</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Section :</strong> <span id="partial-review-section"></span></p>
+          <p id="partial-review-question" class="mb-2"></p>
+          <pre id="partial-review-content" style="background:#0f172a;color:#e2e8f0;padding:10px;border-radius:6px;max-height:40vh;overflow:auto;"></pre>
+          <div class="mt-3">
+            <label for="partial-review-feedback" class="form-label">Feedback à transmettre à l'agent :</label>
+            <textarea id="partial-review-feedback" class="form-control" rows="4" placeholder="Décris les ajustements demandés, ou laisse vide pour accepter."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="partial-review-accept" class="btn btn-success">Accepter tel quel</button>
+          <button type="button" id="partial-review-send" class="btn btn-primary">Envoyer le feedback</button>
+        </div>
+      </div>
+    </div>
   </div>
 <div id="result-area">
     <h2>Résultat :</h2>
@@ -244,6 +272,87 @@ document.addEventListener("DOMContentLoaded", function() {
             if (wasAtBottom) streamLog.scrollTop = streamLog.scrollHeight;
         }
         if (es) es.addEventListener('open', () => appendLog('Connexion au flux ouverte.'));
+
+        // --- Agent tool call / result log ---
+        const toolLog = document.getElementById('tool-calls-log');
+        const seenToolCallIds = new Set();
+        const seenToolResultIds = new Set();
+        function escapeHtml(str) {
+            return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+        function appendToolEntry(kind, payload) {
+            if (!toolLog) return;
+            const ts = new Date().toLocaleTimeString();
+            let body = '';
+            try { body = JSON.stringify(payload, null, 2); } catch { body = String(payload); }
+            const color = kind === 'call' ? '#2563eb' : '#15803d';
+            toolLog.insertAdjacentHTML('beforeend',
+                `<div style="margin-bottom:6px;"><strong style="color:${color};">[${ts}] ${kind}</strong><br><pre style="margin:0;white-space:pre-wrap;">${escapeHtml(body)}</pre></div>`);
+            toolLog.scrollTop = toolLog.scrollHeight;
+        }
+
+        // --- Partial review modal handling ---
+        const activeReviews = new Map(); // review_id -> payload
+        let reviewModalInstance = null;
+        let currentReviewId = null;
+        const reviewSectionEl = document.getElementById('partial-review-section');
+        const reviewQuestionEl = document.getElementById('partial-review-question');
+        const reviewContentEl = document.getElementById('partial-review-content');
+        const reviewFeedbackEl = document.getElementById('partial-review-feedback');
+        const reviewSendBtn = document.getElementById('partial-review-send');
+        const reviewAcceptBtn = document.getElementById('partial-review-accept');
+        const partialReviewModalEl = document.getElementById('partial-review-modal');
+
+        function openReviewModal(payload) {
+            if (!payload || !payload.review_id) return;
+            if (activeReviews.has(payload.review_id)) return;
+            activeReviews.set(payload.review_id, payload);
+            currentReviewId = payload.review_id;
+            if (reviewSectionEl) reviewSectionEl.textContent = payload.section || '(section)';
+            if (reviewQuestionEl) reviewQuestionEl.textContent = payload.question || '';
+            if (reviewContentEl) {
+                try { reviewContentEl.textContent = JSON.stringify(payload.proposed_content, null, 2); }
+                catch { reviewContentEl.textContent = String(payload.proposed_content); }
+            }
+            if (reviewFeedbackEl) reviewFeedbackEl.value = '';
+            if (partialReviewModalEl && window.bootstrap) {
+                try {
+                    reviewModalInstance = window.bootstrap.Modal.getOrCreateInstance(partialReviewModalEl);
+                    reviewModalInstance.show();
+                } catch (e) { console.warn('Modal bootstrap indisponible', e); }
+            }
+            appendLog(`Révision partielle demandée: ${payload.section || ''}`);
+        }
+
+        async function submitReview(feedback) {
+            if (!currentReviewId) return;
+            const reviewId = currentReviewId;
+            try {
+                const resp = await fetch(`/tasks/${encodeURIComponent(_taskId)}/review_response`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({review_id: reviewId, feedback: feedback})
+                });
+                const data = await resp.json();
+                if (data && data.ok) {
+                    appendLog(`Feedback envoyé (${data.subscribers} abonné(s)).`);
+                } else {
+                    appendLog(`Erreur envoi feedback: ${(data && data.error) || 'inconnue'}`);
+                }
+            } catch (e) {
+                appendLog('Erreur réseau lors de l\'envoi du feedback.');
+            }
+            activeReviews.delete(reviewId);
+            currentReviewId = null;
+            if (reviewModalInstance) { try { reviewModalInstance.hide(); } catch {} }
+        }
+
+        if (reviewSendBtn) reviewSendBtn.addEventListener('click', () => {
+            const fb = (reviewFeedbackEl && reviewFeedbackEl.value.trim()) || 'ACCEPTED';
+            submitReview(fb);
+        });
+        if (reviewAcceptBtn) reviewAcceptBtn.addEventListener('click', () => submitReview('ACCEPTED'));
+
         let lastMsg = null;
         let lastSeq = -1;
         let lastReasoning = '';
@@ -290,6 +399,19 @@ document.addEventListener("DOMContentLoaded", function() {
                             if (streamOverlay) streamOverlay.style.display = 'none';
                             scheduleStreamUpdate();
                         }
+                    }
+                    // Agent tool invocations
+                    if (meta.tool_call && meta.tool_call.call_id && !seenToolCallIds.has(meta.tool_call.call_id)) {
+                        seenToolCallIds.add(meta.tool_call.call_id);
+                        appendToolEntry('call', meta.tool_call);
+                    }
+                    if (meta.tool_result && meta.tool_result.call_id && !seenToolResultIds.has(meta.tool_result.call_id)) {
+                        seenToolResultIds.add(meta.tool_result.call_id);
+                        appendToolEntry('result', meta.tool_result);
+                    }
+                    // Partial review request from the agent
+                    if (meta.review_request && meta.review_request.review_id) {
+                        openReviewModal(meta.review_request);
                     }
                 }
                 if (data.state) {

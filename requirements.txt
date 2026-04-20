@@ -25,6 +25,7 @@ gunicorn
 mammoth
 markdown
 openai
+openai-agents>=0.0.17
 openpyxl
 pypdf2
 pytest

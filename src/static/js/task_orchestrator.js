@@ -510,6 +510,27 @@
               <div id="task-orch-stream-text" class="form-control" style="background:#0f172a;color:#e2e8f0;font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Cantarell, Noto Sans, Ubuntu, Helvetica Neue, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';font-size:0.95rem;line-height:1.3;min-height:140px;max-height:280px;overflow:auto;white-space:pre-wrap;position:relative;z-index:1;"></div>
               <pre id="task-orch-stream-json" class="form-control" style="display:none;background:#0f172a;color:#e2e8f0;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;font-size:0.9rem;min-height:140px;max-height:280px;white-space:pre-wrap;overflow:auto;"></pre>
             </div>
+
+            <h6 class="mt-3 mb-1">Outils utilisés par l'agent</h6>
+            <div id="task-orch-tools" class="small" style="background:#f1f5f9;border-radius:6px;padding:10px;min-height:60px;max-height:240px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;">
+              <div class="text-muted">(aucun appel d'outil pour l'instant)</div>
+            </div>
+
+            <div id="task-orch-review-card" class="card border-warning mt-3 d-none">
+              <div class="card-header bg-warning-subtle d-flex justify-content-between align-items-center">
+                <strong>Révision partielle demandée</strong>
+                <span id="task-orch-review-section" class="badge bg-warning text-dark"></span>
+              </div>
+              <div class="card-body">
+                <p id="task-orch-review-question" class="mb-2"></p>
+                <pre id="task-orch-review-content" style="background:#0f172a;color:#e2e8f0;padding:10px;border-radius:6px;max-height:30vh;overflow:auto;margin-bottom:10px;"></pre>
+                <textarea id="task-orch-review-feedback" class="form-control mb-2" rows="3" placeholder="Feedback à transmettre à l'agent (laisser vide pour accepter tel quel)…"></textarea>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-success btn-sm" id="task-orch-review-accept">Accepter tel quel</button>
+                  <button type="button" class="btn btn-primary btn-sm" id="task-orch-review-send">Envoyer feedback</button>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-danger me-auto" id="task-orch-cancel">Arrêter</button>
@@ -968,6 +989,85 @@
       if (allowSSE) {
         es = new EventSource(eventsUrl);
       }
+      // Agent tool-call tracking (avoid duplicates across re-emits)
+      const seenToolCallIds = new Set();
+      const seenToolResultIds = new Set();
+      const seenReviewIds = new Set();
+      let activeReviewId = null;
+      function escapeHtml(str) {
+        return String(str || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+      }
+      function appendToolEntry(kind, payload) {
+        const host = document.getElementById('task-orch-tools');
+        if (!host) return;
+        // Clear initial placeholder if present
+        if (host.querySelector('.text-muted')) host.innerHTML = '';
+        const ts = new Date().toLocaleTimeString();
+        let body = '';
+        try { body = JSON.stringify(payload, null, 2); } catch { body = String(payload); }
+        const color = kind === 'call' ? '#1d4ed8' : '#15803d';
+        const title = kind === 'call' ? `Appel: ${escapeHtml(payload && payload.name)}` : `Résultat (call_id: ${escapeHtml(payload && payload.call_id)})`;
+        host.insertAdjacentHTML('beforeend',
+          `<div style="margin-bottom:6px;border-left:3px solid ${color};padding-left:8px;">`
+          + `<div style="color:${color};font-weight:600;">[${ts}] ${title}</div>`
+          + `<pre style="margin:2px 0 0 0;white-space:pre-wrap;background:#fff;padding:6px;border-radius:4px;">${escapeHtml(body)}</pre>`
+          + `</div>`);
+        host.scrollTop = host.scrollHeight;
+      }
+      function openReviewCard(payload) {
+        if (!payload || !payload.review_id) return;
+        if (seenReviewIds.has(payload.review_id)) return;
+        seenReviewIds.add(payload.review_id);
+        activeReviewId = payload.review_id;
+        const card = document.getElementById('task-orch-review-card');
+        const secEl = document.getElementById('task-orch-review-section');
+        const qEl = document.getElementById('task-orch-review-question');
+        const cEl = document.getElementById('task-orch-review-content');
+        const fbEl = document.getElementById('task-orch-review-feedback');
+        if (!card) return;
+        if (secEl) secEl.textContent = payload.section || '';
+        if (qEl) qEl.textContent = payload.question || '';
+        if (cEl) {
+          try { cEl.textContent = JSON.stringify(payload.proposed_content, null, 2); }
+          catch { cEl.textContent = String(payload.proposed_content); }
+        }
+        if (fbEl) fbEl.value = '';
+        card.classList.remove('d-none');
+        try { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch {}
+        appendLog(`Révision partielle demandée sur « ${payload.section || '?'} »`);
+      }
+      async function submitReview(feedback) {
+        if (!activeReviewId) return;
+        const reviewId = activeReviewId;
+        try {
+          const resp = await fetch(`${prefix}/tasks/${encodeURIComponent(taskId)}/review_response`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ review_id: reviewId, feedback: feedback })
+          });
+          const d = await resp.json();
+          appendLog(d && d.ok ? `Feedback envoyé (${d.subscribers} abonné(s)).` : `Erreur envoi feedback: ${(d && d.error) || 'inconnue'}`);
+        } catch (e) {
+          appendLog(`Erreur réseau lors de l'envoi du feedback: ${e}`);
+        }
+        activeReviewId = null;
+        const card = document.getElementById('task-orch-review-card');
+        if (card) card.classList.add('d-none');
+      }
+      try {
+        const acceptBtn = document.getElementById('task-orch-review-accept');
+        const sendBtn = document.getElementById('task-orch-review-send');
+        if (acceptBtn && !acceptBtn._bound) { acceptBtn._bound = true; acceptBtn.addEventListener('click', () => submitReview('ACCEPTED')); }
+        if (sendBtn && !sendBtn._bound) {
+          sendBtn._bound = true;
+          sendBtn.addEventListener('click', () => {
+            const fb = (document.getElementById('task-orch-review-feedback') || {}).value || '';
+            submitReview(fb.trim() || 'ACCEPTED');
+          });
+        }
+      } catch {}
+
       if (es) es.addEventListener('open', () => appendLog('Flux connecté.'));
       if (es) es.addEventListener('progress', (ev) => {
         try {
@@ -1030,6 +1130,20 @@
                     try { if (reasoningOverlay && String(lastReasoning).trim()) reasoningOverlay.style.display = 'none'; } catch {}
                   }
                 }
+                // Agent tool invocations
+                try {
+                  if (meta.tool_call && meta.tool_call.call_id && !seenToolCallIds.has(meta.tool_call.call_id)) {
+                    seenToolCallIds.add(meta.tool_call.call_id);
+                    appendToolEntry('call', meta.tool_call);
+                  }
+                  if (meta.tool_result && meta.tool_result.call_id && !seenToolResultIds.has(meta.tool_result.call_id)) {
+                    seenToolResultIds.add(meta.tool_result.call_id);
+                    appendToolEntry('result', meta.tool_result);
+                  }
+                  if (meta.review_request && meta.review_request.review_id) {
+                    openReviewCard(meta.review_request);
+                  }
+                } catch {}
               } catch {}
               // Update JSON snapshot (sanitized, throttled, and only when visible)
               try { requestJsonUpdate(meta || {}); } catch {}
@@ -1133,6 +1247,20 @@
               if (reasoningEl) scheduleReasoningUpdate();
               try { if (reasoningOverlay && String(lastReasoning).trim()) reasoningOverlay.style.display = 'none'; } catch {}
             }
+            // Agent tool invocations (polling fallback)
+            try {
+              if (meta.tool_call && meta.tool_call.call_id && !seenToolCallIds.has(meta.tool_call.call_id)) {
+                seenToolCallIds.add(meta.tool_call.call_id);
+                appendToolEntry('call', meta.tool_call);
+              }
+              if (meta.tool_result && meta.tool_result.call_id && !seenToolResultIds.has(meta.tool_result.call_id)) {
+                seenToolResultIds.add(meta.tool_result.call_id);
+                appendToolEntry('result', meta.tool_result);
+              }
+              if (meta.review_request && meta.review_request.review_id) {
+                openReviewCard(meta.review_request);
+              }
+            } catch {}
           } catch {}
           try { requestJsonUpdate(data.meta || {}); } catch {}
           try { updateOverlaysVisibility(); } catch {}
